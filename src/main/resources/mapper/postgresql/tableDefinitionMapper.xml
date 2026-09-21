@@ -128,7 +128,7 @@ WITH all_columns AS (
             t1.schemaname AS schema_name,
             t1.tablename AS table_name,
             row_number() over (PARTITION BY t1.schemaname, t1.tablename ORDER BY t3.attnum) AS column_num,
-            coalesce(substring(coalesce((t4.description), ''), '^[^\t\r\n\(（]*'), '') AS logical_column_name,
+            coalesce((t4.description), '') AS logical_column_name,
             t3.attname AS physical_column_name,
             pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
             coalesce((
@@ -148,7 +148,7 @@ WITH all_columns AS (
                 WHERE d.adrelid = t3.attrelid
                 AND d.adnum = t3.attnum
             ), ' ') AS default_value,
-            regexp_replace(coalesce(substring(coalesce((t4.description), ''), '^.*[\t\r\n\(（]+(.*)'), ''), '[\\）)]$', '', 'g') AS remarks
+            '' AS remarks
         FROM
             pg_catalog.pg_tables t1
             LEFT OUTER JOIN pg_catalog.pg_class t2
@@ -185,7 +185,7 @@ WITH all_columns AS (
             t1.schemaname AS schema_name,
             t1.viewname AS table_name,
             row_number() over (PARTITION BY t1.schemaname, t1.viewname ORDER BY t3.attnum) AS column_num,
-            coalesce(substring(coalesce((t4.description), ''), '^[^\t\r\n\(（]*'), '') AS logical_column_name,
+            coalesce((t4.description), '') AS logical_column_name,
             t3.attname AS physical_column_name,
             pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
             coalesce((
@@ -205,7 +205,7 @@ WITH all_columns AS (
                 WHERE d.adrelid = t3.attrelid
                 AND d.adnum = t3.attnum
             ), ' ') AS default_value,
-            regexp_replace(coalesce(substring(coalesce((t4.description), ''), '^.*[\t\r\n\(（]+(.*)'), ''), '[\\）)]$', '', 'g') AS remarks
+            '' AS remarks
         FROM
             pg_catalog.pg_views t1
             LEFT OUTER JOIN pg_catalog.pg_class t2
@@ -242,7 +242,7 @@ WITH all_columns AS (
             t1.schemaname AS schema_name,
             t1.matviewname AS table_name,
             row_number() over (PARTITION BY t1.schemaname, t1.matviewname ORDER BY t3.attnum) AS column_num,
-            coalesce(substring(coalesce((t4.description), ''), '^[^\t\r\n\(（]*'), '') AS logical_column_name,
+            coalesce((t4.description), '') AS logical_column_name,
             t3.attname AS physical_column_name,
             pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
             coalesce((
@@ -262,7 +262,7 @@ WITH all_columns AS (
                 WHERE d.adrelid = t3.attrelid
                 AND d.adnum = t3.attnum
             ), ' ') AS default_value,
-            regexp_replace(coalesce(substring(coalesce((t4.description), ''), '^.*[\t\r\n\(（]+(.*)'), ''), '[\\）)]$', '', 'g') AS remarks
+            '' AS remarks
         FROM
             pg_catalog.pg_matviews t1
             LEFT OUTER JOIN pg_catalog.pg_class t2

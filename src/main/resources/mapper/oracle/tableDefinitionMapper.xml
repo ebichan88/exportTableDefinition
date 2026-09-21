@@ -145,11 +145,7 @@ WITH ora_all_columns AS (
         c.OWNER AS schema_name,
         c.TABLE_NAME AS table_name,
         c.COLUMN_ID AS column_num,
-        <![CDATA[
-        CASE WHEN regexp_instr(com.COMMENTS, '[(（]') < 1 THEN com.COMMENTS
-             ELSE coalesce(substr(com.COMMENTS, 1, regexp_instr(com.COMMENTS, '[(（]') - 1), '') 
-        END AS logical_column_name,
-        ]]>
+        COALESCE(com.COMMENTS, '') AS logical_column_name,
         c.COLUMN_NAME AS physical_column_name,
         c.DATA_TYPE || CASE WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') 
                             THEN '(' || c.DATA_LENGTH || ')' 
@@ -173,11 +169,7 @@ WITH ora_all_columns AS (
             ELSE ''
         END AS not_null,
         ' ' AS default_value,
-        <![CDATA[
-        CASE WHEN regexp_instr(com.COMMENTS, '[(（]') < 1 then ''
-             ELSE regexp_replace(coalesce(substr(com.COMMENTS, regexp_instr(com.COMMENTS, '[(（]') + 1), ''), '[）)]$', '')
-        END AS remarks
-        ]]>
+        '' AS remarks
     FROM
         ALL_TAB_COLUMNS c
     LEFT OUTER JOIN
