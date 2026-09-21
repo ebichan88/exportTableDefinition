@@ -86,8 +86,8 @@ public class TableDefinitionTemplates {
         String header = """
                 ## カラム情報
 
-                | No. | 論理名 | 物理名 | データ型 | PK | Not Null | デフォルト | 備考 |
-                |:---|:---|:---|:---|:---|:---|:---|:---|
+                | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
+                |:---|:---|:---|:---|:---|:---|:---|:---|:---|
                 """;
         return tableSection(columns, table, header, ColumnEntity::columnInfo, ColumnEntity::getSchemaTableName);
     }
@@ -124,8 +124,8 @@ public class TableDefinitionTemplates {
         String header = """
                 ## インデックス情報
 
-                | No. | インデックス名 | カラムリスト |
-                |:---|:---|:---|
+                | No. | インデックス名 | 種別 | UNIQUE | PRIMARY | 定義 | 備考 |
+                |:---|:---|:---|:---|:---|:---|:---|
                 """;
         return tableSection(indexes, table, header, IndexEntity::indexInfo, IndexEntity::getSchemaTableName);
     }
@@ -141,8 +141,8 @@ public class TableDefinitionTemplates {
         String header = """
                 ## 制約情報
 
-                | No. | 制約名 | 種類 | 制約定義 |
-                |:---|:---|:---|:---|
+                | No. | 制約名 | 種類 | 制約定義 | 備考 |
+                |:---|:---|:---|:---|:---|
                 """;
         return tableSection(constraints, table, header, ConstraintEntity::constraintInfo,
                 ConstraintEntity::getSchemaTableName);

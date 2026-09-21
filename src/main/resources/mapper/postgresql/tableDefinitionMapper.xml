@@ -131,6 +131,19 @@ WITH all_columns AS (
             coalesce((t4.description), '') AS logical_column_name,
             t3.attname AS physical_column_name,
             pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
+            CASE
+                WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
+                    information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text
+                WHEN t3.atttypid = 'pg_catalog.numeric'::regtype
+                        AND information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
+                    information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text ||
+                    CASE
+                        WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0
+                            THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text
+                        ELSE ''
+                    END
+                ELSE ''
+            END AS precision_scale,
             coalesce((
                 SELECT '○'
                 FROM pg_catalog.pg_constraint c
@@ -138,9 +151,9 @@ WITH all_columns AS (
                 AND t3.attnum = ANY (c.conkey)
                 AND c.contype = 'p'
             ), '') AS primary_key,
-            CASE t3.attnotnull 
-                WHEN true THEN '○' 
-                ELSE '' 
+            CASE t3.attnotnull
+                WHEN true THEN '○'
+                ELSE ''
             END AS not_null,
             coalesce((
                 SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)
@@ -188,6 +201,19 @@ WITH all_columns AS (
             coalesce((t4.description), '') AS logical_column_name,
             t3.attname AS physical_column_name,
             pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
+            CASE
+                WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
+                    information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text
+                WHEN t3.atttypid = 'pg_catalog.numeric'::regtype
+                        AND information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
+                    information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text ||
+                    CASE
+                        WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0
+                            THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text
+                        ELSE ''
+                    END
+                ELSE ''
+            END AS precision_scale,
             coalesce((
                 SELECT '○'
                 FROM pg_catalog.pg_constraint c
@@ -195,9 +221,9 @@ WITH all_columns AS (
                 AND t3.attnum = ANY (c.conkey)
                 AND c.contype = 'p'
             ), '') AS primary_key,
-            CASE t3.attnotnull 
-                WHEN true THEN '○' 
-                ELSE '' 
+            CASE t3.attnotnull
+                WHEN true THEN '○'
+                ELSE ''
             END AS not_null,
             coalesce((
                 SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)
@@ -245,6 +271,19 @@ WITH all_columns AS (
             coalesce((t4.description), '') AS logical_column_name,
             t3.attname AS physical_column_name,
             pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
+            CASE
+                WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
+                    information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text
+                WHEN t3.atttypid = 'pg_catalog.numeric'::regtype
+                        AND information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
+                    information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text ||
+                    CASE
+                        WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0
+                            THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text
+                        ELSE ''
+                    END
+                ELSE ''
+            END AS precision_scale,
             coalesce((
                 SELECT '○'
                 FROM pg_catalog.pg_constraint c
@@ -252,9 +291,9 @@ WITH all_columns AS (
                 AND t3.attnum = ANY (c.conkey)
                 AND c.contype = 'p'
             ), '') AS primary_key,
-            CASE t3.attnotnull 
-                WHEN true THEN '○' 
-                ELSE '' 
+            CASE t3.attnotnull
+                WHEN true THEN '○'
+                ELSE ''
             END AS not_null,
             coalesce((
                 SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)
@@ -297,7 +336,7 @@ WITH all_columns AS (
 SELECT
     schema_name AS "schemaName",
     table_name AS "tableName",
-    concat('|', column_num, '|', logical_column_name, '|', physical_column_name, '|', column_type, '|', primary_key, '|', not_null, '|', default_value, '|', remarks, '|') AS "columnInfo",
+    concat('|', column_num, '|', logical_column_name, '|', physical_column_name, '|', column_type, '|', precision_scale, '|', primary_key, '|', not_null, '|', default_value, '|', remarks, '|') AS "columnInfo",
     physical_column_name AS "physicalColumnName",
     column_type AS "columnType",
     primary_key AS "primaryKey"
@@ -324,7 +363,11 @@ WITH all_indexes AS (
         t5.schemaname AS schema_name,
         t1.relname AS table_name,
         t2.relname AS index_name,
-        coalesce(array_to_string(array_agg(t4.attname ORDER BY t4.attnum), ','), '') AS column_names
+        am.amname AS index_method,
+        CASE WHEN t3.indisunique THEN '○' ELSE '' END AS is_unique,
+        CASE WHEN t3.indisprimary THEN '○' ELSE '' END AS is_primary,
+        replace(pg_catalog.pg_get_indexdef(t3.indexrelid), '|', '\|') AS index_definition,
+        coalesce(pg_catalog.obj_description(t2.oid, 'pg_class'), '') AS remarks
     FROM
         pg_class AS t1
     LEFT OUTER JOIN
@@ -332,13 +375,12 @@ WITH all_indexes AS (
     LEFT OUTER JOIN
         pg_class AS t2 ON t2.oid = t3.indexrelid
     LEFT OUTER JOIN
-        pg_attribute AS t4 ON t4.attrelid = t1.oid AND t4.attnum = ANY(t3.indkey)
+        pg_am AS am ON t2.relam = am.oid
     LEFT OUTER JOIN
         pg_tables AS t5 ON t1.relname = t5.tablename
     WHERE
-        t3.indisprimary = false
-        AND t3.indisunique = false
-        AND t1.relkind = 'r'
+        t1.relkind = 'r'
+        AND t3.indexrelid IS NOT NULL
         AND t5.schemaname NOT IN ('pg_catalog', 'information_schema')
         <if test="schemaList != null and schemaList.size() > 0">
             AND t5.schemaname IN
@@ -354,14 +396,12 @@ WITH all_indexes AS (
                 #{table}
             </foreach>
         </if>
-    GROUP BY
-        t5.schemaname, t1.relname, t2.relname
 )
 SELECT
     schema_name AS "schemaName",
     table_name AS "tableName",
     CASE WHEN index_name IS NOT NULL THEN
-        concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY index_name), '|', index_name, '|', column_names, '|')
+        concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY index_name), '|', index_name, '|', index_method, '|', is_unique, '|', is_primary, '|', index_definition, '|', remarks, '|')
     ELSE NULL END AS "indexInfo"
 FROM
     all_indexes
@@ -390,7 +430,8 @@ WITH all_constraints AS (
             WHEN 'u' THEN 'UNIQUE' 
             ELSE NULL 
         END AS constraints_type,
-        pg_get_constraintdef(t1.oid) AS constraints_definition
+        replace(pg_get_constraintdef(t1.oid), '|', '\|') AS constraints_definition,
+        coalesce(pg_catalog.obj_description(t1.oid, 'pg_constraint'), '') AS remarks
     FROM
         pg_catalog.pg_constraint t1
     LEFT OUTER JOIN pg_catalog.pg_class t2
@@ -418,7 +459,7 @@ WITH all_constraints AS (
 SELECT
     schema_name AS "schemaName",
     table_name AS "tableName",
-    concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name), '|', constraints_name, '|', constraints_type, '|', constraints_definition, '|') AS "constraintInfo"
+    concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name), '|', constraints_name, '|', constraints_type, '|', constraints_definition, '|', remarks, '|') AS "constraintInfo"
 FROM
     all_constraints
 ORDER BY

@@ -147,14 +147,21 @@ WITH ora_all_columns AS (
         c.COLUMN_ID AS column_num,
         COALESCE(com.COMMENTS, '') AS logical_column_name,
         c.COLUMN_NAME AS physical_column_name,
-        c.DATA_TYPE || CASE WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') 
-                            THEN '(' || c.DATA_LENGTH || ')' 
-                            WHEN c.DATA_TYPE IN ('NUMBER') 
-                            THEN '(' || c.DATA_PRECISION || ',' || DATA_SCALE || ')' 
-                            WHEN c.DATA_TYPE IN ('FLOAT') 
-                            THEN '(' || c.DATA_PRECISION || ')' 
-                            ELSE '' 
+        c.DATA_TYPE || CASE WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR')
+                            THEN '(' || c.DATA_LENGTH || ')'
+                            WHEN c.DATA_TYPE IN ('NUMBER')
+                            THEN '(' || c.DATA_PRECISION || ',' || DATA_SCALE || ')'
+                            WHEN c.DATA_TYPE IN ('FLOAT')
+                            THEN '(' || c.DATA_PRECISION || ')'
+                            ELSE ''
                        END AS column_type,
+        CASE
+            WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') THEN TO_CHAR(c.DATA_LENGTH)
+            WHEN c.DATA_TYPE IN ('NUMBER', 'FLOAT') AND c.DATA_PRECISION IS NOT NULL THEN
+                TO_CHAR(c.DATA_PRECISION) ||
+                CASE WHEN COALESCE(c.DATA_SCALE, 0) != 0 THEN ',' || TO_CHAR(c.DATA_SCALE) ELSE '' END
+            ELSE ''
+        END AS precision_scale,
         CASE WHEN EXISTS (
             SELECT 1
             FROM ALL_CONS_COLUMNS acc
@@ -200,7 +207,7 @@ WITH ora_all_columns AS (
 SELECT
     schema_name AS "schemaName",
     table_name AS "tableName",
-    '|' || column_num || '|' || logical_column_name || '|' || physical_column_name || '|' || column_type || '|' || primary_key || '|' || not_null || '|' || default_value || '|' || remarks || '|' AS "columnInfo",
+    '|' || column_num || '|' || logical_column_name || '|' || physical_column_name || '|' || column_type || '|' || precision_scale || '|' || primary_key || '|' || not_null || '|' || default_value || '|' || remarks || '|' AS "columnInfo",
     physical_column_name AS "physicalColumnName",
     column_type AS "columnType",
     primary_key AS "primaryKey"
@@ -228,15 +235,33 @@ WITH ora_all_indexes AS (
         idx.owner AS schema_name,
         idx.table_name AS table_name,
         idx.index_name AS index_name,
-        LISTAGG(col.column_name, ',') WITHIN GROUP (ORDER BY col.column_position) AS column_names
+        idx.index_type AS index_method,
+        CASE WHEN idx.uniqueness = 'UNIQUE' THEN '○' ELSE '' END AS is_unique,
+        CASE WHEN EXISTS (
+            SELECT 1
+            FROM all_constraints ac
+            WHERE ac.owner = idx.owner
+            AND ac.constraint_type = 'P'
+            AND ac.index_name = idx.index_name
+        ) THEN '○' ELSE '' END AS is_primary,
+        (CASE WHEN idx.uniqueness = 'UNIQUE' THEN 'CREATE UNIQUE INDEX ' ELSE 'CREATE INDEX ' END)
+            || idx.index_name || ' ON ' || idx.table_name || ' (' ||
+            LISTAGG(COALESCE(ie.column_expression, col.column_name), ',') WITHIN GROUP (ORDER BY col.column_position)
+            || ')' AS index_definition,
+        '' AS remarks
     FROM
         all_indexes idx
     LEFT JOIN
         all_ind_columns col ON idx.index_name = col.index_name
         AND idx.owner = col.index_owner
+    LEFT JOIN
+        (SELECT index_name, index_owner, column_position, SUBSTR(column_expression, 1, 1000) AS column_expression
+         FROM all_ind_expressions) ie
+        ON idx.index_name = ie.index_name
+        AND idx.owner = ie.index_owner
+        AND col.column_position = ie.column_position
     WHERE
-        idx.uniqueness = 'NONUNIQUE'
-        AND idx.index_type != 'LOB'
+        idx.index_type != 'LOB'
         AND idx.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
         <if test="schemaList != null and schemaList.size() > 0">
             AND idx.owner IN
@@ -253,13 +278,13 @@ WITH ora_all_indexes AS (
             </foreach>
         </if>
     GROUP BY
-        idx.owner, idx.table_name, idx.index_name
+        idx.owner, idx.table_name, idx.index_name, idx.index_type, idx.uniqueness
 )
 SELECT
     schema_name AS "schemaName",
     table_name AS "tableName",
     CASE WHEN index_name IS NOT NULL THEN
-        '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY index_name) || '|' || index_name || '|' || column_names || '|'
+        '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY index_name) || '|' || index_name || '|' || index_method || '|' || is_unique || '|' || is_primary || '|' || index_definition || '|' || remarks || '|'
     ELSE NULL END AS "indexInfo"
 FROM
     ora_all_indexes
@@ -370,7 +395,7 @@ SELECT
     table_name AS "tableName",
     constraints_definition,
     '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name) ||
-    '|' || constraints_name || '|' || constraints_type || '|' || constraints_definition || '|' AS "constraintInfo"
+    '|' || constraints_name || '|' || constraints_type || '|' || constraints_definition || '|' || '' || '|' AS "constraintInfo"
 FROM
     ora_all_constraints
 ORDER BY
