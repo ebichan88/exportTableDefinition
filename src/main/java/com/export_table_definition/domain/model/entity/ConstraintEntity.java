@@ -7,15 +7,6 @@ package com.export_table_definition.domain.model.entity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record ConstraintEntity(String schemaName, String tableName, String constraintInfo) {
-
-    /**
-     * スキーマ.テーブル 形式の名称を取得するメソッド
-     * 
-     * @return スキーマ.テーブル 形式の名称
-     */
-    public String getSchemaTableName() {
-        return schemaName + "." + tableName;
-    }
-
+public record ConstraintEntity(String schemaName, String tableName, String constraintInfo)
+        implements SchemaTableKeyed {
 }

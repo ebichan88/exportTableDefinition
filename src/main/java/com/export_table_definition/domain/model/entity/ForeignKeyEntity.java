@@ -8,16 +8,7 @@ package com.export_table_definition.domain.model.entity;
  * @author takashi.ebina
  */
 public record ForeignKeyEntity(String schemaName, String tableName, String foreignkeyInfo, String foreignkeyName,
-        String referenceSchemaName, String referenceTableName) {
-
-    /**
-     * スキーマ.テーブル 形式の名称を取得するメソッド
-     *
-     * @return スキーマ.テーブル 形式の名称
-     */
-    public String getSchemaTableName() {
-        return schemaName + "." + tableName;
-    }
+        String referenceSchemaName, String referenceTableName) implements SchemaTableKeyed {
 
     /**
      * 参照先の スキーマ.テーブル 形式の名称を取得するメソッド

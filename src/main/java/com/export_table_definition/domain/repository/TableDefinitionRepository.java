@@ -2,7 +2,6 @@ package com.export_table_definition.domain.repository;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
@@ -129,6 +128,6 @@ public interface TableDefinitionRepository {
     default <D, E> List<E> makeEntityList(List<D> dtoList, Function<D, E> mapper) {
         return dtoList.stream()
                 .map(mapper)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

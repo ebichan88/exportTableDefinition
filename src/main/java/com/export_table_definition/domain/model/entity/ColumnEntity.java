@@ -8,19 +8,10 @@ package com.export_table_definition.domain.model.entity;
  * @author takashi.ebina
  */
 public record ColumnEntity(String schemaName, String tableName, String columnInfo, String physicalColumnName,
-        String columnType, String primaryKey) {
+        String columnType, String primaryKey) implements SchemaTableKeyed {
 
     /** 主キーであることを表すマーカー文字列 */
     private static final String PRIMARY_KEY_MARKER = "○";
-
-    /**
-     * スキーマ.テーブル 形式の名称を取得するメソッド
-     *
-     * @return スキーマ.テーブル 形式の名称
-     */
-    public String getSchemaTableName() {
-        return schemaName + "." + tableName;
-    }
 
     /**
      * 主キーであるか判定するメソッド
