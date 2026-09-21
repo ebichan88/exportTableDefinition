@@ -17,6 +17,8 @@ import com.google.inject.Guice;
  */
 public class ExportTableDefinition {
 
+    /** chunkSize未設定時のデフォルト値（1スキーマあたりこの件数ごとに詳細情報を取得・出力する） */
+    private static final int DEFAULT_CHUNK_SIZE = 3000;
     private ExportTableDefinitionController controller;
 
     ExportTableDefinition(ExportTableDefinitionController controller) {
@@ -41,13 +43,14 @@ public class ExportTableDefinition {
         final List<String> schemaList = PropertyLoader.getList("ExportTableDefinition", "schema");
         final List<String> tableList = PropertyLoader.getList("ExportTableDefinition", "table");
         final String outputPath = PropertyLoader.getString("ExportTableDefinition", "outputPath");
+        final int chunkSize = PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE);
         // 処理開始メッセージ出力
         System.out.println("""
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
         // テーブル定義出力処理実行
-        final ResultDto resultDto = controller.execute(schemaList, tableList, outputPath);
+        final ResultDto resultDto = controller.execute(schemaList, tableList, outputPath, chunkSize);
         // 処理終了メッセージ出力
         System.out.println(resultDto.getResultMessage());
     }

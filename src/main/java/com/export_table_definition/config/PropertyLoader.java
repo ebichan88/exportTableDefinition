@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,6 +55,27 @@ public class PropertyLoader {
      */
     public static List<String> getList(String fileName, String key) {
         return Arrays.stream(getString(fileName, key).split(",")).filter(s -> !s.isBlank()).toList();
+    }
+
+    /**
+     * プロパティファイルの読み込みを行うメソッド（数値で取得）<br>
+     * キーが存在しない・空・数値以外の場合はデフォルト値を返す
+     *
+     * @param fileName     プロパティファイルのファイル名
+     * @param key          取得するキー
+     * @param defaultValue キーに対応する値が取得できない場合のデフォルト値
+     * @return キーに対応する数値。取得できない場合はデフォルト値
+     */
+    public static int getInt(String fileName, String key, int defaultValue) {
+        try {
+            final String value = getString(fileName, key);
+            if (value == null || value.isBlank()) {
+                return defaultValue;
+            }
+            return Integer.parseInt(value.trim());
+        } catch (MissingResourceException | NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     /**
