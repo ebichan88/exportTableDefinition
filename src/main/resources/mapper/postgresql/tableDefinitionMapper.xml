@@ -430,45 +430,50 @@ ORDER BY
 <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap">
 WITH all_foreignkeys AS (
     SELECT
-        t1.constraint_name AS foreignkey_name,
-        t2.table_schema AS schema_name,
-        t2.table_name AS table_name,
-        coalesce(array_to_string(array_agg(DISTINCT t2.column_name), ','), '') AS column_names,
-        t3.table_schema AS reference_schema_name,
-        t3.table_name AS reference_table_name,
-        coalesce(array_to_string(array_agg(DISTINCT t3.column_name), ','), '') AS reference_column_names
+        t1.conname AS foreignkey_name,
+        t3.nspname AS schema_name,
+        t2.relname AS table_name,
+        coalesce((
+            SELECT string_agg(a.attname, ',' ORDER BY k.ord)
+            FROM unnest(t1.conkey) WITH ORDINALITY AS k(attnum, ord)
+            JOIN pg_catalog.pg_attribute a
+                ON a.attrelid = t1.conrelid AND a.attnum = k.attnum
+        ), '') AS column_names,
+        t5.nspname AS reference_schema_name,
+        t4.relname AS reference_table_name,
+        coalesce((
+            SELECT string_agg(fa.attname, ',' ORDER BY fk.ord)
+            FROM unnest(t1.confkey) WITH ORDINALITY AS fk(attnum, ord)
+            JOIN pg_catalog.pg_attribute fa
+                ON fa.attrelid = t1.confrelid AND fa.attnum = fk.attnum
+        ), '') AS reference_column_names
     FROM
-        information_schema.table_constraints AS t1
-    LEFT OUTER JOIN information_schema.key_column_usage AS t2
-        ON t1.constraint_name = t2.constraint_name
-        AND t1.constraint_catalog = t2.table_catalog
-        AND t1.constraint_schema = t2.table_schema
-        AND t1.table_name = t2.table_name
-    LEFT OUTER JOIN information_schema.constraint_column_usage AS t3
-        ON t2.constraint_name = t3.constraint_name
-        AND t2.table_catalog = t3.constraint_catalog
-        AND t2.table_schema = t3.constraint_schema
+        pg_catalog.pg_constraint t1
+    LEFT OUTER JOIN pg_catalog.pg_class t2
+        ON t1.conrelid = t2.oid
+    LEFT OUTER JOIN pg_catalog.pg_namespace t3
+        ON t2.relnamespace = t3.oid
+    LEFT OUTER JOIN pg_catalog.pg_class t4
+        ON t1.confrelid = t4.oid
+    LEFT OUTER JOIN pg_catalog.pg_namespace t5
+        ON t4.relnamespace = t5.oid
     WHERE
-        t1.constraint_type = 'FOREIGN KEY'
-        AND t1.constraint_schema NOT IN ('pg_catalog', 'information_schema')
+        t1.contype = 'f'
+        AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
         <if test="schemaList != null and schemaList.size() > 0">
-            AND t1.constraint_schema IN
+            AND t3.nspname IN
             <foreach item="schema" index="index" collection="schemaList"
                 open="(" separator="," close=")">
                 #{schema}
             </foreach>
         </if>
         <if test="tableList != null and tableList.size() > 0">
-            AND t2.table_schema IN
+            AND t2.relname IN
             <foreach item="table" index="index" collection="tableList"
                 open="(" separator="," close=")">
                 #{table}
             </foreach>
         </if>
-    GROUP BY
-        t1.constraint_name, t2.table_schema, t2.table_name, t3.table_schema, t3.table_name
-    ORDER BY 
-        t1.constraint_name, t2.table_schema, t2.table_name, t3.table_schema, t3.table_name
 )
 SELECT
     schema_name AS "schemaName",
