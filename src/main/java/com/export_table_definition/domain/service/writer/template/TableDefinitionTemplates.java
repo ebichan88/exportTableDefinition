@@ -150,7 +150,7 @@ public class TableDefinitionTemplates {
 
     /**
      * 外部キー情報セクション
-     * 
+     *
      * @param foreignkeys 外部キー情報のリスト
      * @param table       テーブル情報
      * @return 外部キー情報セクション文字列
@@ -164,6 +164,74 @@ public class TableDefinitionTemplates {
                 """;
         return tableSection(foreignkeys, table, header, ForeignKeyEntity::foreignkeyInfo,
                 ForeignKeyEntity::getSchemaTableName);
+    }
+
+    /**
+     * ER図セクション（Mermaid記法）<br>
+     * 自テーブルはカラム・PK情報付きの箱として、関連テーブル（参照元・参照先）は
+     * 属性なしの箱として描画する。関連テーブルの属性情報を必要としないため、
+     * チャンク単位の分割取得（他チャンク・他スキーマのテーブル詳細を保持しないこと）の影響を受けない
+     *
+     * @param table         テーブル情報
+     * @param columns       自テーブルのカラム情報のリスト
+     * @param outgoingFks   自テーブルが参照している外部キー（自テーブル → 参照先）のリスト
+     * @param incomingFks   自テーブルを参照している外部キー（参照元 → 自テーブル）のリスト
+     * @return ER図セクション文字列
+     */
+    public static String erDiagram(TableEntity table, List<ColumnEntity> columns, List<ForeignKeyEntity> outgoingFks,
+            List<ForeignKeyEntity> incomingFks) {
+        StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
+        if (outgoingFks.isEmpty() && incomingFks.isEmpty()) {
+            return sb.append("関連するテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
+        }
+        final String selfId = mermaidId(table.schemaName(), table.physicalTableName());
+        sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
+        outgoingFks.forEach(fk -> sb.append("    ")
+                .append(mermaidId(fk.referenceSchemaName(), fk.referenceTableName()))
+                .append(" ||--o{ ").append(selfId).append(" : \"").append(fk.foreignkeyName()).append('"')
+                .append(LINE_SEPARATOR));
+        incomingFks.forEach(fk -> sb.append("    ").append(selfId).append(" ||--o{ ")
+                .append(mermaidId(fk.schemaName(), fk.tableName())).append(" : \"").append(fk.foreignkeyName())
+                .append('"').append(LINE_SEPARATOR));
+        sb.append("    ").append(selfId).append(" {").append(LINE_SEPARATOR);
+        columns.forEach(c -> sb.append("        ").append(sanitizeType(c.columnType())).append(' ')
+                .append(sanitizeIdentifier(c.physicalColumnName())).append(c.isPrimaryKey() ? " PK" : "")
+                .append(LINE_SEPARATOR));
+        sb.append("    }").append(LINE_SEPARATOR).append("```").append(LINE_SEPARATOR_DOUBLE);
+        return sb.toString();
+    }
+
+    /**
+     * Mermaid記法のエンティティ識別子を生成するメソッド<br>
+     * スキーマ名を含めることで、同名テーブルが複数スキーマに存在する場合の識別子衝突を避ける
+     *
+     * @param schemaName        スキーマ名
+     * @param physicalTableName 物理テーブル名
+     * @return サニタイズ済みのエンティティ識別子
+     */
+    private static String mermaidId(String schemaName, String physicalTableName) {
+        return sanitizeIdentifier(schemaName + "_" + physicalTableName);
+    }
+
+    /**
+     * Mermaid記法で識別子として利用できない文字をアンダースコアに置換するメソッド
+     *
+     * @param value 変換対象の文字列
+     * @return サニタイズ済みの文字列
+     */
+    private static String sanitizeIdentifier(String value) {
+        return value.replaceAll("[^A-Za-z0-9_]", "_");
+    }
+
+    /**
+     * データ型からMermaid記法の属性型として利用できる文字列を生成するメソッド<br>
+     * 桁数・精度を表す括弧部分を除去し、残った空白をアンダースコアに置換する
+     *
+     * @param columnType データ型
+     * @return サニタイズ済みのデータ型文字列
+     */
+    private static String sanitizeType(String columnType) {
+        return columnType.replaceAll("\\(.*\\)", "").trim().replaceAll("[^A-Za-z0-9_]+", "_");
     }
 
     /**

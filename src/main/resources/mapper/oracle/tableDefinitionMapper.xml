@@ -200,7 +200,10 @@ WITH ora_all_columns AS (
 SELECT
     schema_name AS "schemaName",
     table_name AS "tableName",
-    '|' || column_num || '|' || logical_column_name || '|' || physical_column_name || '|' || column_type || '|' || primary_key || '|' || not_null || '|' || default_value || '|' || remarks || '|' AS "columnInfo"
+    '|' || column_num || '|' || logical_column_name || '|' || physical_column_name || '|' || column_type || '|' || primary_key || '|' || not_null || '|' || default_value || '|' || remarks || '|' AS "columnInfo",
+    physical_column_name AS "physicalColumnName",
+    column_type AS "columnType",
+    primary_key AS "primaryKey"
 FROM
     ora_all_columns
 ORDER BY
@@ -213,6 +216,9 @@ ORDER BY
     <arg column="schemaName" javaType="String"/>
     <arg column="tableName" javaType="String"/>
     <arg column="columnInfo" javaType="String"/>
+    <arg column="physicalColumnName" javaType="String"/>
+    <arg column="columnType" javaType="String"/>
+    <arg column="primaryKey" javaType="String"/>
   </constructor>
 </resultMap>
 
@@ -424,18 +430,21 @@ WITH ora_all_foreignkeys AS (
     ORDER BY 
         ac.constraint_name, ac.owner, ac.table_name, ac_r.owner, ac_r.table_name
 )
-SELECT 
+SELECT
     schema_name AS "schemaName",
     table_name AS "tableName",
     CASE WHEN foreignkey_name IS NOT NULL THEN
         '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY foreignkey_name) ||
         '|' || foreignkey_name || '|' || column_names || '|' || reference_schema_name || '.' || reference_table_name || '|' || reference_column_names || '|'
-    ELSE NULL END AS "foreignkeyInfo"
-FROM 
+    ELSE NULL END AS "foreignkeyInfo",
+    foreignkey_name AS "foreignkeyName",
+    reference_schema_name AS "referenceSchemaName",
+    reference_table_name AS "referenceTableName"
+FROM
     ora_all_foreignkeys
 WHERE
     column_names IS NOT NULL
-ORDER BY 
+ORDER BY
     schema_name, table_name
 </select>
 
@@ -444,6 +453,9 @@ ORDER BY
     <arg column="schemaName" javaType="String"/>
     <arg column="tableName" javaType="String"/>
     <arg column="foreignkeyInfo" javaType="String"/>
+    <arg column="foreignkeyName" javaType="String"/>
+    <arg column="referenceSchemaName" javaType="String"/>
+    <arg column="referenceTableName" javaType="String"/>
   </constructor>
 </resultMap>
 

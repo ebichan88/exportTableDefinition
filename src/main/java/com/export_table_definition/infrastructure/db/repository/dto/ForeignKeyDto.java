@@ -9,14 +9,16 @@ import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record ForeignKeyDto(String schemaName, String tableName, String foreignkeyInfo) {
+public record ForeignKeyDto(String schemaName, String tableName, String foreignkeyInfo, String foreignkeyName,
+        String referenceSchemaName, String referenceTableName) {
 
     /**
      * DTOからEntityへの変換メソッド
-     * 
+     *
      * @return AllForeignkeyEntityのインスタンス
      */
     public ForeignKeyEntity toEntity() {
-        return new ForeignKeyEntity(schemaName, tableName, foreignkeyInfo);
+        return new ForeignKeyEntity(schemaName, tableName, foreignkeyInfo, foreignkeyName, referenceSchemaName,
+                referenceTableName);
     }
 }

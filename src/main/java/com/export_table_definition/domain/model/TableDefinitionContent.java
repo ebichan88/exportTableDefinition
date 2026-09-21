@@ -23,11 +23,11 @@ import com.export_table_definition.domain.model.entity.TableEntity;
  */
 public record TableDefinitionContent(BaseInfoEntity baseInfo, TableEntity table, List<ColumnEntity> columns,
         List<IndexEntity> indexes, List<ConstraintEntity> constraints, List<ForeignKeyEntity> foreignKeys,
-        Path outputBaseDir) {
+        List<ForeignKeyEntity> incomingForeignKeys, Path outputBaseDir) {
 
     /**
      * テーブル定義出力に必要な情報をまとめたレコードを組み立てる
-     * 
+     *
      * @param baseInfo
      * @param table
      * @param columns
@@ -40,6 +40,6 @@ public record TableDefinitionContent(BaseInfoEntity baseInfo, TableEntity table,
     public static TableDefinitionContent assemble(BaseInfoEntity baseInfo, TableEntity table, Columns columns,
             Indexes indexes, Constraints constraints, ForeignKeys foreignkeys, Path baseDir) {
         return new TableDefinitionContent(baseInfo, table, columns.of(table), indexes.of(table), constraints.of(table),
-                foreignkeys.of(table), baseDir);
+                foreignkeys.of(table), foreignkeys.incomingOf(table), baseDir);
     }
 }

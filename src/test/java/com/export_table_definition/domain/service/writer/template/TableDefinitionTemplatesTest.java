@@ -53,8 +53,10 @@ public class TableDefinitionTemplatesTest {
     @DisplayName("columns: schema.table が一致する行のみ含まれる")
     void testColumnsFiltered() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
-        var match = new ColumnEntity("public", "orders", "| 1 | 受注ID | order_id | int | Y | N |  |  |");
-        var other = new ColumnEntity("other", "customers", "| 1 | 顧客ID | customer_id | int | Y | N |  |  |");
+        var match = new ColumnEntity("public", "orders", "| 1 | 受注ID | order_id | int | Y | N |  |  |", "order_id",
+                "int", "○");
+        var other = new ColumnEntity("other", "customers", "| 1 | 顧客ID | customer_id | int | Y | N |  |  |",
+                "customer_id", "int", "○");
         String section = TableDefinitionTemplates.columns(List.of(match, other), table);
         assertTrue(section.contains("| 1 | 受注ID | order_id | int |"));
         assertFalse(section.contains("顧客ID"));
@@ -102,11 +104,51 @@ public class TableDefinitionTemplatesTest {
     @DisplayName("foreignKeys: schema.table 一致行のみ")
     void testForeignKeysFiltered() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
-        var fk1 = new ForeignKeyEntity("public", "orders", "| 1 | fk_orders_customer | customer_id | customers | id |");
-        var fk2 = new ForeignKeyEntity("sales", "orders", "| 1 | fk_sales_orders | x | y | z |");
+        var fk1 = new ForeignKeyEntity("public", "orders", "| 1 | fk_orders_customer | customer_id | customers | id |",
+                "fk_orders_customer", "public", "customers");
+        var fk2 = new ForeignKeyEntity("sales", "orders", "| 1 | fk_sales_orders | x | y | z |", "fk_sales_orders",
+                "sales", "y");
         String section = TableDefinitionTemplates.foreignKeys(List.of(fk1, fk2), table);
         assertTrue(section.contains("fk_orders_customer"));
         assertFalse(section.contains("fk_sales_orders"));
+    }
+
+    @Test
+    @DisplayName("erDiagram: 関連テーブルがない場合はメッセージのみ")
+    void testErDiagramNoRelations() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        String section = TableDefinitionTemplates.erDiagram(table, List.of(), List.of(), List.of());
+        assertTrue(section.contains("関連するテーブルはありません。"));
+        assertFalse(section.contains("```mermaid"));
+    }
+
+    @Test
+    @DisplayName("erDiagram: 自テーブルの属性・PK表記と参照先/参照元の関係線が含まれる")
+    void testErDiagramWithRelations() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var column = new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
+        var outgoing = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_customer", "public", "customers");
+        var incoming = new ForeignKeyEntity("public", "items", "unused", "fk_items_orders", "public", "orders");
+        String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing), List.of(incoming));
+        assertTrue(section.contains("```mermaid"));
+        assertTrue(section.contains("erDiagram"));
+        // 参照先(customers) -> 自テーブル(orders)
+        assertTrue(section.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
+        // 自テーブル(orders) -> 参照元(items)
+        assertTrue(section.contains("public_orders ||--o{ public_items : \"fk_items_orders\""));
+        // 自テーブルの属性: 型の括弧部分は除去、空白はアンダースコア、PKマーカー付き
+        assertTrue(section.contains("character_varying order_id PK"));
+    }
+
+    @Test
+    @DisplayName("erDiagram: データ型の桁数指定は除去される")
+    void testErDiagramSanitizesType() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var column = new ColumnEntity("public", "orders", "unused", "amount", "numeric(10,2)", "");
+        var outgoing = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_customer", "public", "customers");
+        String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing), List.of());
+        assertTrue(section.contains("numeric amount"));
+        assertFalse(section.contains("(10,2)"));
     }
 
     @Test

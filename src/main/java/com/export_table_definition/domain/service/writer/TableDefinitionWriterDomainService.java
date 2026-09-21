@@ -147,6 +147,8 @@ public class TableDefinitionWriterDomainService {
                 TableDefinitionTemplates.indexes(content.indexes(), content.table()), // インデックス情報
                 TableDefinitionTemplates.constraints(content.constraints(), content.table()), // 制約情報
                 TableDefinitionTemplates.foreignKeys(content.foreignKeys(), content.table()), // 外部キー情報
+                TableDefinitionTemplates.erDiagram(content.table(), content.columns(), content.foreignKeys(),
+                        content.incomingForeignKeys()), // ER図
                 TableDefinitionTemplates.footer(content.baseInfo()) // フッター
         );
         fileRepository.createDirectory(directoryPath);

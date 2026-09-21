@@ -61,17 +61,21 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する
         final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
         final List<TableEntity> tableEntityList = repository.selectTableList(targetSchemaList, targetTableList);
+        // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
+        // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
+        // 特定のチャンクに限定せず全件を保持しておく必要がある
+        final ForeignKeys foreignKeys = ForeignKeys.of(repository.selectForeignKeyList(targetSchemaList, targetTableList));
 
         // テーブル一覧出力 -> ./output/ or {設定ファイルのFileParh}/tableList_{DB名}.md
         writer.writeTableDefinitionList(tableEntityList, baseInfoEntity, outputBaseDir);
 
         // テーブル定義出力 -> ./output/ or {設定ファイルのFileParh}/{DB名}/{スキーマ名}/{TBL分類}/{物理テーブル名}.md
-        // カラム・インデックス・制約・外部キーは、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
+        // カラム・インデックス・制約は、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
         // これにより、テーブルが1スキーマに集中していても、同時にメモリ保持する詳細情報を最大chunkSize件分に抑える
         final Map<String, List<TableEntity>> tablesBySchema = tableEntityList.stream()
                 .collect(Collectors.groupingBy(TableEntity::schemaName, LinkedHashMap::new, Collectors.toList()));
         tablesBySchema.forEach((schemaName, tablesInSchema) -> exportSchemaTableDefinitions(schemaName, tablesInSchema,
-                targetSchemaList, targetTableList, baseInfoEntity, outputBaseDir, chunkSize));
+                targetSchemaList, targetTableList, baseInfoEntity, foreignKeys, outputBaseDir, chunkSize));
     }
 
     /**
@@ -82,25 +86,26 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      * @param targetSchemaList テーブル定義出力対象のスキーマのリスト（書き込み要否判定に利用）
      * @param targetTableList  テーブル定義出力対象のテーブルのリスト（書き込み要否判定に利用）
      * @param baseInfoEntity   データベースの基本情報
+     * @param foreignKeys      対象範囲全体の外部キー情報
      * @param outputBaseDir    出力先のベースディレクトリパス
      * @param chunkSize        1回の取得でまとめて処理するテーブル数の上限。0以下の場合は分割しない
      */
     private void exportSchemaTableDefinitions(String schemaName, List<TableEntity> tablesInSchema,
             List<String> targetSchemaList, List<String> targetTableList, BaseInfoEntity baseInfoEntity,
-            Path outputBaseDir, int chunkSize) {
+            ForeignKeys foreignKeys, Path outputBaseDir, int chunkSize) {
         final int total = tablesInSchema.size();
         // chunkSizeが0以下の場合はスキーマ全体を1チャンクとして扱う
         final int step = chunkSize > 0 ? chunkSize : total;
         for (int from = 0; from < total; from += step) {
             final int to = Math.min(from + step, total);
             exportTableDefinitionChunk(schemaName, tablesInSchema.subList(from, to), targetSchemaList, targetTableList,
-                    baseInfoEntity, outputBaseDir);
+                    baseInfoEntity, foreignKeys, outputBaseDir);
         }
     }
 
     /**
      * 1チャンク分のテーブルの定義書を出力するメソッド<br>
-     * 当該チャンクのテーブルに紐づく詳細情報（カラム・インデックス・制約・外部キー）のみを取得し、
+     * 当該チャンクのテーブルに紐づく詳細情報（カラム・インデックス・制約）のみを取得し、
      * 出力後にローカル変数のスコープを抜けることでメモリ解放対象とする
      *
      * @param schemaName       出力対象のスキーマ名
@@ -108,17 +113,17 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      * @param targetSchemaList テーブル定義出力対象のスキーマのリスト（書き込み要否判定に利用）
      * @param targetTableList  テーブル定義出力対象のテーブルのリスト（書き込み要否判定に利用）
      * @param baseInfoEntity   データベースの基本情報
+     * @param foreignKeys      対象範囲全体の外部キー情報
      * @param outputBaseDir    出力先のベースディレクトリパス
      */
     private void exportTableDefinitionChunk(String schemaName, List<TableEntity> chunk, List<String> targetSchemaList,
-            List<String> targetTableList, BaseInfoEntity baseInfoEntity, Path outputBaseDir) {
+            List<String> targetTableList, BaseInfoEntity baseInfoEntity, ForeignKeys foreignKeys, Path outputBaseDir) {
         final List<String> schemaList = List.of(schemaName);
         // 当該チャンクのテーブル名のみを条件に詳細情報を取得する
         final List<String> chunkTableList = chunk.stream().map(TableEntity::physicalTableName).distinct().toList();
         final Columns columns = Columns.of(repository.selectColumnList(schemaList, chunkTableList));
         final Indexes indexes = Indexes.of(repository.selectIndexList(schemaList, chunkTableList));
         final Constraints constraints = Constraints.of(repository.selectConstraintList(schemaList, chunkTableList));
-        final ForeignKeys foreignKeys = ForeignKeys.of(repository.selectForeignKeyList(schemaList, chunkTableList));
 
         chunk.stream()
                 .filter(tableEntity -> tableEntity.needsWriteTableDefinition(targetSchemaList, targetTableList))
