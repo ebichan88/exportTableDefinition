@@ -121,6 +121,25 @@ java -jar .\exportTableDefinition-1.0-SNAPSHOT.jar
 
 ※`conf/mybatis.properties.template`を`conf/mybatis.properties`にリネームしてください
 
+### DB接続情報のCLI引数・環境変数による上書き
+
+`conf/mybatis.properties`を配置せず（あるいは一部項目のみ）、CLI引数や環境変数からDB接続情報を渡すこともできます。CI等、接続情報をファイルに残したくない場合に利用してください。
+
+優先順位は `CLI引数 > 環境変数 > conf/mybatis.propertiesの値` です。
+
+| 項目 | CLI引数 | 環境変数 |
+|---|---|---|
+| driver | `--db-driver=値` | `DB_DRIVER` |
+| url | `--db-url=値` | `DB_URL` |
+| username | `--db-username=値` | `DB_USERNAME` |
+| password | `--db-password=値` | `DB_PASSWORD` |
+
+```
+java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://localhost:5432/testdb --db-username=user --db-password=pass
+```
+
+CLI引数・環境変数で `driver`/`url`/`username`/`password` の4項目すべてを指定する場合、`conf/mybatis.properties`自体が存在しなくても起動できます。
+
 ### ExportTableDefinition.properties の記載内容
 
 ```

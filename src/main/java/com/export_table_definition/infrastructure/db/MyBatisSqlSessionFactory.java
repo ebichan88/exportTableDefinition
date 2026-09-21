@@ -2,7 +2,10 @@ package com.export_table_definition.infrastructure.db;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.sql.SQLException;
+import java.util.MissingResourceException;
+import java.util.Properties;
 
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
@@ -28,6 +31,8 @@ public final class MyBatisSqlSessionFactory {
     private static final String PROPERTY_BUNDLE_NAME = "mybatis";
     /** 唯一のSqlSessionFactoryインスタンス */
     private static SqlSessionFactory sqlSessionFactory;
+    /** conf/mybatis.propertiesの値を上書きする接続情報（CLI引数・環境変数由来） */
+    private static Properties connectionOverrides = new Properties();
 
     /**
      * コンストラクタ（インスタンス化不可）
@@ -36,8 +41,22 @@ public final class MyBatisSqlSessionFactory {
     }
 
     /**
+     * conf/mybatis.propertiesの値を上書きする接続情報を設定する<br>
+     * SqlSessionFactory初期化前（{@link #getSqlSessionFactory()}呼び出し前）に呼び出すこと
+     *
+     * @param overrides 上書きする接続情報（driver/url/username/password）
+     * @throws IllegalStateException SqlSessionFactoryが初期化済みの場合
+     */
+    public static synchronized void setConnectionOverrides(Properties overrides) {
+        if (sqlSessionFactory != null) {
+            throw new IllegalStateException("SqlSessionFactory is already initialized.");
+        }
+        connectionOverrides = overrides;
+    }
+
+    /**
      * SqlSessionFactoryインスタンスの取得
-     * 
+     *
      * @return SqlSessionFactory
      */
     public static synchronized SqlSessionFactory getSqlSessionFactory() {
@@ -49,13 +68,29 @@ public final class MyBatisSqlSessionFactory {
             if (inputStream == null) {
                 throw new IllegalStateException("Could not find resource: " + MYBATIS_CONFIG);
             }
-            sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream,
-                    PropertyLoader.getProperties(PROPERTY_BUNDLE_NAME));
+            final Properties properties = loadBaseProperties();
+            properties.putAll(connectionOverrides);
+            sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream, properties);
         } catch (IOException e) {
             throw new IllegalStateException("SqlSessionFactory initialization failed.", e);
         }
         logger.info("SqlSessionFactory initialization completed.");
         return sqlSessionFactory;
+    }
+
+    /**
+     * conf/mybatis.propertiesを読み込む<br>
+     * ファイルが存在しない場合は空のPropertiesを返す（CLI引数・環境変数のみで接続情報を賄うケースを許容するため）
+     *
+     * @return 読み込んだProperties（ファイルが存在しない場合は空）
+     */
+    private static Properties loadBaseProperties() {
+        try {
+            return PropertyLoader.getProperties(PROPERTY_BUNDLE_NAME);
+        } catch (MissingResourceException | UncheckedIOException e) {
+            logger.info("conf/mybatis.properties not found. Relying on CLI/env connection overrides only.");
+            return new Properties();
+        }
     }
 
     /**
