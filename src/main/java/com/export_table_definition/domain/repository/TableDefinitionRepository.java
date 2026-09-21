@@ -8,8 +8,12 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
+import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
+import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.entity.TypeEntity;
 
 /**
  * テーブル定義出力に関するリポジトリインターフェース
@@ -71,7 +75,48 @@ public interface TableDefinitionRepository {
      * @return データベースの外部キー情報
      */
     List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList, List<String> tableList);
-    
+
+    /**
+     * データベースのトリガー情報を取得するメソッド
+     *
+     * @param schemaList テーブル定義出力対象のスキーマのリスト
+     * @param tableList  テーブル定義出力対象のテーブルのリスト
+     * @return データベースのトリガー情報
+     */
+    List<TriggerEntity> selectTriggerList(List<String> schemaList, List<String> tableList);
+
+    /**
+     * データベースの関数・プロシージャの一覧情報（定義本体を含まない軽量情報）を取得するメソッド
+     *
+     * @param schemaList テーブル定義出力対象のスキーマのリスト
+     * @return データベースの関数・プロシージャの一覧情報
+     */
+    List<FunctionEntity> selectFunctionList(List<String> schemaList);
+
+    /**
+     * データベースの関数・プロシージャの定義本体を含む情報を取得するメソッド
+     *
+     * @param schemaList テーブル定義出力対象のスキーマのリスト
+     * @return データベースの関数・プロシージャの定義情報
+     */
+    List<FunctionEntity> selectFunctionDefList(List<String> schemaList);
+
+    /**
+     * データベースのシーケンス情報を取得するメソッド
+     *
+     * @param schemaList テーブル定義出力対象のスキーマのリスト
+     * @return データベースのシーケンス情報
+     */
+    List<SequenceEntity> selectSequenceList(List<String> schemaList);
+
+    /**
+     * データベースのユーザー定義型（ENUM等）情報を取得するメソッド
+     *
+     * @param schemaList テーブル定義出力対象のスキーマのリスト
+     * @return データベースのユーザー定義型情報
+     */
+    List<TypeEntity> selectTypeList(List<String> schemaList);
+
     /**
      * DTOのListをEntityのListに変換する共通メソッド
      * 

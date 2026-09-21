@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.service.writer.template;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
@@ -44,8 +45,28 @@ public class TableDefinitionListTemplates {
     }
 
     /**
+     * 関連ドキュメントセクション<br>
+     * トリガー・関数/プロシージャ・シーケンス・ユーザー定義型など、
+     * 存在するオブジェクト一覧へのリンクを列挙する
+     *
+     * @param baseInfo データベース基本情報
+     * @param entries  リンク表示名をキー、一覧ファイル名の接頭辞を値とするマップ（挿入順を保持すること）
+     * @return 関連ドキュメントセクション文字列。entriesが空の場合は空文字列
+     */
+    public static String relatedDocuments(BaseInfoEntity baseInfo, Map<String, String> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder("## 関連ドキュメント").append(LINE_SEPARATOR_DOUBLE);
+        entries.forEach((label, prefix) -> sb
+                .append(String.format("* [%s](./%sList_%s.md)  ", label, prefix, baseInfo.dbName()))
+                .append(LINE_SEPARATOR));
+        return sb.append(LINE_SEPARATOR).toString();
+    }
+
+    /**
      * テーブル一覧セクション
-     * 
+     *
      * @return テーブル一覧セクション文字列
      */
     public static String tableListTableHeader() {

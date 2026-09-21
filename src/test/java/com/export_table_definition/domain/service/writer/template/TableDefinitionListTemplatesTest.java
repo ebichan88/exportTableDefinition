@@ -2,7 +2,9 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -94,6 +96,25 @@ public class TableDefinitionListTemplatesTest {
     void subTableListLink_fullMatch() {
         String expected = "* [テーブル一覧_2](./tableList_TEST_DB_2.md)  " + NL;
         MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.subTableListLink(baseInfo(), 2));
+    }
+
+    @Test
+    @DisplayName("relatedDocuments: 空マップ → 空文字")
+    void relatedDocuments_empty() {
+        MarkdownAssert.assertMarkdownEquals("", TableDefinitionListTemplates.relatedDocuments(baseInfo(), Map.of()));
+    }
+
+    @Test
+    @DisplayName("relatedDocuments: 挿入順にリンクを列挙する")
+    void relatedDocuments_entries() {
+        Map<String, String> entries = new LinkedHashMap<>();
+        entries.put("関数・プロシージャ一覧", "function");
+        entries.put("トリガー一覧", "trigger");
+        String section = TableDefinitionListTemplates.relatedDocuments(baseInfo(), entries);
+        assertTrue(section.startsWith("## 関連ドキュメント"));
+        assertTrue(section.contains("* [関数・プロシージャ一覧](./functionList_TEST_DB.md)"));
+        assertTrue(section.contains("* [トリガー一覧](./triggerList_TEST_DB.md)"));
+        assertTrue(section.indexOf("functionList") < section.indexOf("triggerList"), "挿入順が保持される");
     }
 
     @Nested

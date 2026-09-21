@@ -10,16 +10,24 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
+import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
+import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.infrastructure.db.repository.dto.BaseInfoDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ColumnDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ConstraintDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ForeignKeyDto;
+import com.export_table_definition.infrastructure.db.repository.dto.FunctionDto;
 import com.export_table_definition.infrastructure.db.repository.dto.IndexDto;
+import com.export_table_definition.infrastructure.db.repository.dto.SequenceDto;
 import com.export_table_definition.infrastructure.db.repository.dto.TableDto;
+import com.export_table_definition.infrastructure.db.repository.dto.TriggerDto;
+import com.export_table_definition.infrastructure.db.repository.dto.TypeDto;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 
 /**
@@ -92,6 +100,46 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
     @Override
     public List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList, List<String> tableList) {
         return selectTableDefinition(schemaList, tableList, "selectAllForeignKeyInfo", ForeignKeyDto::toEntity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TriggerEntity> selectTriggerList(List<String> schemaList, List<String> tableList) {
+        return selectTableDefinition(schemaList, tableList, "selectAllTriggerInfo", TriggerDto::toEntity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<FunctionEntity> selectFunctionList(List<String> schemaList) {
+        return selectTableDefinition(schemaList, List.of(), "selectAllFunctionInfo", FunctionDto::toEntity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<FunctionEntity> selectFunctionDefList(List<String> schemaList) {
+        return selectTableDefinition(schemaList, List.of(), "selectAllFunctionDefInfo", FunctionDto::toEntity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<SequenceEntity> selectSequenceList(List<String> schemaList) {
+        return selectTableDefinition(schemaList, List.of(), "selectAllSequenceInfo", SequenceDto::toEntity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TypeEntity> selectTypeList(List<String> schemaList) {
+        return selectTableDefinition(schemaList, List.of(), "selectAllTypeInfo", TypeDto::toEntity);
     }
 
     private <D, E> List<E> selectTableDefinition(List<String> schemaList, List<String> tableList, String sqlId,

@@ -6,7 +6,23 @@ DBからMarkdown形式のテーブル定義書を作成するリポジトリ
 
 ## Description
 
-対象のDBに接続し、テーブル一覧と各TBLのテーブル一覧をMarkdown形式で出力します。
+対象のDBに接続し、テーブル一覧と各TBLのテーブル定義をMarkdown形式で出力します。
+
+PostgreSQLの場合は、テーブル定義に加えて以下のオブジェクトも出力します。
+
+| 対象 | 取得元カタログ | 出力 |
+|---|---|---|
+| トリガー | `pg_trigger` + `pg_get_triggerdef` | 各テーブル定義書内の「トリガー情報」セクション + `triggerList_{DB名}.md` |
+| 関数・プロシージャ | `pg_proc` + `pg_get_functiondef`（plpgsql/sql/C 等） | `functionList_{DB名}.md` + `{DB名}/{スキーマ名}/function/{関数名}.md` |
+| シーケンス | `pg_sequences`（増分・最小値・最大値・キャッシュ・開始値・循環・所有カラム） | `sequenceList_{DB名}.md` + `{DB名}/{スキーマ名}/sequence/{シーケンス名}.md` |
+| ユーザー定義型（ENUM等） | `pg_type` + `pg_enum` | `typeList_{DB名}.md` + `{DB名}/{スキーマ名}/type/{型名}.md` |
+
+各一覧（`functionList`／`sequenceList`／`typeList`／`triggerList`）への導線は、`tableList_{DB名}.md` の
+「関連ドキュメント」セクションに集約しています（対象が存在するカテゴリのみリンクを表示します）。
+
+なお、これらの追加オブジェクトの出力はPostgreSQL専用です。Oracle接続時は出力されません。
+また、関数・プロシージャ・シーケンス・ユーザー定義型はスキーマ単位のオブジェクトのため、
+`table`（出力対象テーブル）による絞り込みの対象外です（`schema`による絞り込みのみ適用されます）。
 
 ### sample
 
@@ -18,7 +34,8 @@ DBからMarkdown形式のテーブル定義書を作成するリポジトリ
     * Oracleの場合は、以下の項目の出力が不可
         * デフォルト値
         * view／materialized_viewのソース
-        * Check制約の定義 
+        * Check制約の定義
+        * トリガー／関数・プロシージャ／シーケンス／ユーザー定義型（ENUM等）
 
 ### 主なディレクトリ構成
 

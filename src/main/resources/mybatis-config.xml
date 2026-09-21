@@ -13,6 +13,10 @@
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.IndexDto" alias="IndexDto"/>
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.ConstraintDto" alias="ConstraintDto"/>
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.ForeignKeyDto" alias="ForeignKeyDto"/>
+		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.TriggerDto" alias="TriggerDto"/>
+		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.FunctionDto" alias="FunctionDto"/>
+		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.SequenceDto" alias="SequenceDto"/>
+		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.TypeDto" alias="TypeDto"/>
 	</typeAliases>
 	<environments default="development">
 		<environment id="development">

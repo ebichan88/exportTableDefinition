@@ -17,6 +17,7 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
 
     private static final String TABLE_LIST_FILENAME_PATTERN = "tableList_%s.md";
     private static final String TABLE_LIST_PAGED_FILENAME_PATTERN = "tableList_%s_%d.md";
+    private static final String OBJECT_LIST_FILENAME_PATTERN = "%sList_%s.md";
 
     /**
      * {@inheritDoc}
@@ -49,6 +50,32 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
     @Override
     public Path resolveTableListFile(BaseInfoEntity baseInfo, Path baseOutputDir, int pageIndex) {
         return baseOutputDir.resolve(String.format(TABLE_LIST_PAGED_FILENAME_PATTERN, baseInfo.dbName(), pageIndex));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix) {
+        return baseOutputDir.resolve(String.format(OBJECT_LIST_FILENAME_PATTERN, prefix, baseInfo.dbName()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Path resolveSchemaObjectDirectory(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName,
+            String kind) {
+        return baseOutputDir.resolve(baseInfo.dbName()).resolve(schemaName).resolve(kind);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Path resolveSchemaObjectFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, String kind,
+            String name) {
+        return resolveSchemaObjectDirectory(baseInfo, baseOutputDir, schemaName, kind).resolve(name + ".md");
     }
 
 }

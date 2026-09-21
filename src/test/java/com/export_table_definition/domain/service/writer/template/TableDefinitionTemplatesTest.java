@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
 
 /**
  * TableDefinitionTemplates のセクション生成テスト
@@ -111,6 +112,22 @@ public class TableDefinitionTemplatesTest {
         String section = TableDefinitionTemplates.foreignKeys(List.of(fk1, fk2), table);
         assertTrue(section.contains("fk_orders_customer"));
         assertFalse(section.contains("fk_sales_orders"));
+    }
+
+    @Test
+    @DisplayName("triggers: schema.table 一致行のみ")
+    void testTriggersFiltered() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var t1 = new TriggerEntity("public", "orders",
+                "| 1 | public | orders | trg_orders | BEFORE | INSERT | public.f_orders |",
+                "| 1 | trg_orders | BEFORE | INSERT | ROW | CREATE TRIGGER trg_orders ... |");
+        var t2 = new TriggerEntity("sales", "orders",
+                "| 1 | sales | orders | trg_sales | AFTER | UPDATE | sales.f_sales |",
+                "| 1 | trg_sales | AFTER | UPDATE | ROW | CREATE TRIGGER trg_sales ... |");
+        String section = TableDefinitionTemplates.triggers(List.of(t1, t2), table);
+        assertTrue(section.contains("## トリガー情報"));
+        assertTrue(section.contains("trg_orders"));
+        assertFalse(section.contains("trg_sales"));
     }
 
     @Test

@@ -10,6 +10,7 @@ import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
 
 /**
  * テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス
@@ -164,6 +165,23 @@ public class TableDefinitionTemplates {
                 """;
         return tableSection(foreignkeys, table, header, ForeignKeyEntity::foreignkeyInfo,
                 ForeignKeyEntity::getSchemaTableName);
+    }
+
+    /**
+     * トリガー情報セクション
+     *
+     * @param triggers トリガー情報のリスト
+     * @param table    テーブル情報
+     * @return トリガー情報セクション文字列
+     */
+    public static String triggers(List<TriggerEntity> triggers, TableEntity table) {
+        String header = """
+                ## トリガー情報
+
+                | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
+                |:---|:---|:---|:---|:---|:---|
+                """;
+        return tableSection(triggers, table, header, TriggerEntity::triggerInfo, TriggerEntity::getSchemaTableName);
     }
 
     /**

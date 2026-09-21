@@ -50,11 +50,48 @@ public interface OutputPathResolver {
     /**
      * テーブル一覧（分割ページモード）のパス。 <br>
      * 例: {base}/tableList_{DB名}_{pageIndex}.md
-     * 
+     *
      * @param baseInfo 基本情報エンティティ
      * @param baseOutputDir 基本出力ディレクトリ
      * @param pageIndex ページインデックス（1始まり）
      * @return テーブル一覧ファイルのパス
      */
     Path resolveTableListFile(BaseInfoEntity baseInfo, Path baseOutputDir, int pageIndex);
+
+    /**
+     * オブジェクト一覧（トリガー/関数/シーケンス/型）のパス。 <br>
+     * 例: {base}/{prefix}List_{DB名}.md
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param prefix        一覧ファイル名の接頭辞（例: trigger, function, sequence, type）
+     * @return オブジェクト一覧ファイルのパス
+     */
+    Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix);
+
+    /**
+     * スキーマ配下オブジェクト（関数/シーケンス/型）の出力ディレクトリを返す。 <br>
+     * 例: {base}/{DB名}/{スキーマ名}/{kind}/
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param schemaName    スキーマ名
+     * @param kind          オブジェクト種別ディレクトリ名（例: function, sequence, type）
+     * @return 出力ディレクトリパス
+     */
+    Path resolveSchemaObjectDirectory(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, String kind);
+
+    /**
+     * スキーマ配下オブジェクト（関数/シーケンス/型）の出力ファイルパスを返す。 <br>
+     * 例: {base}/{DB名}/{スキーマ名}/{kind}/{name}.md
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param schemaName    スキーマ名
+     * @param kind          オブジェクト種別ディレクトリ名（例: function, sequence, type）
+     * @param name          ファイル名（拡張子を除く）
+     * @return 出力ファイルパス
+     */
+    Path resolveSchemaObjectFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, String kind,
+            String name);
 }

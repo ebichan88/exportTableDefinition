@@ -549,4 +549,306 @@ ORDER BY
   </constructor>
 </resultMap>
 
+<select id="selectAllTriggerInfo" resultMap="TriggerDtoMap">
+WITH all_triggers AS (
+    SELECT
+        t3.nspname AS schema_name,
+        t2.relname AS table_name,
+        t1.tgname AS trigger_name,
+        CASE
+            WHEN (t1.tgtype &amp; 64) &lt;&gt; 0 THEN 'INSTEAD OF'
+            WHEN (t1.tgtype &amp; 2) &lt;&gt; 0 THEN 'BEFORE'
+            ELSE 'AFTER'
+        END AS timing,
+        array_to_string(ARRAY[
+            CASE WHEN (t1.tgtype &amp; 4) &lt;&gt; 0 THEN 'INSERT' END,
+            CASE WHEN (t1.tgtype &amp; 8) &lt;&gt; 0 THEN 'DELETE' END,
+            CASE WHEN (t1.tgtype &amp; 16) &lt;&gt; 0 THEN 'UPDATE' END,
+            CASE WHEN (t1.tgtype &amp; 32) &lt;&gt; 0 THEN 'TRUNCATE' END
+        ], '/') AS events,
+        CASE WHEN (t1.tgtype &amp; 1) &lt;&gt; 0 THEN 'ROW' ELSE 'STATEMENT' END AS orientation,
+        t5.nspname || '.' || t4.proname AS function_name,
+        replace(regexp_replace(pg_catalog.pg_get_triggerdef(t1.oid), '\r|\n|\r\n', ' ', 'g'), '|', '\|') AS trigger_definition
+    FROM
+        pg_catalog.pg_trigger t1
+    LEFT OUTER JOIN pg_catalog.pg_class t2
+        ON t1.tgrelid = t2.oid
+    LEFT OUTER JOIN pg_catalog.pg_namespace t3
+        ON t2.relnamespace = t3.oid
+    LEFT OUTER JOIN pg_catalog.pg_proc t4
+        ON t1.tgfoid = t4.oid
+    LEFT OUTER JOIN pg_catalog.pg_namespace t5
+        ON t4.pronamespace = t5.oid
+    WHERE
+        NOT t1.tgisinternal
+        AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
+        <if test="schemaList != null and schemaList.size() > 0">
+            AND t3.nspname IN
+            <foreach item="schema" index="index" collection="schemaList"
+                open="(" separator="," close=")">
+                #{schema}
+            </foreach>
+        </if>
+        <if test="tableList != null and tableList.size() > 0">
+            AND t2.relname IN
+            <foreach item="table" index="index" collection="tableList"
+                open="(" separator="," close=")">
+                #{table}
+            </foreach>
+        </if>
+)
+SELECT
+    schema_name AS "schemaName",
+    table_name AS "tableName",
+    concat('|', row_number() over (ORDER BY schema_name, table_name, trigger_name), '|', schema_name, '|', table_name, '|', trigger_name, '|', timing, '|', events, '|', function_name, '|') AS "triggerListInfo",
+    concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY trigger_name), '|', trigger_name, '|', timing, '|', events, '|', orientation, '|', trigger_definition, '|') AS "triggerInfo"
+FROM
+    all_triggers
+ORDER BY
+    schema_name, table_name, trigger_name;
+</select>
+
+<resultMap id="TriggerDtoMap" type="TriggerDto">
+  <constructor>
+    <arg column="schemaName" javaType="String"/>
+    <arg column="tableName" javaType="String"/>
+    <arg column="triggerListInfo" javaType="String"/>
+    <arg column="triggerInfo" javaType="String"/>
+  </constructor>
+</resultMap>
+
+<select id="selectAllFunctionInfo" resultMap="FunctionDtoMap">
+WITH all_functions AS (
+    SELECT
+        current_database() AS db_name,
+        t2.nspname AS schema_name,
+        t1.proname AS function_name,
+        CASE t1.prokind WHEN 'p' THEN 'PROCEDURE' ELSE 'FUNCTION' END AS function_kind,
+        pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments,
+        CASE WHEN t1.prokind = 'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS function_result,
+        t3.lanname AS language_name,
+        t1.proname || CASE
+            WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1
+                THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid)
+            ELSE ''
+        END AS file_name
+    FROM
+        pg_catalog.pg_proc t1
+    LEFT OUTER JOIN pg_catalog.pg_namespace t2
+        ON t1.pronamespace = t2.oid
+    LEFT OUTER JOIN pg_catalog.pg_language t3
+        ON t1.prolang = t3.oid
+    WHERE
+        t1.prokind IN ('f', 'p')
+        AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+        <if test="schemaList != null and schemaList.size() > 0">
+            AND t2.nspname IN
+            <foreach item="schema" index="index" collection="schemaList"
+                open="(" separator="," close=")">
+                #{schema}
+            </foreach>
+        </if>
+)
+SELECT
+    db_name AS "dbName",
+    schema_name AS "schemaName",
+    function_name AS "functionName",
+    file_name AS "fileName",
+    concat('|', row_number() over (ORDER BY schema_name, function_name, file_name), '|', schema_name, '|', function_kind, '|', function_name, '|', replace(function_arguments, '|', '\|'), '|', replace(function_result, '|', '\|'), '|', language_name, '|', concat('[■](./', db_name, '/', schema_name, '/function/', file_name, '.md)'), '|') AS "functionListInfo",
+    '' AS definition
+FROM
+    all_functions
+ORDER BY
+    schema_name, function_name, file_name;
+</select>
+
+<select id="selectAllFunctionDefInfo" resultMap="FunctionDtoMap">
+WITH all_functions AS (
+    SELECT
+        current_database() AS db_name,
+        t2.nspname AS schema_name,
+        t1.proname AS function_name,
+        t1.proname || CASE
+            WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1
+                THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid)
+            ELSE ''
+        END AS file_name,
+        pg_catalog.pg_get_functiondef(t1.oid) AS definition
+    FROM
+        pg_catalog.pg_proc t1
+    LEFT OUTER JOIN pg_catalog.pg_namespace t2
+        ON t1.pronamespace = t2.oid
+    WHERE
+        t1.prokind IN ('f', 'p')
+        AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+        <if test="schemaList != null and schemaList.size() > 0">
+            AND t2.nspname IN
+            <foreach item="schema" index="index" collection="schemaList"
+                open="(" separator="," close=")">
+                #{schema}
+            </foreach>
+        </if>
+)
+SELECT
+    db_name AS "dbName",
+    schema_name AS "schemaName",
+    function_name AS "functionName",
+    file_name AS "fileName",
+    '' AS "functionListInfo",
+    definition AS definition
+FROM
+    all_functions
+ORDER BY
+    schema_name, function_name, file_name;
+</select>
+
+<resultMap id="FunctionDtoMap" type="FunctionDto">
+  <constructor>
+    <arg column="dbName" javaType="String"/>
+    <arg column="schemaName" javaType="String"/>
+    <arg column="functionName" javaType="String"/>
+    <arg column="fileName" javaType="String"/>
+    <arg column="functionListInfo" javaType="String"/>
+    <arg column="definition" javaType="String"/>
+  </constructor>
+</resultMap>
+
+<select id="selectAllSequenceInfo" resultMap="SequenceDtoMap">
+WITH all_sequences AS (
+    SELECT
+        current_database() AS db_name,
+        t2.nspname AS schema_name,
+        t1.relname AS sequence_name,
+        coalesce(s.increment_by::text, '') AS increment_by,
+        coalesce(s.min_value::text, '') AS min_value,
+        coalesce(s.max_value::text, '') AS max_value,
+        coalesce(s.cache_size::text, '') AS cache_size,
+        coalesce(s.start_value::text, '') AS start_value,
+        CASE WHEN s.cycle THEN '○' ELSE '' END AS cycle,
+        coalesce(owned.owned_by, '') AS owned_by
+    FROM
+        pg_catalog.pg_class t1
+    LEFT OUTER JOIN pg_catalog.pg_namespace t2
+        ON t1.relnamespace = t2.oid
+    LEFT OUTER JOIN pg_catalog.pg_sequences s
+        ON s.schemaname = t2.nspname AND s.sequencename = t1.relname
+    LEFT OUTER JOIN LATERAL (
+        SELECT tc.relname || '.' || a.attname AS owned_by
+        FROM pg_catalog.pg_depend d
+        JOIN pg_catalog.pg_class tc ON tc.oid = d.refobjid
+        JOIN pg_catalog.pg_attribute a ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
+        WHERE d.objid = t1.oid
+            AND d.classid = 'pg_class'::regclass
+            AND d.refclassid = 'pg_class'::regclass
+            AND d.deptype = 'a'
+        LIMIT 1
+    ) owned ON true
+    WHERE
+        t1.relkind = 'S'
+        AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+        <if test="schemaList != null and schemaList.size() > 0">
+            AND t2.nspname IN
+            <foreach item="schema" index="index" collection="schemaList"
+                open="(" separator="," close=")">
+                #{schema}
+            </foreach>
+        </if>
+)
+SELECT
+    db_name AS "dbName",
+    schema_name AS "schemaName",
+    sequence_name AS "sequenceName",
+    concat('|', row_number() over (ORDER BY schema_name, sequence_name), '|', schema_name, '|', sequence_name, '|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|', concat('[■](./', db_name, '/', schema_name, '/sequence/', sequence_name, '.md)'), '|') AS "sequenceListInfo",
+    concat('|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|') AS "sequenceInfo"
+FROM
+    all_sequences
+ORDER BY
+    schema_name, sequence_name;
+</select>
+
+<resultMap id="SequenceDtoMap" type="SequenceDto">
+  <constructor>
+    <arg column="dbName" javaType="String"/>
+    <arg column="schemaName" javaType="String"/>
+    <arg column="sequenceName" javaType="String"/>
+    <arg column="sequenceListInfo" javaType="String"/>
+    <arg column="sequenceInfo" javaType="String"/>
+  </constructor>
+</resultMap>
+
+<select id="selectAllTypeInfo" resultMap="TypeDtoMap">
+WITH all_types AS (
+    SELECT
+        current_database() AS db_name,
+        t2.nspname AS schema_name,
+        t1.typname AS type_name,
+        CASE t1.typtype
+            WHEN 'e' THEN 'ENUM'
+            WHEN 'c' THEN 'COMPOSITE'
+            WHEN 'd' THEN 'DOMAIN'
+            WHEN 'r' THEN 'RANGE'
+            ELSE t1.typtype::text
+        END AS type_category,
+        replace(coalesce(
+            CASE t1.typtype
+                WHEN 'e' THEN (
+                    SELECT string_agg(e.enumlabel, ', ' ORDER BY e.enumsortorder)
+                    FROM pg_catalog.pg_enum e
+                    WHERE e.enumtypid = t1.oid
+                )
+                WHEN 'd' THEN 'DOMAIN OVER ' || pg_catalog.format_type(t1.typbasetype, t1.typtypmod)
+                WHEN 'r' THEN 'RANGE OF ' || (
+                    SELECT pg_catalog.format_type(r.rngsubtype, NULL)
+                    FROM pg_catalog.pg_range r
+                    WHERE r.rngtypid = t1.oid
+                )
+                WHEN 'c' THEN (
+                    SELECT string_agg(a.attname || ' ' || pg_catalog.format_type(a.atttypid, a.atttypmod), ', ' ORDER BY a.attnum)
+                    FROM pg_catalog.pg_attribute a
+                    WHERE a.attrelid = t1.typrelid AND a.attnum > 0 AND NOT a.attisdropped
+                )
+                ELSE ''
+            END, ''), '|', '\|') AS definition
+    FROM
+        pg_catalog.pg_type t1
+    LEFT OUTER JOIN pg_catalog.pg_namespace t2
+        ON t1.typnamespace = t2.oid
+    WHERE
+        t1.typtype IN ('e', 'c', 'd', 'r')
+        AND (t1.typtype &lt;&gt; 'c' OR EXISTS (
+            SELECT 1 FROM pg_catalog.pg_class cc WHERE cc.oid = t1.typrelid AND cc.relkind = 'c'
+        ))
+        AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+        <if test="schemaList != null and schemaList.size() > 0">
+            AND t2.nspname IN
+            <foreach item="schema" index="index" collection="schemaList"
+                open="(" separator="," close=")">
+                #{schema}
+            </foreach>
+        </if>
+)
+SELECT
+    db_name AS "dbName",
+    schema_name AS "schemaName",
+    type_name AS "typeName",
+    type_category AS "typeCategory",
+    concat('|', row_number() over (ORDER BY schema_name, type_name), '|', schema_name, '|', type_name, '|', type_category, '|', definition, '|', concat('[■](./', db_name, '/', schema_name, '/type/', type_name, '.md)'), '|') AS "typeListInfo",
+    definition AS definition
+FROM
+    all_types
+ORDER BY
+    schema_name, type_name;
+</select>
+
+<resultMap id="TypeDtoMap" type="TypeDto">
+  <constructor>
+    <arg column="dbName" javaType="String"/>
+    <arg column="schemaName" javaType="String"/>
+    <arg column="typeName" javaType="String"/>
+    <arg column="typeCategory" javaType="String"/>
+    <arg column="typeListInfo" javaType="String"/>
+    <arg column="definition" javaType="String"/>
+  </constructor>
+</resultMap>
+
 </mapper>
