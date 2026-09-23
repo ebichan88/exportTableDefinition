@@ -1,6 +1,8 @@
 package com.export_table_definition.domain.model.collection;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +44,38 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
      */
     public List<ForeignKeyEntity> incomingOf(TableEntity table) {
         return incomingByKey.getOrDefault(TableKey.of(table), List.of());
+    }
+
+    /**
+     * 外部キーをスキーマ単位にグループ化するメソッド<br>
+     * スキーマ別ER図では「そのスキーマのテーブルが関与する外部キー」がまとめて必要になるため、
+     * スキーマ跨ぎの外部キーは参照元・参照先の双方のスキーマに登録する。<br>
+     * 返却するマップはフィールドとして保持せず呼び出しのたびに構築する。
+     * 保持すると外部キー1件あたり最大2つの参照を処理全体にわたって抱え続けることになるため、
+     * 利用側のスコープを抜けた時点で解放されるようにしている
+     *
+     * @return スキーマ名をキー、当該スキーマが関与する外部キーのリストを値とするマップ
+     */
+    public Map<String, List<ForeignKeyEntity>> groupBySchema() {
+        final Map<String, List<ForeignKeyEntity>> bySchema = new LinkedHashMap<>();
+        byKey.values().forEach(foreignKeyList -> foreignKeyList.forEach(fk -> {
+            bySchema.computeIfAbsent(fk.schemaName(), k -> new ArrayList<>()).add(fk);
+            if (!fk.schemaName().equals(fk.referenceSchemaName())) {
+                bySchema.computeIfAbsent(fk.referenceSchemaName(), k -> new ArrayList<>()).add(fk);
+            }
+        }));
+        return bySchema;
+    }
+
+    /**
+     * スキーマを跨ぐ外部キーのリストを取得するメソッド<br>
+     * 全件を平坦化したリストを作らず、該当する部分集合のみを構築する
+     *
+     * @return 参照元と参照先のスキーマが異なる外部キーのリスト
+     */
+    public List<ForeignKeyEntity> crossSchema() {
+        return byKey.values().stream().flatMap(List::stream)
+                .filter(fk -> !fk.schemaName().equals(fk.referenceSchemaName())).toList();
     }
 
     /**

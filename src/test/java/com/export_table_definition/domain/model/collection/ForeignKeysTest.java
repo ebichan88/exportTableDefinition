@@ -58,4 +58,44 @@ public class ForeignKeysTest {
 
         assertEquals(List.of(fk), foreignKeys.incomingOf(newTable("sales", "emp")));
     }
+
+    @Test
+    @DisplayName("groupBySchema: スキーマ跨ぎの外部キーは参照元・参照先の双方のスキーマに登録される")
+    void testGroupBySchemaRegistersBothSides() {
+        var crossFk = new ForeignKeyEntity("hr", "assignment", "unused", "fk_assignment_emp", "sales", "emp");
+        var bySchema = ForeignKeys.of(List.of(crossFk)).groupBySchema();
+
+        assertEquals(List.of(crossFk), bySchema.get("hr"));
+        assertEquals(List.of(crossFk), bySchema.get("sales"));
+    }
+
+    @Test
+    @DisplayName("groupBySchema: 同一スキーマ内の外部キーは1度だけ登録される")
+    void testGroupBySchemaRegistersSameSchemaOnce() {
+        var fk = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_customer", "public", "customers");
+        var bySchema = ForeignKeys.of(List.of(fk)).groupBySchema();
+
+        assertEquals(List.of(fk), bySchema.get("public"));
+        assertEquals(1, bySchema.size());
+    }
+
+    @Test
+    @DisplayName("groupBySchema: 自己参照の外部キーも所属スキーマに登録される")
+    void testGroupBySchemaWithSelfReference() {
+        var selfFk = new ForeignKeyEntity("public", "categories", "unused", "fk_categories_parent", "public",
+                "categories");
+        var bySchema = ForeignKeys.of(List.of(selfFk)).groupBySchema();
+
+        assertEquals(List.of(selfFk), bySchema.get("public"));
+    }
+
+    @Test
+    @DisplayName("crossSchema: スキーマを跨ぐ外部キーのみを返す")
+    void testCrossSchema() {
+        var sameSchemaFk = new ForeignKeyEntity("public", "orders", "unused", "fk_same", "public", "customers");
+        var crossSchemaFk = new ForeignKeyEntity("hr", "assignment", "unused", "fk_cross", "sales", "emp");
+        var foreignKeys = ForeignKeys.of(List.of(sameSchemaFk, crossSchemaFk));
+
+        assertEquals(List.of(crossSchemaFk), foreignKeys.crossSchema());
+    }
 }

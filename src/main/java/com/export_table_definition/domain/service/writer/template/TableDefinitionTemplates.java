@@ -202,54 +202,21 @@ public class TableDefinitionTemplates {
         if (outgoingFks.isEmpty() && incomingFks.isEmpty()) {
             return sb.append("関連するテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
         }
-        final String selfId = mermaidId(table.schemaName(), table.physicalTableName());
+        final String selfId = MermaidSupport.mermaidId(table.schemaName(), table.physicalTableName());
         sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
         outgoingFks.forEach(fk -> sb.append("    ")
-                .append(mermaidId(fk.referenceSchemaName(), fk.referenceTableName()))
+                .append(MermaidSupport.mermaidId(fk.referenceSchemaName(), fk.referenceTableName()))
                 .append(" ||--o{ ").append(selfId).append(" : \"").append(fk.foreignkeyName()).append('"')
                 .append(LINE_SEPARATOR));
         incomingFks.forEach(fk -> sb.append("    ").append(selfId).append(" ||--o{ ")
-                .append(mermaidId(fk.schemaName(), fk.tableName())).append(" : \"").append(fk.foreignkeyName())
-                .append('"').append(LINE_SEPARATOR));
+                .append(MermaidSupport.mermaidId(fk.schemaName(), fk.tableName())).append(" : \"")
+                .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
         sb.append("    ").append(selfId).append(" {").append(LINE_SEPARATOR);
-        columns.forEach(c -> sb.append("        ").append(sanitizeType(c.columnType())).append(' ')
-                .append(sanitizeIdentifier(c.physicalColumnName())).append(c.isPrimaryKey() ? " PK" : "")
+        columns.forEach(c -> sb.append("        ").append(MermaidSupport.sanitizeType(c.columnType())).append(' ')
+                .append(MermaidSupport.sanitizeIdentifier(c.physicalColumnName())).append(c.isPrimaryKey() ? " PK" : "")
                 .append(LINE_SEPARATOR));
         sb.append("    }").append(LINE_SEPARATOR).append("```").append(LINE_SEPARATOR_DOUBLE);
         return sb.toString();
-    }
-
-    /**
-     * Mermaid記法のエンティティ識別子を生成するメソッド<br>
-     * スキーマ名を含めることで、同名テーブルが複数スキーマに存在する場合の識別子衝突を避ける
-     *
-     * @param schemaName        スキーマ名
-     * @param physicalTableName 物理テーブル名
-     * @return サニタイズ済みのエンティティ識別子
-     */
-    private static String mermaidId(String schemaName, String physicalTableName) {
-        return sanitizeIdentifier(schemaName + "_" + physicalTableName);
-    }
-
-    /**
-     * Mermaid記法で識別子として利用できない文字をアンダースコアに置換するメソッド
-     *
-     * @param value 変換対象の文字列
-     * @return サニタイズ済みの文字列
-     */
-    private static String sanitizeIdentifier(String value) {
-        return value.replaceAll("[^A-Za-z0-9_]", "_");
-    }
-
-    /**
-     * データ型からMermaid記法の属性型として利用できる文字列を生成するメソッド<br>
-     * 桁数・精度を表す括弧部分を除去し、残った空白をアンダースコアに置換する
-     *
-     * @param columnType データ型
-     * @return サニタイズ済みのデータ型文字列
-     */
-    private static String sanitizeType(String columnType) {
-        return columnType.replaceAll("\\(.*\\)", "").trim().replaceAll("[^A-Za-z0-9_]+", "_");
     }
 
     /**

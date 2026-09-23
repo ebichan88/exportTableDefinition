@@ -2,14 +2,18 @@ package com.export_table_definition.domain.service.writer;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.export_table_definition.domain.model.TableDefinitionContent;
+import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -17,6 +21,7 @@ import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.domain.service.writer.template.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectDefinitionTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectListTemplates;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionListTemplates;
@@ -168,6 +173,77 @@ public class TableDefinitionWriterDomainService {
         fileRepository.createDirectory(directoryPath);
         fileRepository.writeFile(filePath, contents);
         logger.debug("exportTableDefinition complete. [filePath={}]", filePath.toString());
+    }
+
+    /**
+     * スキーマ別ER図（全体ER図）の書き込み処理を行うメソッド<br>
+     * 1つの図にすべてのテーブルを載せるとMermaidが描画できる規模を超えるため、スキーマ単位に分割して出力し、
+     * それらへのリンクをまとめた索引ファイルを併せて出力する。
+     * 利用する情報はテーブル一覧と外部キー一覧のみで、テーブル詳細を必要としない
+     *
+     * @param tables              テーブル情報リスト
+     * @param foreignKeys         対象範囲全体の外部キー情報
+     * @param baseInfo            データベースの基本情報
+     * @param outputDirectoryPath 出力ディレクトリのパス
+     * @param maxNodes            1つの図に描画するノード数の上限。0以下の場合は上限なし
+     */
+    public void writeErDiagram(List<TableEntity> tables, ForeignKeys foreignKeys, BaseInfoEntity baseInfo,
+            Path outputDirectoryPath, int maxNodes) {
+        if (tables.isEmpty()) {
+            return;
+        }
+        final Map<String, List<TableEntity>> tablesBySchema = tables.stream()
+                .collect(Collectors.groupingBy(TableEntity::schemaName, LinkedHashMap::new, Collectors.toList()));
+        // 外部キーのスキーマ単位のグループ化は1度だけ行う。スキーマごとに全件を走査すると
+        // 外部キー数×スキーマ数の走査となり、対象範囲が広い場合に処理時間が膨らむ
+        final Map<String, List<ForeignKeyEntity>> foreignKeysBySchema = foreignKeys.groupBySchema();
+        tablesBySchema.forEach((schemaName, tablesInSchema) -> writeSchemaErDiagram(schemaName, tablesInSchema,
+                foreignKeysBySchema.getOrDefault(schemaName, List.of()), baseInfo, outputDirectoryPath, maxNodes));
+        writeErDiagramIndex(tablesBySchema, foreignKeys.crossSchema(), baseInfo, outputDirectoryPath);
+    }
+
+    /**
+     * スキーマ1つ分のER図を書き込むメソッド
+     *
+     * @param schemaName          出力対象のスキーマ名
+     * @param tablesInSchema      当該スキーマに属するテーブルのリスト
+     * @param relatedForeignKeys  当該スキーマのテーブルが関与する外部キー（他スキーマとの関連を含む）のリスト
+     * @param baseInfo            データベースの基本情報
+     * @param outputDirectoryPath 出力ディレクトリのパス
+     * @param maxNodes            1つの図に描画するノード数の上限。0以下の場合は上限なし
+     */
+    private void writeSchemaErDiagram(String schemaName, List<TableEntity> tablesInSchema,
+            List<ForeignKeyEntity> relatedForeignKeys, BaseInfoEntity baseInfo, Path outputDirectoryPath,
+            int maxNodes) {
+        final List<String> contents = List.of(ErDiagramTemplates.schemaFileHeader(schemaName, baseInfo), // ヘッダー
+                ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
+                ErDiagramTemplates.erDiagram(relatedForeignKeys, maxNodes), // ER図
+                ErDiagramTemplates.tableList(tablesInSchema, relatedForeignKeys), // テーブル一覧
+                ErDiagramTemplates.schemaFooter(baseInfo) // フッター
+        );
+        final Path filePath = outputPathResolver.resolveErDiagramFile(baseInfo, outputDirectoryPath, schemaName);
+        fileRepository.writeFile(filePath, contents);
+        logger.debug("exportErDiagram complete. [filePath={}]", filePath.toString());
+    }
+
+    /**
+     * ER図の索引ファイルを書き込むメソッド
+     *
+     * @param tablesBySchema      スキーマ名をキー、当該スキーマのテーブルのリストを値とするマップ
+     * @param crossSchemaForeignKeys スキーマを跨ぐ外部キーのリスト
+     * @param baseInfo            データベースの基本情報
+     * @param outputDirectoryPath 出力ディレクトリのパス
+     */
+    private void writeErDiagramIndex(Map<String, List<TableEntity>> tablesBySchema,
+            List<ForeignKeyEntity> crossSchemaForeignKeys, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
+        final List<String> contents = List.of(ErDiagramTemplates.fileHeader("ER図一覧", baseInfo), // ヘッダー
+                ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
+                ErDiagramTemplates.schemaIndex(baseInfo, tablesBySchema), // スキーマ別ER図へのリンク
+                ErDiagramTemplates.crossSchemaForeignKeys(crossSchemaForeignKeys), // スキーマ跨ぎの外部キー
+                ErDiagramTemplates.indexFooter(baseInfo) // フッター
+        );
+        fileRepository.writeFile(outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "erDiagram"),
+                contents);
     }
 
     /**

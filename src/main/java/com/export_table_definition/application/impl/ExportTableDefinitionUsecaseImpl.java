@@ -58,7 +58,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      */
     @Override
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
-            int chunkSize) {
+            int chunkSize, int erDiagramMaxNodes) {
         // ベースディレクトリパス取得
         final Path outputBaseDir = Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
                 .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
@@ -81,11 +81,15 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         final List<TypeEntity> typeList = repository.selectTypeList(targetSchemaList);
 
         // テーブル一覧の関連ドキュメント導線（存在するカテゴリのみ）
-        final Map<String, String> relatedDocuments = buildRelatedDocuments(triggerEntityList, functionList,
-                sequenceList, typeList);
+        final Map<String, String> relatedDocuments = buildRelatedDocuments(tableEntityList, triggerEntityList,
+                functionList, sequenceList, typeList);
 
         // テーブル一覧出力 -> ./output/ or {設定ファイルのFileParh}/tableList_{DB名}.md
         writer.writeTableDefinitionList(tableEntityList, baseInfoEntity, outputBaseDir, relatedDocuments);
+
+        // スキーマ別ER図と、その索引の出力。テーブル一覧と外部キー一覧のみで生成できるため、
+        // テーブル詳細をチャンク単位で取得する前のこの時点で出力できる
+        writer.writeErDiagram(tableEntityList, foreignKeys, baseInfoEntity, outputBaseDir, erDiagramMaxNodes);
 
         // トリガー・関数・シーケンス・型の一覧出力（対象が存在しない場合は出力されない）
         writer.writeTriggerList(triggerEntityList, baseInfoEntity, outputBaseDir);
@@ -114,15 +118,19 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      * テーブル一覧に掲載する関連ドキュメント（各オブジェクト一覧へのリンク）を組み立てるメソッド<br>
      * 対象が1件以上存在するカテゴリのみをリンク対象とする
      *
+     * @param tables    テーブル情報のリスト
      * @param triggers  トリガー情報のリスト
      * @param functions 関数・プロシージャ情報のリスト
      * @param sequences シーケンス情報のリスト
      * @param types     ユーザー定義型情報のリスト
      * @return リンク表示名をキー、一覧ファイル名の接頭辞を値とするマップ（挿入順を保持する）
      */
-    private Map<String, String> buildRelatedDocuments(List<TriggerEntity> triggers, List<FunctionEntity> functions,
-            List<SequenceEntity> sequences, List<TypeEntity> types) {
+    private Map<String, String> buildRelatedDocuments(List<TableEntity> tables, List<TriggerEntity> triggers,
+            List<FunctionEntity> functions, List<SequenceEntity> sequences, List<TypeEntity> types) {
         final Map<String, String> relatedDocuments = new LinkedHashMap<>();
+        if (!tables.isEmpty()) {
+            relatedDocuments.put("ER図一覧", "erDiagram");
+        }
         if (!functions.isEmpty()) {
             relatedDocuments.put("関数・プロシージャ一覧", "function");
         }

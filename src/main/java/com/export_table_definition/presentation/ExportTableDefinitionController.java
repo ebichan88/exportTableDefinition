@@ -39,12 +39,15 @@ public class ExportTableDefinitionController {
      * @param tableList  テーブル定義出力対象のテーブルのリスト
      * @param outputPath テーブル定義出力の出力先のパス
      * @param chunkSize  詳細情報をまとめて取得するテーブル数の上限
+     * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
      * @return 処理結果
      */
-    public ResultDto execute(List<String> schemaList, List<String> tableList, String outputPath, int chunkSize) {
+    public ResultDto execute(List<String> schemaList, List<String> tableList, String outputPath, int chunkSize,
+            int erDiagramMaxNodes) {
         logger.info("[START] exportTableDefinition");
         try {
-            exportTableDefinitionUsecase.exportTableDefinition(schemaList, tableList, outputPath, chunkSize);
+            exportTableDefinitionUsecase.exportTableDefinition(schemaList, tableList, outputPath, chunkSize,
+                    erDiagramMaxNodes);
         } catch (Exception e) {
             logger.error(e);
             return new ResultDto(ProcessResult.FAIL,

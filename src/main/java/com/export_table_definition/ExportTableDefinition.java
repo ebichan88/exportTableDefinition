@@ -23,6 +23,8 @@ public class ExportTableDefinition {
 
     /** chunkSize未設定時のデフォルト値（1スキーマあたりこの件数ごとに詳細情報を取得・出力する） */
     private static final int DEFAULT_CHUNK_SIZE = 3000;
+    /** erDiagramMaxNodes未設定時のデフォルト値（スキーマ別ER図1枚に描画するテーブル数の上限） */
+    private static final int DEFAULT_ER_DIAGRAM_MAX_NODES = 80;
     /** DB接続情報の上書きに対応するプロパティキーと、対応するCLI引数名・環境変数名 */
     private static final Map<String, ConnectionArg> CONNECTION_ARGS = Map.of(
             "driver", new ConnectionArg("--db-driver", "DB_DRIVER"),
@@ -104,13 +106,16 @@ public class ExportTableDefinition {
         final List<String> tableList = PropertyLoader.getList("ExportTableDefinition", "table");
         final String outputPath = PropertyLoader.getString("ExportTableDefinition", "outputPath");
         final int chunkSize = PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE);
+        final int erDiagramMaxNodes = PropertyLoader.getInt("ExportTableDefinition", "erDiagramMaxNodes",
+                DEFAULT_ER_DIAGRAM_MAX_NODES);
         // 処理開始メッセージ出力
         System.out.println("""
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
         // テーブル定義出力処理実行
-        final ResultDto resultDto = controller.execute(schemaList, tableList, outputPath, chunkSize);
+        final ResultDto resultDto = controller.execute(schemaList, tableList, outputPath, chunkSize,
+                erDiagramMaxNodes);
         // 処理終了メッセージ出力
         System.out.println(resultDto.getResultMessage());
     }

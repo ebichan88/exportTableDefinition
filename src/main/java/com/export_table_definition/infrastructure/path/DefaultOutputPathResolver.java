@@ -18,6 +18,7 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
     private static final String TABLE_LIST_FILENAME_PATTERN = "tableList_%s.md";
     private static final String TABLE_LIST_PAGED_FILENAME_PATTERN = "tableList_%s_%d.md";
     private static final String OBJECT_LIST_FILENAME_PATTERN = "%sList_%s.md";
+    private static final String ER_DIAGRAM_FILENAME_PATTERN = "erDiagram_%s_%s.md";
 
     /**
      * {@inheritDoc}
@@ -58,6 +59,14 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
     @Override
     public Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix) {
         return baseOutputDir.resolve(String.format(OBJECT_LIST_FILENAME_PATTERN, prefix, baseInfo.dbName()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName) {
+        return baseOutputDir.resolve(String.format(ER_DIAGRAM_FILENAME_PATTERN, baseInfo.dbName(), schemaName));
     }
 
     /**

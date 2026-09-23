@@ -70,6 +70,17 @@ public interface OutputPathResolver {
     Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix);
 
     /**
+     * スキーマ別ER図のパス。 <br>
+     * 例: {base}/erDiagram_{DB名}_{スキーマ名}.md
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param schemaName    スキーマ名
+     * @return スキーマ別ER図ファイルのパス
+     */
+    Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName);
+
+    /**
      * スキーマ配下オブジェクト（関数/シーケンス/型）の出力ディレクトリを返す。 <br>
      * 例: {base}/{DB名}/{スキーマ名}/{kind}/
      *
