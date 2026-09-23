@@ -57,6 +57,19 @@ public class ErDiagramTemplates {
     }
 
     /**
+     * グループ別ER図ページのファイルヘッダー
+     *
+     * @param schemaName スキーマ名
+     * @param groupNo    グループ番号（1始まり）
+     * @param baseInfo   データベース基本情報
+     * @return ヘッダー文字列
+     */
+    public static String groupFileHeader(String schemaName, int groupNo, BaseInfoEntity baseInfo) {
+        return "# " + String.format("ER図（DB名：%s / スキーマ名：%s / グループ%d）", baseInfo.dbName(), schemaName, groupNo)
+                + LINE_SEPARATOR_DOUBLE;
+    }
+
+    /**
      * 基本情報セクション
      *
      * @param baseInfo データベース基本情報
@@ -121,6 +134,72 @@ public class ErDiagramTemplates {
                 .append(ids.get(TableKey.of(fk.schemaName(), fk.tableName()))).append(" : \"")
                 .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
         return sb.append("```").append(LINE_SEPARATOR_DOUBLE).toString();
+    }
+
+    /**
+     * ER図をグループに分割した場合の、スキーマページに掲載する説明セクション
+     *
+     * @param nodeCount  当該スキーマの関連テーブル数
+     * @param maxNodes   1つの図に描画するノード数の上限
+     * @param groupCount 分割後のグループ数
+     * @return 説明セクション文字列
+     */
+    public static String groupedMessage(int nodeCount, int maxNodes, int groupCount) {
+        return new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE)
+                .append(String.format("ER図に描画するテーブル数が%d件となり、上限（erDiagramMaxNodes = %d件）を超えるため、", nodeCount, maxNodes))
+                .append(LINE_SEPARATOR)
+                .append(String.format("外部キーで繋がったテーブルのまとまりごとに%d個のグループへ分割しました。", groupCount))
+                .append(LINE_SEPARATOR_DOUBLE).toString();
+    }
+
+    /**
+     * グループ一覧セクションの見出し
+     *
+     * @return 見出し文字列
+     */
+    public static String groupIndexHeading() {
+        return "グループ一覧";
+    }
+
+    /**
+     * グループ一覧セクションの表ヘッダー
+     *
+     * @return 表ヘッダー文字列
+     */
+    public static String groupIndexHeader() {
+        return """
+                | No. | テーブル数 | 外部キー数 | 主なテーブル | Link |
+                |:---|:---|:---|:---|:---|
+                """;
+    }
+
+    /**
+     * グループ一覧セクションの1行分
+     *
+     * @param no         グループ番号（1始まり）
+     * @param tableCount 当該グループのテーブル数
+     * @param fkCount    当該グループの外部キー数
+     * @param mainTable  当該グループで最も多くの外部キーが接続するテーブル
+     * @param href       グループ別ER図ページへの相対パス
+     * @return グループ一覧1行分の文字列
+     */
+    public static String groupIndexLine(int no, int tableCount, int fkCount, TableKey mainTable, String href) {
+        return String.format("| %d | %d | %d | %s | [■](%s) |", no, tableCount, fkCount,
+                mainTable == null ? "" : mainTable.schema() + "." + mainTable.table(), href) + LINE_SEPARATOR;
+    }
+
+    /**
+     * グループ別ER図ページのフッター<br>
+     * スキーマ全体のER図（グループ一覧）へ戻る導線を加える
+     *
+     * @param schemaName スキーマ名
+     * @param baseInfo   データベース基本情報
+     * @return フッター文字列
+     */
+    public static String groupFooter(String schemaName, BaseInfoEntity baseInfo) {
+        return HORIZON + LINE_SEPARATOR_DOUBLE + String.format(
+                "[スキーマのER図へ](./erDiagram_%s_%s.md) [ER図一覧へ](./erDiagramList_%s.md) [テーブル一覧へ](./tableList_%s.md)",
+                baseInfo.dbName(), schemaName, baseInfo.dbName(), baseInfo.dbName()) + LINE_SEPARATOR;
     }
 
     /**

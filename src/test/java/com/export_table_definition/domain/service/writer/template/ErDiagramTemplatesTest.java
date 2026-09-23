@@ -160,6 +160,41 @@ public class ErDiagramTemplatesTest {
     }
 
     @Test
+    @DisplayName("groupFileHeader: DB名・スキーマ名・グループ番号を含むヘッダーを生成する")
+    void testGroupFileHeader() {
+        String header = ErDiagramTemplates.groupFileHeader("public", 2, baseInfo());
+        assertTrue(header.startsWith("# ER図（DB名：TEST_DB / スキーマ名：public / グループ2）"));
+    }
+
+    @Test
+    @DisplayName("groupedMessage: 分割した理由とグループ数を出力する")
+    void testGroupedMessage() {
+        String section = ErDiagramTemplates.groupedMessage(200, 80, 3);
+        assertTrue(section.startsWith("## ER図"));
+        assertTrue(section.contains("ER図に描画するテーブル数が200件となり、上限（erDiagramMaxNodes = 80件）を超えるため、"));
+        assertTrue(section.contains("外部キーで繋がったテーブルのまとまりごとに3個のグループへ分割しました。"));
+        assertFalse(section.contains("```mermaid"));
+    }
+
+    @Test
+    @DisplayName("groupIndexLine: グループの規模と主なテーブルを出力する")
+    void testGroupIndexLine() {
+        String line = ErDiagramTemplates.groupIndexLine(1, 12, 15, TableKey.of("public", "orders"),
+                "./erDiagram_TEST_DB_public_group1.md");
+        assertTrue(line.startsWith("| 1 | 12 | 15 | public.orders | [■](./erDiagram_TEST_DB_public_group1.md) |"));
+    }
+
+    @Test
+    @DisplayName("groupFooter: スキーマのER図へ戻るリンクを含む")
+    void testGroupFooter() {
+        String footer = ErDiagramTemplates.groupFooter("public", baseInfo());
+        assertTrue(footer.startsWith("___"));
+        assertTrue(footer.contains("[スキーマのER図へ](./erDiagram_TEST_DB_public.md)"));
+        assertTrue(footer.contains("[ER図一覧へ](./erDiagramList_TEST_DB.md)"));
+        assertTrue(footer.contains("[テーブル一覧へ](./tableList_TEST_DB.md)"));
+    }
+
+    @Test
     @DisplayName("schemaIndex: スキーマ別ER図へのリンクとテーブル数を出力する")
     void testSchemaIndex() {
         final Map<String, List<TableEntity>> tablesBySchema = new LinkedHashMap<>();

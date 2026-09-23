@@ -105,6 +105,32 @@ public interface OutputPathResolver {
     Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int pageIndex);
 
     /**
+     * スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。 <br>
+     * 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param schemaName    スキーマ名
+     * @param groupNo       グループ番号（1始まり）
+     * @return グループ別ER図ファイルのパス
+     */
+    Path resolveErDiagramGroupFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int groupNo);
+
+    /**
+     * グループ別ER図の表をさらに分割したページのパス。 <br>
+     * 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}_{pageIndex}.md
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param schemaName    スキーマ名
+     * @param groupNo       グループ番号（1始まり）
+     * @param pageIndex     ページインデックス（1始まり）
+     * @return グループ別ER図の分割ページファイルのパス
+     */
+    Path resolveErDiagramGroupFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int groupNo,
+            int pageIndex);
+
+    /**
      * スキーマ配下オブジェクト（関数/シーケンス/型）の出力ディレクトリを返す。 <br>
      * 例: {base}/{DB名}/{スキーマ名}/{kind}/
      *
