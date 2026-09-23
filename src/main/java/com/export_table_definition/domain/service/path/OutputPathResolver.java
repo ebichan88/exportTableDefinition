@@ -70,6 +70,18 @@ public interface OutputPathResolver {
     Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix);
 
     /**
+     * オブジェクト一覧（分割ページモード）のパス。 <br>
+     * 例: {base}/{prefix}List_{DB名}_{pageIndex}.md
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param prefix        一覧ファイル名の接頭辞（例: erDiagram）
+     * @param pageIndex     ページインデックス（1始まり）
+     * @return オブジェクト一覧ファイルのパス
+     */
+    Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix, int pageIndex);
+
+    /**
      * スキーマ別ER図のパス。 <br>
      * 例: {base}/erDiagram_{DB名}_{スキーマ名}.md
      *
@@ -79,6 +91,18 @@ public interface OutputPathResolver {
      * @return スキーマ別ER図ファイルのパス
      */
     Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName);
+
+    /**
+     * スキーマ別ER図の分割ページのパス。 <br>
+     * 例: {base}/erDiagram_{DB名}_{スキーマ名}_{pageIndex}.md
+     *
+     * @param baseInfo      基本情報エンティティ
+     * @param baseOutputDir 基本出力ディレクトリ
+     * @param schemaName    スキーマ名
+     * @param pageIndex     ページインデックス（1始まり）
+     * @return スキーマ別ER図の分割ページファイルのパス
+     */
+    Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int pageIndex);
 
     /**
      * スキーマ配下オブジェクト（関数/シーケンス/型）の出力ディレクトリを返す。 <br>

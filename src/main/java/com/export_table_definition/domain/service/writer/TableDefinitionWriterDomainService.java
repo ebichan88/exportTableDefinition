@@ -5,7 +5,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,10 +23,12 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.template.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectDefinitionTemplates;
+import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectListTemplates;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionListTemplates;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionTemplates;
@@ -197,8 +203,13 @@ public class TableDefinitionWriterDomainService {
         // 外部キーのスキーマ単位のグループ化は1度だけ行う。スキーマごとに全件を走査すると
         // 外部キー数×スキーマ数の走査となり、対象範囲が広い場合に処理時間が膨らむ
         final Map<String, List<ForeignKeyEntity>> foreignKeysBySchema = foreignKeys.groupBySchema();
-        tablesBySchema.forEach((schemaName, tablesInSchema) -> writeSchemaErDiagram(schemaName, tablesInSchema,
-                foreignKeysBySchema.getOrDefault(schemaName, List.of()), baseInfo, outputDirectoryPath, maxNodes));
+        // ER図には他スキーマのテーブルも箱として登場するため、全テーブルを引けるマップを用意する
+        final Map<TableKey, TableEntity> tableByKey = tables.stream()
+                .collect(Collectors.toMap(TableKey::of, table -> table, (first, duplicate) -> first,
+                        LinkedHashMap::new));
+        tablesBySchema.forEach((schemaName, tablesInSchema) -> writeSchemaErDiagram(schemaName,
+                foreignKeysBySchema.getOrDefault(schemaName, List.of()), tableByKey, baseInfo, outputDirectoryPath,
+                maxNodes));
         writeErDiagramIndex(tablesBySchema, foreignKeys.crossSchema(), baseInfo, outputDirectoryPath);
     }
 
@@ -206,24 +217,114 @@ public class TableDefinitionWriterDomainService {
      * スキーマ1つ分のER図を書き込むメソッド
      *
      * @param schemaName          出力対象のスキーマ名
-     * @param tablesInSchema      当該スキーマに属するテーブルのリスト
      * @param relatedForeignKeys  当該スキーマのテーブルが関与する外部キー（他スキーマとの関連を含む）のリスト
+     * @param tableByKey          テーブルキーをキー、テーブル情報を値とするマップ
      * @param baseInfo            データベースの基本情報
      * @param outputDirectoryPath 出力ディレクトリのパス
      * @param maxNodes            1つの図に描画するノード数の上限。0以下の場合は上限なし
      */
-    private void writeSchemaErDiagram(String schemaName, List<TableEntity> tablesInSchema,
-            List<ForeignKeyEntity> relatedForeignKeys, BaseInfoEntity baseInfo, Path outputDirectoryPath,
-            int maxNodes) {
+    private void writeSchemaErDiagram(String schemaName, List<ForeignKeyEntity> relatedForeignKeys,
+            Map<TableKey, TableEntity> tableByKey, BaseInfoEntity baseInfo, Path outputDirectoryPath, int maxNodes) {
+        final List<TableKey> nodes = ErDiagramTemplates.diagramNodes(relatedForeignKeys);
+        // ER図を描画した場合は図中の箱の一覧を、描画を省略した場合は代替として外部キーの一覧を掲載する
+        final PagedSection<?> detail = ErDiagramTemplates.isOverflow(nodes.size(), maxNodes)
+                ? new PagedSection<>(ErDiagramTemplates.foreignKeyHeading(),
+                        ErDiagramTemplates.foreignKeyTableHeader(), relatedForeignKeys,
+                        ErDiagramTemplates::foreignKeyTableLine)
+                : new PagedSection<>(ErDiagramTemplates.diagramTableHeading(),
+                        ErDiagramTemplates.diagramTableHeader(), nodes,
+                        (no, key) -> ErDiagramTemplates.diagramTableLine(no, key, tableByKey.get(key)));
+        final PageLayout layout = new PageLayout(ErDiagramTemplates.schemaFileHeader(schemaName, baseInfo),
+                page -> outputPathResolver.resolveErDiagramFile(baseInfo, outputDirectoryPath, schemaName, page),
+                page -> String.format("./erDiagram_%s_%s_%d.md", baseInfo.dbName(), schemaName, page),
+                String.format("./erDiagram_%s_%s.md", baseInfo.dbName(), schemaName), "ER図へ");
         final List<String> contents = List.of(ErDiagramTemplates.schemaFileHeader(schemaName, baseInfo), // ヘッダー
                 ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
-                ErDiagramTemplates.erDiagram(relatedForeignKeys, maxNodes), // ER図
-                ErDiagramTemplates.tableList(tablesInSchema, relatedForeignKeys), // テーブル一覧
+                ErDiagramTemplates.erDiagram(relatedForeignKeys, nodes, maxNodes), // ER図
+                writePagedSection(detail, layout), // 掲載テーブル または 外部キー一覧
                 ErDiagramTemplates.schemaFooter(baseInfo) // フッター
         );
         final Path filePath = outputPathResolver.resolveErDiagramFile(baseInfo, outputDirectoryPath, schemaName);
         fileRepository.writeFile(filePath, contents);
         logger.debug("exportErDiagram complete. [filePath={}]", filePath.toString());
+    }
+
+    /**
+     * ページ分割対象となる表のセクション
+     *
+     * @param <T>         行の元になる要素の型
+     * @param heading     セクションの見出し
+     * @param tableHeader 表のヘッダー行
+     * @param rows        行の元になる要素のリスト
+     * @param lineMapper  行番号と要素から1行分の文字列を生成する関数
+     */
+    private record PagedSection<T>(String heading, String tableHeader, List<T> rows,
+            BiFunction<Integer, T, String> lineMapper) {
+    }
+
+    /**
+     * 分割ページの配置（ファイルパスとリンクの解決方法）
+     *
+     * @param fileHeader 分割ページのファイルヘッダー
+     * @param pageFile   ページ番号から出力先パスを解決する関数
+     * @param pageHref   ページ番号から相対パスを解決する関数
+     * @param backHref   本体ページへの相対パス
+     * @param backLabel  本体ページへのリンク表示名
+     */
+    private record PageLayout(String fileHeader, IntFunction<Path> pageFile, IntFunction<String> pageHref,
+            String backHref, String backLabel) {
+    }
+
+    /**
+     * 表のセクションを書き込むメソッド<br>
+     * 行数がMarkdownの表に表示できる最大件数以下の場合は本体ページに直接埋め込み、
+     * 超える場合はテーブル一覧と同様に別ファイルへ分割して、本体ページにはリンクのみを掲載する。
+     * 行の文字列生成はページ単位で行い、全行分を同時にメモリ保持しない
+     *
+     * @param <T>     行の元になる要素の型
+     * @param section 書き込む表のセクション
+     * @param layout  分割ページの配置
+     * @return 本体ページに掲載するセクション文字列
+     */
+    private <T> String writePagedSection(PagedSection<T> section, PageLayout layout) {
+        final int total = section.rows().size();
+        if (total == 0) {
+            return "";
+        }
+        if (total <= MAX_TABLE_LIST_SIZE) {
+            return PagedSectionTemplates.heading(section.heading()) + section.tableHeader()
+                    + buildRows(section, 0, total) + System.lineSeparator();
+        }
+        final int totalPages = (total + MAX_TABLE_LIST_SIZE - 1) / MAX_TABLE_LIST_SIZE;
+        for (int page = 1; page <= totalPages; page++) {
+            final int from = (page - 1) * MAX_TABLE_LIST_SIZE;
+            final int to = Math.min(from + MAX_TABLE_LIST_SIZE, total);
+            final List<String> contents = List.of(layout.fileHeader(),
+                    PagedSectionTemplates.heading(section.heading()), section.tableHeader(),
+                    buildRows(section, from, to) + System.lineSeparator(),
+                    PagedSectionTemplates.pageFooter(page > 1 ? layout.pageHref().apply(page - 1) : null,
+                            page < totalPages ? layout.pageHref().apply(page + 1) : null, layout.backHref(),
+                            layout.backLabel()));
+            fileRepository.writeFile(layout.pageFile().apply(page), contents);
+        }
+        return PagedSectionTemplates.pagedSectionLinks(section.heading(), section.heading(),
+                IntStream.rangeClosed(1, totalPages).mapToObj(layout.pageHref()::apply).toList());
+    }
+
+    /**
+     * 表の行を指定範囲分だけ組み立てるメソッド
+     *
+     * @param <T>     行の元になる要素の型
+     * @param section 対象の表のセクション
+     * @param from    開始インデックス（含む）
+     * @param to      終了インデックス（含まない）
+     * @return 行を連結した文字列
+     */
+    private <T> String buildRows(PagedSection<T> section, int from, int to) {
+        final StringBuilder sb = new StringBuilder();
+        IntStream.range(from, to)
+                .forEach(i -> sb.append(section.lineMapper().apply(i + 1, section.rows().get(i))));
+        return sb.toString();
     }
 
     /**
@@ -236,10 +337,17 @@ public class TableDefinitionWriterDomainService {
      */
     private void writeErDiagramIndex(Map<String, List<TableEntity>> tablesBySchema,
             List<ForeignKeyEntity> crossSchemaForeignKeys, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
+        final PagedSection<ForeignKeyEntity> crossSchemaSection = new PagedSection<>(
+                ErDiagramTemplates.crossSchemaForeignKeyHeading(), ErDiagramTemplates.foreignKeyTableHeader(),
+                crossSchemaForeignKeys, ErDiagramTemplates::foreignKeyTableLine);
+        final PageLayout layout = new PageLayout(ErDiagramTemplates.fileHeader("ER図一覧", baseInfo),
+                page -> outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "erDiagram", page),
+                page -> String.format("./erDiagramList_%s_%d.md", baseInfo.dbName(), page),
+                String.format("./erDiagramList_%s.md", baseInfo.dbName()), "ER図一覧へ");
         final List<String> contents = List.of(ErDiagramTemplates.fileHeader("ER図一覧", baseInfo), // ヘッダー
                 ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
                 ErDiagramTemplates.schemaIndex(baseInfo, tablesBySchema), // スキーマ別ER図へのリンク
-                ErDiagramTemplates.crossSchemaForeignKeys(crossSchemaForeignKeys), // スキーマ跨ぎの外部キー
+                writePagedSection(crossSchemaSection, layout), // スキーマ跨ぎの外部キー
                 ErDiagramTemplates.indexFooter(baseInfo) // フッター
         );
         fileRepository.writeFile(outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "erDiagram"),
@@ -255,12 +363,41 @@ public class TableDefinitionWriterDomainService {
      * @param outputDirectoryPath 出力ディレクトリのパス
      */
     public void writeTriggerList(List<TriggerEntity> triggers, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
-        if (triggers.isEmpty()) {
+        writeObjectList("トリガー一覧", "trigger", ObjectListTemplates.triggerTableHeader(), triggers,
+                TriggerEntity::triggerListInfo, baseInfo, outputDirectoryPath);
+    }
+
+    /**
+     * オブジェクト一覧（トリガー/関数/シーケンス/型）の書き込み処理を行う共通メソッド<br>
+     * 対象が存在しない場合は何も出力しない。
+     * 行数がMarkdownの表に表示できる最大件数を超える場合は、テーブル一覧と同様に別ファイルへ分割する
+     *
+     * @param <T>                 エンティティの型
+     * @param title               一覧のタイトル
+     * @param prefix              一覧ファイル名の接頭辞（例: trigger, function, sequence, type）
+     * @param tableHeader         表のヘッダー行
+     * @param objects             エンティティのリスト
+     * @param listInfoGetter      エンティティから一覧行の文字列を取得する関数
+     * @param baseInfo            データベースの基本情報
+     * @param outputDirectoryPath 出力ディレクトリのパス
+     */
+    private <T> void writeObjectList(String title, String prefix, String tableHeader, List<T> objects,
+            Function<T, String> listInfoGetter, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
+        if (objects.isEmpty()) {
             return;
         }
-        final List<String> contents = List.of(ObjectListTemplates.fileHeader("トリガー一覧", baseInfo),
-                ObjectListTemplates.baseInfo(baseInfo), ObjectListTemplates.triggerList(triggers));
-        fileRepository.writeFile(outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "trigger"),
+        final PagedSection<T> section = new PagedSection<>(title, tableHeader, objects,
+                (no, object) -> ObjectListTemplates.listLine(listInfoGetter.apply(object)));
+        final PageLayout layout = new PageLayout(ObjectListTemplates.fileHeader(title, baseInfo),
+                page -> outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, prefix, page),
+                page -> String.format("./%sList_%s_%d.md", prefix, baseInfo.dbName(), page),
+                String.format("./%sList_%s.md", prefix, baseInfo.dbName()), title + "へ");
+        final List<String> contents = List.of(ObjectListTemplates.fileHeader(title, baseInfo), // ヘッダー
+                ObjectListTemplates.baseInfo(baseInfo), // 基本情報
+                writePagedSection(section, layout), // 一覧
+                ObjectListTemplates.footer(baseInfo) // フッター
+        );
+        fileRepository.writeFile(outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, prefix),
                 contents);
     }
 
@@ -273,13 +410,8 @@ public class TableDefinitionWriterDomainService {
      * @param outputDirectoryPath 出力ディレクトリのパス
      */
     public void writeFunctionList(List<FunctionEntity> functions, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
-        if (functions.isEmpty()) {
-            return;
-        }
-        final List<String> contents = List.of(ObjectListTemplates.fileHeader("関数・プロシージャ一覧", baseInfo),
-                ObjectListTemplates.baseInfo(baseInfo), ObjectListTemplates.functionList(functions));
-        fileRepository.writeFile(outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "function"),
-                contents);
+        writeObjectList("関数・プロシージャ一覧", "function", ObjectListTemplates.functionTableHeader(), functions,
+                FunctionEntity::functionListInfo, baseInfo, outputDirectoryPath);
     }
 
     /**
@@ -308,13 +440,8 @@ public class TableDefinitionWriterDomainService {
      * @param outputDirectoryPath 出力ディレクトリのパス
      */
     public void writeSequenceList(List<SequenceEntity> sequences, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
-        if (sequences.isEmpty()) {
-            return;
-        }
-        final List<String> contents = List.of(ObjectListTemplates.fileHeader("シーケンス一覧", baseInfo),
-                ObjectListTemplates.baseInfo(baseInfo), ObjectListTemplates.sequenceList(sequences));
-        fileRepository.writeFile(outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "sequence"),
-                contents);
+        writeObjectList("シーケンス一覧", "sequence", ObjectListTemplates.sequenceTableHeader(), sequences,
+                SequenceEntity::sequenceListInfo, baseInfo, outputDirectoryPath);
     }
 
     /**
@@ -343,13 +470,8 @@ public class TableDefinitionWriterDomainService {
      * @param outputDirectoryPath 出力ディレクトリのパス
      */
     public void writeTypeList(List<TypeEntity> types, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
-        if (types.isEmpty()) {
-            return;
-        }
-        final List<String> contents = List.of(ObjectListTemplates.fileHeader("ユーザー定義型一覧", baseInfo),
-                ObjectListTemplates.baseInfo(baseInfo), ObjectListTemplates.typeList(types));
-        fileRepository.writeFile(outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "type"),
-                contents);
+        writeObjectList("ユーザー定義型一覧", "type", ObjectListTemplates.typeTableHeader(), types,
+                TypeEntity::typeListInfo, baseInfo, outputDirectoryPath);
     }
 
     /**

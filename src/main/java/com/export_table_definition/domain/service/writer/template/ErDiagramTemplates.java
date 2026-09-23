@@ -1,13 +1,12 @@
 package com.export_table_definition.domain.service.writer.template;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -20,7 +19,10 @@ import com.export_table_definition.domain.model.value.TableKey;
  * スキーマ単位のER図（全体ER図）書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
  * テーブル単位のER図（{@link TableDefinitionTemplates#erDiagram}）とは異なり、
  * すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。
- * 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない
+ * 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
+ * 表のセクションはヘッダーと1行分を個別に生成できるようにしている。
+ * 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、
+ * テーブル一覧（{@link TableDefinitionListTemplates}）と同じ方針である
  *
  * @since 1.0
  * @version 1.0
@@ -81,49 +83,37 @@ public class ErDiagramTemplates {
                 .append("| No. | スキーマ名 | テーブル数 | Link |").append(LINE_SEPARATOR)
                 .append("|:---|:---|:---|:---|").append(LINE_SEPARATOR);
         final int[] no = { 0 };
-        tablesBySchema.forEach((schemaName, tables) -> sb.append(String.format("| %d | %s | %d | [ER図](./%s) |",
+        tablesBySchema.forEach((schemaName, tables) -> sb.append(String.format("| %d | %s | %d | [■](./%s) |",
                 ++no[0], schemaName, tables.size(), erDiagramFileName(baseInfo, schemaName))).append(LINE_SEPARATOR));
         return sb.append(LINE_SEPARATOR).toString();
     }
 
     /**
-     * スキーマ跨ぎ外部キーセクション<br>
-     * スキーマ単位にER図を分割すると、スキーマをまたぐ関連は双方の図に現れて全体像が追いにくいため、
-     * 索引ページに一覧としてまとめて掲載する
-     *
-     * @param crossSchemaForeignKeys スキーマを跨ぐ外部キーのリスト
-     * @return スキーマ跨ぎ外部キーセクション文字列。該当がない場合は空文字列
-     */
-    public static String crossSchemaForeignKeys(List<ForeignKeyEntity> crossSchemaForeignKeys) {
-        if (crossSchemaForeignKeys.isEmpty()) {
-            return "";
-        }
-        return "## スキーマ跨ぎの外部キー" + LINE_SEPARATOR_DOUBLE + foreignKeyTable(crossSchemaForeignKeys);
-    }
-
-    /**
      * ER図セクション（Mermaid記法）<br>
      * 外部キーによる関連を持つテーブルのみをノードとして描画する。
-     * 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため、
-     * それらは{@link #tableList}のテーブル一覧側に掲載する。<br>
-     * ノード数が上限を超える場合はMermaidの描画を諦め、外部キーの一覧表にフォールバックする
+     * 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する
+     * （全テーブルはテーブル一覧{@code tableList_{DB名}.md}側に掲載されている）。<br>
+     * ノード数が上限を超える場合はMermaidの描画を諦め、その旨のメッセージのみを返す
+     * （代替として掲載する外部キー一覧は呼び出し側が組み立てる）
      *
      * @param foreignKeys 当該スキーマに関連する外部キー情報のリスト
+     * @param nodes       図のノードとなるテーブルキーのリスト
      * @param maxNodes    1つの図に描画するノード数の上限。0以下の場合は上限なし
      * @return ER図セクション文字列
      */
-    public static String erDiagram(List<ForeignKeyEntity> foreignKeys, int maxNodes) {
+    public static String erDiagram(List<ForeignKeyEntity> foreignKeys, List<TableKey> nodes, int maxNodes) {
         StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
         if (foreignKeys.isEmpty()) {
             return sb.append("外部キーによる関連を持つテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
         }
-        final Set<TableKey> nodeKeys = collectNodeKeys(foreignKeys);
-        if (maxNodes > 0 && nodeKeys.size() > maxNodes) {
-            return sb.append(String.format("関連テーブル数が%d件と上限（%d件）を超えるため、ER図の描画を省略しました。", nodeKeys.size(), maxNodes))
+        if (isOverflow(nodes.size(), maxNodes)) {
+            return sb
+                    .append(String.format("ER図に描画するテーブル数が%d件となり、上限（erDiagramMaxNodes = %d件）を超えるため描画を省略しました。",
+                            nodes.size(), maxNodes))
                     .append(LINE_SEPARATOR).append("代わりに外部キーによる関連を一覧で掲載します。").append(LINE_SEPARATOR_DOUBLE)
-                    .append(foreignKeyTable(foreignKeys)).toString();
+                    .toString();
         }
-        final Map<TableKey, String> ids = assignNodeIds(nodeKeys);
+        final Map<TableKey, String> ids = assignNodeIds(nodes);
         sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
         // 参照先（親） ||--o{ 参照元（子） の向きは、テーブル単位のER図の表記と揃える
         foreignKeys.forEach(fk -> sb.append("    ")
@@ -134,27 +124,115 @@ public class ErDiagramTemplates {
     }
 
     /**
-     * テーブル一覧セクション<br>
-     * 外部キーによる関連の有無を示したうえで、各テーブルの定義書へのリンクを掲載する。
-     * Mermaidの{@code click}構文はGitHub上では無効化されるため、図中のノードからの導線はこの一覧で代替する
+     * 図のノードとなるテーブルを取得するメソッド<br>
+     * 外部キーの両端のテーブルを収集し、図中の箱を名前から引けるようスキーマ名・テーブル名の順に並べる
      *
-     * @param tablesInSchema 当該スキーマに属するテーブルのリスト
-     * @param foreignKeys    当該スキーマに関連する外部キー情報のリスト
-     * @return テーブル一覧セクション文字列
+     * @param foreignKeys 外部キー情報のリスト
+     * @return ノードとなるテーブルキーのリスト
      */
-    public static String tableList(List<TableEntity> tablesInSchema, List<ForeignKeyEntity> foreignKeys) {
-        final Set<TableKey> nodeKeys = collectNodeKeys(foreignKeys);
-        StringBuilder sb = new StringBuilder("## テーブル一覧").append(LINE_SEPARATOR_DOUBLE)
-                .append("| No. | 物理テーブル名 | 論理テーブル名 | 区分 | 関連 | Link |").append(LINE_SEPARATOR)
-                .append("|:---|:---|:---|:---|:---|:---|").append(LINE_SEPARATOR);
-        IntStream.range(0, tablesInSchema.size()).forEach(i -> {
-            final TableEntity table = tablesInSchema.get(i);
-            sb.append(String.format("| %d | %s | %s | %s | %s | [定義書](./%s) |", i + 1, table.physicalTableName(),
-                    StringUtils.defaultString(table.logicalTableName()), table.tableType(),
-                    nodeKeys.contains(TableKey.of(table)) ? "○" : "-", tableDefinitionPath(table)))
-                    .append(LINE_SEPARATOR);
+    public static List<TableKey> diagramNodes(List<ForeignKeyEntity> foreignKeys) {
+        final Set<TableKey> nodeKeys = new LinkedHashSet<>();
+        foreignKeys.forEach(fk -> {
+            nodeKeys.add(TableKey.of(fk.schemaName(), fk.tableName()));
+            nodeKeys.add(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()));
         });
-        return sb.append(LINE_SEPARATOR).toString();
+        return nodeKeys.stream().sorted(Comparator.comparing(TableKey::schema).thenComparing(TableKey::table))
+                .toList();
+    }
+
+    /**
+     * ノード数が上限を超えているか判定するメソッド
+     *
+     * @param nodeCount ノード数
+     * @param maxNodes  ノード数の上限。0以下の場合は上限なし
+     * @return 上限を超えている場合はtrue
+     */
+    public static boolean isOverflow(int nodeCount, int maxNodes) {
+        return maxNodes > 0 && nodeCount > maxNodes;
+    }
+
+    /**
+     * 掲載テーブルセクションの見出し
+     *
+     * @return 見出し文字列
+     */
+    public static String diagramTableHeading() {
+        return "ER図に掲載しているテーブル";
+    }
+
+    /**
+     * 掲載テーブルセクションの表ヘッダー
+     *
+     * @return 表ヘッダー文字列
+     */
+    public static String diagramTableHeader() {
+        return """
+                | No. | スキーマ名 | 物理テーブル名 | 論理テーブル名 | 区分 | Link |
+                |:---|:---|:---|:---|:---|:---|
+                """;
+    }
+
+    /**
+     * 掲載テーブルセクションの1行分<br>
+     * Mermaidの{@code click}構文はGitHub上では無効化されるため、図中のノードからの導線をこの一覧で代替する
+     *
+     * @param no    行番号
+     * @param key   テーブルキー
+     * @param table テーブル情報。出力対象範囲外で定義書が存在しない場合はnull
+     * @return 掲載テーブル1行分の文字列
+     */
+    public static String diagramTableLine(int no, TableKey key, TableEntity table) {
+        // 出力対象範囲外のテーブルを参照している場合、定義書が存在しないためリンクを張らない
+        if (table == null) {
+            return String.format("| %d | %s | %s |  |  | - |", no, key.schema(), key.table()) + LINE_SEPARATOR;
+        }
+        return String.format("| %d | %s | %s | %s | %s | [■](./%s) |", no, table.schemaName(),
+                table.physicalTableName(), StringUtils.defaultString(table.logicalTableName()), table.tableType(),
+                tableDefinitionPath(table)) + LINE_SEPARATOR;
+    }
+
+    /**
+     * 外部キー一覧セクションの見出し（ER図の描画を省略した場合の代替掲載）
+     *
+     * @return 見出し文字列
+     */
+    public static String foreignKeyHeading() {
+        return "外部キー一覧";
+    }
+
+    /**
+     * スキーマ跨ぎ外部キーセクションの見出し<br>
+     * スキーマ単位にER図を分割すると、スキーマをまたぐ関連は双方の図に現れて全体像が追いにくいため、
+     * 索引ページに一覧としてまとめて掲載する
+     *
+     * @return 見出し文字列
+     */
+    public static String crossSchemaForeignKeyHeading() {
+        return "スキーマ跨ぎの外部キー";
+    }
+
+    /**
+     * 外部キー一覧セクションの表ヘッダー
+     *
+     * @return 表ヘッダー文字列
+     */
+    public static String foreignKeyTableHeader() {
+        return """
+                | No. | 参照元 | 外部キー名 | 参照先 |
+                |:---|:---|:---|:---|
+                """;
+    }
+
+    /**
+     * 外部キー一覧セクションの1行分
+     *
+     * @param no 行番号
+     * @param fk 外部キー情報
+     * @return 外部キー一覧1行分の文字列
+     */
+    public static String foreignKeyTableLine(int no, ForeignKeyEntity fk) {
+        return String.format("| %d | %s | %s | %s |", no, fk.getSchemaTableName(), fk.foreignkeyName(),
+                fk.getReferenceSchemaTableName()) + LINE_SEPARATOR;
     }
 
     /**
@@ -206,33 +284,18 @@ public class ErDiagramTemplates {
     }
 
     /**
-     * 外部キーの両端のテーブルをノードとして収集するメソッド
-     *
-     * @param foreignKeys 外部キー情報のリスト
-     * @return ノードとなるテーブルキーの集合（登場順を保持する）
-     */
-    private static Set<TableKey> collectNodeKeys(List<ForeignKeyEntity> foreignKeys) {
-        final Set<TableKey> nodeKeys = new LinkedHashSet<>();
-        foreignKeys.forEach(fk -> {
-            nodeKeys.add(TableKey.of(fk.schemaName(), fk.tableName()));
-            nodeKeys.add(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()));
-        });
-        return nodeKeys;
-    }
-
-    /**
      * ノードごとに一意なMermaid識別子を採番するメソッド<br>
      * 識別子のサニタイズでは記号がすべてアンダースコアに潰れるため、
      * 多数のテーブルを1つの図に載せると別テーブルが同一識別子となり1ノードに融合する恐れがある。
      * 衝突した場合は連番を付与して一意性を担保する
      *
-     * @param nodeKeys ノードとなるテーブルキーの集合
+     * @param nodes ノードとなるテーブルキーのリスト
      * @return テーブルキーをキー、Mermaid識別子を値とするマップ
      */
-    private static Map<TableKey, String> assignNodeIds(Set<TableKey> nodeKeys) {
+    private static Map<TableKey, String> assignNodeIds(List<TableKey> nodes) {
         final Map<TableKey, String> ids = new LinkedHashMap<>();
         final Set<String> usedIds = new HashSet<>();
-        nodeKeys.forEach(key -> {
+        nodes.forEach(key -> {
             final String baseId = MermaidSupport.mermaidId(key.schema(), key.table());
             String id = baseId;
             for (int suffix = 2; !usedIds.add(id); suffix++) {
@@ -241,23 +304,5 @@ public class ErDiagramTemplates {
             ids.put(key, id);
         });
         return ids;
-    }
-
-    /**
-     * 外部キーの一覧表を生成するメソッド
-     *
-     * @param foreignKeys 外部キー情報のリスト
-     * @return 外部キー一覧表の文字列
-     */
-    private static String foreignKeyTable(List<ForeignKeyEntity> foreignKeys) {
-        final String header = """
-                | No. | 参照元 | 外部キー名 | 参照先 |
-                |:---|:---|:---|:---|
-                """;
-        return header + IntStream.range(0, foreignKeys.size()).mapToObj(i -> {
-            final ForeignKeyEntity fk = foreignKeys.get(i);
-            return String.format("| %d | %s | %s | %s |", i + 1, fk.getSchemaTableName(), fk.foreignkeyName(),
-                    fk.getReferenceSchemaTableName());
-        }).collect(Collectors.joining(LINE_SEPARATOR)) + LINE_SEPARATOR_DOUBLE;
     }
 }

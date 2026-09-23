@@ -18,7 +18,9 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
     private static final String TABLE_LIST_FILENAME_PATTERN = "tableList_%s.md";
     private static final String TABLE_LIST_PAGED_FILENAME_PATTERN = "tableList_%s_%d.md";
     private static final String OBJECT_LIST_FILENAME_PATTERN = "%sList_%s.md";
+    private static final String OBJECT_LIST_PAGED_FILENAME_PATTERN = "%sList_%s_%d.md";
     private static final String ER_DIAGRAM_FILENAME_PATTERN = "erDiagram_%s_%s.md";
+    private static final String ER_DIAGRAM_PAGED_FILENAME_PATTERN = "erDiagram_%s_%s_%d.md";
 
     /**
      * {@inheritDoc}
@@ -65,8 +67,26 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
      * {@inheritDoc}
      */
     @Override
+    public Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix, int pageIndex) {
+        return baseOutputDir
+                .resolve(String.format(OBJECT_LIST_PAGED_FILENAME_PATTERN, prefix, baseInfo.dbName(), pageIndex));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName) {
         return baseOutputDir.resolve(String.format(ER_DIAGRAM_FILENAME_PATTERN, baseInfo.dbName(), schemaName));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int pageIndex) {
+        return baseOutputDir
+                .resolve(String.format(ER_DIAGRAM_PAGED_FILENAME_PATTERN, baseInfo.dbName(), schemaName, pageIndex));
     }
 
     /**

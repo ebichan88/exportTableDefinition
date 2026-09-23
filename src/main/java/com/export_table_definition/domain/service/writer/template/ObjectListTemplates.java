@@ -1,18 +1,13 @@
 package com.export_table_definition.domain.service.writer.template;
 
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
 
 /**
  * トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧書き込みに利用する
- * Markdownのテンプレートを扱うクラス
+ * Markdownのテンプレートを扱うクラス<br>
+ * 表のセクションはヘッダーと1行分を個別に生成できるようにしている。
+ * 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、
+ * テーブル一覧（{@link TableDefinitionListTemplates}）と同じ方針である
  *
  * @since 1.0
  * @version 1.0
@@ -21,6 +16,7 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
 public class ObjectListTemplates {
     private static final String LINE_SEPARATOR = System.lineSeparator();
     private static final String LINE_SEPARATOR_DOUBLE = LINE_SEPARATOR + LINE_SEPARATOR;
+    private static final String HORIZON = "___";
 
     /**
      * 一覧ファイルヘッダー
@@ -49,79 +45,74 @@ public class ObjectListTemplates {
     }
 
     /**
-     * トリガー一覧セクション
+     * トリガー一覧セクションの表ヘッダー
      *
-     * @param triggers トリガー情報のリスト
-     * @return トリガー一覧セクション文字列
+     * @return 表ヘッダー文字列
      */
-    public static String triggerList(List<TriggerEntity> triggers) {
-        String header = """
-                ## トリガー一覧
-
+    public static String triggerTableHeader() {
+        return """
                 | No. | スキーマ名 | テーブル名 | トリガー名 | タイミング | イベント | 実行関数 |
                 |:---|:---|:---|:---|:---|:---|:---|
                 """;
-        return listSection(triggers, header, TriggerEntity::triggerListInfo);
     }
 
     /**
-     * 関数・プロシージャ一覧セクション
+     * 関数・プロシージャ一覧セクションの表ヘッダー
      *
-     * @param functions 関数・プロシージャ情報のリスト
-     * @return 関数・プロシージャ一覧セクション文字列
+     * @return 表ヘッダー文字列
      */
-    public static String functionList(List<FunctionEntity> functions) {
-        String header = """
-                ## 関数・プロシージャ一覧
-
+    public static String functionTableHeader() {
+        return """
                 | No. | スキーマ名 | 種別 | 名前 | 引数 | 戻り値 | 言語 | Link |
                 |:---|:---|:---|:---|:---|:---|:---|:---|
                 """;
-        return listSection(functions, header, FunctionEntity::functionListInfo);
     }
 
     /**
-     * シーケンス一覧セクション
+     * シーケンス一覧セクションの表ヘッダー
      *
-     * @param sequences シーケンス情報のリスト
-     * @return シーケンス一覧セクション文字列
+     * @return 表ヘッダー文字列
      */
-    public static String sequenceList(List<SequenceEntity> sequences) {
-        String header = """
-                ## シーケンス一覧
-
+    public static String sequenceTableHeader() {
+        return """
                 | No. | スキーマ名 | シーケンス名 | 増分 | 最小値 | 最大値 | キャッシュ | 開始値 | 循環 | 所有カラム | Link |
                 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
                 """;
-        return listSection(sequences, header, SequenceEntity::sequenceListInfo);
     }
 
     /**
-     * ユーザー定義型一覧セクション
+     * ユーザー定義型一覧セクションの表ヘッダー
      *
-     * @param types ユーザー定義型情報のリスト
-     * @return ユーザー定義型一覧セクション文字列
+     * @return 表ヘッダー文字列
      */
-    public static String typeList(List<TypeEntity> types) {
-        String header = """
-                ## ユーザー定義型一覧
-
+    public static String typeTableHeader() {
+        return """
                 | No. | スキーマ名 | 型名 | 種別 | 定義 | Link |
                 |:---|:---|:---|:---|:---|:---|
                 """;
-        return listSection(types, header, TypeEntity::typeListInfo);
     }
 
     /**
-     * 一覧セクションを生成する共通メソッド
+     * 一覧セクションの1行分<br>
+     * 行番号を含む行の内容はSQL側で組み立てているため、ここでは改行を付与するのみとする
      *
-     * @param <T>        エンティティの型
-     * @param list       エンティティのリスト
-     * @param header     セクションのヘッダー文字列
-     * @param infoMapper エンティティから一覧行文字列を生成する関数
-     * @return 一覧セクション文字列
+     * @param listInfo エンティティが保持する一覧行の文字列
+     * @return 一覧1行分の文字列
      */
-    private static <T> String listSection(List<T> list, String header, Function<T, String> infoMapper) {
-        return header + list.stream().map(infoMapper).collect(Collectors.joining(LINE_SEPARATOR)) + LINE_SEPARATOR_DOUBLE;
+    public static String listLine(String listInfo) {
+        return listInfo + LINE_SEPARATOR;
+    }
+
+    /**
+     * 一覧ファイルのフッター<br>
+     * 個別定義書から一覧へ戻る導線（{@link ObjectDefinitionTemplates}）と対になるよう、
+     * 一覧からテーブル一覧へ戻る導線を設ける
+     *
+     * @param baseInfo データベース基本情報
+     * @return フッター文字列
+     */
+    public static String footer(BaseInfoEntity baseInfo) {
+        return HORIZON + LINE_SEPARATOR_DOUBLE + String.format("[テーブル一覧へ](./tableList_%s.md)", baseInfo.dbName())
+                + LINE_SEPARATOR;
     }
 }

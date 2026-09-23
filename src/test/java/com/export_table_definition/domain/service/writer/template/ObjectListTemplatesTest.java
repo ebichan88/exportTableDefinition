@@ -2,16 +2,10 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
 
 /**
  * ObjectListTemplates のセクション生成テスト
@@ -28,46 +22,52 @@ public class ObjectListTemplatesTest {
     }
 
     @Test
-    @DisplayName("triggerList: ヘッダーと一覧行を含む")
-    void testTriggerList() {
-        var t = new TriggerEntity("public", "orders",
-                "| 1 | public | orders | trg_orders | BEFORE | INSERT | public.f_orders |", "unused");
-        String section = ObjectListTemplates.triggerList(List.of(t));
-        assertTrue(section.contains("## トリガー一覧"));
-        assertTrue(section.contains("| 1 | public | orders | trg_orders | BEFORE | INSERT | public.f_orders |"));
+    @DisplayName("baseInfo: 基本情報の表を出力する")
+    void testBaseInfo() {
+        String section = ObjectListTemplates.baseInfo(base);
+        assertTrue(section.startsWith("## 基本情報"));
+        assertTrue(section.contains("| pg | TEST_DB | 2025-01-01 |"));
     }
 
     @Test
-    @DisplayName("functionList: ヘッダーと一覧行を含む")
-    void testFunctionList() {
-        var f = new FunctionEntity("TEST_DB", "public", "f_add", "f_add",
-                "| 1 | public | FUNCTION | f_add | a integer | integer | plpgsql | [■](./TEST_DB/public/function/f_add.md) |",
-                "");
-        String section = ObjectListTemplates.functionList(List.of(f));
-        assertTrue(section.contains("## 関数・プロシージャ一覧"));
-        assertTrue(section.contains("f_add"));
-        assertTrue(section.contains("[■](./TEST_DB/public/function/f_add.md)"));
+    @DisplayName("triggerTableHeader: トリガー一覧の列定義を出力する")
+    void testTriggerTableHeader() {
+        assertTrue(ObjectListTemplates.triggerTableHeader()
+                .startsWith("| No. | スキーマ名 | テーブル名 | トリガー名 | タイミング | イベント | 実行関数 |"));
     }
 
     @Test
-    @DisplayName("sequenceList: ヘッダーと一覧行を含む")
-    void testSequenceList() {
-        var s = new SequenceEntity("TEST_DB", "public", "seq_orders",
-                "| 1 | public | seq_orders | 1 | 1 | 9223372036854775807 | 1 | 1 |  | orders.id | [■](./TEST_DB/public/sequence/seq_orders.md) |",
-                "unused");
-        String section = ObjectListTemplates.sequenceList(List.of(s));
-        assertTrue(section.contains("## シーケンス一覧"));
-        assertTrue(section.contains("seq_orders"));
+    @DisplayName("functionTableHeader: 関数・プロシージャ一覧の列定義を出力する")
+    void testFunctionTableHeader() {
+        assertTrue(ObjectListTemplates.functionTableHeader()
+                .startsWith("| No. | スキーマ名 | 種別 | 名前 | 引数 | 戻り値 | 言語 | Link |"));
     }
 
     @Test
-    @DisplayName("typeList: ヘッダーと一覧行を含む")
-    void testTypeList() {
-        var t = new TypeEntity("TEST_DB", "public", "mood", "ENUM",
-                "| 1 | public | mood | ENUM | sad, ok, happy | [■](./TEST_DB/public/type/mood.md) |", "sad, ok, happy");
-        String section = ObjectListTemplates.typeList(List.of(t));
-        assertTrue(section.contains("## ユーザー定義型一覧"));
-        assertTrue(section.contains("mood"));
-        assertTrue(section.contains("sad, ok, happy"));
+    @DisplayName("sequenceTableHeader: シーケンス一覧の列定義を出力する")
+    void testSequenceTableHeader() {
+        assertTrue(ObjectListTemplates.sequenceTableHeader().startsWith(
+                "| No. | スキーマ名 | シーケンス名 | 増分 | 最小値 | 最大値 | キャッシュ | 開始値 | 循環 | 所有カラム | Link |"));
+    }
+
+    @Test
+    @DisplayName("typeTableHeader: ユーザー定義型一覧の列定義を出力する")
+    void testTypeTableHeader() {
+        assertTrue(ObjectListTemplates.typeTableHeader().startsWith("| No. | スキーマ名 | 型名 | 種別 | 定義 | Link |"));
+    }
+
+    @Test
+    @DisplayName("listLine: SQL側で組み立てた行に改行を付与する")
+    void testListLine() {
+        String row = "| 1 | public | orders | trg_orders | BEFORE | INSERT | public.f_orders |";
+        assertEquals(row + System.lineSeparator(), ObjectListTemplates.listLine(row));
+    }
+
+    @Test
+    @DisplayName("footer: テーブル一覧へ戻るリンクを含む")
+    void testFooter() {
+        String footer = ObjectListTemplates.footer(base);
+        assertTrue(footer.startsWith("___"));
+        assertTrue(footer.contains("[テーブル一覧へ](./tableList_TEST_DB.md)"));
     }
 }
