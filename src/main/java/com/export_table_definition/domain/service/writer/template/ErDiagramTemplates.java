@@ -1,5 +1,9 @@
 package com.export_table_definition.domain.service.writer.template;
 
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.HORIZON;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
+
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -29,9 +33,6 @@ import com.export_table_definition.domain.model.value.TableKey;
  * @author takashi.ebina
  */
 public class ErDiagramTemplates {
-    private static final String LINE_SEPARATOR = System.lineSeparator();
-    private static final String LINE_SEPARATOR_DOUBLE = LINE_SEPARATOR + LINE_SEPARATOR;
-    private static final String HORIZON = "___";
 
     /**
      * ER図ファイルヘッダー
@@ -41,7 +42,7 @@ public class ErDiagramTemplates {
      * @return ヘッダー文字列
      */
     public static String fileHeader(String title, BaseInfoEntity baseInfo) {
-        return "# " + String.format("%s（DB名：%s）", title, baseInfo.dbName()) + LINE_SEPARATOR_DOUBLE;
+        return MarkdownTemplateSupport.titledFileHeader(title, baseInfo);
     }
 
     /**
@@ -76,12 +77,7 @@ public class ErDiagramTemplates {
      * @return 基本情報セクション文字列
      */
     public static String baseInfo(BaseInfoEntity baseInfo) {
-        return """
-                ## 基本情報
-
-                | RDBMS | データベース名 | 作成日 |
-                |:---|:---|:---|
-                """ + baseInfo.baseInfo() + LINE_SEPARATOR_DOUBLE;
+        return MarkdownTemplateSupport.baseInfoSection(baseInfo);
     }
 
     /**
@@ -334,8 +330,8 @@ public class ErDiagramTemplates {
      * @return フッター文字列
      */
     public static String indexFooter(BaseInfoEntity baseInfo) {
-        return HORIZON + LINE_SEPARATOR_DOUBLE + String.format("[テーブル一覧へ](./tableList_%s.md)", baseInfo.dbName())
-                + LINE_SEPARATOR;
+        return PagedSectionTemplates.pageFooter(null, null,
+                String.format("./tableList_%s.md", baseInfo.dbName()), "テーブル一覧へ");
     }
 
     /**

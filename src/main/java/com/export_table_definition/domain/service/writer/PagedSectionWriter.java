@@ -1,0 +1,118 @@
+package com.export_table_definition.domain.service.writer;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
+
+import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
+import com.google.inject.Inject;
+
+/**
+ * 行数の多い表を複数ページに分割して出力する処理を共通化したクラス<br>
+ * GitHub上で表として表示できる行数には上限があるため、テーブル一覧・ER図・
+ * オブジェクト一覧（トリガー/関数/シーケンス/型）など、行数が多くなり得る一覧系の
+ * ドキュメントはすべてこのクラスを介して出力する。
+ * 行数が上限以下の場合は本体ページに直接埋め込み、超える場合は別ファイルへ分割して
+ * 本体ページにはリンクのみを掲載する。行の文字列生成はページ単位で行い、
+ * 全行分を同時にメモリ保持しない
+ *
+ * @since 1.0
+ * @version 1.0
+ * @author takashi.ebina
+ */
+public class PagedSectionWriter {
+
+    private static final int MAX_PAGE_SIZE = 3000;
+    private final FileRepository fileRepository;
+
+    /**
+     * コンストラクタ
+     *
+     * @param fileRepository ファイルリポジトリ
+     */
+    @Inject
+    public PagedSectionWriter(FileRepository fileRepository) {
+        this.fileRepository = fileRepository;
+    }
+
+    /**
+     * ページ分割対象となる表のセクション
+     *
+     * @param <T>         行の元になる要素の型
+     * @param heading     セクションの見出し
+     * @param tableHeader 表のヘッダー行
+     * @param rows        行の元になる要素のリスト
+     * @param lineMapper  行番号と要素から1行分の文字列を生成する関数
+     */
+    public record PagedSection<T>(String heading, String tableHeader, List<T> rows,
+            BiFunction<Integer, T, String> lineMapper) {
+    }
+
+    /**
+     * 分割ページの配置（ファイルパスとリンクの解決方法）
+     *
+     * @param fileHeader 分割ページのファイルヘッダー
+     * @param pageFile   ページ番号から出力先パスを解決する関数
+     * @param pageHref   ページ番号から相対パスを解決する関数
+     * @param backHref   本体ページへの相対パス
+     * @param backLabel  本体ページへのリンク表示名
+     */
+    public record PageLayout(String fileHeader, IntFunction<Path> pageFile, IntFunction<String> pageHref,
+            String backHref, String backLabel) {
+    }
+
+    /**
+     * 表のセクションを書き込むメソッド<br>
+     * 行数がMarkdownの表に表示できる最大件数以下の場合は本体ページに直接埋め込み、
+     * 超える場合は別ファイルへ分割して、本体ページにはリンクのみを掲載する。
+     * 行の文字列生成はページ単位で行い、全行分を同時にメモリ保持しない
+     *
+     * @param <T>     行の元になる要素の型
+     * @param section 書き込む表のセクション
+     * @param layout  分割ページの配置
+     * @return 本体ページに掲載するセクション文字列
+     */
+    public <T> String writePagedSection(PagedSection<T> section, PageLayout layout) {
+        final int total = section.rows().size();
+        if (total == 0) {
+            return "";
+        }
+        if (total <= MAX_PAGE_SIZE) {
+            return PagedSectionTemplates.heading(section.heading()) + section.tableHeader()
+                    + buildRows(section, 0, total) + System.lineSeparator();
+        }
+        final int totalPages = (total + MAX_PAGE_SIZE - 1) / MAX_PAGE_SIZE;
+        for (int page = 1; page <= totalPages; page++) {
+            final int from = (page - 1) * MAX_PAGE_SIZE;
+            final int to = Math.min(from + MAX_PAGE_SIZE, total);
+            final List<String> contents = List.of(layout.fileHeader(),
+                    PagedSectionTemplates.heading(section.heading()), section.tableHeader(),
+                    buildRows(section, from, to) + System.lineSeparator(),
+                    PagedSectionTemplates.pageFooter(page > 1 ? layout.pageHref().apply(page - 1) : null,
+                            page < totalPages ? layout.pageHref().apply(page + 1) : null, layout.backHref(),
+                            layout.backLabel()));
+            fileRepository.writeFile(layout.pageFile().apply(page), contents);
+        }
+        return PagedSectionTemplates.pagedSectionLinks(section.heading(), section.heading(),
+                IntStream.rangeClosed(1, totalPages).mapToObj(layout.pageHref()::apply).toList());
+    }
+
+    /**
+     * 表の行を指定範囲分だけ組み立てるメソッド
+     *
+     * @param <T>     行の元になる要素の型
+     * @param section 対象の表のセクション
+     * @param from    開始インデックス（含む）
+     * @param to      終了インデックス（含まない）
+     * @return 行を連結した文字列
+     */
+    private <T> String buildRows(PagedSection<T> section, int from, int to) {
+        final StringBuilder sb = new StringBuilder();
+        IntStream.range(from, to)
+                .forEach(i -> sb.append(section.lineMapper().apply(i + 1, section.rows().get(i))));
+        return sb.toString();
+    }
+}

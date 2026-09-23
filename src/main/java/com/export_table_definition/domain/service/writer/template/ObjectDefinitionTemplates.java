@@ -1,5 +1,8 @@
 package com.export_table_definition.domain.service.writer.template;
 
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
+
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
@@ -14,9 +17,6 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
  * @author takashi.ebina
  */
 public class ObjectDefinitionTemplates {
-    private static final String LINE_SEPARATOR = System.lineSeparator();
-    private static final String LINE_SEPARATOR_DOUBLE = LINE_SEPARATOR + LINE_SEPARATOR;
-    private static final String HORIZON = "___";
 
     /**
      * 基本情報セクション
@@ -25,12 +25,7 @@ public class ObjectDefinitionTemplates {
      * @return 基本情報セクション文字列
      */
     private static String baseInfo(BaseInfoEntity baseInfo) {
-        return """
-                ## 基本情報
-
-                | RDBMS | データベース名 | 作成日 |
-                |:---|:---|:---|
-                """ + baseInfo.baseInfo() + LINE_SEPARATOR_DOUBLE;
+        return MarkdownTemplateSupport.baseInfoSection(baseInfo);
     }
 
     /**
@@ -42,9 +37,8 @@ public class ObjectDefinitionTemplates {
      * @return フッター文字列
      */
     private static String footer(String listPrefix, String listLabel, BaseInfoEntity baseInfo) {
-        return HORIZON + LINE_SEPARATOR_DOUBLE
-                + String.format("[%s](../../../%sList_%s.md)", listLabel, listPrefix, baseInfo.dbName())
-                + LINE_SEPARATOR;
+        return PagedSectionTemplates.pageFooter(null, null,
+                String.format("../../../%sList_%s.md", listPrefix, baseInfo.dbName()), listLabel);
     }
 
     /**

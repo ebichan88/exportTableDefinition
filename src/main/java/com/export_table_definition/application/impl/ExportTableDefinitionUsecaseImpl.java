@@ -24,6 +24,8 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
+import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
+import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.google.inject.Inject;
 
@@ -39,18 +41,25 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     private static final String OUTPUT_BASE_DIRECTORY = "./output";
     private final TableDefinitionRepository repository;
     private final TableDefinitionWriterDomainService writer;
+    private final ErDiagramWriterDomainService erDiagramWriter;
+    private final ObjectListWriterDomainService objectListWriter;
 
     /**
      * コンストラクタ
-     * 
-     * @param repository テーブル定義出力に関するリポジトリクラス
-     * @param writer     テーブル定義を書き込むクラス
+     *
+     * @param repository       テーブル定義出力に関するリポジトリクラス
+     * @param writer           テーブル一覧・テーブル定義書を書き込むクラス
+     * @param erDiagramWriter  ER図を書き込むクラス
+     * @param objectListWriter トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
      */
     @Inject
     public ExportTableDefinitionUsecaseImpl(TableDefinitionRepository repository,
-            TableDefinitionWriterDomainService writer) {
+            TableDefinitionWriterDomainService writer, ErDiagramWriterDomainService erDiagramWriter,
+            ObjectListWriterDomainService objectListWriter) {
         this.repository = repository;
         this.writer = writer;
+        this.erDiagramWriter = erDiagramWriter;
+        this.objectListWriter = objectListWriter;
     }
 
     /**
@@ -89,17 +98,18 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
 
         // スキーマ別ER図と、その索引の出力。テーブル一覧と外部キー一覧のみで生成できるため、
         // テーブル詳細をチャンク単位で取得する前のこの時点で出力できる
-        writer.writeErDiagram(tableEntityList, foreignKeys, baseInfoEntity, outputBaseDir, erDiagramMaxNodes);
+        erDiagramWriter.writeErDiagram(tableEntityList, foreignKeys, baseInfoEntity, outputBaseDir, erDiagramMaxNodes);
 
         // トリガー・関数・シーケンス・型の一覧出力（対象が存在しない場合は出力されない）
-        writer.writeTriggerList(triggerEntityList, baseInfoEntity, outputBaseDir);
-        writer.writeFunctionList(functionList, baseInfoEntity, outputBaseDir);
-        writer.writeSequenceList(sequenceList, baseInfoEntity, outputBaseDir);
-        writer.writeTypeList(typeList, baseInfoEntity, outputBaseDir);
+        objectListWriter.writeTriggerList(triggerEntityList, baseInfoEntity, outputBaseDir);
+        objectListWriter.writeFunctionList(functionList, baseInfoEntity, outputBaseDir);
+        objectListWriter.writeSequenceList(sequenceList, baseInfoEntity, outputBaseDir);
+        objectListWriter.writeTypeList(typeList, baseInfoEntity, outputBaseDir);
 
         // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
-        sequenceList.forEach(sequence -> writer.writeSequenceDefinition(sequence, baseInfoEntity, outputBaseDir));
-        typeList.forEach(type -> writer.writeTypeDefinition(type, baseInfoEntity, outputBaseDir));
+        sequenceList
+                .forEach(sequence -> objectListWriter.writeSequenceDefinition(sequence, baseInfoEntity, outputBaseDir));
+        typeList.forEach(type -> objectListWriter.writeTypeDefinition(type, baseInfoEntity, outputBaseDir));
 
         // 関数・プロシージャの個別ファイル出力。定義本体が大きくなり得るため、スキーマ単位で本体を取得・出力・破棄する
         functionList.stream().map(FunctionEntity::schemaName).distinct()
@@ -156,7 +166,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      */
     private void exportSchemaFunctionDefinitions(String schemaName, BaseInfoEntity baseInfo, Path outputBaseDir) {
         repository.selectFunctionDefList(List.of(schemaName))
-                .forEach(function -> writer.writeFunctionDefinition(function, baseInfo, outputBaseDir));
+                .forEach(function -> objectListWriter.writeFunctionDefinition(function, baseInfo, outputBaseDir));
     }
 
     /**

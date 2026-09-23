@@ -1,5 +1,9 @@
 package com.export_table_definition.domain.service.writer.template;
 
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.HORIZON;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
+
 import java.util.List;
 
 /**
@@ -12,9 +16,6 @@ import java.util.List;
  * @author takashi.ebina
  */
 public class PagedSectionTemplates {
-    private static final String LINE_SEPARATOR = System.lineSeparator();
-    private static final String LINE_SEPARATOR_DOUBLE = LINE_SEPARATOR + LINE_SEPARATOR;
-    private static final String HORIZON = "___";
 
     /**
      * セクションの見出し行

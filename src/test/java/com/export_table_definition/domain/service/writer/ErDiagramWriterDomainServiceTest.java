@@ -21,10 +21,10 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 
 /**
- * TableDefinitionWriterDomainService のER図出力に関するテスト<br>
+ * ErDiagramWriterDomainService のER図出力に関するテスト<br>
  * ノード数の上限超過時にグループ分割されるかどうかを、生成されるファイル構成で検証する
  */
-public class TableDefinitionWriterDomainServiceTest {
+public class ErDiagramWriterDomainServiceTest {
 
     private static final Path OUT = Path.of("output");
 
@@ -44,12 +44,13 @@ public class TableDefinitionWriterDomainServiceTest {
     }
 
     private InMemoryFileRepository fileRepository;
-    private TableDefinitionWriterDomainService writer;
+    private ErDiagramWriterDomainService writer;
 
     @BeforeEach
     void setUp() {
         fileRepository = new InMemoryFileRepository();
-        writer = new TableDefinitionWriterDomainService(fileRepository, new DefaultOutputPathResolver());
+        writer = new ErDiagramWriterDomainService(fileRepository, new DefaultOutputPathResolver(),
+                new PagedSectionWriter(fileRepository));
     }
 
     private BaseInfoEntity baseInfo() {

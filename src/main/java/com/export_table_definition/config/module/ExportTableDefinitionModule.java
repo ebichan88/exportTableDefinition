@@ -5,6 +5,9 @@ import com.export_table_definition.application.impl.ExportTableDefinitionUsecase
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
+import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.infrastructure.file.repository.TableDefinitionFileRepository;
@@ -26,6 +29,9 @@ public class ExportTableDefinitionModule extends AbstractModule {
         bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
         bind(FileRepository.class).to(TableDefinitionFileRepository.class);
         bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);
+        bind(PagedSectionWriter.class);
         bind(TableDefinitionWriterDomainService.class);
+        bind(ErDiagramWriterDomainService.class);
+        bind(ObjectListWriterDomainService.class);
     }
 }
