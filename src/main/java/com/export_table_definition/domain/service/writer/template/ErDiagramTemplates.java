@@ -124,9 +124,10 @@ public class ErDiagramTemplates {
         }
         final Map<TableKey, String> ids = assignNodeIds(nodes);
         sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
-        // 参照先（親） ||--o{ 参照元（子） の向きは、テーブル単位のER図の表記と揃える
+        // 参照先（親） → 参照元（子） の向きは、テーブル単位のER図の表記と揃える
         foreignKeys.forEach(fk -> sb.append("    ")
-                .append(ids.get(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()))).append(" ||--o{ ")
+                .append(ids.get(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()))).append(' ')
+                .append(fk.cardinality().getNotation()).append(' ')
                 .append(ids.get(TableKey.of(fk.schemaName(), fk.tableName()))).append(" : \"")
                 .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
         return sb.append("```").append(LINE_SEPARATOR_DOUBLE).toString();

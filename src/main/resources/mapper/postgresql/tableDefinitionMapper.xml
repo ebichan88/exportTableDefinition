@@ -495,7 +495,29 @@ WITH all_foreignkeys AS (
             FROM unnest(t1.confkey) WITH ORDINALITY AS fk(attnum, ord)
             JOIN pg_catalog.pg_attribute fa
                 ON fa.attrelid = t1.confrelid AND fa.attnum = fk.attnum
-        ), '') AS reference_column_names
+        ), '') AS reference_column_names,
+        -- 外部キー列が一意制約・一意索引で覆われているか（1件の親に対し子が高々1件となるか）。
+        -- 一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、
+        -- 列名の一致ではなく包含関係で判定する。
+        -- 条件付きの一意性しか保証しない部分インデックスは除外する
+        CASE WHEN EXISTS (
+            SELECT 1
+            FROM pg_catalog.pg_index i
+            WHERE i.indrelid = t1.conrelid
+                AND i.indisunique
+                AND i.indisvalid
+                AND i.indpred IS NULL
+                AND (string_to_array(i.indkey::text, ' ')::smallint[])[1:i.indnkeyatts] &lt;@ t1.conkey
+        ) THEN '○' ELSE '' END AS child_key_unique,
+        -- 外部キー列がすべてNOT NULLか（1件の子が必ず親を1件持つか）。
+        -- 1列でもNULLを許容すると参照が成立しない行が存在しうるため、親側は0または1となる
+        CASE WHEN NOT EXISTS (
+            SELECT 1
+            FROM unnest(t1.conkey) AS k(attnum)
+            JOIN pg_catalog.pg_attribute a
+                ON a.attrelid = t1.conrelid AND a.attnum = k.attnum
+            WHERE NOT a.attnotnull
+        ) THEN '○' ELSE '' END AS child_key_mandatory
     FROM
         pg_catalog.pg_constraint t1
     LEFT OUTER JOIN pg_catalog.pg_class t2
@@ -533,7 +555,9 @@ SELECT
     ELSE NULL END AS "foreignkeyInfo",
     foreignkey_name AS "foreignkeyName",
     reference_schema_name AS "referenceSchemaName",
-    reference_table_name AS "referenceTableName"
+    reference_table_name AS "referenceTableName",
+    child_key_unique AS "childKeyUnique",
+    child_key_mandatory AS "childKeyMandatory"
 FROM
     all_foreignkeys
 ORDER BY
@@ -548,6 +572,8 @@ ORDER BY
     <arg column="foreignkeyName" javaType="String"/>
     <arg column="referenceSchemaName" javaType="String"/>
     <arg column="referenceTableName" javaType="String"/>
+    <arg column="childKeyUnique" javaType="String"/>
+    <arg column="childKeyMandatory" javaType="String"/>
   </constructor>
 </resultMap>
 

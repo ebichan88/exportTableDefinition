@@ -14,6 +14,7 @@ import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.type.Cardinality;
 
 /**
  * TableDefinitionTemplates のセクション生成テスト
@@ -115,6 +116,17 @@ public class TableDefinitionTemplatesTest {
     }
 
     @Test
+    @DisplayName("foreignKeys: 行の末尾に多重度の列を追加する")
+    void testForeignKeysCardinalityColumn() {
+        TableEntity table = newTable("public", "profiles", "プロフィール", "table", "");
+        var fk = new ForeignKeyEntity("public", "profiles", "| 1 | fk_profiles_user | user_id | users | id |",
+                "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
+        String section = TableDefinitionTemplates.foreignKeys(List.of(fk), table);
+        assertTrue(section.contains("| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
+        assertTrue(section.contains("| 1 | fk_profiles_user | user_id | users | id |1対1|"));
+    }
+
+    @Test
     @DisplayName("triggers: schema.table 一致行のみ")
     void testTriggersFiltered() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
@@ -155,6 +167,21 @@ public class TableDefinitionTemplatesTest {
         assertTrue(section.contains("public_orders ||--o{ public_items : \"fk_items_orders\""));
         // 自テーブルの属性: 型の括弧部分は除去、空白はアンダースコア、PKマーカー付き
         assertTrue(section.contains("character_varying order_id PK"));
+    }
+
+    @Test
+    @DisplayName("erDiagram: 参照先・参照元それぞれの多重度に応じた関係線を出力する")
+    void testErDiagramCardinality() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var column = new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
+        var outgoing = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_coupon", "public", "coupons",
+                Cardinality.OPTIONAL_ONE_TO_MANY);
+        var incoming = new ForeignKeyEntity("public", "order_details", "unused", "fk_details_orders", "public",
+                "orders", Cardinality.ONE_TO_ONE);
+        String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing),
+                List.of(incoming));
+        assertTrue(section.contains("public_coupons |o--o{ public_orders : \"fk_orders_coupon\""));
+        assertTrue(section.contains("public_orders ||--o| public_order_details : \"fk_details_orders\""));
     }
 
     @Test

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.value.TableKey;
 
 /**
@@ -68,6 +69,18 @@ public class ErDiagramTemplatesTest {
         assertTrue(section.contains("```mermaid"));
         assertTrue(section.contains("erDiagram"));
         assertTrue(section.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
+    }
+
+    @Test
+    @DisplayName("erDiagram: 外部キーの多重度に応じた関係線を出力する")
+    void testErDiagramCardinality() {
+        var oneToOne = new ForeignKeyEntity("public", "profiles", "unused", "fk_profiles_user", "public", "users",
+                Cardinality.ONE_TO_ONE);
+        var optional = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_coupon", "public", "coupons",
+                Cardinality.OPTIONAL_ONE_TO_MANY);
+        String section = erDiagram(List.of(oneToOne, optional), 80);
+        assertTrue(section.contains("public_users ||--o| public_profiles : \"fk_profiles_user\""));
+        assertTrue(section.contains("public_coupons |o--o{ public_orders : \"fk_orders_coupon\""));
     }
 
     @Test

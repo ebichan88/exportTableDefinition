@@ -155,11 +155,12 @@ public class TableDefinitionTemplates {
         String header = """
                 ## 外部キー情報
 
-                | No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト |
-                |:---|:---|:---|:---|:---|
+                | No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+                |:---|:---|:---|:---|:---|:---|
                 """;
-        return tableSection(foreignkeys, table, header, ForeignKeyEntity::foreignkeyInfo,
-                ForeignKeyEntity::getSchemaTableName);
+        // 多重度はSQLで組み立てた行の末尾に付け足す。ラベルの表記をCardinalityに集約するため
+        return tableSection(foreignkeys, table, header,
+                fk -> fk.foreignkeyInfo() + fk.cardinality().getLabel() + "|", ForeignKeyEntity::getSchemaTableName);
     }
 
     /**
@@ -200,10 +201,11 @@ public class TableDefinitionTemplates {
         final String selfId = MermaidSupport.mermaidId(table.schemaName(), table.physicalTableName());
         sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
         outgoingFks.forEach(fk -> sb.append("    ")
-                .append(MermaidSupport.mermaidId(fk.referenceSchemaName(), fk.referenceTableName()))
-                .append(" ||--o{ ").append(selfId).append(" : \"").append(fk.foreignkeyName()).append('"')
-                .append(LINE_SEPARATOR));
-        incomingFks.forEach(fk -> sb.append("    ").append(selfId).append(" ||--o{ ")
+                .append(MermaidSupport.mermaidId(fk.referenceSchemaName(), fk.referenceTableName())).append(' ')
+                .append(fk.cardinality().getNotation()).append(' ').append(selfId).append(" : \"")
+                .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
+        incomingFks.forEach(fk -> sb.append("    ").append(selfId).append(' ')
+                .append(fk.cardinality().getNotation()).append(' ')
                 .append(MermaidSupport.mermaidId(fk.schemaName(), fk.tableName())).append(" : \"")
                 .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
         sb.append("    ").append(selfId).append(" {").append(LINE_SEPARATOR);
