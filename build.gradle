@@ -38,6 +38,13 @@ test {
     useJUnitPlatform()
 }
 
+// PropertyLoaderはconfディレクトリをファイルシステムパスとして直接参照するため、
+// テスト専用のプロパティファイルもsrc/main/resources/conf配下に置いているが、
+// ビルド成果物（jar・配布用confディレクトリ）には含めない
+processResources {
+    exclude('conf/PropertyLoaderTestFixture.properties')
+}
+
 jar {
     manifest {
         attributes(
@@ -58,6 +65,7 @@ shadowJar {
 task copyResources(type: Copy) {
     from 'src/main/resources/conf'
     into "$buildDir/../build/libs/conf"
+    exclude('PropertyLoaderTestFixture.properties')
 }
 
 javadoc {

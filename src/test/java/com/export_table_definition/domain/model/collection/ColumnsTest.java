@@ -1,0 +1,62 @@
+package com.export_table_definition.domain.model.collection;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.export_table_definition.domain.model.entity.ColumnEntity;
+import com.export_table_definition.domain.model.entity.TableEntity;
+
+/**
+ * Columns のテーブルキーによるインデックス化に関するテスト
+ */
+public class ColumnsTest {
+
+    private TableEntity newTable(String schema, String physical) {
+        return new TableEntity("TEST_DB", schema, "", physical, "table", "", "", "");
+    }
+
+    @Test
+    @DisplayName("of: 自テーブルに属するカラムのみを、登録順を保って返す")
+    void testOfReturnsOwnColumnsInOrder() {
+        var id = new ColumnEntity("public", "orders", "unused", "id", "int", "○");
+        var name = new ColumnEntity("public", "orders", "unused", "name", "varchar", "");
+        var other = new ColumnEntity("public", "customers", "unused", "id", "int", "○");
+        var columns = Columns.of(List.of(id, name, other));
+
+        assertEquals(List.of(id, name), columns.of(newTable("public", "orders")));
+    }
+
+    @Test
+    @DisplayName("of: 該当するカラムがないテーブルには空リストを返す")
+    void testOfReturnsEmptyForUnknownTable() {
+        var columns = Columns.of(List.of(new ColumnEntity("public", "orders", "unused", "id", "int", "○")));
+
+        assertEquals(List.of(), columns.of(newTable("public", "unknown")));
+    }
+
+    @Test
+    @DisplayName("of: 同名テーブルでもスキーマが異なれば別のキーとして扱う")
+    void testOfDistinguishesSameTableNameAcrossSchemas() {
+        var publicCol = new ColumnEntity("public", "orders", "unused", "id", "int", "○");
+        var salesCol = new ColumnEntity("sales", "orders", "unused", "id", "int", "○");
+        var columns = Columns.of(List.of(publicCol, salesCol));
+
+        assertEquals(List.of(publicCol), columns.of(newTable("public", "orders")));
+        assertEquals(List.of(salesCol), columns.of(newTable("sales", "orders")));
+    }
+
+    @Test
+    @DisplayName("of: 入力リストで他テーブルの行と入り交じっていても、同一テーブルの行は集約される")
+    void testOfAggregatesInterleavedRows() {
+        var ordersId = new ColumnEntity("public", "orders", "unused", "id", "int", "○");
+        var customersId = new ColumnEntity("public", "customers", "unused", "id", "int", "○");
+        var ordersName = new ColumnEntity("public", "orders", "unused", "name", "varchar", "");
+        var columns = Columns.of(List.of(ordersId, customersId, ordersName));
+
+        assertEquals(List.of(ordersId, ordersName), columns.of(newTable("public", "orders")));
+    }
+}

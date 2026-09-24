@@ -1,0 +1,178 @@
+package com.export_table_definition.domain.service.writer;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.model.entity.SequenceEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
+
+/**
+ * ObjectListWriterDomainService のトリガー・関数/プロシージャ・シーケンス・型
+ * 一覧および個別定義書き込みに関するテスト
+ */
+public class ObjectListWriterDomainServiceTest {
+
+    private static final Path OUT = Path.of("output");
+
+    /** 書き込み内容・ディレクトリ作成呼び出しをメモリ上に収集するFileRepositoryのスタブ */
+    private static class InMemoryFileRepository implements FileRepository {
+        private final Map<Path, String> files = new LinkedHashMap<>();
+        private final List<Path> createdDirectories = new ArrayList<>();
+
+        @Override
+        public void writeFile(Path filePath, List<String> contents) {
+            files.put(filePath, String.join("", contents));
+        }
+
+        @Override
+        public void createDirectory(Path filePath) {
+            createdDirectories.add(filePath);
+        }
+    }
+
+    private InMemoryFileRepository fileRepository;
+    private ObjectListWriterDomainService writer;
+
+    private BaseInfoEntity baseInfo() {
+        return new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-24 |");
+    }
+
+    @BeforeEach
+    void setUp() {
+        fileRepository = new InMemoryFileRepository();
+        writer = new ObjectListWriterDomainService(fileRepository, new DefaultOutputPathResolver(),
+                new PagedSectionWriter(fileRepository));
+    }
+
+    @Test
+    @DisplayName("writeTriggerList: トリガーが0件の場合は何も出力しない")
+    void testWriteTriggerListEmptyWritesNothing() {
+        writer.writeTriggerList(List.of(), baseInfo(), OUT);
+        assertTrue(fileRepository.files.isEmpty());
+    }
+
+    @Test
+    @DisplayName("writeTriggerList: トリガーが存在する場合、一覧ファイルにヘッダー・基本情報・行・戻る導線が出力される")
+    void testWriteTriggerListWritesFile() {
+        var trigger = new TriggerEntity("public", "orders", "|1|public|orders|trg_orders|BEFORE|INSERT|f_orders|",
+                "unused");
+        writer.writeTriggerList(List.of(trigger), baseInfo(), OUT);
+
+        Path file = OUT.resolve("triggerList_testdb.md");
+        assertTrue(fileRepository.files.containsKey(file));
+        String content = fileRepository.files.get(file);
+        assertTrue(content.contains("# トリガー一覧（DB名：testdb）"));
+        assertTrue(content.contains("| pg | testdb | 2026-09-24 |"));
+        assertTrue(content.contains("trg_orders"));
+        assertTrue(content.contains("[テーブル一覧へ](./tableList_testdb.md)"));
+    }
+
+    @Test
+    @DisplayName("writeFunctionList: 関数・プロシージャが0件の場合は何も出力しない")
+    void testWriteFunctionListEmptyWritesNothing() {
+        writer.writeFunctionList(List.of(), baseInfo(), OUT);
+        assertTrue(fileRepository.files.isEmpty());
+    }
+
+    @Test
+    @DisplayName("writeFunctionList: 関数・プロシージャの一覧ファイルが出力される")
+    void testWriteFunctionListWritesFile() {
+        var function = new FunctionEntity("testdb", "public", "calc_total", "calc_total",
+                "|1|public|function|calc_total|()|int|plpgsql|link|", "");
+        writer.writeFunctionList(List.of(function), baseInfo(), OUT);
+
+        Path file = OUT.resolve("functionList_testdb.md");
+        assertTrue(fileRepository.files.containsKey(file));
+        assertTrue(fileRepository.files.get(file).contains("calc_total"));
+    }
+
+    @Test
+    @DisplayName("writeFunctionDefinition: スキーマ配下のfunctionディレクトリに個別ファイルを出力する")
+    void testWriteFunctionDefinitionWritesIndividualFile() {
+        var function = new FunctionEntity("testdb", "public", "calc_total", "calc_total", "unused", "SELECT 1;");
+        writer.writeFunctionDefinition(function, baseInfo(), OUT);
+
+        Path expectedDir = OUT.resolve("testdb").resolve("public").resolve("function");
+        Path expectedFile = expectedDir.resolve("calc_total.md");
+        assertTrue(fileRepository.createdDirectories.contains(expectedDir));
+        assertTrue(fileRepository.files.containsKey(expectedFile));
+        String content = fileRepository.files.get(expectedFile);
+        assertTrue(content.contains("# calc_total"));
+        assertTrue(content.contains("SELECT 1;"));
+        assertTrue(content.contains("[関数・プロシージャ一覧へ](../../../functionList_testdb.md)"));
+    }
+
+    @Test
+    @DisplayName("writeSequenceList: シーケンスが0件の場合は何も出力しない")
+    void testWriteSequenceListEmptyWritesNothing() {
+        writer.writeSequenceList(List.of(), baseInfo(), OUT);
+        assertTrue(fileRepository.files.isEmpty());
+    }
+
+    @Test
+    @DisplayName("writeSequenceDefinition: スキーマ配下のsequenceディレクトリに個別ファイルを出力する")
+    void testWriteSequenceDefinitionWritesIndividualFile() {
+        var sequence = new SequenceEntity("testdb", "public", "seq_orders", "unused",
+                "|1|10|1|999999999|20|1|true|orders.id|");
+        writer.writeSequenceDefinition(sequence, baseInfo(), OUT);
+
+        Path expectedFile = OUT.resolve("testdb").resolve("public").resolve("sequence").resolve("seq_orders.md");
+        assertTrue(fileRepository.files.containsKey(expectedFile));
+        String content = fileRepository.files.get(expectedFile);
+        assertTrue(content.contains("# seq_orders"));
+        assertTrue(content.contains("|1|10|1|999999999|20|1|true|orders.id|"));
+        assertTrue(content.contains("[シーケンス一覧へ](../../../sequenceList_testdb.md)"));
+    }
+
+    @Test
+    @DisplayName("writeTypeList: ユーザー定義型が0件の場合は何も出力しない")
+    void testWriteTypeListEmptyWritesNothing() {
+        writer.writeTypeList(List.of(), baseInfo(), OUT);
+        assertTrue(fileRepository.files.isEmpty());
+    }
+
+    @Test
+    @DisplayName("writeTypeDefinition: スキーマ配下のtypeディレクトリに個別ファイルを出力する")
+    void testWriteTypeDefinitionWritesIndividualFile() {
+        var type = new TypeEntity("testdb", "public", "order_status", "enum", "unused", "PENDING,SHIPPED,DONE");
+        writer.writeTypeDefinition(type, baseInfo(), OUT);
+
+        Path expectedFile = OUT.resolve("testdb").resolve("public").resolve("type").resolve("order_status.md");
+        assertTrue(fileRepository.files.containsKey(expectedFile));
+        String content = fileRepository.files.get(expectedFile);
+        assertTrue(content.contains("# order_status"));
+        assertTrue(content.contains("|enum|PENDING,SHIPPED,DONE|"));
+        assertTrue(content.contains("[ユーザー定義型一覧へ](../../../typeList_testdb.md)"));
+    }
+
+    @Test
+    @DisplayName("writeTriggerList: 行数が多い場合はページ分割され、本体ページにはリンクのみ掲載される")
+    void testWriteTriggerListSplitsWhenExceedingMaxPageSize() {
+        List<TriggerEntity> triggers = IntStream.rangeClosed(1, 3001)
+                .mapToObj(i -> new TriggerEntity("public", "t" + i, "|" + i + "|public|t" + i + "|trg" + i + "|||", "unused"))
+                .toList();
+        writer.writeTriggerList(triggers, baseInfo(), OUT);
+
+        assertTrue(fileRepository.files.containsKey(OUT.resolve("triggerList_testdb_1.md")));
+        assertTrue(fileRepository.files.containsKey(OUT.resolve("triggerList_testdb_2.md")));
+        String main = fileRepository.files.get(OUT.resolve("triggerList_testdb.md"));
+        assertFalse(main.contains("trg1|"), "本体ページには行そのものは含まれない");
+        assertTrue(main.contains("./triggerList_testdb_1.md"));
+        assertTrue(main.contains("./triggerList_testdb_2.md"));
+    }
+}
