@@ -23,16 +23,18 @@ public class ExportTableDefinitionControllerTest {
         String capturedOutputPath;
         int capturedChunkSize;
         int capturedErDiagramMaxNodes;
+        List<String> capturedOutputObjectList;
         RuntimeException toThrow;
 
         @Override
         public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList,
-                String outputPath, int chunkSize, int erDiagramMaxNodes) {
+                String outputPath, int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList) {
             this.capturedSchemaList = targetSchemaList;
             this.capturedTableList = targetTableList;
             this.capturedOutputPath = outputPath;
             this.capturedChunkSize = chunkSize;
             this.capturedErDiagramMaxNodes = erDiagramMaxNodes;
+            this.capturedOutputObjectList = outputObjectList;
             if (toThrow != null) {
                 throw toThrow;
             }
@@ -45,7 +47,7 @@ public class ExportTableDefinitionControllerTest {
         var usecase = new RecordingUsecase();
         var controller = new ExportTableDefinitionController(usecase);
 
-        ResultDto result = controller.execute(List.of("public"), List.of("orders"), "output", 100, 80);
+        ResultDto result = controller.execute(List.of("public"), List.of("orders"), "output", 100, 80, List.of());
 
         assertEquals(ProcessResult.SUCCESS, result.result());
         assertEquals("Table definition output is complete.", result.message());
@@ -57,13 +59,14 @@ public class ExportTableDefinitionControllerTest {
         var usecase = new RecordingUsecase();
         var controller = new ExportTableDefinitionController(usecase);
 
-        controller.execute(List.of("public"), List.of("orders"), "output", 100, 80);
+        controller.execute(List.of("public"), List.of("orders"), "output", 100, 80, List.of("trigger", "function"));
 
         assertEquals(List.of("public"), usecase.capturedSchemaList);
         assertEquals(List.of("orders"), usecase.capturedTableList);
         assertEquals("output", usecase.capturedOutputPath);
         assertEquals(100, usecase.capturedChunkSize);
         assertEquals(80, usecase.capturedErDiagramMaxNodes);
+        assertEquals(List.of("trigger", "function"), usecase.capturedOutputObjectList);
     }
 
     @Test
@@ -73,7 +76,7 @@ public class ExportTableDefinitionControllerTest {
         usecase.toThrow = new RuntimeException("boom");
         var controller = new ExportTableDefinitionController(usecase);
 
-        ResultDto result = controller.execute(List.of(), List.of(), null, 0, 0);
+        ResultDto result = controller.execute(List.of(), List.of(), null, 0, 0, List.of());
 
         assertEquals(ProcessResult.FAIL, result.result());
         assertTrue(result.message().contains("boom"));
@@ -86,6 +89,6 @@ public class ExportTableDefinitionControllerTest {
         usecase.toThrow = new IllegalStateException("unexpected");
         var controller = new ExportTableDefinitionController(usecase);
 
-        assertDoesNotThrow(() -> controller.execute(List.of(), List.of(), null, 0, 0));
+        assertDoesNotThrow(() -> controller.execute(List.of(), List.of(), null, 0, 0, List.of()));
     }
 }

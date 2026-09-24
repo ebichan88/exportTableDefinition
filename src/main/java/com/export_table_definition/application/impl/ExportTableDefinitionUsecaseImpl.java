@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +24,7 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.OutputObjectType;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
@@ -67,10 +69,12 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      */
     @Override
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
-            int chunkSize, int erDiagramMaxNodes) {
+            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList) {
         // ベースディレクトリパス取得
         final Path outputBaseDir = Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
                 .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
+        // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
+        final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
 
         // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する
         final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
@@ -80,14 +84,24 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         // 特定のチャンクに限定せず全件を保持しておく必要がある
         final ForeignKeys foreignKeys = ForeignKeys.of(repository.selectForeignKeyList(targetSchemaList, targetTableList));
         // トリガーはテーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、
-        // テーブル定義書内のセクションとトリガー一覧の両方で利用する
-        final List<TriggerEntity> triggerEntityList = repository.selectTriggerList(targetSchemaList, targetTableList);
+        // テーブル定義書内のセクションとトリガー一覧の両方で利用する。
+        // outputObjectListでトリガーが対象外とされた場合は、取得自体を行わず一覧・テーブル定義書双方から除外する
+        final List<TriggerEntity> triggerEntityList = outputObjectTypes.contains(OutputObjectType.TRIGGER)
+                ? repository.selectTriggerList(targetSchemaList, targetTableList)
+                : List.of();
         final Triggers triggers = Triggers.of(triggerEntityList);
         // スキーマレベルのオブジェクト（関数/シーケンス/型）はテーブルフィルタの対象外。スキーマフィルタのみ適用する。
-        // 関数一覧は定義本体を含まない軽量情報のみ先に取得する（定義本体はスキーマ単位で別途取得する）
-        final List<FunctionEntity> functionList = repository.selectFunctionList(targetSchemaList);
-        final List<SequenceEntity> sequenceList = repository.selectSequenceList(targetSchemaList);
-        final List<TypeEntity> typeList = repository.selectTypeList(targetSchemaList);
+        // 関数一覧は定義本体を含まない軽量情報のみ先に取得する（定義本体はスキーマ単位で別途取得する）。
+        // outputObjectListで対象外とされた種別は取得自体を行わない（一覧・個別定義とも出力されなくなる）
+        final List<FunctionEntity> functionList = outputObjectTypes.contains(OutputObjectType.FUNCTION)
+                ? repository.selectFunctionList(targetSchemaList)
+                : List.of();
+        final List<SequenceEntity> sequenceList = outputObjectTypes.contains(OutputObjectType.SEQUENCE)
+                ? repository.selectSequenceList(targetSchemaList)
+                : List.of();
+        final List<TypeEntity> typeList = outputObjectTypes.contains(OutputObjectType.TYPE)
+                ? repository.selectTypeList(targetSchemaList)
+                : List.of();
 
         // テーブル一覧の関連ドキュメント導線（存在するカテゴリのみ）
         final Map<String, String> relatedDocuments = buildRelatedDocuments(tableEntityList, triggerEntityList,

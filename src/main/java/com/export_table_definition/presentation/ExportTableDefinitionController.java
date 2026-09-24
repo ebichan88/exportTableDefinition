@@ -40,14 +40,15 @@ public class ExportTableDefinitionController {
      * @param outputPath テーブル定義出力の出力先のパス
      * @param chunkSize  詳細情報をまとめて取得するテーブル数の上限
      * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
+     * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト（空の場合は全種別を出力対象とする）
      * @return 処理結果
      */
     public ResultDto execute(List<String> schemaList, List<String> tableList, String outputPath, int chunkSize,
-            int erDiagramMaxNodes) {
+            int erDiagramMaxNodes, List<String> outputObjectList) {
         logger.info("[START] exportTableDefinition");
         try {
             exportTableDefinitionUsecase.exportTableDefinition(schemaList, tableList, outputPath, chunkSize,
-                    erDiagramMaxNodes);
+                    erDiagramMaxNodes, outputObjectList);
         } catch (Exception e) {
             logger.error(e);
             return new ResultDto(ProcessResult.FAIL,

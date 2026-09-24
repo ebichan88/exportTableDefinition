@@ -21,7 +21,9 @@ public interface ExportTableDefinitionUsecase {
      *                         0以下の場合はスキーマ単位で分割せず取得する
      * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限。超過した場合はER図の代わりに
      *                          外部キーの一覧表を出力する。0以下の場合は上限なし
+     * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名（{@link com.export_table_definition.domain.model.type.OutputObjectType#getName()}）のリスト。
+     *                         空の場合は全種別を出力対象とする
      */
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
-            int chunkSize, int erDiagramMaxNodes);
+            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList);
 }

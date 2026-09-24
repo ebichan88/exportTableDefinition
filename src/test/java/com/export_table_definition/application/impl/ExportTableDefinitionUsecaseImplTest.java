@@ -190,7 +190,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.sequences.add(new SequenceEntity("testdb", "public", "seq1", "seq_list", "seq_info"));
         repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "type_list", "def"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
 
         // テーブル一覧: 全カテゴリへの関連ドキュメントリンクを含む
         final Path tableListFile = DEFAULT_OUT.resolve("tableList_testdb.md");
@@ -223,13 +223,50 @@ public class ExportTableDefinitionUsecaseImplTest {
     }
 
     @Test
+    @DisplayName("outputObjectListで一部種別のみ指定した場合、指定外の種別は一覧・個別定義・テーブル定義書内セクションとも出力されない")
+    void testOutputObjectListRestrictsToSpecifiedTypes() {
+        setUp();
+        repository.tables.add(table("public", "t1"));
+        repository.columns.add(new ColumnEntity("public", "t1", "col1", "id", "int", "○"));
+        repository.triggers.add(new TriggerEntity("public", "t1", "trg_list", "trg_info"));
+        repository.functions.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", ""));
+        repository.functionDefs.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", "BODY"));
+        repository.sequences.add(new SequenceEntity("testdb", "public", "seq1", "seq_list", "seq_info"));
+        repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "type_list", "def"));
+
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of("function"));
+
+        // 指定したfunctionのみ出力される
+        assertTrue(fileExists(DEFAULT_OUT.resolve("functionList_testdb.md")));
+        assertTrue(fileExists(DEFAULT_OUT.resolve("testdb").resolve("public").resolve("function").resolve("f1.md")));
+
+        // 指定外の種別は一覧・個別定義とも出力されない
+        assertFalse(fileExists(DEFAULT_OUT.resolve("triggerList_testdb.md")));
+        assertFalse(fileExists(DEFAULT_OUT.resolve("sequenceList_testdb.md")));
+        assertFalse(fileExists(DEFAULT_OUT.resolve("typeList_testdb.md")));
+        assertFalse(fileExists(DEFAULT_OUT.resolve("testdb").resolve("public").resolve("sequence").resolve("seq1.md")));
+        assertFalse(fileExists(DEFAULT_OUT.resolve("testdb").resolve("public").resolve("type").resolve("type1.md")));
+
+        // テーブル一覧の関連ドキュメントも指定外の種別は含まれない
+        final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
+        assertTrue(tableListContent.contains("関数・プロシージャ一覧"));
+        assertFalse(tableListContent.contains("シーケンス一覧"));
+        assertFalse(tableListContent.contains("ユーザー定義型一覧"));
+        assertFalse(tableListContent.contains("トリガー一覧"));
+
+        // トリガーが対象外の場合、テーブル定義書内の「トリガー情報」セクションにも出力されない
+        final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
+        assertFalse(t1Content.contains("trg_info"));
+    }
+
+    @Test
     @DisplayName("関連ドキュメントは存在するカテゴリのみリンクされ、対象が空の一覧は出力されない")
     void testBuildRelatedDocumentsOnlyIncludesExistingCategories() {
         setUp();
         repository.tables.add(table("public", "t1"));
         // トリガー・関数・シーケンス・型はすべて0件
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
 
         final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
         assertTrue(tableListContent.contains("ER図一覧"));
@@ -251,7 +288,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         IntStream.rangeClosed(1, 5).forEach(i -> repository.tables.add(table("public", "t" + i)));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of());
 
         // 5件を2件ずつ取得: 3回に分割される
         assertEquals(3, repository.columnCallArgs.size());
@@ -273,7 +310,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         IntStream.rangeClosed(1, 5).forEach(i -> repository.tables.add(table("public", "t" + i)));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
 
         assertEquals(1, repository.columnCallArgs.size());
         assertEquals(5, repository.columnCallArgs.get(0).size());
@@ -291,7 +328,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.functionDefs.add(new FunctionEntity("testdb", "s1", "f2", "f2", "list", "BODY2"));
         repository.functionDefs.add(new FunctionEntity("testdb", "s2", "f3", "f3", "list", "BODY3"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
 
         // 関数は3件だが、スキーマは2件のためselectFunctionDefListは2回のみ呼ばれる
         assertEquals(2, repository.functionDefCallArgs.size());
@@ -310,7 +347,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.tables.add(table("public", "keep"));
         repository.tables.add(table("public", "skip"));
 
-        usecase.exportTableDefinition(List.of(), List.of("keep"), null, 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of("keep"), null, 0, 80, List.of());
 
         assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "keep")));
         assertFalse(fileExists(tableDefFile(DEFAULT_OUT, "public", "skip")));
@@ -326,7 +363,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         repository.tables.add(table("public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
 
         assertTrue(fileExists(DEFAULT_OUT.resolve("tableList_testdb.md")));
     }
@@ -337,7 +374,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         repository.tables.add(table("public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), "   ", 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), "   ", 0, 80, List.of());
 
         assertTrue(fileExists(DEFAULT_OUT.resolve("tableList_testdb.md")));
     }
@@ -348,7 +385,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         repository.tables.add(table("public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), "custom_out", 0, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), "custom_out", 0, 80, List.of());
 
         final Path customOut = Paths.get("custom_out");
         assertTrue(fileExists(customOut.resolve("tableList_testdb.md")));
@@ -363,7 +400,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         // t4（2チャンク目）がt1（1チャンク目）を参照する
         repository.foreignKeys.add(new ForeignKeyEntity("public", "t4", "unused", "fk_t4_t1", "public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80);
+        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of());
 
         final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
         // t1はt4から参照されている（被参照側）関係がER図セクションに反映される
