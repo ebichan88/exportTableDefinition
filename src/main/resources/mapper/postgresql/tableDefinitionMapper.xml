@@ -539,7 +539,10 @@
             schema_name AS "schemaName",
             function_name AS "functionName",
             file_name AS "fileName",
-            concat('|', row_number() over (ORDER BY schema_name, function_name, file_name), '|', schema_name, '|', function_kind, '|', function_name, '|', replace(function_arguments, '|', '\|'), '|', replace(function_result, '|', '\|'), '|', language_name, '|', concat('[■](./', db_name, '/', schema_name, '/function/', file_name, '.md)'), '|') AS "functionListInfo",
+            function_kind AS "functionKind",
+            replace(function_arguments, '|', '\|') AS "functionArguments",
+            replace(function_result, '|', '\|') AS "functionResult",
+            language_name AS "languageName",
             '' AS definition
         FROM all_functions
         ORDER BY schema_name, function_name, file_name;
@@ -568,7 +571,10 @@
             schema_name AS "schemaName",
             function_name AS "functionName",
             file_name AS "fileName",
-            '' AS "functionListInfo",
+            '' AS "functionKind",
+            '' AS "functionArguments",
+            '' AS "functionResult",
+            '' AS "languageName",
             definition AS definition
         FROM all_functions
         ORDER BY schema_name, function_name, file_name;
@@ -580,7 +586,10 @@
             <arg column="schemaName" javaType="String" />
             <arg column="functionName" javaType="String" />
             <arg column="fileName" javaType="String" />
-            <arg column="functionListInfo" javaType="String" />
+            <arg column="functionKind" javaType="String" />
+            <arg column="functionArguments" javaType="String" />
+            <arg column="functionResult" javaType="String" />
+            <arg column="languageName" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>
@@ -621,8 +630,13 @@
             db_name AS "dbName",
             schema_name AS "schemaName",
             sequence_name AS "sequenceName",
-            concat('|', row_number() over (ORDER BY schema_name, sequence_name), '|', schema_name, '|', sequence_name, '|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|', concat('[■](./', db_name, '/', schema_name, '/sequence/', sequence_name, '.md)'), '|') AS "sequenceListInfo",
-            concat('|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|') AS "sequenceInfo"
+            increment_by AS "incrementBy",
+            min_value AS "minValue",
+            max_value AS "maxValue",
+            cache_size AS "cacheSize",
+            start_value AS "startValue",
+            cycle AS "cycle",
+            owned_by AS "ownedBy"
         FROM all_sequences
         ORDER BY schema_name, sequence_name;
     </select>
@@ -632,8 +646,13 @@
             <arg column="dbName" javaType="String" />
             <arg column="schemaName" javaType="String" />
             <arg column="sequenceName" javaType="String" />
-            <arg column="sequenceListInfo" javaType="String" />
-            <arg column="sequenceInfo" javaType="String" />
+            <arg column="incrementBy" javaType="String" />
+            <arg column="minValue" javaType="String" />
+            <arg column="maxValue" javaType="String" />
+            <arg column="cacheSize" javaType="String" />
+            <arg column="startValue" javaType="String" />
+            <arg column="cycle" javaType="String" />
+            <arg column="ownedBy" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -675,7 +694,6 @@
             schema_name AS "schemaName",
             type_name AS "typeName",
             type_category AS "typeCategory",
-            concat('|', row_number() over (ORDER BY schema_name, type_name), '|', schema_name, '|', type_name, '|', type_category, '|', definition, '|', concat('[■](./', db_name, '/', schema_name, '/type/', type_name, '.md)'), '|') AS "typeListInfo",
             definition AS definition
         FROM all_types
         ORDER BY schema_name, type_name;
@@ -687,7 +705,6 @@
             <arg column="schemaName" javaType="String" />
             <arg column="typeName" javaType="String" />
             <arg column="typeCategory" javaType="String" />
-            <arg column="typeListInfo" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>

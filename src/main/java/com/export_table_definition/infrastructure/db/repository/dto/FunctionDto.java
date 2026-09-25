@@ -14,7 +14,10 @@ public record FunctionDto(
     String schemaName,
     String functionName,
     String fileName,
-    String functionListInfo,
+    String functionKind,
+    String functionArguments,
+    String functionResult,
+    String languageName,
     String definition) {
 
   /**
@@ -24,6 +27,14 @@ public record FunctionDto(
    */
   public FunctionEntity toEntity() {
     return new FunctionEntity(
-        dbName, schemaName, functionName, fileName, functionListInfo, definition);
+        dbName,
+        schemaName,
+        functionName,
+        fileName,
+        functionKind,
+        functionArguments,
+        functionResult,
+        languageName,
+        definition);
   }
 }

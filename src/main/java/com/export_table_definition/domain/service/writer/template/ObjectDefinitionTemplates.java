@@ -81,7 +81,21 @@ public class ObjectDefinitionTemplates {
                 | 増分 | 最小値 | 最大値 | キャッシュ | 開始値 | 循環 | 所有カラム |
                 |:---|:---|:---|:---|:---|:---|:---|
                 """
-            + sequence.sequenceInfo()
+            + "|"
+            + sequence.incrementBy()
+            + "|"
+            + sequence.minValue()
+            + "|"
+            + sequence.maxValue()
+            + "|"
+            + sequence.cacheSize()
+            + "|"
+            + sequence.startValue()
+            + "|"
+            + sequence.cycle()
+            + "|"
+            + sequence.ownedBy()
+            + "|"
             + LINE_SEPARATOR_DOUBLE;
     return "# "
         + sequence.sequenceName()

@@ -149,9 +149,42 @@ public class ObjectListWriterDomainService {
         "function",
         ObjectListTemplates.functionTableHeader(),
         functions,
-        (no, f) -> f.functionListInfo(),
+        (no, f) ->
+            "|"
+                + no
+                + "|"
+                + f.schemaName()
+                + "|"
+                + f.functionKind()
+                + "|"
+                + f.functionName()
+                + "|"
+                + f.functionArguments()
+                + "|"
+                + f.functionResult()
+                + "|"
+                + f.languageName()
+                + "|"
+                + objectLink(f.dbName(), f.schemaName(), "function", f.fileName())
+                + "|",
         baseInfo,
         outputDirectoryPath);
+  }
+
+  /**
+   * オブジェクトの個別定義ファイルへのリンクをMarkdownのリンク記法で表す文字列を生成するメソッド<br>
+   * 関数/プロシージャ・シーケンス・ユーザー定義型の個別定義ファイルは出力ベースディレクトリ直下に配置されるため、 {@code
+   * ./{DB名}/{スキーマ名}/{区分}/{ファイル名}.md}となる
+   *
+   * @param dbName データベース名
+   * @param schemaName スキーマ名
+   * @param prefix オブジェクトの区分（function/sequence/type）
+   * @param fileName 個別定義ファイル名（拡張子を除く）
+   * @return オブジェクトの個別定義ファイルへのリンク文字列
+   */
+  private static String objectLink(
+      String dbName, String schemaName, String prefix, String fileName) {
+    return String.format("[■](./%s/%s/%s/%s.md)", dbName, schemaName, prefix, fileName);
   }
 
   /**
@@ -190,7 +223,30 @@ public class ObjectListWriterDomainService {
         "sequence",
         ObjectListTemplates.sequenceTableHeader(),
         sequences,
-        (no, s) -> s.sequenceListInfo(),
+        (no, s) ->
+            "|"
+                + no
+                + "|"
+                + s.schemaName()
+                + "|"
+                + s.sequenceName()
+                + "|"
+                + s.incrementBy()
+                + "|"
+                + s.minValue()
+                + "|"
+                + s.maxValue()
+                + "|"
+                + s.cacheSize()
+                + "|"
+                + s.startValue()
+                + "|"
+                + s.cycle()
+                + "|"
+                + s.ownedBy()
+                + "|"
+                + objectLink(s.dbName(), s.schemaName(), "sequence", s.sequenceName())
+                + "|",
         baseInfo,
         outputDirectoryPath);
   }
@@ -235,7 +291,20 @@ public class ObjectListWriterDomainService {
         "type",
         ObjectListTemplates.typeTableHeader(),
         types,
-        (no, t) -> t.typeListInfo(),
+        (no, t) ->
+            "|"
+                + no
+                + "|"
+                + t.schemaName()
+                + "|"
+                + t.typeName()
+                + "|"
+                + t.typeCategory()
+                + "|"
+                + t.definition()
+                + "|"
+                + objectLink(t.dbName(), t.schemaName(), "type", t.typeName())
+                + "|",
         baseInfo,
         outputDirectoryPath);
   }

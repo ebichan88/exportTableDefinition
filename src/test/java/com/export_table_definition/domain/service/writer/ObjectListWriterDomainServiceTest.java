@@ -113,12 +113,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteFunctionListWritesFile() {
     var function =
         new FunctionEntity(
-            "testdb",
-            "public",
-            "calc_total",
-            "calc_total",
-            "|1|public|function|calc_total|()|int|plpgsql|link|",
-            "");
+            "testdb", "public", "calc_total", "calc_total", "FUNCTION", "()", "int", "plpgsql", "");
     writer.writeFunctionList(List.of(function), baseInfo(), OUT);
 
     Path file = OUT.resolve("functionList_testdb.md");
@@ -130,7 +125,8 @@ public class ObjectListWriterDomainServiceTest {
   @DisplayName("writeFunctionDefinition: スキーマ配下のfunctionディレクトリに個別ファイルを出力する")
   void testWriteFunctionDefinitionWritesIndividualFile() {
     var function =
-        new FunctionEntity("testdb", "public", "calc_total", "calc_total", "unused", "SELECT 1;");
+        new FunctionEntity(
+            "testdb", "public", "calc_total", "calc_total", "", "", "", "", "SELECT 1;");
     writer.writeFunctionDefinition(function, baseInfo(), OUT);
 
     Path expectedDir = OUT.resolve("testdb").resolve("public").resolve("function");
@@ -155,7 +151,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteSequenceDefinitionWritesIndividualFile() {
     var sequence =
         new SequenceEntity(
-            "testdb", "public", "seq_orders", "unused", "|1|10|1|999999999|20|1|true|orders.id|");
+            "testdb", "public", "seq_orders", "10", "1", "999999999", "20", "1", "○", "orders.id");
     writer.writeSequenceDefinition(sequence, baseInfo(), OUT);
 
     Path expectedFile =
@@ -163,7 +159,7 @@ public class ObjectListWriterDomainServiceTest {
     assertTrue(fileRepository.files.containsKey(expectedFile));
     String content = fileRepository.files.get(expectedFile);
     assertTrue(content.contains("# seq_orders"));
-    assertTrue(content.contains("|1|10|1|999999999|20|1|true|orders.id|"));
+    assertTrue(content.contains("|10|1|999999999|20|1|○|orders.id|"));
     assertTrue(content.contains("[シーケンス一覧へ](../../../sequenceList_testdb.md)"));
   }
 
@@ -177,9 +173,7 @@ public class ObjectListWriterDomainServiceTest {
   @Test
   @DisplayName("writeTypeDefinition: スキーマ配下のtypeディレクトリに個別ファイルを出力する")
   void testWriteTypeDefinitionWritesIndividualFile() {
-    var type =
-        new TypeEntity(
-            "testdb", "public", "order_status", "enum", "unused", "PENDING,SHIPPED,DONE");
+    var type = new TypeEntity("testdb", "public", "order_status", "enum", "PENDING,SHIPPED,DONE");
     writer.writeTypeDefinition(type, baseInfo(), OUT);
 
     Path expectedFile =
