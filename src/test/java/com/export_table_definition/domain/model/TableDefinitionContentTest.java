@@ -39,8 +39,8 @@ public class TableDefinitionContentTest {
     var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
     var target = newTable("public", "orders");
 
-    var ownColumn = new ColumnEntity("public", "orders", "id", "int", "○");
-    var otherColumn = new ColumnEntity("public", "customers", "id", "int", "○");
+    var ownColumn = new ColumnEntity("public", "orders", "id", "int", true);
+    var otherColumn = new ColumnEntity("public", "customers", "id", "int", true);
     var columns = Columns.of(List.of(ownColumn, otherColumn));
 
     var ownIndex = new IndexEntity("public", "orders");

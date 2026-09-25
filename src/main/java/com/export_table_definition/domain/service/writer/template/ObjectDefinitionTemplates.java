@@ -94,7 +94,7 @@ public class ObjectDefinitionTemplates {
             + "|"
             + sequence.startValue()
             + "|"
-            + sequence.cycle()
+            + MarkdownTemplateSupport.marker(sequence.cycle())
             + "|"
             + sequence.ownedBy()
             + "|"

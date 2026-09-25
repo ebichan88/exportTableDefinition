@@ -18,9 +18,9 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 自テーブルに属するカラムのみを、登録順を保って返す")
   void testOfReturnsOwnColumnsInOrder() {
-    var id = new ColumnEntity("public", "orders", "id", "int", "○");
-    var name = new ColumnEntity("public", "orders", "name", "varchar", "");
-    var other = new ColumnEntity("public", "customers", "id", "int", "○");
+    var id = new ColumnEntity("public", "orders", "id", "int", true);
+    var name = new ColumnEntity("public", "orders", "name", "varchar", false);
+    var other = new ColumnEntity("public", "customers", "id", "int", true);
     var columns = Columns.of(List.of(id, name, other));
 
     assertEquals(List.of(id, name), columns.of(newTable("public", "orders")));
@@ -29,7 +29,7 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 該当するカラムがないテーブルには空リストを返す")
   void testOfReturnsEmptyForUnknownTable() {
-    var columns = Columns.of(List.of(new ColumnEntity("public", "orders", "id", "int", "○")));
+    var columns = Columns.of(List.of(new ColumnEntity("public", "orders", "id", "int", true)));
 
     assertEquals(List.of(), columns.of(newTable("public", "unknown")));
   }
@@ -37,8 +37,8 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 同名テーブルでもスキーマが異なれば別のキーとして扱う")
   void testOfDistinguishesSameTableNameAcrossSchemas() {
-    var publicCol = new ColumnEntity("public", "orders", "id", "int", "○");
-    var salesCol = new ColumnEntity("sales", "orders", "id", "int", "○");
+    var publicCol = new ColumnEntity("public", "orders", "id", "int", true);
+    var salesCol = new ColumnEntity("sales", "orders", "id", "int", true);
     var columns = Columns.of(List.of(publicCol, salesCol));
 
     assertEquals(List.of(publicCol), columns.of(newTable("public", "orders")));
@@ -48,9 +48,9 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 入力リストで他テーブルの行と入り交じっていても、同一テーブルの行は集約される")
   void testOfAggregatesInterleavedRows() {
-    var ordersId = new ColumnEntity("public", "orders", "id", "int", "○");
-    var customersId = new ColumnEntity("public", "customers", "id", "int", "○");
-    var ordersName = new ColumnEntity("public", "orders", "name", "varchar", "");
+    var ordersId = new ColumnEntity("public", "orders", "id", "int", true);
+    var customersId = new ColumnEntity("public", "customers", "id", "int", true);
+    var ordersName = new ColumnEntity("public", "orders", "name", "varchar", false);
     var columns = Columns.of(List.of(ordersId, customersId, ordersName));
 
     assertEquals(List.of(ordersId, ordersName), columns.of(newTable("public", "orders")));

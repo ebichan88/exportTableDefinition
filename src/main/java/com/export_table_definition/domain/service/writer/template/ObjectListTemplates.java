@@ -174,7 +174,7 @@ public class ObjectListTemplates {
         + "|"
         + sequence.startValue()
         + "|"
-        + sequence.cycle()
+        + MarkdownTemplateSupport.marker(sequence.cycle())
         + "|"
         + sequence.ownedBy()
         + "|"

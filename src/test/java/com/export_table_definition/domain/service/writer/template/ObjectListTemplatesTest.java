@@ -90,7 +90,7 @@ public class ObjectListTemplatesTest {
   void testSequenceListLine() {
     var sequence =
         new SequenceEntity(
-            "TEST_DB", "public", "seq_orders", "10", "1", "999", "20", "1", "○", "orders.id");
+            "TEST_DB", "public", "seq_orders", "10", "1", "999", "20", "1", true, "orders.id");
     assertEquals(
         "|1|public|seq_orders|10|1|999|20|1|○|orders.id|[■](./TEST_DB/public/sequence/seq_orders.md)|"
             + System.lineSeparator(),

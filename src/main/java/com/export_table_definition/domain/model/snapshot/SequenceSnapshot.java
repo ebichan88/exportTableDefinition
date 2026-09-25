@@ -47,7 +47,7 @@ public record SequenceSnapshot(
         text(sequence.maxValue()),
         text(sequence.cacheSize()),
         text(sequence.startValue()),
-        sequence.isCycle(),
+        sequence.cycle(),
         text(sequence.ownedBy()));
   }
 }

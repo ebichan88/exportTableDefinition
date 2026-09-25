@@ -261,7 +261,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "t1"));
     repository.tables.add(table("public", "t2"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
     repository.triggers.add(
         new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
     repository.functions.add(
@@ -269,7 +269,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.functionDefs.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", "BODY"));
     repository.sequences.add(
-        new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", "", ""));
+        new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", false, ""));
     repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "def"));
 
     usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null, false);
@@ -319,7 +319,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testOutputObjectListRestrictsToSpecifiedTypes() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
     repository.triggers.add(
         new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
     repository.functions.add(
@@ -327,7 +327,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.functionDefs.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", "BODY"));
     repository.sequences.add(
-        new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", "", ""));
+        new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", false, ""));
     repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "def"));
 
     usecase.exportTableDefinition(
@@ -578,7 +578,8 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testAnnotationsAreMergedIntoTableDefinition() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "論理ID", "id", "int", "", "○", "○", ""));
+    repository.columns.add(
+        new ColumnEntity("public", "t1", "論理ID", "id", "int", "", true, true, ""));
     annotations =
         Annotations.of(
             Map.of(
@@ -788,13 +789,13 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testExportWritesSnapshotAlongsideMarkdown() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
     repository.functions.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", ""));
     repository.functionDefs.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", "BODY"));
     repository.sequences.add(
-        new SequenceEntity("testdb", "public", "seq1", "1", "", "", "", "", "", ""));
+        new SequenceEntity("testdb", "public", "seq1", "1", "", "", "", "", false, ""));
     repository.types.add(new TypeEntity("testdb", "public", "type1", "ENUM", "a, b"));
 
     usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null, false);
@@ -885,7 +886,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testCheckSnapshotDiffNoDifference() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
     exportCommitted();
 
     // 実行日（作成日）が変わった状態で比較する
@@ -901,13 +902,13 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "changed"));
     repository.tables.add(table("public", "dropped"));
-    repository.columns.add(new ColumnEntity("public", "changed", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "changed", "id", "int", true));
     exportCommitted();
 
     repository.tables.clear();
     repository.tables.add(table("public", "added"));
     repository.tables.add(table("public", "changed"));
-    repository.columns.add(new ColumnEntity("public", "changed", "name", "text", ""));
+    repository.columns.add(new ColumnEntity("public", "changed", "name", "text", false));
     final DiffResult result = checkSnapshotDiff();
 
     assertEquals(List.of("table public.added"), result.onlyInGenerated());

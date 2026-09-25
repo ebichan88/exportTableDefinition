@@ -48,7 +48,7 @@ public class ObjectDefinitionTemplatesTest {
             "9223372036854775807",
             "1",
             "1",
-            "",
+            false,
             "orders.id");
     String file = ObjectDefinitionTemplates.sequenceFile(s, base);
     assertTrue(file.startsWith("# seq_orders"));

@@ -16,8 +16,8 @@ public record ColumnDto(
     String physicalColumnName,
     String columnType,
     String precisionScale,
-    String primaryKey,
-    String notNull,
+    boolean primaryKey,
+    boolean notNull,
     String defaultValue) {
 
   /**

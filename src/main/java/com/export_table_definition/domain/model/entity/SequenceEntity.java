@@ -11,7 +11,7 @@ package com.export_table_definition.domain.model.entity;
  * @param maxValue 最大値
  * @param cacheSize キャッシュサイズ
  * @param startValue 開始値
- * @param cycle 循環することを表すマーカー文字列
+ * @param cycle 最大値（最小値）到達時に循環するか
  * @param ownedBy 所有カラム（テーブル.カラム形式）
  * @since 1.0
  * @version 1.0
@@ -26,18 +26,5 @@ public record SequenceEntity(
     String maxValue,
     String cacheSize,
     String startValue,
-    String cycle,
-    String ownedBy) {
-
-  /** 循環することを表すマーカー文字列 */
-  private static final String MARKER = "○";
-
-  /**
-   * 最大値（最小値）到達時に循環するか判定するメソッド
-   *
-   * @return 循環する場合はtrue。それ以外の場合はfalse
-   */
-  public boolean isCycle() {
-    return MARKER.equals(cycle);
-  }
-}
+    boolean cycle,
+    String ownedBy) {}

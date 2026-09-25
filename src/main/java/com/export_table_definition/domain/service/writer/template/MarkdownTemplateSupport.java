@@ -16,6 +16,9 @@ public final class MarkdownTemplateSupport {
   public static final String LINE_SEPARATOR_DOUBLE = LINE_SEPARATOR + LINE_SEPARATOR;
   public static final String HORIZON = "___";
 
+  /** 表のセルで真偽値の「真」を表すマーカー文字列（「偽」は空文字とする） */
+  private static final String MARKER = "○";
+
   private MarkdownTemplateSupport() {}
 
   /**
@@ -81,5 +84,15 @@ public final class MarkdownTemplateSupport {
       return "";
     }
     return value.replace("|", "\\|");
+  }
+
+  /**
+   * 真偽値を表のセルに表示するマーカー文字列へ変換するメソッド
+   *
+   * @param value 真偽値
+   * @return 真の場合は{@code ○}、偽の場合は空文字
+   */
+  public static String marker(boolean value) {
+    return value ? MARKER : "";
   }
 }

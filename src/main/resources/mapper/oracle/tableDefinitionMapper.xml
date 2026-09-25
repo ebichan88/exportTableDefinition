@@ -141,10 +141,10 @@
                         SELECT 1 FROM ALL_CONS_COLUMNS acc
                         JOIN ALL_CONSTRAINTS ac ON acc.CONSTRAINT_NAME = ac.CONSTRAINT_NAME
                         WHERE acc.TABLE_NAME = c.TABLE_NAME AND acc.COLUMN_NAME = c.COLUMN_NAME AND ac.CONSTRAINT_TYPE = 'P'
-                    ) THEN '○'
-                    ELSE ''
+                    ) THEN 1
+                    ELSE 0
                 END AS primary_key,
-                CASE c.NULLABLE WHEN 'N' THEN '○' ELSE '' END AS not_null,
+                CASE c.NULLABLE WHEN 'N' THEN 1 ELSE 0 END AS not_null,
                 ' ' AS default_value,
                 '' AS remarks
             FROM ALL_TAB_COLUMNS c
@@ -186,8 +186,8 @@
             <arg column="physicalColumnName" javaType="String" />
             <arg column="columnType" javaType="String" />
             <arg column="precisionScale" javaType="String" />
-            <arg column="primaryKey" javaType="String" />
-            <arg column="notNull" javaType="String" />
+            <arg column="primaryKey" javaType="_boolean" />
+            <arg column="notNull" javaType="_boolean" />
             <arg column="defaultValue" javaType="String" />
         </constructor>
     </resultMap>
@@ -199,13 +199,13 @@
                 idx.table_name AS table_name,
                 idx.index_name AS index_name,
                 idx.index_type AS index_method,
-                CASE WHEN idx.uniqueness = 'UNIQUE' THEN '○' ELSE '' END AS is_unique,
+                CASE WHEN idx.uniqueness = 'UNIQUE' THEN 1 ELSE 0 END AS is_unique,
                 CASE
                     WHEN EXISTS (
                         SELECT 1 FROM all_constraints ac
                         WHERE ac.owner = idx.owner AND ac.constraint_type = 'P' AND ac.index_name = idx.index_name
-                    ) THEN '○'
-                    ELSE ''
+                    ) THEN 1
+                    ELSE 0
                 END AS is_primary,
                 (CASE WHEN idx.uniqueness = 'UNIQUE' THEN 'CREATE UNIQUE INDEX ' ELSE 'CREATE INDEX ' END)
                     || idx.index_name || ' ON ' || idx.table_name || ' ('
@@ -253,8 +253,8 @@
             <arg column="tableName" javaType="String" />
             <arg column="indexName" javaType="String" />
             <arg column="indexMethod" javaType="String" />
-            <arg column="isUnique" javaType="String" />
-            <arg column="isPrimary" javaType="String" />
+            <arg column="isUnique" javaType="_boolean" />
+            <arg column="isPrimary" javaType="_boolean" />
             <arg column="indexDefinition" javaType="String" />
             <arg column="remarks" javaType="String" />
         </constructor>
@@ -468,15 +468,15 @@
                 WHEN EXISTS (
                     SELECT 1 FROM ora_unique_foreignkeys u
                     WHERE u.schema_name = f.schema_name AND u.table_name = f.table_name AND u.foreignkey_name = f.foreignkey_name
-                ) THEN '○'
-                ELSE ''
+                ) THEN 1
+                ELSE 0
             END AS "childKeyUnique",
             CASE
                 WHEN EXISTS (
                     SELECT 1 FROM ora_mandatory_foreignkeys m
                     WHERE m.schema_name = f.schema_name AND m.table_name = f.table_name AND m.foreignkey_name = f.foreignkey_name
-                ) THEN '○'
-                ELSE ''
+                ) THEN 1
+                ELSE 0
             END AS "childKeyMandatory"
         FROM ora_all_foreignkeys f
         WHERE column_names IS NOT NULL
@@ -492,8 +492,8 @@
             <arg column="referenceSchemaName" javaType="String" />
             <arg column="referenceTableName" javaType="String" />
             <arg column="referenceColumnNames" javaType="String" />
-            <arg column="childKeyUnique" javaType="String" />
-            <arg column="childKeyMandatory" javaType="String" />
+            <arg column="childKeyUnique" javaType="_boolean" />
+            <arg column="childKeyMandatory" javaType="_boolean" />
         </constructor>
     </resultMap>
 

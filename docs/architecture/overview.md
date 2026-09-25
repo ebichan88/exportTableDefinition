@@ -103,8 +103,8 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 `{outputPath}/snapshot/{DB名}/`配下へ出力する。Markdownは最終成果物（表示形式）であり機械処理に向かないため、
 差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
 
-- モデルは`domain.model.snapshot`配下のrecord（`TableSnapshot`等）。エンティティから変換する際に、Markdownの
-  表示都合の値（`○`マーカー、カンマ・スラッシュ区切りの連結文字列、空白1文字等）を真偽値・リスト・nullへ正規化する。
+- モデルは`domain.model.snapshot`配下のrecord（`TableSnapshot`等）。エンティティから変換する際に、
+  連結文字列（カンマ・スラッシュ区切り）や空白1文字等の値をリスト・nullへ正規化する。
   実行のたびに変わる生成日は含めない
 - JSONへの変換はドメイン層のIF（`SnapshotSerializer`）を介し、実装（`JacksonSnapshotSerializer`）はインフラ層に置く。
   Jacksonへの依存をドメイン層へ持ち込まないため
@@ -116,6 +116,8 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 
 なお、SQLは構造化した値のみを返し、Markdown向けの表示用の組み立て・エスケープ（`|`→`\|`等）は
 `domain.service.writer.template`配下で行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
+主キー・NOT NULL・一意性・循環などの真偽値もSQLは真偽値で返し（PostgreSQLは`boolean`、`boolean`型を持たない
+Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセルの「○」は`MarkdownTemplateSupport.marker()`で描画する。
 
 ## DB vs ドキュメントの差分検知（`--check`モード）
 

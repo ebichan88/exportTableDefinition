@@ -48,4 +48,11 @@ public class MarkdownTemplateSupportTest {
         MarkdownTemplateSupport.escapePipe("CHECK (((a || b) <> ''::text))"));
     assertEquals("a\nb", MarkdownTemplateSupport.escapePipe("a\nb"));
   }
+
+  @Test
+  @DisplayName("marker: 真の場合は○、偽の場合は空文字を返す")
+  void testMarker() {
+    assertEquals("○", MarkdownTemplateSupport.marker(true));
+    assertEquals("", MarkdownTemplateSupport.marker(false));
+  }
 }

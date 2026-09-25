@@ -137,10 +137,11 @@ public class TableDefinitionWriterDomainServiceTest {
   @DisplayName("writeTableDefinition: 解決されたパスに、カラム・インデックス・制約・外部キー・トリガー・ER図の全セクションを出力する")
   void testWriteTableDefinitionWritesAllSections() {
     TableEntity table = table("orders");
-    var column = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "○", "");
+    var column =
+        new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", true, true, "");
     var index =
         new IndexEntity(
-            "public", "orders", "idx_orders_1", "btree", "", "", "CREATE INDEX ...", "");
+            "public", "orders", "idx_orders_1", "btree", false, false, "CREATE INDEX ...", "");
     var constraint =
         new ConstraintEntity(
             "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");

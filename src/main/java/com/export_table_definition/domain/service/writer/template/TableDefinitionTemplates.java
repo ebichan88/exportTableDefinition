@@ -129,9 +129,9 @@ public class TableDefinitionTemplates {
                 + "|"
                 + c.precisionScale()
                 + "|"
-                + c.primaryKey()
+                + MarkdownTemplateSupport.marker(c.primaryKey())
                 + "|"
-                + c.notNull()
+                + MarkdownTemplateSupport.marker(c.notNull())
                 + "|"
                 + MarkdownTemplateSupport.escapeTableCell(c.defaultValue())
                 + "|"
@@ -191,9 +191,9 @@ public class TableDefinitionTemplates {
                 + "|"
                 + idx.indexMethod()
                 + "|"
-                + idx.isUnique()
+                + MarkdownTemplateSupport.marker(idx.isUnique())
                 + "|"
-                + idx.isPrimary()
+                + MarkdownTemplateSupport.marker(idx.isPrimary())
                 + "|"
                 + MarkdownTemplateSupport.escapePipe(idx.indexDefinition())
                 + "|"
@@ -373,7 +373,7 @@ public class TableDefinitionTemplates {
                 .append(MermaidSupport.sanitizeType(c.columnType()))
                 .append(' ')
                 .append(MermaidSupport.sanitizeIdentifier(c.physicalColumnName()))
-                .append(c.isPrimaryKey() ? " PK" : "")
+                .append(c.primaryKey() ? " PK" : "")
                 .append(LINE_SEPARATOR));
     sb.append("    }").append(LINE_SEPARATOR).append("```").append(LINE_SEPARATOR_DOUBLE);
     return sb.toString();

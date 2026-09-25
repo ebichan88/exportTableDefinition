@@ -14,8 +14,8 @@ public record IndexDto(
     String tableName,
     String indexName,
     String indexMethod,
-    String isUnique,
-    String isPrimary,
+    boolean isUnique,
+    boolean isPrimary,
     String indexDefinition,
     String remarks) {
 

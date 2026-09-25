@@ -85,9 +85,10 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("columns: 渡されたカラムを1から採番して出力する")
   void testColumns() {
-    var first = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
+    var first =
+        new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", true, false, "");
     var second =
-        new ColumnEntity("public", "orders", "顧客ID", "customer_id", "int", "", "", "○", "");
+        new ColumnEntity("public", "orders", "顧客ID", "customer_id", "int", "", false, true, "");
     String section =
         TableDefinitionTemplates.columns(List.of(first, second), TableAnnotation.EMPTY);
     assertTrue(section.contains("|1|受注ID|order_id|int|"));
@@ -97,7 +98,8 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("columns: 物理カラム名をキーにサイドカーのカラム備考を末尾セルへ後付けする")
   void testColumnsWithAnnotation() {
-    var match = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
+    var match =
+        new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", true, false, "");
     var annotation = new TableAnnotation("", "", Map.of("order_id", "受注の主キー|連番"));
     String section = TableDefinitionTemplates.columns(List.of(match), annotation);
     assertTrue(section.contains("|1|受注ID|order_id|int||○|||受注の主キー\\|連番|"));
@@ -114,8 +116,8 @@ public class TableDefinitionTemplatesTest {
             "order_code",
             "text",
             "",
-            "",
-            "○",
+            false,
+            true,
             "'ORD-' || nextval('orders_seq')");
     String section = TableDefinitionTemplates.columns(List.of(column), TableAnnotation.EMPTY);
     assertTrue(
@@ -142,8 +144,8 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("indexes: 渡されたインデックスを1から採番して出力する")
   void testIndexes() {
-    var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", "", "", "", "");
-    var idx2 = new IndexEntity("public", "orders", "idx_orders_2", "", "", "", "", "");
+    var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", false, false, "", "");
+    var idx2 = new IndexEntity("public", "orders", "idx_orders_2", "", false, false, "", "");
     String section = TableDefinitionTemplates.indexes(List.of(idx1, idx2));
     assertTrue(section.contains("|1|idx_orders_1|"));
     assertTrue(section.contains("|2|idx_orders_2|"));
@@ -222,8 +224,8 @@ public class TableDefinitionTemplatesTest {
             "orders",
             "idx_orders_code",
             "btree",
-            "",
-            "",
+            false,
+            false,
             "CREATE INDEX idx_orders_code ON public.orders USING btree (((a || b)))",
             "");
     var c =
@@ -254,7 +256,14 @@ public class TableDefinitionTemplatesTest {
   void testRemarksEscapeTableCell() {
     var idx =
         new IndexEntity(
-            "public", "orders", "idx_orders_code", "btree", "", "", "", "運用メモ|旧インデックス\n(削除予定)");
+            "public",
+            "orders",
+            "idx_orders_code",
+            "btree",
+            false,
+            false,
+            "",
+            "運用メモ|旧インデックス\n(削除予定)");
     var c = new ConstraintEntity("public", "orders", "chk_code", "CHECK", "", "運用メモ|注意事項\n(要確認)");
     assertTrue(
         TableDefinitionTemplates.indexes(List.of(idx)).contains("|運用メモ\\|旧インデックス<br>(削除予定)|"));
@@ -274,7 +283,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 自テーブルの属性・PK表記と参照先/参照元の関係線が含まれる")
   void testErDiagramWithRelations() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", true);
     var outgoing =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -297,7 +306,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 参照先・参照元それぞれの多重度に応じた関係線を出力する")
   void testErDiagramCardinality() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", true);
     var outgoing =
         ForeignKeyFixtures.physical(
             "public",
@@ -326,7 +335,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: データ型の桁数指定は除去される")
   void testErDiagramSanitizesType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "amount", "numeric(10,2)", "");
+    var column = new ColumnEntity("public", "orders", "amount", "numeric(10,2)", false);
     var outgoing =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -388,7 +397,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 論理リレーションは破線、物理外部キーは実線で描画する")
   void testErDiagramDistinguishesRelationType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "int", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "int", true);
     var physical =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -406,7 +415,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 被参照側の論理リレーションも破線で描画する")
   void testErDiagramIncomingLogicalIsDashed() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "int", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "int", true);
     var incoming =
         ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_orders", "public", "orders");
     String section =

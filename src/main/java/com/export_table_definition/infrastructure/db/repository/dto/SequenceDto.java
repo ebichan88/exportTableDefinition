@@ -18,7 +18,7 @@ public record SequenceDto(
     String maxValue,
     String cacheSize,
     String startValue,
-    String cycle,
+    boolean cycle,
     String ownedBy) {
 
   /**

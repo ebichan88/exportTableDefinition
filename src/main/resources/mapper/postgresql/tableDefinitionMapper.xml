@@ -127,8 +127,8 @@
                             THEN information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END
                         ELSE ''
                     END AS precision_scale,
-                    coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS primary_key,
-                    CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null,
+                    EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
+                    t3.attnotnull AS not_null,
                     coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_tables t1
@@ -167,8 +167,8 @@
                             THEN information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END
                         ELSE ''
                     END AS precision_scale,
-                    coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS primary_key,
-                    CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null,
+                    EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
+                    t3.attnotnull AS not_null,
                     coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_views t1
@@ -206,8 +206,8 @@
                             THEN information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END
                         ELSE ''
                     END AS precision_scale,
-                    coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS primary_key,
-                    CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null,
+                    EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
+                    t3.attnotnull AS not_null,
                     coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_matviews t1
@@ -252,8 +252,8 @@
             <arg column="physicalColumnName" javaType="String" />
             <arg column="columnType" javaType="String" />
             <arg column="precisionScale" javaType="String" />
-            <arg column="primaryKey" javaType="String" />
-            <arg column="notNull" javaType="String" />
+            <arg column="primaryKey" javaType="_boolean" />
+            <arg column="notNull" javaType="_boolean" />
             <arg column="defaultValue" javaType="String" />
         </constructor>
     </resultMap>
@@ -265,8 +265,8 @@
                 t1.relname AS table_name,
                 t2.relname AS index_name,
                 am.amname AS index_method,
-                CASE WHEN t3.indisunique THEN '○' ELSE '' END AS is_unique,
-                CASE WHEN t3.indisprimary THEN '○' ELSE '' END AS is_primary,
+                t3.indisunique AS is_unique,
+                t3.indisprimary AS is_primary,
                 pg_catalog.pg_get_indexdef(t3.indexrelid) AS index_definition,
                 coalesce(pg_catalog.obj_description(t2.oid, 'pg_class'), '') AS remarks
             FROM pg_class AS t1
@@ -307,8 +307,8 @@
             <arg column="tableName" javaType="String" />
             <arg column="indexName" javaType="String" />
             <arg column="indexMethod" javaType="String" />
-            <arg column="isUnique" javaType="String" />
-            <arg column="isPrimary" javaType="String" />
+            <arg column="isUnique" javaType="_boolean" />
+            <arg column="isPrimary" javaType="_boolean" />
             <arg column="indexDefinition" javaType="String" />
             <arg column="remarks" javaType="String" />
         </constructor>
@@ -382,24 +382,18 @@
                    一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、
                    列名の一致ではなく包含関係で判定する。
                    条件付きの一意性しか保証しない部分インデックスは除外する */
-                CASE
-                    WHEN EXISTS (
-                        SELECT 1 FROM pg_catalog.pg_index i
-                        WHERE i.indrelid = t1.conrelid AND i.indisunique AND i.indisvalid AND i.indpred IS NULL
-                            AND (string_to_array(i.indkey::text, ' ')::smallint[])[1:i.indnkeyatts] &lt;@ t1.conkey
-                    ) THEN '○'
-                    ELSE ''
-                END AS child_key_unique,
+                EXISTS (
+                    SELECT 1 FROM pg_catalog.pg_index i
+                    WHERE i.indrelid = t1.conrelid AND i.indisunique AND i.indisvalid AND i.indpred IS NULL
+                        AND (string_to_array(i.indkey::text, ' ')::smallint[])[1:i.indnkeyatts] &lt;@ t1.conkey
+                ) AS child_key_unique,
                 /* 外部キー列がすべてNOT NULLか（1件の子が必ず親を1件持つか）。
                    1列でもNULLを許容すると参照が成立しない行が存在しうるため、親側は0または1となる */
-                CASE
-                    WHEN NOT EXISTS (
-                        SELECT 1 FROM unnest(t1.conkey) AS k(attnum)
-                        JOIN pg_catalog.pg_attribute a ON a.attrelid = t1.conrelid AND a.attnum = k.attnum
-                        WHERE NOT a.attnotnull
-                    ) THEN '○'
-                    ELSE ''
-                END AS child_key_mandatory
+                NOT EXISTS (
+                    SELECT 1 FROM unnest(t1.conkey) AS k(attnum)
+                    JOIN pg_catalog.pg_attribute a ON a.attrelid = t1.conrelid AND a.attnum = k.attnum
+                    WHERE NOT a.attnotnull
+                ) AS child_key_mandatory
             FROM pg_catalog.pg_constraint t1
             LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.conrelid = t2.oid
             LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
@@ -442,8 +436,8 @@
             <arg column="referenceSchemaName" javaType="String" />
             <arg column="referenceTableName" javaType="String" />
             <arg column="referenceColumnNames" javaType="String" />
-            <arg column="childKeyUnique" javaType="String" />
-            <arg column="childKeyMandatory" javaType="String" />
+            <arg column="childKeyUnique" javaType="_boolean" />
+            <arg column="childKeyMandatory" javaType="_boolean" />
         </constructor>
     </resultMap>
 
@@ -610,7 +604,7 @@
                 coalesce(s.max_value::text, '') AS max_value,
                 coalesce(s.cache_size::text, '') AS cache_size,
                 coalesce(s.start_value::text, '') AS start_value,
-                CASE WHEN s.cycle THEN '○' ELSE '' END AS cycle,
+                s.cycle AS cycle,
                 coalesce(owned.owned_by, '') AS owned_by
             FROM pg_catalog.pg_class t1
             LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid
@@ -656,7 +650,7 @@
             <arg column="maxValue" javaType="String" />
             <arg column="cacheSize" javaType="String" />
             <arg column="startValue" javaType="String" />
-            <arg column="cycle" javaType="String" />
+            <arg column="cycle" javaType="_boolean" />
             <arg column="ownedBy" javaType="String" />
         </constructor>
     </resultMap>

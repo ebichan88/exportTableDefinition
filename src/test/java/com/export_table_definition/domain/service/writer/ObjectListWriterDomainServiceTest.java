@@ -183,7 +183,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteSequenceDefinitionWritesIndividualFile() {
     var sequence =
         new SequenceEntity(
-            "testdb", "public", "seq_orders", "10", "1", "999999999", "20", "1", "○", "orders.id");
+            "testdb", "public", "seq_orders", "10", "1", "999999999", "20", "1", true, "orders.id");
     writer.writeSequenceDefinition(sequence, baseInfo(), OUT);
 
     Path expectedFile =
