@@ -29,6 +29,14 @@ public class TableDefinitionFileRepository implements FileRepository {
 
   /** {@inheritDoc} */
   @Override
+  public void appendFile(Path filePath, List<String> contents) {
+    try (final var bw = new TableDefinitionBufferedWriter(filePath, StandardCharsets.UTF_8, true)) {
+      contents.stream().forEach(content -> bw.write(content));
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void createDirectory(Path filePath) {
     try {
       Files.createDirectories(filePath);

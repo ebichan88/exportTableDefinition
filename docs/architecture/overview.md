@@ -36,7 +36,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 2. Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、
    `ExportTableDefinitionController` を取得して `run()` を呼び出す。
 3. `ExportTableDefinition.run()` が `conf/ExportTableDefinition.properties` の設定値
-   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、
+   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath、outputSnapshot）を読み込み、
    `ExportTableDefinitionController.execute()` を呼び出す。
 4. コントローラーは `ExportTableDefinitionUsecaseImpl.exportTableDefinition()` を呼び出し、例外を捕捉して
    `ResultDto`（成功/失敗）に変換する。
@@ -46,6 +46,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込みマージ
    - `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ObjectListWriterDomainService`
      （いずれも `domain.service.writer` 配下）がMarkdownを組み立てて `FileRepository` 経由で出力
+   - `outputSnapshot=true`の場合は、`SchemaSnapshotWriterDomainService`（`domain.service.snapshot` 配下）が
+     同じ取得結果からスキーマのスナップショット（JSON Lines）を出力
 
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
@@ -80,14 +82,51 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 `ErDiagramWriterDomainService` と `domain.model.collection.ForeignKeyGroups`（連結成分の算出）、
 `domain.model.type.Cardinality`（多重度判定）が中心。
 
+## スキーマのスナップショット（中間表現）
+
+`outputSnapshot=true`の場合、Markdownと同じ取得結果から、スキーマ情報を構造化したスナップショット（JSON Lines）を
+`{outputPath}/snapshot/{DB名}/`配下へ出力する。Markdownは最終成果物（表示形式）であり機械処理に向かないため、
+差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
+
+- モデルは`domain.model.snapshot`配下のrecord（`TableSnapshot`等）。エンティティから変換する際に、Markdownの
+  表示都合の値（`○`マーカー、カンマ・スラッシュ区切りの連結文字列、空白1文字等）を真偽値・リスト・nullへ正規化する。
+  実行のたびに変わる生成日は含めない
+- JSONへの変換はドメイン層のIF（`SnapshotSerializer`）を介し、実装（`JacksonSnapshotSerializer`）はインフラ層に置く。
+  Jacksonへの依存をドメイン層へ持ち込まないため
+- 書き込みは`SchemaSnapshotWriterDomainService`が`FileRepository`・`OutputPathResolver`経由で行う
+- メモリ効率のための分割取得の方針は変えない。テーブルは`exportTableDefinitionChunk`で`TableDefinitionContent`を
+  組み立てた時点でMarkdownと並べて1行ずつスキーマ単位の`tables.jsonl`へ追記する（スキーマの処理開始時に
+  `initTableFile`で空にしてから追記するため、前回実行時の内容へ追記されることはない）。関数は定義本体を
+  スキーマ単位で取得した時点で`functions.jsonl`へ出力する
+
+なお、SQLは構造化した値のみを返し、Markdown向けの表示用の組み立て・エスケープ（`|`→`\|`等）は
+`domain.service.writer.template`配下で行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
+
 ## DB vs ドキュメントの差分検知（`--check`モード）
 
 `ExportTableDefinition.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
 `ExportTableDefinitionController.checkDiff()` → `ExportTableDefinitionUsecaseImpl.checkDocumentDiff()`を呼び出す。
 
-`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、一時ディレクトリへ向けて
-`exportTableDefinition()`をそのまま呼び出した上で、生成結果と`outputPath`配下を
-`DocumentDiffDomainService.compare()`でファイル単位（追加/削除/内容不一致）に比較する。
+`ExportTableDefinitionUsecaseImpl`は、DBからの取得と出力を以下のように分けている。通常実行と`--check`は
+取得処理を共有し、出力形式（private enum `OutputFormat`: `MARKDOWN`/`SNAPSHOT`）だけを切り替える。
+
+- `fetchTargets()`: 一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・
+  サイドカー）を取得し、`ExportTargets`にまとめる
+- `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を出力した後、関数の定義本体をスキーマ単位で、
+  テーブルの詳細情報をスキーマ・チャンク単位で取得し、指定された出力形式で出力する
+
+`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、一時ディレクトリへ向けて`export()`を呼び出した上で、
+生成結果と`outputPath`配下を比較する。比較方法は`outputSnapshot`の設定で切り替わる。
+
+| `outputSnapshot` | 出力形式 | 比較 |
+|---|---|---|
+| `true` | `SNAPSHOT`のみ（Markdownの描画・ER図の生成を行わない） | `SnapshotDiffDomainService.compare()`で`snapshot/`配下を比較。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`: `スキーマ名.名前`、関数は引数を含む）で突き合わせ、追加/削除/内容不一致をオブジェクト単位で報告する。`database.json`等それ以外のファイルはファイル単位 |
+| `false` | `MARKDOWN`のみ | `DocumentDiffDomainService.compare()`でファイル単位（追加/削除/内容不一致）に比較する |
+
+スナップショットは生成日を含まないため、生成日と別の日に`--check`を実行しても差分にならない
+（Markdownは「基本情報」表に作成日を含むため、`outputSnapshot=false`では日付が変わると全ファイルが差分になる）。
+その代わり、スナップショット同士の比較ではMarkdownのみに生じた差分（手作業での編集等）は検知しない。
+
 Writer層・SQL層は出力先パスに一切依存しないため無改修で再利用できる。一時ディレクトリの作成・削除は
 （他のファイル操作と同様に）`FileRepository.createTempDirectory()`/`deleteDirectory()`を介して行い、
 `try-finally`で必ず削除される。

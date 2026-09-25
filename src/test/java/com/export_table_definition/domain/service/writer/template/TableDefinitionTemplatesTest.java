@@ -58,6 +58,14 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
+  @DisplayName("tableInfo: 論理テーブル名（DBコメント由来）に含まれる|・改行は表を崩さないようエスケープする")
+  void testTableInfoEscapesLogicalTableName() {
+    TableEntity table = newTable("public", "orders", "受注|管理\n(旧:注文)", "table", "");
+    String info = TableDefinitionTemplates.tableInfo(table, TableAnnotation.EMPTY);
+    assertTrue(info.contains("|public|受注\\|管理<br>(旧:注文)|orders|table|"));
+  }
+
+  @Test
   @DisplayName("tableExplanation: サイドカーの説明が無い場合は空セクション")
   void testTableExplanationEmpty() {
     String section = TableDefinitionTemplates.tableExplanation(TableAnnotation.EMPTY);
@@ -95,6 +103,28 @@ public class TableDefinitionTemplatesTest {
     var annotation = new TableAnnotation("", "", Map.of("order_id", "受注の主キー|連番"));
     String section = TableDefinitionTemplates.columns(List.of(match), table, annotation);
     assertTrue(section.contains("|1|受注ID|order_id|int||○|||受注の主キー\\|連番|"));
+  }
+
+  @Test
+  @DisplayName("columns: 論理名（DBコメント由来）・デフォルト値に含まれる|・改行は表を崩さないようエスケープする")
+  void testColumnsEscapesLogicalNameAndDefaultValue() {
+    TableEntity table = newTable("public", "orders", "受注", "table", "");
+    var column =
+        new ColumnEntity(
+            "public",
+            "orders",
+            "受注コード|旧:伝票番号\n(廃止予定)",
+            "order_code",
+            "text",
+            "",
+            "",
+            "○",
+            "'ORD-' || nextval('orders_seq')");
+    String section =
+        TableDefinitionTemplates.columns(List.of(column), table, TableAnnotation.EMPTY);
+    assertTrue(
+        section.contains(
+            "|1|受注コード\\|旧:伝票番号<br>(廃止予定)|order_code|text|||○|'ORD-' \\|\\| nextval('orders_seq')||"));
   }
 
   @Test
@@ -190,6 +220,59 @@ public class TableDefinitionTemplatesTest {
     assertTrue(section.contains("## トリガー情報"));
     assertTrue(section.contains("trg_orders"));
     assertFalse(section.contains("trg_sales"));
+  }
+
+  @Test
+  @DisplayName("indexes/constraints/triggers: 定義に含まれる|は表を崩さないようエスケープする")
+  void testDefinitionsEscapePipe() {
+    TableEntity table = newTable("public", "orders", "受注", "table", "");
+    var idx =
+        new IndexEntity(
+            "public",
+            "orders",
+            "idx_orders_code",
+            "btree",
+            "",
+            "",
+            "CREATE INDEX idx_orders_code ON public.orders USING btree (((a || b)))",
+            "");
+    var c =
+        new ConstraintEntity(
+            "public", "orders", "chk_code", "CHECK", "CHECK ((code ~ '^(A|B)$'::text))", "");
+    var t =
+        new TriggerEntity(
+            "public",
+            "orders",
+            "trg_orders",
+            "BEFORE",
+            "INSERT",
+            "ROW",
+            "public.f_orders",
+            "CREATE TRIGGER trg_orders WHEN ((new.a || new.b) IS NOT NULL)");
+    assertTrue(
+        TableDefinitionTemplates.indexes(List.of(idx), table)
+            .contains("USING btree (((a \\|\\| b)))|"));
+    assertTrue(
+        TableDefinitionTemplates.constraints(List.of(c), table)
+            .contains("|CHECK ((code ~ '^(A\\|B)$'::text))|"));
+    assertTrue(
+        TableDefinitionTemplates.triggers(List.of(t), table)
+            .contains("WHEN ((new.a \\|\\| new.b) IS NOT NULL)|"));
+  }
+
+  @Test
+  @DisplayName("indexes/constraints: 備考（DBコメント由来）に含まれる|・改行は表を崩さないようエスケープする")
+  void testRemarksEscapeTableCell() {
+    TableEntity table = newTable("public", "orders", "受注", "table", "");
+    var idx =
+        new IndexEntity(
+            "public", "orders", "idx_orders_code", "btree", "", "", "", "運用メモ|旧インデックス\n(削除予定)");
+    var c = new ConstraintEntity("public", "orders", "chk_code", "CHECK", "", "運用メモ|注意事項\n(要確認)");
+    assertTrue(
+        TableDefinitionTemplates.indexes(List.of(idx), table)
+            .contains("|運用メモ\\|旧インデックス<br>(削除予定)|"));
+    assertTrue(
+        TableDefinitionTemplates.constraints(List.of(c), table).contains("|運用メモ\\|注意事項<br>(要確認)|"));
   }
 
   @Test

@@ -267,7 +267,7 @@
                 am.amname AS index_method,
                 CASE WHEN t3.indisunique THEN '○' ELSE '' END AS is_unique,
                 CASE WHEN t3.indisprimary THEN '○' ELSE '' END AS is_primary,
-                replace(pg_catalog.pg_get_indexdef(t3.indexrelid), '|', '\|') AS index_definition,
+                pg_catalog.pg_get_indexdef(t3.indexrelid) AS index_definition,
                 coalesce(pg_catalog.obj_description(t2.oid, 'pg_class'), '') AS remarks
             FROM pg_class AS t1
             LEFT OUTER JOIN pg_index AS t3 ON t1.oid = t3.indrelid
@@ -327,7 +327,7 @@
                     WHEN 'u' THEN 'UNIQUE'
                     ELSE NULL
                 END AS constraints_type,
-                replace(pg_get_constraintdef(t1.oid), '|', '\|') AS constraints_definition,
+                pg_get_constraintdef(t1.oid) AS constraints_definition,
                 coalesce(pg_catalog.obj_description(t1.oid, 'pg_constraint'), '') AS remarks
             FROM pg_catalog.pg_constraint t1
             LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.conrelid = t2.oid
@@ -466,7 +466,7 @@
                 ], '/') AS events,
                 CASE WHEN (t1.tgtype &amp; 1) &lt;&gt; 0 THEN 'ROW' ELSE 'STATEMENT' END AS orientation,
                 t5.nspname || '.' || t4.proname AS function_name,
-                replace(regexp_replace(pg_catalog.pg_get_triggerdef(t1.oid), '\r|\n|\r\n', ' ', 'g'), '|', '\|') AS trigger_definition
+                regexp_replace(pg_catalog.pg_get_triggerdef(t1.oid), '\r|\n|\r\n', ' ', 'g') AS trigger_definition
             FROM pg_catalog.pg_trigger t1
             LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.tgrelid = t2.oid
             LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
@@ -540,8 +540,8 @@
             function_name AS "functionName",
             file_name AS "fileName",
             function_kind AS "functionKind",
-            replace(function_arguments, '|', '\|') AS "functionArguments",
-            replace(function_result, '|', '\|') AS "functionResult",
+            function_arguments AS "functionArguments",
+            function_result AS "functionResult",
             language_name AS "languageName",
             '' AS definition
         FROM all_functions
@@ -554,10 +554,15 @@
                 current_database() AS db_name,
                 t2.nspname AS schema_name,
                 t1.proname AS function_name,
+                CASE t1.prokind WHEN 'p' THEN 'PROCEDURE' ELSE 'FUNCTION' END AS function_kind,
+                pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments,
+                CASE WHEN t1.prokind = 'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS function_result,
+                t3.lanname AS language_name,
                 t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name,
                 pg_catalog.pg_get_functiondef(t1.oid) AS definition
             FROM pg_catalog.pg_proc t1
             LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid
+            LEFT OUTER JOIN pg_catalog.pg_language t3 ON t1.prolang = t3.oid
             WHERE t1.prokind IN ('f', 'p') AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND t2.nspname IN
@@ -571,10 +576,10 @@
             schema_name AS "schemaName",
             function_name AS "functionName",
             file_name AS "fileName",
-            '' AS "functionKind",
-            '' AS "functionArguments",
-            '' AS "functionResult",
-            '' AS "languageName",
+            function_kind AS "functionKind",
+            function_arguments AS "functionArguments",
+            function_result AS "functionResult",
+            language_name AS "languageName",
             definition AS definition
         FROM all_functions
         ORDER BY schema_name, function_name, file_name;
@@ -669,14 +674,14 @@
                     WHEN 'r' THEN 'RANGE'
                     ELSE t1.typtype::text
                 END AS type_category,
-                replace(coalesce(
+                coalesce(
                     CASE t1.typtype
                         WHEN 'e' THEN ( SELECT string_agg(e.enumlabel, ', ' ORDER BY e.enumsortorder) FROM pg_catalog.pg_enum e WHERE e.enumtypid = t1.oid )
                         WHEN 'd' THEN 'DOMAIN OVER ' || pg_catalog.format_type(t1.typbasetype, t1.typtypmod)
                         WHEN 'r' THEN 'RANGE OF ' || ( SELECT pg_catalog.format_type(r.rngsubtype, NULL) FROM pg_catalog.pg_range r WHERE r.rngtypid = t1.oid )
                         WHEN 'c' THEN ( SELECT string_agg(a.attname || ' ' || pg_catalog.format_type(a.atttypid, a.atttypmod), ', ' ORDER BY a.attnum) FROM pg_catalog.pg_attribute a WHERE a.attrelid = t1.typrelid AND a.attnum > 0 AND NOT a.attisdropped )
                         ELSE ''
-                    END, ''), '|', '\|') AS definition
+                    END, '') AS definition
             FROM pg_catalog.pg_type t1
             LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.typnamespace = t2.oid
             WHERE t1.typtype IN ('e', 'c', 'd', 'r')

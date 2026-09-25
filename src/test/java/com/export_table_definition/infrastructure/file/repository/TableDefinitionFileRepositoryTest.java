@@ -55,6 +55,26 @@ public class TableDefinitionFileRepositoryTest {
   }
 
   @Test
+  @DisplayName("appendFile: 既存ファイルの末尾へ追記し、ファイルが存在しない場合は新規作成する")
+  void testAppendFile(@TempDir Path dir) {
+    Path file = dir.resolve("t3.jsonl");
+    repository.appendFile(file, List.of("line1\n"));
+    repository.appendFile(file, List.of("line2\n", "line3\n"));
+
+    assertEquals(List.of("line1", "line2", "line3"), repository.readFile(file));
+  }
+
+  @Test
+  @DisplayName("writeFile: 既存ファイルは追記ではなく上書きされる")
+  void testWriteFileOverwritesAppendedFile(@TempDir Path dir) {
+    Path file = dir.resolve("t4.jsonl");
+    repository.appendFile(file, List.of("stale\n"));
+    repository.writeFile(file, List.of());
+
+    assertEquals(List.of(), repository.readFile(file));
+  }
+
+  @Test
   @DisplayName("createTempDirectory: 指定した接頭辞を持つ、実在する一意なディレクトリを作成する")
   void testCreateTempDirectory() {
     Path tempDir = repository.createTempDirectory("exportTableDefinition-test-");

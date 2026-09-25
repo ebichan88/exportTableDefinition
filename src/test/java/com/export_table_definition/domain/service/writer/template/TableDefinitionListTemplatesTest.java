@@ -71,6 +71,15 @@ public class TableDefinitionListTemplatesTest {
   }
 
   @Test
+  @DisplayName("tableListLine: 論理テーブル名（DBコメント由来）に含まれる|・改行は表を崩さないようエスケープする")
+  void tableListLine_escapesLogicalTableName() {
+    TableEntity e = newEntity("public", "orders", "受注|管理\n(旧:注文)", "");
+    String expected =
+        "|1|public|受注\\|管理<br>(旧:注文)|orders|table|[■](./TEST_DB/public/table/orders.md)||" + NL;
+    MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.tableListLine(1, e));
+  }
+
+  @Test
   @DisplayName("relatedDocuments: 空マップ → 空文字")
   void relatedDocuments_empty() {
     MarkdownAssert.assertMarkdownEquals(

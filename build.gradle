@@ -30,6 +30,7 @@ dependencies {
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.24.0'
     implementation group: 'com.google.inject', name: 'guice', version: '7.0.0'
     implementation 'org.yaml:snakeyaml:2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'

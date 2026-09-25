@@ -32,4 +32,20 @@ public class MarkdownTemplateSupportTest {
   void testEscapePlain() {
     assertEquals("個人情報を含む", MarkdownTemplateSupport.escapeTableCell("個人情報を含む"));
   }
+
+  @Test
+  @DisplayName("escapePipe: null・空文字は空文字を返す")
+  void testEscapePipeEmpty() {
+    assertEquals("", MarkdownTemplateSupport.escapePipe(null));
+    assertEquals("", MarkdownTemplateSupport.escapePipe(""));
+  }
+
+  @Test
+  @DisplayName("escapePipe: パイプのみエスケープし、改行はそのまま残す")
+  void testEscapePipeOnly() {
+    assertEquals(
+        "CHECK (((a \\|\\| b) <> ''::text))",
+        MarkdownTemplateSupport.escapePipe("CHECK (((a || b) <> ''::text))"));
+    assertEquals("a\nb", MarkdownTemplateSupport.escapePipe("a\nb"));
+  }
 }

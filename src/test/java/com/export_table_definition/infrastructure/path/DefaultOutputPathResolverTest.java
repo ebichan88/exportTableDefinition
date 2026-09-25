@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -126,6 +128,46 @@ public class DefaultOutputPathResolverTest {
   void testResolveSchemaObjectFile() {
     Path result = resolver.resolveSchemaObjectFile(baseInfo, baseDir, "public", "sequence", "seq1");
     assertEquals(Path.of("output", "testdb", "public", "sequence", "seq1.md"), result);
+  }
+
+  @Test
+  @DisplayName("resolveSnapshotDirectory: {base}/snapshot")
+  void testResolveSnapshotDirectory() {
+    assertEquals(Path.of("output", "snapshot"), resolver.resolveSnapshotDirectory(baseDir));
+  }
+
+  @Test
+  @DisplayName("resolveSnapshotDatabaseFile: {base}/snapshot/{DB名}/database.json")
+  void testResolveSnapshotDatabaseFile() {
+    assertEquals(
+        Path.of("output", "snapshot", "testdb", "database.json"),
+        resolver.resolveSnapshotDatabaseFile(baseInfo, baseDir));
+  }
+
+  @Test
+  @DisplayName("resolveSnapshotFile: {base}/snapshot/{DB名}/{スキーマ名}/{種別のファイル名}.jsonl")
+  void testResolveSnapshotFile() {
+    assertEquals(
+        Path.of("output", "snapshot", "testdb", "public", "tables.jsonl"),
+        resolver.resolveSnapshotFile(baseInfo, baseDir, "public", SnapshotKind.TABLE));
+    assertEquals(
+        Path.of("output", "snapshot", "testdb", "public", "functions.jsonl"),
+        resolver.resolveSnapshotFile(baseInfo, baseDir, "public", SnapshotKind.FUNCTION));
+  }
+
+  @Test
+  @DisplayName("resolveSnapshotKind: resolveSnapshotFileで解決したファイルから種別を判定し、それ以外は空を返す")
+  void testResolveSnapshotKind() {
+    for (SnapshotKind kind : SnapshotKind.values()) {
+      assertEquals(
+          Optional.of(kind),
+          resolver.resolveSnapshotKind(
+              resolver.resolveSnapshotFile(baseInfo, baseDir, "public", kind)));
+    }
+    assertEquals(
+        Optional.empty(),
+        resolver.resolveSnapshotKind(resolver.resolveSnapshotDatabaseFile(baseInfo, baseDir)));
+    assertEquals(Optional.empty(), resolver.resolveSnapshotKind(Path.of("README.md")));
   }
 
   @Test

@@ -72,7 +72,8 @@ public class TableDefinitionListTemplates {
   }
 
   /**
-   * テーブル一覧セクション（テーブル情報1行分）
+   * テーブル一覧セクション（テーブル情報1行分）<br>
+   * 論理テーブル名はDBコメント由来の自由記述文字列（{@code |}・改行を含みうる）のためエスケープする
    *
    * @param no 行番号（1始まり）
    * @param table テーブル情報
@@ -84,7 +85,7 @@ public class TableDefinitionListTemplates {
         + "|"
         + table.schemaName()
         + "|"
-        + table.logicalTableName()
+        + MarkdownTemplateSupport.escapeTableCell(table.logicalTableName())
         + "|"
         + table.physicalTableName()
         + "|"

@@ -20,6 +20,15 @@ public interface FileRepository {
   public void writeFile(Path filePath, List<String> contents);
 
   /**
+   * ファイルの末尾へ追記するメソッド<br>
+   * ファイルが存在しない場合は新規作成する
+   *
+   * @param filePath 追記先のファイルパス
+   * @param contents 追記する内容のリスト
+   */
+  public void appendFile(Path filePath, List<String> contents);
+
+  /**
    * ディレクトリを作成するメソッド
    *
    * @param filePath 作成するディレクトリのパス

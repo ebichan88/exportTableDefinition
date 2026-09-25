@@ -67,4 +67,19 @@ public final class MarkdownTemplateSupport {
     }
     return value.replace("|", "\\|").replaceAll("\\r\\n|\\r|\\n", "<br>");
   }
+
+  /**
+   * DBのカタログから取得した定義文字列（インデックス定義・制約定義等）を、Markdownの表セルへ埋め込める形へエスケープするメソッド<br>
+   * セル区切りとして解釈される{@code |}のみをエスケープする。{@link #escapeTableCell(String)}と異なり改行は置換しない
+   * （カタログ由来の定義は1行で取得しているため）。 SQL側でエスケープすると構造化データ（スナップショット等）にもMarkdown記法が混入するため、表示用のエスケープはここで行う
+   *
+   * @param value エスケープ対象の文字列（nullの場合は空文字として扱う）
+   * @return 表セルへ埋め込み可能な文字列
+   */
+  public static String escapePipe(String value) {
+    if (value == null || value.isEmpty()) {
+      return "";
+    }
+    return value.replace("|", "\\|");
+  }
 }

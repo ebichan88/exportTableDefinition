@@ -37,6 +37,11 @@ public class ErDiagramWriterDomainServiceTest {
     }
 
     @Override
+    public void appendFile(Path filePath, List<String> contents) {
+      files.merge(filePath, String.join("", contents), String::concat);
+    }
+
+    @Override
     public void createDirectory(Path filePath) {
       // 何もしない
     }

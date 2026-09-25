@@ -27,4 +27,17 @@ public record SequenceEntity(
     String cacheSize,
     String startValue,
     String cycle,
-    String ownedBy) {}
+    String ownedBy) {
+
+  /** 循環することを表すマーカー文字列 */
+  private static final String MARKER = "○";
+
+  /**
+   * 最大値（最小値）到達時に循環するか判定するメソッド
+   *
+   * @return 循環する場合はtrue。それ以外の場合はfalse
+   */
+  public boolean isCycle() {
+    return MARKER.equals(cycle);
+  }
+}

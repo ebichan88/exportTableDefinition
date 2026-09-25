@@ -92,7 +92,8 @@ public interface TableDefinitionRepository {
   List<FunctionEntity> selectFunctionList(List<String> schemaList);
 
   /**
-   * データベースの関数・プロシージャの定義本体を含む情報を取得するメソッド
+   * データベースの関数・プロシージャの定義本体を含む情報を取得するメソッド<br>
+   * {@link #selectFunctionList}と同じ項目（種別・引数・戻り値・言語）に加え、定義本体を含む
    *
    * @param schemaList テーブル定義出力対象のスキーマのリスト
    * @return データベースの関数・プロシージャの定義情報

@@ -35,6 +35,11 @@ public class ObjectListWriterDomainServiceTest {
     }
 
     @Override
+    public void appendFile(Path filePath, List<String> contents) {
+      files.merge(filePath, String.join("", contents), String::concat);
+    }
+
+    @Override
     public void createDirectory(Path filePath) {
       createdDirectories.add(filePath);
     }
@@ -119,6 +124,33 @@ public class ObjectListWriterDomainServiceTest {
     Path file = OUT.resolve("functionList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
     assertTrue(fileRepository.files.get(file).contains("calc_total"));
+  }
+
+  @Test
+  @DisplayName("writeFunctionList/writeTypeList: 引数・戻り値・型定義に含まれる|は表を崩さないようエスケープする")
+  void testWriteListsEscapePipe() {
+    var function =
+        new FunctionEntity(
+            "testdb",
+            "public",
+            "concat_code",
+            "concat_code",
+            "FUNCTION",
+            "sep text DEFAULT '|'::text",
+            "TABLE(code text, label text)",
+            "sql",
+            "");
+    var type = new TypeEntity("testdb", "public", "delimiter", "ENUM", "|, ,, ;");
+    writer.writeFunctionList(List.of(function), baseInfo(), OUT);
+    writer.writeTypeList(List.of(type), baseInfo(), OUT);
+
+    assertTrue(
+        fileRepository
+            .files
+            .get(OUT.resolve("functionList_testdb.md"))
+            .contains("|sep text DEFAULT '\\|'::text|TABLE(code text, label text)|"));
+    assertTrue(
+        fileRepository.files.get(OUT.resolve("typeList_testdb.md")).contains("|ENUM|\\|, ,, ;|"));
   }
 
   @Test

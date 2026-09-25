@@ -12,6 +12,7 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 | 各テーブル定義書 | カラム・インデックス・制約・外部キー情報など（PostgreSQLの場合はトリガー情報も） |
 | ER図 | テーブル間の外部キー関係を表すMermaid記法の図（テーブル単位・スキーマ単位の2種類） |
 | PostgreSQL固有オブジェクトの一覧・個別ページ | 関数・プロシージャ、シーケンス、ユーザー定義型（ENUM等） |
+| スキーマのスナップショット（任意） | 上記と同じ情報を機械可読なJSON Lines形式で構造化したもの（`outputSnapshot=true`の場合のみ。[詳細](#スキーマのスナップショットjson-lines)） |
 
 出力サンプル: [テーブル一覧](./docs/sample/postgres/output/tableList_testdb.md)
 
@@ -75,7 +76,10 @@ chunkSize={詳細情報をまとめて取得・出力するテーブル数の上
 erDiagramMaxNodes={スキーマ別ER図1枚に描画するテーブル数の上限} ※空白の場合は80。0以下を指定すると上限なし
 outputObjects={出力対象とするPostgreSQL固有オブジェクト種別（複数存在する場合はカンマ区切り）} ※空白の場合は全種別を対象
 annotationPath={手動付帯情報・論理リレーションを記述したサイドカーYAMLのパス} ※空白の場合はマージを行わない
+outputSnapshot={Markdownに加えてスキーマのスナップショット（JSON Lines）を出力するか（true/false）} ※空白の場合はfalse（出力しない）
 ```
+
+`outputSnapshot`を`true`にすると、Markdownのドキュメントと同じ取得結果から、スキーマ情報を構造化したスナップショットを`outputPath`配下の`snapshot/`へ出力します。jq等での機械処理や、プルリクエストでのスキーマ変更のレビュー（git diff）に利用できます。形式は[スキーマのスナップショット（JSON Lines）](#スキーマのスナップショットjson-lines)を参照してください。
 
 `outputObjects`は、PostgreSQL固有の追加オブジェクト（トリガー・関数/プロシージャ・シーケンス・ユーザー定義型）のうち、
 出力したい種別だけを指定するための設定です。指定できる値は以下のとおりで、`table`（テーブル定義書・ER図）は
@@ -207,6 +211,7 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --rm-dist
 * `outputPath`が未作成の場合（初回実行など）は何もせず、通常どおり生成します。
 * 誤設定による被害を防ぐため、`outputPath`の解決結果がルートディレクトリ・ホームディレクトリ・カレントディレクトリ自体になる場合は削除を拒否し、異常終了します。
 * `--check`モードでは出力先ディレクトリへ直接書き込まない（一時ディレクトリへ生成して比較するのみの）ため、`--check`と同時に指定した場合`--rm-dist`は無視されます。
+* `outputSnapshot=true`の場合、`outputPath`配下の`snapshot/`も削除・再生成の対象になります。
 
 ### DB vs ドキュメントの差分検知（`--check`モード）
 
@@ -219,13 +224,27 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --rm-dist
 java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
 ```
 
-* 比較は、生成した一時ディレクトリと`outputPath`配下を**ファイル単位**で突き合わせ、以下の3区分で報告します。
-    * 生成側にのみ存在するファイル（コミット漏れの可能性）
-    * コミット側にのみ存在するファイル（削除されたテーブル等の残骸ファイルの可能性）
-    * 両方に存在するが内容が一致しないファイル
+比較の方法は`outputSnapshot`（[こちら](#exporttabledefinitionproperties-の記載内容)）の設定によって変わります。
+CIで利用する場合は、`outputSnapshot=true`でスナップショットもコミットしておく運用を推奨します。
+
+| `outputSnapshot` | 比較対象 | 差分の報告単位 |
+|---|---|---|
+| `true` | `outputPath`配下の`snapshot/`（[スキーマのスナップショット](#スキーマのスナップショットjson-lines)） | オブジェクト単位（例: `table sample.employee`、`function sample.calculate_bonus(p_salary numeric)`） |
+| `false`（既定） | `outputPath`配下のMarkdownのドキュメント一式 | ファイル単位（例: `testdb/sample/table/employee.md`） |
+
+* いずれの場合も、以下の3区分で報告します。
+    * 生成側にのみ存在するもの（コミット漏れの可能性）
+    * コミット側にのみ存在するもの（削除されたテーブル等の残骸の可能性）
+    * 両方に存在するが内容が一致しないもの
 * 差分が1件でも見つかった場合、または比較処理自体が失敗した場合は終了コード`1`で終了します。差分がない場合は`0`で終了するため、CIのジョブをそのまま失敗させられます。
-* `outputPath`がまだ作成されていない場合（初回実行など）は、生成される全ファイルが「生成側にのみ存在するファイル」として扱われ、差分ありと判定されます。
-* `--check`は内部でドキュメント生成処理を通常の1回に加えてもう1回実行するため、実行時間・DB負荷は通常実行の約2倍になります。
+* `outputPath`（`outputSnapshot=true`の場合は`outputPath`配下の`snapshot/`）がまだ作成されていない場合（初回実行など）は、生成される全ファイル・全オブジェクトが「生成側にのみ存在するもの」として扱われ、差分ありと判定されます。
+* `outputSnapshot=true`の場合
+    * スナップショットは実行のたびに変わる「作成日」を含まないため、ドキュメントを生成した日と別の日に`--check`を実行しても、DBに変更が無ければ差分なしと判定されます。
+    * スナップショットのみを生成して比較し、Markdownの描画・ER図の生成は行いません。そのため、**Markdownのみに生じた差分（手作業での編集・削除、ツールのバージョンアップによる出力形式の変更等）は検知しません**。
+    * 関数・プロシージャは同名のもの（オーバーロード）を引数で区別するため、引数（デフォルト値を含む）を変更した場合は、変更前の関数の削除と変更後の関数の追加として報告されます。
+* `outputSnapshot=false`の場合
+    * Markdownには「基本情報」表に作成日（実行日）が含まれるため、ドキュメントを生成した日と別の日に`--check`を実行すると、DBに変更が無くても全ファイルが「内容が一致しないファイル」と判定されます。
+* DBからの取得は通常実行と同じく1回です。取得結果を一時ディレクトリへ出力して比較するため、比較対象の出力（Markdown一式またはスナップショット）の書き込み・読み込みの分だけ通常実行より処理が増えます。
 * `schema`/`table`/`chunkSize`/`erDiagramMaxNodes`/`outputObjects`/`annotationPath`といった設定は、通常実行と同様に適用されます。
 
 GitHub Actionsでの利用例（マイグレーション後にドキュメント再生成を忘れていないかをCIで検知する）:
@@ -323,6 +342,48 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 これらの追加オブジェクトは、`outputObjects`（[こちら](#exporttabledefinitionproperties-の記載内容)）でオブジェクト種別ごとに
 出力有無を絞り込めます。トリガーを対象外にした場合は、`triggerList_{DB名}.md`だけでなく各テーブル定義書内の
 「トリガー情報」セクションも出力されなくなります。
+
+### スキーマのスナップショット（JSON Lines）
+
+`outputSnapshot=true`の場合、Markdownのドキュメントに加えて、DBから取得したスキーマ情報を構造化した
+スナップショットを出力します（出力サンプル: [docs/sample/postgres/output/snapshot](./docs/sample/postgres/output/snapshot)）。
+Markdownでは1つの表セルにまとめて表示している情報（NOT NULL・デフォルト値・カラムリスト等）も個別の項目として持つため、
+jq等で機械的に扱えます。
+
+```
+{outputPath}/snapshot/
+└─{DB名}
+   ├─database.json       ・・・ DB名・DBMS種別・スナップショットの形式バージョン
+   └─{スキーマ名}
+      ├─tables.jsonl     ・・・ 1テーブル1行（カラム・インデックス・制約・外部キー・論理リレーション・トリガー・サイドカーの付帯情報）
+      ├─functions.jsonl  ・・・ 1関数・プロシージャ1行（定義本体を含む）
+      ├─sequences.jsonl  ・・・ 1シーケンス1行
+      └─types.jsonl      ・・・ 1ユーザー定義型1行
+```
+
+`tables.jsonl`の1行は以下のような内容です（実際は1行。見やすさのため整形しています）。
+
+```json
+{
+  "schema": "sample", "name": "audit_log", "type": "table",
+  "description": "employeeテーブルの変更を記録する監査ログ。…", "remarks": "アプリケーションからの直接INSERTは禁止",
+  "columns": [
+    {"name": "log_id", "type": "bigint", "primaryKey": true, "notNull": true, "defaultValue": "nextval('sample.audit_log_log_id_seq'::regclass)"},
+    {"name": "table_name", "type": "character varying(50)", "precisionScale": "50", "primaryKey": false, "notNull": true, "remarks": "変更対象のテーブル名"}
+  ],
+  "indexes": [{"name": "audit_log_pkey", "method": "btree", "unique": true, "primary": true, "definition": "CREATE UNIQUE INDEX …"}],
+  "constraints": [{"name": "audit_log_pkey", "type": "PRIMARY KEY", "definition": "PRIMARY KEY (log_id)"}],
+  "logicalRelations": [{"name": "rel_audit_log_employee", "columns": ["record_id"], "referenceSchema": "sample", "referenceTable": "employee", "referenceColumns": ["employee_id"], "cardinality": "OPTIONAL_ONE_TO_MANY"}]
+}
+```
+
+* 1オブジェクト1行のJSON Lines形式のため、git上の差分がそのままオブジェクト単位の差分になります。1テーブル分の情報が1行にまとまっているため、行内のどこが変わったかは`git diff --word-diff`で確認すると読みやすくなります。
+* `outputSnapshot=true`で出力したスナップショットをコミットしておくと、`--check`がスナップショット同士の比較になります（[DB vs ドキュメントの差分検知](#db-vs-ドキュメントの差分検知--checkモード)を参照）。
+* 値が無い項目（コメント未設定の論理名、外部キーを持たないテーブルの`foreignKeys`等）は出力を省略します。真偽値の項目（`primaryKey`・`notNull`等）は`false`も出力します。
+* 実行のたびに変わる「作成日」は含めません。DBに変更が無ければ、何度実行しても同じ内容になります。
+* 値はMarkdown向けのエスケープ（`|`→`\|`等）をしない、DBのカタログ・サイドカーYAMLから取得したままの値です。
+* 被参照側の外部キーは、参照元テーブルの`foreignKeys`から導出できるため保持しません。
+* `schema`・`table`・`outputObjects`・`annotationPath`の設定はMarkdownと同様に適用されます。`chunkSize`・`erDiagramMaxNodes`はMarkdownの分割出力のための設定のため、スナップショットの内容には影響しません。
 
 ## 開発者向け（ソースからビルドする場合）
 

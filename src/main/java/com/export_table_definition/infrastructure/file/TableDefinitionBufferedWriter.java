@@ -36,10 +36,21 @@ public class TableDefinitionBufferedWriter implements AutoCloseable {
    * @param charset 文字エンコード
    */
   public TableDefinitionBufferedWriter(Path path, Charset charset) {
+    this(path, charset, false);
+  }
+
+  /**
+   * コンストラクタ
+   *
+   * @param path 書き込み先のファイルパス
+   * @param charset 文字エンコード
+   * @param append trueの場合は既存ファイルの末尾へ追記し、falseの場合は上書きする
+   */
+  public TableDefinitionBufferedWriter(Path path, Charset charset, boolean append) {
     try {
       this.bw =
           new BufferedWriter(
-              new OutputStreamWriter(new FileOutputStream(path.toFile(), false), charset));
+              new OutputStreamWriter(new FileOutputStream(path.toFile(), append), charset));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
