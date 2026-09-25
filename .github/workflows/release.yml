@@ -47,7 +47,9 @@ jobs:
       - name: Build with Gradle (Unix)
         if: matrix.platform != 'windows'
         shell: bash
-        run: ./gradlew build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build
 
       # 依存ライブラリ（JDBCドライバ、log4j、Guice等）が実際に使用するJDKモジュールを検出する。
       # jdk.crypto.ec / jdk.charsets / jdk.unsupported はリフレクションやSPI経由で使われ
