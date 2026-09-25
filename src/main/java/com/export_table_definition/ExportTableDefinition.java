@@ -54,10 +54,9 @@ public class ExportTableDefinition {
         MyBatisSqlSessionFactory.setConnectionOverrides(resolveConnectionOverrides(args));
         final ExportTableDefinition exportTableDefinition = new ExportTableDefinition(
                 Guice.createInjector(new ExportTableDefinitionModule()).getInstance(ExportTableDefinitionController.class));
-        if (Arrays.asList(args).contains(CHECK_FLAG)) {
-            exportTableDefinition.runCheck();
-        } else {
-            exportTableDefinition.run();
+        switch (ExecutionMode.from(args)) {
+            case EXPORT -> exportTableDefinition.run();
+            case CHECK -> exportTableDefinition.runCheck();
         }
     }
 
@@ -106,6 +105,26 @@ public class ExportTableDefinition {
      * @param envName 環境変数名
      */
     private record ConnectionArg(String cliName, String envName) {
+    }
+
+    /**
+     * 実行モードの種別
+     */
+    private enum ExecutionMode {
+        /** テーブル定義出力（通常実行） */
+        EXPORT,
+        /** DB vs ドキュメントの差分検知（{@code --check}モード） */
+        CHECK;
+
+        /**
+         * コマンドライン引数から実行モードを判定するメソッド
+         *
+         * @param args コマンドライン引数
+         * @return {@code --check}が指定されている場合は{@link #CHECK}、それ以外は{@link #EXPORT}
+         */
+        static ExecutionMode from(String[] args) {
+            return Arrays.asList(args).contains(CHECK_FLAG) ? CHECK : EXPORT;
+        }
     }
 
     /**
