@@ -2,7 +2,7 @@ package com.export_table_definition.domain.model.snapshot;
 
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
+import java.util.regex.Pattern;
 
 /**
  * エンティティの値をスナップショット向けの値へ変換する共通処理を集約したクラス<br>
@@ -24,7 +24,7 @@ final class SnapshotValues {
    * @return 空文字・空白のみ・nullの場合はnull。それ以外は元の文字列
    */
   static String text(String value) {
-    return StringUtils.isBlank(value) ? null : value;
+    return (value == null || value.isBlank()) ? null : value;
   }
 
   /**
@@ -35,10 +35,10 @@ final class SnapshotValues {
    * @return 分解した値のリスト（前後の空白は除去し、空要素は含めない）。値が無い場合は空リスト
    */
   static List<String> split(String value, String separator) {
-    if (StringUtils.isBlank(value)) {
+    if (value == null || value.isBlank()) {
       return List.of();
     }
-    return Arrays.stream(StringUtils.splitByWholeSeparator(value, separator))
+    return Arrays.stream(value.split(Pattern.quote(separator)))
         .map(String::strip)
         .filter(element -> !element.isEmpty())
         .toList();

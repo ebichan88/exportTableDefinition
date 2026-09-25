@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
+import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -78,7 +78,7 @@ public class AnnotationYamlRepository implements AnnotationRepository {
   /** {@inheritDoc} */
   @Override
   public Sidecar load(String annotationPath) {
-    if (StringUtils.isBlank(annotationPath)) {
+    if (annotationPath == null || annotationPath.isBlank()) {
       return Sidecar.empty();
     }
     final Path path = Path.of(annotationPath.trim());
@@ -211,7 +211,7 @@ public class AnnotationYamlRepository implements AnnotationRepository {
    * @return 解決した関連名
    */
   private String resolveRelationName(String name, TableKey child, List<String> childColumns) {
-    if (StringUtils.isNotBlank(name)) {
+    if (name != null && !name.isBlank()) {
       return name.trim();
     }
     return child.table() + "_" + String.join("_", childColumns) + LOGICAL_RELATION_NAME_SUFFIX;
@@ -227,7 +227,7 @@ public class AnnotationYamlRepository implements AnnotationRepository {
    * @return 解決した多重度
    */
   private Cardinality resolveCardinality(String label, TableKey child, Path path) {
-    if (StringUtils.isBlank(label)) {
+    if (label == null || label.isBlank()) {
       return DEFAULT_CARDINALITY;
     }
     return Cardinality.fromLabel(label)
@@ -254,7 +254,7 @@ public class AnnotationYamlRepository implements AnnotationRepository {
    * @return 変換したテーブルキー。形式が不正な場合はnull
    */
   private TableKey toTableKey(String rawKey, String sectionKey, Path path) {
-    if (StringUtils.isBlank(rawKey) || !rawKey.contains(".")) {
+    if (rawKey == null || rawKey.isBlank() || !rawKey.contains(".")) {
       logger.warn(
           "Ignoring key not in 'schema.table' format. [key={}, section={}, annotationPath={}]",
           rawKey,
@@ -289,7 +289,7 @@ public class AnnotationYamlRepository implements AnnotationRepository {
     final Map<String, String> columnRemarks = new LinkedHashMap<>();
     columns.forEach(
         (columnName, remark) -> {
-          if (StringUtils.isNotBlank(columnName)) {
+          if (columnName != null && !columnName.isBlank()) {
             columnRemarks.put(columnName.trim(), asString(remark));
           }
         });
@@ -342,7 +342,7 @@ public class AnnotationYamlRepository implements AnnotationRepository {
     return rawList.stream()
         .map(this::asString)
         .map(String::trim)
-        .filter(StringUtils::isNotBlank)
+        .filter(Predicate.not(String::isBlank))
         .toList();
   }
 

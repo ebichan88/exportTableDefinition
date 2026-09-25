@@ -14,8 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * スキーマ単位のER図（全体ER図）書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
@@ -304,7 +304,7 @@ public class ErDiagramTemplates {
             no,
             table.schemaName(),
             table.physicalTableName(),
-            StringUtils.defaultString(table.logicalTableName()),
+            Objects.toString(table.logicalTableName(), ""),
             table.tableType(),
             tableDefinitionPath(table))
         + LINE_SEPARATOR;

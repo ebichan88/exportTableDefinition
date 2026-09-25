@@ -3,8 +3,6 @@ package com.export_table_definition.domain.model.entity;
 import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.model.value.TableTargetFilter;
 import java.util.List;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * テーブル情報に関するrecordクラス
@@ -45,7 +43,7 @@ public record TableEntity(
    *     論理テーブル名が存在しない場合は 物理テーブル名 形式の名称を返却
    */
   public String getHeaderTableName() {
-    if (StringUtils.isBlank(logicalTableName)) {
+    if (logicalTableName == null || logicalTableName.isBlank()) {
       return physicalTableName;
     }
     return physicalTableName + "（" + logicalTableName + "）";
@@ -79,7 +77,7 @@ public record TableEntity(
    */
   public boolean needsWriteTableDefinition(
       List<String> targetSchemaList, List<String> targetTableList) {
-    final boolean hasSchemaList = CollectionUtils.isNotEmpty(targetSchemaList);
+    final boolean hasSchemaList = targetSchemaList != null && !targetSchemaList.isEmpty();
     final TableTargetFilter tableFilter = TableTargetFilter.of(targetTableList);
     final boolean hasTableList = !tableFilter.isEmpty();
 

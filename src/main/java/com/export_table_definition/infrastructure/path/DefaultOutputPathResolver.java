@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
-import org.apache.commons.lang3.StringUtils;
+import java.util.function.Predicate;
 
 /**
  * 出力パス解決のデフォルト実装
@@ -37,7 +37,7 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   @Override
   public Path resolveBaseOutputDir(String outputPath) {
     return Optional.ofNullable(outputPath)
-        .filter(StringUtils::isNotBlank)
+        .filter(Predicate.not(String::isBlank))
         .map(Paths::get)
         .orElse(Paths.get(DEFAULT_OUTPUT_DIRECTORY));
   }
