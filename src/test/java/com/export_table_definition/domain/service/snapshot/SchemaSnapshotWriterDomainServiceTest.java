@@ -93,8 +93,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
         List.of(),
         List.of(),
         List.of(),
-        TableAnnotation.EMPTY,
-        OUT);
+        TableAnnotation.EMPTY);
   }
 
   @Test
@@ -113,8 +112,8 @@ public class SchemaSnapshotWriterDomainServiceTest {
   @DisplayName("initTableFile + appendTable: スキーマ単位のファイルへ1テーブル1行で追記する")
   void testAppendTableWritesOneLinePerTable() {
     writer.initTableFile("public", BASE_INFO, OUT);
-    writer.appendTable(tableContent("public", "t1", "id"));
-    writer.appendTable(tableContent("public", "t2", "code"));
+    writer.appendTable(tableContent("public", "t1", "id"), OUT);
+    writer.appendTable(tableContent("public", "t2", "code"), OUT);
 
     Path file = SNAPSHOT_DIR.resolve("public").resolve("tables.jsonl");
     List<String> lines = fileRepository.files.get(file).lines().toList();
@@ -133,7 +132,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
     fileRepository.files.put(file, "{\"stale\":true}\n");
 
     writer.initTableFile("public", BASE_INFO, OUT);
-    writer.appendTable(tableContent("public", "t1", "id"));
+    writer.appendTable(tableContent("public", "t1", "id"), OUT);
 
     assertFalse(fileRepository.files.get(file).contains("stale"));
     assertEquals(1, fileRepository.files.get(file).lines().count());

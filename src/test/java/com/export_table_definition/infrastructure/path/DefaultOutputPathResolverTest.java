@@ -44,6 +44,20 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
+  @DisplayName("isRemovableOutputDir: カレントディレクトリ配下のサブディレクトリは削除を認める")
+  void testIsRemovableOutputDirAllowsSubdirectory() {
+    assertTrue(resolver.isRemovableOutputDir(Path.of("output")));
+  }
+
+  @Test
+  @DisplayName("isRemovableOutputDir: ルート・ホーム・カレントディレクトリ自体は削除を認めない")
+  void testIsRemovableOutputDirRejectsUnsafeDirectories() {
+    assertFalse(resolver.isRemovableOutputDir(Path.of(".")));
+    assertFalse(resolver.isRemovableOutputDir(Path.of("").toAbsolutePath().getRoot()));
+    assertFalse(resolver.isRemovableOutputDir(Path.of(System.getProperty("user.home"))));
+  }
+
+  @Test
   @DisplayName("resolveTableDefinitionDirectory: {base}/{DB名}/{スキーマ名}/{テーブル種別}")
   void testResolveTableDefinitionDirectory() {
     Path result =

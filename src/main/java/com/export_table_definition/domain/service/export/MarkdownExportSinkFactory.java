@@ -1,0 +1,145 @@
+package com.export_table_definition.domain.service.export;
+
+import com.export_table_definition.domain.model.ExportTargets;
+import com.export_table_definition.domain.model.TableDefinitionContent;
+import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
+import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
+import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
+import com.google.inject.Inject;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義）を書き出す{@link ExportSink}を生成するクラス
+ *
+ * @since 1.0
+ * @version 1.0
+ * @author takashi.ebina
+ */
+public class MarkdownExportSinkFactory {
+
+  private final TableDefinitionWriterDomainService tableDefinitionWriter;
+  private final ErDiagramWriterDomainService erDiagramWriter;
+  private final ObjectListWriterDomainService objectListWriter;
+
+  /**
+   * コンストラクタ
+   *
+   * @param tableDefinitionWriter テーブル一覧・テーブル定義書を書き込むクラス
+   * @param erDiagramWriter ER図を書き込むクラス
+   * @param objectListWriter トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
+   */
+  @Inject
+  public MarkdownExportSinkFactory(
+      TableDefinitionWriterDomainService tableDefinitionWriter,
+      ErDiagramWriterDomainService erDiagramWriter,
+      ObjectListWriterDomainService objectListWriter) {
+    this.tableDefinitionWriter = tableDefinitionWriter;
+    this.erDiagramWriter = erDiagramWriter;
+    this.objectListWriter = objectListWriter;
+  }
+
+  /**
+   * 指定したディレクトリへMarkdownのドキュメントを書き出す{@link ExportSink}を生成するメソッド
+   *
+   * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限。0以下の場合は上限なし
+   * @return Markdownのドキュメントを書き出す{@link ExportSink}
+   */
+  public ExportSink create(Path outputBaseDir, int erDiagramMaxNodes) {
+    return new MarkdownExportSink(outputBaseDir, erDiagramMaxNodes);
+  }
+
+  /**
+   * テーブル一覧に掲載する関連ドキュメント（各一覧へのリンク）を決めるメソッド<br>
+   * 対象が1件以上存在するカテゴリのみをリンク対象とする（対象が空の一覧は出力されないため）
+   *
+   * @param targets 一括取得した出力対象の情報
+   * @return リンクを掲載する一覧の種別（掲載順）
+   */
+  private static List<ListDocumentType> relatedDocuments(ExportTargets targets) {
+    final List<ListDocumentType> relatedDocuments = new ArrayList<>();
+    if (!targets.tables().isEmpty()) {
+      relatedDocuments.add(ListDocumentType.ER_DIAGRAM);
+    }
+    if (!targets.functions().isEmpty()) {
+      relatedDocuments.add(ListDocumentType.FUNCTION);
+    }
+    if (!targets.sequences().isEmpty()) {
+      relatedDocuments.add(ListDocumentType.SEQUENCE);
+    }
+    if (!targets.types().isEmpty()) {
+      relatedDocuments.add(ListDocumentType.TYPE);
+    }
+    if (!targets.triggers().isEmpty()) {
+      relatedDocuments.add(ListDocumentType.TRIGGER);
+    }
+    return relatedDocuments;
+  }
+
+  /** 1回の出力先・設定に紐づく、Markdownのドキュメントの{@link ExportSink}実装 */
+  private final class MarkdownExportSink implements ExportSink {
+
+    private final Path outputBaseDir;
+    private final int erDiagramMaxNodes;
+
+    /**
+     * コンストラクタ
+     *
+     * @param outputBaseDir 出力先のベースディレクトリパス
+     * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
+     */
+    private MarkdownExportSink(Path outputBaseDir, int erDiagramMaxNodes) {
+      this.outputBaseDir = outputBaseDir;
+      this.erDiagramMaxNodes = erDiagramMaxNodes;
+    }
+
+    /**
+     * {@inheritDoc}<br>
+     * テーブル一覧・ER図・各種一覧・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧と外部キー一覧のみで 生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる
+     */
+    @Override
+    public void writeOverview(ExportTargets targets) {
+      final BaseInfoEntity baseInfo = targets.baseInfo();
+      // テーブル一覧出力 -> {outputBaseDir}/tableList_{DB名}.md
+      tableDefinitionWriter.writeTableDefinitionList(
+          targets.tables(), baseInfo, outputBaseDir, relatedDocuments(targets));
+      // スキーマ別ER図と、その索引の出力
+      erDiagramWriter.writeErDiagram(
+          targets.tables(), targets.foreignKeys(), baseInfo, outputBaseDir, erDiagramMaxNodes);
+      // トリガー・関数・シーケンス・型の一覧出力（対象が存在しない場合は出力されない）
+      objectListWriter.writeTriggerList(targets.triggers(), baseInfo, outputBaseDir);
+      objectListWriter.writeFunctionList(targets.functions(), baseInfo, outputBaseDir);
+      objectListWriter.writeSequenceList(targets.sequences(), baseInfo, outputBaseDir);
+      objectListWriter.writeTypeList(targets.types(), baseInfo, outputBaseDir);
+      // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
+      targets
+          .sequences()
+          .forEach(
+              sequence ->
+                  objectListWriter.writeSequenceDefinition(sequence, baseInfo, outputBaseDir));
+      targets
+          .types()
+          .forEach(type -> objectListWriter.writeTypeDefinition(type, baseInfo, outputBaseDir));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void writeFunctionDefinitions(
+        String schemaName, List<FunctionEntity> functions, BaseInfoEntity baseInfo) {
+      functions.forEach(
+          function -> objectListWriter.writeFunctionDefinition(function, baseInfo, outputBaseDir));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void writeTableDefinition(TableDefinitionContent content) {
+      // テーブル定義出力 -> {outputBaseDir}/{DB名}/{スキーマ名}/{TBL分類}/{物理テーブル名}.md
+      tableDefinitionWriter.writeTableDefinition(content, outputBaseDir);
+    }
+  }
+}

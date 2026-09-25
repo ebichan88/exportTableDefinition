@@ -6,10 +6,13 @@ import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
+import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
+import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotSerializer;
+import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
@@ -57,5 +60,8 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(SchemaSnapshotWriterDomainService.class);
     bind(SnapshotDiffDomainService.class);
     bind(UnifiedDiffGenerator.class);
+    bind(ExportTargetConsistencyDomainService.class);
+    bind(MarkdownExportSinkFactory.class);
+    bind(SnapshotExportSinkFactory.class);
   }
 }

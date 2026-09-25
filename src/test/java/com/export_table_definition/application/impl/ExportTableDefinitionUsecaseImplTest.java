@@ -23,8 +23,11 @@ import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
+import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
+import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
+import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
@@ -223,11 +226,10 @@ public class ExportTableDefinitionUsecaseImplTest {
     usecase =
         new ExportTableDefinitionUsecaseImpl(
             repository,
-            writer,
-            erDiagramWriter,
-            objectListWriter,
-            snapshotWriter,
             annotationRepository,
+            new ExportTargetConsistencyDomainService(),
+            new MarkdownExportSinkFactory(writer, erDiagramWriter, objectListWriter),
+            new SnapshotExportSinkFactory(snapshotWriter),
             snapshotDiffDomainService,
             fileRepository,
             pathResolver);

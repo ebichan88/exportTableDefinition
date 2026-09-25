@@ -148,14 +148,12 @@ public class SchemaSnapshotWriterDomainService {
    * 追記先は{@link #initTableFile}で作成済みであること
    *
    * @param content 1テーブル分の定義書出力に必要な情報
+   * @param outputBaseDir 出力先のベースディレクトリパス
    */
-  public void appendTable(TableDefinitionContent content) {
+  public void appendTable(TableDefinitionContent content, Path outputBaseDir) {
     final Path filePath =
         outputPathResolver.resolveSnapshotFile(
-            content.baseInfo(),
-            content.outputBaseDir(),
-            content.table().schemaName(),
-            SnapshotKind.TABLE);
+            content.baseInfo(), outputBaseDir, content.table().schemaName(), SnapshotKind.TABLE);
     fileRepository.appendFile(filePath, List.of(toLine(TableSnapshot.of(content))));
   }
 

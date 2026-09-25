@@ -89,14 +89,15 @@ public class TableDefinitionWriterDomainService {
    * テーブル定義の書き込み処理を行うメソッド
    *
    * @param content テーブル定義出力に必要な情報をまとめたレコード
+   * @param outputDirectoryPath 出力ディレクトリのパス
    */
-  public void writeTableDefinition(TableDefinitionContent content) {
+  public void writeTableDefinition(TableDefinitionContent content, Path outputDirectoryPath) {
     final Path directoryPath =
         outputPathResolver.resolveTableDefinitionDirectory(
-            content.baseInfo(), content.table(), content.outputBaseDir());
+            content.baseInfo(), content.table(), outputDirectoryPath);
     final Path filePath =
         outputPathResolver.resolveTableDefinitionFile(
-            content.baseInfo(), content.table(), content.outputBaseDir());
+            content.baseInfo(), content.table(), outputDirectoryPath);
     final List<String> contents =
         List.of(
             TableDefinitionTemplates.fileHeader(content.table()), // ヘッダー

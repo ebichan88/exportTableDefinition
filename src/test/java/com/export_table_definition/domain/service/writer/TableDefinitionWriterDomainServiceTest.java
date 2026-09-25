@@ -165,10 +165,9 @@ public class TableDefinitionWriterDomainServiceTest {
             List.of(),
             List.of(incomingFk),
             List.of(trigger),
-            annotation,
-            OUT);
+            annotation);
 
-    writer.writeTableDefinition(content);
+    writer.writeTableDefinition(content, OUT);
 
     Path expectedFile =
         OUT.resolve("testdb").resolve("public").resolve("table").resolve("orders.md");

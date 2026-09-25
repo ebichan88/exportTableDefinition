@@ -1,0 +1,37 @@
+package com.export_table_definition.domain.model;
+
+import com.export_table_definition.domain.model.annotation.Annotations;
+import com.export_table_definition.domain.model.collection.ForeignKeys;
+import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.model.entity.SequenceEntity;
+import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.entity.TypeEntity;
+import java.util.List;
+
+/**
+ * 出力対象のうち、一括取得する軽量な情報の組<br>
+ * テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は含まない。 それらは出力時にスキーマ・チャンク単位で取得する
+ *
+ * @param baseInfo データベースの基本情報
+ * @param tables 出力対象のテーブル情報のリスト（テーブルの絞り込み済み）
+ * @param foreignKeys 出力対象のテーブル同士の外部キー（論理リレーションを含む）
+ * @param triggers 対象範囲全体のトリガー情報のリスト
+ * @param functions 関数・プロシージャの一覧情報（定義本体を含まない）のリスト
+ * @param sequences シーケンス情報のリスト
+ * @param types ユーザー定義型情報のリスト
+ * @param annotations 対象範囲全体の手動付帯情報
+ * @since 1.0
+ * @version 1.0
+ * @author takashi.ebina
+ */
+public record ExportTargets(
+    BaseInfoEntity baseInfo,
+    List<TableEntity> tables,
+    ForeignKeys foreignKeys,
+    List<TriggerEntity> triggers,
+    List<FunctionEntity> functions,
+    List<SequenceEntity> sequences,
+    List<TypeEntity> types,
+    Annotations annotations) {}

@@ -38,6 +38,15 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
 
   /** {@inheritDoc} */
   @Override
+  public boolean isRemovableOutputDir(Path baseOutputDir) {
+    final Path absolute = baseOutputDir.toAbsolutePath().normalize();
+    final Path cwd = Path.of("").toAbsolutePath().normalize();
+    final Path home = Path.of(System.getProperty("user.home")).toAbsolutePath().normalize();
+    return absolute.getParent() != null && !absolute.equals(cwd) && !absolute.equals(home);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public Path resolveTableDefinitionDirectory(
       BaseInfoEntity baseInfo, TableEntity table, Path baseOutputDir) {
     return resolveTableDefinitionFile(baseInfo, table, baseOutputDir).getParent();

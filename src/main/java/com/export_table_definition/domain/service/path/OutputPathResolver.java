@@ -28,6 +28,15 @@ public interface OutputPathResolver {
   Path resolveBaseOutputDir(String outputPath);
 
   /**
+   * 出力先ベースディレクトリを、書き込み前にディレクトリごと削除してよいか判定する。 <br>
+   * ルート・ホームディレクトリ・カレントディレクトリ自体など、設定誤りで削除すると被害が甚大なディレクトリの場合は削除を認めない
+   *
+   * @param baseOutputDir 基本出力ディレクトリ
+   * @return 削除してよい場合はtrue
+   */
+  boolean isRemovableOutputDir(Path baseOutputDir);
+
+  /**
    * テーブル定義書の出力ディレクトリを返す。 <br>
    * 例: {base}/{DB名}/{スキーマ名}/{テーブル種別}/
    *

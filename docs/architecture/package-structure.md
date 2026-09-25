@@ -17,7 +17,7 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `application` | `ExportTableDefinitionUsecase` | テーブル定義出力ユースケースのインターフェース（通常出力`exportTableDefinition`／差分検知`checkDocumentDiff`） |
-| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔）。取得（`fetchTargets`）と出力（`export`）を分け、出力形式（Markdown/スナップショット）を切り替えられる。`checkDocumentDiff`は`SNAPSHOT`形式のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
+| `application.impl` | `ExportTableDefinitionUsecaseImpl` | DBからの取得（一括取得・スキーマ単位・チャンク単位）の段取りを担う。取得（`fetchTargets`）と出力（`export`）を分け、書き出しは出力形式ごとの`ExportSink`に、取得した情報同士の突き合わせは`ExportTargetConsistencyDomainService`に委ねる。`checkDocumentDiff`はスナップショットの`ExportSink`のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 
 ## domain層
 
@@ -25,7 +25,8 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `domain.model` | `TableDefinitionContent` | 1テーブル分の定義書出力に必要な情報を束ねるrecord（`assemble()`で組み立て） |
+| `domain.model` | `TableDefinitionContent` | 1テーブル分の定義書出力に必要な情報を束ねるrecord（`assemble()`で組み立て）。出力先は持たない |
+| | `ExportTargets` | 一括取得する軽量な出力対象の情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・付帯情報）の組 |
 | `domain.model.entity` | `BaseInfoEntity`, `TableEntity`, `ColumnEntity`, `ConstraintEntity`, `ForeignKeyEntity`, `IndexEntity`, `TriggerEntity`, `FunctionEntity`, `SequenceEntity`, `TypeEntity` | DBから取得したメタ情報を表すrecord群。`SchemaTableKeyed`はスキーマ名・テーブル名を持つ共通IFで、所属テーブルの`TableKey`を`tableKey()`で返す（`ForeignKeyEntity`は参照先の`referenceTableKey()`も持つ） |
 | `domain.model.collection` | `Columns`, `Constraints`, `ForeignKeys`, `Indexes`, `Triggers`, `AbstractEntities` | エンティティのリストをラップし、テーブル単位の絞り込み等を提供するコレクションクラス群。`ForeignKeys`は物理外部キーと論理リレーションを同一集合として保持し、`physicalOf`/`logicalOf`で由来ごとに取り出せる |
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の外部キーのまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し） |
@@ -52,7 +53,10 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `domain.service` | `UnifiedDiffGenerator` | 2つの行リストからunified diff形式の差分を生成する。Myers法による自前実装（外部ライブラリに依存しない） |
-| `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF。分割ページのパスは本体ページのパスから`resolvePageFile`で求める |
+| `domain.service.export` | `ExportSink` | 取得したスキーマ情報を1つの出力形式で書き出すIF（一括取得分・関数定義・テーブル定義の書き出し） |
+| | `MarkdownExportSinkFactory`, `SnapshotExportSinkFactory` | 出力先（とER図のノード上限）を受け取り、Markdown／スナップショットの`ExportSink`を生成する |
+| `domain.service.target` | `ExportTargetConsistencyDomainService` | 出力対象のテーブルと、外部キー・サイドカー（論理リレーション／付帯情報）を突き合わせる。片側が出力対象外の外部キー・論理リレーションの除外と、孤児注釈の警告を行う |
+| `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF。分割ページのパスは本体ページのパスから`resolvePageFile`で求める。`--rm-dist`で削除してよい出力先かの判定（`isRemovableOutputDir`）も持つ |
 | | `DocumentLocations` | Markdownドキュメントのファイル名と出力ベースディレクトリからの相対パス、ドキュメント間の相対リンクの規則を一元的に定める。`OutputPathResolver`の実装とテンプレートの双方がこの規則を参照する |
 | `domain.service.snapshot` | `SchemaSnapshotWriterDomainService` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
 | | `SnapshotDiffDomainService` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`--check`モードで使用）。内容が一致しないものは、`SnapshotSerializer.formatForDiff`で整形した上で`UnifiedDiffGenerator`によりunified diffを付ける |

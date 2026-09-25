@@ -19,7 +19,6 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
-import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -70,22 +69,12 @@ public class TableDefinitionContentTest {
                 TableKey.of("public", "customers"),
                 new TableAnnotation("顧客テーブル", "", java.util.Map.of())));
 
-    Path baseDir = Path.of("output");
     TableDefinitionContent content =
         TableDefinitionContent.assemble(
-            baseInfo,
-            target,
-            columns,
-            indexes,
-            constraints,
-            foreignKeys,
-            triggers,
-            annotations,
-            baseDir);
+            baseInfo, target, columns, indexes, constraints, foreignKeys, triggers, annotations);
 
     assertSame(baseInfo, content.baseInfo());
     assertSame(target, content.table());
-    assertSame(baseDir, content.outputBaseDir());
     assertSame(ownAnnotation, content.annotation());
     assertEquals(List.of(ownColumn), content.columns());
     assertEquals(List.of(ownIndex), content.indexes());
@@ -113,8 +102,7 @@ public class TableDefinitionContentTest {
             Constraints.of(List.of()),
             ForeignKeys.of(List.of()),
             Triggers.of(List.of()),
-            Annotations.empty(),
-            Path.of("output"));
+            Annotations.empty());
 
     // 付帯情報が存在しないテーブルには空の付帯情報が設定される
     assertSame(TableAnnotation.EMPTY, content.annotation());
@@ -146,8 +134,7 @@ public class TableDefinitionContentTest {
             Constraints.of(List.of()),
             foreignKeys,
             Triggers.of(List.of()),
-            Annotations.empty(),
-            Path.of("output"));
+            Annotations.empty());
 
     assertEquals(List.of(physical), content.foreignKeys());
     assertEquals(List.of(logical), content.logicalRelations());
@@ -173,8 +160,7 @@ public class TableDefinitionContentTest {
             Constraints.of(List.of()),
             foreignKeys,
             Triggers.of(List.of()),
-            Annotations.empty(),
-            Path.of("output"));
+            Annotations.empty());
 
     assertEquals(List.of(physical, logical), content.outgoingRelations());
   }

@@ -13,7 +13,6 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.RelationType;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -44,8 +43,7 @@ public class TableSnapshotTest {
         logicalRelations,
         List.of(),
         triggers,
-        annotation,
-        Path.of("output"));
+        annotation);
   }
 
   @Test

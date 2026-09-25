@@ -43,11 +43,13 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 5. ユースケース実装が以下を順に行う（詳細は
    [ExportTableDefinitionUsecaseImpl.java](../../src/main/java/com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.java) 参照）。
    - `TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得
-   - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込みマージ
-   - `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ObjectListWriterDomainService`
-     （いずれも `domain.service.writer` 配下）がMarkdownを組み立てて `FileRepository` 経由で出力
-   - `SchemaSnapshotWriterDomainService`（`domain.service.snapshot` 配下）が、同じ取得結果から常に
-     スキーマのスナップショット（JSON Lines）を出力
+   - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込み、
+     `ExportTargetConsistencyDomainService`（`domain.service.target` 配下）が出力対象のテーブルと突き合わせる
+   - 取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export` 配下）へ渡して書き出す
+     - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` /
+       `ObjectListWriterDomainService`（いずれも `domain.service.writer` 配下）がMarkdownを組み立てて `FileRepository` 経由で出力
+     - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot` 配下）が、
+       同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
 
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
@@ -109,8 +111,8 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 - 書き込みは`SchemaSnapshotWriterDomainService`が`FileRepository`・`OutputPathResolver`経由で行う
 - メモリ効率のための分割取得の方針は変えない。テーブルは`exportTableDefinitionChunk`で`TableDefinitionContent`を
   組み立てた時点でMarkdownと並べて1行ずつスキーマ単位の`tables.jsonl`へ追記する（スキーマの処理開始時に
-  `initTableFile`で空にしてから追記するため、前回実行時の内容へ追記されることはない）。関数は定義本体を
-  スキーマ単位で取得した時点で`functions.jsonl`へ出力する
+  `ExportSink.beginSchemaTables()`→`initTableFile`で空にしてから追記するため、前回実行時の内容へ追記されることはない）。
+  関数は定義本体をスキーマ単位で取得した時点で`functions.jsonl`へ出力する
 
 なお、SQLは構造化した値のみを返し、Markdown向けの表示用の組み立て・エスケープ（`|`→`\|`等）は
 `domain.service.writer.template`配下で行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
@@ -121,14 +123,15 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 `ExportTableDefinitionController.checkDiff()` → `ExportTableDefinitionUsecaseImpl.checkDocumentDiff()`を呼び出す。
 
 `ExportTableDefinitionUsecaseImpl`は、DBからの取得と出力を以下のように分けている。通常実行と`--check`は
-取得処理を共有し、出力形式（private enum `OutputFormat`: `MARKDOWN`/`SNAPSHOT`）だけを切り替える。
+取得処理を共有し、書き出し先の出力形式（`ExportSink`のリスト）だけを切り替える。
 
 - `fetchTargets()`: 一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・
-  サイドカー）を取得し、`ExportTargets`にまとめる
-- `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を出力した後、関数の定義本体をスキーマ単位で、
-  テーブルの詳細情報をスキーマ・チャンク単位で取得し、指定された出力形式で出力する
+  サイドカー）を取得し、`domain.model.ExportTargets`にまとめる
+- `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を`ExportSink.writeOverview()`で書き出した後、
+  関数の定義本体をスキーマ単位で、テーブルの詳細情報をスキーマ・チャンク単位で取得し、各`ExportSink`へ渡す。
+  出力形式ごとの違い（何をどのファイルへ書くか）は`ExportSink`の実装が持ち、ユースケースは出力形式を意識しない
 
-`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、`SNAPSHOT`形式のみで一時ディレクトリへ向けて
+`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、スナップショットの`ExportSink`のみで一時ディレクトリへ向けて
 `export()`を呼び出した上で（Markdownの描画・ER図の生成は行わない）、生成結果と`outputPath`配下の`snapshot/`を
 `SnapshotDiffDomainService.compare()`で比較する。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`:
 `スキーマ名.名前`、関数は引数を含む）で突き合わせ、追加/削除/内容不一致をオブジェクト単位で報告する。
@@ -170,8 +173,8 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 外部キー制約を張らないDBではカタログから読み取れる関連だけではER図がほとんど空になるため、
 サイドカーで宣言した関連を補う。設計上の要点は「**物理外部キーと同じ集合へ合流させる**」こと。
 
-- `ExportTableDefinitionUsecaseImpl` が、DBから取得した外部キーとサイドカー由来の論理リレーションを
-  結合して `ForeignKeys.of()` に渡す（`resolveLogicalRelations`）。参照元・参照先の双方が出力対象に
+- `ExportTargetConsistencyDomainService.resolveForeignKeys()` が、DBから取得した外部キーとサイドカー由来の
+  論理リレーションを結合して `ForeignKeys.of()` に渡す。参照元・参照先の双方が出力対象に
   存在しない関連は、ER図に片側だけのノードが現れるのを避けるため警告ログを出して除外する
 - 合流させることで、ER図のグループ分割（`ForeignKeyGroups` の連結成分算出）、スキーマ跨ぎ関連の抽出
   （`ForeignKeys.crossSchema()`）、被参照側の解決（`incomingOf`）にも**追加実装なしで反映される**
