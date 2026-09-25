@@ -1,11 +1,7 @@
 package com.export_table_definition.application.impl;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +33,7 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.OutputObjectType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
+import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
@@ -62,6 +59,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     private final ObjectListWriterDomainService objectListWriter;
     private final AnnotationRepository annotationRepository;
     private final DocumentDiffDomainService documentDiffDomainService;
+    private final FileRepository fileRepository;
 
     /**
      * コンストラクタ
@@ -72,18 +70,20 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      * @param objectListWriter          トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
      * @param annotationRepository      手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
      * @param documentDiffDomainService 生成ドキュメントとコミット済みドキュメントの比較を行うドメインサービス
+     * @param fileRepository            差分比較用の一時ディレクトリの作成・削除に用いるファイルリポジトリ
      */
     @Inject
     public ExportTableDefinitionUsecaseImpl(TableDefinitionRepository repository,
             TableDefinitionWriterDomainService writer, ErDiagramWriterDomainService erDiagramWriter,
             ObjectListWriterDomainService objectListWriter, AnnotationRepository annotationRepository,
-            DocumentDiffDomainService documentDiffDomainService) {
+            DocumentDiffDomainService documentDiffDomainService, FileRepository fileRepository) {
         this.repository = repository;
         this.writer = writer;
         this.erDiagramWriter = erDiagramWriter;
         this.objectListWriter = objectListWriter;
         this.annotationRepository = annotationRepository;
         this.documentDiffDomainService = documentDiffDomainService;
+        this.fileRepository = fileRepository;
     }
 
     /**
@@ -172,13 +172,13 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
             String outputPath, int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList,
             String annotationPath) {
         final Path committedDir = resolveOutputBaseDir(outputPath);
-        final Path generatedDir = createTempDirectory();
+        final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
         try {
             exportTableDefinition(targetSchemaList, targetTableList, generatedDir.toString(), chunkSize,
                     erDiagramMaxNodes, outputObjectList, annotationPath);
             return documentDiffDomainService.compare(generatedDir, committedDir);
         } finally {
-            deleteRecursively(generatedDir);
+            fileRepository.deleteDirectory(generatedDir);
         }
     }
 
@@ -192,38 +192,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     private Path resolveOutputBaseDir(String outputPath) {
         return Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
                 .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
-    }
-
-    /**
-     * 差分比較用の一時ディレクトリを作成するメソッド
-     *
-     * @return 作成した一時ディレクトリのパス
-     */
-    private Path createTempDirectory() {
-        try {
-            return Files.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    /**
-     * ディレクトリを配下のファイルごと再帰的に削除するメソッド
-     *
-     * @param directory 削除対象のディレクトリ
-     */
-    private void deleteRecursively(Path directory) {
-        try (var stream = Files.walk(directory)) {
-            stream.sorted(Comparator.reverseOrder()).forEach(path -> {
-                try {
-                    Files.delete(path);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     /**

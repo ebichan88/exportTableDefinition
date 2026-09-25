@@ -42,4 +42,20 @@ public interface FileRepository {
      */
     public List<String> readFile(Path filePath);
 
+    /**
+     * 一時ディレクトリを作成するメソッド
+     *
+     * @param prefix 一時ディレクトリ名の接頭辞
+     * @return 作成した一時ディレクトリのパス
+     */
+    public Path createTempDirectory(String prefix);
+
+    /**
+     * ディレクトリを配下のファイルごと再帰的に削除するメソッド<br>
+     * ディレクトリが存在しない場合は何もしない
+     *
+     * @param directory 削除対象のディレクトリ
+     */
+    public void deleteDirectory(Path directory);
+
 }

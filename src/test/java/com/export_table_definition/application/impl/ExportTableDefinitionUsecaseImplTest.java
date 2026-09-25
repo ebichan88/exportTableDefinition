@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     /** 書き込み内容をメモリ上に収集するFileRepositoryのスタブ */
     private static class InMemoryFileRepository implements FileRepository {
         private final Map<Path, String> files = new LinkedHashMap<>();
+        private final AtomicInteger tempDirCounter = new AtomicInteger();
 
         @Override
         public void writeFile(Path filePath, List<String> contents) {
@@ -68,6 +70,16 @@ public class ExportTableDefinitionUsecaseImplTest {
         @Override
         public List<String> readFile(Path filePath) {
             return List.of(files.getOrDefault(filePath, ""));
+        }
+
+        @Override
+        public Path createTempDirectory(String prefix) {
+            return Paths.get(prefix + tempDirCounter.incrementAndGet());
+        }
+
+        @Override
+        public void deleteDirectory(Path directory) {
+            files.keySet().removeIf(path -> path.startsWith(directory));
         }
     }
 
@@ -181,7 +193,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         };
         final DocumentDiffDomainService documentDiffDomainService = new DocumentDiffDomainService(fileRepository);
         usecase = new ExportTableDefinitionUsecaseImpl(repository, writer, erDiagramWriter, objectListWriter,
-                annotationRepository, documentDiffDomainService);
+                annotationRepository, documentDiffDomainService, fileRepository);
     }
 
     private TableEntity table(String schema, String physical) {

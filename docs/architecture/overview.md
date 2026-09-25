@@ -86,7 +86,8 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 `checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、一時ディレクトリへ向けて
 `exportTableDefinition()`をそのまま呼び出した上で、生成結果と`outputPath`配下を
 `DocumentDiffDomainService.compare()`でファイル単位（追加/削除/内容不一致）に比較する。
-Writer層・SQL層は出力先パスに一切依存しないため無改修で再利用でき、一時ディレクトリは
+Writer層・SQL層は出力先パスに一切依存しないため無改修で再利用できる。一時ディレクトリの作成・削除は
+（他のファイル操作と同様に）`FileRepository.createTempDirectory()`/`deleteDirectory()`を介して行い、
 `try-finally`で必ず削除される。
 
 差分が1件でもある場合、または比較処理自体が例外で失敗した場合は`System.exit(1)`、差分なしの場合は

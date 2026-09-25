@@ -56,6 +56,16 @@ public class TableDefinitionWriterDomainServiceTest {
         public List<String> readFile(Path filePath) {
             return List.of();
         }
+
+        @Override
+        public Path createTempDirectory(String prefix) {
+            return Path.of(prefix);
+        }
+
+        @Override
+        public void deleteDirectory(Path directory) {
+            // 何もしない
+        }
     }
 
     private InMemoryFileRepository fileRepository;

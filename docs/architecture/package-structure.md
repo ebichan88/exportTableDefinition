@@ -39,7 +39,7 @@
 |---|---|
 | `TableDefinitionRepository` | テーブル・カラム・制約・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる） |
 | `AnnotationRepository` | サイドカーYAML（手動付帯情報）読み込みIF |
-| `FileRepository` | ファイル書き込み・読み込みIF（`writeFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`を持つ） |
+| `FileRepository` | ファイル操作IF（`writeFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
 ### domain.service
 
