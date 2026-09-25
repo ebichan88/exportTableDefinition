@@ -1,0 +1,90 @@
+# パッケージ構成リファレンス
+
+`com.export_table_definition` 配下の全パッケージと主要クラスの一覧。
+役割の全体像は先に [overview.md](./overview.md) を参照。
+
+## presentation層
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`変換を行う |
+| `presentation.dto` | `ResultDto` | 処理結果（成否・メッセージ）を表すrecord |
+| `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum |
+
+## application層
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `application` | `ExportTableDefinitionUsecase` | テーブル定義出力ユースケースのインターフェース |
+| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔） |
+
+## domain層
+
+### domain.model
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `domain.model` | `TableDefinitionContent` | 1テーブル分の定義書出力に必要な情報を束ねるrecord（`assemble()`で組み立て） |
+| `domain.model.entity` | `BaseInfoEntity`, `TableEntity`, `ColumnEntity`, `ConstraintEntity`, `ForeignKeyEntity`, `IndexEntity`, `TriggerEntity`, `FunctionEntity`, `SequenceEntity`, `TypeEntity` | DBから取得したメタ情報を表すrecord群。`SchemaTableKeyed`はスキーマ名・テーブル名を持つ共通IF |
+| `domain.model.collection` | `Columns`, `Constraints`, `ForeignKeys`, `Indexes`, `Triggers`, `AbstractEntities`, `ForeignKeyGroups` | エンティティのリストをラップし、テーブル単位の絞り込み等を提供するコレクションクラス群。`ForeignKeyGroups`は外部キーの連結成分（ER図の分割単位）を算出する |
+| `domain.model.type` | `TableType`, `Cardinality`, `OutputObjectType` | テーブル種別、外部キー多重度（1対1／1対多等）、PostgreSQL固有出力対象種別のenum |
+| `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー） |
+| `domain.model.annotation` | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブル単位の集合とその1件分） |
+
+### domain.repository（インターフェースのみ。実装はinfrastructure層）
+
+| クラス | 役割 |
+|---|---|
+| `TableDefinitionRepository` | テーブル・カラム・制約・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる） |
+| `AnnotationRepository` | サイドカーYAML（手動付帯情報）読み込みIF |
+| `FileRepository` | ファイル書き込みIF |
+
+### domain.service
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧の出力パス生成戦略IF |
+| `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
+| | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
+| | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |
+| | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理 |
+| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群 |
+| | `MarkdownTemplateSupport`, `MermaidSupport` | テンプレート共通部品、Mermaid記法変換ユーティリティ |
+
+## infrastructure層
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `infrastructure.db` | `MyBatisSqlSessionFactory` | MyBatisの`SqlSessionFactory`生成・DB接続情報の上書き管理 |
+| `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
+| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス |
+| | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
+| `infrastructure.db.repository.dto` | `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto`, `BaseInfoDto` | MyBatisのResultMap受け皿となるDTO（`domain.model.entity`へ変換される） |
+| `infrastructure.file` | `TableDefinitionBufferedWriter` | テーブル定義書き込み用`BufferedWriter`のラッパー |
+| `infrastructure.file.repository` | `TableDefinitionFileRepository` | `FileRepository`実装（実ファイル書き込み） |
+| | `AnnotationYamlRepository` | `AnnotationRepository`実装（サイドカーYAML読み込み、SnakeYAML使用） |
+| `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
+
+## config層
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `config` | `PropertyLoader` | `conf/*.properties`読み込みユーティリティ |
+| `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
+
+## リソース（Java外）
+
+| パス | 役割 |
+|---|---|
+| `src/main/resources/conf/ExportTableDefinition.properties` | 出力対象スキーマ/テーブル、出力先、chunkSize等のアプリ設定 |
+| `src/main/resources/conf/mybatis.properties.template` | DB接続情報テンプレート（実ファイルは`mybatis.properties`としてgitignore対象） |
+| `src/main/resources/mybatis-config.xml` | MyBatisのメイン設定（DB種別ごとのmapper読み込み等） |
+| `src/main/resources/mapper/oracle/tableDefinitionMapper.xml` | Oracle向けSQL定義 |
+| `src/main/resources/mapper/postgresql/tableDefinitionMapper.xml` | PostgreSQL向けSQL定義 |
+| `src/main/resources/log4j2.xml` | ログ設定 |
+
+## テスト
+
+`src/test/java/com/export_table_definition` 配下は本体パッケージとほぼ1:1で対応する構成
+（`application`, `config`, `domain`, `infrastructure`, `presentation`, `testsupport`）。
+`testsupport`にはテスト用のビルダー・フィクスチャ等の共通部品を置く。
