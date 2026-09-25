@@ -10,6 +10,7 @@ import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
@@ -87,16 +88,14 @@ public class TableDefinitionWriterDomainServiceTest {
         new TableDefinitionWriterDomainService(
             fileRepository,
             new DefaultOutputPathResolver(),
-            new PagedSectionWriter(fileRepository));
+            new PagedSectionWriter(fileRepository, new DefaultOutputPathResolver()));
   }
 
   @Test
   @DisplayName("writeTableDefinitionList: ヘッダー・基本情報・関連ドキュメント・テーブル一覧行が出力される")
   void testWriteTableDefinitionListWritesAllSections() {
-    Map<String, String> relatedDocuments = new LinkedHashMap<>();
-    relatedDocuments.put("ER図一覧", "erDiagram");
-
-    writer.writeTableDefinitionList(List.of(table("orders")), baseInfo(), OUT, relatedDocuments);
+    writer.writeTableDefinitionList(
+        List.of(table("orders")), baseInfo(), OUT, List.of(ListDocumentType.ER_DIAGRAM));
 
     Path file = OUT.resolve("tableList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
@@ -112,7 +111,7 @@ public class TableDefinitionWriterDomainServiceTest {
   @Test
   @DisplayName("writeTableDefinitionList: 関連ドキュメントが空の場合はセクション自体が出力されない")
   void testWriteTableDefinitionListOmitsRelatedDocumentsWhenEmpty() {
-    writer.writeTableDefinitionList(List.of(table("orders")), baseInfo(), OUT, Map.of());
+    writer.writeTableDefinitionList(List.of(table("orders")), baseInfo(), OUT, List.of());
 
     String content = fileRepository.files.get(OUT.resolve("tableList_testdb.md"));
     assertFalse(content.contains("## 関連ドキュメント"));
@@ -124,7 +123,7 @@ public class TableDefinitionWriterDomainServiceTest {
     List<TableEntity> tables =
         IntStream.rangeClosed(1, 3001).mapToObj(i -> table("t" + i)).toList();
 
-    writer.writeTableDefinitionList(tables, baseInfo(), OUT, Map.of());
+    writer.writeTableDefinitionList(tables, baseInfo(), OUT, List.of());
 
     assertTrue(fileRepository.files.containsKey(OUT.resolve("tableList_testdb_1.md")));
     assertTrue(fileRepository.files.containsKey(OUT.resolve("tableList_testdb_2.md")));
@@ -138,10 +137,11 @@ public class TableDefinitionWriterDomainServiceTest {
   @DisplayName("writeTableDefinition: 解決されたパスに、カラム・インデックス・制約・外部キー・トリガー・ER図の全セクションを出力する")
   void testWriteTableDefinitionWritesAllSections() {
     TableEntity table = table("orders");
-    var column = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "○", "");
+    var column =
+        new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", true, true, "");
     var index =
         new IndexEntity(
-            "public", "orders", "idx_orders_1", "btree", "", "", "CREATE INDEX ...", "");
+            "public", "orders", "idx_orders_1", "btree", false, false, "CREATE INDEX ...", "");
     var constraint =
         new ConstraintEntity(
             "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");
@@ -166,10 +166,9 @@ public class TableDefinitionWriterDomainServiceTest {
             List.of(),
             List.of(incomingFk),
             List.of(trigger),
-            annotation,
-            OUT);
+            annotation);
 
-    writer.writeTableDefinition(content);
+    writer.writeTableDefinition(content, OUT);
 
     Path expectedFile =
         OUT.resolve("testdb").resolve("public").resolve("table").resolve("orders.md");

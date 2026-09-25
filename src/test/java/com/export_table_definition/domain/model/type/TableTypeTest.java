@@ -29,7 +29,9 @@ public class TableTypeTest {
   @Test
   @DisplayName("findByName: 未知の値の場合はIllegalArgumentExceptionをスローする")
   void testFindByNameUnknownThrows() {
-    assertThrows(IllegalArgumentException.class, () -> TableType.findByName("unknown"));
+    IllegalArgumentException e =
+        assertThrows(IllegalArgumentException.class, () -> TableType.findByName("unknown"));
+    assertTrue(e.getMessage().contains("unknown"));
   }
 
   @Test

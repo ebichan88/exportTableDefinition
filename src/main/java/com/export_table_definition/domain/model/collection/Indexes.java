@@ -18,12 +18,6 @@ public final class Indexes extends AbstractEntities<IndexEntity> {
   }
 
   public static Indexes of(List<IndexEntity> list) {
-    return new Indexes(index(list, c -> TableKey.of(c.schemaName(), c.tableName())));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  protected TableKey extractKey(IndexEntity e) {
-    return TableKey.of(e.schemaName(), e.tableName());
+    return new Indexes(index(list));
   }
 }

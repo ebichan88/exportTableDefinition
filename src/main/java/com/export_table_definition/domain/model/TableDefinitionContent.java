@@ -14,12 +14,12 @@ import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * テーブル定義出力に必要な情報をまとめたレコード
+ * テーブル定義出力に必要な情報をまとめたレコード<br>
+ * 1テーブル分の「何を出力するか」のみを持ち、出力先（ディレクトリ）は出力形式ごとの書き込み側が持つ
  *
  * @since 1.0
  * @version 1.0
@@ -35,8 +35,7 @@ public record TableDefinitionContent(
     List<ForeignKeyEntity> logicalRelations,
     List<ForeignKeyEntity> incomingForeignKeys,
     List<TriggerEntity> triggers,
-    TableAnnotation annotation,
-    Path outputBaseDir) {
+    TableAnnotation annotation) {
 
   /**
    * テーブル定義出力に必要な情報をまとめたレコードを組み立てる<br>
@@ -52,7 +51,6 @@ public record TableDefinitionContent(
    * @param foreignkeys
    * @param triggers
    * @param annotations 対象範囲全体の手動付帯情報（当該テーブル分を抽出して保持する）
-   * @param baseDir
    * @return TableDefinitionContent
    */
   public static TableDefinitionContent assemble(
@@ -63,8 +61,7 @@ public record TableDefinitionContent(
       Constraints constraints,
       ForeignKeys foreignkeys,
       Triggers triggers,
-      Annotations annotations,
-      Path baseDir) {
+      Annotations annotations) {
     return new TableDefinitionContent(
         baseInfo,
         table,
@@ -75,8 +72,7 @@ public record TableDefinitionContent(
         foreignkeys.logicalOf(table),
         foreignkeys.incomingOf(table),
         triggers.of(table),
-        annotations.of(table),
-        baseDir);
+        annotations.of(table));
   }
 
   /**

@@ -1,5 +1,6 @@
 package com.export_table_definition.domain.model.collection;
 
+import com.export_table_definition.domain.model.entity.SchemaTableKeyed;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.value.TableKey;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.function.Function;
  * @author takashi.ebina
  * @param <T> エンティティの型
  */
-public abstract class AbstractEntities<T> {
+public abstract class AbstractEntities<T extends SchemaTableKeyed> {
   protected final Map<TableKey, List<T>> byKey;
 
   /**
@@ -30,12 +31,15 @@ public abstract class AbstractEntities<T> {
   }
 
   /**
-   * エンティティからテーブルキーを抽出する抽象メソッド
+   * リストを、各エンティティが所属するテーブルのテーブルキーでインデックス化するユーティリティメソッド
    *
-   * @param element エンティティ
-   * @return テーブルキー
+   * @param <E> エンティティの型
+   * @param list エンティティのリスト
+   * @return テーブルキーをキー、エンティティのリストを値とするマップ
    */
-  protected abstract TableKey extractKey(T element);
+  protected static <E extends SchemaTableKeyed> Map<TableKey, List<E>> index(List<E> list) {
+    return index(list, SchemaTableKeyed::tableKey);
+  }
 
   /**
    * リストをテーブルキーでインデックス化するユーティリティメソッド

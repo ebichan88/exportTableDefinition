@@ -19,11 +19,8 @@ public record ForeignKeyDto(
     String referenceSchemaName,
     String referenceTableName,
     String referenceColumnNames,
-    String childKeyUnique,
-    String childKeyMandatory) {
-
-  /** 参照元（子）テーブルの外部キー列が条件を満たすことを表すマーカー文字列 */
-  private static final String MARKER = "○";
+    boolean childKeyUnique,
+    boolean childKeyMandatory) {
 
   /**
    * DTOからEntityへの変換メソッド<br>
@@ -40,7 +37,7 @@ public record ForeignKeyDto(
         referenceSchemaName,
         referenceTableName,
         referenceColumnNames,
-        Cardinality.of(MARKER.equals(childKeyUnique), MARKER.equals(childKeyMandatory)),
+        Cardinality.of(childKeyUnique, childKeyMandatory),
         RelationType.PHYSICAL);
   }
 }

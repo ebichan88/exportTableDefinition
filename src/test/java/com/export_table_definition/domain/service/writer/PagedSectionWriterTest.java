@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
+import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,7 +67,7 @@ public class PagedSectionWriterTest {
 
   private void setUp() {
     fileRepository = new InMemoryFileRepository();
-    writer = new PagedSectionWriter(fileRepository);
+    writer = new PagedSectionWriter(fileRepository, new DefaultOutputPathResolver());
   }
 
   private PagedSection<Integer> section(int rowCount) {
@@ -79,12 +80,8 @@ public class PagedSectionWriterTest {
   }
 
   private PageLayout layout() {
-    return new PageLayout(
-        "HEADER" + System.lineSeparator(),
-        page -> Path.of("page_" + page + ".md"),
-        page -> "./page_" + page + ".md",
-        "./back.md",
-        "戻る");
+    // 分割ページは本体ページ（page.md）と同じディレクトリに page_{ページ番号}.md として置かれる
+    return new PageLayout("HEADER" + System.lineSeparator(), Path.of("page.md"), "戻る");
   }
 
   @Test
@@ -158,8 +155,8 @@ public class PagedSectionWriterTest {
 
     String page1 = fileRepository.files.get(Path.of("page_1.md"));
     assertFalse(page1.contains("前へ"));
-    assertTrue(page1.contains("次へ"));
-    assertTrue(page1.contains("戻る"));
+    assertTrue(page1.contains("[次へ>>](./page_2.md)"));
+    assertTrue(page1.contains("[戻る](./page.md)"));
   }
 
   @Test
@@ -169,9 +166,9 @@ public class PagedSectionWriterTest {
     writer.writePagedSection(section(MAX_PAGE_SIZE + 1), layout());
 
     String page2 = fileRepository.files.get(Path.of("page_2.md"));
-    assertTrue(page2.contains("前へ"));
+    assertTrue(page2.contains("[<<前へ](./page_1.md)"));
     assertFalse(page2.contains("次へ"));
-    assertTrue(page2.contains("戻る"));
+    assertTrue(page2.contains("[戻る](./page.md)"));
   }
 
   @Test

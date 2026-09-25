@@ -18,12 +18,6 @@ public final class Triggers extends AbstractEntities<TriggerEntity> {
   }
 
   public static Triggers of(List<TriggerEntity> list) {
-    return new Triggers(index(list, c -> TableKey.of(c.schemaName(), c.tableName())));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  protected TableKey extractKey(TriggerEntity e) {
-    return TableKey.of(e.schemaName(), e.tableName());
+    return new Triggers(index(list));
   }
 }

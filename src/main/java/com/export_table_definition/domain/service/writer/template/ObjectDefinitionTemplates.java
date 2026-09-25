@@ -7,6 +7,8 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 
 /**
  * 関数/プロシージャ・シーケンス・ユーザー定義型の個別定義書き込みに利用する Markdownのテンプレートを扱うクラス
@@ -30,17 +32,17 @@ public class ObjectDefinitionTemplates {
   /**
    * 一覧へ戻るフッター
    *
-   * @param listPrefix 一覧ファイル名の接頭辞（例: function, sequence, type）
-   * @param listLabel 一覧へのリンク表示名
+   * @param listType 戻り先の一覧の種別
    * @param baseInfo データベース基本情報
    * @return フッター文字列
    */
-  private static String footer(String listPrefix, String listLabel, BaseInfoEntity baseInfo) {
+  private static String footer(ListDocumentType listType, BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.pageFooter(
         null,
         null,
-        String.format("../../../%sList_%s.md", listPrefix, baseInfo.dbName()),
-        listLabel);
+        DocumentLocations.linkFromDefinition(
+            DocumentLocations.listFile(listType, baseInfo.dbName())),
+        listType.getBackLinkLabel());
   }
 
   /**
@@ -63,7 +65,7 @@ public class ObjectDefinitionTemplates {
         + LINE_SEPARATOR
         + "```"
         + LINE_SEPARATOR_DOUBLE
-        + footer("function", "関数・プロシージャ一覧へ", baseInfo);
+        + footer(ListDocumentType.FUNCTION, baseInfo);
   }
 
   /**
@@ -92,7 +94,7 @@ public class ObjectDefinitionTemplates {
             + "|"
             + sequence.startValue()
             + "|"
-            + sequence.cycle()
+            + MarkdownTemplateSupport.marker(sequence.cycle())
             + "|"
             + sequence.ownedBy()
             + "|"
@@ -102,7 +104,7 @@ public class ObjectDefinitionTemplates {
         + LINE_SEPARATOR_DOUBLE
         + baseInfo(baseInfo)
         + properties
-        + footer("sequence", "シーケンス一覧へ", baseInfo);
+        + footer(ListDocumentType.SEQUENCE, baseInfo);
   }
 
   /**
@@ -131,6 +133,6 @@ public class ObjectDefinitionTemplates {
         + LINE_SEPARATOR_DOUBLE
         + baseInfo(baseInfo)
         + definition
-        + footer("type", "ユーザー定義型一覧へ", baseInfo);
+        + footer(ListDocumentType.TYPE, baseInfo);
   }
 }

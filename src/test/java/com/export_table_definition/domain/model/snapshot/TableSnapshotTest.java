@@ -13,7 +13,6 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.RelationType;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -44,17 +43,17 @@ public class TableSnapshotTest {
         logicalRelations,
         List.of(),
         triggers,
-        annotation,
-        Path.of("output"));
+        annotation);
   }
 
   @Test
   @DisplayName("of: テーブル・カラムの各項目を個別の値として保持し、サイドカーの付帯情報をマージする")
   void testOfConvertsTableAndColumns() {
     var table = new TableEntity("testdb", "public", "受注", "orders", "table", "", "");
-    var id = new ColumnEntity("public", "orders", "受注ID", "id", "integer", "", "○", "○", " ");
+    var id = new ColumnEntity("public", "orders", "受注ID", "id", "integer", "", true, true, " ");
     var amount =
-        new ColumnEntity("public", "orders", "", "amount", "numeric(10,2)", "10,2", "", "", "0");
+        new ColumnEntity(
+            "public", "orders", "", "amount", "numeric(10,2)", "10,2", false, false, "0");
     var annotation = new TableAnnotation("受注を管理する。", "個人情報を含む", Map.of("amount", "税込"));
 
     TableSnapshot snapshot =
@@ -90,7 +89,7 @@ public class TableSnapshotTest {
     var table = new TableEntity("testdb", "public", "", "orders", "table", "", "");
     var index =
         new IndexEntity(
-            "public", "orders", "orders_pkey", "btree", "○", "○", "CREATE UNIQUE INDEX ...", "");
+            "public", "orders", "orders_pkey", "btree", true, true, "CREATE UNIQUE INDEX ...", "");
     var constraint =
         new ConstraintEntity(
             "public", "orders", "chk_amount", "CHECK", "CHECK ((amount >= 0))", "金額は0以上");

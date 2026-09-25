@@ -3,6 +3,7 @@ package com.export_table_definition.domain.service.writer;
 import com.export_table_definition.domain.model.TableDefinitionContent;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
@@ -12,7 +13,6 @@ import com.export_table_definition.domain.service.writer.template.TableDefinitio
 import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,64 +55,62 @@ public class TableDefinitionWriterDomainService {
    * @param tables テーブル情報リスト
    * @param baseInfo データベースの基本情報
    * @param outputDirectoryPath 出力ディレクトリのパス
+   * @param relatedDocuments 「関連ドキュメント」としてリンクを掲載する一覧の種別（掲載順）
    */
   public void writeTableDefinitionList(
       List<TableEntity> tables,
       BaseInfoEntity baseInfo,
       Path outputDirectoryPath,
-      Map<String, String> relatedDocuments) {
+      List<ListDocumentType> relatedDocuments) {
     fileRepository.createDirectory(outputDirectoryPath);
     final PagedSection<TableEntity> section =
         new PagedSection<>(
             "テーブル情報",
             TableDefinitionListTemplates.tableListTableHeader(),
             tables,
-            (no, table) -> TableDefinitionListTemplates.tableListLine(no, table));
+            TableDefinitionListTemplates::tableListLine);
     final PageLayout layout =
         new PageLayout(
             TableDefinitionListTemplates.fileHeader(baseInfo),
-            page -> outputPathResolver.resolveTableListFile(baseInfo, outputDirectoryPath, page),
-            page -> String.format("./tableList_%s_%d.md", baseInfo.dbName(), page),
-            String.format("./tableList_%s.md", baseInfo.dbName()),
-            "テーブル一覧へ");
+            outputPathResolver.resolveListFile(
+                baseInfo, outputDirectoryPath, ListDocumentType.TABLE),
+            ListDocumentType.TABLE.getBackLinkLabel());
     final List<String> contents =
         List.of(
-            TableDefinitionListTemplates.fileHeader(baseInfo), // ヘッダー
+            layout.fileHeader(), // ヘッダー
             TableDefinitionListTemplates.baseInfo(baseInfo), // 基本情報
             TableDefinitionListTemplates.relatedDocuments(baseInfo, relatedDocuments), // 関連ドキュメント
             pagedSectionWriter.writePagedSection(section, layout) // テーブル一覧
             );
-    fileRepository.writeFile(
-        outputPathResolver.resolveTableListFile(baseInfo, outputDirectoryPath), contents);
+    fileRepository.writeFile(layout.file(), contents);
   }
 
   /**
    * テーブル定義の書き込み処理を行うメソッド
    *
    * @param content テーブル定義出力に必要な情報をまとめたレコード
+   * @param outputDirectoryPath 出力ディレクトリのパス
    */
-  public void writeTableDefinition(TableDefinitionContent content) {
+  public void writeTableDefinition(TableDefinitionContent content, Path outputDirectoryPath) {
     final Path directoryPath =
         outputPathResolver.resolveTableDefinitionDirectory(
-            content.baseInfo(), content.table(), content.outputBaseDir());
+            content.baseInfo(), content.table(), outputDirectoryPath);
     final Path filePath =
         outputPathResolver.resolveTableDefinitionFile(
-            content.baseInfo(), content.table(), content.outputBaseDir());
+            content.baseInfo(), content.table(), outputDirectoryPath);
     final List<String> contents =
         List.of(
             TableDefinitionTemplates.fileHeader(content.table()), // ヘッダー
             TableDefinitionTemplates.baseInfo(content.baseInfo()), // 基本情報
             TableDefinitionTemplates.tableExplanation(content.annotation()), // テーブル説明
             TableDefinitionTemplates.tableInfo(content.table(), content.annotation()), // テーブル情報
-            TableDefinitionTemplates.columns(
-                content.columns(), content.table(), content.annotation()), // カラム情報
+            TableDefinitionTemplates.columns(content.columns(), content.annotation()), // カラム情報
             TableDefinitionTemplates.view(content.table()), // View情報
-            TableDefinitionTemplates.indexes(content.indexes(), content.table()), // インデックス情報
-            TableDefinitionTemplates.constraints(content.constraints(), content.table()), // 制約情報
-            TableDefinitionTemplates.foreignKeys(content.foreignKeys(), content.table()), // 外部キー情報
-            TableDefinitionTemplates.logicalRelations(
-                content.logicalRelations(), content.table()), // 論理リレーション情報
-            TableDefinitionTemplates.triggers(content.triggers(), content.table()), // トリガー情報
+            TableDefinitionTemplates.indexes(content.indexes()), // インデックス情報
+            TableDefinitionTemplates.constraints(content.constraints()), // 制約情報
+            TableDefinitionTemplates.foreignKeys(content.foreignKeys()), // 外部キー情報
+            TableDefinitionTemplates.logicalRelations(content.logicalRelations()), // 論理リレーション情報
+            TableDefinitionTemplates.triggers(content.triggers()), // トリガー情報
             TableDefinitionTemplates.erDiagram(
                 content.table(),
                 content.columns(),

@@ -18,8 +18,8 @@ public class IndexesTest {
   @Test
   @DisplayName("of: 自テーブルに属するインデックスのみを、登録順を保って返す")
   void testOfReturnsOwnIndexesInOrder() {
-    var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", "", "", "", "");
-    var idx2 = new IndexEntity("public", "orders", "idx_orders_2", "", "", "", "", "");
+    var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", false, false, "", "");
+    var idx2 = new IndexEntity("public", "orders", "idx_orders_2", "", false, false, "", "");
     var other = new IndexEntity("public", "customers");
     var indexes = Indexes.of(List.of(idx1, idx2, other));
 

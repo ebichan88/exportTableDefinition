@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.collection.ForeignKeyGroup;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -32,8 +33,7 @@ public class ErDiagramTemplatesTest {
 
   /** ER図セクションを、ノード算出込みで生成するテスト用ヘルパー */
   private String erDiagram(List<ForeignKeyEntity> foreignKeys, int maxNodes) {
-    return ErDiagramTemplates.erDiagram(
-        foreignKeys, ErDiagramTemplates.diagramNodes(foreignKeys), maxNodes);
+    return ErDiagramTemplates.erDiagram(ForeignKeyGroup.of(foreignKeys), maxNodes);
   }
 
   @Test
@@ -133,28 +133,6 @@ public class ErDiagramTemplatesTest {
     var fk1 = newFk("public", "orders", "fk_orders_customer", "public", "customers");
     var fk2 = newFk("public", "items", "fk_items_orders", "public", "orders");
     assertTrue(erDiagram(List.of(fk1, fk2), 0).contains("```mermaid"));
-  }
-
-  @Test
-  @DisplayName("diagramNodes: 外部キーの両端をスキーマ名・テーブル名順に並べて返す")
-  void testDiagramNodes() {
-    var fk1 = newFk("public", "orders", "fk_orders_customer", "master", "customers");
-    var fk2 = newFk("public", "items", "fk_items_orders", "public", "orders");
-    assertEquals(
-        List.of(
-            TableKey.of("master", "customers"),
-            TableKey.of("public", "items"),
-            TableKey.of("public", "orders")),
-        ErDiagramTemplates.diagramNodes(List.of(fk1, fk2)));
-  }
-
-  @Test
-  @DisplayName("isOverflow: 上限が0以下の場合は常に超過しないと判定する")
-  void testIsOverflow() {
-    assertTrue(ErDiagramTemplates.isOverflow(3, 2));
-    assertFalse(ErDiagramTemplates.isOverflow(2, 2));
-    assertFalse(ErDiagramTemplates.isOverflow(10000, 0));
-    assertFalse(ErDiagramTemplates.isOverflow(10000, -1));
   }
 
   @Test

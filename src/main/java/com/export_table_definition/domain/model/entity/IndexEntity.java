@@ -7,8 +7,8 @@ package com.export_table_definition.domain.model.entity;
  * @param tableName テーブル名
  * @param indexName インデックス名
  * @param indexMethod インデックスの種別（アクセスメソッド）
- * @param isUnique 一意インデックスであることを表すマーカー文字列
- * @param isPrimary 主キーのインデックスであることを表すマーカー文字列
+ * @param isUnique 一意インデックスか
+ * @param isPrimary 主キーのインデックスか
  * @param indexDefinition インデックスの定義
  * @param remarks 備考
  * @since 1.0
@@ -20,14 +20,11 @@ public record IndexEntity(
     String tableName,
     String indexName,
     String indexMethod,
-    String isUnique,
-    String isPrimary,
+    boolean isUnique,
+    boolean isPrimary,
     String indexDefinition,
     String remarks)
     implements SchemaTableKeyed {
-
-  /** 一意インデックス・主キーのインデックスであることを表すマーカー文字列 */
-  private static final String MARKER = "○";
 
   /**
    * スキーマ名・テーブル名のみを持つインデックスを生成するコンストラクタ<br>
@@ -37,24 +34,6 @@ public record IndexEntity(
    * @param tableName テーブル名
    */
   public IndexEntity(String schemaName, String tableName) {
-    this(schemaName, tableName, "", "", "", "", "", "");
-  }
-
-  /**
-   * 一意インデックスであるか判定するメソッド
-   *
-   * @return 一意インデックスの場合はtrue。それ以外の場合はfalse
-   */
-  public boolean isUniqueIndex() {
-    return MARKER.equals(isUnique);
-  }
-
-  /**
-   * 主キーのインデックスであるか判定するメソッド
-   *
-   * @return 主キーのインデックスの場合はtrue。それ以外の場合はfalse
-   */
-  public boolean isPrimaryKeyIndex() {
-    return MARKER.equals(isPrimary);
+    this(schemaName, tableName, "", "", false, false, "", "");
   }
 }

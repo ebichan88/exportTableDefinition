@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import java.nio.file.Path;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -43,6 +44,20 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
+  @DisplayName("isRemovableOutputDir: カレントディレクトリ配下のサブディレクトリは削除を認める")
+  void testIsRemovableOutputDirAllowsSubdirectory() {
+    assertTrue(resolver.isRemovableOutputDir(Path.of("output")));
+  }
+
+  @Test
+  @DisplayName("isRemovableOutputDir: ルート・ホーム・カレントディレクトリ自体は削除を認めない")
+  void testIsRemovableOutputDirRejectsUnsafeDirectories() {
+    assertFalse(resolver.isRemovableOutputDir(Path.of(".")));
+    assertFalse(resolver.isRemovableOutputDir(Path.of("").toAbsolutePath().getRoot()));
+    assertFalse(resolver.isRemovableOutputDir(Path.of(System.getProperty("user.home"))));
+  }
+
+  @Test
   @DisplayName("resolveTableDefinitionDirectory: {base}/{DB名}/{スキーマ名}/{テーブル種別}")
   void testResolveTableDefinitionDirectory() {
     Path result =
@@ -60,31 +75,21 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
-  @DisplayName("resolveTableListFile: {base}/tableList_{DB名}.md")
-  void testResolveTableListFile() {
-    Path result = resolver.resolveTableListFile(baseInfo, baseDir);
+  @DisplayName("resolveListFile: テーブル一覧は{base}/tableList_{DB名}.md")
+  void testResolveListFileForTable() {
+    Path result = resolver.resolveListFile(baseInfo, baseDir, ListDocumentType.TABLE);
     assertEquals(Path.of("output", "tableList_testdb.md"), result);
   }
 
   @Test
-  @DisplayName("resolveTableListFile(ページ): {base}/tableList_{DB名}_{ページ番号}.md")
-  void testResolveTableListFilePaged() {
-    Path result = resolver.resolveTableListFile(baseInfo, baseDir, 2);
-    assertEquals(Path.of("output", "tableList_testdb_2.md"), result);
-  }
-
-  @Test
-  @DisplayName("resolveObjectListFile: {base}/{prefix}List_{DB名}.md")
-  void testResolveObjectListFile() {
-    Path result = resolver.resolveObjectListFile(baseInfo, baseDir, "trigger");
-    assertEquals(Path.of("output", "triggerList_testdb.md"), result);
-  }
-
-  @Test
-  @DisplayName("resolveObjectListFile(ページ): {base}/{prefix}List_{DB名}_{ページ番号}.md")
-  void testResolveObjectListFilePaged() {
-    Path result = resolver.resolveObjectListFile(baseInfo, baseDir, "function", 3);
-    assertEquals(Path.of("output", "functionList_testdb_3.md"), result);
+  @DisplayName("resolveListFile: オブジェクト一覧・ER図一覧は{base}/{接頭辞}List_{DB名}.md")
+  void testResolveListFileForObjects() {
+    assertEquals(
+        Path.of("output", "triggerList_testdb.md"),
+        resolver.resolveListFile(baseInfo, baseDir, ListDocumentType.TRIGGER));
+    assertEquals(
+        Path.of("output", "erDiagramList_testdb.md"),
+        resolver.resolveListFile(baseInfo, baseDir, ListDocumentType.ER_DIAGRAM));
   }
 
   @Test
@@ -95,13 +100,6 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
-  @DisplayName("resolveErDiagramFile(ページ): {base}/erDiagram_{DB名}_{スキーマ名}_{ページ番号}.md")
-  void testResolveErDiagramFilePaged() {
-    Path result = resolver.resolveErDiagramFile(baseInfo, baseDir, "public", 4);
-    assertEquals(Path.of("output", "erDiagram_testdb_public_4.md"), result);
-  }
-
-  @Test
   @DisplayName("resolveErDiagramGroupFile: {base}/erDiagram_{DB名}_{スキーマ名}_group{グループ番号}.md")
   void testResolveErDiagramGroupFile() {
     Path result = resolver.resolveErDiagramGroupFile(baseInfo, baseDir, "public", 1);
@@ -109,24 +107,39 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
-  @DisplayName(
-      "resolveErDiagramGroupFile(ページ): {base}/erDiagram_{DB名}_{スキーマ名}_group{グループ番号}_{ページ番号}.md")
-  void testResolveErDiagramGroupFilePaged() {
-    Path result = resolver.resolveErDiagramGroupFile(baseInfo, baseDir, "public", 1, 2);
-    assertEquals(Path.of("output", "erDiagram_testdb_public_group1_2.md"), result);
+  @DisplayName("resolvePageFile: 本体ページと同じディレクトリに、拡張子の前へ_{ページ番号}を付けたファイル")
+  void testResolvePageFile() {
+    assertEquals(
+        Path.of("output", "tableList_testdb_2.md"),
+        resolver.resolvePageFile(Path.of("output", "tableList_testdb.md"), 2));
+    assertEquals(
+        Path.of("output", "functionList_testdb_3.md"),
+        resolver.resolvePageFile(
+            resolver.resolveListFile(baseInfo, baseDir, ListDocumentType.FUNCTION), 3));
+    assertEquals(
+        Path.of("output", "erDiagram_testdb_public_4.md"),
+        resolver.resolvePageFile(resolver.resolveErDiagramFile(baseInfo, baseDir, "public"), 4));
+    assertEquals(
+        Path.of("output", "erDiagram_testdb_public_group1_2.md"),
+        resolver.resolvePageFile(
+            resolver.resolveErDiagramGroupFile(baseInfo, baseDir, "public", 1), 2));
   }
 
   @Test
   @DisplayName("resolveSchemaObjectDirectory: {base}/{DB名}/{スキーマ名}/{種別}")
   void testResolveSchemaObjectDirectory() {
-    Path result = resolver.resolveSchemaObjectDirectory(baseInfo, baseDir, "public", "function");
+    Path result =
+        resolver.resolveSchemaObjectDirectory(
+            baseInfo, baseDir, "public", ListDocumentType.FUNCTION);
     assertEquals(Path.of("output", "testdb", "public", "function"), result);
   }
 
   @Test
   @DisplayName("resolveSchemaObjectFile: ディレクトリ配下に{名前}.md")
   void testResolveSchemaObjectFile() {
-    Path result = resolver.resolveSchemaObjectFile(baseInfo, baseDir, "public", "sequence", "seq1");
+    Path result =
+        resolver.resolveSchemaObjectFile(
+            baseInfo, baseDir, "public", ListDocumentType.SEQUENCE, "seq1");
     assertEquals(Path.of("output", "testdb", "public", "sequence", "seq1.md"), result);
   }
 

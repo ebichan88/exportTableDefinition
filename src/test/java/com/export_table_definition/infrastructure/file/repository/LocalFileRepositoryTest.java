@@ -11,12 +11,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * TableDefinitionFileRepository の listFiles／readFile／createTempDirectory／deleteDirectory に関するテスト
- */
-public class TableDefinitionFileRepositoryTest {
+/** LocalFileRepository のファイル読み書き・一覧取得・一時ディレクトリ操作に関するテスト */
+public class LocalFileRepositoryTest {
 
-  private final TableDefinitionFileRepository repository = new TableDefinitionFileRepository();
+  private final LocalFileRepository repository = new LocalFileRepository();
 
   @Test
   @DisplayName("listFiles: ディレクトリ配下のファイルをサブディレクトリを含め再帰的に列挙する")
@@ -72,6 +70,15 @@ public class TableDefinitionFileRepositoryTest {
     repository.writeFile(file, List.of());
 
     assertEquals(List.of(), repository.readFile(file));
+  }
+
+  @Test
+  @DisplayName("writeFile: マルチバイト文字をUTF-8で書き込む")
+  void testWriteFileEncodesUtf8(@TempDir Path dir) throws IOException {
+    Path file = dir.resolve("t5.md");
+    repository.writeFile(file, List.of("# 社員（employee）\n"));
+
+    assertEquals("# 社員（employee）\n", Files.readString(file, StandardCharsets.UTF_8));
   }
 
   @Test

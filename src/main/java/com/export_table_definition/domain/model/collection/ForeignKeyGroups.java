@@ -5,16 +5,14 @@ import com.export_table_definition.domain.model.value.TableKey;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 外部キーの繋がりからテーブルのまとまり（連結成分）を求めるクラス<br>
- * スキーマ単位のER図が1枚に収まらない場合に、外部キーで繋がったテーブルのまとまりごとに 図を分割するために利用する。 入力がコレクション全体ではなくスキーマ単位の部分集合となるため、
- * {@link ForeignKeys}のメソッドではなく独立したクラスとしている
+ * スキーマ単位のER図が1枚に収まらない場合に、外部キーで繋がったテーブルのまとまりごとに 図を分割し、1枚に収まる範囲でまとめ直すために利用する。
+ * 入力がコレクション全体ではなくスキーマ単位の部分集合となるため、 {@link ForeignKeys}のメソッドではなく独立したクラスとしている
  *
  * @since 1.0
  * @version 1.0
@@ -32,97 +30,65 @@ public final class ForeignKeyGroups {
    * 出力順は、規模の大きいまとまりから確認できるようノード数の降順とし、 同数の場合は再実行しても同じ結果になるよう先頭テーブルキーの昇順とする
    *
    * @param foreignKeys 外部キー情報のリスト
-   * @return 連結成分ごとに仕分けた外部キーのリスト
+   * @return 連結成分ごとのまとまりのリスト
    */
-  public static List<List<ForeignKeyEntity>> connectedComponents(
-      List<ForeignKeyEntity> foreignKeys) {
+  public static List<ForeignKeyGroup> connectedComponents(List<ForeignKeyEntity> foreignKeys) {
     if (foreignKeys.isEmpty()) {
       return List.of();
     }
     final Map<TableKey, TableKey> parents = new HashMap<>();
-    foreignKeys.forEach(
-        fk ->
-            union(
-                parents,
-                TableKey.of(fk.schemaName(), fk.tableName()),
-                TableKey.of(fk.referenceSchemaName(), fk.referenceTableName())));
+    foreignKeys.forEach(fk -> union(parents, fk.tableKey(), fk.referenceTableKey()));
     // 代表テーブルをキーとして外部キーを仕分ける
     final Map<TableKey, List<ForeignKeyEntity>> componentsByRoot = new LinkedHashMap<>();
     foreignKeys.forEach(
         fk ->
             componentsByRoot
-                .computeIfAbsent(
-                    find(parents, TableKey.of(fk.schemaName(), fk.tableName())),
-                    k -> new ArrayList<>())
+                .computeIfAbsent(find(parents, fk.tableKey()), k -> new ArrayList<>())
                 .add(fk));
-    final Comparator<List<ForeignKeyEntity>> ordering =
-        Comparator.comparingInt(ForeignKeyGroups::nodeCount)
+    final Comparator<ForeignKeyGroup> ordering =
+        Comparator.comparingInt(ForeignKeyGroup::nodeCount)
             .reversed()
             .thenComparing(ForeignKeyGroups::firstKeyText);
-    return componentsByRoot.values().stream().sorted(ordering).map(List::copyOf).toList();
+    return componentsByRoot.values().stream().map(ForeignKeyGroup::of).sorted(ordering).toList();
   }
 
   /**
-   * 連結成分に含まれるテーブル（ノード）の数を数えるメソッド
+   * 連結成分を、1枚の図に収まる範囲でグループにまとめ直すメソッド<br>
+   * 成分ごとに1ファイルとすると、2テーブルだけの極小の図が大量に生成されてしまうため、 ノード数の上限に収まる限り複数の成分を同じ図にまとめる（貪欲法）。
+   * まとめられた成分同士は線で繋がっていないため、1枚に並んでも関連を誤読するおそれはない。 単独で上限を超える成分はそれ単独のグループとなり、当該グループは外部キー一覧にフォールバックする
    *
-   * @param foreignKeys 連結成分に属する外部キーのリスト
-   * @return テーブル数
+   * @param components 連結成分ごとのまとまりのリスト（ノード数の降順）
+   * @param maxNodes 1つの図に描画するノード数の上限
+   * @return グループごとにまとめ直したまとまりのリスト
    */
-  public static int nodeCount(List<ForeignKeyEntity> foreignKeys) {
-    return nodeKeys(foreignKeys).size();
-  }
-
-  /**
-   * 連結成分の中で最も多くの外部キーが接続するテーブルを求めるメソッド<br>
-   * どのまとまりなのかを識別する手がかりとして一覧に掲載する
-   *
-   * @param foreignKeys 連結成分に属する外部キーのリスト
-   * @return 最も多くの外部キーが接続するテーブル。同数の場合はスキーマ名・テーブル名順で先頭のもの
-   */
-  public static TableKey mainTable(List<ForeignKeyEntity> foreignKeys) {
-    final Map<TableKey, Integer> degrees = new HashMap<>();
-    foreignKeys.forEach(
-        fk -> {
-          degrees.merge(TableKey.of(fk.schemaName(), fk.tableName()), 1, Integer::sum);
-          degrees.merge(
-              TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()), 1, Integer::sum);
+  public static List<ForeignKeyGroup> pack(List<ForeignKeyGroup> components, int maxNodes) {
+    final List<List<ForeignKeyEntity>> groups = new ArrayList<>();
+    final List<Integer> groupNodeCounts = new ArrayList<>();
+    components.forEach(
+        component -> {
+          final int componentNodes = component.nodeCount();
+          for (int i = 0; i < groups.size(); i++) {
+            if (groupNodeCounts.get(i) + componentNodes <= maxNodes) {
+              groups.get(i).addAll(component.foreignKeys());
+              groupNodeCounts.set(i, groupNodeCounts.get(i) + componentNodes);
+              return;
+            }
+          }
+          groups.add(new ArrayList<>(component.foreignKeys()));
+          groupNodeCounts.add(componentNodes);
         });
-    return degrees.entrySet().stream()
-        .sorted(
-            Map.Entry.<TableKey, Integer>comparingByValue()
-                .reversed()
-                .thenComparing(entry -> entry.getKey().schema())
-                .thenComparing(entry -> entry.getKey().table()))
-        .map(Map.Entry::getKey)
-        .findFirst()
-        .orElse(null);
-  }
-
-  /**
-   * 連結成分に含まれるテーブルキーを収集するメソッド
-   *
-   * @param foreignKeys 外部キーのリスト
-   * @return テーブルキーの集合
-   */
-  private static Set<TableKey> nodeKeys(List<ForeignKeyEntity> foreignKeys) {
-    final Set<TableKey> keys = new HashSet<>();
-    foreignKeys.forEach(
-        fk -> {
-          keys.add(TableKey.of(fk.schemaName(), fk.tableName()));
-          keys.add(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()));
-        });
-    return keys;
+    return groups.stream().map(ForeignKeyGroup::of).toList();
   }
 
   /**
    * 連結成分の先頭テーブルを表す文字列を求めるメソッド<br>
    * ノード数が同数の場合の並び順を一意に定めるために利用する
    *
-   * @param foreignKeys 連結成分に属する外部キーのリスト
-   * @return スキーマ名・テーブル名順で先頭となるテーブルの スキーマ.テーブル 形式の名称
+   * @param component 連結成分
+   * @return 名称の辞書順で先頭となるテーブルの スキーマ.テーブル 形式の名称
    */
-  private static String firstKeyText(List<ForeignKeyEntity> foreignKeys) {
-    return nodeKeys(foreignKeys).stream()
+  private static String firstKeyText(ForeignKeyGroup component) {
+    return component.nodes().stream()
         .map(key -> key.schema() + "." + key.table())
         .min(Comparator.naturalOrder())
         .orElseThrow();

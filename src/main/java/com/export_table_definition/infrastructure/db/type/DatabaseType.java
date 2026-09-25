@@ -62,6 +62,6 @@ public enum DatabaseType {
     return Arrays.stream(DatabaseType.values())
         .filter(e -> Objects.equals(name, e.getName()))
         .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException());
+        .orElseThrow(() -> new IllegalArgumentException("Unsupported database type: " + name));
   }
 }

@@ -3,6 +3,12 @@ package com.export_table_definition.domain.service.writer.template;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.model.entity.SequenceEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 
 /**
  * トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧書き込みに利用する Markdownのテンプレートを扱うクラス<br>
@@ -85,14 +91,143 @@ public class ObjectListTemplates {
   }
 
   /**
-   * 一覧セクションの1行分<br>
-   * 行番号を含む行の内容はSQL側で組み立てているため、ここでは改行を付与するのみとする
+   * トリガー一覧セクションの1行分
    *
-   * @param listInfo エンティティが保持する一覧行の文字列
-   * @return 一覧1行分の文字列
+   * @param no 行番号
+   * @param trigger トリガー情報
+   * @return 一覧1行分の文字列（末尾の改行を含む）
    */
-  public static String listLine(String listInfo) {
-    return listInfo + LINE_SEPARATOR;
+  public static String triggerListLine(int no, TriggerEntity trigger) {
+    return "|"
+        + no
+        + "|"
+        + trigger.schemaName()
+        + "|"
+        + trigger.tableName()
+        + "|"
+        + trigger.triggerName()
+        + "|"
+        + trigger.timing()
+        + "|"
+        + trigger.events()
+        + "|"
+        + trigger.functionName()
+        + "|"
+        + LINE_SEPARATOR;
+  }
+
+  /**
+   * 関数・プロシージャ一覧セクションの1行分<br>
+   * 引数・戻り値の型表記は{@code |}を含みうるためエスケープする
+   *
+   * @param no 行番号
+   * @param function 関数・プロシージャの一覧情報
+   * @return 一覧1行分の文字列（末尾の改行を含む）
+   */
+  public static String functionListLine(int no, FunctionEntity function) {
+    return "|"
+        + no
+        + "|"
+        + function.schemaName()
+        + "|"
+        + function.functionKind()
+        + "|"
+        + function.functionName()
+        + "|"
+        + MarkdownTemplateSupport.escapePipe(function.functionArguments())
+        + "|"
+        + MarkdownTemplateSupport.escapePipe(function.functionResult())
+        + "|"
+        + function.languageName()
+        + "|"
+        + objectLink(
+            function.dbName(),
+            function.schemaName(),
+            ListDocumentType.FUNCTION,
+            function.fileName())
+        + "|"
+        + LINE_SEPARATOR;
+  }
+
+  /**
+   * シーケンス一覧セクションの1行分
+   *
+   * @param no 行番号
+   * @param sequence シーケンス情報
+   * @return 一覧1行分の文字列（末尾の改行を含む）
+   */
+  public static String sequenceListLine(int no, SequenceEntity sequence) {
+    return "|"
+        + no
+        + "|"
+        + sequence.schemaName()
+        + "|"
+        + sequence.sequenceName()
+        + "|"
+        + sequence.incrementBy()
+        + "|"
+        + sequence.minValue()
+        + "|"
+        + sequence.maxValue()
+        + "|"
+        + sequence.cacheSize()
+        + "|"
+        + sequence.startValue()
+        + "|"
+        + MarkdownTemplateSupport.marker(sequence.cycle())
+        + "|"
+        + sequence.ownedBy()
+        + "|"
+        + objectLink(
+            sequence.dbName(),
+            sequence.schemaName(),
+            ListDocumentType.SEQUENCE,
+            sequence.sequenceName())
+        + "|"
+        + LINE_SEPARATOR;
+  }
+
+  /**
+   * ユーザー定義型一覧セクションの1行分<br>
+   * 定義はENUMのラベル等に{@code |}を含みうるためエスケープする
+   *
+   * @param no 行番号
+   * @param type ユーザー定義型情報
+   * @return 一覧1行分の文字列（末尾の改行を含む）
+   */
+  public static String typeListLine(int no, TypeEntity type) {
+    return "|"
+        + no
+        + "|"
+        + type.schemaName()
+        + "|"
+        + type.typeName()
+        + "|"
+        + type.typeCategory()
+        + "|"
+        + MarkdownTemplateSupport.escapePipe(type.definition())
+        + "|"
+        + objectLink(type.dbName(), type.schemaName(), ListDocumentType.TYPE, type.typeName())
+        + "|"
+        + LINE_SEPARATOR;
+  }
+
+  /**
+   * オブジェクトの個別定義ファイルへのリンクをMarkdownのリンク記法で表す文字列を生成するメソッド<br>
+   * 一覧は出力ベースディレクトリ直下に配置されるため、出力ベースディレクトリからの相対パスで参照する
+   *
+   * @param dbName データベース名
+   * @param schemaName スキーマ名
+   * @param kind オブジェクトの区分（関数・プロシージャ／シーケンス／ユーザー定義型）
+   * @param fileName 個別定義ファイル名（拡張子を除く）
+   * @return オブジェクトの個別定義ファイルへのリンク文字列
+   */
+  private static String objectLink(
+      String dbName, String schemaName, ListDocumentType kind, String fileName) {
+    return "[■]("
+        + DocumentLocations.linkFromBase(
+            DocumentLocations.schemaObjectFile(dbName, schemaName, kind, fileName))
+        + ")";
   }
 
   /**
@@ -104,6 +239,10 @@ public class ObjectListTemplates {
    */
   public static String footer(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.pageFooter(
-        null, null, String.format("./tableList_%s.md", baseInfo.dbName()), "テーブル一覧へ");
+        null,
+        null,
+        DocumentLocations.linkFromBase(
+            DocumentLocations.listFile(ListDocumentType.TABLE, baseInfo.dbName())),
+        ListDocumentType.TABLE.getBackLinkLabel());
   }
 }

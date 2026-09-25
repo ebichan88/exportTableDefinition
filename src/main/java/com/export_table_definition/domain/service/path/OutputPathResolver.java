@@ -3,12 +3,14 @@ package com.export_table_definition.domain.service.path;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import java.nio.file.Path;
 import java.util.Optional;
 
 /**
  * テーブル定義および一覧出力用のパス生成戦略インタフェース <br>
- * 物理レイアウト（ディレクトリ構造・ファイル命名規則）を抽象化する
+ * 物理レイアウト（ディレクトリ構造・ファイル命名規則）を抽象化する。Markdownドキュメントのファイル名・配置の規則自体は、 ドキュメント間の相対リンクと共有するため{@link
+ * DocumentLocations}に定める
  *
  * @since 1.0
  * @version 1.0
@@ -24,6 +26,15 @@ public interface OutputPathResolver {
    * @return 基本出力ディレクトリのパス
    */
   Path resolveBaseOutputDir(String outputPath);
+
+  /**
+   * 出力先ベースディレクトリを、書き込み前にディレクトリごと削除してよいか判定する。 <br>
+   * ルート・ホームディレクトリ・カレントディレクトリ自体など、設定誤りで削除すると被害が甚大なディレクトリの場合は削除を認めない
+   *
+   * @param baseOutputDir 基本出力ディレクトリ
+   * @return 削除してよい場合はtrue
+   */
+  boolean isRemovableOutputDir(Path baseOutputDir);
 
   /**
    * テーブル定義書の出力ディレクトリを返す。 <br>
@@ -49,49 +60,15 @@ public interface OutputPathResolver {
   Path resolveTableDefinitionFile(BaseInfoEntity baseInfo, TableEntity table, Path baseOutputDir);
 
   /**
-   * テーブル一覧（単一ファイルモード）のパス。 <br>
-   * 例: {base}/tableList_{DB名}.md
+   * 一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー）のパス。 <br>
+   * 例: {base}/{接頭辞}List_{DB名}.md
    *
    * @param baseInfo 基本情報エンティティ
    * @param baseOutputDir 基本出力ディレクトリ
-   * @return テーブル一覧ファイルのパス
+   * @param type 一覧の種別
+   * @return 一覧ファイルのパス
    */
-  Path resolveTableListFile(BaseInfoEntity baseInfo, Path baseOutputDir);
-
-  /**
-   * テーブル一覧（分割ページモード）のパス。 <br>
-   * 例: {base}/tableList_{DB名}_{pageIndex}.md
-   *
-   * @param baseInfo 基本情報エンティティ
-   * @param baseOutputDir 基本出力ディレクトリ
-   * @param pageIndex ページインデックス（1始まり）
-   * @return テーブル一覧ファイルのパス
-   */
-  Path resolveTableListFile(BaseInfoEntity baseInfo, Path baseOutputDir, int pageIndex);
-
-  /**
-   * オブジェクト一覧（トリガー/関数/シーケンス/型）のパス。 <br>
-   * 例: {base}/{prefix}List_{DB名}.md
-   *
-   * @param baseInfo 基本情報エンティティ
-   * @param baseOutputDir 基本出力ディレクトリ
-   * @param prefix 一覧ファイル名の接頭辞（例: trigger, function, sequence, type）
-   * @return オブジェクト一覧ファイルのパス
-   */
-  Path resolveObjectListFile(BaseInfoEntity baseInfo, Path baseOutputDir, String prefix);
-
-  /**
-   * オブジェクト一覧（分割ページモード）のパス。 <br>
-   * 例: {base}/{prefix}List_{DB名}_{pageIndex}.md
-   *
-   * @param baseInfo 基本情報エンティティ
-   * @param baseOutputDir 基本出力ディレクトリ
-   * @param prefix 一覧ファイル名の接頭辞（例: erDiagram）
-   * @param pageIndex ページインデックス（1始まり）
-   * @return オブジェクト一覧ファイルのパス
-   */
-  Path resolveObjectListFile(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String prefix, int pageIndex);
+  Path resolveListFile(BaseInfoEntity baseInfo, Path baseOutputDir, ListDocumentType type);
 
   /**
    * スキーマ別ER図のパス。 <br>
@@ -103,19 +80,6 @@ public interface OutputPathResolver {
    * @return スキーマ別ER図ファイルのパス
    */
   Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName);
-
-  /**
-   * スキーマ別ER図の分割ページのパス。 <br>
-   * 例: {base}/erDiagram_{DB名}_{スキーマ名}_{pageIndex}.md
-   *
-   * @param baseInfo 基本情報エンティティ
-   * @param baseOutputDir 基本出力ディレクトリ
-   * @param schemaName スキーマ名
-   * @param pageIndex ページインデックス（1始まり）
-   * @return スキーマ別ER図の分割ページファイルのパス
-   */
-  Path resolveErDiagramFile(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int pageIndex);
 
   /**
    * スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。 <br>
@@ -131,18 +95,14 @@ public interface OutputPathResolver {
       BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int groupNo);
 
   /**
-   * グループ別ER図の表をさらに分割したページのパス。 <br>
-   * 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}_{pageIndex}.md
+   * 行数の多い表を分割した場合の、分割ページのパス。 <br>
+   * 本体ページと同じディレクトリに置く。例: {base}/tableList_{DB名}.md の2ページ目は {base}/tableList_{DB名}_2.md
    *
-   * @param baseInfo 基本情報エンティティ
-   * @param baseOutputDir 基本出力ディレクトリ
-   * @param schemaName スキーマ名
-   * @param groupNo グループ番号（1始まり）
+   * @param file 本体ページのファイルパス
    * @param pageIndex ページインデックス（1始まり）
-   * @return グループ別ER図の分割ページファイルのパス
+   * @return 分割ページのファイルパス
    */
-  Path resolveErDiagramGroupFile(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int groupNo, int pageIndex);
+  Path resolvePageFile(Path file, int pageIndex);
 
   /**
    * スキーマ配下オブジェクト（関数/シーケンス/型）の出力ディレクトリを返す。 <br>
@@ -151,11 +111,12 @@ public interface OutputPathResolver {
    * @param baseInfo 基本情報エンティティ
    * @param baseOutputDir 基本出力ディレクトリ
    * @param schemaName スキーマ名
-   * @param kind オブジェクト種別ディレクトリ名（例: function, sequence, type）
+   * @param kind オブジェクトの区分（{@link ListDocumentType#FUNCTION}／{@link
+   *     ListDocumentType#SEQUENCE}／{@link ListDocumentType#TYPE}）
    * @return 出力ディレクトリパス
    */
   Path resolveSchemaObjectDirectory(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, String kind);
+      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, ListDocumentType kind);
 
   /**
    * スキーマ配下オブジェクト（関数/シーケンス/型）の出力ファイルパスを返す。 <br>
@@ -164,12 +125,17 @@ public interface OutputPathResolver {
    * @param baseInfo 基本情報エンティティ
    * @param baseOutputDir 基本出力ディレクトリ
    * @param schemaName スキーマ名
-   * @param kind オブジェクト種別ディレクトリ名（例: function, sequence, type）
+   * @param kind オブジェクトの区分（{@link ListDocumentType#FUNCTION}／{@link
+   *     ListDocumentType#SEQUENCE}／{@link ListDocumentType#TYPE}）
    * @param name ファイル名（拡張子を除く）
    * @return 出力ファイルパス
    */
   Path resolveSchemaObjectFile(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, String kind, String name);
+      BaseInfoEntity baseInfo,
+      Path baseOutputDir,
+      String schemaName,
+      ListDocumentType kind,
+      String name);
 
   /**
    * スキーマのスナップショットの出力ディレクトリ（スナップショット全体のルート）を返す。 <br>

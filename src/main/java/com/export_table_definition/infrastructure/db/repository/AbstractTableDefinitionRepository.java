@@ -137,7 +137,7 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
               sqlPath,
               Map.ofEntries(
                   Map.entry("schemaList", schemaList), Map.entry("tableList", tableList)));
-      return makeEntityList(dtoList, mapper);
+      return dtoList.stream().map(mapper).toList();
     } catch (Exception e) {
       throw new RuntimeException("Failed to select: " + sqlPath, e);
     }

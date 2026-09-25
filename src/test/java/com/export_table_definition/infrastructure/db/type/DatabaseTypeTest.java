@@ -25,7 +25,9 @@ public class DatabaseTypeTest {
   @Test
   @DisplayName("findByName: 未知の値の場合はIllegalArgumentExceptionをスローする")
   void testFindByNameUnknownThrows() {
-    assertThrows(IllegalArgumentException.class, () -> DatabaseType.findByName("mysql"));
+    IllegalArgumentException e =
+        assertThrows(IllegalArgumentException.class, () -> DatabaseType.findByName("mysql"));
+    assertTrue(e.getMessage().contains("mysql"));
   }
 
   @Test

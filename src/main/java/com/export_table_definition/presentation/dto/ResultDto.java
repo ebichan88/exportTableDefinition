@@ -17,6 +17,6 @@ public record ResultDto(ProcessResult result, String message) {
    * @return 処理結果のメッセージ
    */
   public String getResultMessage() {
-    return "[result]:" + result.toString() + "\r\n" + message;
+    return result.formatMessage(message);
   }
 }

@@ -20,6 +20,6 @@ public record DiffCheckResultDto(ProcessResult result, String message, boolean h
    * @return 処理結果のメッセージ
    */
   public String getResultMessage() {
-    return "[result]:" + result.toString() + "\r\n" + message;
+    return result.formatMessage(message);
   }
 }

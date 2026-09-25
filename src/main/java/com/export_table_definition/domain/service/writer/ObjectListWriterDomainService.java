@@ -5,11 +5,11 @@ import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
-import com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport;
 import com.export_table_definition.domain.service.writer.template.ObjectDefinitionTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectListTemplates;
 import com.google.inject.Inject;
@@ -61,78 +61,12 @@ public class ObjectListWriterDomainService {
   public void writeTriggerList(
       List<TriggerEntity> triggers, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
     writeObjectList(
-        "トリガー一覧",
-        "trigger",
+        ListDocumentType.TRIGGER,
         ObjectListTemplates.triggerTableHeader(),
         triggers,
-        (no, t) ->
-            "|"
-                + no
-                + "|"
-                + t.schemaName()
-                + "|"
-                + t.tableName()
-                + "|"
-                + t.triggerName()
-                + "|"
-                + t.timing()
-                + "|"
-                + t.events()
-                + "|"
-                + t.functionName()
-                + "|",
+        ObjectListTemplates::triggerListLine,
         baseInfo,
         outputDirectoryPath);
-  }
-
-  /**
-   * オブジェクト一覧（トリガー/関数/シーケンス/型）の書き込み処理を行う共通メソッド<br>
-   * 対象が存在しない場合は何も出力しない。 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割する
-   *
-   * @param <T> エンティティの型
-   * @param title 一覧のタイトル
-   * @param prefix 一覧ファイル名の接頭辞（例: trigger, function, sequence, type）
-   * @param tableHeader 表のヘッダー行
-   * @param objects エンティティのリスト
-   * @param lineBuilder 行番号とエンティティから一覧行の文字列を生成する関数
-   * @param baseInfo データベースの基本情報
-   * @param outputDirectoryPath 出力ディレクトリのパス
-   */
-  private <T> void writeObjectList(
-      String title,
-      String prefix,
-      String tableHeader,
-      List<T> objects,
-      BiFunction<Integer, T, String> lineBuilder,
-      BaseInfoEntity baseInfo,
-      Path outputDirectoryPath) {
-    if (objects.isEmpty()) {
-      return;
-    }
-    final PagedSection<T> section =
-        new PagedSection<>(
-            title,
-            tableHeader,
-            objects,
-            (no, object) -> ObjectListTemplates.listLine(lineBuilder.apply(no, object)));
-    final PageLayout layout =
-        new PageLayout(
-            ObjectListTemplates.fileHeader(title, baseInfo),
-            page ->
-                outputPathResolver.resolveObjectListFile(
-                    baseInfo, outputDirectoryPath, prefix, page),
-            page -> String.format("./%sList_%s_%d.md", prefix, baseInfo.dbName(), page),
-            String.format("./%sList_%s.md", prefix, baseInfo.dbName()),
-            title + "へ");
-    final List<String> contents =
-        List.of(
-            ObjectListTemplates.fileHeader(title, baseInfo), // ヘッダー
-            ObjectListTemplates.baseInfo(baseInfo), // 基本情報
-            pagedSectionWriter.writePagedSection(section, layout), // 一覧
-            ObjectListTemplates.footer(baseInfo) // フッター
-            );
-    fileRepository.writeFile(
-        outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, prefix), contents);
   }
 
   /**
@@ -146,67 +80,12 @@ public class ObjectListWriterDomainService {
   public void writeFunctionList(
       List<FunctionEntity> functions, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
     writeObjectList(
-        "関数・プロシージャ一覧",
-        "function",
+        ListDocumentType.FUNCTION,
         ObjectListTemplates.functionTableHeader(),
         functions,
-        (no, f) ->
-            "|"
-                + no
-                + "|"
-                + f.schemaName()
-                + "|"
-                + f.functionKind()
-                + "|"
-                + f.functionName()
-                + "|"
-                + MarkdownTemplateSupport.escapePipe(f.functionArguments())
-                + "|"
-                + MarkdownTemplateSupport.escapePipe(f.functionResult())
-                + "|"
-                + f.languageName()
-                + "|"
-                + objectLink(f.dbName(), f.schemaName(), "function", f.fileName())
-                + "|",
+        ObjectListTemplates::functionListLine,
         baseInfo,
         outputDirectoryPath);
-  }
-
-  /**
-   * オブジェクトの個別定義ファイルへのリンクをMarkdownのリンク記法で表す文字列を生成するメソッド<br>
-   * 関数/プロシージャ・シーケンス・ユーザー定義型の個別定義ファイルは出力ベースディレクトリ直下に配置されるため、 {@code
-   * ./{DB名}/{スキーマ名}/{区分}/{ファイル名}.md}となる
-   *
-   * @param dbName データベース名
-   * @param schemaName スキーマ名
-   * @param prefix オブジェクトの区分（function/sequence/type）
-   * @param fileName 個別定義ファイル名（拡張子を除く）
-   * @return オブジェクトの個別定義ファイルへのリンク文字列
-   */
-  private static String objectLink(
-      String dbName, String schemaName, String prefix, String fileName) {
-    return String.format("[■](./%s/%s/%s/%s.md)", dbName, schemaName, prefix, fileName);
-  }
-
-  /**
-   * 関数・プロシージャの個別定義書き込み処理を行うメソッド
-   *
-   * @param function 関数・プロシージャ情報（定義本体を含む）
-   * @param baseInfo データベースの基本情報
-   * @param outputDirectoryPath 出力ディレクトリのパス
-   */
-  public void writeFunctionDefinition(
-      FunctionEntity function, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
-    final Path directoryPath =
-        outputPathResolver.resolveSchemaObjectDirectory(
-            baseInfo, outputDirectoryPath, function.schemaName(), "function");
-    final Path filePath =
-        outputPathResolver.resolveSchemaObjectFile(
-            baseInfo, outputDirectoryPath, function.schemaName(), "function", function.fileName());
-    fileRepository.createDirectory(directoryPath);
-    fileRepository.writeFile(
-        filePath, List.of(ObjectDefinitionTemplates.functionFile(function, baseInfo)));
-    logger.debug("exportFunctionDefinition complete. [filePath={}]", filePath.toString());
   }
 
   /**
@@ -220,61 +99,12 @@ public class ObjectListWriterDomainService {
   public void writeSequenceList(
       List<SequenceEntity> sequences, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
     writeObjectList(
-        "シーケンス一覧",
-        "sequence",
+        ListDocumentType.SEQUENCE,
         ObjectListTemplates.sequenceTableHeader(),
         sequences,
-        (no, s) ->
-            "|"
-                + no
-                + "|"
-                + s.schemaName()
-                + "|"
-                + s.sequenceName()
-                + "|"
-                + s.incrementBy()
-                + "|"
-                + s.minValue()
-                + "|"
-                + s.maxValue()
-                + "|"
-                + s.cacheSize()
-                + "|"
-                + s.startValue()
-                + "|"
-                + s.cycle()
-                + "|"
-                + s.ownedBy()
-                + "|"
-                + objectLink(s.dbName(), s.schemaName(), "sequence", s.sequenceName())
-                + "|",
+        ObjectListTemplates::sequenceListLine,
         baseInfo,
         outputDirectoryPath);
-  }
-
-  /**
-   * シーケンスの個別定義書き込み処理を行うメソッド
-   *
-   * @param sequence シーケンス情報
-   * @param baseInfo データベースの基本情報
-   * @param outputDirectoryPath 出力ディレクトリのパス
-   */
-  public void writeSequenceDefinition(
-      SequenceEntity sequence, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
-    final Path directoryPath =
-        outputPathResolver.resolveSchemaObjectDirectory(
-            baseInfo, outputDirectoryPath, sequence.schemaName(), "sequence");
-    final Path filePath =
-        outputPathResolver.resolveSchemaObjectFile(
-            baseInfo,
-            outputDirectoryPath,
-            sequence.schemaName(),
-            "sequence",
-            sequence.sequenceName());
-    fileRepository.createDirectory(directoryPath);
-    fileRepository.writeFile(
-        filePath, List.of(ObjectDefinitionTemplates.sequenceFile(sequence, baseInfo)));
-    logger.debug("exportSequenceDefinition complete. [filePath={}]", filePath.toString());
   }
 
   /**
@@ -288,24 +118,85 @@ public class ObjectListWriterDomainService {
   public void writeTypeList(
       List<TypeEntity> types, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
     writeObjectList(
-        "ユーザー定義型一覧",
-        "type",
+        ListDocumentType.TYPE,
         ObjectListTemplates.typeTableHeader(),
         types,
-        (no, t) ->
-            "|"
-                + no
-                + "|"
-                + t.schemaName()
-                + "|"
-                + t.typeName()
-                + "|"
-                + t.typeCategory()
-                + "|"
-                + MarkdownTemplateSupport.escapePipe(t.definition())
-                + "|"
-                + objectLink(t.dbName(), t.schemaName(), "type", t.typeName())
-                + "|",
+        ObjectListTemplates::typeListLine,
+        baseInfo,
+        outputDirectoryPath);
+  }
+
+  /**
+   * オブジェクト一覧（トリガー/関数/シーケンス/型）の書き込み処理を行う共通メソッド<br>
+   * 対象が存在しない場合は何も出力しない。 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割する
+   *
+   * @param <T> エンティティの型
+   * @param type 一覧の種別
+   * @param tableHeader 表のヘッダー行
+   * @param objects エンティティのリスト
+   * @param lineMapper 行番号とエンティティから一覧1行分の文字列を生成する関数
+   * @param baseInfo データベースの基本情報
+   * @param outputDirectoryPath 出力ディレクトリのパス
+   */
+  private <T> void writeObjectList(
+      ListDocumentType type,
+      String tableHeader,
+      List<T> objects,
+      BiFunction<Integer, T, String> lineMapper,
+      BaseInfoEntity baseInfo,
+      Path outputDirectoryPath) {
+    if (objects.isEmpty()) {
+      return;
+    }
+    final PagedSection<T> section =
+        new PagedSection<>(type.getTitle(), tableHeader, objects, lineMapper);
+    final PageLayout layout =
+        new PageLayout(
+            ObjectListTemplates.fileHeader(type.getTitle(), baseInfo),
+            outputPathResolver.resolveListFile(baseInfo, outputDirectoryPath, type),
+            type.getBackLinkLabel());
+    final List<String> contents =
+        List.of(
+            layout.fileHeader(), // ヘッダー
+            ObjectListTemplates.baseInfo(baseInfo), // 基本情報
+            pagedSectionWriter.writePagedSection(section, layout), // 一覧
+            ObjectListTemplates.footer(baseInfo) // フッター
+            );
+    fileRepository.writeFile(layout.file(), contents);
+  }
+
+  /**
+   * 関数・プロシージャの個別定義書き込み処理を行うメソッド
+   *
+   * @param function 関数・プロシージャ情報（定義本体を含む）
+   * @param baseInfo データベースの基本情報
+   * @param outputDirectoryPath 出力ディレクトリのパス
+   */
+  public void writeFunctionDefinition(
+      FunctionEntity function, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
+    writeSchemaObjectDefinition(
+        ListDocumentType.FUNCTION,
+        function.schemaName(),
+        function.fileName(),
+        ObjectDefinitionTemplates.functionFile(function, baseInfo),
+        baseInfo,
+        outputDirectoryPath);
+  }
+
+  /**
+   * シーケンスの個別定義書き込み処理を行うメソッド
+   *
+   * @param sequence シーケンス情報
+   * @param baseInfo データベースの基本情報
+   * @param outputDirectoryPath 出力ディレクトリのパス
+   */
+  public void writeSequenceDefinition(
+      SequenceEntity sequence, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
+    writeSchemaObjectDefinition(
+        ListDocumentType.SEQUENCE,
+        sequence.schemaName(),
+        sequence.sequenceName(),
+        ObjectDefinitionTemplates.sequenceFile(sequence, baseInfo),
         baseInfo,
         outputDirectoryPath);
   }
@@ -319,14 +210,39 @@ public class ObjectListWriterDomainService {
    */
   public void writeTypeDefinition(
       TypeEntity type, BaseInfoEntity baseInfo, Path outputDirectoryPath) {
-    final Path directoryPath =
-        outputPathResolver.resolveSchemaObjectDirectory(
-            baseInfo, outputDirectoryPath, type.schemaName(), "type");
+    writeSchemaObjectDefinition(
+        ListDocumentType.TYPE,
+        type.schemaName(),
+        type.typeName(),
+        ObjectDefinitionTemplates.typeFile(type, baseInfo),
+        baseInfo,
+        outputDirectoryPath);
+  }
+
+  /**
+   * スキーマ配下オブジェクト（関数/シーケンス/型）の個別定義書き込み処理を行う共通メソッド
+   *
+   * @param kind オブジェクトの区分
+   * @param schemaName スキーマ名
+   * @param name 個別定義ファイル名（拡張子を除く）
+   * @param content 個別定義ファイルの内容
+   * @param baseInfo データベースの基本情報
+   * @param outputDirectoryPath 出力ディレクトリのパス
+   */
+  private void writeSchemaObjectDefinition(
+      ListDocumentType kind,
+      String schemaName,
+      String name,
+      String content,
+      BaseInfoEntity baseInfo,
+      Path outputDirectoryPath) {
     final Path filePath =
         outputPathResolver.resolveSchemaObjectFile(
-            baseInfo, outputDirectoryPath, type.schemaName(), "type", type.typeName());
-    fileRepository.createDirectory(directoryPath);
-    fileRepository.writeFile(filePath, List.of(ObjectDefinitionTemplates.typeFile(type, baseInfo)));
-    logger.debug("exportTypeDefinition complete. [filePath={}]", filePath.toString());
+            baseInfo, outputDirectoryPath, schemaName, kind, name);
+    fileRepository.createDirectory(
+        outputPathResolver.resolveSchemaObjectDirectory(
+            baseInfo, outputDirectoryPath, schemaName, kind));
+    fileRepository.writeFile(filePath, List.of(content));
+    logger.debug("exportSchemaObjectDefinition complete. [kind={}, filePath={}]", kind, filePath);
   }
 }

@@ -1,12 +1,15 @@
 package com.export_table_definition.domain.service.writer;
 
+import com.export_table_definition.domain.model.collection.ForeignKeyGroup;
 import com.export_table_definition.domain.model.collection.ForeignKeyGroups;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
@@ -14,11 +17,9 @@ import com.export_table_definition.domain.service.writer.template.ErDiagramTempl
 import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
 import com.google.inject.Inject;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +33,9 @@ import org.apache.logging.log4j.Logger;
  * @author takashi.ebina
  */
 public class ErDiagramWriterDomainService {
+
+  /** ER図の分割ページから本体ページへ戻るリンクの表示名 */
+  private static final String ER_DIAGRAM_BACK_LABEL = "ER図へ";
 
   private static final Logger logger = LogManager.getLogger(ErDiagramWriterDomainService.class);
   private final FileRepository fileRepository;
@@ -102,7 +106,8 @@ public class ErDiagramWriterDomainService {
   }
 
   /**
-   * スキーマ1つ分のER図を書き込むメソッド
+   * スキーマ1つ分のER図を書き込むメソッド<br>
+   * ノード数が上限を超える場合は、連結成分を1枚に収まる範囲でまとめ直したグループごとに分割して出力する
    *
    * @param schemaName 出力対象のスキーマ名
    * @param relatedForeignKeys 当該スキーマのテーブルが関与する外部キー（他スキーマとの関連を含む）のリスト
@@ -118,29 +123,26 @@ public class ErDiagramWriterDomainService {
       BaseInfoEntity baseInfo,
       Path outputDirectoryPath,
       int maxNodes) {
-    final List<TableKey> nodes = ErDiagramTemplates.diagramNodes(relatedForeignKeys);
-    final List<List<ForeignKeyEntity>> groups =
-        ErDiagramTemplates.isOverflow(nodes.size(), maxNodes)
-            ? packGroups(ForeignKeyGroups.connectedComponents(relatedForeignKeys), maxNodes)
+    final ForeignKeyGroup schemaGroup = ForeignKeyGroup.of(relatedForeignKeys);
+    final List<ForeignKeyGroup> groups =
+        schemaGroup.exceeds(maxNodes)
+            ? ForeignKeyGroups.pack(
+                ForeignKeyGroups.connectedComponents(relatedForeignKeys), maxNodes)
             : List.of();
     // グループが1つ以下の場合は分割しても1枚に収まらない単一の巨大なまとまりであり、
     // スキーマページと同じ内容のグループページができるだけなので分割しない
     if (groups.size() <= 1) {
+      final PageLayout layout =
+          new PageLayout(
+              ErDiagramTemplates.schemaFileHeader(schemaName, baseInfo),
+              outputPathResolver.resolveErDiagramFile(baseInfo, outputDirectoryPath, schemaName),
+              ER_DIAGRAM_BACK_LABEL);
       writeErDiagramPage(
-          outputPathResolver.resolveErDiagramFile(baseInfo, outputDirectoryPath, schemaName),
-          ErDiagramTemplates.schemaFileHeader(schemaName, baseInfo),
-          ErDiagramTemplates.erDiagram(relatedForeignKeys, nodes, maxNodes),
-          relatedForeignKeys,
-          nodes,
+          layout,
+          schemaGroup,
+          ErDiagramTemplates.schemaFooter(baseInfo),
           tableByKey,
           maxNodes,
-          ErDiagramTemplates.schemaFooter(baseInfo),
-          page ->
-              outputPathResolver.resolveErDiagramFile(
-                  baseInfo, outputDirectoryPath, schemaName, page),
-          page -> String.format("./erDiagram_%s_%s_%d.md", baseInfo.dbName(), schemaName, page),
-          String.format("./erDiagram_%s_%s.md", baseInfo.dbName(), schemaName),
-          "ER図へ",
           baseInfo);
       return;
     }
@@ -156,36 +158,7 @@ public class ErDiagramWriterDomainService {
                     outputDirectoryPath,
                     maxNodes));
     writeSchemaGroupIndex(
-        schemaName, groups, nodes.size(), baseInfo, outputDirectoryPath, maxNodes);
-  }
-
-  /**
-   * 連結成分を、1枚の図に収まる範囲でグループにまとめ直すメソッド<br>
-   * 成分ごとに1ファイルとすると、2テーブルだけの極小の図が大量に生成されてしまうため、 ノード数の上限に収まる限り複数の成分を同じ図にまとめる（貪欲法）。
-   * まとめられた成分同士は線で繋がっていないため、1枚に並んでも関連を誤読するおそれはない。 単独で上限を超える成分はそれ単独のグループとなり、当該グループは外部キー一覧にフォールバックする
-   *
-   * @param components 連結成分ごとに仕分けた外部キーのリスト（ノード数の降順）
-   * @param maxNodes 1つの図に描画するノード数の上限
-   * @return グループごとにまとめ直した外部キーのリスト
-   */
-  private List<List<ForeignKeyEntity>> packGroups(
-      List<List<ForeignKeyEntity>> components, int maxNodes) {
-    final List<List<ForeignKeyEntity>> groups = new ArrayList<>();
-    final List<Integer> groupNodeCounts = new ArrayList<>();
-    components.forEach(
-        component -> {
-          final int componentNodes = ForeignKeyGroups.nodeCount(component);
-          for (int i = 0; i < groups.size(); i++) {
-            if (groupNodeCounts.get(i) + componentNodes <= maxNodes) {
-              groups.get(i).addAll(component);
-              groupNodeCounts.set(i, groupNodeCounts.get(i) + componentNodes);
-              return;
-            }
-          }
-          groups.add(new ArrayList<>(component));
-          groupNodeCounts.add(componentNodes);
-        });
-    return groups.stream().map(List::<ForeignKeyEntity>copyOf).toList();
+        schemaName, groups, schemaGroup.nodeCount(), baseInfo, outputDirectoryPath, maxNodes);
   }
 
   /**
@@ -193,7 +166,7 @@ public class ErDiagramWriterDomainService {
    *
    * @param schemaName 出力対象のスキーマ名
    * @param groupNo グループ番号（1始まり）
-   * @param groupForeignKeys 当該グループに属する外部キーのリスト
+   * @param group 当該グループに属する外部キーのまとまり
    * @param tableByKey テーブルキーをキー、テーブル情報を値とするマップ
    * @param baseInfo データベースの基本情報
    * @param outputDirectoryPath 出力ディレクトリのパス
@@ -202,30 +175,23 @@ public class ErDiagramWriterDomainService {
   private void writeGroupErDiagram(
       String schemaName,
       int groupNo,
-      List<ForeignKeyEntity> groupForeignKeys,
+      ForeignKeyGroup group,
       Map<TableKey, TableEntity> tableByKey,
       BaseInfoEntity baseInfo,
       Path outputDirectoryPath,
       int maxNodes) {
-    final List<TableKey> nodes = ErDiagramTemplates.diagramNodes(groupForeignKeys);
+    final PageLayout layout =
+        new PageLayout(
+            ErDiagramTemplates.groupFileHeader(schemaName, groupNo, baseInfo),
+            outputPathResolver.resolveErDiagramGroupFile(
+                baseInfo, outputDirectoryPath, schemaName, groupNo),
+            ER_DIAGRAM_BACK_LABEL);
     writeErDiagramPage(
-        outputPathResolver.resolveErDiagramGroupFile(
-            baseInfo, outputDirectoryPath, schemaName, groupNo),
-        ErDiagramTemplates.groupFileHeader(schemaName, groupNo, baseInfo),
-        ErDiagramTemplates.erDiagram(groupForeignKeys, nodes, maxNodes),
-        groupForeignKeys,
-        nodes,
+        layout,
+        group,
+        ErDiagramTemplates.groupFooter(schemaName, baseInfo),
         tableByKey,
         maxNodes,
-        ErDiagramTemplates.groupFooter(schemaName, baseInfo),
-        page ->
-            outputPathResolver.resolveErDiagramGroupFile(
-                baseInfo, outputDirectoryPath, schemaName, groupNo, page),
-        page ->
-            String.format(
-                "./erDiagram_%s_%s_group%d_%d.md", baseInfo.dbName(), schemaName, groupNo, page),
-        String.format("./erDiagram_%s_%s_group%d.md", baseInfo.dbName(), schemaName, groupNo),
-        "ER図へ",
         baseInfo);
   }
 
@@ -234,64 +200,49 @@ public class ErDiagramWriterDomainService {
    * スキーマ全体のページとグループ別のページで本文の構成（図または代替の外部キー一覧）が同じため共通化する。
    * ER図を描画した場合は図中の箱の一覧を、描画を省略した場合は代替として外部キーの一覧を掲載する
    *
-   * @param filePath 出力先のファイルパス
-   * @param fileHeader ファイルヘッダー
-   * @param diagramSection ER図セクション（描画結果または省略メッセージ）
-   * @param foreignKeys 当該ページが対象とする外部キーのリスト
-   * @param nodes 当該ページが対象とするノードのリスト
+   * @param layout 出力先のファイルパスとファイルヘッダー（一覧が長い場合の分割ページと共通）
+   * @param group 当該ページに描画する外部キーのまとまり
+   * @param footer フッター
    * @param tableByKey テーブルキーをキー、テーブル情報を値とするマップ
    * @param maxNodes 1つの図に描画するノード数の上限
-   * @param footer フッター
-   * @param pageFile 分割ページのページ番号から出力先パスを解決する関数
-   * @param pageHref 分割ページのページ番号から相対パスを解決する関数
-   * @param backHref 本体ページへの相対パス
-   * @param backLabel 本体ページへのリンク表示名
    * @param baseInfo データベースの基本情報
    */
   private void writeErDiagramPage(
-      Path filePath,
-      String fileHeader,
-      String diagramSection,
-      List<ForeignKeyEntity> foreignKeys,
-      List<TableKey> nodes,
+      PageLayout layout,
+      ForeignKeyGroup group,
+      String footer,
       Map<TableKey, TableEntity> tableByKey,
       int maxNodes,
-      String footer,
-      IntFunction<Path> pageFile,
-      IntFunction<String> pageHref,
-      String backHref,
-      String backLabel,
       BaseInfoEntity baseInfo) {
     final PagedSection<?> detail =
-        ErDiagramTemplates.isOverflow(nodes.size(), maxNodes)
+        group.exceeds(maxNodes)
             ? new PagedSection<>(
                 ErDiagramTemplates.foreignKeyHeading(),
                 ErDiagramTemplates.foreignKeyTableHeader(),
-                foreignKeys,
+                group.foreignKeys(),
                 ErDiagramTemplates::foreignKeyTableLine)
             : new PagedSection<>(
                 ErDiagramTemplates.diagramTableHeading(),
                 ErDiagramTemplates.diagramTableHeader(),
-                nodes,
+                group.nodes(),
                 (no, key) -> ErDiagramTemplates.diagramTableLine(no, key, tableByKey.get(key)));
-    final PageLayout layout = new PageLayout(fileHeader, pageFile, pageHref, backHref, backLabel);
     final List<String> contents =
         List.of(
-            fileHeader, // ヘッダー
+            layout.fileHeader(), // ヘッダー
             ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
-            diagramSection, // ER図
+            ErDiagramTemplates.erDiagram(group, maxNodes), // ER図（描画結果または省略メッセージ）
             pagedSectionWriter.writePagedSection(detail, layout), // 掲載テーブル または 外部キー一覧
             footer // フッター
             );
-    fileRepository.writeFile(filePath, contents);
-    logger.debug("exportErDiagram complete. [filePath={}]", filePath.toString());
+    fileRepository.writeFile(layout.file(), contents);
+    logger.debug("exportErDiagram complete. [filePath={}]", layout.file());
   }
 
   /**
    * ER図をグループに分割した場合の、スキーマページ（グループ索引）を書き込むメソッド
    *
    * @param schemaName 出力対象のスキーマ名
-   * @param groups グループごとにまとめ直した外部キーのリスト
+   * @param groups グループごとにまとめ直した外部キーのまとまりのリスト
    * @param nodeCount 当該スキーマの関連テーブル数
    * @param baseInfo データベースの基本情報
    * @param outputDirectoryPath 出力ディレクトリのパス
@@ -299,7 +250,7 @@ public class ErDiagramWriterDomainService {
    */
   private void writeSchemaGroupIndex(
       String schemaName,
-      List<List<ForeignKeyEntity>> groups,
+      List<ForeignKeyGroup> groups,
       int nodeCount,
       BaseInfoEntity baseInfo,
       Path outputDirectoryPath,
@@ -310,15 +261,16 @@ public class ErDiagramWriterDomainService {
     IntStream.rangeClosed(1, groups.size())
         .forEach(
             groupNo -> {
-              final List<ForeignKeyEntity> group = groups.get(groupNo - 1);
+              final ForeignKeyGroup group = groups.get(groupNo - 1);
               groupIndex.append(
                   ErDiagramTemplates.groupIndexLine(
                       groupNo,
-                      ForeignKeyGroups.nodeCount(group),
-                      group.size(),
-                      ForeignKeyGroups.mainTable(group),
-                      String.format(
-                          "./erDiagram_%s_%s_group%d.md", baseInfo.dbName(), schemaName, groupNo)));
+                      group.nodeCount(),
+                      group.foreignKeys().size(),
+                      group.mainTable(),
+                      DocumentLocations.linkFromBase(
+                          DocumentLocations.erDiagramGroupFile(
+                              baseInfo.dbName(), schemaName, groupNo))));
             });
     final List<String> contents =
         List.of(
@@ -354,23 +306,18 @@ public class ErDiagramWriterDomainService {
             ErDiagramTemplates::foreignKeyTableLine);
     final PageLayout layout =
         new PageLayout(
-            ErDiagramTemplates.fileHeader("ER図一覧", baseInfo),
-            page ->
-                outputPathResolver.resolveObjectListFile(
-                    baseInfo, outputDirectoryPath, "erDiagram", page),
-            page -> String.format("./erDiagramList_%s_%d.md", baseInfo.dbName(), page),
-            String.format("./erDiagramList_%s.md", baseInfo.dbName()),
-            "ER図一覧へ");
+            ErDiagramTemplates.fileHeader(ListDocumentType.ER_DIAGRAM.getTitle(), baseInfo),
+            outputPathResolver.resolveListFile(
+                baseInfo, outputDirectoryPath, ListDocumentType.ER_DIAGRAM),
+            ListDocumentType.ER_DIAGRAM.getBackLinkLabel());
     final List<String> contents =
         List.of(
-            ErDiagramTemplates.fileHeader("ER図一覧", baseInfo), // ヘッダー
+            layout.fileHeader(), // ヘッダー
             ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
             ErDiagramTemplates.schemaIndex(baseInfo, tablesBySchema), // スキーマ別ER図へのリンク
             pagedSectionWriter.writePagedSection(crossSchemaSection, layout), // スキーマ跨ぎの外部キー
             ErDiagramTemplates.indexFooter(baseInfo) // フッター
             );
-    fileRepository.writeFile(
-        outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "erDiagram"),
-        contents);
+    fileRepository.writeFile(layout.file(), contents);
   }
 }

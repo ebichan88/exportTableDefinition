@@ -104,8 +104,8 @@ public record TableSnapshot(
           text(column.logicalColumnName()),
           column.columnType(),
           text(column.precisionScale()),
-          column.isPrimaryKey(),
-          column.isNotNull(),
+          column.primaryKey(),
+          column.notNull(),
           text(column.defaultValue()),
           text(annotation.columnRemark(column.physicalColumnName())));
     }
@@ -133,8 +133,8 @@ public record TableSnapshot(
       return new Index(
           index.indexName(),
           text(index.indexMethod()),
-          index.isUniqueIndex(),
-          index.isPrimaryKeyIndex(),
+          index.isUnique(),
+          index.isPrimary(),
           text(index.indexDefinition()),
           text(index.remarks()));
     }

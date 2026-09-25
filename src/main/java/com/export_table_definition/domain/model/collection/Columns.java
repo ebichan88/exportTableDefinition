@@ -18,12 +18,6 @@ public final class Columns extends AbstractEntities<ColumnEntity> {
   }
 
   public static Columns of(List<ColumnEntity> list) {
-    return new Columns(index(list, c -> TableKey.of(c.schemaName(), c.tableName())));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  protected TableKey extractKey(ColumnEntity e) {
-    return TableKey.of(e.schemaName(), e.tableName());
+    return new Columns(index(list));
   }
 }

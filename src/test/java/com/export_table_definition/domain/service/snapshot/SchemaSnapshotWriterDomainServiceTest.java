@@ -86,15 +86,14 @@ public class SchemaSnapshotWriterDomainServiceTest {
     return new TableDefinitionContent(
         BASE_INFO,
         new TableEntity("testdb", schema, "", table, "table", "", ""),
-        List.of(new ColumnEntity(schema, table, column, "integer", "○")),
+        List.of(new ColumnEntity(schema, table, column, "integer", true)),
         List.of(),
         List.of(),
         List.of(),
         List.of(),
         List.of(),
         List.of(),
-        TableAnnotation.EMPTY,
-        OUT);
+        TableAnnotation.EMPTY);
   }
 
   @Test
@@ -113,8 +112,8 @@ public class SchemaSnapshotWriterDomainServiceTest {
   @DisplayName("initTableFile + appendTable: スキーマ単位のファイルへ1テーブル1行で追記する")
   void testAppendTableWritesOneLinePerTable() {
     writer.initTableFile("public", BASE_INFO, OUT);
-    writer.appendTable(tableContent("public", "t1", "id"));
-    writer.appendTable(tableContent("public", "t2", "code"));
+    writer.appendTable(tableContent("public", "t1", "id"), OUT);
+    writer.appendTable(tableContent("public", "t2", "code"), OUT);
 
     Path file = SNAPSHOT_DIR.resolve("public").resolve("tables.jsonl");
     List<String> lines = fileRepository.files.get(file).lines().toList();
@@ -133,7 +132,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
     fileRepository.files.put(file, "{\"stale\":true}\n");
 
     writer.initTableFile("public", BASE_INFO, OUT);
-    writer.appendTable(tableContent("public", "t1", "id"));
+    writer.appendTable(tableContent("public", "t1", "id"), OUT);
 
     assertFalse(fileRepository.files.get(file).contains("stale"));
     assertEquals(1, fileRepository.files.get(file).lines().count());
@@ -144,8 +143,8 @@ public class SchemaSnapshotWriterDomainServiceTest {
   void testWriteSequencesAndTypesBySchema() {
     writer.writeSequences(
         List.of(
-            new SequenceEntity("testdb", "public", "seq_a", "1", "1", "100", "1", "1", "○", ""),
-            new SequenceEntity("testdb", "sales", "seq_b", "1", "1", "100", "1", "1", "", "")),
+            new SequenceEntity("testdb", "public", "seq_a", "1", "1", "100", "1", "1", true, ""),
+            new SequenceEntity("testdb", "sales", "seq_b", "1", "1", "100", "1", "1", false, "")),
         BASE_INFO,
         OUT);
     writer.writeTypes(

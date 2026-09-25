@@ -1,12 +1,12 @@
 package com.export_table_definition.domain.service.writer;
 
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
 import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
 /**
@@ -23,15 +23,18 @@ public class PagedSectionWriter {
 
   private static final int MAX_PAGE_SIZE = 3000;
   private final FileRepository fileRepository;
+  private final OutputPathResolver outputPathResolver;
 
   /**
    * コンストラクタ
    *
    * @param fileRepository ファイルリポジトリ
+   * @param outputPathResolver 出力パス解決クラス（分割ページのファイルパスの解決に用いる）
    */
   @Inject
-  public PagedSectionWriter(FileRepository fileRepository) {
+  public PagedSectionWriter(FileRepository fileRepository, OutputPathResolver outputPathResolver) {
     this.fileRepository = fileRepository;
+    this.outputPathResolver = outputPathResolver;
   }
 
   /**
@@ -50,20 +53,14 @@ public class PagedSectionWriter {
       BiFunction<Integer, T, String> lineMapper) {}
 
   /**
-   * 分割ページの配置（ファイルパスとリンクの解決方法）
+   * 表のセクションを掲載する本体ページと、分割ページの共通部分<br>
+   * 分割ページのファイルパスは本体ページのファイルパスから{@link OutputPathResolver#resolvePageFile}で解決する
    *
-   * @param fileHeader 分割ページのファイルヘッダー
-   * @param pageFile ページ番号から出力先パスを解決する関数
-   * @param pageHref ページ番号から相対パスを解決する関数
-   * @param backHref 本体ページへの相対パス
-   * @param backLabel 本体ページへのリンク表示名
+   * @param fileHeader 本体ページ・分割ページのファイルヘッダー
+   * @param file 本体ページのファイルパス
+   * @param backLabel 分割ページから本体ページへのリンク表示名
    */
-  public record PageLayout(
-      String fileHeader,
-      IntFunction<Path> pageFile,
-      IntFunction<String> pageHref,
-      String backHref,
-      String backLabel) {}
+  public record PageLayout(String fileHeader, Path file, String backLabel) {}
 
   /**
    * 表のセクションを書き込むメソッド<br>
@@ -97,16 +94,38 @@ public class PagedSectionWriter {
               section.tableHeader(),
               buildRows(section, from, to) + System.lineSeparator(),
               PagedSectionTemplates.pageFooter(
-                  page > 1 ? layout.pageHref().apply(page - 1) : null,
-                  page < totalPages ? layout.pageHref().apply(page + 1) : null,
-                  layout.backHref(),
+                  page > 1 ? pageHref(layout, page - 1) : null,
+                  page < totalPages ? pageHref(layout, page + 1) : null,
+                  siblingHref(layout.file()),
                   layout.backLabel()));
-      fileRepository.writeFile(layout.pageFile().apply(page), contents);
+      fileRepository.writeFile(outputPathResolver.resolvePageFile(layout.file(), page), contents);
     }
     return PagedSectionTemplates.pagedSectionLinks(
         section.heading(),
         section.heading(),
-        IntStream.rangeClosed(1, totalPages).mapToObj(layout.pageHref()::apply).toList());
+        IntStream.rangeClosed(1, totalPages).mapToObj(page -> pageHref(layout, page)).toList());
+  }
+
+  /**
+   * 分割ページへの相対リンクを取得するメソッド
+   *
+   * @param layout 本体ページと分割ページの共通部分
+   * @param page ページ番号（1始まり）
+   * @return 分割ページへの相対リンク
+   */
+  private String pageHref(PageLayout layout, int page) {
+    return siblingHref(outputPathResolver.resolvePageFile(layout.file(), page));
+  }
+
+  /**
+   * 本体ページ・分割ページ同士の相対リンクを取得するメソッド<br>
+   * 分割ページは本体ページと同じディレクトリに置かれるため、ファイル名のみで参照できる
+   *
+   * @param file 参照先のファイルパス
+   * @return 相対リンク（例: {@code ./tableList_testdb_2.md}）
+   */
+  private static String siblingHref(Path file) {
+    return "./" + file.getFileName();
   }
 
   /**
