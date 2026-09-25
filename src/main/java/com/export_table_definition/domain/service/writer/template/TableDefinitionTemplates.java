@@ -67,7 +67,8 @@ public class TableDefinitionTemplates {
 
   /**
    * テーブル情報セクション<br>
-   * 末尾の備考セルはSQLでは付与されないため、サイドカー由来のテーブル備考を エスケープした上でここで後付けする（FK多重度と同様の後付け方式）
+   * 論理テーブル名はDBコメント由来の自由記述文字列（{@code |}・改行を含みうる）のためエスケープする。 末尾の備考セルはSQLでは付与されないため、サイドカー由来のテーブル備考を
+   * エスケープした上でここで後付けする（FK多重度と同様の後付け方式）
    *
    * @param table テーブル情報
    * @param annotation テーブルの手動付帯情報
@@ -83,7 +84,7 @@ public class TableDefinitionTemplates {
         + "|"
         + table.schemaName()
         + "|"
-        + table.logicalTableName()
+        + MarkdownTemplateSupport.escapeTableCell(table.logicalTableName())
         + "|"
         + table.physicalTableName()
         + "|"
@@ -95,7 +96,9 @@ public class TableDefinitionTemplates {
   }
 
   /**
-   * カラム情報セクション
+   * カラム情報セクション<br>
+   * 論理名（DBコメント）・デフォルト値（DBのデフォルト式。PostgreSQLの{@code ||}連結等で{@code |}を含みうる）は、
+   * いずれも自由記述文字列で改行を含む場合もあるためエスケープする
    *
    * @param columns カラム情報のリスト
    * @param table テーブル情報
@@ -120,7 +123,7 @@ public class TableDefinitionTemplates {
             "|"
                 + no
                 + "|"
-                + c.logicalColumnName()
+                + MarkdownTemplateSupport.escapeTableCell(c.logicalColumnName())
                 + "|"
                 + c.physicalColumnName()
                 + "|"
@@ -132,7 +135,7 @@ public class TableDefinitionTemplates {
                 + "|"
                 + c.notNull()
                 + "|"
-                + c.defaultValue()
+                + MarkdownTemplateSupport.escapeTableCell(c.defaultValue())
                 + "|"
                 + MarkdownTemplateSupport.escapeTableCell(
                     annotation.columnRemark(c.physicalColumnName()))
@@ -166,7 +169,8 @@ public class TableDefinitionTemplates {
   }
 
   /**
-   * インデックス情報セクション
+   * インデックス情報セクション<br>
+   * 備考はDBコメント（{@code COMMENT ON INDEX}）由来の自由記述文字列のためエスケープする
    *
    * @param indexes インデックス情報のリスト
    * @param table テーブル情報
@@ -198,13 +202,14 @@ public class TableDefinitionTemplates {
                 + "|"
                 + MarkdownTemplateSupport.escapePipe(idx.indexDefinition())
                 + "|"
-                + idx.remarks()
+                + MarkdownTemplateSupport.escapeTableCell(idx.remarks())
                 + "|",
         IndexEntity::getSchemaTableName);
   }
 
   /**
-   * 制約情報セクション
+   * 制約情報セクション<br>
+   * 備考はDBコメント（{@code COMMENT ON CONSTRAINT}）由来の自由記述文字列のためエスケープする
    *
    * @param constraints 制約情報のリスト
    * @param table テーブル情報
@@ -232,7 +237,7 @@ public class TableDefinitionTemplates {
                 + "|"
                 + MarkdownTemplateSupport.escapePipe(c.constraintDefinition())
                 + "|"
-                + c.remarks()
+                + MarkdownTemplateSupport.escapeTableCell(c.remarks())
                 + "|",
         ConstraintEntity::getSchemaTableName);
   }
