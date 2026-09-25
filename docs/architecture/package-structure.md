@@ -33,6 +33,8 @@
 | `domain.model.annotation` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション）を束ねるrecord |
 | | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブル単位の集合とその1件分） |
 | `domain.model` | `DiffResult` | 生成ドキュメントとコミット済みドキュメントの比較結果（追加/削除/内容不一致のファイルパス一覧）を表すrecord |
+| `domain.model.snapshot` | `DatabaseSnapshot`, `TableSnapshot`, `FunctionSnapshot`, `SequenceSnapshot`, `TypeSnapshot` | スキーマのスナップショット（JSON Lines）の1行分を表すrecord群。エンティティからの変換時にMarkdownの表示都合の値（`○`マーカー・連結文字列等）を真偽値・リストへ正規化する |
+| | `SnapshotKind` | スキーマ単位のJSON Linesファイルに出力するオブジェクト種別（テーブル/関数/シーケンス/型）のenum |
 
 ### domain.repository（インターフェースのみ。実装はinfrastructure層）
 
@@ -40,14 +42,16 @@
 |---|---|
 | `TableDefinitionRepository` | テーブル・カラム・制約・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる） |
 | `AnnotationRepository` | サイドカーYAML（手動付帯情報・論理リレーション）読み込みIF |
-| `FileRepository` | ファイル操作IF（`writeFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
+| `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
 ### domain.service
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `domain.service` | `DocumentDiffDomainService` | 生成ドキュメントとコミット済みドキュメントをファイル単位（追加/削除/内容不一致）で比較する（`--check`モードで使用） |
-| `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧の出力パス生成戦略IF |
+| `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF |
+| `domain.service.snapshot` | `SchemaSnapshotWriterDomainService` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
+| | `SnapshotSerializer` | スナップショットのrecordとJSON文字列の変換IF（実装はインフラ層） |
 | `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
 | | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
 | | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |
@@ -68,6 +72,7 @@
 | `infrastructure.file.repository` | `TableDefinitionFileRepository` | `FileRepository`実装（実ファイル書き込み） |
 | | `AnnotationYamlRepository` | `AnnotationRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する |
 | `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
+| `infrastructure.snapshot` | `JacksonSnapshotSerializer` | `SnapshotSerializer`のJackson実装 |
 
 ## config層
 

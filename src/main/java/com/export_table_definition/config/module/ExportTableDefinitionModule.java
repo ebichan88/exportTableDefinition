@@ -7,6 +7,8 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
+import com.export_table_definition.domain.service.snapshot.SnapshotSerializer;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
@@ -15,6 +17,7 @@ import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.infrastructure.file.repository.AnnotationYamlRepository;
 import com.export_table_definition.infrastructure.file.repository.TableDefinitionFileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
+import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
 import com.google.inject.AbstractModule;
 
 /**
@@ -34,10 +37,12 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(FileRepository.class).to(TableDefinitionFileRepository.class);
     bind(AnnotationRepository.class).to(AnnotationYamlRepository.class);
     bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);
+    bind(SnapshotSerializer.class).to(JacksonSnapshotSerializer.class);
     bind(PagedSectionWriter.class);
     bind(TableDefinitionWriterDomainService.class);
     bind(ErDiagramWriterDomainService.class);
     bind(ObjectListWriterDomainService.class);
+    bind(SchemaSnapshotWriterDomainService.class);
     bind(DocumentDiffDomainService.class);
   }
 }

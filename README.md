@@ -12,6 +12,7 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 | 各テーブル定義書 | カラム・インデックス・制約・外部キー情報など（PostgreSQLの場合はトリガー情報も） |
 | ER図 | テーブル間の外部キー関係を表すMermaid記法の図（テーブル単位・スキーマ単位の2種類） |
 | PostgreSQL固有オブジェクトの一覧・個別ページ | 関数・プロシージャ、シーケンス、ユーザー定義型（ENUM等） |
+| スキーマのスナップショット（任意） | 上記と同じ情報を機械可読なJSON Lines形式で構造化したもの（`outputSnapshot=true`の場合のみ。[詳細](#スキーマのスナップショットjson-lines)） |
 
 出力サンプル: [テーブル一覧](./docs/sample/postgres/output/tableList_testdb.md)
 
@@ -75,7 +76,10 @@ chunkSize={詳細情報をまとめて取得・出力するテーブル数の上
 erDiagramMaxNodes={スキーマ別ER図1枚に描画するテーブル数の上限} ※空白の場合は80。0以下を指定すると上限なし
 outputObjects={出力対象とするPostgreSQL固有オブジェクト種別（複数存在する場合はカンマ区切り）} ※空白の場合は全種別を対象
 annotationPath={手動付帯情報・論理リレーションを記述したサイドカーYAMLのパス} ※空白の場合はマージを行わない
+outputSnapshot={Markdownに加えてスキーマのスナップショット（JSON Lines）を出力するか（true/false）} ※空白の場合はfalse（出力しない）
 ```
+
+`outputSnapshot`を`true`にすると、Markdownのドキュメントと同じ取得結果から、スキーマ情報を構造化したスナップショットを`outputPath`配下の`snapshot/`へ出力します。jq等での機械処理や、プルリクエストでのスキーマ変更のレビュー（git diff）に利用できます。形式は[スキーマのスナップショット（JSON Lines）](#スキーマのスナップショットjson-lines)を参照してください。
 
 `outputObjects`は、PostgreSQL固有の追加オブジェクト（トリガー・関数/プロシージャ・シーケンス・ユーザー定義型）のうち、
 出力したい種別だけを指定するための設定です。指定できる値は以下のとおりで、`table`（テーブル定義書・ER図）は
@@ -323,6 +327,47 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 これらの追加オブジェクトは、`outputObjects`（[こちら](#exporttabledefinitionproperties-の記載内容)）でオブジェクト種別ごとに
 出力有無を絞り込めます。トリガーを対象外にした場合は、`triggerList_{DB名}.md`だけでなく各テーブル定義書内の
 「トリガー情報」セクションも出力されなくなります。
+
+### スキーマのスナップショット（JSON Lines）
+
+`outputSnapshot=true`の場合、Markdownのドキュメントに加えて、DBから取得したスキーマ情報を構造化した
+スナップショットを出力します（出力サンプル: [docs/sample/postgres/output/snapshot](./docs/sample/postgres/output/snapshot)）。
+Markdownでは1つの表セルにまとめて表示している情報（NOT NULL・デフォルト値・カラムリスト等）も個別の項目として持つため、
+jq等で機械的に扱えます。
+
+```
+{outputPath}/snapshot/
+└─{DB名}
+   ├─database.json       ・・・ DB名・DBMS種別・スナップショットの形式バージョン
+   └─{スキーマ名}
+      ├─tables.jsonl     ・・・ 1テーブル1行（カラム・インデックス・制約・外部キー・論理リレーション・トリガー・サイドカーの付帯情報）
+      ├─functions.jsonl  ・・・ 1関数・プロシージャ1行（定義本体を含む）
+      ├─sequences.jsonl  ・・・ 1シーケンス1行
+      └─types.jsonl      ・・・ 1ユーザー定義型1行
+```
+
+`tables.jsonl`の1行は以下のような内容です（実際は1行。見やすさのため整形しています）。
+
+```json
+{
+  "schema": "sample", "name": "audit_log", "type": "table",
+  "description": "employeeテーブルの変更を記録する監査ログ。…", "remarks": "アプリケーションからの直接INSERTは禁止",
+  "columns": [
+    {"name": "log_id", "type": "bigint", "primaryKey": true, "notNull": true, "defaultValue": "nextval('sample.audit_log_log_id_seq'::regclass)"},
+    {"name": "table_name", "type": "character varying(50)", "precisionScale": "50", "primaryKey": false, "notNull": true, "remarks": "変更対象のテーブル名"}
+  ],
+  "indexes": [{"name": "audit_log_pkey", "method": "btree", "unique": true, "primary": true, "definition": "CREATE UNIQUE INDEX …"}],
+  "constraints": [{"name": "audit_log_pkey", "type": "PRIMARY KEY", "definition": "PRIMARY KEY (log_id)"}],
+  "logicalRelations": [{"name": "rel_audit_log_employee", "columns": ["record_id"], "referenceSchema": "sample", "referenceTable": "employee", "referenceColumns": ["employee_id"], "cardinality": "OPTIONAL_ONE_TO_MANY"}]
+}
+```
+
+* 1オブジェクト1行のJSON Lines形式のため、git上の差分がそのままオブジェクト単位の差分になります。
+* 値が無い項目（コメント未設定の論理名、外部キーを持たないテーブルの`foreignKeys`等）は出力を省略します。真偽値の項目（`primaryKey`・`notNull`等）は`false`も出力します。
+* 実行のたびに変わる「作成日」は含めません。DBに変更が無ければ、何度実行しても同じ内容になります。
+* 値はMarkdown向けのエスケープ（`|`→`\|`等）をしない、DBのカタログ・サイドカーYAMLから取得したままの値です。
+* 被参照側の外部キーは、参照元テーブルの`foreignKeys`から導出できるため保持しません。
+* `schema`・`table`・`outputObjects`・`annotationPath`の設定はMarkdownと同様に適用されます。`chunkSize`・`erDiagramMaxNodes`はMarkdownの分割出力のための設定のため、スナップショットの内容には影響しません。
 
 ## 開発者向け（ソースからビルドする場合）
 

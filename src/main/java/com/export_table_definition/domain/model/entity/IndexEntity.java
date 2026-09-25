@@ -26,6 +26,9 @@ public record IndexEntity(
     String remarks)
     implements SchemaTableKeyed {
 
+  /** 一意インデックス・主キーのインデックスであることを表すマーカー文字列 */
+  private static final String MARKER = "○";
+
   /**
    * スキーマ名・テーブル名のみを持つインデックスを生成するコンストラクタ<br>
    * テーブルへの紐付けのみを参照し、表示内容を参照しない呼び出し元向けの簡易コンストラクタ
@@ -35,5 +38,23 @@ public record IndexEntity(
    */
   public IndexEntity(String schemaName, String tableName) {
     this(schemaName, tableName, "", "", "", "", "", "");
+  }
+
+  /**
+   * 一意インデックスであるか判定するメソッド
+   *
+   * @return 一意インデックスの場合はtrue。それ以外の場合はfalse
+   */
+  public boolean isUniqueIndex() {
+    return MARKER.equals(isUnique);
+  }
+
+  /**
+   * 主キーのインデックスであるか判定するメソッド
+   *
+   * @return 主キーのインデックスの場合はtrue。それ以外の場合はfalse
+   */
+  public boolean isPrimaryKeyIndex() {
+    return MARKER.equals(isPrimary);
   }
 }

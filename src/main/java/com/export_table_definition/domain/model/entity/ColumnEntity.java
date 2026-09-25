@@ -28,8 +28,8 @@ public record ColumnEntity(
     String defaultValue)
     implements SchemaTableKeyed {
 
-  /** 主キーであることを表すマーカー文字列 */
-  private static final String PRIMARY_KEY_MARKER = "○";
+  /** 主キー・NOT NULL制約であることを表すマーカー文字列 */
+  private static final String MARKER = "○";
 
   /**
    * 論理カラム名・桁数/精度・NOT NULL・デフォルト値を持たないカラムを生成するコンストラクタ<br>
@@ -56,6 +56,15 @@ public record ColumnEntity(
    * @return 主キーの場合はtrue。それ以外の場合はfalse
    */
   public boolean isPrimaryKey() {
-    return PRIMARY_KEY_MARKER.equals(primaryKey);
+    return MARKER.equals(primaryKey);
+  }
+
+  /**
+   * NOT NULL制約を持つか判定するメソッド
+   *
+   * @return NOT NULL制約を持つ場合はtrue。それ以外の場合はfalse
+   */
+  public boolean isNotNull() {
+    return MARKER.equals(notNull);
   }
 }

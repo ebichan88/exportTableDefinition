@@ -2,6 +2,7 @@ package com.export_table_definition.infrastructure.path;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,6 +28,9 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   private static final String ER_DIAGRAM_GROUP_FILENAME_PATTERN = "erDiagram_%s_%s_group%d.md";
   private static final String ER_DIAGRAM_GROUP_PAGED_FILENAME_PATTERN =
       "erDiagram_%s_%s_group%d_%d.md";
+  private static final String SNAPSHOT_DIRECTORY = "snapshot";
+  private static final String SNAPSHOT_DATABASE_FILENAME = "database.json";
+  private static final String SNAPSHOT_FILENAME_PATTERN = "%s.jsonl";
 
   /** {@inheritDoc} */
   @Override
@@ -132,5 +136,29 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
       BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, String kind, String name) {
     return resolveSchemaObjectDirectory(baseInfo, baseOutputDir, schemaName, kind)
         .resolve(name + ".md");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Path resolveSnapshotDirectory(Path baseOutputDir) {
+    return baseOutputDir.resolve(SNAPSHOT_DIRECTORY);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Path resolveSnapshotDatabaseFile(BaseInfoEntity baseInfo, Path baseOutputDir) {
+    return resolveSnapshotDirectory(baseOutputDir)
+        .resolve(baseInfo.dbName())
+        .resolve(SNAPSHOT_DATABASE_FILENAME);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Path resolveSnapshotFile(
+      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, SnapshotKind kind) {
+    return resolveSnapshotDirectory(baseOutputDir)
+        .resolve(baseInfo.dbName())
+        .resolve(schemaName)
+        .resolve(String.format(SNAPSHOT_FILENAME_PATTERN, kind.getFileName()));
   }
 }

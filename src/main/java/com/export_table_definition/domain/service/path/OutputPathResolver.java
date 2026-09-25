@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.path;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import java.nio.file.Path;
 
 /**
@@ -168,4 +169,36 @@ public interface OutputPathResolver {
    */
   Path resolveSchemaObjectFile(
       BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, String kind, String name);
+
+  /**
+   * スキーマのスナップショットの出力ディレクトリ（スナップショット全体のルート）を返す。 <br>
+   * Markdownのドキュメントとは混在させず、専用のディレクトリ配下にまとめる。 例: {base}/snapshot/
+   *
+   * @param baseOutputDir 基本出力ディレクトリ
+   * @return スナップショットの出力ディレクトリパス
+   */
+  Path resolveSnapshotDirectory(Path baseOutputDir);
+
+  /**
+   * スナップショットのうち、DB全体の情報の出力ファイルパスを返す。 <br>
+   * 例: {base}/snapshot/{DB名}/database.json
+   *
+   * @param baseInfo 基本情報エンティティ
+   * @param baseOutputDir 基本出力ディレクトリ
+   * @return DB全体の情報の出力ファイルパス
+   */
+  Path resolveSnapshotDatabaseFile(BaseInfoEntity baseInfo, Path baseOutputDir);
+
+  /**
+   * スナップショットのうち、スキーマ配下のオブジェクト（テーブル/関数/シーケンス/型）の出力ファイルパスを返す。 <br>
+   * 種別ごとに1ファイル（1行1オブジェクトのJSON Lines）とする。 例: {base}/snapshot/{DB名}/{スキーマ名}/tables.jsonl
+   *
+   * @param baseInfo 基本情報エンティティ
+   * @param baseOutputDir 基本出力ディレクトリ
+   * @param schemaName スキーマ名
+   * @param kind オブジェクトの種別
+   * @return 出力ファイルパス
+   */
+  Path resolveSnapshotFile(
+      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, SnapshotKind kind);
 }

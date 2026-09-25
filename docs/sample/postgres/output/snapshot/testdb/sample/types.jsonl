@@ -1,0 +1,3 @@
+{"schema":"sample","name":"address_type","category":"COMPOSITE","definition":"street character varying(100), city character varying(50), postal_code character varying(10)"}
+{"schema":"sample","name":"employee_status_enum","category":"ENUM","definition":"ACTIVE, ON_LEAVE, RETIRED"}
+{"schema":"sample","name":"positive_numeric","category":"DOMAIN","definition":"DOMAIN OVER numeric(12,2)"}

@@ -25,6 +25,7 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
@@ -56,6 +57,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   private final ErDiagramWriterDomainService erDiagramWriter;
   private final ObjectListWriterDomainService objectListWriter;
   private final AnnotationRepository annotationRepository;
+  private final SchemaSnapshotWriterDomainService snapshotWriter;
   private final DocumentDiffDomainService documentDiffDomainService;
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
@@ -67,6 +69,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @param writer テーブル一覧・テーブル定義書を書き込むクラス
    * @param erDiagramWriter ER図を書き込むクラス
    * @param objectListWriter トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
+   * @param snapshotWriter スキーマのスナップショットを書き込むクラス
    * @param annotationRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
    * @param documentDiffDomainService 生成ドキュメントとコミット済みドキュメントの比較を行うドメインサービス
    * @param fileRepository 差分比較用の一時ディレクトリの作成・削除に用いるファイルリポジトリ
@@ -78,6 +81,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       TableDefinitionWriterDomainService writer,
       ErDiagramWriterDomainService erDiagramWriter,
       ObjectListWriterDomainService objectListWriter,
+      SchemaSnapshotWriterDomainService snapshotWriter,
       AnnotationRepository annotationRepository,
       DocumentDiffDomainService documentDiffDomainService,
       FileRepository fileRepository,
@@ -86,6 +90,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     this.writer = writer;
     this.erDiagramWriter = erDiagramWriter;
     this.objectListWriter = objectListWriter;
+    this.snapshotWriter = snapshotWriter;
     this.annotationRepository = annotationRepository;
     this.documentDiffDomainService = documentDiffDomainService;
     this.fileRepository = fileRepository;
@@ -102,6 +107,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       int erDiagramMaxNodes,
       List<String> outputObjectList,
       String annotationPath,
+      boolean outputSnapshot,
       boolean rmDist) {
     // ベースディレクトリパス取得
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
@@ -196,13 +202,21 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     typeList.forEach(
         type -> objectListWriter.writeTypeDefinition(type, baseInfoEntity, outputBaseDir));
 
+    // スキーマのスナップショットのうち、DB全体の情報・シーケンス・型の出力（一覧取得結果をそのまま利用する）
+    if (outputSnapshot) {
+      snapshotWriter.writeDatabase(baseInfoEntity, outputBaseDir);
+      snapshotWriter.writeSequences(sequenceList, baseInfoEntity, outputBaseDir);
+      snapshotWriter.writeTypes(typeList, baseInfoEntity, outputBaseDir);
+    }
+
     // 関数・プロシージャの個別ファイル出力。定義本体が大きくなり得るため、スキーマ単位で本体を取得・出力・破棄する
     functionList.stream()
         .map(FunctionEntity::schemaName)
         .distinct()
         .forEach(
             schemaName ->
-                exportSchemaFunctionDefinitions(schemaName, baseInfoEntity, outputBaseDir));
+                exportSchemaFunctionDefinitions(
+                    schemaName, baseInfoEntity, outputBaseDir, outputSnapshot));
 
     // テーブル定義出力 -> ./output/ or {設定ファイルのFileParh}/{DB名}/{スキーマ名}/{TBL分類}/{物理テーブル名}.md
     // カラム・インデックス・制約は、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
@@ -222,7 +236,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
                 triggers,
                 annotations,
                 outputBaseDir,
-                chunkSize));
+                chunkSize,
+                outputSnapshot));
   }
 
   /**
@@ -256,7 +271,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath) {
+      String annotationPath,
+      boolean outputSnapshot) {
     final Path committedDir = outputPathResolver.resolveBaseOutputDir(outputPath);
     final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
     try {
@@ -268,6 +284,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
           erDiagramMaxNodes,
           outputObjectList,
           annotationPath,
+          outputSnapshot,
           false);
       return documentDiffDomainService.compare(generatedDir, committedDir);
     } finally {
@@ -460,14 +477,16 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @param schemaName 出力対象のスキーマ名
    * @param baseInfo データベースの基本情報
    * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputSnapshot trueの場合、スキーマのスナップショットも出力する
    */
   private void exportSchemaFunctionDefinitions(
-      String schemaName, BaseInfoEntity baseInfo, Path outputBaseDir) {
-    repository
-        .selectFunctionDefList(List.of(schemaName))
-        .forEach(
-            function ->
-                objectListWriter.writeFunctionDefinition(function, baseInfo, outputBaseDir));
+      String schemaName, BaseInfoEntity baseInfo, Path outputBaseDir, boolean outputSnapshot) {
+    final List<FunctionEntity> functions = repository.selectFunctionDefList(List.of(schemaName));
+    functions.forEach(
+        function -> objectListWriter.writeFunctionDefinition(function, baseInfo, outputBaseDir));
+    if (outputSnapshot) {
+      snapshotWriter.writeFunctions(schemaName, functions, baseInfo, outputBaseDir);
+    }
   }
 
   /**
@@ -481,6 +500,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @param annotations 対象範囲全体の手動付帯情報
    * @param outputBaseDir 出力先のベースディレクトリパス
    * @param chunkSize 1回の取得でまとめて処理するテーブル数の上限。0以下の場合は分割しない
+   * @param outputSnapshot trueの場合、スキーマのスナップショットも出力する
    */
   private void exportSchemaTableDefinitions(
       String schemaName,
@@ -490,7 +510,12 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       Triggers triggers,
       Annotations annotations,
       Path outputBaseDir,
-      int chunkSize) {
+      int chunkSize,
+      boolean outputSnapshot) {
+    // スナップショットはスキーマ単位のファイルへ1テーブルずつ追記するため、先に追記先を空の状態で用意する
+    if (outputSnapshot) {
+      snapshotWriter.initTableFile(schemaName, baseInfoEntity, outputBaseDir);
+    }
     final int total = tablesInSchema.size();
     // chunkSizeが0以下の場合はスキーマ全体を1チャンクとして扱う
     final int step = chunkSize > 0 ? chunkSize : total;
@@ -503,7 +528,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
           foreignKeys,
           triggers,
           annotations,
-          outputBaseDir);
+          outputBaseDir,
+          outputSnapshot);
     }
   }
 
@@ -518,6 +544,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @param triggers 対象範囲全体のトリガー情報
    * @param annotations 対象範囲全体の手動付帯情報
    * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputSnapshot trueの場合、スキーマのスナップショットも出力する
    */
   private void exportTableDefinitionChunk(
       String schemaName,
@@ -526,7 +553,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       ForeignKeys foreignKeys,
       Triggers triggers,
       Annotations annotations,
-      Path outputBaseDir) {
+      Path outputBaseDir,
+      boolean outputSnapshot) {
     final List<String> schemaList = List.of(schemaName);
     // 当該チャンクのテーブル名のみを条件に詳細情報を取得する
     final List<String> chunkTableList =
@@ -550,7 +578,13 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
                     triggers,
                     annotations,
                     outputBaseDir))
-        .forEach(writer::writeTableDefinition);
+        .forEach(
+            content -> {
+              writer.writeTableDefinition(content);
+              if (outputSnapshot) {
+                snapshotWriter.appendTable(content);
+              }
+            });
   }
 
   /**

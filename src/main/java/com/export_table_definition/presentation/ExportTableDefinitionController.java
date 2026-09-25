@@ -44,6 +44,7 @@ public class ExportTableDefinitionController {
    * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
    * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト（空の場合は全種別を出力対象とする）
    * @param annotationPath 手動付帯情報を記述したサイドカーYAMLのパス（空の場合はマージを行わない）
+   * @param outputSnapshot trueの場合、Markdownに加えてスキーマのスナップショットを出力する
    * @param rmDist trueの場合、書き込み前に出力先ディレクトリを事前に削除する（{@code --rm-dist}）
    * @return 処理結果
    */
@@ -55,6 +56,7 @@ public class ExportTableDefinitionController {
       int erDiagramMaxNodes,
       List<String> outputObjectList,
       String annotationPath,
+      boolean outputSnapshot,
       boolean rmDist) {
     logger.info("[START] exportTableDefinition");
     try {
@@ -66,6 +68,7 @@ public class ExportTableDefinitionController {
           erDiagramMaxNodes,
           outputObjectList,
           annotationPath,
+          outputSnapshot,
           rmDist);
     } catch (Exception e) {
       logger.error(e);
@@ -89,6 +92,7 @@ public class ExportTableDefinitionController {
    * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
    * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト（空の場合は全種別を出力対象とする）
    * @param annotationPath 手動付帯情報を記述したサイドカーYAMLのパス（空の場合はマージを行わない）
+   * @param outputSnapshot スキーマのスナップショットを出力する設定か
    * @return 処理結果（比較処理自体の成否と、差分の有無）
    */
   public DiffCheckResultDto checkDiff(
@@ -98,7 +102,8 @@ public class ExportTableDefinitionController {
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath) {
+      String annotationPath,
+      boolean outputSnapshot) {
     logger.info("[START] checkDocumentDiff");
     final DiffResult diffResult;
     try {
@@ -110,7 +115,8 @@ public class ExportTableDefinitionController {
               chunkSize,
               erDiagramMaxNodes,
               outputObjectList,
-              annotationPath);
+              annotationPath,
+              outputSnapshot);
     } catch (Exception e) {
       logger.error(e);
       return new DiffCheckResultDto(

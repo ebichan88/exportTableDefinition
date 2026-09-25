@@ -36,7 +36,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 2. Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、
    `ExportTableDefinitionController` を取得して `run()` を呼び出す。
 3. `ExportTableDefinition.run()` が `conf/ExportTableDefinition.properties` の設定値
-   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、
+   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath、outputSnapshot）を読み込み、
    `ExportTableDefinitionController.execute()` を呼び出す。
 4. コントローラーは `ExportTableDefinitionUsecaseImpl.exportTableDefinition()` を呼び出し、例外を捕捉して
    `ResultDto`（成功/失敗）に変換する。
@@ -46,6 +46,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込みマージ
    - `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ObjectListWriterDomainService`
      （いずれも `domain.service.writer` 配下）がMarkdownを組み立てて `FileRepository` 経由で出力
+   - `outputSnapshot=true`の場合は、`SchemaSnapshotWriterDomainService`（`domain.service.snapshot` 配下）が
+     同じ取得結果からスキーマのスナップショット（JSON Lines）を出力
 
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
@@ -79,6 +81,26 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 （[../../README.md](../../README.md) の「ER図」節）に詳しい。実装は
 `ErDiagramWriterDomainService` と `domain.model.collection.ForeignKeyGroups`（連結成分の算出）、
 `domain.model.type.Cardinality`（多重度判定）が中心。
+
+## スキーマのスナップショット（中間表現）
+
+`outputSnapshot=true`の場合、Markdownと同じ取得結果から、スキーマ情報を構造化したスナップショット（JSON Lines）を
+`{outputPath}/snapshot/{DB名}/`配下へ出力する。Markdownは最終成果物（表示形式）であり機械処理に向かないため、
+差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
+
+- モデルは`domain.model.snapshot`配下のrecord（`TableSnapshot`等）。エンティティから変換する際に、Markdownの
+  表示都合の値（`○`マーカー、カンマ・スラッシュ区切りの連結文字列、空白1文字等）を真偽値・リスト・nullへ正規化する。
+  実行のたびに変わる生成日は含めない
+- JSONへの変換はドメイン層のIF（`SnapshotSerializer`）を介し、実装（`JacksonSnapshotSerializer`）はインフラ層に置く。
+  Jacksonへの依存をドメイン層へ持ち込まないため
+- 書き込みは`SchemaSnapshotWriterDomainService`が`FileRepository`・`OutputPathResolver`経由で行う
+- メモリ効率のための分割取得の方針は変えない。テーブルは`exportTableDefinitionChunk`で`TableDefinitionContent`を
+  組み立てた時点でMarkdownと並べて1行ずつスキーマ単位の`tables.jsonl`へ追記する（スキーマの処理開始時に
+  `initTableFile`で空にしてから追記するため、前回実行時の内容へ追記されることはない）。関数は定義本体を
+  スキーマ単位で取得した時点で`functions.jsonl`へ出力する
+
+なお、SQLは構造化した値のみを返し、Markdown向けの表示用の組み立て・エスケープ（`|`→`\|`等）は
+`domain.service.writer.template`配下で行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
 
 ## DB vs ドキュメントの差分検知（`--check`モード）
 

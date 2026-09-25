@@ -69,7 +69,11 @@ chunkSize=
 erDiagramMaxNodes=
 outputObjects=
 annotationPath=<リポジトリの絶対パス>/docs/sample/postgres/annotations.sample.yml
+outputSnapshot=true
 ```
+
+`outputSnapshot=true`により、Markdownに加えて`docs/sample/postgres/output/snapshot/`配下へ
+スキーマのスナップショット（JSON Lines）も出力される（ベースラインにコミット済み）。
 
 ### 4. 実行する
 
@@ -100,6 +104,7 @@ git diff docs/sample/postgres/output
 `docs/sample/postgres/output/` をベースライン（コミット済みの「正しい出力」）として扱っている場合、
 `git diff`で見るのが最速。**「基本情報」表の作成日（実行日）は毎回変わるので、その1行だけの差分は
 無視してよい**。それ以外の差分（カラム・制約・ER図・多重度など）が意図した変更と一致しているか確認する。
+スナップショット（`snapshot/`配下）は作成日を含まないため、意図した変更が無ければ差分ゼロになる。
 
 初回や、意図的に出力仕様を変えた場合は、この出力一式をコミットしてベースラインを更新する
 （ユーザーの明示的な許可なくcommitはしないこと）。

@@ -24,6 +24,8 @@ public interface ExportTableDefinitionUsecase {
    *     com.export_table_definition.domain.model.type.OutputObjectType#getName()}）のリスト。
    *     空の場合は全種別を出力対象とする
    * @param annotationPath 手動付帯情報（テーブル説明・テーブル備考・カラム備考）を記述したサイドカーYAMLのパス。 空・未指定の場合はマージを行わない
+   * @param outputSnapshot trueの場合、Markdownに加えてスキーマのスナップショット（JSON Lines）を {@code
+   *     outputPath}配下の{@code snapshot/}へ出力する
    * @param rmDist trueの場合、書き込みを開始する前に{@code outputPath}のベースディレクトリを 再帰的に削除する（{@code
    *     --rm-dist}）。削除されたテーブル等の残骸ファイルを残さずに再生成したい場合に指定する
    */
@@ -35,6 +37,7 @@ public interface ExportTableDefinitionUsecase {
       int erDiagramMaxNodes,
       List<String> outputObjectList,
       String annotationPath,
+      boolean outputSnapshot,
       boolean rmDist);
 
   /**
@@ -50,6 +53,7 @@ public interface ExportTableDefinitionUsecase {
    * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限。0以下の場合は上限なし
    * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト。空の場合は全種別を出力対象とする
    * @param annotationPath 手動付帯情報を記述したサイドカーYAMLのパス。空・未指定の場合はマージを行わない
+   * @param outputSnapshot スキーマのスナップショットを出力する設定か
    * @return 比較結果
    */
   public DiffResult checkDocumentDiff(
@@ -59,5 +63,6 @@ public interface ExportTableDefinitionUsecase {
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath);
+      String annotationPath,
+      boolean outputSnapshot);
 }
