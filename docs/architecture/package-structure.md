@@ -7,16 +7,17 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`変換を行う |
-| `presentation.dto` | `ResultDto` | 処理結果（成否・メッセージ）を表すrecord |
+| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`/`DiffCheckResultDto`変換を行う |
+| `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成否・メッセージ）を表すrecord |
+| | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（成否・メッセージ・差分有無）を表すrecord |
 | `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum |
 
 ## application層
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `application` | `ExportTableDefinitionUsecase` | テーブル定義出力ユースケースのインターフェース |
-| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔） |
+| `application` | `ExportTableDefinitionUsecase` | テーブル定義出力ユースケースのインターフェース（通常出力`exportTableDefinition`／差分検知`checkDocumentDiff`） |
+| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔）。`checkDocumentDiff`は一時ディレクトリへ`exportTableDefinition`相当の処理を実行し、`DocumentDiffDomainService`で比較する |
 
 ## domain層
 
@@ -30,6 +31,7 @@
 | `domain.model.type` | `TableType`, `Cardinality`, `OutputObjectType` | テーブル種別、外部キー多重度（1対1／1対多等）、PostgreSQL固有出力対象種別のenum |
 | `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー） |
 | `domain.model.annotation` | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブル単位の集合とその1件分） |
+| `domain.model` | `DiffResult` | 生成ドキュメントとコミット済みドキュメントの比較結果（追加/削除/内容不一致のファイルパス一覧）を表すrecord |
 
 ### domain.repository（インターフェースのみ。実装はinfrastructure層）
 
@@ -37,12 +39,13 @@
 |---|---|
 | `TableDefinitionRepository` | テーブル・カラム・制約・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる） |
 | `AnnotationRepository` | サイドカーYAML（手動付帯情報）読み込みIF |
-| `FileRepository` | ファイル書き込みIF |
+| `FileRepository` | ファイル操作IF（`writeFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
 ### domain.service
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
+| `domain.service` | `DocumentDiffDomainService` | 生成ドキュメントとコミット済みドキュメントをファイル単位（追加/削除/内容不一致）で比較する（`--check`モードで使用） |
 | `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧の出力パス生成戦略IF |
 | `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
 | | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |

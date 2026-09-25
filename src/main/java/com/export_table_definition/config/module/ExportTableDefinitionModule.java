@@ -5,6 +5,7 @@ import com.export_table_definition.application.impl.ExportTableDefinitionUsecase
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
+import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
@@ -36,5 +37,6 @@ public class ExportTableDefinitionModule extends AbstractModule {
         bind(TableDefinitionWriterDomainService.class);
         bind(ErDiagramWriterDomainService.class);
         bind(ObjectListWriterDomainService.class);
+        bind(DocumentDiffDomainService.class);
     }
 }

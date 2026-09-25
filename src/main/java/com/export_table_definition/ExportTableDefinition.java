@@ -1,5 +1,6 @@
 package com.export_table_definition;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,9 @@ import com.export_table_definition.config.PropertyLoader;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
+import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
+import com.export_table_definition.presentation.type.ProcessResult;
 import com.google.inject.Guice;
 
 /**
@@ -25,6 +28,8 @@ public class ExportTableDefinition {
     private static final int DEFAULT_CHUNK_SIZE = 3000;
     /** erDiagramMaxNodes未設定時のデフォルト値（スキーマ別ER図1枚に描画するテーブル数の上限） */
     private static final int DEFAULT_ER_DIAGRAM_MAX_NODES = 80;
+    /** DB vs ドキュメントの差分検知モードを指定するCLIフラグ（値を持たないブールフラグ） */
+    private static final String CHECK_FLAG = "--check";
     /** DB接続情報の上書きに対応するプロパティキーと、対応するCLI引数名・環境変数名 */
     private static final Map<String, ConnectionArg> CONNECTION_ARGS = Map.of(
             "driver", new ConnectionArg("--db-driver", "DB_DRIVER"),
@@ -42,12 +47,17 @@ public class ExportTableDefinition {
      *
      * @param args コマンドライン引数（{@code --db-url=...}のような{@code --キー=値}形式でDB接続情報を上書き可能。
      *             未指定の場合は同名の環境変数（例: {@code DB_URL}）、さらに未指定の場合は
-     *             {@code conf/mybatis.properties}の値が使用される）
+     *             {@code conf/mybatis.properties}の値が使用される。{@code --check}を指定すると、
+     *             通常のドキュメント出力の代わりにDB vs ドキュメントの差分検知モードで実行する）
      */
     public static void main(String[] args) {
         MyBatisSqlSessionFactory.setConnectionOverrides(resolveConnectionOverrides(args));
-        new ExportTableDefinition(Guice.createInjector(new ExportTableDefinitionModule())
-                .getInstance(ExportTableDefinitionController.class)).run();
+        final ExportTableDefinition exportTableDefinition = new ExportTableDefinition(
+                Guice.createInjector(new ExportTableDefinitionModule()).getInstance(ExportTableDefinitionController.class));
+        switch (ExecutionMode.from(args)) {
+            case EXPORT -> exportTableDefinition.run();
+            case CHECK -> exportTableDefinition.runCheck();
+        }
     }
 
     /**
@@ -98,27 +108,93 @@ public class ExportTableDefinition {
     }
 
     /**
+     * 実行モードの種別
+     */
+    private enum ExecutionMode {
+        /** テーブル定義出力（通常実行） */
+        EXPORT,
+        /** DB vs ドキュメントの差分検知（{@code --check}モード） */
+        CHECK;
+
+        /**
+         * コマンドライン引数から実行モードを判定するメソッド
+         *
+         * @param args コマンドライン引数
+         * @return {@code --check}が指定されている場合は{@link #CHECK}、それ以外は{@link #EXPORT}
+         */
+        static ExecutionMode from(String[] args) {
+            return Arrays.asList(args).contains(CHECK_FLAG) ? CHECK : EXPORT;
+        }
+    }
+
+    /**
      * テーブル定義出力処理実行メソッド
      */
     void run() {
-        // プロパティファイルの読み込み
-        final List<String> schemaList = PropertyLoader.getList("ExportTableDefinition", "schema");
-        final List<String> tableList = PropertyLoader.getList("ExportTableDefinition", "table");
-        final String outputPath = PropertyLoader.getString("ExportTableDefinition", "outputPath");
-        final int chunkSize = PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE);
-        final int erDiagramMaxNodes = PropertyLoader.getInt("ExportTableDefinition", "erDiagramMaxNodes",
-                DEFAULT_ER_DIAGRAM_MAX_NODES);
-        final List<String> outputObjectList = PropertyLoader.getList("ExportTableDefinition", "outputObjects");
-        final String annotationPath = PropertyLoader.getString("ExportTableDefinition", "annotationPath");
+        final ExecutionSettings settings = loadExecutionSettings();
         // 処理開始メッセージ出力
         System.out.println("""
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
         // テーブル定義出力処理実行
-        final ResultDto resultDto = controller.execute(schemaList, tableList, outputPath, chunkSize,
-                erDiagramMaxNodes, outputObjectList, annotationPath);
+        final ResultDto resultDto = controller.execute(settings.schemaList(), settings.tableList(),
+                settings.outputPath(), settings.chunkSize(), settings.erDiagramMaxNodes(), settings.outputObjectList(),
+                settings.annotationPath());
         // 処理終了メッセージ出力
         System.out.println(resultDto.getResultMessage());
+    }
+
+    /**
+     * DB vs ドキュメントの差分検知処理実行メソッド（{@code --check}モード）
+     */
+    void runCheck() {
+        final ExecutionSettings settings = loadExecutionSettings();
+        // 処理開始メッセージ出力
+        System.out.println("""
+                Starting check of table definition document diff.
+                Please wait a moment ...
+                """);
+        // DB vs ドキュメントの差分検知処理実行
+        final DiffCheckResultDto diffCheckResultDto = controller.checkDiff(settings.schemaList(), settings.tableList(),
+                settings.outputPath(), settings.chunkSize(), settings.erDiagramMaxNodes(), settings.outputObjectList(),
+                settings.annotationPath());
+        // 処理終了メッセージ出力
+        System.out.println(diffCheckResultDto.getResultMessage());
+        // 比較処理自体が失敗した場合、または差分が見つかった場合は異常終了とする
+        if (diffCheckResultDto.result() == ProcessResult.FAIL || diffCheckResultDto.hasDifference()) {
+            System.exit(1);
+        }
+    }
+
+    /**
+     * 実行時設定を{@code conf/ExportTableDefinition.properties}から読み込むメソッド
+     *
+     * @return 読み込んだ実行時設定
+     */
+    private static ExecutionSettings loadExecutionSettings() {
+        return new ExecutionSettings(
+                PropertyLoader.getList("ExportTableDefinition", "schema"),
+                PropertyLoader.getList("ExportTableDefinition", "table"),
+                PropertyLoader.getString("ExportTableDefinition", "outputPath"),
+                PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE),
+                PropertyLoader.getInt("ExportTableDefinition", "erDiagramMaxNodes", DEFAULT_ER_DIAGRAM_MAX_NODES),
+                PropertyLoader.getList("ExportTableDefinition", "outputObjects"),
+                PropertyLoader.getString("ExportTableDefinition", "annotationPath"));
+    }
+
+    /**
+     * {@code conf/ExportTableDefinition.properties}から読み込む実行時設定の組
+     *
+     * @param schemaList        テーブル定義出力対象のスキーマのリスト
+     * @param tableList         テーブル定義出力対象のテーブルのリスト
+     * @param outputPath        テーブル定義出力の出力先のパス
+     * @param chunkSize         詳細情報をまとめて取得するテーブル数の上限
+     * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
+     * @param outputObjectList  出力対象とするPostgreSQL固有オブジェクト種別名のリスト
+     * @param annotationPath    手動付帯情報を記述したサイドカーYAMLのパス
+     */
+    private record ExecutionSettings(List<String> schemaList, List<String> tableList, String outputPath,
+            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList, String annotationPath) {
     }
 }

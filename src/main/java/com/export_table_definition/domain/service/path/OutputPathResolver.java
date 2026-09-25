@@ -16,6 +16,15 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 public interface OutputPathResolver {
 
     /**
+     * 基本出力ディレクトリを解決する。 <br>
+     * 設定された出力先パスが未指定・空白の場合は、デフォルトの出力先にフォールバックする
+     *
+     * @param outputPath 設定された出力先のパス（未指定可）
+     * @return 基本出力ディレクトリのパス
+     */
+    Path resolveBaseOutputDir(String outputPath);
+
+    /**
      * テーブル定義書の出力ディレクトリを返す。 <br>
      * 例: {base}/{DB名}/{スキーマ名}/{テーブル種別}/
      * 

@@ -1,20 +1,18 @@
 package com.export_table_definition.application.impl;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.TableDefinitionContent;
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.collection.Columns;
@@ -32,7 +30,10 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.OutputObjectType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
+import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
+import com.export_table_definition.domain.service.DocumentDiffDomainService;
+import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
@@ -47,32 +48,43 @@ import com.google.inject.Inject;
  */
 public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUsecase {
 
-    private static final String OUTPUT_BASE_DIRECTORY = "./output";
+    private static final String CHECK_TEMP_DIR_PREFIX = "exportTableDefinition-check-";
     private static final Logger logger = LogManager.getLogger(ExportTableDefinitionUsecaseImpl.class);
     private final TableDefinitionRepository repository;
     private final TableDefinitionWriterDomainService writer;
     private final ErDiagramWriterDomainService erDiagramWriter;
     private final ObjectListWriterDomainService objectListWriter;
     private final AnnotationRepository annotationRepository;
+    private final DocumentDiffDomainService documentDiffDomainService;
+    private final FileRepository fileRepository;
+    private final OutputPathResolver outputPathResolver;
 
     /**
      * コンストラクタ
      *
-     * @param repository           テーブル定義出力に関するリポジトリクラス
-     * @param writer               テーブル一覧・テーブル定義書を書き込むクラス
-     * @param erDiagramWriter      ER図を書き込むクラス
-     * @param objectListWriter     トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
-     * @param annotationRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
+     * @param repository                テーブル定義出力に関するリポジトリクラス
+     * @param writer                    テーブル一覧・テーブル定義書を書き込むクラス
+     * @param erDiagramWriter           ER図を書き込むクラス
+     * @param objectListWriter          トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
+     * @param annotationRepository      手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
+     * @param documentDiffDomainService 生成ドキュメントとコミット済みドキュメントの比較を行うドメインサービス
+     * @param fileRepository            差分比較用の一時ディレクトリの作成・削除に用いるファイルリポジトリ
+     * @param outputPathResolver        出力先パス解決クラス
      */
     @Inject
     public ExportTableDefinitionUsecaseImpl(TableDefinitionRepository repository,
             TableDefinitionWriterDomainService writer, ErDiagramWriterDomainService erDiagramWriter,
-            ObjectListWriterDomainService objectListWriter, AnnotationRepository annotationRepository) {
+            ObjectListWriterDomainService objectListWriter, AnnotationRepository annotationRepository,
+            DocumentDiffDomainService documentDiffDomainService, FileRepository fileRepository,
+            OutputPathResolver outputPathResolver) {
         this.repository = repository;
         this.writer = writer;
         this.erDiagramWriter = erDiagramWriter;
         this.objectListWriter = objectListWriter;
         this.annotationRepository = annotationRepository;
+        this.documentDiffDomainService = documentDiffDomainService;
+        this.fileRepository = fileRepository;
+        this.outputPathResolver = outputPathResolver;
     }
 
     /**
@@ -82,8 +94,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
             int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList, String annotationPath) {
         // ベースディレクトリパス取得
-        final Path outputBaseDir = Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
-                .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
+        final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
         // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
         final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
         // 手動付帯情報（サイドカーYAML）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
@@ -152,6 +163,24 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         tablesBySchema.forEach((schemaName, tablesInSchema) -> exportSchemaTableDefinitions(schemaName, tablesInSchema,
                 targetSchemaList, targetTableList, baseInfoEntity, foreignKeys, triggers, annotations, outputBaseDir,
                 chunkSize));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DiffResult checkDocumentDiff(List<String> targetSchemaList, List<String> targetTableList,
+            String outputPath, int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList,
+            String annotationPath) {
+        final Path committedDir = outputPathResolver.resolveBaseOutputDir(outputPath);
+        final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
+        try {
+            exportTableDefinition(targetSchemaList, targetTableList, generatedDir.toString(), chunkSize,
+                    erDiagramMaxNodes, outputObjectList, annotationPath);
+            return documentDiffDomainService.compare(generatedDir, committedDir);
+        } finally {
+            fileRepository.deleteDirectory(generatedDir);
+        }
     }
 
     /**
