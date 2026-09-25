@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.model;
+package com.export_table_definition.domain.model.value;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.*;
@@ -9,18 +9,22 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-class TableEntityTest {
+/** TableTargetScope の絞り込み判定（matches）・isFilteredに関するテスト */
+class TableTargetScopeTest {
 
-  private TableEntity tableEntity;
+  private static TableEntity table() {
+    return new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", "table", "", "");
+  }
 
   @Nested
-  class testNeedsWriteTableDefinition {
+  class testMatches {
 
-    static Stream<Arguments> testNeedsWriteTableDefinitionProvider() {
+    static Stream<Arguments> testMatchesProvider() {
       return Stream.of(
           arguments("実施する　（テーブル定義出力対象のスキーマ／TBLリストが存在しない）", Arrays.asList(), Arrays.asList(), true),
           arguments(
@@ -100,21 +104,39 @@ class TableEntityTest {
               false));
     }
 
-    @DisplayName("【正常系】テーブル定義書の作成を行うか判定する")
+    @DisplayName("【正常系】テーブルが出力対象の範囲に含まれるか判定する")
     @ParameterizedTest
-    @MethodSource("testNeedsWriteTableDefinitionProvider")
+    @MethodSource("testMatchesProvider")
     void success1(
         String definition,
         List<String> targetSchemaList,
         List<String> targetTableList,
         boolean expected) {
-      // Given
-      tableEntity =
-          new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", "table", "", "");
-      // When
-      boolean result = tableEntity.needsWriteTableDefinition(targetSchemaList, targetTableList);
-      // Then
-      assertEquals(expected, result);
+      TableTargetScope scope = TableTargetScope.of(targetSchemaList, targetTableList);
+      assertEquals(expected, scope.matches(table()));
+    }
+  }
+
+  @Nested
+  class testIsFiltered {
+
+    @Test
+    @DisplayName("isFiltered: スキーマ・テーブルのいずれも指定されていない場合はfalse")
+    void testIsFilteredFalseWhenBothEmpty() {
+      assertFalse(TableTargetScope.of(List.of(), List.of()).isFiltered());
+      assertFalse(TableTargetScope.of(null, null).isFiltered());
+    }
+
+    @Test
+    @DisplayName("isFiltered: スキーマのみ指定されている場合はtrue")
+    void testIsFilteredTrueWhenOnlySchemaSpecified() {
+      assertTrue(TableTargetScope.of(List.of("test_schema"), List.of()).isFiltered());
+    }
+
+    @Test
+    @DisplayName("isFiltered: テーブルのみ指定されている場合はtrue")
+    void testIsFilteredTrueWhenOnlyTableSpecified() {
+      assertTrue(TableTargetScope.of(List.of(), List.of("testTable")).isFiltered());
     }
   }
 }

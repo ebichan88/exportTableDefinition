@@ -18,6 +18,7 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.OutputObjectType;
+import com.export_table_definition.domain.model.value.TableTargetScope;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
@@ -161,17 +162,19 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // サイドカーYAML（手動付帯情報・論理リレーション）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
     final Sidecar sidecar = annotationRepository.load(annotationPath);
     final Annotations annotations = sidecar.annotations();
-    final boolean isFiltered = !targetSchemaList.isEmpty() || !targetTableList.isEmpty();
+    // スキーマ・テーブルの絞り込み条件を1回だけ組み立てる（テーブルごとにワイルドカードパターンを解析し直さない）
+    final TableTargetScope targetScope = TableTargetScope.of(targetSchemaList, targetTableList);
+    final boolean isFiltered = targetScope.isFiltered();
 
     // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する。
     // targetTableListにはワイルドカード（*）・除外（!）・スキーマ修飾（schema.table）を指定できるため、
     // SQLの完全一致IN句では絞り込めない。スキーマのみSQLで絞り込み、テーブル単位の絞り込みは
-    // TableEntity#needsWriteTableDefinitionによりJava側で行う（TableTargetFilter参照）。
+    // TableTargetScopeによりJava側で行う。
     // ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
     final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
     final List<TableEntity> tableEntityList =
         repository.selectTableList(targetSchemaList, List.of()).stream()
-            .filter(table -> table.needsWriteTableDefinition(targetSchemaList, targetTableList))
+            .filter(targetScope::matches)
             .toList();
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
     consistencyDomainService.warnOrphanTableAnnotations(annotations, tableEntityList, isFiltered);
