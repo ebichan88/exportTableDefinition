@@ -94,17 +94,18 @@ public class SnapshotDiffDomainServiceTest {
     assertEquals(1, result.contentDiffer().size());
     ContentDiff diff = result.contentDiffer().get(0);
     assertEquals("table public.changed", diff.target());
-    var expected = List.of(
-        "--- committed/testdb/public/tables.jsonl (table public.changed)",
-        "+++ generated/testdb/public/tables.jsonl (table public.changed)",
-        "@@ -3,6 +3,6 @@",
-        "   \"name\": \"changed\"",
-        "   \"type\": \"table\"",
-        "   \"columns\": [",
-        "-    {\"name\":\"id\",\"type\":\"integer\"}",
-        "+    {\"name\":\"id\",\"type\":\"bigint\"}",
-        "   ]",
-        " }");
+    var expected =
+        List.of(
+            "--- committed/testdb/public/tables.jsonl (table public.changed)",
+            "+++ generated/testdb/public/tables.jsonl (table public.changed)",
+            "@@ -3,6 +3,6 @@",
+            "   \"name\": \"changed\"",
+            "   \"type\": \"table\"",
+            "   \"columns\": [",
+            "-    {\"name\":\"id\",\"type\":\"integer\"}",
+            "+    {\"name\":\"id\",\"type\":\"bigint\"}",
+            "   ]",
+            " }");
     var actual = diff.unifiedDiff();
     if (!expected.equals(actual)) {
       System.out.println("EXPECTED:");
