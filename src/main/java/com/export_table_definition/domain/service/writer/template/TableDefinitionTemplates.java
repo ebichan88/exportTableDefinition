@@ -196,7 +196,7 @@ public class TableDefinitionTemplates {
                 + "|"
                 + idx.isPrimary()
                 + "|"
-                + idx.indexDefinition()
+                + MarkdownTemplateSupport.escapePipe(idx.indexDefinition())
                 + "|"
                 + idx.remarks()
                 + "|",
@@ -230,7 +230,7 @@ public class TableDefinitionTemplates {
                 + "|"
                 + c.constraintType()
                 + "|"
-                + c.constraintDefinition()
+                + MarkdownTemplateSupport.escapePipe(c.constraintDefinition())
                 + "|"
                 + c.remarks()
                 + "|",
@@ -354,7 +354,7 @@ public class TableDefinitionTemplates {
                 + "|"
                 + t.orientation()
                 + "|"
-                + t.triggerDefinition()
+                + MarkdownTemplateSupport.escapePipe(t.triggerDefinition())
                 + "|",
         TriggerEntity::getSchemaTableName);
   }

@@ -193,6 +193,44 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
+  @DisplayName("indexes/constraints/triggers: 定義に含まれる|は表を崩さないようエスケープする")
+  void testDefinitionsEscapePipe() {
+    TableEntity table = newTable("public", "orders", "受注", "table", "");
+    var idx =
+        new IndexEntity(
+            "public",
+            "orders",
+            "idx_orders_code",
+            "btree",
+            "",
+            "",
+            "CREATE INDEX idx_orders_code ON public.orders USING btree (((a || b)))",
+            "");
+    var c =
+        new ConstraintEntity(
+            "public", "orders", "chk_code", "CHECK", "CHECK ((code ~ '^(A|B)$'::text))", "");
+    var t =
+        new TriggerEntity(
+            "public",
+            "orders",
+            "trg_orders",
+            "BEFORE",
+            "INSERT",
+            "ROW",
+            "public.f_orders",
+            "CREATE TRIGGER trg_orders WHEN ((new.a || new.b) IS NOT NULL)");
+    assertTrue(
+        TableDefinitionTemplates.indexes(List.of(idx), table)
+            .contains("USING btree (((a \\|\\| b)))|"));
+    assertTrue(
+        TableDefinitionTemplates.constraints(List.of(c), table)
+            .contains("|CHECK ((code ~ '^(A\\|B)$'::text))|"));
+    assertTrue(
+        TableDefinitionTemplates.triggers(List.of(t), table)
+            .contains("WHEN ((new.a \\|\\| new.b) IS NOT NULL)|"));
+  }
+
+  @Test
   @DisplayName("erDiagram: 関連テーブルがない場合はメッセージのみ")
   void testErDiagramNoRelations() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");

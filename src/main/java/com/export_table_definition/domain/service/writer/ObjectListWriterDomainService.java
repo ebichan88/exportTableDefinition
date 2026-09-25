@@ -9,6 +9,7 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
+import com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport;
 import com.export_table_definition.domain.service.writer.template.ObjectDefinitionTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectListTemplates;
 import com.google.inject.Inject;
@@ -159,9 +160,9 @@ public class ObjectListWriterDomainService {
                 + "|"
                 + f.functionName()
                 + "|"
-                + f.functionArguments()
+                + MarkdownTemplateSupport.escapePipe(f.functionArguments())
                 + "|"
-                + f.functionResult()
+                + MarkdownTemplateSupport.escapePipe(f.functionResult())
                 + "|"
                 + f.languageName()
                 + "|"
@@ -301,7 +302,7 @@ public class ObjectListWriterDomainService {
                 + "|"
                 + t.typeCategory()
                 + "|"
-                + t.definition()
+                + MarkdownTemplateSupport.escapePipe(t.definition())
                 + "|"
                 + objectLink(t.dbName(), t.schemaName(), "type", t.typeName())
                 + "|",

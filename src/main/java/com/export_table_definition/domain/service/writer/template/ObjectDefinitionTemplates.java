@@ -123,7 +123,7 @@ public class ObjectDefinitionTemplates {
             + "|"
             + type.typeCategory()
             + "|"
-            + type.definition()
+            + MarkdownTemplateSupport.escapePipe(type.definition())
             + "|"
             + LINE_SEPARATOR_DOUBLE;
     return "# "

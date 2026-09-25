@@ -67,4 +67,12 @@ public class ObjectDefinitionTemplatesTest {
     assertTrue(file.contains("|ENUM|sad, ok, happy|"));
     assertTrue(file.contains("[ユーザー定義型一覧へ](../../../typeList_TEST_DB.md)"));
   }
+
+  @Test
+  @DisplayName("typeFile: 定義に含まれる|は表を崩さないようエスケープする")
+  void testTypeFileEscapesPipe() {
+    var t = new TypeEntity("TEST_DB", "public", "delimiter", "ENUM", "|, ;");
+    String file = ObjectDefinitionTemplates.typeFile(t, base);
+    assertTrue(file.contains("|ENUM|\\|, ;|"));
+  }
 }

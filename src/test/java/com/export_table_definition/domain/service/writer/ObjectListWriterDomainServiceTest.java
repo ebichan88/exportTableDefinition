@@ -122,6 +122,33 @@ public class ObjectListWriterDomainServiceTest {
   }
 
   @Test
+  @DisplayName("writeFunctionList/writeTypeList: 引数・戻り値・型定義に含まれる|は表を崩さないようエスケープする")
+  void testWriteListsEscapePipe() {
+    var function =
+        new FunctionEntity(
+            "testdb",
+            "public",
+            "concat_code",
+            "concat_code",
+            "FUNCTION",
+            "sep text DEFAULT '|'::text",
+            "TABLE(code text, label text)",
+            "sql",
+            "");
+    var type = new TypeEntity("testdb", "public", "delimiter", "ENUM", "|, ,, ;");
+    writer.writeFunctionList(List.of(function), baseInfo(), OUT);
+    writer.writeTypeList(List.of(type), baseInfo(), OUT);
+
+    assertTrue(
+        fileRepository
+            .files
+            .get(OUT.resolve("functionList_testdb.md"))
+            .contains("|sep text DEFAULT '\\|'::text|TABLE(code text, label text)|"));
+    assertTrue(
+        fileRepository.files.get(OUT.resolve("typeList_testdb.md")).contains("|ENUM|\\|, ,, ;|"));
+  }
+
+  @Test
   @DisplayName("writeFunctionDefinition: スキーマ配下のfunctionディレクトリに個別ファイルを出力する")
   void testWriteFunctionDefinitionWritesIndividualFile() {
     var function =
