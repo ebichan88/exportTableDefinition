@@ -47,4 +47,18 @@ public final class MarkdownTemplateSupport {
     public static String titledFileHeader(String title, BaseInfoEntity baseInfo) {
         return "# " + String.format("%s（DB名：%s）", title, baseInfo.dbName()) + LINE_SEPARATOR_DOUBLE;
     }
+
+    /**
+     * 手動付帯情報などの自由記述文字列を、Markdownの表セルへ安全に埋め込める形へエスケープするメソッド<br>
+     * セル区切りとして解釈される{@code |}をエスケープし、セルを崩す改行（CR/LF）は{@code <br>}に置換する
+     *
+     * @param value エスケープ対象の文字列（nullの場合は空文字として扱う）
+     * @return 表セルへ埋め込み可能な文字列
+     */
+    public static String escapeTableCell(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        return value.replace("|", "\\|").replaceAll("\\r\\n|\\r|\\n", "<br>");
+    }
 }

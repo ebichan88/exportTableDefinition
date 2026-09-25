@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.export_table_definition.domain.model.TableDefinitionContent;
+import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
@@ -121,8 +122,9 @@ public class TableDefinitionWriterDomainServiceTest {
         var incomingFk = new ForeignKeyEntity("public", "items", "unused", "fk_items_orders", "public", "orders");
         var trigger = new TriggerEntity("public", "orders", "unused", "|1|trg_orders|BEFORE|INSERT|ROW|...|");
 
+        var annotation = new TableAnnotation("受注を管理するテーブル", "個人情報を含む", Map.of("order_id", "受注の主キー"));
         var content = new TableDefinitionContent(baseInfo(), table, List.of(column), List.of(index),
-                List.of(constraint), List.of(outgoingFk), List.of(incomingFk), List.of(trigger), OUT);
+                List.of(constraint), List.of(outgoingFk), List.of(incomingFk), List.of(trigger), annotation, OUT);
 
         writer.writeTableDefinition(content);
 
@@ -147,5 +149,9 @@ public class TableDefinitionWriterDomainServiceTest {
         assertTrue(fileContent.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
         assertTrue(fileContent.contains("public_orders ||--o{ public_items : \"fk_items_orders\""));
         assertTrue(fileContent.contains("[テーブル一覧へ](../../../tableList_testdb.md)"));
+        // サイドカー由来の付帯情報（テーブル説明・テーブル備考・カラム備考）がマージされる
+        assertTrue(fileContent.contains("受注を管理するテーブル"));
+        assertTrue(fileContent.contains("|public|受注|orders|table|個人情報を含む|"));
+        assertTrue(fileContent.contains("|1|受注ID|order_id|int|Y|N||受注の主キー|"));
     }
 }

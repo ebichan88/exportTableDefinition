@@ -23,7 +23,9 @@ public interface ExportTableDefinitionUsecase {
      *                          外部キーの一覧表を出力する。0以下の場合は上限なし
      * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名（{@link com.export_table_definition.domain.model.type.OutputObjectType#getName()}）のリスト。
      *                         空の場合は全種別を出力対象とする
+     * @param annotationPath   手動付帯情報（テーブル説明・テーブル備考・カラム備考）を記述したサイドカーYAMLのパス。
+     *                         空・未指定の場合はマージを行わない
      */
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
-            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList);
+            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList, String annotationPath);
 }

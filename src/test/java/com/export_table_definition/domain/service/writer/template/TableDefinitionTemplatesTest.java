@@ -7,6 +7,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
+import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
@@ -22,9 +25,10 @@ import com.export_table_definition.domain.model.type.Cardinality;
 public class TableDefinitionTemplatesTest {
 
     private TableEntity newTable(String schema, String physical, String logical, String type, String def) {
+        // tableInfo（テーブル定義書内の行）は末尾の備考セルをSQLで付与しないため「| 区分 |」で終わる
         return new TableEntity("TEST_DB", schema, logical, physical, type,
                 "| 1 | " + schema + " | " + logical + " | " + physical + " | T | link | note |",
-                "| " + schema + " | " + logical + " | " + physical + " | T | note |", def);
+                "| " + schema + " | " + logical + " | " + physical + " | T |", def);
     }
 
     @Test
@@ -47,8 +51,34 @@ public class TableDefinitionTemplatesTest {
     @DisplayName("tableInfo: 単体テーブル行が含まれる")
     void testTableInfo() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
-        String info = TableDefinitionTemplates.tableInfo(table);
+        String info = TableDefinitionTemplates.tableInfo(table, TableAnnotation.EMPTY);
         assertTrue(info.contains("| public | 受注 | orders |"));
+    }
+
+    @Test
+    @DisplayName("tableInfo: サイドカーのテーブル備考を末尾セルへ後付けし、|・改行はエスケープする")
+    void testTableInfoWithAnnotation() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var annotation = new TableAnnotation("", "個人情報|取扱\n注意", Map.of());
+        String info = TableDefinitionTemplates.tableInfo(table, annotation);
+        assertTrue(info.contains("| public | 受注 | orders | T |個人情報\\|取扱<br>注意|"));
+    }
+
+    @Test
+    @DisplayName("tableExplanation: サイドカーの説明が無い場合は空セクション")
+    void testTableExplanationEmpty() {
+        String section = TableDefinitionTemplates.tableExplanation(TableAnnotation.EMPTY);
+        assertTrue(section.contains("## テーブル説明"));
+        assertFalse(section.contains("ユーザー"));
+    }
+
+    @Test
+    @DisplayName("tableExplanation: サイドカーの説明本文を出力する（改行はそのまま）")
+    void testTableExplanationWithDescription() {
+        var annotation = new TableAnnotation("1行目\n2行目", "", Map.of());
+        String section = TableDefinitionTemplates.tableExplanation(annotation);
+        assertTrue(section.contains("## テーブル説明"));
+        assertTrue(section.contains("1行目\n2行目"));
     }
 
     @Test
@@ -59,9 +89,21 @@ public class TableDefinitionTemplatesTest {
                 "int", "○");
         var other = new ColumnEntity("other", "customers", "| 1 | 顧客ID | customer_id | int | Y | N |  |  |",
                 "customer_id", "int", "○");
-        String section = TableDefinitionTemplates.columns(List.of(match, other), table);
+        String section = TableDefinitionTemplates.columns(List.of(match, other), table, TableAnnotation.EMPTY);
         assertTrue(section.contains("| 1 | 受注ID | order_id | int |"));
         assertFalse(section.contains("顧客ID"));
+    }
+
+    @Test
+    @DisplayName("columns: 物理カラム名をキーにサイドカーのカラム備考を末尾セルへ後付けする")
+    void testColumnsWithAnnotation() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        // columnInfo は末尾の備考セルをSQLで付与しないため「| デフォルト |」で終わる
+        var match = new ColumnEntity("public", "orders", "| 1 | 受注ID | order_id | int |  | ○ |  |", "order_id",
+                "int", "○");
+        var annotation = new TableAnnotation("", "", Map.of("order_id", "受注の主キー|連番"));
+        String section = TableDefinitionTemplates.columns(List.of(match), table, annotation);
+        assertTrue(section.contains("| 1 | 受注ID | order_id | int |  | ○ |  |受注の主キー\\|連番|"));
     }
 
     @Test

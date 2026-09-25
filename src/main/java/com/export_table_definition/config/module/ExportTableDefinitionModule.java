@@ -2,6 +2,7 @@ package com.export_table_definition.config.module;
 
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.application.impl.ExportTableDefinitionUsecaseImpl;
+import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
@@ -10,6 +11,7 @@ import com.export_table_definition.domain.service.writer.ObjectListWriterDomainS
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
+import com.export_table_definition.infrastructure.file.repository.AnnotationYamlRepository;
 import com.export_table_definition.infrastructure.file.repository.TableDefinitionFileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.google.inject.AbstractModule;
@@ -28,6 +30,7 @@ public class ExportTableDefinitionModule extends AbstractModule {
         bind(TableDefinitionRepository.class).to(MyBatisSqlSessionFactory.getConnectionDbName().getRepositoryClass());
         bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
         bind(FileRepository.class).to(TableDefinitionFileRepository.class);
+        bind(AnnotationRepository.class).to(AnnotationYamlRepository.class);
         bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);
         bind(PagedSectionWriter.class);
         bind(TableDefinitionWriterDomainService.class);

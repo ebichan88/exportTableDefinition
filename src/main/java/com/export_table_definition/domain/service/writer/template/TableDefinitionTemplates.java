@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
@@ -45,47 +46,63 @@ public class TableDefinitionTemplates {
     }
 
     /**
-     * テーブル説明セクション
-     * 
+     * テーブル説明セクション<br>
+     * サイドカー由来の説明が存在する場合はその本文を、存在しない場合は従来通り空のセクションを出力する。
+     * 説明本文は自由記述のブロックとしてそのまま出力するため、改行はエスケープしない
+     *
+     * @param annotation テーブルの手動付帯情報
      * @return テーブル説明セクション文字列
      */
-    public static String tableExplanation() {
-        return """
-                ## テーブル説明
+    public static String tableExplanation(TableAnnotation annotation) {
+        final String description = annotation.description();
+        if (description.isBlank()) {
+            return """
+                    ## テーブル説明
 
-                """;
+                    """;
+        }
+        return "## テーブル説明" + LINE_SEPARATOR_DOUBLE + description.stripTrailing() + LINE_SEPARATOR_DOUBLE;
     }
 
     /**
-     * テーブル情報セクション
-     * 
-     * @param table テーブル情報
+     * テーブル情報セクション<br>
+     * 末尾の備考セルはSQLでは付与されないため、サイドカー由来のテーブル備考を
+     * エスケープした上でここで後付けする（FK多重度と同様の後付け方式）
+     *
+     * @param table      テーブル情報
+     * @param annotation テーブルの手動付帯情報
      * @return テーブル情報セクション文字列
      */
-    public static String tableInfo(TableEntity table) {
+    public static String tableInfo(TableEntity table, TableAnnotation annotation) {
         return """
                 ## テーブル情報
 
                 | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | 備考 |
                 |:---|:---|:---|:---|:---|
-                """ + table.tableInfo() + LINE_SEPARATOR_DOUBLE;
+                """ + table.tableInfo() + MarkdownTemplateSupport.escapeTableCell(annotation.remarks()) + "|"
+                + LINE_SEPARATOR_DOUBLE;
     }
 
     /**
      * カラム情報セクション
      * 
-     * @param columns カラム情報のリスト
-     * @param table   テーブル情報
+     * @param columns    カラム情報のリスト
+     * @param table      テーブル情報
+     * @param annotation テーブルの手動付帯情報
      * @return カラム情報セクション文字列
      */
-    public static String columns(List<ColumnEntity> columns, TableEntity table) {
+    public static String columns(List<ColumnEntity> columns, TableEntity table, TableAnnotation annotation) {
         String header = """
                 ## カラム情報
 
                 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
                 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
                 """;
-        return tableSection(columns, table, header, ColumnEntity::columnInfo, ColumnEntity::getSchemaTableName);
+        // 末尾の備考セルはSQLでは付与されないため、物理カラム名をキーにサイドカー由来の備考を後付けする
+        return tableSection(columns, table, header,
+                c -> c.columnInfo() + MarkdownTemplateSupport.escapeTableCell(annotation.columnRemark(
+                        c.physicalColumnName())) + "|",
+                ColumnEntity::getSchemaTableName);
     }
 
     /**

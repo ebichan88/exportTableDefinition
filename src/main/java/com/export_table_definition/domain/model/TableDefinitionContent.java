@@ -3,6 +3,8 @@ package com.export_table_definition.domain.model;
 import java.nio.file.Path;
 import java.util.List;
 
+import com.export_table_definition.domain.model.annotation.Annotations;
+import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.collection.Columns;
 import com.export_table_definition.domain.model.collection.Constraints;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
@@ -25,7 +27,8 @@ import com.export_table_definition.domain.model.entity.TriggerEntity;
  */
 public record TableDefinitionContent(BaseInfoEntity baseInfo, TableEntity table, List<ColumnEntity> columns,
         List<IndexEntity> indexes, List<ConstraintEntity> constraints, List<ForeignKeyEntity> foreignKeys,
-        List<ForeignKeyEntity> incomingForeignKeys, List<TriggerEntity> triggers, Path outputBaseDir) {
+        List<ForeignKeyEntity> incomingForeignKeys, List<TriggerEntity> triggers, TableAnnotation annotation,
+        Path outputBaseDir) {
 
     /**
      * テーブル定義出力に必要な情報をまとめたレコードを組み立てる
@@ -37,12 +40,15 @@ public record TableDefinitionContent(BaseInfoEntity baseInfo, TableEntity table,
      * @param constraints
      * @param foreignkeys
      * @param triggers
+     * @param annotations 対象範囲全体の手動付帯情報（当該テーブル分を抽出して保持する）
      * @param baseDir
      * @return TableDefinitionContent
      */
     public static TableDefinitionContent assemble(BaseInfoEntity baseInfo, TableEntity table, Columns columns,
-            Indexes indexes, Constraints constraints, ForeignKeys foreignkeys, Triggers triggers, Path baseDir) {
+            Indexes indexes, Constraints constraints, ForeignKeys foreignkeys, Triggers triggers,
+            Annotations annotations, Path baseDir) {
         return new TableDefinitionContent(baseInfo, table, columns.of(table), indexes.of(table), constraints.of(table),
-                foreignkeys.of(table), foreignkeys.incomingOf(table), triggers.of(table), baseDir);
+                foreignkeys.of(table), foreignkeys.incomingOf(table), triggers.of(table), annotations.of(table),
+                baseDir);
     }
 }

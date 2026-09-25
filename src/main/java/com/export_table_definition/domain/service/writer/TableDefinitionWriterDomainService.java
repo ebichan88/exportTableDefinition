@@ -86,9 +86,9 @@ public class TableDefinitionWriterDomainService {
                 content.outputBaseDir());
         final List<String> contents = List.of(TableDefinitionTemplates.fileHeader(content.table()), // ヘッダー
                 TableDefinitionTemplates.baseInfo(content.baseInfo()), // 基本情報
-                TableDefinitionTemplates.tableExplanation(), // テーブル説明
-                TableDefinitionTemplates.tableInfo(content.table()), // テーブル情報
-                TableDefinitionTemplates.columns(content.columns(), content.table()), // カラム情報
+                TableDefinitionTemplates.tableExplanation(content.annotation()), // テーブル説明
+                TableDefinitionTemplates.tableInfo(content.table(), content.annotation()), // テーブル情報
+                TableDefinitionTemplates.columns(content.columns(), content.table(), content.annotation()), // カラム情報
                 TableDefinitionTemplates.view(content.table()), // View情報
                 TableDefinitionTemplates.indexes(content.indexes(), content.table()), // インデックス情報
                 TableDefinitionTemplates.constraints(content.constraints(), content.table()), // 制約情報

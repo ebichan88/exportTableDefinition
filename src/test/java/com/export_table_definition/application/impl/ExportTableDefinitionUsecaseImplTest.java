@@ -13,6 +13,8 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.export_table_definition.domain.model.annotation.Annotations;
+import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
@@ -23,6 +25,8 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.value.TableKey;
+import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
@@ -143,6 +147,10 @@ public class ExportTableDefinitionUsecaseImplTest {
     private InMemoryFileRepository fileRepository;
     private RecordingRepository repository;
     private ExportTableDefinitionUsecaseImpl usecase;
+    /** annotationRepositoryスタブが返す付帯情報（テストごとに差し替え可能） */
+    private Annotations annotations = Annotations.empty();
+    /** annotationRepositoryへ渡されたパスを記録する */
+    private String receivedAnnotationPath;
 
     private void setUp() {
         fileRepository = new InMemoryFileRepository();
@@ -155,7 +163,12 @@ public class ExportTableDefinitionUsecaseImplTest {
                 pathResolver, pagedSectionWriter);
         final ObjectListWriterDomainService objectListWriter = new ObjectListWriterDomainService(fileRepository,
                 pathResolver, pagedSectionWriter);
-        usecase = new ExportTableDefinitionUsecaseImpl(repository, writer, erDiagramWriter, objectListWriter);
+        final AnnotationRepository annotationRepository = path -> {
+            receivedAnnotationPath = path;
+            return annotations;
+        };
+        usecase = new ExportTableDefinitionUsecaseImpl(repository, writer, erDiagramWriter, objectListWriter,
+                annotationRepository);
     }
 
     private TableEntity table(String schema, String physical) {
@@ -190,7 +203,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.sequences.add(new SequenceEntity("testdb", "public", "seq1", "seq_list", "seq_info"));
         repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "type_list", "def"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null);
 
         // テーブル一覧: 全カテゴリへの関連ドキュメントリンクを含む
         final Path tableListFile = DEFAULT_OUT.resolve("tableList_testdb.md");
@@ -234,7 +247,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.sequences.add(new SequenceEntity("testdb", "public", "seq1", "seq_list", "seq_info"));
         repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "type_list", "def"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of("function"));
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of("function"), null);
 
         // 指定したfunctionのみ出力される
         assertTrue(fileExists(DEFAULT_OUT.resolve("functionList_testdb.md")));
@@ -266,7 +279,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.tables.add(table("public", "t1"));
         // トリガー・関数・シーケンス・型はすべて0件
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null);
 
         final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
         assertTrue(tableListContent.contains("ER図一覧"));
@@ -288,7 +301,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         IntStream.rangeClosed(1, 5).forEach(i -> repository.tables.add(table("public", "t" + i)));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of(), null);
 
         // 5件を2件ずつ取得: 3回に分割される
         assertEquals(3, repository.columnCallArgs.size());
@@ -310,7 +323,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         IntStream.rangeClosed(1, 5).forEach(i -> repository.tables.add(table("public", "t" + i)));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null);
 
         assertEquals(1, repository.columnCallArgs.size());
         assertEquals(5, repository.columnCallArgs.get(0).size());
@@ -328,7 +341,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.functionDefs.add(new FunctionEntity("testdb", "s1", "f2", "f2", "list", "BODY2"));
         repository.functionDefs.add(new FunctionEntity("testdb", "s2", "f3", "f3", "list", "BODY3"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null);
 
         // 関数は3件だが、スキーマは2件のためselectFunctionDefListは2回のみ呼ばれる
         assertEquals(2, repository.functionDefCallArgs.size());
@@ -347,7 +360,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         repository.tables.add(table("public", "keep"));
         repository.tables.add(table("public", "skip"));
 
-        usecase.exportTableDefinition(List.of(), List.of("keep"), null, 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of("keep"), null, 0, 80, List.of(), null);
 
         assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "keep")));
         assertFalse(fileExists(tableDefFile(DEFAULT_OUT, "public", "skip")));
@@ -363,7 +376,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         repository.tables.add(table("public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null);
 
         assertTrue(fileExists(DEFAULT_OUT.resolve("tableList_testdb.md")));
     }
@@ -374,7 +387,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         repository.tables.add(table("public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), "   ", 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), "   ", 0, 80, List.of(), null);
 
         assertTrue(fileExists(DEFAULT_OUT.resolve("tableList_testdb.md")));
     }
@@ -385,7 +398,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         repository.tables.add(table("public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), "custom_out", 0, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), "custom_out", 0, 80, List.of(), null);
 
         final Path customOut = Paths.get("custom_out");
         assertTrue(fileExists(customOut.resolve("tableList_testdb.md")));
@@ -400,10 +413,29 @@ public class ExportTableDefinitionUsecaseImplTest {
         // t4（2チャンク目）がt1（1チャンク目）を参照する
         repository.foreignKeys.add(new ForeignKeyEntity("public", "t4", "unused", "fk_t4_t1", "public", "t1"));
 
-        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of());
+        usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of(), null);
 
         final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
         // t1はt4から参照されている（被参照側）関係がER図セクションに反映される
         assertTrue(t1Content.contains("public_t1 ||--o{ public_t4 : \"fk_t4_t1\""));
+    }
+
+    @Test
+    @DisplayName("サイドカーの付帯情報が、テーブル説明・テーブル備考・カラム備考としてテーブル定義書にマージされる")
+    void testAnnotationsAreMergedIntoTableDefinition() {
+        setUp();
+        repository.tables.add(table("public", "t1"));
+        repository.columns.add(new ColumnEntity("public", "t1", "|1|論理ID|id|int|Y|N||", "id", "int", "○"));
+        annotations = Annotations.of(Map.of(TableKey.of("public", "t1"),
+                new TableAnnotation("t1の説明文", "t1の備考", Map.of("id", "主キー"))));
+
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), "conf/annotations.yml");
+
+        // annotationRepositoryにはプロパティで指定したパスがそのまま渡される
+        assertEquals("conf/annotations.yml", receivedAnnotationPath);
+        final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
+        assertTrue(t1Content.contains("t1の説明文"));
+        assertTrue(t1Content.contains("t1の備考"));
+        assertTrue(t1Content.contains("|1|論理ID|id|int|Y|N||主キー|"));
     }
 }

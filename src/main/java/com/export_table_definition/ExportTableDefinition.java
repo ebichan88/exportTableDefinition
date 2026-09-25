@@ -109,6 +109,7 @@ public class ExportTableDefinition {
         final int erDiagramMaxNodes = PropertyLoader.getInt("ExportTableDefinition", "erDiagramMaxNodes",
                 DEFAULT_ER_DIAGRAM_MAX_NODES);
         final List<String> outputObjectList = PropertyLoader.getList("ExportTableDefinition", "outputObjects");
+        final String annotationPath = PropertyLoader.getString("ExportTableDefinition", "annotationPath");
         // 処理開始メッセージ出力
         System.out.println("""
                 Starting output of table definition document.
@@ -116,7 +117,7 @@ public class ExportTableDefinition {
                 """);
         // テーブル定義出力処理実行
         final ResultDto resultDto = controller.execute(schemaList, tableList, outputPath, chunkSize,
-                erDiagramMaxNodes, outputObjectList);
+                erDiagramMaxNodes, outputObjectList, annotationPath);
         // 処理終了メッセージ出力
         System.out.println(resultDto.getResultMessage());
     }

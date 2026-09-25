@@ -9,22 +9,29 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.domain.model.TableDefinitionContent;
+import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.collection.Columns;
 import com.export_table_definition.domain.model.collection.Constraints;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.collection.Indexes;
 import com.export_table_definition.domain.model.collection.Triggers;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.OutputObjectType;
+import com.export_table_definition.domain.model.value.TableKey;
+import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
@@ -41,27 +48,31 @@ import com.google.inject.Inject;
 public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUsecase {
 
     private static final String OUTPUT_BASE_DIRECTORY = "./output";
+    private static final Logger logger = LogManager.getLogger(ExportTableDefinitionUsecaseImpl.class);
     private final TableDefinitionRepository repository;
     private final TableDefinitionWriterDomainService writer;
     private final ErDiagramWriterDomainService erDiagramWriter;
     private final ObjectListWriterDomainService objectListWriter;
+    private final AnnotationRepository annotationRepository;
 
     /**
      * コンストラクタ
      *
-     * @param repository       テーブル定義出力に関するリポジトリクラス
-     * @param writer           テーブル一覧・テーブル定義書を書き込むクラス
-     * @param erDiagramWriter  ER図を書き込むクラス
-     * @param objectListWriter トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
+     * @param repository           テーブル定義出力に関するリポジトリクラス
+     * @param writer               テーブル一覧・テーブル定義書を書き込むクラス
+     * @param erDiagramWriter      ER図を書き込むクラス
+     * @param objectListWriter     トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
+     * @param annotationRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
      */
     @Inject
     public ExportTableDefinitionUsecaseImpl(TableDefinitionRepository repository,
             TableDefinitionWriterDomainService writer, ErDiagramWriterDomainService erDiagramWriter,
-            ObjectListWriterDomainService objectListWriter) {
+            ObjectListWriterDomainService objectListWriter, AnnotationRepository annotationRepository) {
         this.repository = repository;
         this.writer = writer;
         this.erDiagramWriter = erDiagramWriter;
         this.objectListWriter = objectListWriter;
+        this.annotationRepository = annotationRepository;
     }
 
     /**
@@ -69,16 +80,20 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      */
     @Override
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
-            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList) {
+            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList, String annotationPath) {
         // ベースディレクトリパス取得
         final Path outputBaseDir = Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
                 .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
         // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
         final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
+        // 手動付帯情報（サイドカーYAML）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
+        final Annotations annotations = annotationRepository.load(annotationPath);
 
         // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する
         final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
         final List<TableEntity> tableEntityList = repository.selectTableList(targetSchemaList, targetTableList);
+        // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
+        warnOrphanTableAnnotations(annotations, tableEntityList, targetSchemaList, targetTableList);
         // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
         // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
         // 特定のチャンクに限定せず全件を保持しておく必要がある
@@ -135,7 +150,35 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         final Map<String, List<TableEntity>> tablesBySchema = tableEntityList.stream()
                 .collect(Collectors.groupingBy(TableEntity::schemaName, LinkedHashMap::new, Collectors.toList()));
         tablesBySchema.forEach((schemaName, tablesInSchema) -> exportSchemaTableDefinitions(schemaName, tablesInSchema,
-                targetSchemaList, targetTableList, baseInfoEntity, foreignKeys, triggers, outputBaseDir, chunkSize));
+                targetSchemaList, targetTableList, baseInfoEntity, foreignKeys, triggers, annotations, outputBaseDir,
+                chunkSize));
+    }
+
+    /**
+     * 実在しないテーブルに対する付帯情報（＝孤児注釈）を検出して警告するメソッド<br>
+     * リネームや削除により、サイドカーの付帯情報が現在のスキーマと乖離した場合の気付きとする。
+     * スキーマ・テーブルの出力対象が絞り込まれている場合は、対象外テーブルの付帯情報を
+     * 誤って孤児と判定しないよう検出をスキップする
+     *
+     * @param annotations      読み込んだ付帯情報
+     * @param tables           出力対象のテーブル情報のリスト
+     * @param targetSchemaList テーブル定義出力対象のスキーマのリスト
+     * @param targetTableList  テーブル定義出力対象のテーブルのリスト
+     */
+    private void warnOrphanTableAnnotations(Annotations annotations, List<TableEntity> tables,
+            List<String> targetSchemaList, List<String> targetTableList) {
+        if (annotations.isEmpty()) {
+            return;
+        }
+        if (CollectionUtils.isNotEmpty(targetSchemaList) || CollectionUtils.isNotEmpty(targetTableList)) {
+            logger.info("Skipping orphan table annotation check because the output target is filtered.");
+            return;
+        }
+        final Set<TableKey> existingKeys = tables.stream().map(TableKey::of).collect(Collectors.toSet());
+        annotations.tableKeys().stream().filter(key -> !existingKeys.contains(key))
+                .forEach(key -> logger.warn(
+                        "Annotation exists for a table that was not found (renamed or dropped?). [table={}.{}]",
+                        key.schema(), key.table()));
     }
 
     /**
@@ -193,19 +236,20 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      * @param baseInfoEntity   データベースの基本情報
      * @param foreignKeys      対象範囲全体の外部キー情報
      * @param triggers         対象範囲全体のトリガー情報
+     * @param annotations      対象範囲全体の手動付帯情報
      * @param outputBaseDir    出力先のベースディレクトリパス
      * @param chunkSize        1回の取得でまとめて処理するテーブル数の上限。0以下の場合は分割しない
      */
     private void exportSchemaTableDefinitions(String schemaName, List<TableEntity> tablesInSchema,
             List<String> targetSchemaList, List<String> targetTableList, BaseInfoEntity baseInfoEntity,
-            ForeignKeys foreignKeys, Triggers triggers, Path outputBaseDir, int chunkSize) {
+            ForeignKeys foreignKeys, Triggers triggers, Annotations annotations, Path outputBaseDir, int chunkSize) {
         final int total = tablesInSchema.size();
         // chunkSizeが0以下の場合はスキーマ全体を1チャンクとして扱う
         final int step = chunkSize > 0 ? chunkSize : total;
         for (int from = 0; from < total; from += step) {
             final int to = Math.min(from + step, total);
             exportTableDefinitionChunk(schemaName, tablesInSchema.subList(from, to), targetSchemaList, targetTableList,
-                    baseInfoEntity, foreignKeys, triggers, outputBaseDir);
+                    baseInfoEntity, foreignKeys, triggers, annotations, outputBaseDir);
         }
     }
 
@@ -221,11 +265,12 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      * @param baseInfoEntity   データベースの基本情報
      * @param foreignKeys      対象範囲全体の外部キー情報
      * @param triggers         対象範囲全体のトリガー情報
+     * @param annotations      対象範囲全体の手動付帯情報
      * @param outputBaseDir    出力先のベースディレクトリパス
      */
     private void exportTableDefinitionChunk(String schemaName, List<TableEntity> chunk, List<String> targetSchemaList,
             List<String> targetTableList, BaseInfoEntity baseInfoEntity, ForeignKeys foreignKeys, Triggers triggers,
-            Path outputBaseDir) {
+            Annotations annotations, Path outputBaseDir) {
         final List<String> schemaList = List.of(schemaName);
         // 当該チャンクのテーブル名のみを条件に詳細情報を取得する
         final List<String> chunkTableList = chunk.stream().map(TableEntity::physicalTableName).distinct().toList();
@@ -235,8 +280,27 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
 
         chunk.stream()
                 .filter(tableEntity -> tableEntity.needsWriteTableDefinition(targetSchemaList, targetTableList))
+                .peek(tableEntity -> warnOrphanColumnAnnotations(tableEntity, columns, annotations))
                 .map(tableEntity -> TableDefinitionContent.assemble(baseInfoEntity, tableEntity, columns, indexes,
-                        constraints, foreignKeys, triggers, outputBaseDir))
+                        constraints, foreignKeys, triggers, annotations, outputBaseDir))
                 .forEach(writer::writeTableDefinition);
+    }
+
+    /**
+     * 実在しないカラムに対するカラム備考（＝孤児注釈）を検出して警告するメソッド<br>
+     * 出力対象のテーブルに対してのみ、実在カラムと付帯情報のカラム名を突き合わせて検出する
+     *
+     * @param table       出力対象のテーブル情報
+     * @param columns     当該チャンクのカラム情報
+     * @param annotations 対象範囲全体の手動付帯情報
+     */
+    private void warnOrphanColumnAnnotations(TableEntity table, Columns columns, Annotations annotations) {
+        final Set<String> actualColumnNames = columns.of(table).stream().map(ColumnEntity::physicalColumnName)
+                .collect(Collectors.toSet());
+        annotations.of(table).orphanColumnNames(actualColumnNames)
+                .forEach(columnName -> logger.warn(
+                        "Column annotation exists for a column that was not found (renamed or dropped?). "
+                                + "[table={}, column={}]",
+                        table.getSchemaTableName(), columnName));
     }
 }

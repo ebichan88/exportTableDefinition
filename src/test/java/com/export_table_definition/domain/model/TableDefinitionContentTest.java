@@ -8,6 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.export_table_definition.domain.model.annotation.Annotations;
+import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.collection.Columns;
 import com.export_table_definition.domain.model.collection.Constraints;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
@@ -20,6 +22,7 @@ import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.value.TableKey;
 
 /**
  * TableDefinitionContent.assemble の組み立てに関するテスト<br>
@@ -56,13 +59,18 @@ public class TableDefinitionContentTest {
         var ownTrigger = new TriggerEntity("public", "orders", "unused", "unused");
         var triggers = Triggers.of(List.of(ownTrigger, new TriggerEntity("public", "customers", "unused", "unused")));
 
+        var ownAnnotation = new TableAnnotation("受注テーブル", "備考", java.util.Map.of("id", "主キー"));
+        var annotations = Annotations.of(java.util.Map.of(TableKey.of("public", "orders"), ownAnnotation,
+                TableKey.of("public", "customers"), new TableAnnotation("顧客テーブル", "", java.util.Map.of())));
+
         Path baseDir = Path.of("output");
         TableDefinitionContent content = TableDefinitionContent.assemble(baseInfo, target, columns, indexes,
-                constraints, foreignKeys, triggers, baseDir);
+                constraints, foreignKeys, triggers, annotations, baseDir);
 
         assertSame(baseInfo, content.baseInfo());
         assertSame(target, content.table());
         assertSame(baseDir, content.outputBaseDir());
+        assertSame(ownAnnotation, content.annotation());
         assertEquals(List.of(ownColumn), content.columns());
         assertEquals(List.of(ownIndex), content.indexes());
         assertEquals(List.of(ownConstraint), content.constraints());
@@ -82,8 +90,10 @@ public class TableDefinitionContentTest {
 
         TableDefinitionContent content = TableDefinitionContent.assemble(baseInfo, target, Columns.of(List.of()),
                 Indexes.of(List.of()), Constraints.of(List.of()), ForeignKeys.of(List.of()), Triggers.of(List.of()),
-                Path.of("output"));
+                Annotations.empty(), Path.of("output"));
 
+        // 付帯情報が存在しないテーブルには空の付帯情報が設定される
+        assertSame(TableAnnotation.EMPTY, content.annotation());
         assertEquals(List.of(), content.columns());
         assertEquals(List.of(), content.indexes());
         assertEquals(List.of(), content.constraints());
