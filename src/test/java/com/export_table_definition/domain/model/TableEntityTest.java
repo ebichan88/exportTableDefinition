@@ -62,6 +62,41 @@ class TableEntityTest {
               "実施しない（テーブル定義出力対象のスキーマ／TBLリストが存在 かつ 対象のスキーマ／TBLが存在しない）",
               Arrays.asList("mismatch_schema"),
               Arrays.asList("mismatchTable"),
+              false),
+          arguments(
+              "実施する　（TBLリストにワイルドカードパターンが存在 かつ 対象のTBLがパターンに一致する）",
+              Arrays.asList(),
+              Arrays.asList("test*"),
+              true),
+          arguments(
+              "実施しない（TBLリストにワイルドカードパターンが存在 かつ 対象のTBLがパターンに一致しない）",
+              Arrays.asList(),
+              Arrays.asList("other*"),
+              false),
+          arguments(
+              "実施しない（TBLリストに除外パターンが存在 かつ 対象のTBLが除外パターンに一致する）",
+              Arrays.asList(),
+              Arrays.asList("!testTable"),
+              false),
+          arguments(
+              "実施する　（TBLリストに除外パターンのみ存在 かつ 対象のTBLが除外パターンに一致しない）",
+              Arrays.asList(),
+              Arrays.asList("!mismatchTable"),
+              true),
+          arguments(
+              "実施しない（TBLリストに包含・除外の両パターンが存在 かつ 除外パターンが優先される）",
+              Arrays.asList(),
+              Arrays.asList("test*", "!testTable"),
+              false),
+          arguments(
+              "実施する　（TBLリストにスキーマ修飾パターンが存在 かつ 対象のスキーマ・TBLが一致する）",
+              Arrays.asList(),
+              Arrays.asList("test_schema.testTable"),
+              true),
+          arguments(
+              "実施しない（TBLリストにスキーマ修飾パターンが存在 かつ 対象のスキーマが一致しない）",
+              Arrays.asList(),
+              Arrays.asList("other_schema.testTable"),
               false));
     }
 

@@ -24,6 +24,8 @@ public interface ExportTableDefinitionUsecase {
    *     com.export_table_definition.domain.model.type.OutputObjectType#getName()}）のリスト。
    *     空の場合は全種別を出力対象とする
    * @param annotationPath 手動付帯情報（テーブル説明・テーブル備考・カラム備考）を記述したサイドカーYAMLのパス。 空・未指定の場合はマージを行わない
+   * @param rmDist trueの場合、書き込みを開始する前に{@code outputPath}のベースディレクトリを 再帰的に削除する（{@code
+   *     --rm-dist}）。削除されたテーブル等の残骸ファイルを残さずに再生成したい場合に指定する
    */
   public void exportTableDefinition(
       List<String> targetSchemaList,
@@ -32,7 +34,8 @@ public interface ExportTableDefinitionUsecase {
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath);
+      String annotationPath,
+      boolean rmDist);
 
   /**
    * DBの現状から生成したドキュメントと、{@code outputPath}配下に既にコミット済みのドキュメントを比較し、 差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド

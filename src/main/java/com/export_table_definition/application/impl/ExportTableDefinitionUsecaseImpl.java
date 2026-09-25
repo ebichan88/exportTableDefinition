@@ -101,40 +101,56 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath) {
+      String annotationPath,
+      boolean rmDist) {
     // ベースディレクトリパス取得
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
+    if (rmDist) {
+      removeOutputBaseDir(outputBaseDir);
+    }
     // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
     final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
     // サイドカーYAML（手動付帯情報・論理リレーション）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
     final Sidecar sidecar = annotationRepository.load(annotationPath);
     final Annotations annotations = sidecar.annotations();
 
-    // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する
+    // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する。
+    // targetTableListにはワイルドカード（*）・除外（!）・スキーマ修飾（schema.table）を指定できるため、
+    // SQLの完全一致IN句では絞り込めない。スキーマのみSQLで絞り込み、テーブル単位の絞り込みは
+    // TableEntity#needsWriteTableDefinitionによりJava側で行う（TableTargetFilter参照）。
+    // ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
     final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
     final List<TableEntity> tableEntityList =
-        repository.selectTableList(targetSchemaList, targetTableList);
+        repository.selectTableList(targetSchemaList, List.of()).stream()
+            .filter(table -> table.needsWriteTableDefinition(targetSchemaList, targetTableList))
+            .toList();
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
     warnOrphanTableAnnotations(annotations, tableEntityList, targetSchemaList, targetTableList);
     // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
     // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
-    // 特定のチャンクに限定せず全件を保持しておく必要がある。
+    // 特定のチャンクに限定せず全件を保持しておく必要がある。テーブル名は上記の理由によりSQLで絞り込まず、
+    // スキーマ全体を取得する（tableListによる絞り込みが利く分、schemaのみ指定時よりDB負荷が増え得る）。
+    // その代わり、参照元・参照先の一方でもtableListの絞り込みで除外された関係は、テーブル一覧・ER図の
+    // 双方から一貫して除外されるよう、出力対象のテーブルに含まれるものだけへ絞り込む（resolvePhysicalForeignKeys）。
     // サイドカー由来の論理リレーションは、出力対象に含まれるテーブル同士のものだけを同じ集合へ合流させる。
     // 合流させることで、ER図のグループ分割（連結成分）やスキーマ跨ぎ関連の抽出にも自動的に反映される
     final List<ForeignKeyEntity> logicalRelations =
         resolveLogicalRelations(sidecar, tableEntityList);
+    final List<ForeignKeyEntity> physicalForeignKeys =
+        resolvePhysicalForeignKeys(
+            repository.selectForeignKeyList(targetSchemaList, List.of()),
+            tableEntityList,
+            targetSchemaList,
+            targetTableList);
     final ForeignKeys foreignKeys =
         ForeignKeys.of(
-            Stream.concat(
-                    repository.selectForeignKeyList(targetSchemaList, targetTableList).stream(),
-                    logicalRelations.stream())
-                .toList());
+            Stream.concat(physicalForeignKeys.stream(), logicalRelations.stream()).toList());
     // トリガーはテーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、
     // テーブル定義書内のセクションとトリガー一覧の両方で利用する。
     // outputObjectListでトリガーが対象外とされた場合は、取得自体を行わず一覧・テーブル定義書双方から除外する
     final List<TriggerEntity> triggerEntityList =
         outputObjectTypes.contains(OutputObjectType.TRIGGER)
-            ? repository.selectTriggerList(targetSchemaList, targetTableList)
+            ? repository.selectTriggerList(targetSchemaList, List.of())
             : List.of();
     final Triggers triggers = Triggers.of(triggerEntityList);
     // スキーマレベルのオブジェクト（関数/シーケンス/型）はテーブルフィルタの対象外。スキーマフィルタのみ適用する。
@@ -201,14 +217,34 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
             exportSchemaTableDefinitions(
                 schemaName,
                 tablesInSchema,
-                targetSchemaList,
-                targetTableList,
                 baseInfoEntity,
                 foreignKeys,
                 triggers,
                 annotations,
                 outputBaseDir,
                 chunkSize));
+  }
+
+  /**
+   * {@code --rm-dist}指定時に、出力先ベースディレクトリを事前に削除するメソッド<br>
+   * 削除されたテーブル等の残骸ファイルを残さないため、書き込み前にディレクトリごと削除する。 ルート・ホームディレクトリ・カレントディレクトリ自体など、設定誤りによる被害が甚大な
+   * パスを解決した場合は削除を拒否する
+   *
+   * @param outputBaseDir 出力先ベースディレクトリ
+   */
+  private void removeOutputBaseDir(Path outputBaseDir) {
+    final Path absolute = outputBaseDir.toAbsolutePath().normalize();
+    final Path cwd = Path.of("").toAbsolutePath().normalize();
+    final Path home = Path.of(System.getProperty("user.home")).toAbsolutePath().normalize();
+    if (absolute.getParent() == null || absolute.equals(cwd) || absolute.equals(home)) {
+      throw new IllegalStateException(
+          "Refusing to run --rm-dist because outputPath resolves to an unsafe directory. "
+              + "[outputBaseDir="
+              + absolute
+              + "]");
+    }
+    logger.info("Removing existing output directory before export. [outputBaseDir={}]", absolute);
+    fileRepository.deleteDirectory(outputBaseDir);
   }
 
   /** {@inheritDoc} */
@@ -231,7 +267,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
           chunkSize,
           erDiagramMaxNodes,
           outputObjectList,
-          annotationPath);
+          annotationPath,
+          false);
       return documentDiffDomainService.compare(generatedDir, committedDir);
     } finally {
       fileRepository.deleteDirectory(generatedDir);
@@ -271,6 +308,46 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
                     "Annotation exists for a table that was not found (renamed or dropped?). [table={}.{}]",
                     key.schema(),
                     key.table()));
+  }
+
+  /**
+   * DBに実在する外部キー制約のうち、参照元・参照先の双方が出力対象のテーブルであるものだけを抽出するメソッド<br>
+   * 外部キーはスキーマ全体から取得しているため、{@code targetTableList}の絞り込みで除外されたテーブルへの
+   * 参照が含まれうる。ここで除外しておかないと、テーブル一覧・個別の定義書には現れないテーブルが
+   * ER図にだけ箱として残ってしまう。出力対象が絞り込まれていない場合のみ、警告ログで気付けるようにする（ 絞り込み時は意図した除外のため警告しない）
+   *
+   * @param foreignKeys スキーマ全体から取得した外部キー制約のリスト
+   * @param tables 出力対象のテーブル情報のリスト
+   * @param targetSchemaList テーブル定義出力対象のスキーマのリスト
+   * @param targetTableList テーブル定義出力対象のテーブルのリスト
+   * @return 出力対象のテーブル同士の外部キー制約のリスト
+   */
+  private List<ForeignKeyEntity> resolvePhysicalForeignKeys(
+      List<ForeignKeyEntity> foreignKeys,
+      List<TableEntity> tables,
+      List<String> targetSchemaList,
+      List<String> targetTableList) {
+    final Set<TableKey> existingKeys =
+        tables.stream().map(TableKey::of).collect(Collectors.toSet());
+    final boolean isFiltered =
+        CollectionUtils.isNotEmpty(targetSchemaList) || CollectionUtils.isNotEmpty(targetTableList);
+    return foreignKeys.stream()
+        .filter(
+            fk -> {
+              if (isResolvable(fk, existingKeys)) {
+                return true;
+              }
+              if (!isFiltered) {
+                logger.warn(
+                    "Skipping a foreign key because the referenced table was not found "
+                        + "(renamed or dropped?). [foreignKey={}, table={}, referenceTable={}]",
+                    fk.foreignkeyName(),
+                    fk.getSchemaTableName(),
+                    fk.getReferenceSchemaTableName());
+              }
+              return false;
+            })
+        .toList();
   }
 
   /**
@@ -324,6 +401,20 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         relation.getReferenceSchemaTableName(),
         parentExists ? "" : " (not found)");
     return false;
+  }
+
+  /**
+   * 外部キーの参照元・参照先が、いずれも出力対象のテーブルとして実在するか判定するメソッド（ログ出力なし）<br>
+   * {@link #isResolvableRelation}と異なり、呼び出し元ごとに警告要否の判断が異なるため副作用を持たない
+   *
+   * @param relation 判定対象の外部キー
+   * @param existingKeys 出力対象のテーブルキーの集合
+   * @return 双方が実在する場合はtrue
+   */
+  private boolean isResolvable(ForeignKeyEntity relation, Set<TableKey> existingKeys) {
+    return existingKeys.contains(TableKey.of(relation.schemaName(), relation.tableName()))
+        && existingKeys.contains(
+            TableKey.of(relation.referenceSchemaName(), relation.referenceTableName()));
   }
 
   /**
@@ -383,9 +474,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * 指定スキーマに属するテーブルの定義書を、chunkSize件ずつに分割して出力するメソッド
    *
    * @param schemaName 出力対象のスキーマ名
-   * @param tablesInSchema 当該スキーマに属するテーブルのリスト
-   * @param targetSchemaList テーブル定義出力対象のスキーマのリスト（書き込み要否判定に利用）
-   * @param targetTableList テーブル定義出力対象のテーブルのリスト（書き込み要否判定に利用）
+   * @param tablesInSchema 当該スキーマに属するテーブルのリスト（呼び出し元で絞り込み済み）
    * @param baseInfoEntity データベースの基本情報
    * @param foreignKeys 対象範囲全体の外部キー情報
    * @param triggers 対象範囲全体のトリガー情報
@@ -396,8 +485,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   private void exportSchemaTableDefinitions(
       String schemaName,
       List<TableEntity> tablesInSchema,
-      List<String> targetSchemaList,
-      List<String> targetTableList,
       BaseInfoEntity baseInfoEntity,
       ForeignKeys foreignKeys,
       Triggers triggers,
@@ -412,8 +499,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       exportTableDefinitionChunk(
           schemaName,
           tablesInSchema.subList(from, to),
-          targetSchemaList,
-          targetTableList,
           baseInfoEntity,
           foreignKeys,
           triggers,
@@ -427,9 +512,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * 当該チャンクのテーブルに紐づく詳細情報（カラム・インデックス・制約）のみを取得し、 出力後にローカル変数のスコープを抜けることでメモリ解放対象とする
    *
    * @param schemaName 出力対象のスキーマ名
-   * @param chunk 1チャンク分のテーブルのリスト
-   * @param targetSchemaList テーブル定義出力対象のスキーマのリスト（書き込み要否判定に利用）
-   * @param targetTableList テーブル定義出力対象のテーブルのリスト（書き込み要否判定に利用）
+   * @param chunk 1チャンク分のテーブルのリスト（呼び出し元で絞り込み済み）
    * @param baseInfoEntity データベースの基本情報
    * @param foreignKeys 対象範囲全体の外部キー情報
    * @param triggers 対象範囲全体のトリガー情報
@@ -439,8 +522,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   private void exportTableDefinitionChunk(
       String schemaName,
       List<TableEntity> chunk,
-      List<String> targetSchemaList,
-      List<String> targetTableList,
       BaseInfoEntity baseInfoEntity,
       ForeignKeys foreignKeys,
       Triggers triggers,
@@ -456,8 +537,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         Constraints.of(repository.selectConstraintList(schemaList, chunkTableList));
 
     chunk.stream()
-        .filter(
-            tableEntity -> tableEntity.needsWriteTableDefinition(targetSchemaList, targetTableList))
         .peek(tableEntity -> warnOrphanColumnAnnotations(tableEntity, columns, annotations))
         .map(
             tableEntity ->

@@ -24,6 +24,7 @@ public class ExportTableDefinitionControllerTest {
     int capturedErDiagramMaxNodes;
     List<String> capturedOutputObjectList;
     String capturedAnnotationPath;
+    boolean capturedRmDist;
     RuntimeException toThrow;
     DiffResult diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
 
@@ -35,7 +36,8 @@ public class ExportTableDefinitionControllerTest {
         int chunkSize,
         int erDiagramMaxNodes,
         List<String> outputObjectList,
-        String annotationPath) {
+        String annotationPath,
+        boolean rmDist) {
       this.capturedSchemaList = targetSchemaList;
       this.capturedTableList = targetTableList;
       this.capturedOutputPath = outputPath;
@@ -43,6 +45,7 @@ public class ExportTableDefinitionControllerTest {
       this.capturedErDiagramMaxNodes = erDiagramMaxNodes;
       this.capturedOutputObjectList = outputObjectList;
       this.capturedAnnotationPath = annotationPath;
+      this.capturedRmDist = rmDist;
       if (toThrow != null) {
         throw toThrow;
       }
@@ -85,7 +88,8 @@ public class ExportTableDefinitionControllerTest {
             100,
             80,
             List.of(),
-            "conf/annotations.yml");
+            "conf/annotations.yml",
+            false);
 
     assertEquals(ProcessResult.SUCCESS, result.result());
     assertEquals("Table definition output is complete.", result.message());
@@ -104,7 +108,8 @@ public class ExportTableDefinitionControllerTest {
         100,
         80,
         List.of("trigger", "function"),
-        "conf/annotations.yml");
+        "conf/annotations.yml",
+        true);
 
     assertEquals(List.of("public"), usecase.capturedSchemaList);
     assertEquals(List.of("orders"), usecase.capturedTableList);
@@ -113,6 +118,7 @@ public class ExportTableDefinitionControllerTest {
     assertEquals(80, usecase.capturedErDiagramMaxNodes);
     assertEquals(List.of("trigger", "function"), usecase.capturedOutputObjectList);
     assertEquals("conf/annotations.yml", usecase.capturedAnnotationPath);
+    assertTrue(usecase.capturedRmDist);
   }
 
   @Test
@@ -122,7 +128,7 @@ public class ExportTableDefinitionControllerTest {
     usecase.toThrow = new RuntimeException("boom");
     var controller = new ExportTableDefinitionController(usecase);
 
-    ResultDto result = controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null);
+    ResultDto result = controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false);
 
     assertEquals(ProcessResult.FAIL, result.result());
     assertTrue(result.message().contains("boom"));
@@ -135,7 +141,8 @@ public class ExportTableDefinitionControllerTest {
     usecase.toThrow = new IllegalStateException("unexpected");
     var controller = new ExportTableDefinitionController(usecase);
 
-    assertDoesNotThrow(() -> controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null));
+    assertDoesNotThrow(
+        () -> controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false));
   }
 
   @Test
