@@ -31,13 +31,15 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## 実行フロー
 
-1. `ExportTableDefinition.main()` がCLI引数／環境変数からDB接続情報の上書き値を解決し、
-   `MyBatisSqlSessionFactory` に設定する。
+1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・環境変数からのDB接続情報の
+   上書き値の解決・`--check`/`--rm-dist`フラグの判定）を介して `MyBatisSqlSessionFactory` に接続情報を設定する。
 2. Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、
    `ExportTableDefinitionController` を取得して `run()` を呼び出す。
 3. `ExportTableDefinition.run()` が `conf/ExportTableDefinition.properties` の設定値
-   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、
-   `ExportTableDefinitionController.execute()` を呼び出す。
+   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を
+   `ExportRequest`（record）へ読み込み、`ExportTableDefinitionController.execute()` へそのまま渡す
+   （`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`を用いる。エントリーポイント→コントローラー→
+   ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する）。
 4. コントローラーは `ExportTableDefinitionUsecaseImpl.exportTableDefinition()` を呼び出し、例外を捕捉して
    `ResultDto`（成功/失敗）に変換する。
 5. ユースケース実装が以下を順に行う（詳細は

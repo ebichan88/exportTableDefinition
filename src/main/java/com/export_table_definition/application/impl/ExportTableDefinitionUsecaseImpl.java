@@ -1,5 +1,7 @@
 package com.export_table_definition.application.impl;
 
+import com.export_table_definition.application.CheckDiffRequest;
+import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.ExportTargets;
@@ -94,46 +96,39 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
 
   /** {@inheritDoc} */
   @Override
-  public void exportTableDefinition(
-      List<String> targetSchemaList,
-      List<String> targetTableList,
-      String outputPath,
-      int chunkSize,
-      int erDiagramMaxNodes,
-      List<String> outputObjectList,
-      String annotationPath,
-      boolean rmDist) {
+  public void exportTableDefinition(ExportRequest request) {
     // ベースディレクトリパス取得
-    final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
-    if (rmDist) {
+    final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
+    if (request.rmDist()) {
       removeOutputBaseDir(outputBaseDir);
     }
     export(
-        fetchTargets(targetSchemaList, targetTableList, outputObjectList, annotationPath),
+        fetchTargets(
+            request.targetSchemaList(),
+            request.targetTableList(),
+            request.outputObjectList(),
+            request.annotationPath()),
         List.of(
-            markdownSinkFactory.create(outputBaseDir, erDiagramMaxNodes),
+            markdownSinkFactory.create(outputBaseDir, request.erDiagramMaxNodes()),
             snapshotSinkFactory.create(outputBaseDir)),
-        chunkSize);
+        request.chunkSize());
   }
 
   /** {@inheritDoc} */
   @Override
-  public DiffResult checkDocumentDiff(
-      List<String> targetSchemaList,
-      List<String> targetTableList,
-      String outputPath,
-      int chunkSize,
-      int erDiagramMaxNodes,
-      List<String> outputObjectList,
-      String annotationPath) {
-    final Path committedDir = outputPathResolver.resolveBaseOutputDir(outputPath);
+  public DiffResult checkDocumentDiff(CheckDiffRequest request) {
+    final Path committedDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
     try {
       final ExportTargets targets =
-          fetchTargets(targetSchemaList, targetTableList, outputObjectList, annotationPath);
+          fetchTargets(
+              request.targetSchemaList(),
+              request.targetTableList(),
+              request.outputObjectList(),
+              request.annotationPath());
       // DBからの取得は通常実行と同じだが、差分の判定に不要なMarkdownの描画・ER図の生成は行わず、
       // スナップショットのみを生成してオブジェクト単位で比較する
-      export(targets, List.of(snapshotSinkFactory.create(generatedDir)), chunkSize);
+      export(targets, List.of(snapshotSinkFactory.create(generatedDir)), request.chunkSize());
       return snapshotDiffDomainService.compare(
           outputPathResolver.resolveSnapshotDirectory(generatedDir),
           outputPathResolver.resolveSnapshotDirectory(committedDir));

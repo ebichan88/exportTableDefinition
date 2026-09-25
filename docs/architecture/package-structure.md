@@ -7,7 +7,8 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`/`DiffCheckResultDto`変換を行う。`checkDiff`の差分メッセージ組み立てでは、`ContentDiff`のunified diffを1オブジェクトあたり・全体それぞれ行数の上限付きで含める |
+| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`/`DiffCheckResultDto`変換を行う |
+| | `DiffReportFormatter`（パッケージプライベート） | `checkDiff`の差分メッセージ組み立て。`ContentDiff`のunified diffを1オブジェクトあたり・全体それぞれ行数の上限付きで含める |
 | `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成否・メッセージ）を表すrecord |
 | | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（成否・メッセージ・差分有無）を表すrecord |
 | `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum |
@@ -17,6 +18,7 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `application` | `ExportTableDefinitionUsecase` | テーブル定義出力ユースケースのインターフェース（通常出力`exportTableDefinition`／差分検知`checkDocumentDiff`） |
+| | `ExportRequest`, `CheckDiffRequest` | 各ユースケースメソッドへの入力をまとめたrecord。エントリーポイント→コントローラー→ユースケースを分解・再構築せず通過する。`CheckDiffRequest`はMarkdownの描画・ER図の生成を行わないため`erDiagramMaxNodes`・`rmDist`を持たない |
 | `application.impl` | `ExportTableDefinitionUsecaseImpl` | DBからの取得（一括取得・スキーマ単位・チャンク単位）の段取りを担う。取得（`fetchTargets`）と出力（`export`）を分け、書き出しは出力形式ごとの`ExportSink`に、取得した情報同士の突き合わせは`ExportTargetConsistencyDomainService`に委ねる。`checkDocumentDiff`はスナップショットの`ExportSink`のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 
 ## domain層

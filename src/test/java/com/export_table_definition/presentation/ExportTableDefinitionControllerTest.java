@@ -2,6 +2,8 @@ package com.export_table_definition.presentation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.application.CheckDiffRequest;
+import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
@@ -17,61 +19,58 @@ public class ExportTableDefinitionControllerTest {
 
   /** 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ */
   private static class RecordingUsecase implements ExportTableDefinitionUsecase {
-    List<String> capturedSchemaList;
-    List<String> capturedTableList;
-    String capturedOutputPath;
-    int capturedChunkSize;
-    int capturedErDiagramMaxNodes;
-    List<String> capturedOutputObjectList;
-    String capturedAnnotationPath;
-    boolean capturedRmDist;
+    ExportRequest capturedExportRequest;
+    CheckDiffRequest capturedCheckDiffRequest;
     RuntimeException toThrow;
     DiffResult diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
 
     @Override
-    public void exportTableDefinition(
-        List<String> targetSchemaList,
-        List<String> targetTableList,
-        String outputPath,
-        int chunkSize,
-        int erDiagramMaxNodes,
-        List<String> outputObjectList,
-        String annotationPath,
-        boolean rmDist) {
-      this.capturedSchemaList = targetSchemaList;
-      this.capturedTableList = targetTableList;
-      this.capturedOutputPath = outputPath;
-      this.capturedChunkSize = chunkSize;
-      this.capturedErDiagramMaxNodes = erDiagramMaxNodes;
-      this.capturedOutputObjectList = outputObjectList;
-      this.capturedAnnotationPath = annotationPath;
-      this.capturedRmDist = rmDist;
+    public void exportTableDefinition(ExportRequest request) {
+      this.capturedExportRequest = request;
       if (toThrow != null) {
         throw toThrow;
       }
     }
 
     @Override
-    public DiffResult checkDocumentDiff(
-        List<String> targetSchemaList,
-        List<String> targetTableList,
-        String outputPath,
-        int chunkSize,
-        int erDiagramMaxNodes,
-        List<String> outputObjectList,
-        String annotationPath) {
-      this.capturedSchemaList = targetSchemaList;
-      this.capturedTableList = targetTableList;
-      this.capturedOutputPath = outputPath;
-      this.capturedChunkSize = chunkSize;
-      this.capturedErDiagramMaxNodes = erDiagramMaxNodes;
-      this.capturedOutputObjectList = outputObjectList;
-      this.capturedAnnotationPath = annotationPath;
+    public DiffResult checkDocumentDiff(CheckDiffRequest request) {
+      this.capturedCheckDiffRequest = request;
       if (toThrow != null) {
         throw toThrow;
       }
       return diffResultToReturn;
     }
+  }
+
+  private ExportRequest exportRequest(
+      List<String> schemaList,
+      List<String> tableList,
+      String outputPath,
+      int chunkSize,
+      int erDiagramMaxNodes,
+      List<String> outputObjectList,
+      String annotationPath,
+      boolean rmDist) {
+    return new ExportRequest(
+        schemaList,
+        tableList,
+        outputPath,
+        chunkSize,
+        erDiagramMaxNodes,
+        outputObjectList,
+        annotationPath,
+        rmDist);
+  }
+
+  private CheckDiffRequest checkDiffRequest(
+      List<String> schemaList,
+      List<String> tableList,
+      String outputPath,
+      int chunkSize,
+      List<String> outputObjectList,
+      String annotationPath) {
+    return new CheckDiffRequest(
+        schemaList, tableList, outputPath, chunkSize, outputObjectList, annotationPath);
   }
 
   @Test
@@ -82,43 +81,40 @@ public class ExportTableDefinitionControllerTest {
 
     ResultDto result =
         controller.execute(
-            List.of("public"),
-            List.of("orders"),
-            "output",
-            100,
-            80,
-            List.of(),
-            "conf/annotations.yml",
-            false);
+            exportRequest(
+                List.of("public"),
+                List.of("orders"),
+                "output",
+                100,
+                80,
+                List.of(),
+                "conf/annotations.yml",
+                false));
 
     assertEquals(ProcessResult.SUCCESS, result.result());
     assertEquals("Table definition output is complete.", result.message());
   }
 
   @Test
-  @DisplayName("execute: 引数をそのままユースケースへ渡す")
+  @DisplayName("execute: 引数（ExportRequest）をそのままユースケースへ渡す")
   void testExecutePassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
     var controller = new ExportTableDefinitionController(usecase);
 
-    controller.execute(
-        List.of("public"),
-        List.of("orders"),
-        "output",
-        100,
-        80,
-        List.of("trigger", "function"),
-        "conf/annotations.yml",
-        true);
+    ExportRequest request =
+        exportRequest(
+            List.of("public"),
+            List.of("orders"),
+            "output",
+            100,
+            80,
+            List.of("trigger", "function"),
+            "conf/annotations.yml",
+            true);
 
-    assertEquals(List.of("public"), usecase.capturedSchemaList);
-    assertEquals(List.of("orders"), usecase.capturedTableList);
-    assertEquals("output", usecase.capturedOutputPath);
-    assertEquals(100, usecase.capturedChunkSize);
-    assertEquals(80, usecase.capturedErDiagramMaxNodes);
-    assertEquals(List.of("trigger", "function"), usecase.capturedOutputObjectList);
-    assertEquals("conf/annotations.yml", usecase.capturedAnnotationPath);
-    assertTrue(usecase.capturedRmDist);
+    controller.execute(request);
+
+    assertSame(request, usecase.capturedExportRequest);
   }
 
   @Test
@@ -128,7 +124,8 @@ public class ExportTableDefinitionControllerTest {
     usecase.toThrow = new RuntimeException("boom");
     var controller = new ExportTableDefinitionController(usecase);
 
-    ResultDto result = controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false);
+    ResultDto result =
+        controller.execute(exportRequest(List.of(), List.of(), null, 0, 0, List.of(), null, false));
 
     assertEquals(ProcessResult.FAIL, result.result());
     assertTrue(result.message().contains("boom"));
@@ -142,7 +139,9 @@ public class ExportTableDefinitionControllerTest {
     var controller = new ExportTableDefinitionController(usecase);
 
     assertDoesNotThrow(
-        () -> controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false));
+        () ->
+            controller.execute(
+                exportRequest(List.of(), List.of(), null, 0, 0, List.of(), null, false)));
   }
 
   @Test
@@ -153,7 +152,8 @@ public class ExportTableDefinitionControllerTest {
     var controller = new ExportTableDefinitionController(usecase);
 
     DiffCheckResultDto result =
-        controller.checkDiff(List.of("public"), List.of(), "output", 100, 80, List.of(), null);
+        controller.checkDiff(
+            checkDiffRequest(List.of("public"), List.of(), "output", 100, List.of(), null));
 
     assertEquals(ProcessResult.SUCCESS, result.result());
     assertFalse(result.hasDifference());
@@ -179,7 +179,8 @@ public class ExportTableDefinitionControllerTest {
     var controller = new ExportTableDefinitionController(usecase);
 
     DiffCheckResultDto result =
-        controller.checkDiff(List.of(), List.of(), "output", 100, 80, List.of(), null);
+        controller.checkDiff(
+            checkDiffRequest(List.of(), List.of(), "output", 100, List.of(), null));
 
     assertEquals(ProcessResult.SUCCESS, result.result());
     assertTrue(result.hasDifference());
@@ -194,27 +195,23 @@ public class ExportTableDefinitionControllerTest {
   }
 
   @Test
-  @DisplayName("checkDiff: 引数をそのままユースケースへ渡す")
+  @DisplayName("checkDiff: 引数（CheckDiffRequest）をそのままユースケースへ渡す")
   void testCheckDiffPassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
     var controller = new ExportTableDefinitionController(usecase);
 
-    controller.checkDiff(
-        List.of("public"),
-        List.of("orders"),
-        "output",
-        100,
-        80,
-        List.of("trigger"),
-        "conf/annotations.yml");
+    CheckDiffRequest request =
+        checkDiffRequest(
+            List.of("public"),
+            List.of("orders"),
+            "output",
+            100,
+            List.of("trigger"),
+            "conf/annotations.yml");
 
-    assertEquals(List.of("public"), usecase.capturedSchemaList);
-    assertEquals(List.of("orders"), usecase.capturedTableList);
-    assertEquals("output", usecase.capturedOutputPath);
-    assertEquals(100, usecase.capturedChunkSize);
-    assertEquals(80, usecase.capturedErDiagramMaxNodes);
-    assertEquals(List.of("trigger"), usecase.capturedOutputObjectList);
-    assertEquals("conf/annotations.yml", usecase.capturedAnnotationPath);
+    controller.checkDiff(request);
+
+    assertSame(request, usecase.capturedCheckDiffRequest);
   }
 
   @Test
@@ -226,7 +223,9 @@ public class ExportTableDefinitionControllerTest {
 
     DiffCheckResultDto result =
         assertDoesNotThrow(
-            () -> controller.checkDiff(List.of(), List.of(), null, 0, 0, List.of(), null));
+            () ->
+                controller.checkDiff(
+                    checkDiffRequest(List.of(), List.of(), null, 0, List.of(), null)));
 
     assertEquals(ProcessResult.FAIL, result.result());
     assertTrue(result.message().contains("boom"));
