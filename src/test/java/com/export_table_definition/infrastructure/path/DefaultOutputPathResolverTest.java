@@ -6,6 +6,7 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -152,6 +153,21 @@ public class DefaultOutputPathResolverTest {
     assertEquals(
         Path.of("output", "snapshot", "testdb", "public", "functions.jsonl"),
         resolver.resolveSnapshotFile(baseInfo, baseDir, "public", SnapshotKind.FUNCTION));
+  }
+
+  @Test
+  @DisplayName("resolveSnapshotKind: resolveSnapshotFileで解決したファイルから種別を判定し、それ以外は空を返す")
+  void testResolveSnapshotKind() {
+    for (SnapshotKind kind : SnapshotKind.values()) {
+      assertEquals(
+          Optional.of(kind),
+          resolver.resolveSnapshotKind(
+              resolver.resolveSnapshotFile(baseInfo, baseDir, "public", kind)));
+    }
+    assertEquals(
+        Optional.empty(),
+        resolver.resolveSnapshotKind(resolver.resolveSnapshotDatabaseFile(baseInfo, baseDir)));
+    assertEquals(Optional.empty(), resolver.resolveSnapshotKind(Path.of("README.md")));
   }
 
   @Test

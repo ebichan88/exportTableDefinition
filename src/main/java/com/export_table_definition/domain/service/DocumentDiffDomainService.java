@@ -45,17 +45,19 @@ public class DocumentDiffDomainService {
     final Map<Path, Path> committedFiles =
         relativize(committedDir, fileRepository.listFiles(committedDir));
 
-    final List<Path> onlyInGenerated =
+    final List<String> onlyInGenerated =
         generatedFiles.keySet().stream()
             .filter(relativePath -> !committedFiles.containsKey(relativePath))
             .sorted()
+            .map(Path::toString)
             .toList();
-    final List<Path> onlyInCommitted =
+    final List<String> onlyInCommitted =
         committedFiles.keySet().stream()
             .filter(relativePath -> !generatedFiles.containsKey(relativePath))
             .sorted()
+            .map(Path::toString)
             .toList();
-    final List<Path> contentDiffer =
+    final List<String> contentDiffer =
         generatedFiles.keySet().stream()
             .filter(committedFiles::containsKey)
             .filter(
@@ -64,6 +66,7 @@ public class DocumentDiffDomainService {
                         .readFile(generatedFiles.get(relativePath))
                         .equals(fileRepository.readFile(committedFiles.get(relativePath))))
             .sorted()
+            .map(Path::toString)
             .toList();
 
     return new DiffResult(onlyInGenerated, onlyInCommitted, contentDiffer);

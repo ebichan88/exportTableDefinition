@@ -23,6 +23,7 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
+import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
@@ -55,13 +56,18 @@ public class ExportTableDefinitionUsecaseImplTest {
     private final Map<Path, String> files = new LinkedHashMap<>();
     private final AtomicInteger tempDirCounter = new AtomicInteger();
 
+    /** 書き込み（上書き・追記）を行ったファイルパスの履歴（一時ディレクトリの削除後も残る） */
+    private final List<Path> writtenPaths = new ArrayList<>();
+
     @Override
     public void writeFile(Path filePath, List<String> contents) {
+      writtenPaths.add(filePath);
       files.put(filePath, String.join("", contents));
     }
 
     @Override
     public void appendFile(Path filePath, List<String> contents) {
+      writtenPaths.add(filePath);
       files.merge(filePath, String.join("", contents), String::concat);
     }
 
@@ -93,7 +99,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
   /** リポジトリ呼び出し回数・引数を記録するスタブ */
   private static class RecordingRepository implements TableDefinitionRepository {
-    private final BaseInfoEntity baseInfo;
+    private BaseInfoEntity baseInfo;
     List<TableEntity> tables = new ArrayList<>();
     List<ColumnEntity> columns = new ArrayList<>();
     List<IndexEntity> indexes = new ArrayList<>();
@@ -206,11 +212,13 @@ public class ExportTableDefinitionUsecaseImplTest {
           receivedAnnotationPath = path;
           return new Sidecar(annotations, logicalRelations);
         };
+    final JacksonSnapshotSerializer serializer = new JacksonSnapshotSerializer();
     final SchemaSnapshotWriterDomainService snapshotWriter =
-        new SchemaSnapshotWriterDomainService(
-            fileRepository, pathResolver, new JacksonSnapshotSerializer());
+        new SchemaSnapshotWriterDomainService(fileRepository, pathResolver, serializer);
     final DocumentDiffDomainService documentDiffDomainService =
         new DocumentDiffDomainService(fileRepository);
+    final SnapshotDiffDomainService snapshotDiffDomainService =
+        new SnapshotDiffDomainService(fileRepository, pathResolver, serializer);
     usecase =
         new ExportTableDefinitionUsecaseImpl(
             repository,
@@ -220,6 +228,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             snapshotWriter,
             annotationRepository,
             documentDiffDomainService,
+            snapshotDiffDomainService,
             fileRepository,
             pathResolver);
   }
@@ -602,8 +611,9 @@ public class ExportTableDefinitionUsecaseImplTest {
     assertTrue(result.hasDifference());
     assertTrue(result.onlyInCommitted().isEmpty());
     assertTrue(result.contentDiffer().isEmpty());
-    assertTrue(result.onlyInGenerated().contains(Paths.get("tableList_testdb.md")));
-    assertTrue(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "t1")));
+    assertTrue(result.onlyInGenerated().contains("tableList_testdb.md"));
+    assertTrue(
+        result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "t1").toString()));
   }
 
   @Test
@@ -630,8 +640,14 @@ public class ExportTableDefinitionUsecaseImplTest {
         usecase.checkDocumentDiff(
             List.of(), List.of("keep"), "committed", 0, 80, List.of(), null, false);
 
-    assertTrue(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "keep")));
-    assertFalse(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "skip")));
+    assertTrue(
+        result
+            .onlyInGenerated()
+            .contains(tableDefFile(Paths.get(""), "public", "keep").toString()));
+    assertFalse(
+        result
+            .onlyInGenerated()
+            .contains(tableDefFile(Paths.get(""), "public", "skip").toString()));
   }
 
   @Test
@@ -851,5 +867,87 @@ public class ExportTableDefinitionUsecaseImplTest {
     usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null, true, false);
 
     assertEquals(1, contentOf(snapshotFile("public", "tables.jsonl")).lines().count());
+  }
+
+  /** "committed"へスナップショット付きで出力し、コミット済みの状態を作る */
+  private void exportCommitted() {
+    usecase.exportTableDefinition(
+        List.of(), List.of(), "committed", 0, 80, List.of(), null, true, false);
+  }
+
+  /** "committed"に対してスナップショット同士の比較を行う */
+  private DiffResult checkSnapshotDiff() {
+    return usecase.checkDocumentDiff(
+        List.of(), List.of(), "committed", 0, 80, List.of(), null, true);
+  }
+
+  @Test
+  @DisplayName("checkDocumentDiff(outputSnapshot=true): Markdownの描画・ER図の生成を行わず、スナップショットのみを生成して比較する")
+  void testCheckSnapshotDiffDoesNotRenderMarkdown() {
+    setUp();
+    repository.tables.add(table("public", "t1"));
+    repository.foreignKeys.add(ForeignKeyFixtures.physical("public", "t1", "fk", "public", "t1"));
+    repository.functions.add(
+        new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", ""));
+    repository.functionDefs.add(
+        new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", "BODY"));
+
+    final DiffResult result = checkSnapshotDiff();
+
+    assertTrue(fileRepository.writtenPaths.stream().noneMatch(p -> p.toString().endsWith(".md")));
+    // committed側にスナップショットが存在しないため、生成した全オブジェクトがonlyInGeneratedとなる
+    assertEquals(
+        List.of(
+            "function public.f1()",
+            "table public.t1",
+            Paths.get("testdb", "database.json").toString()),
+        result.onlyInGenerated());
+    assertTrue(result.onlyInGenerated().stream().noneMatch(target -> target.endsWith(".md")));
+  }
+
+  @Test
+  @DisplayName("checkDocumentDiff(outputSnapshot=true): DBに変更が無ければ差分なし（実行日が変わっても差分にならない）")
+  void testCheckSnapshotDiffNoDifference() {
+    setUp();
+    repository.tables.add(table("public", "t1"));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
+    exportCommitted();
+
+    // 実行日（作成日）が変わった状態で比較する
+    repository.baseInfo = new BaseInfoEntity("testdb", "pg", "2027-01-01");
+    final DiffResult result = checkSnapshotDiff();
+
+    assertFalse(result.hasDifference());
+  }
+
+  @Test
+  @DisplayName("checkDocumentDiff(outputSnapshot=true): テーブルの追加・削除・変更をテーブル単位で報告する")
+  void testCheckSnapshotDiffReportsTableLevelDifferences() {
+    setUp();
+    repository.tables.add(table("public", "changed"));
+    repository.tables.add(table("public", "dropped"));
+    repository.columns.add(new ColumnEntity("public", "changed", "id", "int", "○"));
+    exportCommitted();
+
+    repository.tables.clear();
+    repository.tables.add(table("public", "added"));
+    repository.tables.add(table("public", "changed"));
+    repository.columns.add(new ColumnEntity("public", "changed", "name", "text", ""));
+    final DiffResult result = checkSnapshotDiff();
+
+    assertEquals(List.of("table public.added"), result.onlyInGenerated());
+    assertEquals(List.of("table public.dropped"), result.onlyInCommitted());
+    assertEquals(List.of("table public.changed"), result.contentDiffer());
+  }
+
+  @Test
+  @DisplayName("checkDocumentDiff(outputSnapshot=true): Markdownのみの差分（手修正・削除等）は検知しない")
+  void testCheckSnapshotDiffIgnoresMarkdown() {
+    setUp();
+    repository.tables.add(table("public", "t1"));
+    exportCommitted();
+    fileRepository.files.remove(tableDefFile(Paths.get("committed"), "public", "t1"));
+
+    assertFalse(checkSnapshotDiff().hasDifference());
   }
 }

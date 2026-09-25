@@ -1,5 +1,8 @@
 package com.export_table_definition.domain.model.snapshot;
 
+import java.util.Map;
+import java.util.Objects;
+
 /**
  * スナップショットのうち、スキーマ単位のJSON Linesファイルに出力するオブジェクトの種別を表す列挙型<br>
  * 種別ごとに1ファイルとし、1行に1オブジェクトを出力する
@@ -12,7 +15,13 @@ public enum SnapshotKind {
   /** テーブル（view・materialized viewを含む） */
   TABLE("tables", "table"),
   /** 関数・プロシージャ */
-  FUNCTION("functions", "function"),
+  FUNCTION("functions", "function") {
+    /** 同名の関数（オーバーロード）を区別するため、引数も識別名に含める */
+    @Override
+    public String identify(Map<String, ?> snapshot) {
+      return super.identify(snapshot) + "(" + Objects.toString(snapshot.get("arguments"), "") + ")";
+    }
+  },
   /** シーケンス */
   SEQUENCE("sequences", "sequence"),
   /** ユーザー定義型 */
@@ -51,5 +60,16 @@ public enum SnapshotKind {
    */
   public String getLabel() {
     return label;
+  }
+
+  /**
+   * スナップショットの1行（項目名をキーとするマップ）から、オブジェクトを識別する名前を取得するメソッド<br>
+   * スナップショット同士の比較で、同じオブジェクトの行を突き合わせるキーとして用いる
+   *
+   * @param snapshot スナップショットの1行を項目名をキーとするマップへ変換したもの
+   * @return {@code スキーマ名.名前}形式の識別名（関数・プロシージャの場合は引数を含む）
+   */
+  public String identify(Map<String, ?> snapshot) {
+    return snapshot.get("schema") + "." + snapshot.get("name");
   }
 }

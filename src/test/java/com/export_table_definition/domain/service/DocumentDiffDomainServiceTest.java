@@ -34,7 +34,7 @@ public class DocumentDiffDomainServiceTest {
     DiffResult result = service.compare(generatedDir, committedDir);
 
     assertTrue(result.hasDifference());
-    assertEquals(List.of(Path.of("new.md")), result.onlyInGenerated());
+    assertEquals(List.of("new.md"), result.onlyInGenerated());
     assertTrue(result.onlyInCommitted().isEmpty());
     assertTrue(result.contentDiffer().isEmpty());
   }
@@ -48,7 +48,7 @@ public class DocumentDiffDomainServiceTest {
     DiffResult result = service.compare(generatedDir, committedDir);
 
     assertTrue(result.hasDifference());
-    assertEquals(List.of(Path.of("stale.md")), result.onlyInCommitted());
+    assertEquals(List.of("stale.md"), result.onlyInCommitted());
     assertTrue(result.onlyInGenerated().isEmpty());
     assertTrue(result.contentDiffer().isEmpty());
   }
@@ -63,7 +63,7 @@ public class DocumentDiffDomainServiceTest {
     DiffResult result = service.compare(generatedDir, committedDir);
 
     assertTrue(result.hasDifference());
-    assertEquals(List.of(Path.of("t1.md")), result.contentDiffer());
+    assertEquals(List.of("t1.md"), result.contentDiffer());
     assertTrue(result.onlyInGenerated().isEmpty());
     assertTrue(result.onlyInCommitted().isEmpty());
   }
@@ -90,6 +90,6 @@ public class DocumentDiffDomainServiceTest {
     DiffResult result = service.compare(generatedDir, notExistCommittedDir);
 
     assertTrue(result.hasDifference());
-    assertEquals(List.of(Path.of("t1.md")), result.onlyInGenerated());
+    assertEquals(List.of("t1.md"), result.onlyInGenerated());
   }
 }

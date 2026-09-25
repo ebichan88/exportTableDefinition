@@ -7,7 +7,6 @@ import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ProcessResult;
-import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -174,10 +173,7 @@ public class ExportTableDefinitionControllerTest {
   void testCheckDiffWithDifferenceReturnsSuccessWithDifference() {
     var usecase = new RecordingUsecase();
     usecase.diffResultToReturn =
-        new DiffResult(
-            List.of(Path.of("new.md")),
-            List.of(Path.of("stale.md")),
-            List.of(Path.of("changed.md")));
+        new DiffResult(List.of("new.md"), List.of("stale.md"), List.of("changed.md"));
     var controller = new ExportTableDefinitionController(usecase);
 
     DiffCheckResultDto result =

@@ -4,6 +4,7 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * テーブル定義および一覧出力用のパス生成戦略インタフェース <br>
@@ -201,4 +202,13 @@ public interface OutputPathResolver {
    */
   Path resolveSnapshotFile(
       BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, SnapshotKind kind);
+
+  /**
+   * スナップショットのファイルパスから、出力しているオブジェクトの種別を判定する。 <br>
+   * {@link #resolveSnapshotFile}の逆変換。スナップショット同士の比較で、ファイルごとの比較方法を決めるために用いる
+   *
+   * @param snapshotFile スナップショットのファイルパス
+   * @return オブジェクトの種別。スキーマ配下のオブジェクトのファイルでない場合（{@code database.json}等）は空
+   */
+  Optional<SnapshotKind> resolveSnapshotKind(Path snapshotFile);
 }

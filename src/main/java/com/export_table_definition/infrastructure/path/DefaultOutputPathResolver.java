@@ -6,6 +6,7 @@ import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
@@ -160,5 +161,15 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
         .resolve(baseInfo.dbName())
         .resolve(schemaName)
         .resolve(String.format(SNAPSHOT_FILENAME_PATTERN, kind.getFileName()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Optional<SnapshotKind> resolveSnapshotKind(Path snapshotFile) {
+    final String fileName = String.valueOf(snapshotFile.getFileName());
+    return Arrays.stream(SnapshotKind.values())
+        .filter(
+            kind -> fileName.equals(String.format(SNAPSHOT_FILENAME_PATTERN, kind.getFileName())))
+        .findFirst();
   }
 }

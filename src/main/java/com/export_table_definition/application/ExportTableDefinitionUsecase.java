@@ -43,8 +43,14 @@ public interface ExportTableDefinitionUsecase {
   /**
    * DBの現状から生成したドキュメントと、{@code outputPath}配下に既にコミット済みのドキュメントを比較し、 差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド
    * <br>
-   * 内部で一時ディレクトリへ向けて{@link #exportTableDefinition}相当の処理を実行し、 生成結果と{@code
-   * outputPath}配下の既存ファイルをファイル単位で比較する
+   * DBからの取得は{@link #exportTableDefinition}と共通で、生成結果を一時ディレクトリへ出力して比較する。
+   *
+   * <ul>
+   *   <li>{@code outputSnapshot}がtrueの場合: スキーマのスナップショットのみを生成し、 {@code
+   *       outputPath}配下のスナップショットとオブジェクト（テーブル・関数等）単位で比較する。 Markdownの描画・ER図の生成は行わない
+   *   <li>{@code outputSnapshot}がfalseの場合: Markdownのドキュメントを生成し、{@code outputPath}配下の既存ファイルと
+   *       ファイル単位で比較する
+   * </ul>
    *
    * @param targetSchemaList テーブル定義出力対象のスキーマのリスト
    * @param targetTableList テーブル定義出力対象のテーブルのリスト
@@ -53,7 +59,7 @@ public interface ExportTableDefinitionUsecase {
    * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限。0以下の場合は上限なし
    * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト。空の場合は全種別を出力対象とする
    * @param annotationPath 手動付帯情報を記述したサイドカーYAMLのパス。空・未指定の場合はマージを行わない
-   * @param outputSnapshot スキーマのスナップショットを出力する設定か
+   * @param outputSnapshot スキーマのスナップショットを出力する設定か（trueの場合はスナップショット同士を比較する）
    * @return 比較結果
    */
   public DiffResult checkDocumentDiff(

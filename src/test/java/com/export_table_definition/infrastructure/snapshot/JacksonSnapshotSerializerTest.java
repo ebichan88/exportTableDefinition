@@ -6,7 +6,9 @@ import com.export_table_definition.domain.model.snapshot.SequenceSnapshot;
 import com.export_table_definition.domain.model.snapshot.TableSnapshot;
 import com.export_table_definition.domain.model.snapshot.TypeSnapshot;
 import com.export_table_definition.domain.model.type.Cardinality;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +50,21 @@ public class JacksonSnapshotSerializerTest {
     assertFalse(json.contains("\n"));
     assertTrue(json.contains("\"name\":\"区分\""));
     assertTrue(json.contains("\"definition\":\"line1\\nline2\""));
+  }
+
+  @Test
+  @DisplayName("deserialize: serializeで出力した1行を、項目名をキーとするマップへ変換する")
+  void testDeserialize() {
+    var type = new TypeSnapshot("public", "mood", "ENUM", "sad, ok");
+    assertEquals(
+        Map.of("schema", "public", "name", "mood", "category", "ENUM", "definition", "sad, ok"),
+        serializer.deserialize(serializer.serialize(type)));
+  }
+
+  @Test
+  @DisplayName("deserialize: JSONとして解釈できない行は例外とする")
+  void testDeserializeInvalidLine() {
+    assertThrows(UncheckedIOException.class, () -> serializer.deserialize("{broken"));
   }
 
   @Test

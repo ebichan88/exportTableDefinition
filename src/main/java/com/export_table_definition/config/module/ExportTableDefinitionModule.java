@@ -8,6 +8,7 @@ import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
+import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotSerializer;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
@@ -44,5 +45,6 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(ObjectListWriterDomainService.class);
     bind(SchemaSnapshotWriterDomainService.class);
     bind(DocumentDiffDomainService.class);
+    bind(SnapshotDiffDomainService.class);
   }
 }

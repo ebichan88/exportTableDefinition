@@ -107,9 +107,26 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 `ExportTableDefinition.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
 `ExportTableDefinitionController.checkDiff()` → `ExportTableDefinitionUsecaseImpl.checkDocumentDiff()`を呼び出す。
 
-`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、一時ディレクトリへ向けて
-`exportTableDefinition()`をそのまま呼び出した上で、生成結果と`outputPath`配下を
-`DocumentDiffDomainService.compare()`でファイル単位（追加/削除/内容不一致）に比較する。
+`ExportTableDefinitionUsecaseImpl`は、DBからの取得と出力を以下のように分けている。通常実行と`--check`は
+取得処理を共有し、出力形式（private enum `OutputFormat`: `MARKDOWN`/`SNAPSHOT`）だけを切り替える。
+
+- `fetchTargets()`: 一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・
+  サイドカー）を取得し、`ExportTargets`にまとめる
+- `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を出力した後、関数の定義本体をスキーマ単位で、
+  テーブルの詳細情報をスキーマ・チャンク単位で取得し、指定された出力形式で出力する
+
+`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、一時ディレクトリへ向けて`export()`を呼び出した上で、
+生成結果と`outputPath`配下を比較する。比較方法は`outputSnapshot`の設定で切り替わる。
+
+| `outputSnapshot` | 出力形式 | 比較 |
+|---|---|---|
+| `true` | `SNAPSHOT`のみ（Markdownの描画・ER図の生成を行わない） | `SnapshotDiffDomainService.compare()`で`snapshot/`配下を比較。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`: `スキーマ名.名前`、関数は引数を含む）で突き合わせ、追加/削除/内容不一致をオブジェクト単位で報告する。`database.json`等それ以外のファイルはファイル単位 |
+| `false` | `MARKDOWN`のみ | `DocumentDiffDomainService.compare()`でファイル単位（追加/削除/内容不一致）に比較する |
+
+スナップショットは生成日を含まないため、生成日と別の日に`--check`を実行しても差分にならない
+（Markdownは「基本情報」表に作成日を含むため、`outputSnapshot=false`では日付が変わると全ファイルが差分になる）。
+その代わり、スナップショット同士の比較ではMarkdownのみに生じた差分（手作業での編集等）は検知しない。
+
 Writer層・SQL層は出力先パスに一切依存しないため無改修で再利用できる。一時ディレクトリの作成・削除は
 （他のファイル操作と同様に）`FileRepository.createTempDirectory()`/`deleteDirectory()`を介して行い、
 `try-finally`で必ず削除される。

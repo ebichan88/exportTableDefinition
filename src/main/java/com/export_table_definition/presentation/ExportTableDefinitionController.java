@@ -6,7 +6,6 @@ import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ProcessResult;
 import com.google.inject.Inject;
-import java.nio.file.Path;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -92,7 +91,7 @@ public class ExportTableDefinitionController {
    * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
    * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト（空の場合は全種別を出力対象とする）
    * @param annotationPath 手動付帯情報を記述したサイドカーYAMLのパス（空の場合はマージを行わない）
-   * @param outputSnapshot スキーマのスナップショットを出力する設定か
+   * @param outputSnapshot スキーマのスナップショットを出力する設定か（trueの場合はスナップショット同士を比較する）
    * @return 処理結果（比較処理自体の成否と、差分の有無）
    */
   public DiffCheckResultDto checkDiff(
@@ -145,34 +144,34 @@ public class ExportTableDefinitionController {
     final StringBuilder message =
         new StringBuilder(
             "Difference detected between the generated document and the committed document.");
-    appendPathSection(
+    appendSection(
         message,
         lineSeparator,
         "Only in generated document (possibly missing commit):",
         diffResult.onlyInGenerated());
-    appendPathSection(
+    appendSection(
         message,
         lineSeparator,
         "Only in committed document (possibly a stale file):",
         diffResult.onlyInCommitted());
-    appendPathSection(message, lineSeparator, "Content differs:", diffResult.contentDiffer());
+    appendSection(message, lineSeparator, "Content differs:", diffResult.contentDiffer());
     return message.toString();
   }
 
   /**
-   * 差分ファイルの一覧をメッセージへ追記するメソッド。対象が空の場合は何も追記しない
+   * 差分の対象（ファイルパスまたはオブジェクト）の一覧をメッセージへ追記するメソッド。対象が空の場合は何も追記しない
    *
    * @param message 追記先のメッセージ
    * @param lineSeparator 改行文字
    * @param title 区分のタイトル
-   * @param paths 区分に属するファイルパスのリスト
+   * @param targets 区分に属する差分の対象のリスト
    */
-  private void appendPathSection(
-      StringBuilder message, String lineSeparator, String title, List<Path> paths) {
-    if (paths.isEmpty()) {
+  private void appendSection(
+      StringBuilder message, String lineSeparator, String title, List<String> targets) {
+    if (targets.isEmpty()) {
       return;
     }
     message.append(lineSeparator).append(title);
-    paths.forEach(path -> message.append(lineSeparator).append(" - ").append(path));
+    targets.forEach(target -> message.append(lineSeparator).append(" - ").append(target));
   }
 }
