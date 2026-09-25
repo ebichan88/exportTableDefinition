@@ -7,6 +7,6 @@ package com.export_table_definition.domain.model.entity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record TriggerEntity(String schemaName, String tableName, String triggerListInfo, String triggerInfo)
-        implements SchemaTableKeyed {
-}
+public record TriggerEntity(
+    String schemaName, String tableName, String triggerListInfo, String triggerInfo)
+    implements SchemaTableKeyed {}

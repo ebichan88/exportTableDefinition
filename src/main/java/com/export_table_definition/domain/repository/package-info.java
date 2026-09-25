@@ -1,4 +1,2 @@
-/**
- * リポジトリのインターフェースに関するパッケージ
- */
+/** リポジトリのインターフェースに関するパッケージ */
 package com.export_table_definition.domain.repository;

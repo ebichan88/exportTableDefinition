@@ -9,26 +9,26 @@ package com.export_table_definition.domain.model.entity;
  */
 public interface SchemaTableKeyed {
 
-    /**
-     * スキーマ名を取得するメソッド
-     *
-     * @return スキーマ名
-     */
-    String schemaName();
+  /**
+   * スキーマ名を取得するメソッド
+   *
+   * @return スキーマ名
+   */
+  String schemaName();
 
-    /**
-     * テーブル名を取得するメソッド
-     *
-     * @return テーブル名
-     */
-    String tableName();
+  /**
+   * テーブル名を取得するメソッド
+   *
+   * @return テーブル名
+   */
+  String tableName();
 
-    /**
-     * スキーマ.テーブル 形式の名称を取得するメソッド
-     *
-     * @return スキーマ.テーブル 形式の名称
-     */
-    default String getSchemaTableName() {
-        return schemaName() + "." + tableName();
-    }
+  /**
+   * スキーマ.テーブル 形式の名称を取得するメソッド
+   *
+   * @return スキーマ.テーブル 形式の名称
+   */
+  default String getSchemaTableName() {
+    return schemaName() + "." + tableName();
+  }
 }

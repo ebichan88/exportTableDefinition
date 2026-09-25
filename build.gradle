@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.diffplug.spotless' version '8.8.0'
 }
 
 group 'exportTableDefinition'
@@ -76,3 +77,12 @@ javadoc {
 }
 
 build.dependsOn(copyResources)
+
+spotless {
+    java {
+        googleJavaFormat('1.27.0')
+        // static importを第1グループ、それ以外をASCII辞書順の1グループとする
+        importOrder('\\#', '')
+        removeUnusedImports()
+    }
+}

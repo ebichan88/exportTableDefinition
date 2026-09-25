@@ -1,10 +1,9 @@
 package com.export_table_definition.domain.model.collection;
 
-import java.util.List;
-import java.util.Map;
-
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.value.TableKey;
+import java.util.List;
+import java.util.Map;
 
 /**
  * トリガー情報の集合を扱うクラス
@@ -14,19 +13,17 @@ import com.export_table_definition.domain.model.value.TableKey;
  * @author takashi.ebina
  */
 public final class Triggers extends AbstractEntities<TriggerEntity> {
-    private Triggers(Map<TableKey, List<TriggerEntity>> byKey) {
-        super(byKey);
-    }
+  private Triggers(Map<TableKey, List<TriggerEntity>> byKey) {
+    super(byKey);
+  }
 
-    public static Triggers of(List<TriggerEntity> list) {
-        return new Triggers(index(list, c -> TableKey.of(c.schemaName(), c.tableName())));
-    }
+  public static Triggers of(List<TriggerEntity> list) {
+    return new Triggers(index(list, c -> TableKey.of(c.schemaName(), c.tableName())));
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected TableKey extractKey(TriggerEntity e) {
-        return TableKey.of(e.schemaName(), e.tableName());
-    }
+  /** {@inheritDoc} */
+  @Override
+  protected TableKey extractKey(TriggerEntity e) {
+    return TableKey.of(e.schemaName(), e.tableName());
+  }
 }

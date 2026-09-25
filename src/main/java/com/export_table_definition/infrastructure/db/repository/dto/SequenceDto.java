@@ -9,15 +9,19 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record SequenceDto(String dbName, String schemaName, String sequenceName, String sequenceListInfo,
-        String sequenceInfo) {
+public record SequenceDto(
+    String dbName,
+    String schemaName,
+    String sequenceName,
+    String sequenceListInfo,
+    String sequenceInfo) {
 
-    /**
-     * DTOからEntityへの変換メソッド
-     *
-     * @return SequenceEntityのインスタンス
-     */
-    public SequenceEntity toEntity() {
-        return new SequenceEntity(dbName, schemaName, sequenceName, sequenceListInfo, sequenceInfo);
-    }
+  /**
+   * DTOからEntityへの変換メソッド
+   *
+   * @return SequenceEntityのインスタンス
+   */
+  public SequenceEntity toEntity() {
+    return new SequenceEntity(dbName, schemaName, sequenceName, sequenceListInfo, sequenceInfo);
+  }
 }

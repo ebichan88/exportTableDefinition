@@ -7,18 +7,24 @@ package com.export_table_definition.domain.model.entity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record ColumnEntity(String schemaName, String tableName, String columnInfo, String physicalColumnName,
-        String columnType, String primaryKey) implements SchemaTableKeyed {
+public record ColumnEntity(
+    String schemaName,
+    String tableName,
+    String columnInfo,
+    String physicalColumnName,
+    String columnType,
+    String primaryKey)
+    implements SchemaTableKeyed {
 
-    /** 主キーであることを表すマーカー文字列 */
-    private static final String PRIMARY_KEY_MARKER = "○";
+  /** 主キーであることを表すマーカー文字列 */
+  private static final String PRIMARY_KEY_MARKER = "○";
 
-    /**
-     * 主キーであるか判定するメソッド
-     *
-     * @return 主キーの場合はtrue。それ以外の場合はfalse
-     */
-    public boolean isPrimaryKey() {
-        return PRIMARY_KEY_MARKER.equals(primaryKey);
-    }
+  /**
+   * 主キーであるか判定するメソッド
+   *
+   * @return 主キーの場合はtrue。それ以外の場合はfalse
+   */
+  public boolean isPrimaryKey() {
+    return PRIMARY_KEY_MARKER.equals(primaryKey);
+  }
 }

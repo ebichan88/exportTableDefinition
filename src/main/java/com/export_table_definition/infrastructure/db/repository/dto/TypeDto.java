@@ -9,15 +9,20 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record TypeDto(String dbName, String schemaName, String typeName, String typeCategory, String typeListInfo,
-        String definition) {
+public record TypeDto(
+    String dbName,
+    String schemaName,
+    String typeName,
+    String typeCategory,
+    String typeListInfo,
+    String definition) {
 
-    /**
-     * DTOからEntityへの変換メソッド
-     *
-     * @return TypeEntityのインスタンス
-     */
-    public TypeEntity toEntity() {
-        return new TypeEntity(dbName, schemaName, typeName, typeCategory, typeListInfo, definition);
-    }
+  /**
+   * DTOからEntityへの変換メソッド
+   *
+   * @return TypeEntityのインスタンス
+   */
+  public TypeEntity toEntity() {
+    return new TypeEntity(dbName, schemaName, typeName, typeCategory, typeListInfo, definition);
+  }
 }

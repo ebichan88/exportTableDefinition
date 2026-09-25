@@ -19,24 +19,25 @@ import com.google.inject.AbstractModule;
 
 /**
  * 依存関係を管理するクラス
- * 
+ *
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
  */
 public class ExportTableDefinitionModule extends AbstractModule {
 
-    @Override
-    protected void configure() {
-        bind(TableDefinitionRepository.class).to(MyBatisSqlSessionFactory.getConnectionDbName().getRepositoryClass());
-        bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
-        bind(FileRepository.class).to(TableDefinitionFileRepository.class);
-        bind(AnnotationRepository.class).to(AnnotationYamlRepository.class);
-        bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);
-        bind(PagedSectionWriter.class);
-        bind(TableDefinitionWriterDomainService.class);
-        bind(ErDiagramWriterDomainService.class);
-        bind(ObjectListWriterDomainService.class);
-        bind(DocumentDiffDomainService.class);
-    }
+  @Override
+  protected void configure() {
+    bind(TableDefinitionRepository.class)
+        .to(MyBatisSqlSessionFactory.getConnectionDbName().getRepositoryClass());
+    bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
+    bind(FileRepository.class).to(TableDefinitionFileRepository.class);
+    bind(AnnotationRepository.class).to(AnnotationYamlRepository.class);
+    bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);
+    bind(PagedSectionWriter.class);
+    bind(TableDefinitionWriterDomainService.class);
+    bind(ErDiagramWriterDomainService.class);
+    bind(ObjectListWriterDomainService.class);
+    bind(DocumentDiffDomainService.class);
+  }
 }

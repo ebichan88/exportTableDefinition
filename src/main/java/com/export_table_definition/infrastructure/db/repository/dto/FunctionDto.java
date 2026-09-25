@@ -9,15 +9,21 @@ import com.export_table_definition.domain.model.entity.FunctionEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record FunctionDto(String dbName, String schemaName, String functionName, String fileName,
-        String functionListInfo, String definition) {
+public record FunctionDto(
+    String dbName,
+    String schemaName,
+    String functionName,
+    String fileName,
+    String functionListInfo,
+    String definition) {
 
-    /**
-     * DTOからEntityへの変換メソッド
-     *
-     * @return FunctionEntityのインスタンス
-     */
-    public FunctionEntity toEntity() {
-        return new FunctionEntity(dbName, schemaName, functionName, fileName, functionListInfo, definition);
-    }
+  /**
+   * DTOからEntityへの変換メソッド
+   *
+   * @return FunctionEntityのインスタンス
+   */
+  public FunctionEntity toEntity() {
+    return new FunctionEntity(
+        dbName, schemaName, functionName, fileName, functionListInfo, definition);
+  }
 }
