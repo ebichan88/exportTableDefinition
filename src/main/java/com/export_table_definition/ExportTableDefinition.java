@@ -52,9 +52,13 @@ public class ExportTableDefinition {
      */
     public static void main(String[] args) {
         MyBatisSqlSessionFactory.setConnectionOverrides(resolveConnectionOverrides(args));
-        final boolean checkMode = Arrays.asList(args).contains(CHECK_FLAG);
-        new ExportTableDefinition(Guice.createInjector(new ExportTableDefinitionModule())
-                .getInstance(ExportTableDefinitionController.class)).run(checkMode);
+        final ExportTableDefinition exportTableDefinition = new ExportTableDefinition(
+                Guice.createInjector(new ExportTableDefinitionModule()).getInstance(ExportTableDefinitionController.class));
+        if (Arrays.asList(args).contains(CHECK_FLAG)) {
+            exportTableDefinition.runCheck();
+        } else {
+            exportTableDefinition.run();
+        }
     }
 
     /**
@@ -106,47 +110,72 @@ public class ExportTableDefinition {
 
     /**
      * テーブル定義出力処理実行メソッド
-     *
-     * @param checkMode trueの場合、通常のドキュメント出力ではなくDB vs ドキュメントの差分検知モードで実行する
      */
-    void run(boolean checkMode) {
-        // プロパティファイルの読み込み
-        final List<String> schemaList = PropertyLoader.getList("ExportTableDefinition", "schema");
-        final List<String> tableList = PropertyLoader.getList("ExportTableDefinition", "table");
-        final String outputPath = PropertyLoader.getString("ExportTableDefinition", "outputPath");
-        final int chunkSize = PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE);
-        final int erDiagramMaxNodes = PropertyLoader.getInt("ExportTableDefinition", "erDiagramMaxNodes",
-                DEFAULT_ER_DIAGRAM_MAX_NODES);
-        final List<String> outputObjectList = PropertyLoader.getList("ExportTableDefinition", "outputObjects");
-        final String annotationPath = PropertyLoader.getString("ExportTableDefinition", "annotationPath");
-
-        if (checkMode) {
-            // 処理開始メッセージ出力
-            System.out.println("""
-                    Starting check of table definition document diff.
-                    Please wait a moment ...
-                    """);
-            // DB vs ドキュメントの差分検知処理実行
-            final DiffCheckResultDto diffCheckResultDto = controller.checkDiff(schemaList, tableList, outputPath,
-                    chunkSize, erDiagramMaxNodes, outputObjectList, annotationPath);
-            // 処理終了メッセージ出力
-            System.out.println(diffCheckResultDto.getResultMessage());
-            // 比較処理自体が失敗した場合、または差分が見つかった場合は異常終了とする
-            if (diffCheckResultDto.result() == ProcessResult.FAIL || diffCheckResultDto.hasDifference()) {
-                System.exit(1);
-            }
-            return;
-        }
-
+    void run() {
+        final ExecutionSettings settings = loadExecutionSettings();
         // 処理開始メッセージ出力
         System.out.println("""
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
         // テーブル定義出力処理実行
-        final ResultDto resultDto = controller.execute(schemaList, tableList, outputPath, chunkSize,
-                erDiagramMaxNodes, outputObjectList, annotationPath);
+        final ResultDto resultDto = controller.execute(settings.schemaList(), settings.tableList(),
+                settings.outputPath(), settings.chunkSize(), settings.erDiagramMaxNodes(), settings.outputObjectList(),
+                settings.annotationPath());
         // 処理終了メッセージ出力
         System.out.println(resultDto.getResultMessage());
+    }
+
+    /**
+     * DB vs ドキュメントの差分検知処理実行メソッド（{@code --check}モード）
+     */
+    void runCheck() {
+        final ExecutionSettings settings = loadExecutionSettings();
+        // 処理開始メッセージ出力
+        System.out.println("""
+                Starting check of table definition document diff.
+                Please wait a moment ...
+                """);
+        // DB vs ドキュメントの差分検知処理実行
+        final DiffCheckResultDto diffCheckResultDto = controller.checkDiff(settings.schemaList(), settings.tableList(),
+                settings.outputPath(), settings.chunkSize(), settings.erDiagramMaxNodes(), settings.outputObjectList(),
+                settings.annotationPath());
+        // 処理終了メッセージ出力
+        System.out.println(diffCheckResultDto.getResultMessage());
+        // 比較処理自体が失敗した場合、または差分が見つかった場合は異常終了とする
+        if (diffCheckResultDto.result() == ProcessResult.FAIL || diffCheckResultDto.hasDifference()) {
+            System.exit(1);
+        }
+    }
+
+    /**
+     * 実行時設定を{@code conf/ExportTableDefinition.properties}から読み込むメソッド
+     *
+     * @return 読み込んだ実行時設定
+     */
+    private static ExecutionSettings loadExecutionSettings() {
+        return new ExecutionSettings(
+                PropertyLoader.getList("ExportTableDefinition", "schema"),
+                PropertyLoader.getList("ExportTableDefinition", "table"),
+                PropertyLoader.getString("ExportTableDefinition", "outputPath"),
+                PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE),
+                PropertyLoader.getInt("ExportTableDefinition", "erDiagramMaxNodes", DEFAULT_ER_DIAGRAM_MAX_NODES),
+                PropertyLoader.getList("ExportTableDefinition", "outputObjects"),
+                PropertyLoader.getString("ExportTableDefinition", "annotationPath"));
+    }
+
+    /**
+     * {@code conf/ExportTableDefinition.properties}から読み込む実行時設定の組
+     *
+     * @param schemaList        テーブル定義出力対象のスキーマのリスト
+     * @param tableList         テーブル定義出力対象のテーブルのリスト
+     * @param outputPath        テーブル定義出力の出力先のパス
+     * @param chunkSize         詳細情報をまとめて取得するテーブル数の上限
+     * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
+     * @param outputObjectList  出力対象とするPostgreSQL固有オブジェクト種別名のリスト
+     * @param annotationPath    手動付帯情報を記述したサイドカーYAMLのパス
+     */
+    private record ExecutionSettings(List<String> schemaList, List<String> tableList, String outputPath,
+            int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList, String annotationPath) {
     }
 }
