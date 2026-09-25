@@ -1,10 +1,10 @@
-# mymatview
+# project_summary_mv（プロジェクト別要員数集計）
 
 ## 基本情報
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/21|
+|PostgreSQL|testdb|2026/09/25|
 
 ## テーブル説明
 
@@ -12,30 +12,26 @@
 
 | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | 備考 |
 |:---|:---|:---|:---|:---|
-|test_plpgsql||mymatview|materialized_view| |
+|sample|プロジェクト別要員数集計|project_summary_mv|materialized_view||
 
 ## カラム情報
 
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-|1||id|numeric(10,0)|10||| ||
-|2||userid|character varying(10)|10||| ||
-|3||opecode|character varying(10)|10||| ||
-|4||opests|numeric(1,0)|1||| ||
-|5||logmsg|character varying(256)|256||| ||
-|6||accesstime|timestamp(6) without time zone|||| ||
+|1||project_id|integer|||| ||
+|2||project_name|character varying(100)|100||| ||
+|3||member_count|bigint|||| ||
 
 ## ソース
 
 ```sql
 
- SELECT id,
-    userid,
-    opecode,
-    opests,
-    logmsg,
-    accesstime
-   FROM test_plpgsql.accesslog;
+ SELECT p.project_id,
+    p.project_name,
+    count(pa.employee_id) AS member_count
+   FROM (sample.project p
+     LEFT JOIN sample.project_assignment pa ON ((pa.project_id = p.project_id)))
+  GROUP BY p.project_id, p.project_name;
 
 ```
 
@@ -53,8 +49,14 @@
 
 ## 外部キー情報
 
-| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト |
-|:---|:---|:---|:---|:---|
+| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+|:---|:---|:---|:---|:---|:---|
+
+
+## トリガー情報
+
+| No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
+|:---|:---|:---|:---|:---|:---|
 
 
 ## ER図

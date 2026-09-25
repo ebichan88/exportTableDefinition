@@ -141,8 +141,8 @@
         idx.index_type AS index_method, CASE WHEN idx.uniqueness = 'UNIQUE' THEN '○' ELSE '' END AS
         is_unique, CASE WHEN EXISTS ( SELECT 1 FROM all_constraints ac WHERE ac.owner = idx.owner
         AND ac.constraint_type = 'P' AND ac.index_name = idx.index_name ) THEN '○' ELSE '' END AS
-        is_primary, (CASE WHEN idx.uniqueness = 'UNIQUE' THEN 'CREATE UNIQUE INDEX ' ELSE 'CREATE
-        INDEX ' END) || idx.index_name || ' ON ' || idx.table_name || ' (' ||
+        is_primary, (CASE WHEN idx.uniqueness = 'UNIQUE' THEN 'CREATE UNIQUE INDEX ' ELSE 'CREATE INDEX '
+        END) || idx.index_name || ' ON ' || idx.table_name || ' (' ||
         LISTAGG(COALESCE(ie.column_expression, col.column_name), ',') WITHIN GROUP (ORDER BY
         col.column_position) || ')' AS index_definition, '' AS remarks FROM all_indexes idx LEFT
         JOIN all_ind_columns col ON idx.index_name = col.index_name AND idx.owner = col.index_owner
@@ -233,9 +233,11 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap"> WITH ora_fk_columns AS ( --
-        外部キーを構成する列。多重度の判定に用いる。 -- 参照元テーブルが出力対象であれば判定できればよいため、 -- ora_all_foreignkeys
-        のようなシステムスキーマの除外は行わない SELECT ac.owner AS schema_name, ac.table_name AS table_name,
+    <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap"> WITH ora_fk_columns AS (
+        /* 外部キーを構成する列。多重度の判定に用いる。
+           参照元テーブルが出力対象であれば判定できればよいため、ora_all_foreignkeys
+           のようなシステムスキーマの除外は行わない */
+        SELECT ac.owner AS schema_name, ac.table_name AS table_name,
         ac.constraint_name AS foreignkey_name, acc.column_name AS column_name FROM all_constraints
         ac JOIN all_cons_columns acc ON acc.owner = ac.owner AND acc.constraint_name =
         ac.constraint_name WHERE ac.constraint_type = 'R' <if
@@ -248,9 +250,12 @@
                 item="table" index="index" collection="tableList"
                 open="(" separator="," close=")"> #{table} </foreach>
         </if> ),
-        ora_unique_keys AS ( -- 一意性を保証するキーを構成する列。一意索引と、一意索引に支えられない場合がある --
-        主キー制約・一意制約（遅延可能な制約など）の双方から収集する。 -- 関数ベース索引や降順索引の列は SYS_NC00004$ のような内部名となり --
-        外部キー列と一致しないため、自然と判定対象から外れる SELECT ai.table_owner AS schema_name, ai.table_name AS
+        ora_unique_keys AS (
+        /* 一意性を保証するキーを構成する列。一意索引と、一意索引に支えられない場合がある
+           主キー制約・一意制約（遅延可能な制約など）の双方から収集する。
+           関数ベース索引や降順索引の列は SYS_NC00004$ のような内部名となり
+           外部キー列と一致しないため、自然と判定対象から外れる */
+        SELECT ai.table_owner AS schema_name, ai.table_name AS
         table_name, 'I:' || ai.owner || '.' || ai.index_name AS unique_key_id, aic.column_name AS
         column_name FROM all_indexes ai JOIN all_ind_columns aic ON aic.index_owner = ai.owner AND
         aic.index_name = ai.index_name WHERE ai.uniqueness = 'UNIQUE' AND ai.status NOT IN
@@ -258,9 +263,12 @@
         ac.owner || '.' || ac.constraint_name AS unique_key_id, acc.column_name AS column_name FROM
         all_constraints ac JOIN all_cons_columns acc ON acc.owner = ac.owner AND acc.constraint_name
         = ac.constraint_name WHERE ac.constraint_type IN ('P', 'U') AND ac.status = 'ENABLED' AND
-        ac.validated = 'VALIDATED' ), ora_unique_foreignkeys AS ( --
-        外部キー列が一意キーで覆われている外部キー（1件の親に対し子が高々1件となるもの）。 -- 一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、 --
-        列名の一致ではなく包含関係で判定する。 -- 一意キーの列数と、そのうち外部キー列にも現れる列数が等しいことをもって包含とみなす SELECT uk.schema_name AS
+        ac.validated = 'VALIDATED' ), ora_unique_foreignkeys AS (
+        /* 外部キー列が一意キーで覆われている外部キー（1件の親に対し子が高々1件となるもの）。
+           一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、
+           列名の一致ではなく包含関係で判定する。
+           一意キーの列数と、そのうち外部キー列にも現れる列数が等しいことをもって包含とみなす */
+        SELECT uk.schema_name AS
         schema_name, uk.table_name AS table_name, fkc.foreignkey_name AS foreignkey_name FROM
         ora_unique_keys uk JOIN ora_fk_columns fkc ON fkc.schema_name = uk.schema_name AND
         fkc.table_name = uk.table_name GROUP BY uk.schema_name, uk.table_name, uk.unique_key_id,

@@ -1,0 +1,32 @@
+# テーブル定義書へマージする手動付帯情報（サイドカー）のサンプル。
+# conf/ExportTableDefinition.properties の annotationPath にこのファイルのパスを指定すると、
+# テーブル定義書の再生成時に以下の付帯情報がマージされ、手書き情報が上書きで失われるのを防げます。
+#
+# キーは物理名（スキーマ名.物理テーブル名、カラムは物理カラム名）で指定します。
+# ddl.sql では sample.department にDBコメント（COMMENT ON TABLE/COLUMN）を付与していません。
+# ここで論理名の代わりとなる説明・備考を補い、DBコメントとサイドカーの両方の使い分けを
+# サンプルとして示しています。
+tables:
+  sample.department:
+    # 「テーブル説明」セクションへ出力されます（複数行可）。
+    description: |
+      社内の組織単位を管理するマスタテーブル。
+      従業員（employee）は必ずいずれか1つの部署に所属する。
+    # 「テーブル情報」表の備考セルへ出力されます。
+    remarks: 組織改編時はdepartment_codeを変更せず、department_nameのみ更新すること
+    # 物理カラム名をキーに、各カラムの備考を記述します（「カラム情報」表の備考セル）。
+    columns:
+      department_code: 部署コード。他システム連携時のキーとして使用
+      department_name: 部署名称
+  sample.audit_log:
+    description: employeeテーブルの変更を記録する監査ログ。トリガー経由でのみ書き込まれる。
+    remarks: アプリケーションからの直接INSERTは禁止
+    columns:
+      table_name: 変更対象のテーブル名
+      record_id: 変更対象の主キー値
+      action: 変更種別（INSERT / UPDATE / DELETE）
+      changed_by: 変更を行ったDBユーザー
+      # 改行や | を含んでいても、表を崩さないよう自動でエスケープされます。
+      changed_at: |
+        変更日時
+        （サーバータイムゾーン基準 | UTC変換は未実施）
