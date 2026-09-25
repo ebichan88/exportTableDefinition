@@ -79,7 +79,7 @@ public class ObjectListWriterDomainServiceTest {
         new ObjectListWriterDomainService(
             fileRepository,
             new DefaultOutputPathResolver(),
-            new PagedSectionWriter(fileRepository));
+            new PagedSectionWriter(fileRepository, new DefaultOutputPathResolver()));
   }
 
   @Test

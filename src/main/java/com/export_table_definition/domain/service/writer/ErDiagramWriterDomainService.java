@@ -6,8 +6,10 @@ import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
@@ -31,6 +33,9 @@ import org.apache.logging.log4j.Logger;
  * @author takashi.ebina
  */
 public class ErDiagramWriterDomainService {
+
+  /** ER図の分割ページから本体ページへ戻るリンクの表示名 */
+  private static final String ER_DIAGRAM_BACK_LABEL = "ER図へ";
 
   private static final Logger logger = LogManager.getLogger(ErDiagramWriterDomainService.class);
   private final FileRepository fileRepository;
@@ -130,14 +135,9 @@ public class ErDiagramWriterDomainService {
       final PageLayout layout =
           new PageLayout(
               ErDiagramTemplates.schemaFileHeader(schemaName, baseInfo),
-              page ->
-                  outputPathResolver.resolveErDiagramFile(
-                      baseInfo, outputDirectoryPath, schemaName, page),
-              page -> String.format("./erDiagram_%s_%s_%d.md", baseInfo.dbName(), schemaName, page),
-              String.format("./erDiagram_%s_%s.md", baseInfo.dbName(), schemaName),
-              "ER図へ");
+              outputPathResolver.resolveErDiagramFile(baseInfo, outputDirectoryPath, schemaName),
+              ER_DIAGRAM_BACK_LABEL);
       writeErDiagramPage(
-          outputPathResolver.resolveErDiagramFile(baseInfo, outputDirectoryPath, schemaName),
           layout,
           schemaGroup,
           ErDiagramTemplates.schemaFooter(baseInfo),
@@ -183,18 +183,10 @@ public class ErDiagramWriterDomainService {
     final PageLayout layout =
         new PageLayout(
             ErDiagramTemplates.groupFileHeader(schemaName, groupNo, baseInfo),
-            page ->
-                outputPathResolver.resolveErDiagramGroupFile(
-                    baseInfo, outputDirectoryPath, schemaName, groupNo, page),
-            page ->
-                String.format(
-                    "./erDiagram_%s_%s_group%d_%d.md",
-                    baseInfo.dbName(), schemaName, groupNo, page),
-            String.format("./erDiagram_%s_%s_group%d.md", baseInfo.dbName(), schemaName, groupNo),
-            "ER図へ");
+            outputPathResolver.resolveErDiagramGroupFile(
+                baseInfo, outputDirectoryPath, schemaName, groupNo),
+            ER_DIAGRAM_BACK_LABEL);
     writeErDiagramPage(
-        outputPathResolver.resolveErDiagramGroupFile(
-            baseInfo, outputDirectoryPath, schemaName, groupNo),
         layout,
         group,
         ErDiagramTemplates.groupFooter(schemaName, baseInfo),
@@ -208,8 +200,7 @@ public class ErDiagramWriterDomainService {
    * スキーマ全体のページとグループ別のページで本文の構成（図または代替の外部キー一覧）が同じため共通化する。
    * ER図を描画した場合は図中の箱の一覧を、描画を省略した場合は代替として外部キーの一覧を掲載する
    *
-   * @param filePath 出力先のファイルパス
-   * @param layout ファイルヘッダーと、一覧が長い場合の分割ページの配置
+   * @param layout 出力先のファイルパスとファイルヘッダー（一覧が長い場合の分割ページと共通）
    * @param group 当該ページに描画する外部キーのまとまり
    * @param footer フッター
    * @param tableByKey テーブルキーをキー、テーブル情報を値とするマップ
@@ -217,7 +208,6 @@ public class ErDiagramWriterDomainService {
    * @param baseInfo データベースの基本情報
    */
   private void writeErDiagramPage(
-      Path filePath,
       PageLayout layout,
       ForeignKeyGroup group,
       String footer,
@@ -244,8 +234,8 @@ public class ErDiagramWriterDomainService {
             pagedSectionWriter.writePagedSection(detail, layout), // 掲載テーブル または 外部キー一覧
             footer // フッター
             );
-    fileRepository.writeFile(filePath, contents);
-    logger.debug("exportErDiagram complete. [filePath={}]", filePath.toString());
+    fileRepository.writeFile(layout.file(), contents);
+    logger.debug("exportErDiagram complete. [filePath={}]", layout.file());
   }
 
   /**
@@ -278,8 +268,9 @@ public class ErDiagramWriterDomainService {
                       group.nodeCount(),
                       group.foreignKeys().size(),
                       group.mainTable(),
-                      String.format(
-                          "./erDiagram_%s_%s_group%d.md", baseInfo.dbName(), schemaName, groupNo)));
+                      DocumentLocations.linkFromBase(
+                          DocumentLocations.erDiagramGroupFile(
+                              baseInfo.dbName(), schemaName, groupNo))));
             });
     final List<String> contents =
         List.of(
@@ -315,23 +306,18 @@ public class ErDiagramWriterDomainService {
             ErDiagramTemplates::foreignKeyTableLine);
     final PageLayout layout =
         new PageLayout(
-            ErDiagramTemplates.fileHeader("ER図一覧", baseInfo),
-            page ->
-                outputPathResolver.resolveObjectListFile(
-                    baseInfo, outputDirectoryPath, "erDiagram", page),
-            page -> String.format("./erDiagramList_%s_%d.md", baseInfo.dbName(), page),
-            String.format("./erDiagramList_%s.md", baseInfo.dbName()),
-            "ER図一覧へ");
+            ErDiagramTemplates.fileHeader(ListDocumentType.ER_DIAGRAM.getTitle(), baseInfo),
+            outputPathResolver.resolveListFile(
+                baseInfo, outputDirectoryPath, ListDocumentType.ER_DIAGRAM),
+            ListDocumentType.ER_DIAGRAM.getBackLinkLabel());
     final List<String> contents =
         List.of(
-            ErDiagramTemplates.fileHeader("ER図一覧", baseInfo), // ヘッダー
+            layout.fileHeader(), // ヘッダー
             ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
             ErDiagramTemplates.schemaIndex(baseInfo, tablesBySchema), // スキーマ別ER図へのリンク
             pagedSectionWriter.writePagedSection(crossSchemaSection, layout), // スキーマ跨ぎの外部キー
             ErDiagramTemplates.indexFooter(baseInfo) // フッター
             );
-    fileRepository.writeFile(
-        outputPathResolver.resolveObjectListFile(baseInfo, outputDirectoryPath, "erDiagram"),
-        contents);
+    fileRepository.writeFile(layout.file(), contents);
   }
 }

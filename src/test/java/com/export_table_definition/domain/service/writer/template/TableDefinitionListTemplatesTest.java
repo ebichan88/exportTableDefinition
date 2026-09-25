@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.testsupport.MarkdownAssert;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -80,22 +80,21 @@ public class TableDefinitionListTemplatesTest {
   }
 
   @Test
-  @DisplayName("relatedDocuments: 空マップ → 空文字")
+  @DisplayName("relatedDocuments: 空リスト → 空文字")
   void relatedDocuments_empty() {
     MarkdownAssert.assertMarkdownEquals(
-        "", TableDefinitionListTemplates.relatedDocuments(baseInfo(), Map.of()));
+        "", TableDefinitionListTemplates.relatedDocuments(baseInfo(), List.of()));
   }
 
   @Test
-  @DisplayName("relatedDocuments: 挿入順にリンクを列挙する")
+  @DisplayName("relatedDocuments: 指定された順に一覧へのリンクを列挙する")
   void relatedDocuments_entries() {
-    Map<String, String> entries = new LinkedHashMap<>();
-    entries.put("関数・プロシージャ一覧", "function");
-    entries.put("トリガー一覧", "trigger");
-    String section = TableDefinitionListTemplates.relatedDocuments(baseInfo(), entries);
+    String section =
+        TableDefinitionListTemplates.relatedDocuments(
+            baseInfo(), List.of(ListDocumentType.FUNCTION, ListDocumentType.TRIGGER));
     assertTrue(section.startsWith("## 関連ドキュメント"));
     assertTrue(section.contains("* [関数・プロシージャ一覧](./functionList_TEST_DB.md)"));
     assertTrue(section.contains("* [トリガー一覧](./triggerList_TEST_DB.md)"));
-    assertTrue(section.indexOf("functionList") < section.indexOf("triggerList"), "挿入順が保持される");
+    assertTrue(section.indexOf("functionList") < section.indexOf("triggerList"), "指定された順が保持される");
   }
 }

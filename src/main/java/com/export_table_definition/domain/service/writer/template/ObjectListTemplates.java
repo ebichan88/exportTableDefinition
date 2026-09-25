@@ -7,6 +7,8 @@ import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 
 /**
  * トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧書き込みに利用する Markdownのテンプレートを扱うクラス<br>
@@ -138,7 +140,11 @@ public class ObjectListTemplates {
         + "|"
         + function.languageName()
         + "|"
-        + objectLink(function.dbName(), function.schemaName(), "function", function.fileName())
+        + objectLink(
+            function.dbName(),
+            function.schemaName(),
+            ListDocumentType.FUNCTION,
+            function.fileName())
         + "|"
         + LINE_SEPARATOR;
   }
@@ -172,7 +178,11 @@ public class ObjectListTemplates {
         + "|"
         + sequence.ownedBy()
         + "|"
-        + objectLink(sequence.dbName(), sequence.schemaName(), "sequence", sequence.sequenceName())
+        + objectLink(
+            sequence.dbName(),
+            sequence.schemaName(),
+            ListDocumentType.SEQUENCE,
+            sequence.sequenceName())
         + "|"
         + LINE_SEPARATOR;
   }
@@ -197,25 +207,27 @@ public class ObjectListTemplates {
         + "|"
         + MarkdownTemplateSupport.escapePipe(type.definition())
         + "|"
-        + objectLink(type.dbName(), type.schemaName(), "type", type.typeName())
+        + objectLink(type.dbName(), type.schemaName(), ListDocumentType.TYPE, type.typeName())
         + "|"
         + LINE_SEPARATOR;
   }
 
   /**
    * オブジェクトの個別定義ファイルへのリンクをMarkdownのリンク記法で表す文字列を生成するメソッド<br>
-   * 関数/プロシージャ・シーケンス・ユーザー定義型の個別定義ファイルは出力ベースディレクトリ直下に配置されるため、 {@code
-   * ./{DB名}/{スキーマ名}/{区分}/{ファイル名}.md}となる
+   * 一覧は出力ベースディレクトリ直下に配置されるため、出力ベースディレクトリからの相対パスで参照する
    *
    * @param dbName データベース名
    * @param schemaName スキーマ名
-   * @param prefix オブジェクトの区分（function/sequence/type）
+   * @param kind オブジェクトの区分（関数・プロシージャ／シーケンス／ユーザー定義型）
    * @param fileName 個別定義ファイル名（拡張子を除く）
    * @return オブジェクトの個別定義ファイルへのリンク文字列
    */
   private static String objectLink(
-      String dbName, String schemaName, String prefix, String fileName) {
-    return String.format("[■](./%s/%s/%s/%s.md)", dbName, schemaName, prefix, fileName);
+      String dbName, String schemaName, ListDocumentType kind, String fileName) {
+    return "[■]("
+        + DocumentLocations.linkFromBase(
+            DocumentLocations.schemaObjectFile(dbName, schemaName, kind, fileName))
+        + ")";
   }
 
   /**
@@ -227,6 +239,10 @@ public class ObjectListTemplates {
    */
   public static String footer(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.pageFooter(
-        null, null, String.format("./tableList_%s.md", baseInfo.dbName()), "テーブル一覧へ");
+        null,
+        null,
+        DocumentLocations.linkFromBase(
+            DocumentLocations.listFile(ListDocumentType.TABLE, baseInfo.dbName())),
+        ListDocumentType.TABLE.getBackLinkLabel());
   }
 }

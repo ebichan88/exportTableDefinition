@@ -30,7 +30,8 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フローは以�
 - ファイルI/O（読み書き・一覧取得・一時ディレクトリ作成／削除等）は必ず`domain.repository.FileRepository`経由で行い、
   `application`/`domain`層で`java.nio.file.Files`を直接呼ばない。出力先パスの組み立てやデフォルト値解決
   （未指定時のフォールバック等）は必ず`domain.service.path.OutputPathResolver`経由で行い、`application`層で
-  パス文字列を直接組み立てない。既存の抽象化を素通りする実装が増えるとテストが実ディスクI/Oに依存し始め、
+  パス文字列を直接組み立てない。Markdownのファイル名やドキュメント間の相対リンクも、テンプレート・Writerで
+  `String.format`等により直接組み立てず、`domain.service.path.DocumentLocations`の規則を使う。既存の抽象化を素通りする実装が増えるとテストが実ディスクI/Oに依存し始め、
   レイヤーの意図も崩れるため、新規ロジックを追加する前にまずこの2つのIFで足りないか確認すること。
 - `tableDefinitionMapper.xml` やドメイン層（エンティティ・テンプレート・ER図生成ロジック等）を変更した後は、
   `verify` スキル（`.claude/skills/verify/SKILL.md`）に従って実際に出力結果を確認すること。

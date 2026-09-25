@@ -8,7 +8,9 @@ import com.export_table_definition.domain.model.collection.ForeignKeyGroup;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.model.value.TableKey;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -98,11 +100,12 @@ public class ErDiagramTemplates {
         (schemaName, tables) ->
             sb.append(
                     String.format(
-                        "| %d | %s | %d | [■](./%s) |",
+                        "| %d | %s | %d | [■](%s) |",
                         ++no[0],
                         schemaName,
                         tables.size(),
-                        erDiagramFileName(baseInfo, schemaName)))
+                        DocumentLocations.linkFromBase(
+                            DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName))))
                 .append(LINE_SEPARATOR));
     return sb.append(LINE_SEPARATOR).toString();
   }
@@ -220,8 +223,10 @@ public class ErDiagramTemplates {
     return HORIZON
         + LINE_SEPARATOR_DOUBLE
         + String.format(
-            "[スキーマのER図へ](./erDiagram_%s_%s.md) [ER図一覧へ](./erDiagramList_%s.md) [テーブル一覧へ](./tableList_%s.md)",
-            baseInfo.dbName(), schemaName, baseInfo.dbName(), baseInfo.dbName())
+            "[スキーマのER図へ](%s) ",
+            DocumentLocations.linkFromBase(
+                DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName)))
+        + listLinks(baseInfo)
         + LINE_SEPARATOR;
   }
 
@@ -262,13 +267,14 @@ public class ErDiagramTemplates {
           + LINE_SEPARATOR;
     }
     return String.format(
-            "| %d | %s | %s | %s | %s | [■](./%s) |",
+            "| %d | %s | %s | %s | %s | [■](%s) |",
             no,
             table.schemaName(),
             table.physicalTableName(),
             Objects.toString(table.logicalTableName(), ""),
             table.tableType(),
-            tableDefinitionPath(table))
+            DocumentLocations.linkFromBase(
+                DocumentLocations.tableDefinitionFile(table.dbName(), table)))
         + LINE_SEPARATOR;
   }
 
@@ -324,12 +330,7 @@ public class ErDiagramTemplates {
    * @return フッター文字列
    */
   public static String schemaFooter(BaseInfoEntity baseInfo) {
-    return HORIZON
-        + LINE_SEPARATOR_DOUBLE
-        + String.format(
-            "[ER図一覧へ](./erDiagramList_%s.md) [テーブル一覧へ](./tableList_%s.md)",
-            baseInfo.dbName(), baseInfo.dbName())
-        + LINE_SEPARATOR;
+    return HORIZON + LINE_SEPARATOR_DOUBLE + listLinks(baseInfo) + LINE_SEPARATOR;
   }
 
   /**
@@ -340,32 +341,37 @@ public class ErDiagramTemplates {
    */
   public static String indexFooter(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.pageFooter(
-        null, null, String.format("./tableList_%s.md", baseInfo.dbName()), "テーブル一覧へ");
+        null,
+        null,
+        listLink(ListDocumentType.TABLE, baseInfo),
+        ListDocumentType.TABLE.getBackLinkLabel());
   }
 
   /**
-   * スキーマ別ER図のファイル名を生成するメソッド<br>
-   * 索引ページからのリンク生成に利用する（実際の出力パスはOutputPathResolverが解決する）
+   * ER図一覧・テーブル一覧へ戻るリンクを並べた文字列を生成するメソッド
    *
    * @param baseInfo データベース基本情報
-   * @param schemaName スキーマ名
-   * @return スキーマ別ER図のファイル名
+   * @return ER図一覧・テーブル一覧へのリンク
    */
-  private static String erDiagramFileName(BaseInfoEntity baseInfo, String schemaName) {
-    return String.format("erDiagram_%s_%s.md", baseInfo.dbName(), schemaName);
+  private static String listLinks(BaseInfoEntity baseInfo) {
+    return String.format(
+        "[%s](%s) [%s](%s)",
+        ListDocumentType.ER_DIAGRAM.getBackLinkLabel(),
+        listLink(ListDocumentType.ER_DIAGRAM, baseInfo),
+        ListDocumentType.TABLE.getBackLinkLabel(),
+        listLink(ListDocumentType.TABLE, baseInfo));
   }
 
   /**
-   * テーブル定義書への相対パスを生成するメソッド<br>
-   * ER図は出力ベースディレクトリ直下に配置されるため、{@code ./{DB名}/{スキーマ名}/{区分}/{物理テーブル名}.md}となる
+   * 一覧への相対リンクを生成するメソッド<br>
+   * ER図は出力ベースディレクトリ直下に配置される
    *
-   * @param table テーブル情報
-   * @return テーブル定義書への相対パス
+   * @param type 一覧の種別
+   * @param baseInfo データベース基本情報
+   * @return 一覧への相対リンク
    */
-  private static String tableDefinitionPath(TableEntity table) {
-    return String.format(
-        "%s/%s/%s/%s.md",
-        table.dbName(), table.schemaName(), table.tableType(), table.physicalTableName());
+  private static String listLink(ListDocumentType type, BaseInfoEntity baseInfo) {
+    return DocumentLocations.linkFromBase(DocumentLocations.listFile(type, baseInfo.dbName()));
   }
 
   /**

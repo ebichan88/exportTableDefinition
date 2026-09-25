@@ -83,6 +83,18 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 （1枚の図のノード算出・上限超過の判定）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
 まとめ直し）、`domain.model.type.Cardinality`（多重度判定）が中心。
 
+## 出力ファイルの命名規則と相対リンク
+
+Markdownドキュメントのファイル名・配置（一覧・ER図は出力ベースディレクトリ直下、テーブル定義書・関数等の個別定義書は
+`{DB名}/{スキーマ名}/{区分}/`配下）は`domain.service.path.DocumentLocations`に一元化している。
+出力先の絶対パス（`OutputPathResolver`の実装）と、ドキュメント間の相対リンク（`domain.service.writer.template`）の
+双方がこの規則を参照するため、ファイル名を変更してもパスとリンクが食い違わない。一覧の種別ごとの接頭辞・タイトルは
+`domain.model.type.ListDocumentType`が持つ。
+
+行数の多い表を分割した分割ページは、本体ページと同じディレクトリに`{本体ページのファイル名}_{ページ番号}.md`として
+置く（`OutputPathResolver.resolvePageFile`）。`PagedSectionWriter`は本体ページのパスのみを受け取り、分割ページの
+パスとページ間のリンクをそこから導く。
+
 ## スキーマのスナップショット（中間表現）
 
 Markdownと同じ取得結果から、常にスキーマ情報を構造化したスナップショット（JSON Lines）を

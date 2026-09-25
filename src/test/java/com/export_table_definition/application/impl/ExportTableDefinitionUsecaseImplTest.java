@@ -201,7 +201,8 @@ public class ExportTableDefinitionUsecaseImplTest {
     fileRepository = new InMemoryFileRepository();
     repository = new RecordingRepository(new BaseInfoEntity("testdb", "pg", "2026-09-24"));
     final DefaultOutputPathResolver pathResolver = new DefaultOutputPathResolver();
-    final PagedSectionWriter pagedSectionWriter = new PagedSectionWriter(fileRepository);
+    final PagedSectionWriter pagedSectionWriter =
+        new PagedSectionWriter(fileRepository, pathResolver);
     final TableDefinitionWriterDomainService writer =
         new TableDefinitionWriterDomainService(fileRepository, pathResolver, pagedSectionWriter);
     final ErDiagramWriterDomainService erDiagramWriter =

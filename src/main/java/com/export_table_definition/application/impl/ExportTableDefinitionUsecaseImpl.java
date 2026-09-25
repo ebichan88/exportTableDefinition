@@ -18,6 +18,7 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.model.type.OutputObjectType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
@@ -31,6 +32,7 @@ import com.export_table_definition.domain.service.writer.ObjectListWriterDomainS
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.google.inject.Inject;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -271,7 +273,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       ExportTargets targets, Path outputBaseDir, int erDiagramMaxNodes) {
     final BaseInfoEntity baseInfoEntity = targets.baseInfo();
     // テーブル一覧の関連ドキュメント導線（存在するカテゴリのみ）
-    final Map<String, String> relatedDocuments =
+    final List<ListDocumentType> relatedDocuments =
         buildRelatedDocuments(
             targets.tables(),
             targets.triggers(),
@@ -511,29 +513,29 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @param functions 関数・プロシージャ情報のリスト
    * @param sequences シーケンス情報のリスト
    * @param types ユーザー定義型情報のリスト
-   * @return リンク表示名をキー、一覧ファイル名の接頭辞を値とするマップ（挿入順を保持する）
+   * @return リンクを掲載する一覧の種別（掲載順）
    */
-  private Map<String, String> buildRelatedDocuments(
+  private List<ListDocumentType> buildRelatedDocuments(
       List<TableEntity> tables,
       List<TriggerEntity> triggers,
       List<FunctionEntity> functions,
       List<SequenceEntity> sequences,
       List<TypeEntity> types) {
-    final Map<String, String> relatedDocuments = new LinkedHashMap<>();
+    final List<ListDocumentType> relatedDocuments = new ArrayList<>();
     if (!tables.isEmpty()) {
-      relatedDocuments.put("ER図一覧", "erDiagram");
+      relatedDocuments.add(ListDocumentType.ER_DIAGRAM);
     }
     if (!functions.isEmpty()) {
-      relatedDocuments.put("関数・プロシージャ一覧", "function");
+      relatedDocuments.add(ListDocumentType.FUNCTION);
     }
     if (!sequences.isEmpty()) {
-      relatedDocuments.put("シーケンス一覧", "sequence");
+      relatedDocuments.add(ListDocumentType.SEQUENCE);
     }
     if (!types.isEmpty()) {
-      relatedDocuments.put("ユーザー定義型一覧", "type");
+      relatedDocuments.add(ListDocumentType.TYPE);
     }
     if (!triggers.isEmpty()) {
-      relatedDocuments.put("トリガー一覧", "trigger");
+      relatedDocuments.add(ListDocumentType.TRIGGER);
     }
     return relatedDocuments;
   }

@@ -77,7 +77,7 @@ public class ErDiagramWriterDomainServiceTest {
         new ErDiagramWriterDomainService(
             fileRepository,
             new DefaultOutputPathResolver(),
-            new PagedSectionWriter(fileRepository));
+            new PagedSectionWriter(fileRepository, new DefaultOutputPathResolver()));
   }
 
   private BaseInfoEntity baseInfo() {

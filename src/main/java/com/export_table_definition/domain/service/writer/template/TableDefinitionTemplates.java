@@ -11,6 +11,8 @@ import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -385,7 +387,11 @@ public class TableDefinitionTemplates {
    */
   public static String footer(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.pageFooter(
-        null, null, String.format("../../../tableList_%s.md", baseInfo.dbName()), "テーブル一覧へ");
+        null,
+        null,
+        DocumentLocations.linkFromDefinition(
+            DocumentLocations.listFile(ListDocumentType.TABLE, baseInfo.dbName())),
+        ListDocumentType.TABLE.getBackLinkLabel());
   }
 
   /**
