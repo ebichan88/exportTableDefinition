@@ -17,7 +17,7 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `application` | `ExportTableDefinitionUsecase` | テーブル定義出力ユースケースのインターフェース（通常出力`exportTableDefinition`／差分検知`checkDocumentDiff`） |
-| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔）。取得（`fetchTargets`）と出力（`export`）を分け、出力形式（Markdown/スナップショット）を切り替えられる。`checkDocumentDiff`は一時ディレクトリへ出力し、`outputSnapshot`に応じて`SnapshotDiffDomainService`（スナップショットのみ生成）または`DocumentDiffDomainService`（Markdownのみ生成）で比較する |
+| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔）。取得（`fetchTargets`）と出力（`export`）を分け、出力形式（Markdown/スナップショット）を切り替えられる。`checkDocumentDiff`は`SNAPSHOT`形式のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 
 ## domain層
 
@@ -48,10 +48,9 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `domain.service` | `DocumentDiffDomainService` | 生成ドキュメントとコミット済みドキュメントをファイル単位（追加/削除/内容不一致）で比較する（`--check`モードで使用） |
 | `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF |
 | `domain.service.snapshot` | `SchemaSnapshotWriterDomainService` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
-| | `SnapshotDiffDomainService` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`outputSnapshot=true`の`--check`モードで使用） |
+| | `SnapshotDiffDomainService` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`--check`モードで使用） |
 | | `SnapshotSerializer` | スナップショットのrecordとJSON文字列の変換IF（実装はインフラ層） |
 | `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
 | | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
