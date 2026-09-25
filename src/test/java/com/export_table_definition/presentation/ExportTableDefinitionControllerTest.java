@@ -3,6 +3,7 @@ package com.export_table_definition.presentation;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
@@ -159,11 +160,22 @@ public class ExportTableDefinitionControllerTest {
   }
 
   @Test
-  @DisplayName("checkDiff: 差分が見つかった場合はSUCCESSかつhasDifference=trueを返し、差分ファイルをメッセージに含める")
+  @DisplayName("checkDiff: 差分が見つかった場合はSUCCESSかつhasDifference=trueを返し、差分対象とunified diffをメッセージに含める")
   void testCheckDiffWithDifferenceReturnsSuccessWithDifference() {
     var usecase = new RecordingUsecase();
     usecase.diffResultToReturn =
-        new DiffResult(List.of("new.md"), List.of("stale.md"), List.of("changed.md"));
+        new DiffResult(
+            List.of("new.md"),
+            List.of("stale.md"),
+            List.of(
+                new ContentDiff(
+                    "table public.changed",
+                    List.of(
+                        "--- committed/t.jsonl",
+                        "+++ generated/t.jsonl",
+                        "@@ -1 +1 @@",
+                        "-old",
+                        "+new"))));
     var controller = new ExportTableDefinitionController(usecase);
 
     DiffCheckResultDto result =
@@ -173,7 +185,12 @@ public class ExportTableDefinitionControllerTest {
     assertTrue(result.hasDifference());
     assertTrue(result.message().contains("new.md"));
     assertTrue(result.message().contains("stale.md"));
-    assertTrue(result.message().contains("changed.md"));
+    assertTrue(result.message().contains("table public.changed"));
+    assertTrue(result.message().contains("--- committed/t.jsonl"));
+    assertTrue(result.message().contains("+++ generated/t.jsonl"));
+    assertTrue(result.message().contains("@@ -1 +1 @@"));
+    assertTrue(result.message().contains("-old"));
+    assertTrue(result.message().contains("+new"));
   }
 
   @Test

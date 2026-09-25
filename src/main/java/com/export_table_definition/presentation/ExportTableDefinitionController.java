@@ -1,6 +1,7 @@
 package com.export_table_definition.presentation;
 
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
@@ -18,6 +19,12 @@ import org.apache.logging.log4j.Logger;
  * @author takashi.ebina
  */
 public class ExportTableDefinitionController {
+
+  /** 差分メッセージに含めるunified diffの行数の上限（オブジェクト単位）。超えた分は残り行数のみ表示する */
+  private static final int MAX_DIFF_LINES_PER_TARGET = 200;
+
+  /** 差分メッセージに含めるunified diffの行数の上限（全体合計）。超えた場合、それ以降のオブジェクトの差分本体は省略する */
+  private static final int MAX_DIFF_LINES_TOTAL = 2000;
 
   private static final Logger logger = LogManager.getLogger(ExportTableDefinitionController.class);
   private final ExportTableDefinitionUsecase exportTableDefinitionUsecase;
@@ -148,7 +155,12 @@ public class ExportTableDefinitionController {
         lineSeparator,
         "Only in committed document (possibly a stale file):",
         diffResult.onlyInCommitted());
-    appendSection(message, lineSeparator, "Content differs:", diffResult.contentDiffer());
+    appendSection(
+        message,
+        lineSeparator,
+        "Content differs:",
+        diffResult.contentDiffer().stream().map(ContentDiff::target).toList());
+    appendContentDiffs(message, lineSeparator, diffResult.contentDiffer());
     return message.toString();
   }
 
@@ -167,5 +179,44 @@ public class ExportTableDefinitionController {
     }
     message.append(lineSeparator).append(title);
     targets.forEach(target -> message.append(lineSeparator).append(" - ").append(target));
+  }
+
+  /**
+   * 内容が一致しないオブジェクトについて、unified diff本体をメッセージへ追記するメソッド<br>
+   * 1オブジェクトあたり{@value #MAX_DIFF_LINES_PER_TARGET}行、全体で{@value #MAX_DIFF_LINES_TOTAL}行を上限とし、
+   * 超えた分は省略した旨のみ表示する（対象自体は{@link #buildDiffMessage}が組み立てる「Content differs:」の一覧に
+   * すべて含まれるため、見落としにはならない）
+   *
+   * @param message 追記先のメッセージ
+   * @param lineSeparator 改行文字
+   * @param contentDiffer 内容が一致しないものの一覧
+   */
+  private void appendContentDiffs(
+      StringBuilder message, String lineSeparator, List<ContentDiff> contentDiffer) {
+    int remainingBudget = MAX_DIFF_LINES_TOTAL;
+    for (int i = 0; i < contentDiffer.size(); i++) {
+      if (remainingBudget <= 0) {
+        message
+            .append(lineSeparator)
+            .append("(diff omitted for ")
+            .append(contentDiffer.size() - i)
+            .append(" more objects)");
+        break;
+      }
+      final List<String> unifiedDiff = contentDiffer.get(i).unifiedDiff();
+      final int shown =
+          Math.min(Math.min(MAX_DIFF_LINES_PER_TARGET, remainingBudget), unifiedDiff.size());
+      for (int j = 0; j < shown; j++) {
+        message.append(lineSeparator).append(unifiedDiff.get(j));
+      }
+      if (shown < unifiedDiff.size()) {
+        message
+            .append(lineSeparator)
+            .append("... (")
+            .append(unifiedDiff.size() - shown)
+            .append(" more lines)");
+      }
+      remainingBudget -= shown;
+    }
   }
 }

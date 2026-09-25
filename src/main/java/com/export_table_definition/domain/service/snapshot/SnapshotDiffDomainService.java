@@ -1,8 +1,10 @@
 package com.export_table_definition.domain.service.snapshot;
 
+import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.google.inject.Inject;
 import java.nio.file.Path;
@@ -17,7 +19,9 @@ import java.util.function.Predicate;
 /**
  * DBから生成したスキーマのスナップショットと、既にコミット済みのスナップショットを比較するドメインサービス<br>
  * スキーマ配下のオブジェクトのファイル（{@code tables.jsonl}等）は1行1オブジェクトのため、行をオブジェクト単位で突き合わせ、 追加/削除/内容不一致をオブジェクト単位（例:
- * {@code table sample.employee}）で報告する。 それ以外のファイル（{@code database.json}等）はファイル単位で比較する
+ * {@code table sample.employee}）で報告する。 それ以外のファイル（{@code database.json}等）はファイル単位で比較する。
+ * 内容が一致しないものは、{@link SnapshotSerializer#formatForDiff}で差分表示用に整形した上で {@link
+ * UnifiedDiffGenerator}によりunified diff形式の差分を付ける
  *
  * @since 1.0
  * @version 1.0
@@ -32,6 +36,7 @@ public class SnapshotDiffDomainService {
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final SnapshotSerializer serializer;
+  private final UnifiedDiffGenerator diffGenerator;
 
   /**
    * コンストラクタ
@@ -39,15 +44,18 @@ public class SnapshotDiffDomainService {
    * @param fileRepository ファイルリポジトリ
    * @param outputPathResolver 出力パス解決クラス
    * @param serializer スナップショットのJSON変換を行うクラス
+   * @param diffGenerator unified diffを生成するクラス
    */
   @Inject
   public SnapshotDiffDomainService(
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver,
-      SnapshotSerializer serializer) {
+      SnapshotSerializer serializer,
+      UnifiedDiffGenerator diffGenerator) {
     this.fileRepository = fileRepository;
     this.outputPathResolver = outputPathResolver;
     this.serializer = serializer;
+    this.diffGenerator = diffGenerator;
   }
 
   /**
@@ -63,11 +71,60 @@ public class SnapshotDiffDomainService {
     return new DiffResult(
         labels(generated, target -> !committed.containsKey(target)),
         labels(committed, target -> !generated.containsKey(target)),
-        labels(
-            generated,
+        contentDiffs(generated, committed));
+  }
+
+  /**
+   * 両方に存在するが内容が一致しないものについて、unified diff付きの差分を組み立てるメソッド
+   *
+   * @param generated 生成側のインデックス
+   * @param committed コミット側のインデックス
+   * @return 内容が一致しないものの一覧（表示名順）
+   */
+  private List<ContentDiff> contentDiffs(
+      Map<Target, List<String>> generated, Map<Target, List<String>> committed) {
+    return generated.keySet().stream()
+        .filter(
             target ->
                 committed.containsKey(target)
-                    && !generated.get(target).equals(committed.get(target))));
+                    && !generated.get(target).equals(committed.get(target)))
+        .sorted(TARGET_ORDER)
+        .map(
+            target ->
+                new ContentDiff(
+                    target.label(),
+                    diffGenerator.generate(
+                        sideLabel("committed", target),
+                        formatForDiff(committed.get(target)),
+                        sideLabel("generated", target),
+                        formatForDiff(generated.get(target)))))
+        .toList();
+  }
+
+  /**
+   * 差分の対象の生の行（スナップショットの1行、または{@code database.json}等の全行）を、 {@link
+   * SnapshotSerializer#formatForDiff}で差分表示用に整形するメソッド
+   *
+   * @param rawLines 生の行のリスト
+   * @return 整形した行のリスト
+   */
+  private List<String> formatForDiff(List<String> rawLines) {
+    return rawLines.stream().flatMap(line -> serializer.formatForDiff(line).stream()).toList();
+  }
+
+  /**
+   * unified diffの{@code ---}/{@code +++}ヘッダに用いるラベルを組み立てるメソッド<br>
+   * オブジェクト単位で比較するもの（{@code tables.jsonl}等）は{@code committed/相対パス (表示名)}、 ファイル単位で比較するもの（{@code
+   * database.json}等）は表示名がファイルパスそのものであるため{@code committed/相対パス}のみとする
+   *
+   * @param side {@code committed}または{@code generated}
+   * @param target 差分の対象
+   * @return ラベル
+   */
+  private String sideLabel(String side, Target target) {
+    final String relativeFile = target.file().toString();
+    final String suffix = relativeFile.equals(target.label()) ? "" : " (" + target.label() + ")";
+    return side + "/" + relativeFile + suffix;
   }
 
   /**

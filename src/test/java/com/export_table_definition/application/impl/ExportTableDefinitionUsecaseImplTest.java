@@ -2,6 +2,7 @@ package com.export_table_definition.application.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.annotation.Sidecar;
@@ -21,6 +22,7 @@ import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
+import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
@@ -215,7 +217,8 @@ public class ExportTableDefinitionUsecaseImplTest {
     final SchemaSnapshotWriterDomainService snapshotWriter =
         new SchemaSnapshotWriterDomainService(fileRepository, pathResolver, serializer);
     final SnapshotDiffDomainService snapshotDiffDomainService =
-        new SnapshotDiffDomainService(fileRepository, pathResolver, serializer);
+        new SnapshotDiffDomainService(
+            fileRepository, pathResolver, serializer, new UnifiedDiffGenerator());
     usecase =
         new ExportTableDefinitionUsecaseImpl(
             repository,
@@ -906,7 +909,13 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     assertEquals(List.of("table public.added"), result.onlyInGenerated());
     assertEquals(List.of("table public.dropped"), result.onlyInCommitted());
-    assertEquals(List.of("table public.changed"), result.contentDiffer());
+    assertEquals(
+        List.of("table public.changed"),
+        result.contentDiffer().stream().map(ContentDiff::target).toList());
+    // unified diffの本体にも、追加された列の内容が現れる
+    assertTrue(
+        result.contentDiffer().get(0).unifiedDiff().stream()
+            .anyMatch(line -> line.contains("\"name\":\"name\"")));
   }
 
   @Test

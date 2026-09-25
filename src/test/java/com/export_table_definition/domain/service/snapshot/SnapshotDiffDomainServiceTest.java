@@ -2,7 +2,9 @@ package com.export_table_definition.domain.service.snapshot;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.infrastructure.file.repository.TableDefinitionFileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
@@ -24,7 +26,13 @@ public class SnapshotDiffDomainServiceTest {
       new SnapshotDiffDomainService(
           new TableDefinitionFileRepository(),
           new DefaultOutputPathResolver(),
-          new JacksonSnapshotSerializer());
+          new JacksonSnapshotSerializer(),
+          new UnifiedDiffGenerator());
+
+  /** 差分の対象の表示名（{@link ContentDiff#target()}）だけを取り出すヘルパー */
+  private List<String> targetsOf(DiffResult result) {
+    return result.contentDiffer().stream().map(ContentDiff::target).toList();
+  }
 
   private void write(Path dir, String relativePath, String... lines) throws IOException {
     Path file = dir.resolve(relativePath);
@@ -71,7 +79,49 @@ public class SnapshotDiffDomainServiceTest {
 
     assertEquals(List.of("table public.added"), result.onlyInGenerated());
     assertEquals(List.of("table public.dropped"), result.onlyInCommitted());
-    assertEquals(List.of("table public.changed"), result.contentDiffer());
+    assertEquals(List.of("table public.changed"), targetsOf(result));
+  }
+
+  @Test
+  @DisplayName("compare: 内容が一致しないオブジェクトには、変更箇所を示すunified diffが付く")
+  void testContentDifferIncludesUnifiedDiff(@TempDir Path generated, @TempDir Path committed)
+      throws IOException {
+    write(committed, TABLES, table("changed", "integer"));
+    write(generated, TABLES, table("changed", "bigint"));
+
+    DiffResult result = service.compare(generated, committed);
+
+    assertEquals(1, result.contentDiffer().size());
+    ContentDiff diff = result.contentDiffer().get(0);
+    assertEquals("table public.changed", diff.target());
+    assertEquals(
+        List.of(
+            "--- committed/testdb/public/tables.jsonl (table public.changed)",
+            "+++ generated/testdb/public/tables.jsonl (table public.changed)",
+            "@@ -3,6 +3,6 @@",
+            "   \"name\": \"changed\"",
+            "   \"type\": \"table\"",
+            "   \"columns\": [",
+            "-    {\"name\":\"id\",\"type\":\"integer\"}",
+            "+    {\"name\":\"id\",\"type\":\"bigint\"}",
+            "   ]",
+            " }"),
+        diff.unifiedDiff());
+  }
+
+  @Test
+  @DisplayName("compare: スキーマ配下のオブジェクトのファイル以外(database.json)のunified diffには、表示名を重複させない")
+  void testUnifiedDiffLabelForWholeFileOmitsDuplicateName(
+      @TempDir Path generated, @TempDir Path committed) throws IOException {
+    write(generated, "testdb/database.json", "{\"formatVersion\":2,\"name\":\"testdb\"}");
+    write(committed, "testdb/database.json", "{\"formatVersion\":1,\"name\":\"testdb\"}");
+
+    DiffResult result = service.compare(generated, committed);
+
+    ContentDiff diff = result.contentDiffer().get(0);
+    assertEquals(Path.of("testdb", "database.json").toString(), diff.target());
+    assertEquals("--- committed/testdb/database.json", diff.unifiedDiff().get(0));
+    assertEquals("+++ generated/testdb/database.json", diff.unifiedDiff().get(1));
   }
 
   @Test
@@ -103,7 +153,7 @@ public class SnapshotDiffDomainServiceTest {
 
     assertEquals(List.of(), result.onlyInGenerated());
     assertEquals(List.of("function public.calc()"), result.onlyInCommitted());
-    assertEquals(List.of("function public.calc(x integer, y integer)"), result.contentDiffer());
+    assertEquals(List.of("function public.calc(x integer, y integer)"), targetsOf(result));
   }
 
   @Test
@@ -115,7 +165,7 @@ public class SnapshotDiffDomainServiceTest {
 
     DiffResult result = service.compare(generated, committed);
 
-    assertEquals(List.of(Path.of("testdb", "database.json").toString()), result.contentDiffer());
+    assertEquals(List.of(Path.of("testdb", "database.json").toString()), targetsOf(result));
   }
 
   @Test
