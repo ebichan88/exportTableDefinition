@@ -46,6 +46,14 @@ employeeテーブルの変更を記録する監査ログ。トリガー経由で
 |:---|:---|:---|:---|:---|:---|
 
 
+## 論理リレーション情報
+
+※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。
+
+| No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+|:---|:---|:---|:---|:---|:---|
+|1|rel_audit_log_employee|record_id|sample.employee|employee_id|0..1対多|
+
 ## トリガー情報
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
@@ -54,7 +62,18 @@ employeeテーブルの変更を記録する監査ログ。トリガー経由で
 
 ## ER図
 
-関連するテーブルはありません。
+```mermaid
+erDiagram
+    sample_employee |o..o{ sample_audit_log : "rel_audit_log_employee"
+    sample_audit_log {
+        bigint log_id PK
+        character_varying table_name
+        integer record_id
+        character_varying action
+        timestamp_without_time_zone changed_at
+        character_varying changed_by
+    }
+```
 
 ___
 

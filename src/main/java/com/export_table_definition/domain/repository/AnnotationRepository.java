@@ -1,9 +1,9 @@
 package com.export_table_definition.domain.repository;
 
-import com.export_table_definition.domain.model.annotation.Annotations;
+import com.export_table_definition.domain.model.annotation.Sidecar;
 
 /**
- * 手動付帯情報（サイドカーYAML）の読み込みに関するリポジトリインターフェース
+ * サイドカーYAML（手動付帯情報・論理リレーション）の読み込みに関するリポジトリインターフェース
  *
  * @since 1.0
  * @version 1.0
@@ -12,11 +12,11 @@ import com.export_table_definition.domain.model.annotation.Annotations;
 public interface AnnotationRepository {
 
     /**
-     * サイドカーの付帯情報を読み込むメソッド<br>
-     * パスが未指定（null・空）の場合や、ファイルが存在しない場合は空の{@link Annotations}を返す
+     * サイドカーの内容を読み込むメソッド<br>
+     * パスが未指定（null・空）の場合や、ファイルが存在しない場合は空の{@link Sidecar}を返す
      *
      * @param annotationPath サイドカーファイルのパス（未指定可）
-     * @return 読み込んだ付帯情報。無効な指定の場合は空のAnnotations
+     * @return 読み込んだサイドカーの内容。無効な指定の場合は空のSidecar
      */
-    Annotations load(String annotationPath);
+    Sidecar load(String annotationPath);
 }

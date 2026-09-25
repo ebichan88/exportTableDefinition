@@ -127,7 +127,7 @@ public class ErDiagramTemplates {
         // 参照先（親） → 参照元（子） の向きは、テーブル単位のER図の表記と揃える
         foreignKeys.forEach(fk -> sb.append("    ")
                 .append(ids.get(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()))).append(' ')
-                .append(fk.cardinality().getNotation()).append(' ')
+                .append(fk.cardinality().getNotation(fk.relationType())).append(' ')
                 .append(ids.get(TableKey.of(fk.schemaName(), fk.tableName()))).append(" : \"")
                 .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
         return sb.append("```").append(LINE_SEPARATOR_DOUBLE).toString();

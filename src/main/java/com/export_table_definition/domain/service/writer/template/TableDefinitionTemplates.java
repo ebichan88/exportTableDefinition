@@ -181,6 +181,39 @@ public class TableDefinitionTemplates {
     }
 
     /**
+     * 論理リレーション情報セクション<br>
+     * DBに外部キー制約が存在せず、サイドカーYAMLで宣言された関連のみを掲載する。
+     * 読み手が「DBに制約がある」と誤読しないよう外部キー情報とは別セクションとし、注意書きを添える。
+     * 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）
+     *
+     * @param logicalRelations 論理リレーションのリスト
+     * @param table            テーブル情報
+     * @return 論理リレーション情報セクション文字列。対象が存在しない場合は空文字
+     */
+    public static String logicalRelations(List<ForeignKeyEntity> logicalRelations, TableEntity table) {
+        final List<ForeignKeyEntity> targets = logicalRelations.stream()
+                .filter(relation -> relation.getSchemaTableName().equals(table.getSchemaTableName())).toList();
+        if (targets.isEmpty()) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder("## 論理リレーション情報").append(LINE_SEPARATOR_DOUBLE)
+                .append("※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。").append(LINE_SEPARATOR_DOUBLE)
+                .append("""
+                        | No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+                        |:---|:---|:---|:---|:---|:---|
+                        """);
+        // 物理外部キーの行番号はSQLのrow_number()が振るが、論理リレーションは当セクション内で1から振り直す
+        for (int i = 0; i < targets.size(); i++) {
+            final ForeignKeyEntity relation = targets.get(i);
+            sb.append('|').append(i + 1).append('|').append(relation.foreignkeyName()).append('|')
+                    .append(relation.columnNames()).append('|').append(relation.getReferenceSchemaTableName())
+                    .append('|').append(relation.referenceColumnNames()).append('|')
+                    .append(relation.cardinality().getLabel()).append('|').append(LINE_SEPARATOR);
+        }
+        return sb.append(LINE_SEPARATOR).toString();
+    }
+
+    /**
      * トリガー情報セクション
      *
      * @param triggers トリガー情報のリスト
@@ -219,10 +252,10 @@ public class TableDefinitionTemplates {
         sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
         outgoingFks.forEach(fk -> sb.append("    ")
                 .append(MermaidSupport.mermaidId(fk.referenceSchemaName(), fk.referenceTableName())).append(' ')
-                .append(fk.cardinality().getNotation()).append(' ').append(selfId).append(" : \"")
+                .append(fk.cardinality().getNotation(fk.relationType())).append(' ').append(selfId).append(" : \"")
                 .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
         incomingFks.forEach(fk -> sb.append("    ").append(selfId).append(' ')
-                .append(fk.cardinality().getNotation()).append(' ')
+                .append(fk.cardinality().getNotation(fk.relationType())).append(' ')
                 .append(MermaidSupport.mermaidId(fk.schemaName(), fk.tableName())).append(" : \"")
                 .append(fk.foreignkeyName()).append('"').append(LINE_SEPARATOR));
         sb.append("    ").append(selfId).append(" {").append(LINE_SEPARATOR);

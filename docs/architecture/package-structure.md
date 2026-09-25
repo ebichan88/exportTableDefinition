@@ -27,10 +27,11 @@
 |---|---|---|
 | `domain.model` | `TableDefinitionContent` | 1テーブル分の定義書出力に必要な情報を束ねるrecord（`assemble()`で組み立て） |
 | `domain.model.entity` | `BaseInfoEntity`, `TableEntity`, `ColumnEntity`, `ConstraintEntity`, `ForeignKeyEntity`, `IndexEntity`, `TriggerEntity`, `FunctionEntity`, `SequenceEntity`, `TypeEntity` | DBから取得したメタ情報を表すrecord群。`SchemaTableKeyed`はスキーマ名・テーブル名を持つ共通IF |
-| `domain.model.collection` | `Columns`, `Constraints`, `ForeignKeys`, `Indexes`, `Triggers`, `AbstractEntities`, `ForeignKeyGroups` | エンティティのリストをラップし、テーブル単位の絞り込み等を提供するコレクションクラス群。`ForeignKeyGroups`は外部キーの連結成分（ER図の分割単位）を算出する |
-| `domain.model.type` | `TableType`, `Cardinality`, `OutputObjectType` | テーブル種別、外部キー多重度（1対1／1対多等）、PostgreSQL固有出力対象種別のenum |
+| `domain.model.collection` | `Columns`, `Constraints`, `ForeignKeys`, `Indexes`, `Triggers`, `AbstractEntities`, `ForeignKeyGroups` | エンティティのリストをラップし、テーブル単位の絞り込み等を提供するコレクションクラス群。`ForeignKeys`は物理外部キーと論理リレーションを同一集合として保持し、`physicalOf`/`logicalOf`で由来ごとに取り出せる。`ForeignKeyGroups`は外部キーの連結成分（ER図の分割単位）を算出する |
+| `domain.model.type` | `TableType`, `Cardinality`, `RelationType`, `OutputObjectType` | テーブル種別、外部キー多重度（1対1／1対多等）、関連の由来（物理＝FK制約／論理＝サイドカー宣言）、PostgreSQL固有出力対象種別のenum |
 | `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー） |
-| `domain.model.annotation` | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブル単位の集合とその1件分） |
+| `domain.model.annotation` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション）を束ねるrecord |
+| | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブル単位の集合とその1件分） |
 | `domain.model` | `DiffResult` | 生成ドキュメントとコミット済みドキュメントの比較結果（追加/削除/内容不一致のファイルパス一覧）を表すrecord |
 
 ### domain.repository（インターフェースのみ。実装はinfrastructure層）
@@ -38,7 +39,7 @@
 | クラス | 役割 |
 |---|---|
 | `TableDefinitionRepository` | テーブル・カラム・制約・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる） |
-| `AnnotationRepository` | サイドカーYAML（手動付帯情報）読み込みIF |
+| `AnnotationRepository` | サイドカーYAML（手動付帯情報・論理リレーション）読み込みIF |
 | `FileRepository` | ファイル操作IF（`writeFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
 ### domain.service
@@ -65,7 +66,7 @@
 | `infrastructure.db.repository.dto` | `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto`, `BaseInfoDto` | MyBatisのResultMap受け皿となるDTO（`domain.model.entity`へ変換される） |
 | `infrastructure.file` | `TableDefinitionBufferedWriter` | テーブル定義書き込み用`BufferedWriter`のラッパー |
 | `infrastructure.file.repository` | `TableDefinitionFileRepository` | `FileRepository`実装（実ファイル書き込み） |
-| | `AnnotationYamlRepository` | `AnnotationRepository`実装（サイドカーYAML読み込み、SnakeYAML使用） |
+| | `AnnotationYamlRepository` | `AnnotationRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する |
 | `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
 
 ## config層
@@ -90,4 +91,5 @@
 
 `src/test/java/com/export_table_definition` 配下は本体パッケージとほぼ1:1で対応する構成
 （`application`, `config`, `domain`, `infrastructure`, `presentation`, `testsupport`）。
-`testsupport`にはテスト用のビルダー・フィクスチャ等の共通部品を置く。
+`testsupport`にはテスト用のビルダー・フィクスチャ等の共通部品を置く
+（`MarkdownAssert`、`ForeignKeyFixtures`など）。

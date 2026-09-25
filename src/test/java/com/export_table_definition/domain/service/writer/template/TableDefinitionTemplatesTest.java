@@ -18,6 +18,7 @@ import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
+import com.export_table_definition.testsupport.ForeignKeyFixtures;
 
 /**
  * TableDefinitionTemplates のセクション生成テスト
@@ -148,9 +149,9 @@ public class TableDefinitionTemplatesTest {
     @DisplayName("foreignKeys: schema.table 一致行のみ")
     void testForeignKeysFiltered() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
-        var fk1 = new ForeignKeyEntity("public", "orders", "| 1 | fk_orders_customer | customer_id | customers | id |",
+        var fk1 = ForeignKeyFixtures.physical("public", "orders", "| 1 | fk_orders_customer | customer_id | customers | id |",
                 "fk_orders_customer", "public", "customers");
-        var fk2 = new ForeignKeyEntity("sales", "orders", "| 1 | fk_sales_orders | x | y | z |", "fk_sales_orders",
+        var fk2 = ForeignKeyFixtures.physical("sales", "orders", "| 1 | fk_sales_orders | x | y | z |", "fk_sales_orders",
                 "sales", "y");
         String section = TableDefinitionTemplates.foreignKeys(List.of(fk1, fk2), table);
         assertTrue(section.contains("fk_orders_customer"));
@@ -161,7 +162,7 @@ public class TableDefinitionTemplatesTest {
     @DisplayName("foreignKeys: 行の末尾に多重度の列を追加する")
     void testForeignKeysCardinalityColumn() {
         TableEntity table = newTable("public", "profiles", "プロフィール", "table", "");
-        var fk = new ForeignKeyEntity("public", "profiles", "| 1 | fk_profiles_user | user_id | users | id |",
+        var fk = ForeignKeyFixtures.physical("public", "profiles", "| 1 | fk_profiles_user | user_id | users | id |",
                 "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
         String section = TableDefinitionTemplates.foreignKeys(List.of(fk), table);
         assertTrue(section.contains("| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
@@ -198,8 +199,8 @@ public class TableDefinitionTemplatesTest {
     void testErDiagramWithRelations() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
         var column = new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
-        var outgoing = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_customer", "public", "customers");
-        var incoming = new ForeignKeyEntity("public", "items", "unused", "fk_items_orders", "public", "orders");
+        var outgoing = ForeignKeyFixtures.physical("public", "orders", "unused", "fk_orders_customer", "public", "customers");
+        var incoming = ForeignKeyFixtures.physical("public", "items", "unused", "fk_items_orders", "public", "orders");
         String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing), List.of(incoming));
         assertTrue(section.contains("```mermaid"));
         assertTrue(section.contains("erDiagram"));
@@ -216,9 +217,9 @@ public class TableDefinitionTemplatesTest {
     void testErDiagramCardinality() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
         var column = new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
-        var outgoing = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_coupon", "public", "coupons",
+        var outgoing = ForeignKeyFixtures.physical("public", "orders", "unused", "fk_orders_coupon", "public", "coupons",
                 Cardinality.OPTIONAL_ONE_TO_MANY);
-        var incoming = new ForeignKeyEntity("public", "order_details", "unused", "fk_details_orders", "public",
+        var incoming = ForeignKeyFixtures.physical("public", "order_details", "unused", "fk_details_orders", "public",
                 "orders", Cardinality.ONE_TO_ONE);
         String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing),
                 List.of(incoming));
@@ -231,7 +232,7 @@ public class TableDefinitionTemplatesTest {
     void testErDiagramSanitizesType() {
         TableEntity table = newTable("public", "orders", "受注", "table", "");
         var column = new ColumnEntity("public", "orders", "unused", "amount", "numeric(10,2)", "");
-        var outgoing = new ForeignKeyEntity("public", "orders", "unused", "fk_orders_customer", "public", "customers");
+        var outgoing = ForeignKeyFixtures.physical("public", "orders", "unused", "fk_orders_customer", "public", "customers");
         String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing), List.of());
         assertTrue(section.contains("numeric amount"));
         assertFalse(section.contains("(10,2)"));
@@ -244,5 +245,59 @@ public class TableDefinitionTemplatesTest {
         String footer = TableDefinitionTemplates.footer(base);
         assertTrue(footer.contains("[テーブル一覧へ](../../../tableList_TEST_DB.md)"));
         assertTrue(footer.startsWith("___"));
+    }
+
+    @Test
+    @DisplayName("logicalRelations: 論理リレーションを専用セクションに、セクション内で1から採番して出力する")
+    void testLogicalRelationsSection() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var rel1 = ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "staff_id", "public", "staff",
+                "id", Cardinality.ONE_TO_MANY);
+        var rel2 = ForeignKeyFixtures.logical("public", "orders", "rel_orders_coupon", "coupon_code", "public",
+                "coupons", "code", Cardinality.OPTIONAL_ONE_TO_ONE);
+        String section = TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2), table);
+
+        assertTrue(section.contains("## 論理リレーション情報"));
+        assertTrue(section.contains("※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。"));
+        assertTrue(section.contains("| No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
+        // 物理外部キーの採番とは独立に、当セクション内で1から振り直す
+        assertTrue(section.contains("|1|rel_orders_staff|staff_id|public.staff|id|1対多|"));
+        assertTrue(section.contains("|2|rel_orders_coupon|coupon_code|public.coupons|code|0..1対1|"));
+    }
+
+    @Test
+    @DisplayName("logicalRelations: 対象が存在しない場合はセクションごと出力しない")
+    void testLogicalRelationsSectionOmittedWhenEmpty() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        assertEquals("", TableDefinitionTemplates.logicalRelations(List.of(), table));
+        // 他テーブルの論理リレーションしか無い場合も出力しない
+        var other = ForeignKeyFixtures.logical("public", "items", "rel_items_staff", "public", "staff");
+        assertEquals("", TableDefinitionTemplates.logicalRelations(List.of(other), table));
+    }
+
+    @Test
+    @DisplayName("erDiagram: 論理リレーションは破線、物理外部キーは実線で描画する")
+    void testErDiagramDistinguishesRelationType() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var column = new ColumnEntity("public", "orders", "unused", "order_id", "int", "○");
+        var physical = ForeignKeyFixtures.physical("public", "orders", "unused", "fk_orders_customer", "public",
+                "customers");
+        var logical = ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
+        String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(physical, logical),
+                List.of());
+
+        assertTrue(section.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
+        assertTrue(section.contains("public_staff ||..o{ public_orders : \"rel_orders_staff\""));
+    }
+
+    @Test
+    @DisplayName("erDiagram: 被参照側の論理リレーションも破線で描画する")
+    void testErDiagramIncomingLogicalIsDashed() {
+        TableEntity table = newTable("public", "orders", "受注", "table", "");
+        var column = new ColumnEntity("public", "orders", "unused", "order_id", "int", "○");
+        var incoming = ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_orders", "public", "orders");
+        String section = TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(), List.of(incoming));
+
+        assertTrue(section.contains("public_orders ||..o{ public_audit_log : \"rel_audit_orders\""));
     }
 }

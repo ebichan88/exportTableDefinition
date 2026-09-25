@@ -2,6 +2,7 @@ package com.export_table_definition.infrastructure.db.repository.dto;
 
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
+import com.export_table_definition.domain.model.type.RelationType;
 
 /**
  * 外部キー情報に関してORMのデータの受け渡しに利用するDTOクラス
@@ -11,18 +12,22 @@ import com.export_table_definition.domain.model.type.Cardinality;
  * @author takashi.ebina
  */
 public record ForeignKeyDto(String schemaName, String tableName, String foreignkeyInfo, String foreignkeyName,
-        String referenceSchemaName, String referenceTableName, String childKeyUnique, String childKeyMandatory) {
+        String columnNames, String referenceSchemaName, String referenceTableName, String referenceColumnNames,
+        String childKeyUnique, String childKeyMandatory) {
 
     /** 参照元（子）テーブルの外部キー列が条件を満たすことを表すマーカー文字列 */
     private static final String MARKER = "○";
 
     /**
-     * DTOからEntityへの変換メソッド
+     * DTOからEntityへの変換メソッド<br>
+     * DBのカタログから取得した外部キー制約のため、由来は常に{@link RelationType#PHYSICAL}となる
      *
-     * @return AllForeignkeyEntityのインスタンス
+     * @return ForeignKeyEntityのインスタンス
      */
     public ForeignKeyEntity toEntity() {
-        return new ForeignKeyEntity(schemaName, tableName, foreignkeyInfo, foreignkeyName, referenceSchemaName,
-                referenceTableName, Cardinality.of(MARKER.equals(childKeyUnique), MARKER.equals(childKeyMandatory)));
+        return new ForeignKeyEntity(schemaName, tableName, foreignkeyInfo, foreignkeyName, columnNames,
+                referenceSchemaName, referenceTableName, referenceColumnNames,
+                Cardinality.of(MARKER.equals(childKeyUnique), MARKER.equals(childKeyMandatory)),
+                RelationType.PHYSICAL);
     }
 }

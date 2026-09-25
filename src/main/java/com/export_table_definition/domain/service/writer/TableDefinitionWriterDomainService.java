@@ -93,8 +93,9 @@ public class TableDefinitionWriterDomainService {
                 TableDefinitionTemplates.indexes(content.indexes(), content.table()), // インデックス情報
                 TableDefinitionTemplates.constraints(content.constraints(), content.table()), // 制約情報
                 TableDefinitionTemplates.foreignKeys(content.foreignKeys(), content.table()), // 外部キー情報
+                TableDefinitionTemplates.logicalRelations(content.logicalRelations(), content.table()), // 論理リレーション情報
                 TableDefinitionTemplates.triggers(content.triggers(), content.table()), // トリガー情報
-                TableDefinitionTemplates.erDiagram(content.table(), content.columns(), content.foreignKeys(),
+                TableDefinitionTemplates.erDiagram(content.table(), content.columns(), content.outgoingRelations(),
                         content.incomingForeignKeys()), // ER図
                 TableDefinitionTemplates.footer(content.baseInfo()) // フッター
         );
