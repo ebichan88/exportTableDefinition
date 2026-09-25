@@ -115,16 +115,37 @@ public class SnapshotDiffDomainService {
   /**
    * unified diffの{@code ---}/{@code +++}ヘッダに用いるラベルを組み立てるメソッド<br>
    * オブジェクト単位で比較するもの（{@code tables.jsonl}等）は{@code committed/相対パス (表示名)}、 ファイル単位で比較するもの（{@code
-   * database.json}等）は表示名がファイルパスそのものであるため{@code committed/相対パス}のみとする
+   * database.json}等）は表示名がファイルパスそのものであるため{@code committed/相対パス}のみとする<br>
+   * 相対パスは{@link Path#toString()}ではなく、OSに依らず常に{@code /}区切りで組み立てる（unified diffの慣習に合わせるため）
    *
    * @param side {@code committed}または{@code generated}
    * @param target 差分の対象
    * @return ラベル
    */
   private String sideLabel(String side, Target target) {
-    final String relativeFile = target.file().toString();
-    final String suffix = relativeFile.equals(target.label()) ? "" : " (" + target.label() + ")";
+    final String relativeFile = toSlashSeparatedPath(target.file());
+    final String normalizedLabel = target.label().replace('\\', '/');
+    final String suffix = relativeFile.equals(normalizedLabel) ? "" : " (" + target.label() + ")";
     return side + "/" + relativeFile + suffix;
+  }
+
+  /**
+   * パスを、OSに依らず常に{@code /}区切りの文字列へ変換するメソッド<br>
+   * {@link Path#toString()}はWindows環境では{@code \}区切りとなるため、unified diffのヘッダのように
+   * プラットフォームに依らない一貫した表記が必要な箇所ではこのメソッドを用いる
+   *
+   * @param path 変換対象のパス
+   * @return {@code /}区切りのパス文字列
+   */
+  private static String toSlashSeparatedPath(Path path) {
+    final StringBuilder builder = new StringBuilder();
+    for (final Path part : path) {
+      if (builder.length() > 0) {
+        builder.append('/');
+      }
+      builder.append(part);
+    }
+    return builder.toString();
   }
 
   /**
