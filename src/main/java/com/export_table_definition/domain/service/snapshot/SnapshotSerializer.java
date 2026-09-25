@@ -1,5 +1,6 @@
 package com.export_table_definition.domain.service.snapshot;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,4 +30,16 @@ public interface SnapshotSerializer {
    * @return 項目名をキー、値を値とするマップ
    */
   Map<String, Object> deserialize(String json);
+
+  /**
+   * {@link #serialize}で出力した1行のJSON文字列を、unified diffでの表示に適した複数行へ整形する<br>
+   * トップレベルの項目は1項目1行、配列は1要素を1行とし、行末にカンマは付けない。値が変わった行に必ず
+   * 項目名（配列内であれば少なくとも要素そのもの）が含まれるようにすることで、前後3行の文脈だけでも
+   * 何が変わったか読み取れるようにする。1要素追加しただけで直前の行まで差分になるのを避ける狙いもある。 項目の並び順は{@link
+   * #serialize}と同じ（同じ内容からは常に同じ結果を返す）
+   *
+   * @param json 1行のJSON文字列
+   * @return 整形した行のリスト。JSONとして解釈できない場合は{@code json}をそのまま1件だけ含むリスト
+   */
+  List<String> formatForDiff(String json);
 }

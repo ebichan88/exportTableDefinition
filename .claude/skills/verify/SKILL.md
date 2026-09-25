@@ -69,11 +69,10 @@ chunkSize=
 erDiagramMaxNodes=
 outputObjects=
 annotationPath=<リポジトリの絶対パス>/docs/sample/postgres/annotations.sample.yml
-outputSnapshot=true
 ```
 
-`outputSnapshot=true`により、Markdownに加えて`docs/sample/postgres/output/snapshot/`配下へ
-スキーマのスナップショット（JSON Lines）も出力される（ベースラインにコミット済み）。
+Markdownに加えて、常に`docs/sample/postgres/output/snapshot/`配下へスキーマのスナップショット
+（JSON Lines）も出力される（ベースラインにコミット済み）。
 
 ### 4. 実行する
 

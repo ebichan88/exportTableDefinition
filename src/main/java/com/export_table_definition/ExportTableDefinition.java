@@ -165,7 +165,6 @@ public class ExportTableDefinition {
             settings.erDiagramMaxNodes(),
             settings.outputObjectList(),
             settings.annotationPath(),
-            settings.outputSnapshot(),
             rmDist);
     // 処理終了メッセージ出力
     System.out.println(resultDto.getResultMessage());
@@ -189,8 +188,7 @@ public class ExportTableDefinition {
             settings.chunkSize(),
             settings.erDiagramMaxNodes(),
             settings.outputObjectList(),
-            settings.annotationPath(),
-            settings.outputSnapshot());
+            settings.annotationPath());
     // 処理終了メッセージ出力
     System.out.println(diffCheckResultDto.getResultMessage());
     // 比較処理自体が失敗した場合、または差分が見つかった場合は異常終了とする
@@ -213,8 +211,7 @@ public class ExportTableDefinition {
         PropertyLoader.getInt(
             "ExportTableDefinition", "erDiagramMaxNodes", DEFAULT_ER_DIAGRAM_MAX_NODES),
         PropertyLoader.getList("ExportTableDefinition", "outputObjects"),
-        PropertyLoader.getString("ExportTableDefinition", "annotationPath"),
-        PropertyLoader.getBoolean("ExportTableDefinition", "outputSnapshot", false));
+        PropertyLoader.getString("ExportTableDefinition", "annotationPath"));
   }
 
   /**
@@ -227,7 +224,6 @@ public class ExportTableDefinition {
    * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
    * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト
    * @param annotationPath 手動付帯情報を記述したサイドカーYAMLのパス
-   * @param outputSnapshot Markdownに加えてスキーマのスナップショットを出力するか
    */
   private record ExecutionSettings(
       List<String> schemaList,
@@ -236,6 +232,5 @@ public class ExportTableDefinition {
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath,
-      boolean outputSnapshot) {}
+      String annotationPath) {}
 }

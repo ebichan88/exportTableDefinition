@@ -36,7 +36,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 2. Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、
    `ExportTableDefinitionController` を取得して `run()` を呼び出す。
 3. `ExportTableDefinition.run()` が `conf/ExportTableDefinition.properties` の設定値
-   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath、outputSnapshot）を読み込み、
+   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、
    `ExportTableDefinitionController.execute()` を呼び出す。
 4. コントローラーは `ExportTableDefinitionUsecaseImpl.exportTableDefinition()` を呼び出し、例外を捕捉して
    `ResultDto`（成功/失敗）に変換する。
@@ -46,8 +46,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込みマージ
    - `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ObjectListWriterDomainService`
      （いずれも `domain.service.writer` 配下）がMarkdownを組み立てて `FileRepository` 経由で出力
-   - `outputSnapshot=true`の場合は、`SchemaSnapshotWriterDomainService`（`domain.service.snapshot` 配下）が
-     同じ取得結果からスキーマのスナップショット（JSON Lines）を出力
+   - `SchemaSnapshotWriterDomainService`（`domain.service.snapshot` 配下）が、同じ取得結果から常に
+     スキーマのスナップショット（JSON Lines）を出力
 
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
@@ -84,7 +84,7 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 
 ## スキーマのスナップショット（中間表現）
 
-`outputSnapshot=true`の場合、Markdownと同じ取得結果から、スキーマ情報を構造化したスナップショット（JSON Lines）を
+Markdownと同じ取得結果から、常にスキーマ情報を構造化したスナップショット（JSON Lines）を
 `{outputPath}/snapshot/{DB名}/`配下へ出力する。Markdownは最終成果物（表示形式）であり機械処理に向かないため、
 差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
 
@@ -115,17 +115,22 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 - `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を出力した後、関数の定義本体をスキーマ単位で、
   テーブルの詳細情報をスキーマ・チャンク単位で取得し、指定された出力形式で出力する
 
-`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、一時ディレクトリへ向けて`export()`を呼び出した上で、
-生成結果と`outputPath`配下を比較する。比較方法は`outputSnapshot`の設定で切り替わる。
+`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、`SNAPSHOT`形式のみで一時ディレクトリへ向けて
+`export()`を呼び出した上で（Markdownの描画・ER図の生成は行わない）、生成結果と`outputPath`配下の`snapshot/`を
+`SnapshotDiffDomainService.compare()`で比較する。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`:
+`スキーマ名.名前`、関数は引数を含む）で突き合わせ、追加/削除/内容不一致をオブジェクト単位で報告する。
+`database.json`等それ以外のファイルはファイル単位で比較する。
 
-| `outputSnapshot` | 出力形式 | 比較 |
-|---|---|---|
-| `true` | `SNAPSHOT`のみ（Markdownの描画・ER図の生成を行わない） | `SnapshotDiffDomainService.compare()`で`snapshot/`配下を比較。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`: `スキーマ名.名前`、関数は引数を含む）で突き合わせ、追加/削除/内容不一致をオブジェクト単位で報告する。`database.json`等それ以外のファイルはファイル単位 |
-| `false` | `MARKDOWN`のみ | `DocumentDiffDomainService.compare()`でファイル単位（追加/削除/内容不一致）に比較する |
+スナップショットは生成日を含まないため、生成日と別の日に`--check`を実行しても差分にならない。その代わり、
+Markdownのみに生じた差分（手作業での編集等）は検知しない。
 
-スナップショットは生成日を含まないため、生成日と別の日に`--check`を実行しても差分にならない
-（Markdownは「基本情報」表に作成日を含むため、`outputSnapshot=false`では日付が変わると全ファイルが差分になる）。
-その代わり、スナップショット同士の比較ではMarkdownのみに生じた差分（手作業での編集等）は検知しない。
+内容が一致しないオブジェクトには、変更箇所を示すunified diffを付ける（`domain.model.ContentDiff`）。
+`SnapshotDiffDomainService`が、比較前に生成側・コミット側それぞれの行を`SnapshotSerializer.formatForDiff()`で
+1項目1行・配列は1要素1行へ整形し（生の1行のJSONのままだと行単位のdiffが「丸ごと削除+丸ごと追加」にしか
+ならないため）、`UnifiedDiffGenerator`（Myers法による自前実装。外部ライブラリに依存しない）へ渡してdiffを
+生成する。整形後の行番号はファイル上の行番号とは対応しない。`ExportTableDefinitionController.buildDiffMessage()`
+が、1オブジェクトあたり・全体それぞれに行数の上限を設けてメッセージへ含める（超えた分は省略した旨のみ表示。
+対象自体はサマリの一覧に全件掲載されるため見落としにはならない）。
 
 Writer層・SQL層は出力先パスに一切依存しないため無改修で再利用できる。一時ディレクトリの作成・削除は
 （他のファイル操作と同様に）`FileRepository.createTempDirectory()`/`deleteDirectory()`を介して行い、

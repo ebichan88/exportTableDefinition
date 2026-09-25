@@ -7,7 +7,7 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`/`DiffCheckResultDto`変換を行う |
+| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`/`DiffCheckResultDto`変換を行う。`checkDiff`の差分メッセージ組み立てでは、`ContentDiff`のunified diffを1オブジェクトあたり・全体それぞれ行数の上限付きで含める |
 | `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成否・メッセージ）を表すrecord |
 | | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（成否・メッセージ・差分有無）を表すrecord |
 | `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum |
@@ -17,7 +17,7 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `application` | `ExportTableDefinitionUsecase` | テーブル定義出力ユースケースのインターフェース（通常出力`exportTableDefinition`／差分検知`checkDocumentDiff`） |
-| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔）。取得（`fetchTargets`）と出力（`export`）を分け、出力形式（Markdown/スナップショット）を切り替えられる。`checkDocumentDiff`は一時ディレクトリへ出力し、`outputSnapshot`に応じて`SnapshotDiffDomainService`（スナップショットのみ生成）または`DocumentDiffDomainService`（Markdownのみ生成）で比較する |
+| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 出力処理全体のフロー制御（取得→マージ→書き込みの司令塔）。取得（`fetchTargets`）と出力（`export`）を分け、出力形式（Markdown/スナップショット）を切り替えられる。`checkDocumentDiff`は`SNAPSHOT`形式のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 
 ## domain層
 
@@ -32,7 +32,8 @@
 | `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー） |
 | `domain.model.annotation` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション）を束ねるrecord |
 | | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブル単位の集合とその1件分） |
-| `domain.model` | `DiffResult` | 生成ドキュメント（またはスナップショット）とコミット済みのものの比較結果（追加/削除/内容不一致の対象一覧）を表すrecord。対象はMarkdownの比較ではファイルの相対パス、スナップショットの比較ではオブジェクト（例: `table sample.employee`） |
+| `domain.model` | `DiffResult` | 生成したスキーマのスナップショットとコミット済みのものの比較結果（追加/削除/内容不一致の対象一覧）を表すrecord。対象はオブジェクト（例: `table sample.employee`）またはファイル（例: `database.json`）の識別名 |
+| | `ContentDiff` | 内容が一致しないオブジェクト（またはファイル）1件分の差分（対象の表示名 + unified diff形式の行リスト）を表すrecord |
 | `domain.model.snapshot` | `DatabaseSnapshot`, `TableSnapshot`, `FunctionSnapshot`, `SequenceSnapshot`, `TypeSnapshot` | スキーマのスナップショット（JSON Lines）の1行分を表すrecord群。エンティティからの変換時にMarkdownの表示都合の値（`○`マーカー・連結文字列等）を真偽値・リストへ正規化する |
 | | `SnapshotKind` | スキーマ単位のJSON Linesファイルに出力するオブジェクト種別（テーブル/関数/シーケンス/型）のenum |
 
@@ -48,11 +49,11 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `domain.service` | `DocumentDiffDomainService` | 生成ドキュメントとコミット済みドキュメントをファイル単位（追加/削除/内容不一致）で比較する（`--check`モードで使用） |
+| `domain.service` | `UnifiedDiffGenerator` | 2つの行リストからunified diff形式の差分を生成する。Myers法による自前実装（外部ライブラリに依存しない） |
 | `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF |
 | `domain.service.snapshot` | `SchemaSnapshotWriterDomainService` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
-| | `SnapshotDiffDomainService` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`outputSnapshot=true`の`--check`モードで使用） |
-| | `SnapshotSerializer` | スナップショットのrecordとJSON文字列の変換IF（実装はインフラ層） |
+| | `SnapshotDiffDomainService` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`--check`モードで使用）。内容が一致しないものは、`SnapshotSerializer.formatForDiff`で整形した上で`UnifiedDiffGenerator`によりunified diffを付ける |
+| | `SnapshotSerializer` | スナップショットのrecordとJSON文字列の変換IF（実装はインフラ層）。差分表示用に1項目1行へ整形する`formatForDiff`も持つ |
 | `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
 | | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
 | | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |

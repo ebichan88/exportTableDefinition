@@ -23,7 +23,6 @@ import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
-import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
@@ -60,7 +59,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   private final ObjectListWriterDomainService objectListWriter;
   private final AnnotationRepository annotationRepository;
   private final SchemaSnapshotWriterDomainService snapshotWriter;
-  private final DocumentDiffDomainService documentDiffDomainService;
   private final SnapshotDiffDomainService snapshotDiffDomainService;
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
@@ -74,7 +72,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @param objectListWriter トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
    * @param snapshotWriter スキーマのスナップショットを書き込むクラス
    * @param annotationRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
-   * @param documentDiffDomainService 生成ドキュメントとコミット済みドキュメントの比較を行うドメインサービス
    * @param snapshotDiffDomainService 生成したスナップショットとコミット済みスナップショットの比較を行うドメインサービス
    * @param fileRepository 差分比較用の一時ディレクトリの作成・削除に用いるファイルリポジトリ
    * @param outputPathResolver 出力先パス解決クラス
@@ -87,7 +84,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       ObjectListWriterDomainService objectListWriter,
       SchemaSnapshotWriterDomainService snapshotWriter,
       AnnotationRepository annotationRepository,
-      DocumentDiffDomainService documentDiffDomainService,
       SnapshotDiffDomainService snapshotDiffDomainService,
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver) {
@@ -97,7 +93,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     this.objectListWriter = objectListWriter;
     this.snapshotWriter = snapshotWriter;
     this.annotationRepository = annotationRepository;
-    this.documentDiffDomainService = documentDiffDomainService;
     this.snapshotDiffDomainService = snapshotDiffDomainService;
     this.fileRepository = fileRepository;
     this.outputPathResolver = outputPathResolver;
@@ -113,7 +108,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       int erDiagramMaxNodes,
       List<String> outputObjectList,
       String annotationPath,
-      boolean outputSnapshot,
       boolean rmDist) {
     // ベースディレクトリパス取得
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
@@ -125,9 +119,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         outputBaseDir,
         chunkSize,
         erDiagramMaxNodes,
-        outputSnapshot
-            ? EnumSet.of(OutputFormat.MARKDOWN, OutputFormat.SNAPSHOT)
-            : EnumSet.of(OutputFormat.MARKDOWN));
+        EnumSet.of(OutputFormat.MARKDOWN, OutputFormat.SNAPSHOT));
   }
 
   /**
@@ -357,25 +349,19 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath,
-      boolean outputSnapshot) {
+      String annotationPath) {
     final Path committedDir = outputPathResolver.resolveBaseOutputDir(outputPath);
     final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
     try {
       final ExportTargets targets =
           fetchTargets(targetSchemaList, targetTableList, outputObjectList, annotationPath);
-      if (outputSnapshot) {
-        // スナップショットを出力する設定の場合は、スナップショット同士を比較する。
-        // DBからの取得は通常実行と同じだが、差分の判定に不要なMarkdownの描画・ER図の生成を行わない
-        export(
-            targets, generatedDir, chunkSize, erDiagramMaxNodes, EnumSet.of(OutputFormat.SNAPSHOT));
-        return snapshotDiffDomainService.compare(
-            outputPathResolver.resolveSnapshotDirectory(generatedDir),
-            outputPathResolver.resolveSnapshotDirectory(committedDir));
-      }
+      // DBからの取得は通常実行と同じだが、差分の判定に不要なMarkdownの描画・ER図の生成は行わず、
+      // スナップショットのみを生成してオブジェクト単位で比較する
       export(
-          targets, generatedDir, chunkSize, erDiagramMaxNodes, EnumSet.of(OutputFormat.MARKDOWN));
-      return documentDiffDomainService.compare(generatedDir, committedDir);
+          targets, generatedDir, chunkSize, erDiagramMaxNodes, EnumSet.of(OutputFormat.SNAPSHOT));
+      return snapshotDiffDomainService.compare(
+          outputPathResolver.resolveSnapshotDirectory(generatedDir),
+          outputPathResolver.resolveSnapshotDirectory(committedDir));
     } finally {
       fileRepository.deleteDirectory(generatedDir);
     }
