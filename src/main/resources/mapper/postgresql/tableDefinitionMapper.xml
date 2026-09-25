@@ -236,10 +236,13 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            concat('|', column_num, '|', logical_column_name, '|', physical_column_name, '|', column_type, '|', precision_scale, '|', primary_key, '|', not_null, '|', default_value, '|') AS "columnInfo",
+            logical_column_name AS "logicalColumnName",
             physical_column_name AS "physicalColumnName",
             column_type AS "columnType",
-            primary_key AS "primaryKey"
+            precision_scale AS "precisionScale",
+            primary_key AS "primaryKey",
+            not_null AS "notNull",
+            default_value AS "defaultValue"
         FROM all_columns
         ORDER BY schema_name, table_name, column_num;
     </select>
@@ -248,10 +251,13 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="columnInfo" javaType="String" />
+            <arg column="logicalColumnName" javaType="String" />
             <arg column="physicalColumnName" javaType="String" />
             <arg column="columnType" javaType="String" />
+            <arg column="precisionScale" javaType="String" />
             <arg column="primaryKey" javaType="String" />
+            <arg column="notNull" javaType="String" />
+            <arg column="defaultValue" javaType="String" />
         </constructor>
     </resultMap>
 

@@ -40,8 +40,8 @@ public class TableDefinitionContentTest {
     var baseInfo = new BaseInfoEntity("testdb", "unused");
     var target = newTable("public", "orders");
 
-    var ownColumn = new ColumnEntity("public", "orders", "unused", "id", "int", "○");
-    var otherColumn = new ColumnEntity("public", "customers", "unused", "id", "int", "○");
+    var ownColumn = new ColumnEntity("public", "orders", "id", "int", "○");
+    var otherColumn = new ColumnEntity("public", "customers", "id", "int", "○");
     var columns = Columns.of(List.of(ownColumn, otherColumn));
 
     var ownIndex = new IndexEntity("public", "orders", "unused");
@@ -56,8 +56,7 @@ public class TableDefinitionContentTest {
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
     var incomingFk =
-        ForeignKeyFixtures.physical(
-            "public", "items", "fk_items_orders", "public", "orders");
+        ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var foreignKeys = ForeignKeys.of(List.of(outgoingFk, incomingFk));
 
     var ownTrigger = new TriggerEntity("public", "orders", "unused", "unused");

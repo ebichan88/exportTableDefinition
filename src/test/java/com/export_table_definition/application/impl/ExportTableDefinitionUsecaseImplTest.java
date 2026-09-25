@@ -248,7 +248,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "t1"));
     repository.tables.add(table("public", "t2"));
-    repository.columns.add(new ColumnEntity("public", "t1", "col1", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
     repository.triggers.add(new TriggerEntity("public", "t1", "trg_list", "trg_info"));
     repository.functions.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", ""));
     repository.functionDefs.add(
@@ -304,7 +304,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testOutputObjectListRestrictsToSpecifiedTypes() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "col1", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
     repository.triggers.add(new TriggerEntity("public", "t1", "trg_list", "trg_info"));
     repository.functions.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", ""));
     repository.functionDefs.add(
@@ -558,8 +558,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testAnnotationsAreMergedIntoTableDefinition() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(
-        new ColumnEntity("public", "t1", "|1|論理ID|id|int|Y|N||", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "論理ID", "id", "int", "", "○", "○", ""));
     annotations =
         Annotations.of(
             Map.of(
@@ -574,7 +573,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
     assertTrue(t1Content.contains("t1の説明文"));
     assertTrue(t1Content.contains("t1の備考"));
-    assertTrue(t1Content.contains("|1|論理ID|id|int|Y|N||主キー|"));
+    assertTrue(t1Content.contains("|1|論理ID|id|int||○|○||主キー|"));
   }
 
   @Test

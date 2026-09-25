@@ -81,12 +81,7 @@ public class ErDiagramTemplatesTest {
   void testErDiagramCardinality() {
     var oneToOne =
         ForeignKeyFixtures.physical(
-            "public",
-            "profiles",
-            "fk_profiles_user",
-            "public",
-            "users",
-            Cardinality.ONE_TO_ONE);
+            "public", "profiles", "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
     var optional =
         ForeignKeyFixtures.physical(
             "public",

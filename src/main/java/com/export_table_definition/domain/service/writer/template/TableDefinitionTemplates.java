@@ -103,13 +103,29 @@ public class TableDefinitionTemplates {
                 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
                 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
                 """;
-    // 末尾の備考セルはSQLでは付与されないため、物理カラム名をキーにサイドカー由来の備考を後付けする
+    // 末尾の備考セルはSQL由来ではないため、物理カラム名をキーにサイドカー由来の備考を後付けする
     return tableSection(
         columns,
         table,
         header,
         (no, c) ->
-            c.columnInfo()
+            "|"
+                + no
+                + "|"
+                + c.logicalColumnName()
+                + "|"
+                + c.physicalColumnName()
+                + "|"
+                + c.columnType()
+                + "|"
+                + c.precisionScale()
+                + "|"
+                + c.primaryKey()
+                + "|"
+                + c.notNull()
+                + "|"
+                + c.defaultValue()
+                + "|"
                 + MarkdownTemplateSupport.escapeTableCell(
                     annotation.columnRemark(c.physicalColumnName()))
                 + "|",

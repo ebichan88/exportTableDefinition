@@ -141,21 +141,15 @@ public class TableDefinitionWriterDomainServiceTest {
   @DisplayName("writeTableDefinition: 解決されたパスに、カラム・インデックス・制約・外部キー・トリガー・ER図の全セクションを出力する")
   void testWriteTableDefinitionWritesAllSections() {
     TableEntity table = table("orders");
-    var column =
-        new ColumnEntity("public", "orders", "|1|受注ID|order_id|int|Y|N||", "order_id", "int", "○");
+    var column = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "○", "");
     var index = new IndexEntity("public", "orders", "|1|idx_orders_1|order_id|");
     var constraint =
         new ConstraintEntity("public", "orders", "|1|pk_orders|PRIMARY KEY|(order_id)|");
     var outgoingFk =
         ForeignKeyFixtures.physical(
-            "public",
-            "orders",
-            "fk_orders_customer",
-            "public",
-            "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var incomingFk =
-        ForeignKeyFixtures.physical(
-            "public", "items", "fk_items_orders", "public", "orders");
+        ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var trigger =
         new TriggerEntity("public", "orders", "unused", "|1|trg_orders|BEFORE|INSERT|ROW|...|");
 
@@ -204,6 +198,6 @@ public class TableDefinitionWriterDomainServiceTest {
     // サイドカー由来の付帯情報（テーブル説明・テーブル備考・カラム備考）がマージされる
     assertTrue(fileContent.contains("受注を管理するテーブル"));
     assertTrue(fileContent.contains("|public|受注|orders|table|個人情報を含む|"));
-    assertTrue(fileContent.contains("|1|受注ID|order_id|int|Y|N||受注の主キー|"));
+    assertTrue(fileContent.contains("|1|受注ID|order_id|int||○|○||受注の主キー|"));
   }
 }

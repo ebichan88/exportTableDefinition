@@ -87,25 +87,12 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("columns: schema.table が一致する行のみ含まれる")
   void testColumnsFiltered() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var match =
-        new ColumnEntity(
-            "public",
-            "orders",
-            "| 1 | 受注ID | order_id | int | Y | N |  |  |",
-            "order_id",
-            "int",
-            "○");
+    var match = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
     var other =
-        new ColumnEntity(
-            "other",
-            "customers",
-            "| 1 | 顧客ID | customer_id | int | Y | N |  |  |",
-            "customer_id",
-            "int",
-            "○");
+        new ColumnEntity("other", "customers", "顧客ID", "customer_id", "int", "", "○", "", "");
     String section =
         TableDefinitionTemplates.columns(List.of(match, other), table, TableAnnotation.EMPTY);
-    assertTrue(section.contains("| 1 | 受注ID | order_id | int |"));
+    assertTrue(section.contains("|1|受注ID|order_id|int|"));
     assertFalse(section.contains("顧客ID"));
   }
 
@@ -113,13 +100,10 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("columns: 物理カラム名をキーにサイドカーのカラム備考を末尾セルへ後付けする")
   void testColumnsWithAnnotation() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    // columnInfo は末尾の備考セルをSQLで付与しないため「| デフォルト |」で終わる
-    var match =
-        new ColumnEntity(
-            "public", "orders", "| 1 | 受注ID | order_id | int |  | ○ |  |", "order_id", "int", "○");
+    var match = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
     var annotation = new TableAnnotation("", "", Map.of("order_id", "受注の主キー|連番"));
     String section = TableDefinitionTemplates.columns(List.of(match), table, annotation);
-    assertTrue(section.contains("| 1 | 受注ID | order_id | int |  | ○ |  |受注の主キー\\|連番|"));
+    assertTrue(section.contains("|1|受注ID|order_id|int||○|||受注の主キー\\|連番|"));
   }
 
   @Test
@@ -167,18 +151,8 @@ public class TableDefinitionTemplatesTest {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     var fk1 =
         ForeignKeyFixtures.physical(
-            "public",
-            "orders",
-            "fk_orders_customer",
-            "public",
-            "customers");
-    var fk2 =
-        ForeignKeyFixtures.physical(
-            "sales",
-            "orders",
-            "fk_sales_orders",
-            "sales",
-            "y");
+            "public", "orders", "fk_orders_customer", "public", "customers");
+    var fk2 = ForeignKeyFixtures.physical("sales", "orders", "fk_sales_orders", "sales", "y");
     String section = TableDefinitionTemplates.foreignKeys(List.of(fk1, fk2), table);
     assertTrue(section.contains("fk_orders_customer"));
     assertFalse(section.contains("fk_sales_orders"));
@@ -190,12 +164,7 @@ public class TableDefinitionTemplatesTest {
     TableEntity table = newTable("public", "profiles", "プロフィール", "table", "");
     var fk =
         ForeignKeyFixtures.physical(
-            "public",
-            "profiles",
-            "fk_profiles_user",
-            "public",
-            "users",
-            Cardinality.ONE_TO_ONE);
+            "public", "profiles", "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
     String section = TableDefinitionTemplates.foreignKeys(List.of(fk), table);
     assertTrue(section.contains("| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
     assertTrue(section.contains("|1|fk_profiles_user|unused|public.users|unused|1対1|"));
@@ -236,14 +205,12 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 自テーブルの属性・PK表記と参照先/参照元の関係線が含まれる")
   void testErDiagramWithRelations() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column =
-        new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", "○");
     var outgoing =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
     var incoming =
-        ForeignKeyFixtures.physical(
-            "public", "items", "fk_items_orders", "public", "orders");
+        ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     String section =
         TableDefinitionTemplates.erDiagram(
             table, List.of(column), List.of(outgoing), List.of(incoming));
@@ -261,8 +228,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 参照先・参照元それぞれの多重度に応じた関係線を出力する")
   void testErDiagramCardinality() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column =
-        new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", "○");
     var outgoing =
         ForeignKeyFixtures.physical(
             "public",
@@ -291,7 +257,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: データ型の桁数指定は除去される")
   void testErDiagramSanitizesType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "unused", "amount", "numeric(10,2)", "");
+    var column = new ColumnEntity("public", "orders", "amount", "numeric(10,2)", "");
     var outgoing =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -358,7 +324,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 論理リレーションは破線、物理外部キーは実線で描画する")
   void testErDiagramDistinguishesRelationType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "unused", "order_id", "int", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "int", "○");
     var physical =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -376,7 +342,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 被参照側の論理リレーションも破線で描画する")
   void testErDiagramIncomingLogicalIsDashed() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "unused", "order_id", "int", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "int", "○");
     var incoming =
         ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_orders", "public", "orders");
     String section =

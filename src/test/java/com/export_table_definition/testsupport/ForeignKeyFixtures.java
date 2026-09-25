@@ -50,7 +50,14 @@ public final class ForeignKeyFixtures {
       String refTable,
       Cardinality cardinality) {
     return new ForeignKeyEntity(
-        schema, table, name, UNUSED, refSchema, refTable, UNUSED, cardinality,
+        schema,
+        table,
+        name,
+        UNUSED,
+        refSchema,
+        refTable,
+        UNUSED,
+        cardinality,
         RelationType.PHYSICAL);
   }
 

@@ -54,9 +54,7 @@ public class ForeignKeysTest {
   @Test
   @DisplayName("incomingOf: スキーマを跨いだ参照でも正しく解決される")
   void testIncomingOfAcrossSchemas() {
-    var fk =
-        ForeignKeyFixtures.physical(
-            "hr", "assignment", "fk_assignment_emp", "sales", "emp");
+    var fk = ForeignKeyFixtures.physical("hr", "assignment", "fk_assignment_emp", "sales", "emp");
     var foreignKeys = ForeignKeys.of(List.of(fk));
 
     assertEquals(List.of(fk), foreignKeys.incomingOf(newTable("sales", "emp")));
@@ -66,8 +64,7 @@ public class ForeignKeysTest {
   @DisplayName("groupBySchema: スキーマ跨ぎの外部キーは参照元・参照先の双方のスキーマに登録される")
   void testGroupBySchemaRegistersBothSides() {
     var crossFk =
-        ForeignKeyFixtures.physical(
-            "hr", "assignment", "fk_assignment_emp", "sales", "emp");
+        ForeignKeyFixtures.physical("hr", "assignment", "fk_assignment_emp", "sales", "emp");
     var bySchema = ForeignKeys.of(List.of(crossFk)).groupBySchema();
 
     assertEquals(List.of(crossFk), bySchema.get("hr"));
@@ -102,8 +99,7 @@ public class ForeignKeysTest {
   void testCrossSchema() {
     var sameSchemaFk =
         ForeignKeyFixtures.physical("public", "orders", "fk_same", "public", "customers");
-    var crossSchemaFk =
-        ForeignKeyFixtures.physical("hr", "assignment", "fk_cross", "sales", "emp");
+    var crossSchemaFk = ForeignKeyFixtures.physical("hr", "assignment", "fk_cross", "sales", "emp");
     var foreignKeys = ForeignKeys.of(List.of(sameSchemaFk, crossSchemaFk));
 
     assertEquals(List.of(crossSchemaFk), foreignKeys.crossSchema());
