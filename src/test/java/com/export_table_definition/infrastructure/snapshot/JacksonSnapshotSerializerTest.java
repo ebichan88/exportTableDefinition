@@ -84,4 +84,74 @@ public class JacksonSnapshotSerializerTest {
             + "\"cardinality\":\"OPTIONAL_ONE_TO_MANY\"}",
         serializer.serialize(relation));
   }
+
+  @Test
+  @DisplayName("formatForDiff: トップレベルの項目を1項目1行に整形する。行末にカンマは付けない")
+  void testFormatForDiffFormatsTopLevelFieldsOnePerLine() {
+    var type = new TypeSnapshot("public", "mood", "ENUM", "sad, ok");
+
+    assertEquals(
+        List.of(
+            "{",
+            "  \"schema\": \"public\"",
+            "  \"name\": \"mood\"",
+            "  \"category\": \"ENUM\"",
+            "  \"definition\": \"sad, ok\"",
+            "}"),
+        serializer.formatForDiff(serializer.serialize(type)));
+  }
+
+  @Test
+  @DisplayName("formatForDiff: 配列は1要素を1行に整形し、要素自体はコンパクトなJSONのままとする")
+  void testFormatForDiffFormatsArrayElementsOnePerLine() {
+    var table =
+        new TableSnapshot(
+            "public",
+            "t1",
+            null,
+            "table",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(
+                new TableSnapshot.Relation(
+                    "fk1", List.of("customer_id"), "public", "customers", List.of("id"), null),
+                new TableSnapshot.Relation(
+                    "fk2", List.of("owner_id"), "public", "owners", List.of("id"), null)),
+            List.of(),
+            List.of());
+
+    assertEquals(
+        List.of(
+            "{",
+            "  \"schema\": \"public\"",
+            "  \"name\": \"t1\"",
+            "  \"type\": \"table\"",
+            "  \"foreignKeys\": [",
+            "    {\"name\":\"fk1\",\"columns\":[\"customer_id\"],\"referenceSchema\":\"public\","
+                + "\"referenceTable\":\"customers\",\"referenceColumns\":[\"id\"]}",
+            "    {\"name\":\"fk2\",\"columns\":[\"owner_id\"],\"referenceSchema\":\"public\","
+                + "\"referenceTable\":\"owners\",\"referenceColumns\":[\"id\"]}",
+            "  ]",
+            "}"),
+        serializer.formatForDiff(serializer.serialize(table)));
+  }
+
+  @Test
+  @DisplayName("formatForDiff: 同じ内容からは常に同じ結果を返す")
+  void testFormatForDiffIsDeterministic() {
+    var type = new TypeSnapshot("public", "mood", "ENUM", "sad, ok");
+    String json = serializer.serialize(type);
+
+    assertEquals(serializer.formatForDiff(json), serializer.formatForDiff(json));
+  }
+
+  @Test
+  @DisplayName("formatForDiff: JSONとして解釈できない行はそのまま1件だけ含むリストとして返す")
+  void testFormatForDiffReturnsInputAsIsWhenNotJson() {
+    assertEquals(List.of("not json"), serializer.formatForDiff("not json"));
+  }
 }
