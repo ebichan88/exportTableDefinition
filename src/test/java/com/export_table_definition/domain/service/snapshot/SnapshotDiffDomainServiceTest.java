@@ -49,6 +49,23 @@ public class SnapshotDiffDomainServiceTest {
         + "\"}]}";
   }
 
+  private void assertUnifiedDiffEquals(
+      List<String> expected, List<String> actual, String testName) {
+    if (!expected.equals(actual)) {
+      var msg = new StringBuilder();
+      msg.append("\n").append(testName).append("\n");
+      msg.append("EXPECTED (size=").append(expected.size()).append("):\n");
+      for (int i = 0; i < expected.size(); i++) {
+        msg.append(String.format("[%d] %s\n", i, expected.get(i)));
+      }
+      msg.append("ACTUAL (size=").append(actual.size()).append("):\n");
+      for (int i = 0; i < actual.size(); i++) {
+        msg.append(String.format("[%d] %s\n", i, actual.get(i)));
+      }
+      throw new AssertionError(msg.toString());
+    }
+  }
+
   @Test
   @DisplayName("compare: 同じ内容の場合は差分なし")
   void testNoDifference(@TempDir Path generated, @TempDir Path committed) throws IOException {
@@ -107,13 +124,7 @@ public class SnapshotDiffDomainServiceTest {
             "   ]",
             " }");
     var actual = diff.unifiedDiff();
-    if (!expected.equals(actual)) {
-      System.out.println("EXPECTED:");
-      expected.forEach(System.out::println);
-      System.out.println("ACTUAL:");
-      actual.forEach(System.out::println);
-    }
-    assertEquals(expected, actual);
+    assertUnifiedDiffEquals(expected, actual, "testContentDifferIncludesUnifiedDiff");
   }
 
   @Test
@@ -129,24 +140,24 @@ public class SnapshotDiffDomainServiceTest {
     assertEquals(Path.of("testdb", "database.json").toString(), diff.target());
     var lines = diff.unifiedDiff();
     if (lines.size() < 2) {
-      System.out.println("UNIFIEDIFF_LINES_SIZE: " + lines.size());
-      System.out.println("UNIFIED_DIFF_CONTENT:");
-      lines.forEach(System.out::println);
+      throw new AssertionError(
+          "Expected at least 2 lines in unifiedDiff, but got "
+              + lines.size()
+              + ":\n"
+              + String.join("\n", lines));
     }
     var expectedFirst = "--- committed/testdb/database.json";
     var actualFirst = lines.get(0);
     if (!expectedFirst.equals(actualFirst)) {
-      System.out.println("FIRST_LINE_EXPECTED: " + expectedFirst);
-      System.out.println("FIRST_LINE_ACTUAL: " + actualFirst);
+      throw new AssertionError(
+          "First line mismatch:\nExpected: " + expectedFirst + "\nActual: " + actualFirst);
     }
-    assertEquals(expectedFirst, actualFirst);
     var expectedSecond = "+++ generated/testdb/database.json";
     var actualSecond = lines.get(1);
     if (!expectedSecond.equals(actualSecond)) {
-      System.out.println("SECOND_LINE_EXPECTED: " + expectedSecond);
-      System.out.println("SECOND_LINE_ACTUAL: " + actualSecond);
+      throw new AssertionError(
+          "Second line mismatch:\nExpected: " + expectedSecond + "\nActual: " + actualSecond);
     }
-    assertEquals(expectedSecond, actualSecond);
   }
 
   @Test
