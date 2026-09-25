@@ -43,7 +43,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 5. ユースケース実装が以下を順に行う（詳細は
    [ExportTableDefinitionUsecaseImpl.java](../../src/main/java/com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.java) 参照）。
    - `TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得
-   - `AnnotationRepository` でサイドカーYAML（手動付帯情報）を読み込みマージ
+   - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込みマージ
    - `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ObjectListWriterDomainService`
      （いずれも `domain.service.writer` 配下）がMarkdownを組み立てて `FileRepository` 経由で出力
 
@@ -60,6 +60,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は
 `domain.model.type.OutputObjectType` で種別ごとに絞り込み可能。Oracle接続時はこれらの取得・出力自体が行われない。
+
+なお論理リレーション（サイドカーYAML由来）はDBに依存しないため、PostgreSQL／Oracleの双方で利用できる。
 
 ## メモリ効率のための分割取得
 
@@ -93,12 +95,33 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 差分が1件でもある場合、または比較処理自体が例外で失敗した場合は`System.exit(1)`、差分なしの場合は
 `System.exit(0)`で終了するため、CI上でジョブの成否として扱える。
 
-## 手動付帯情報（サイドカーYAML）
+## サイドカーYAML（手動付帯情報・論理リレーション）
 
-DBのメタ情報だけでは表現できない備考等を、サイドカーYAML（`annotationPath` で指定）としてテーブル定義に
-マージできる。読み込みは `AnnotationRepository`（実装: `infrastructure.file.repository.AnnotationYamlRepository`）、
-モデルは `domain.model.annotation.Annotations` / `TableAnnotation`。実在しないテーブル・カラムに対する
-付帯情報（リネーム・削除の見落とし）は警告ログで検知する。
+DBのメタ情報だけでは表現できない情報を、サイドカーYAML（`annotationPath` で指定）としてマージできる。
+読み込みは `AnnotationRepository`（実装: `infrastructure.file.repository.AnnotationYamlRepository`）が一括で行い、
+`domain.model.annotation.Sidecar` として返す。`Sidecar` は性質の異なる2種類の情報を束ねる。
+
+| 種別 | YAMLキー | モデル | 反映先 |
+|---|---|---|---|
+| 手動付帯情報 | `tables` | `Annotations` / `TableAnnotation` | テーブル定義書の各セル（説明・備考・カラム備考） |
+| 論理リレーション | `relations` | `ForeignKeyEntity`（`RelationType.LOGICAL`） | 「論理リレーション情報」セクション + ER図 |
+
+実在しないテーブル・カラムに対する付帯情報（リネーム・削除の見落とし）は警告ログで検知する。
+
+### 論理リレーションの合流
+
+外部キー制約を張らないDBではカタログから読み取れる関連だけではER図がほとんど空になるため、
+サイドカーで宣言した関連を補う。設計上の要点は「**物理外部キーと同じ集合へ合流させる**」こと。
+
+- `ExportTableDefinitionUsecaseImpl` が、DBから取得した外部キーとサイドカー由来の論理リレーションを
+  結合して `ForeignKeys.of()` に渡す（`resolveLogicalRelations`）。参照元・参照先の双方が出力対象に
+  存在しない関連は、ER図に片側だけのノードが現れるのを避けるため警告ログを出して除外する
+- 合流させることで、ER図のグループ分割（`ForeignKeyGroups` の連結成分算出）、スキーマ跨ぎ関連の抽出
+  （`ForeignKeys.crossSchema()`）、被参照側の解決（`incomingOf`）にも**追加実装なしで反映される**
+- 読み手が「DBに制約がある」と誤読しないよう、2箇所で区別する
+  - テーブル定義書：`ForeignKeys.physicalOf()` / `logicalOf()` で由来ごとに取り出し、別セクションへ掲載
+  - ER図：`RelationType` が持つ線種を `Cardinality.getNotation(RelationType)` が組み立て、
+    物理は実線（`||--o{`）、論理は破線（`||..o{`）で描画する
 
 ## 設定・DI
 

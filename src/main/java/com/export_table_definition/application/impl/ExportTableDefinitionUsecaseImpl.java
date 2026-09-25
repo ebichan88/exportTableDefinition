@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +16,7 @@ import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.TableDefinitionContent;
 import com.export_table_definition.domain.model.annotation.Annotations;
+import com.export_table_definition.domain.model.annotation.Sidecar;
 import com.export_table_definition.domain.model.collection.Columns;
 import com.export_table_definition.domain.model.collection.Constraints;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
@@ -22,6 +24,7 @@ import com.export_table_definition.domain.model.collection.Indexes;
 import com.export_table_definition.domain.model.collection.Triggers;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
+import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -97,8 +100,9 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
         // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
         final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
-        // 手動付帯情報（サイドカーYAML）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
-        final Annotations annotations = annotationRepository.load(annotationPath);
+        // サイドカーYAML（手動付帯情報・論理リレーション）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
+        final Sidecar sidecar = annotationRepository.load(annotationPath);
+        final Annotations annotations = sidecar.annotations();
 
         // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する
         final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
@@ -107,8 +111,14 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         warnOrphanTableAnnotations(annotations, tableEntityList, targetSchemaList, targetTableList);
         // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
         // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
-        // 特定のチャンクに限定せず全件を保持しておく必要がある
-        final ForeignKeys foreignKeys = ForeignKeys.of(repository.selectForeignKeyList(targetSchemaList, targetTableList));
+        // 特定のチャンクに限定せず全件を保持しておく必要がある。
+        // サイドカー由来の論理リレーションは、出力対象に含まれるテーブル同士のものだけを同じ集合へ合流させる。
+        // 合流させることで、ER図のグループ分割（連結成分）やスキーマ跨ぎ関連の抽出にも自動的に反映される
+        final List<ForeignKeyEntity> logicalRelations = resolveLogicalRelations(sidecar, tableEntityList);
+        final ForeignKeys foreignKeys = ForeignKeys.of(Stream
+                .concat(repository.selectForeignKeyList(targetSchemaList, targetTableList).stream(),
+                        logicalRelations.stream())
+                .toList());
         // トリガーはテーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、
         // テーブル定義書内のセクションとトリガー一覧の両方で利用する。
         // outputObjectListでトリガーが対象外とされた場合は、取得自体を行わず一覧・テーブル定義書双方から除外する
@@ -208,6 +218,51 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
                 .forEach(key -> logger.warn(
                         "Annotation exists for a table that was not found (renamed or dropped?). [table={}.{}]",
                         key.schema(), key.table()));
+    }
+
+    /**
+     * サイドカー由来の論理リレーションのうち、出力対象のテーブル同士のものだけを抽出するメソッド<br>
+     * 参照元・参照先の双方が出力対象に含まれていないと、ER図に片側だけのノードが現れたり、
+     * 定義書が存在しないテーブルへの関連が掲載されたりするため、いずれかが欠ける定義は除外する。
+     * 除外の理由は、出力対象の絞り込みによるものか、リネーム・削除による乖離かを区別できないため、
+     * 一律で警告ログを出して気付けるようにする
+     *
+     * @param sidecar 読み込んだサイドカーの内容
+     * @param tables  出力対象のテーブル情報のリスト
+     * @return 出力対象のテーブル同士の論理リレーションのリスト
+     */
+    private List<ForeignKeyEntity> resolveLogicalRelations(Sidecar sidecar, List<TableEntity> tables) {
+        if (sidecar.logicalRelations().isEmpty()) {
+            return List.of();
+        }
+        final Set<TableKey> existingKeys = tables.stream().map(TableKey::of).collect(Collectors.toSet());
+        final List<ForeignKeyEntity> resolved = sidecar.logicalRelations().stream()
+                .filter(relation -> isResolvableRelation(relation, existingKeys)).toList();
+        logger.info("Merged logical relations declared in the sidecar. [relationCount={}]", resolved.size());
+        return resolved;
+    }
+
+    /**
+     * 論理リレーションの参照元・参照先が、いずれも出力対象のテーブルとして実在するか判定するメソッド<br>
+     * 実在しない場合は、どちら側が解決できなかったかを警告ログに出力する
+     *
+     * @param relation     判定対象の論理リレーション
+     * @param existingKeys 出力対象のテーブルキーの集合
+     * @return 双方が実在する場合はtrue
+     */
+    private boolean isResolvableRelation(ForeignKeyEntity relation, Set<TableKey> existingKeys) {
+        final boolean childExists = existingKeys.contains(TableKey.of(relation.schemaName(), relation.tableName()));
+        final boolean parentExists = existingKeys
+                .contains(TableKey.of(relation.referenceSchemaName(), relation.referenceTableName()));
+        if (childExists && parentExists) {
+            return true;
+        }
+        logger.warn(
+                "Skipping logical relation because the table was not found in the output target "
+                        + "(filtered, renamed or dropped?). [relation={}, table={}{}, parentTable={}{}]",
+                relation.foreignkeyName(), relation.getSchemaTableName(), childExists ? "" : " (not found)",
+                relation.getReferenceSchemaTableName(), parentExists ? "" : " (not found)");
+        return false;
     }
 
     /**

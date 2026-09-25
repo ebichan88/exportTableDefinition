@@ -413,8 +413,10 @@
                 ELSE NULL
             END AS "foreignkeyInfo",
             foreignkey_name AS "foreignkeyName",
+            column_names AS "columnNames",
             reference_schema_name AS "referenceSchemaName",
             reference_table_name AS "referenceTableName",
+            reference_column_names AS "referenceColumnNames",
             child_key_unique AS "childKeyUnique",
             child_key_mandatory AS "childKeyMandatory"
         FROM all_foreignkeys
@@ -427,8 +429,10 @@
             <arg column="tableName" javaType="String" />
             <arg column="foreignkeyInfo" javaType="String" />
             <arg column="foreignkeyName" javaType="String" />
+            <arg column="columnNames" javaType="String" />
             <arg column="referenceSchemaName" javaType="String" />
             <arg column="referenceTableName" javaType="String" />
+            <arg column="referenceColumnNames" javaType="String" />
             <arg column="childKeyUnique" javaType="String" />
             <arg column="childKeyMandatory" javaType="String" />
         </constructor>

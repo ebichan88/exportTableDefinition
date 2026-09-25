@@ -10,7 +10,11 @@ import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.value.TableKey;
 /**
- * 外部キー情報の集合を扱うクラス
+ * 外部キー情報の集合を扱うクラス<br>
+ * DBに実在する外部キー制約と、サイドカーYAML由来の論理リレーションを同一の集合として保持する。
+ * ER図はテーブル間の関連をまとめて描く必要があるため両者を区別せず扱い、
+ * テーブル定義書のセクションは{@link #physicalOf(TableEntity)}／{@link #logicalOf(TableEntity)}で
+ * 由来ごとに取り出して掲載する
  *
  * @since 1.0
  * @version 1.0
@@ -44,6 +48,28 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
      */
     public List<ForeignKeyEntity> incomingOf(TableEntity table) {
         return incomingByKey.getOrDefault(TableKey.of(table), List.of());
+    }
+
+    /**
+     * 指定されたテーブルが持つ、DBに実在する外部キー制約のリストを取得するメソッド<br>
+     * テーブル定義書の「外部キー情報」セクションには制約として実在するものだけを掲載する
+     *
+     * @param table テーブルエンティティ
+     * @return 当該テーブルの物理外部キーのリスト。存在しない場合は空のリストを返す
+     */
+    public List<ForeignKeyEntity> physicalOf(TableEntity table) {
+        return of(table).stream().filter(fk -> !fk.isLogical()).toList();
+    }
+
+    /**
+     * 指定されたテーブルが持つ、サイドカーYAML由来の論理リレーションのリストを取得するメソッド<br>
+     * テーブル定義書では「論理リレーション情報」セクションとして物理外部キーとは別に掲載する
+     *
+     * @param table テーブルエンティティ
+     * @return 当該テーブルの論理リレーションのリスト。存在しない場合は空のリストを返す
+     */
+    public List<ForeignKeyEntity> logicalOf(TableEntity table) {
+        return of(table).stream().filter(ForeignKeyEntity::isLogical).toList();
     }
 
     /**

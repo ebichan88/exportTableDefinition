@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
+import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import com.export_table_definition.domain.model.value.TableKey;
 
 /**
@@ -16,7 +17,7 @@ import com.export_table_definition.domain.model.value.TableKey;
 public class ForeignKeyGroupsTest {
 
     private ForeignKeyEntity fk(String schema, String table, String name, String refSchema, String refTable) {
-        return new ForeignKeyEntity(schema, table, "unused", name, refSchema, refTable);
+        return ForeignKeyFixtures.physical(schema, table, "unused", name, refSchema, refTable);
     }
 
     @Test

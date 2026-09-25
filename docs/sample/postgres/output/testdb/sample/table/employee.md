@@ -76,6 +76,7 @@ erDiagram
     sample_parking_spot |o--o| sample_employee : "employee_parking_spot_id_fkey"
     sample_employee ||--o| sample_employee_profile : "employee_profile_employee_id_fkey"
     sample_employee ||--o{ sample_project_assignment : "project_assignment_employee_id_fkey"
+    sample_employee |o..o{ sample_audit_log : "rel_audit_log_employee"
     sample_employee {
         integer employee_id PK
         character_varying employee_code

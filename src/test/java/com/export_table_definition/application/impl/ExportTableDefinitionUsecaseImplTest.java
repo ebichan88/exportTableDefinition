@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.annotation.Annotations;
+import com.export_table_definition.domain.model.annotation.Sidecar;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
@@ -27,6 +28,7 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -37,6 +39,7 @@ import com.export_table_definition.domain.service.writer.ObjectListWriterDomainS
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
+import com.export_table_definition.testsupport.ForeignKeyFixtures;
 
 /**
  * ExportTableDefinitionUsecaseImpl のオーケストレーションに関するテスト<br>
@@ -173,6 +176,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     private ExportTableDefinitionUsecaseImpl usecase;
     /** annotationRepositoryスタブが返す付帯情報（テストごとに差し替え可能） */
     private Annotations annotations = Annotations.empty();
+    private List<ForeignKeyEntity> logicalRelations = List.of();
     /** annotationRepositoryへ渡されたパスを記録する */
     private String receivedAnnotationPath;
 
@@ -189,7 +193,7 @@ public class ExportTableDefinitionUsecaseImplTest {
                 pathResolver, pagedSectionWriter);
         final AnnotationRepository annotationRepository = path -> {
             receivedAnnotationPath = path;
-            return annotations;
+            return new Sidecar(annotations, logicalRelations);
         };
         final DocumentDiffDomainService documentDiffDomainService = new DocumentDiffDomainService(fileRepository);
         usecase = new ExportTableDefinitionUsecaseImpl(repository, writer, erDiagramWriter, objectListWriter,
@@ -436,7 +440,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         setUp();
         IntStream.rangeClosed(1, 4).forEach(i -> repository.tables.add(table("public", "t" + i)));
         // t4（2チャンク目）がt1（1チャンク目）を参照する
-        repository.foreignKeys.add(new ForeignKeyEntity("public", "t4", "unused", "fk_t4_t1", "public", "t1"));
+        repository.foreignKeys.add(ForeignKeyFixtures.physical("public", "t4", "unused", "fk_t4_t1", "public", "t1"));
 
         usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of(), null);
 
@@ -504,5 +508,71 @@ public class ExportTableDefinitionUsecaseImplTest {
 
         assertTrue(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "keep")));
         assertFalse(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "skip")));
+    }
+
+    @Test
+    @DisplayName("サイドカーの論理リレーションが、専用セクションとER図（破線）の双方に反映される")
+    void testLogicalRelationsAreMergedIntoTableDefinition() {
+        setUp();
+        repository.tables.add(table("public", "audit_log"));
+        repository.tables.add(table("public", "employee"));
+        logicalRelations = List.of(ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_employee", "record_id",
+                "public", "employee", "employee_id", Cardinality.OPTIONAL_ONE_TO_MANY));
+
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), "conf/annotations.yml");
+
+        final String auditContent = contentOf(tableDefFile(DEFAULT_OUT, "public", "audit_log"));
+        // 参照元は専用セクションに掲載され、外部キー情報セクションには現れない
+        assertTrue(auditContent.contains("## 論理リレーション情報"));
+        assertTrue(auditContent.contains("|1|rel_audit_employee|record_id|public.employee|employee_id|0..1対多|"));
+        assertTrue(auditContent.contains("public_employee |o..o{ public_audit_log : \"rel_audit_employee\""));
+
+        // 参照先には被参照側としてER図にのみ現れ、専用セクションは出力されない
+        final String employeeContent = contentOf(tableDefFile(DEFAULT_OUT, "public", "employee"));
+        assertFalse(employeeContent.contains("## 論理リレーション情報"));
+        assertTrue(employeeContent.contains("public_employee |o..o{ public_audit_log : \"rel_audit_employee\""));
+    }
+
+    @Test
+    @DisplayName("論理リレーションを持たないテーブルには、論理リレーション情報セクションを出力しない")
+    void testLogicalRelationSectionOmittedWhenNotDeclared() {
+        setUp();
+        repository.tables.add(table("public", "t1"));
+
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null);
+
+        assertFalse(contentOf(tableDefFile(DEFAULT_OUT, "public", "t1")).contains("## 論理リレーション情報"));
+    }
+
+    @Test
+    @DisplayName("参照元・参照先のいずれかが出力対象に存在しない論理リレーションは除外される")
+    void testLogicalRelationSkippedWhenTableMissing() {
+        setUp();
+        repository.tables.add(table("public", "audit_log"));
+        // 参照先のemployeeは出力対象に存在しない（絞り込み・リネーム・削除を想定）
+        logicalRelations = List.of(
+                ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_employee", "public", "employee"));
+
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), "conf/annotations.yml");
+
+        final String auditContent = contentOf(tableDefFile(DEFAULT_OUT, "public", "audit_log"));
+        assertFalse(auditContent.contains("## 論理リレーション情報"));
+        assertFalse(auditContent.contains("rel_audit_employee"));
+    }
+
+    @Test
+    @DisplayName("論理リレーションもスキーマ別ER図に破線で描画される")
+    void testLogicalRelationAppearsInSchemaErDiagram() {
+        setUp();
+        repository.tables.add(table("public", "audit_log"));
+        repository.tables.add(table("public", "employee"));
+        logicalRelations = List.of(
+                ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_employee", "public", "employee"));
+
+        usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), "conf/annotations.yml");
+
+        final String erContent = contentOf(DEFAULT_OUT.resolve("erDiagram_testdb_public.md"));
+        assertTrue(erContent.contains("||..o{"));
+        assertTrue(erContent.contains("rel_audit_employee"));
     }
 }

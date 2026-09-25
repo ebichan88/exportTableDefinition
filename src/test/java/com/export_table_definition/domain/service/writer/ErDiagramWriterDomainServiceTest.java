@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
+import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
@@ -82,7 +83,7 @@ public class ErDiagramWriterDomainServiceTest {
     }
 
     private ForeignKeyEntity fk(String table, String name, String refTable) {
-        return new ForeignKeyEntity("public", table, "unused", name, "public", refTable);
+        return ForeignKeyFixtures.physical("public", table, "unused", name, "public", refTable);
     }
 
     private List<String> fileNames() {

@@ -19,6 +19,7 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
+import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
@@ -137,14 +138,15 @@ public class TableDefinitionWriterDomainServiceTest {
         var column = new ColumnEntity("public", "orders", "|1|受注ID|order_id|int|Y|N||", "order_id", "int", "○");
         var index = new IndexEntity("public", "orders", "|1|idx_orders_1|order_id|");
         var constraint = new ConstraintEntity("public", "orders", "|1|pk_orders|PRIMARY KEY|(order_id)|");
-        var outgoingFk = new ForeignKeyEntity("public", "orders", "|1|fk_orders_customer|customer_id|customers|id|",
+        var outgoingFk = ForeignKeyFixtures.physical("public", "orders", "|1|fk_orders_customer|customer_id|customers|id|",
                 "fk_orders_customer", "public", "customers");
-        var incomingFk = new ForeignKeyEntity("public", "items", "unused", "fk_items_orders", "public", "orders");
+        var incomingFk = ForeignKeyFixtures.physical("public", "items", "unused", "fk_items_orders", "public", "orders");
         var trigger = new TriggerEntity("public", "orders", "unused", "|1|trg_orders|BEFORE|INSERT|ROW|...|");
 
         var annotation = new TableAnnotation("受注を管理するテーブル", "個人情報を含む", Map.of("order_id", "受注の主キー"));
         var content = new TableDefinitionContent(baseInfo(), table, List.of(column), List.of(index),
-                List.of(constraint), List.of(outgoingFk), List.of(incomingFk), List.of(trigger), annotation, OUT);
+                List.of(constraint), List.of(outgoingFk), List.of(), List.of(incomingFk), List.of(trigger), annotation,
+                OUT);
 
         writer.writeTableDefinition(content);
 
