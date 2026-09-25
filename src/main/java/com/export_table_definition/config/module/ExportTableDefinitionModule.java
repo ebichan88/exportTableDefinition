@@ -5,6 +5,7 @@ import com.export_table_definition.application.impl.ExportTableDefinitionUsecase
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
+import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
@@ -44,5 +45,6 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(ObjectListWriterDomainService.class);
     bind(SchemaSnapshotWriterDomainService.class);
     bind(SnapshotDiffDomainService.class);
+    bind(UnifiedDiffGenerator.class);
   }
 }
