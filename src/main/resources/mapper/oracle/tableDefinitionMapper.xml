@@ -2,10 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.export_table_definition.domain.repository.oracle.TableDefinitionRepository">
 
-    <select id="selectBaseInfo" resultMap="BaseInfoDtoMap"> SELECT SYS_CONTEXT('USERENV','DB_NAME')
-        AS "dbName", '|' || 'Oracle' || '|' || SYS_CONTEXT('USERENV','DB_NAME') || '|' ||
-        to_char(current_timestamp, 'yyyy/MM/dd') || '|' AS "baseInfo" FROM dual fetch first 1 rows
-        only </select>
+    <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
+        SELECT
+            SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
+            '|' || 'Oracle' || '|' || SYS_CONTEXT('USERENV','DB_NAME') || '|' || to_char(current_timestamp, 'yyyy/MM/dd') || '|' AS "baseInfo"
+        FROM dual
+        fetch first 1 rows only
+    </select>
 
     <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
         <constructor>
@@ -14,69 +17,94 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllTableInfo" resultMap="TableDtoMap"> WITH ora_all_tables AS ( SELECT
-        COALESCE(t1.OWNER, '') AS schema_name, 'table' AS table_type,
-        COALESCE(REGEXP_REPLACE(tcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
-        COALESCE(t1.TABLE_NAME, '') AS physical_table_name, '' AS remarks, '[■](./' ||
-        SYS_CONTEXT('USERENV','DB_NAME') || '/' || t1.OWNER || '/table/' || t1.TABLE_NAME || '.md)'
-        AS link, NULL AS definition FROM ALL_TABLES t1 LEFT OUTER JOIN ALL_MVIEWS m ON t1.OWNER =
-        m.OWNER AND t1.TABLE_NAME = m.MVIEW_NAME LEFT OUTER JOIN ALL_TAB_COMMENTS tcom ON t1.OWNER =
-        tcom.OWNER AND t1.TABLE_NAME = tcom.TABLE_NAME WHERE m.MVIEW_NAME IS NULL AND t1.OWNER NOT
-        IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND t1.OWNER IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND t1.TABLE_NAME IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> UNION ALL SELECT
-        COALESCE(t2.OWNER, '') AS schema_name, 'view' AS table_type,
-        COALESCE(REGEXP_REPLACE(vcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
-        COALESCE(t2.VIEW_NAME, '') AS physical_table_name, '' AS remarks, '[■](./' ||
-        SYS_CONTEXT('USERENV','DB_NAME') || '/' || t2.OWNER || '/view/' || t2.VIEW_NAME || '.md)' AS
-        link, '-- Oracleは未対応 --' AS definition FROM ALL_VIEWS t2 LEFT OUTER JOIN ALL_TAB_COMMENTS
-        vcom ON t2.OWNER = vcom.OWNER AND t2.VIEW_NAME = vcom.TABLE_NAME WHERE t2.OWNER NOT IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND t2.OWNER IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND t2.VIEW_NAME IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> UNION ALL SELECT
-        COALESCE(t3.OWNER, '') AS schema_name, 'materialized_view' AS table_type,
-        COALESCE(REGEXP_REPLACE(mcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
-        COALESCE(t3.MVIEW_NAME, '') AS physical_table_name, '' AS remarks, '[■](./' ||
-        SYS_CONTEXT('USERENV','DB_NAME') || '/' || t3.OWNER || '/materialized_view/' ||
-        t3.MVIEW_NAME || '.md)' AS link, '-- Oracleは未対応 --' AS definition FROM ALL_MVIEWS t3 LEFT
-        OUTER JOIN ALL_TAB_COMMENTS mcom ON t3.OWNER = mcom.OWNER AND t3.MVIEW_NAME =
-        mcom.TABLE_NAME WHERE t3.OWNER NOT IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND t3.OWNER IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND t3.MVIEW_NAME IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ) SELECT
-        SYS_CONTEXT('USERENV','DB_NAME') AS "dbName", schema_name AS "schemaName",
-        logical_table_name AS "logicalTableName", physical_table_name AS "physicalTableName",
-        table_type AS "tableType", '|' || ROW_NUMBER() OVER (ORDER BY schema_name,
-        physical_table_name) || '|' || schema_name || '|' || logical_table_name || '|' ||
-        physical_table_name || '|' || table_type || '|' || link || '|' || remarks || '|' AS
-        "tableInfoList", '|' || schema_name || '|' || logical_table_name || '|' ||
-        physical_table_name || '|' || table_type || '|' AS "tableInfo", definition AS definition
-        FROM ora_all_tables ORDER BY schema_name, physical_table_name </select>
+    <select id="selectAllTableInfo" resultMap="TableDtoMap">
+        WITH ora_all_tables AS (
+            SELECT
+                COALESCE(t1.OWNER, '') AS schema_name,
+                'table' AS table_type,
+                COALESCE(REGEXP_REPLACE(tcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
+                COALESCE(t1.TABLE_NAME, '') AS physical_table_name,
+                '' AS remarks,
+                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t1.OWNER || '/table/' || t1.TABLE_NAME || '.md)' AS link,
+                NULL AS definition
+            FROM ALL_TABLES t1
+            LEFT OUTER JOIN ALL_MVIEWS m ON t1.OWNER = m.OWNER AND t1.TABLE_NAME = m.MVIEW_NAME
+            LEFT OUTER JOIN ALL_TAB_COMMENTS tcom ON t1.OWNER = tcom.OWNER AND t1.TABLE_NAME = tcom.TABLE_NAME
+            WHERE m.MVIEW_NAME IS NULL
+                AND t1.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t1.OWNER IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t1.TABLE_NAME IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            UNION ALL
+            SELECT
+                COALESCE(t2.OWNER, '') AS schema_name,
+                'view' AS table_type,
+                COALESCE(REGEXP_REPLACE(vcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
+                COALESCE(t2.VIEW_NAME, '') AS physical_table_name,
+                '' AS remarks,
+                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t2.OWNER || '/view/' || t2.VIEW_NAME || '.md)' AS link,
+                '-- Oracleは未対応 --' AS definition
+            FROM ALL_VIEWS t2
+            LEFT OUTER JOIN ALL_TAB_COMMENTS vcom ON t2.OWNER = vcom.OWNER AND t2.VIEW_NAME = vcom.TABLE_NAME
+            WHERE t2.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t2.OWNER IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t2.VIEW_NAME IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            UNION ALL
+            SELECT
+                COALESCE(t3.OWNER, '') AS schema_name,
+                'materialized_view' AS table_type,
+                COALESCE(REGEXP_REPLACE(mcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
+                COALESCE(t3.MVIEW_NAME, '') AS physical_table_name,
+                '' AS remarks,
+                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t3.OWNER || '/materialized_view/' || t3.MVIEW_NAME || '.md)' AS link,
+                '-- Oracleは未対応 --' AS definition
+            FROM ALL_MVIEWS t3
+            LEFT OUTER JOIN ALL_TAB_COMMENTS mcom ON t3.OWNER = mcom.OWNER AND t3.MVIEW_NAME = mcom.TABLE_NAME
+            WHERE t3.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t3.OWNER IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t3.MVIEW_NAME IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
+            schema_name AS "schemaName",
+            logical_table_name AS "logicalTableName",
+            physical_table_name AS "physicalTableName",
+            table_type AS "tableType",
+            '|' || ROW_NUMBER() OVER (ORDER BY schema_name, physical_table_name) || '|' || schema_name || '|' || logical_table_name || '|' || physical_table_name || '|' || table_type || '|' || link || '|' || remarks || '|' AS "tableInfoList",
+            '|' || schema_name || '|' || logical_table_name || '|' || physical_table_name || '|' || table_type || '|' AS "tableInfo",
+            definition AS definition
+        FROM ora_all_tables
+        ORDER BY schema_name, physical_table_name
+    </select>
 
     <resultMap id="TableDtoMap" type="TableDto">
         <constructor>
@@ -91,39 +119,64 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllColumnInfo" resultMap="ColumnDtoMap"> WITH ora_all_columns AS ( SELECT
-        c.OWNER AS schema_name, c.TABLE_NAME AS table_name, c.COLUMN_ID AS column_num,
-        COALESCE(com.COMMENTS, '') AS logical_column_name, c.COLUMN_NAME AS physical_column_name,
-        c.DATA_TYPE || CASE WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') THEN '('
-        || c.DATA_LENGTH || ')' WHEN c.DATA_TYPE IN ('NUMBER') THEN '(' || c.DATA_PRECISION || ','
-        || DATA_SCALE || ')' WHEN c.DATA_TYPE IN ('FLOAT') THEN '(' || c.DATA_PRECISION || ')' ELSE
-        '' END AS column_type, CASE WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR')
-        THEN TO_CHAR(c.DATA_LENGTH) WHEN c.DATA_TYPE IN ('NUMBER', 'FLOAT') AND c.DATA_PRECISION IS
-        NOT NULL THEN TO_CHAR(c.DATA_PRECISION) || CASE WHEN COALESCE(c.DATA_SCALE, 0) != 0 THEN ','
-        || TO_CHAR(c.DATA_SCALE) ELSE '' END ELSE '' END AS precision_scale, CASE WHEN EXISTS (
-        SELECT 1 FROM ALL_CONS_COLUMNS acc JOIN ALL_CONSTRAINTS ac ON acc.CONSTRAINT_NAME =
-        ac.CONSTRAINT_NAME WHERE acc.TABLE_NAME = c.TABLE_NAME AND acc.COLUMN_NAME = c.COLUMN_NAME
-        AND ac.CONSTRAINT_TYPE = 'P' ) THEN '○' ELSE '' END AS primary_key, CASE c.NULLABLE WHEN 'N'
-        THEN '○' ELSE '' END AS not_null, ' ' AS default_value, '' AS remarks FROM ALL_TAB_COLUMNS c
-        LEFT OUTER JOIN ALL_COL_COMMENTS com ON c.OWNER = com.OWNER AND c.TABLE_NAME =
-        com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME WHERE c.OWNER NOT IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND c.OWNER IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND c.TABLE_NAME IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ORDER BY c.OWNER,
-        c.TABLE_NAME, c.COLUMN_ID ) SELECT schema_name AS "schemaName", table_name AS "tableName",
-        '|' || column_num || '|' || logical_column_name || '|' || physical_column_name || '|' ||
-        column_type || '|' || precision_scale || '|' || primary_key || '|' || not_null || '|' ||
-        default_value || '|' AS "columnInfo", physical_column_name AS "physicalColumnName",
-        column_type AS "columnType", primary_key AS "primaryKey" FROM ora_all_columns ORDER BY
-        schema_name, table_name, column_num </select>
+    <select id="selectAllColumnInfo" resultMap="ColumnDtoMap">
+        WITH ora_all_columns AS (
+            SELECT
+                c.OWNER AS schema_name,
+                c.TABLE_NAME AS table_name,
+                c.COLUMN_ID AS column_num,
+                COALESCE(com.COMMENTS, '') AS logical_column_name,
+                c.COLUMN_NAME AS physical_column_name,
+                c.DATA_TYPE || CASE
+                    WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') THEN '(' || c.DATA_LENGTH || ')'
+                    WHEN c.DATA_TYPE IN ('NUMBER') THEN '(' || c.DATA_PRECISION || ',' || DATA_SCALE || ')'
+                    WHEN c.DATA_TYPE IN ('FLOAT') THEN '(' || c.DATA_PRECISION || ')'
+                    ELSE ''
+                END AS column_type,
+                CASE
+                    WHEN c.DATA_TYPE IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') THEN TO_CHAR(c.DATA_LENGTH)
+                    WHEN c.DATA_TYPE IN ('NUMBER', 'FLOAT') AND c.DATA_PRECISION IS NOT NULL
+                        THEN TO_CHAR(c.DATA_PRECISION) || CASE WHEN COALESCE(c.DATA_SCALE, 0) != 0 THEN ',' || TO_CHAR(c.DATA_SCALE) ELSE '' END
+                    ELSE ''
+                END AS precision_scale,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1 FROM ALL_CONS_COLUMNS acc
+                        JOIN ALL_CONSTRAINTS ac ON acc.CONSTRAINT_NAME = ac.CONSTRAINT_NAME
+                        WHERE acc.TABLE_NAME = c.TABLE_NAME AND acc.COLUMN_NAME = c.COLUMN_NAME AND ac.CONSTRAINT_TYPE = 'P'
+                    ) THEN '○'
+                    ELSE ''
+                END AS primary_key,
+                CASE c.NULLABLE WHEN 'N' THEN '○' ELSE '' END AS not_null,
+                ' ' AS default_value,
+                '' AS remarks
+            FROM ALL_TAB_COLUMNS c
+            LEFT OUTER JOIN ALL_COL_COMMENTS com ON c.OWNER = com.OWNER AND c.TABLE_NAME = com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME
+            WHERE c.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND c.OWNER IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND c.TABLE_NAME IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            ORDER BY c.OWNER, c.TABLE_NAME, c.COLUMN_ID
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            '|' || column_num || '|' || logical_column_name || '|' || physical_column_name || '|' || column_type || '|' || precision_scale || '|' || primary_key || '|' || not_null || '|' || default_value || '|' AS "columnInfo",
+            physical_column_name AS "physicalColumnName",
+            column_type AS "columnType",
+            primary_key AS "primaryKey"
+        FROM ora_all_columns
+        ORDER BY schema_name, table_name, column_num
+    </select>
 
     <resultMap id="ColumnDtoMap" type="ColumnDto">
         <constructor>
@@ -136,37 +189,59 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllIndexInfo" resultMap="IndexDtoMap"> WITH ora_all_indexes AS ( SELECT
-        idx.owner AS schema_name, idx.table_name AS table_name, idx.index_name AS index_name,
-        idx.index_type AS index_method, CASE WHEN idx.uniqueness = 'UNIQUE' THEN '○' ELSE '' END AS
-        is_unique, CASE WHEN EXISTS ( SELECT 1 FROM all_constraints ac WHERE ac.owner = idx.owner
-        AND ac.constraint_type = 'P' AND ac.index_name = idx.index_name ) THEN '○' ELSE '' END AS
-        is_primary, (CASE WHEN idx.uniqueness = 'UNIQUE' THEN 'CREATE UNIQUE INDEX ' ELSE 'CREATE INDEX '
-        END) || idx.index_name || ' ON ' || idx.table_name || ' (' ||
-        LISTAGG(COALESCE(ie.column_expression, col.column_name), ',') WITHIN GROUP (ORDER BY
-        col.column_position) || ')' AS index_definition, '' AS remarks FROM all_indexes idx LEFT
-        JOIN all_ind_columns col ON idx.index_name = col.index_name AND idx.owner = col.index_owner
-        LEFT JOIN (SELECT index_name, index_owner, column_position, SUBSTR(column_expression, 1,
-        1000) AS column_expression FROM all_ind_expressions) ie ON idx.index_name = ie.index_name
-        AND idx.owner = ie.index_owner AND col.column_position = ie.column_position WHERE
-        idx.index_type != 'LOB' AND idx.OWNER NOT IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND idx.owner IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND idx.table_name IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> GROUP BY
-        idx.owner, idx.table_name, idx.index_name, idx.index_type, idx.uniqueness ) SELECT
-        schema_name AS "schemaName", table_name AS "tableName", CASE WHEN index_name IS NOT NULL
-        THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY index_name) ||
-        '|' || index_name || '|' || index_method || '|' || is_unique || '|' || is_primary || '|' ||
-        index_definition || '|' || remarks || '|' ELSE NULL END AS "indexInfo" FROM ora_all_indexes
-        ORDER BY schema_name, table_name </select>
+    <select id="selectAllIndexInfo" resultMap="IndexDtoMap">
+        WITH ora_all_indexes AS (
+            SELECT
+                idx.owner AS schema_name,
+                idx.table_name AS table_name,
+                idx.index_name AS index_name,
+                idx.index_type AS index_method,
+                CASE WHEN idx.uniqueness = 'UNIQUE' THEN '○' ELSE '' END AS is_unique,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1 FROM all_constraints ac
+                        WHERE ac.owner = idx.owner AND ac.constraint_type = 'P' AND ac.index_name = idx.index_name
+                    ) THEN '○'
+                    ELSE ''
+                END AS is_primary,
+                (CASE WHEN idx.uniqueness = 'UNIQUE' THEN 'CREATE UNIQUE INDEX ' ELSE 'CREATE INDEX ' END)
+                    || idx.index_name || ' ON ' || idx.table_name || ' ('
+                    || LISTAGG(COALESCE(ie.column_expression, col.column_name), ',') WITHIN GROUP (ORDER BY col.column_position)
+                    || ')' AS index_definition,
+                '' AS remarks
+            FROM all_indexes idx
+            LEFT JOIN all_ind_columns col ON idx.index_name = col.index_name AND idx.owner = col.index_owner
+            LEFT JOIN (
+                SELECT index_name, index_owner, column_position, SUBSTR(column_expression, 1, 1000) AS column_expression
+                FROM all_ind_expressions
+            ) ie ON idx.index_name = ie.index_name AND idx.owner = ie.index_owner AND col.column_position = ie.column_position
+            WHERE idx.index_type != 'LOB'
+                AND idx.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND idx.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND idx.table_name IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            GROUP BY idx.owner, idx.table_name, idx.index_name, idx.index_type, idx.uniqueness
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            CASE
+                WHEN index_name IS NOT NULL
+                    THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY index_name) || '|' || index_name || '|' || index_method || '|' || is_unique || '|' || is_primary || '|' || index_definition || '|' || remarks || '|'
+                ELSE NULL
+            END AS "indexInfo"
+        FROM ora_all_indexes
+        ORDER BY schema_name, table_name
+    </select>
 
     <resultMap id="IndexDtoMap" type="IndexDto">
         <constructor>
@@ -176,54 +251,84 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllConstraintInfo" resultMap="ConstraintDtoMap"> WITH ora_all_constraints AS (
-        SELECT ac.owner AS schema_name, ac.table_name AS table_name, ac.constraint_name AS
-        constraints_name, CASE ac.constraint_type WHEN 'C' THEN 'CHECK' WHEN 'R' THEN 'FOREIGN KEY'
-        WHEN 'P' THEN 'PRIMARY KEY' WHEN 'U' THEN 'UNIQUE' ELSE NULL END AS constraints_type, CASE
-        ac.constraint_type WHEN 'P' THEN 'PRIMARY KEY (' || LISTAGG(acc.column_name, ',') WITHIN
-        GROUP (ORDER BY acc.position) || ')' ELSE NULL END AS constraints_definition FROM
-        all_constraints ac LEFT OUTER JOIN all_cons_columns acc ON ac.constraint_name =
-        acc.constraint_name AND ac.owner = acc.owner WHERE ac.constraint_type IN ('P') AND ac.OWNER
-        NOT IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND ac.owner IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND ac.table_name IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> GROUP BY
-        ac.owner, ac.table_name, ac.constraint_name, ac.constraint_type UNION ALL SELECT ac.owner AS
-        schema_name, ac.table_name AS table_name, ac.constraint_name AS constraints_name, CASE
-        ac.constraint_type WHEN 'C' THEN 'CHECK' WHEN 'R' THEN 'FOREIGN KEY' WHEN 'U' THEN 'UNIQUE'
-        ELSE NULL END AS constraints_type, CASE ac.constraint_type WHEN 'C' THEN ' ' WHEN 'R' THEN
-        'FOREIGN KEY (' || acc.column_name || ') REFERENCES' || ac_r.table_name || '(' ||
-        acc_r.column_name || ')' WHEN 'U' THEN 'UNIQUE ('|| acc.column_name || ')' ELSE NULL END AS
-        constraints_definition FROM all_constraints ac LEFT OUTER JOIN all_cons_columns acc ON
-        ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner LEFT OUTER JOIN
-        all_constraints ac_r ON ac.r_constraint_name = ac_r.constraint_name AND ac.r_owner =
-        ac_r.owner LEFT OUTER JOIN all_cons_columns acc_r ON ac_r.constraint_name =
-        acc_r.constraint_name AND ac_r.owner = acc_r.owner AND acc.position = acc_r.position WHERE
-        ac.constraint_type IN ('C', 'R', 'U') AND ac.OWNER NOT IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND ac.owner IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND ac.table_name IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ) SELECT
-        schema_name AS "schemaName", table_name AS "tableName", constraints_definition, '|' ||
-        ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY constraints_type,
-        constraints_name) || '|' || constraints_name || '|' || constraints_type || '|' ||
-        constraints_definition || '|' || '' || '|' AS "constraintInfo" FROM ora_all_constraints
-        ORDER BY schema_name, table_name, constraints_type, constraints_name </select>
+    <select id="selectAllConstraintInfo" resultMap="ConstraintDtoMap">
+        WITH ora_all_constraints AS (
+            SELECT
+                ac.owner AS schema_name,
+                ac.table_name AS table_name,
+                ac.constraint_name AS constraints_name,
+                CASE ac.constraint_type
+                    WHEN 'C' THEN 'CHECK'
+                    WHEN 'R' THEN 'FOREIGN KEY'
+                    WHEN 'P' THEN 'PRIMARY KEY'
+                    WHEN 'U' THEN 'UNIQUE'
+                    ELSE NULL
+                END AS constraints_type,
+                CASE ac.constraint_type
+                    WHEN 'P' THEN 'PRIMARY KEY (' || LISTAGG(acc.column_name, ',') WITHIN GROUP (ORDER BY acc.position) || ')'
+                    ELSE NULL
+                END AS constraints_definition
+            FROM all_constraints ac
+            LEFT OUTER JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+            WHERE ac.constraint_type IN ('P')
+                AND ac.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND ac.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND ac.table_name IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            GROUP BY ac.owner, ac.table_name, ac.constraint_name, ac.constraint_type
+            UNION ALL
+            SELECT
+                ac.owner AS schema_name,
+                ac.table_name AS table_name,
+                ac.constraint_name AS constraints_name,
+                CASE ac.constraint_type
+                    WHEN 'C' THEN 'CHECK'
+                    WHEN 'R' THEN 'FOREIGN KEY'
+                    WHEN 'U' THEN 'UNIQUE'
+                    ELSE NULL
+                END AS constraints_type,
+                CASE ac.constraint_type
+                    WHEN 'C' THEN ' '
+                    WHEN 'R' THEN 'FOREIGN KEY (' || acc.column_name || ') REFERENCES' || ac_r.table_name || '(' || acc_r.column_name || ')'
+                    WHEN 'U' THEN 'UNIQUE ('|| acc.column_name || ')'
+                    ELSE NULL
+                END AS constraints_definition
+            FROM all_constraints ac
+            LEFT OUTER JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+            LEFT OUTER JOIN all_constraints ac_r ON ac.r_constraint_name = ac_r.constraint_name AND ac.r_owner = ac_r.owner
+            LEFT OUTER JOIN all_cons_columns acc_r ON ac_r.constraint_name = acc_r.constraint_name AND ac_r.owner = acc_r.owner AND acc.position = acc_r.position
+            WHERE ac.constraint_type IN ('C', 'R', 'U')
+                AND ac.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND ac.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND ac.table_name IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            constraints_definition,
+            '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name) || '|' || constraints_name || '|' || constraints_type || '|' || constraints_definition || '|' || '' || '|' AS "constraintInfo"
+        FROM ora_all_constraints
+        ORDER BY schema_name, table_name, constraints_type, constraints_name
+    </select>
 
     <resultMap id="ConstraintDtoMap" type="ConstraintDto">
         <constructor>
@@ -233,88 +338,139 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap"> WITH ora_fk_columns AS (
-        /* 外部キーを構成する列。多重度の判定に用いる。
-           参照元テーブルが出力対象であれば判定できればよいため、ora_all_foreignkeys
-           のようなシステムスキーマの除外は行わない */
-        SELECT ac.owner AS schema_name, ac.table_name AS table_name,
-        ac.constraint_name AS foreignkey_name, acc.column_name AS column_name FROM all_constraints
-        ac JOIN all_cons_columns acc ON acc.owner = ac.owner AND acc.constraint_name =
-        ac.constraint_name WHERE ac.constraint_type = 'R' <if
-            test="schemaList != null and schemaList.size() > 0"> AND ac.owner IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND ac.table_name IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ),
+    <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap">
+        WITH ora_fk_columns AS (
+            /* 外部キーを構成する列。多重度の判定に用いる。
+               参照元テーブルが出力対象であれば判定できればよいため、ora_all_foreignkeys
+               のようなシステムスキーマの除外は行わない */
+            SELECT
+                ac.owner AS schema_name,
+                ac.table_name AS table_name,
+                ac.constraint_name AS foreignkey_name,
+                acc.column_name AS column_name
+            FROM all_constraints ac
+            JOIN all_cons_columns acc ON acc.owner = ac.owner AND acc.constraint_name = ac.constraint_name
+            WHERE ac.constraint_type = 'R'
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND ac.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND ac.table_name IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        ),
         ora_unique_keys AS (
-        /* 一意性を保証するキーを構成する列。一意索引と、一意索引に支えられない場合がある
-           主キー制約・一意制約（遅延可能な制約など）の双方から収集する。
-           関数ベース索引や降順索引の列は SYS_NC00004$ のような内部名となり
-           外部キー列と一致しないため、自然と判定対象から外れる */
-        SELECT ai.table_owner AS schema_name, ai.table_name AS
-        table_name, 'I:' || ai.owner || '.' || ai.index_name AS unique_key_id, aic.column_name AS
-        column_name FROM all_indexes ai JOIN all_ind_columns aic ON aic.index_owner = ai.owner AND
-        aic.index_name = ai.index_name WHERE ai.uniqueness = 'UNIQUE' AND ai.status NOT IN
-        ('UNUSABLE') UNION ALL SELECT ac.owner AS schema_name, ac.table_name AS table_name, 'C:' ||
-        ac.owner || '.' || ac.constraint_name AS unique_key_id, acc.column_name AS column_name FROM
-        all_constraints ac JOIN all_cons_columns acc ON acc.owner = ac.owner AND acc.constraint_name
-        = ac.constraint_name WHERE ac.constraint_type IN ('P', 'U') AND ac.status = 'ENABLED' AND
-        ac.validated = 'VALIDATED' ), ora_unique_foreignkeys AS (
-        /* 外部キー列が一意キーで覆われている外部キー（1件の親に対し子が高々1件となるもの）。
-           一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、
-           列名の一致ではなく包含関係で判定する。
-           一意キーの列数と、そのうち外部キー列にも現れる列数が等しいことをもって包含とみなす */
-        SELECT uk.schema_name AS
-        schema_name, uk.table_name AS table_name, fkc.foreignkey_name AS foreignkey_name FROM
-        ora_unique_keys uk JOIN ora_fk_columns fkc ON fkc.schema_name = uk.schema_name AND
-        fkc.table_name = uk.table_name GROUP BY uk.schema_name, uk.table_name, uk.unique_key_id,
-        fkc.foreignkey_name HAVING COUNT(DISTINCT uk.column_name) = COUNT(DISTINCT CASE WHEN
-        uk.column_name = fkc.column_name THEN uk.column_name END) ), ora_mandatory_foreignkeys AS (
-        -- 外部キー列がすべてNOT NULLの外部キー（1件の子が必ず親を1件持つもの）。 -- 'N'より'Y'が大きいため、1列でもNULLを許容すると最大値は'Y'となる
-        SELECT fkc.schema_name AS schema_name, fkc.table_name AS table_name, fkc.foreignkey_name AS
-        foreignkey_name FROM ora_fk_columns fkc JOIN all_tab_columns atc ON atc.owner =
-        fkc.schema_name AND atc.table_name = fkc.table_name AND atc.column_name = fkc.column_name
-        GROUP BY fkc.schema_name, fkc.table_name, fkc.foreignkey_name HAVING MAX(atc.nullable) = 'N'
-        ), ora_all_foreignkeys AS ( SELECT ac.constraint_name AS foreignkey_name, ac.owner AS
-        schema_name, ac.table_name AS table_name, LISTAGG(acc.column_name, ',') WITHIN GROUP (ORDER
-        BY acc.position) AS column_names, ac_r.owner AS reference_schema_name, ac_r.table_name AS
-        reference_table_name, LISTAGG(acc_r.column_name, ',') WITHIN GROUP (ORDER BY acc_r.position)
-        AS reference_column_names FROM all_constraints ac LEFT OUTER JOIN all_cons_columns acc ON
-        ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner AND ac.constraint_type =
-        'R' LEFT OUTER JOIN all_constraints ac_r ON ac.r_constraint_name = ac_r.constraint_name AND
-        ac.r_owner = ac_r.owner LEFT OUTER JOIN all_cons_columns acc_r ON ac_r.constraint_name =
-        acc_r.constraint_name AND ac_r.owner = acc_r.owner AND acc.position = acc_r.position WHERE
-        ac.OWNER NOT IN
-        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
-        <if
-            test="schemaList != null and schemaList.size() > 0"> AND ac.owner IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND ac.table_name IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> GROUP BY
-        ac.constraint_name, ac.owner, ac.table_name, ac_r.owner, ac_r.table_name ORDER BY
-        ac.constraint_name, ac.owner, ac.table_name, ac_r.owner, ac_r.table_name ) SELECT
-        schema_name AS "schemaName", table_name AS "tableName", CASE WHEN foreignkey_name IS NOT
-        NULL THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY
-        foreignkey_name) || '|' || foreignkey_name || '|' || column_names || '|' ||
-        reference_schema_name || '.' || reference_table_name || '|' || reference_column_names || '|'
-        ELSE NULL END AS "foreignkeyInfo", foreignkey_name AS "foreignkeyName",
-        reference_schema_name AS "referenceSchemaName", reference_table_name AS
-        "referenceTableName", CASE WHEN EXISTS ( SELECT 1 FROM ora_unique_foreignkeys u WHERE
-        u.schema_name = f.schema_name AND u.table_name = f.table_name AND u.foreignkey_name =
-        f.foreignkey_name ) THEN '○' ELSE '' END AS "childKeyUnique", CASE WHEN EXISTS ( SELECT 1
-        FROM ora_mandatory_foreignkeys m WHERE m.schema_name = f.schema_name AND m.table_name =
-        f.table_name AND m.foreignkey_name = f.foreignkey_name ) THEN '○' ELSE '' END AS
-        "childKeyMandatory" FROM ora_all_foreignkeys f WHERE column_names IS NOT NULL ORDER BY
-        schema_name, table_name </select>
+            /* 一意性を保証するキーを構成する列。一意索引と、一意索引に支えられない場合がある
+               主キー制約・一意制約（遅延可能な制約など）の双方から収集する。
+               関数ベース索引や降順索引の列は SYS_NC00004$ のような内部名となり
+               外部キー列と一致しないため、自然と判定対象から外れる */
+            SELECT
+                ai.table_owner AS schema_name,
+                ai.table_name AS table_name,
+                'I:' || ai.owner || '.' || ai.index_name AS unique_key_id,
+                aic.column_name AS column_name
+            FROM all_indexes ai
+            JOIN all_ind_columns aic ON aic.index_owner = ai.owner AND aic.index_name = ai.index_name
+            WHERE ai.uniqueness = 'UNIQUE' AND ai.status NOT IN ('UNUSABLE')
+            UNION ALL
+            SELECT
+                ac.owner AS schema_name,
+                ac.table_name AS table_name,
+                'C:' || ac.owner || '.' || ac.constraint_name AS unique_key_id,
+                acc.column_name AS column_name
+            FROM all_constraints ac
+            JOIN all_cons_columns acc ON acc.owner = ac.owner AND acc.constraint_name = ac.constraint_name
+            WHERE ac.constraint_type IN ('P', 'U') AND ac.status = 'ENABLED' AND ac.validated = 'VALIDATED'
+        ),
+        ora_unique_foreignkeys AS (
+            /* 外部キー列が一意キーで覆われている外部キー（1件の親に対し子が高々1件となるもの）。
+               一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、
+               列名の一致ではなく包含関係で判定する。
+               一意キーの列数と、そのうち外部キー列にも現れる列数が等しいことをもって包含とみなす */
+            SELECT
+                uk.schema_name AS schema_name,
+                uk.table_name AS table_name,
+                fkc.foreignkey_name AS foreignkey_name
+            FROM ora_unique_keys uk
+            JOIN ora_fk_columns fkc ON fkc.schema_name = uk.schema_name AND fkc.table_name = uk.table_name
+            GROUP BY uk.schema_name, uk.table_name, uk.unique_key_id, fkc.foreignkey_name
+            HAVING COUNT(DISTINCT uk.column_name) = COUNT(DISTINCT CASE WHEN uk.column_name = fkc.column_name THEN uk.column_name END)
+        ),
+        ora_mandatory_foreignkeys AS (
+            -- 外部キー列がすべてNOT NULLの外部キー（1件の子が必ず親を1件持つもの）。
+            -- 'N'より'Y'が大きいため、1列でもNULLを許容すると最大値は'Y'となる
+            SELECT
+                fkc.schema_name AS schema_name,
+                fkc.table_name AS table_name,
+                fkc.foreignkey_name AS foreignkey_name
+            FROM ora_fk_columns fkc
+            JOIN all_tab_columns atc ON atc.owner = fkc.schema_name AND atc.table_name = fkc.table_name AND atc.column_name = fkc.column_name
+            GROUP BY fkc.schema_name, fkc.table_name, fkc.foreignkey_name
+            HAVING MAX(atc.nullable) = 'N'
+        ),
+        ora_all_foreignkeys AS (
+            SELECT
+                ac.constraint_name AS foreignkey_name,
+                ac.owner AS schema_name,
+                ac.table_name AS table_name,
+                LISTAGG(acc.column_name, ',') WITHIN GROUP (ORDER BY acc.position) AS column_names,
+                ac_r.owner AS reference_schema_name,
+                ac_r.table_name AS reference_table_name,
+                LISTAGG(acc_r.column_name, ',') WITHIN GROUP (ORDER BY acc_r.position) AS reference_column_names
+            FROM all_constraints ac
+            LEFT OUTER JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner AND ac.constraint_type = 'R'
+            LEFT OUTER JOIN all_constraints ac_r ON ac.r_constraint_name = ac_r.constraint_name AND ac.r_owner = ac_r.owner
+            LEFT OUTER JOIN all_cons_columns acc_r ON ac_r.constraint_name = acc_r.constraint_name AND ac_r.owner = acc_r.owner AND acc.position = acc_r.position
+            WHERE ac.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND ac.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND ac.table_name IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            GROUP BY ac.constraint_name, ac.owner, ac.table_name, ac_r.owner, ac_r.table_name
+            ORDER BY ac.constraint_name, ac.owner, ac.table_name, ac_r.owner, ac_r.table_name
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            CASE
+                WHEN foreignkey_name IS NOT NULL
+                    THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY foreignkey_name) || '|' || foreignkey_name || '|' || column_names || '|' || reference_schema_name || '.' || reference_table_name || '|' || reference_column_names || '|'
+                ELSE NULL
+            END AS "foreignkeyInfo",
+            foreignkey_name AS "foreignkeyName",
+            reference_schema_name AS "referenceSchemaName",
+            reference_table_name AS "referenceTableName",
+            CASE
+                WHEN EXISTS (
+                    SELECT 1 FROM ora_unique_foreignkeys u
+                    WHERE u.schema_name = f.schema_name AND u.table_name = f.table_name AND u.foreignkey_name = f.foreignkey_name
+                ) THEN '○'
+                ELSE ''
+            END AS "childKeyUnique",
+            CASE
+                WHEN EXISTS (
+                    SELECT 1 FROM ora_mandatory_foreignkeys m
+                    WHERE m.schema_name = f.schema_name AND m.table_name = f.table_name AND m.foreignkey_name = f.foreignkey_name
+                ) THEN '○'
+                ELSE ''
+            END AS "childKeyMandatory"
+        FROM ora_all_foreignkeys f
+        WHERE column_names IS NOT NULL
+        ORDER BY schema_name, table_name
+    </select>
 
     <resultMap id="ForeignKeyDtoMap" type="ForeignKeyDto">
         <constructor>

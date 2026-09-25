@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper
-    namespace="com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository">
+<mapper namespace="com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository">
 
-    <select id="selectBaseInfo" resultMap="BaseInfoDtoMap"> SELECT current_database() AS "dbName",
-        concat('|', 'PostgreSQL', '|', current_database(), '|', to_char(current_timestamp,
-        'yyyy/MM/dd'), '|') AS "baseInfo" fetch first 1 rows only; </select>
+    <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
+        SELECT
+            current_database() AS "dbName",
+            concat('|', 'PostgreSQL', '|', current_database(), '|', to_char(current_timestamp, 'yyyy/MM/dd'), '|') AS "baseInfo"
+        fetch first 1 rows only;
+    </select>
 
     <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
         <constructor>
@@ -14,59 +16,89 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllTableInfo" resultMap="TableDtoMap"> WITH all_tables AS ( SELECT
-        coalesce(t1.schemaname, '') AS schema_name, 'table' AS table_type,
-        coalesce(regexp_replace(pg_catalog.obj_description(to_regclass(quote_ident(t1.schemaname) ||
-        '.' || quote_ident(t1.tablename))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
-        coalesce(t1.tablename, '') AS physical_table_name, '' AS remarks, concat('[■](./',
-        current_database(), '/', t1.schemaname, '/table/', t1.tablename, '.md)') AS link, '' AS
-        definition FROM pg_catalog.pg_tables t1 WHERE t1.schemaname NOT IN ('pg_catalog',
-        'information_schema') <if test="schemaList != null and schemaList.size() > 0"> AND
-        t1.schemaname IN <foreach item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-    <if
-            test="tableList != null and tableList.size() > 0"> AND t1.tablename IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> UNION ALL SELECT
-        coalesce(t2.schemaname, '') AS schema_name, 'view' AS table_type,
-        coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t2.schemaname) || '.' ||
-        quote_ident(t2.viewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
-        coalesce(t2.viewname, '') AS physical_table_name, ' ' AS remarks, concat('[■](./',
-        current_database(), '/', t2.schemaname, '/view/', t2.viewname, '.md)') AS link, definition
-        AS definition FROM pg_catalog.pg_views t2 WHERE t2.schemaname NOT IN ('pg_catalog',
-        'information_schema') <if test="schemaList != null and schemaList.size() > 0"> AND
-        t2.schemaname IN <foreach item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-    <if
-            test="tableList != null and tableList.size() > 0"> AND t2.viewname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> UNION ALL SELECT
-        coalesce(t3.schemaname, '') AS schema_name, 'materialized_view' AS table_type,
-        coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t3.schemaname) || '.' ||
-        quote_ident(t3.matviewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
-        coalesce(t3.matviewname, '') AS physical_table_name, ' ' AS remarks, concat('[■](./',
-        current_database(), '/', t3.schemaname, '/materialized_view/', t3.matviewname, '.md)') AS
-        link, definition AS definition FROM pg_catalog.pg_matviews t3 WHERE t3.schemaname NOT IN
-        ('pg_catalog', 'information_schema') <if test="schemaList != null and schemaList.size() > 0">
-        AND t3.schemaname IN <foreach item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-    <if
-            test="tableList != null and tableList.size() > 0"> AND t3.matviewname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ) SELECT
-        current_database() AS "dbName" , schema_name AS "schemaName" , logical_table_name AS
-        "logicalTableName" , physical_table_name AS "physicalTableName" , table_type AS "tableType"
-        , concat('|', row_number() over (ORDER BY schema_name, physical_table_name), '|',
-        schema_name, '|', logical_table_name, '|', physical_table_name, '|', table_type, '|', link,
-        '|', remarks, '|') AS "tableInfoList" , concat('|', schema_name, '|', logical_table_name,
-        '|', physical_table_name, '|', table_type, '|') AS "tableInfo" , definition AS definition
-        FROM all_tables ORDER BY schema_name, physical_table_name; </select>
+    <select id="selectAllTableInfo" resultMap="TableDtoMap">
+        WITH all_tables AS (
+            SELECT
+                coalesce(t1.schemaname, '') AS schema_name,
+                'table' AS table_type,
+                coalesce(regexp_replace(pg_catalog.obj_description(to_regclass(quote_ident(t1.schemaname) || '.' || quote_ident(t1.tablename))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
+                coalesce(t1.tablename, '') AS physical_table_name,
+                '' AS remarks,
+                concat('[■](./', current_database(), '/', t1.schemaname, '/table/', t1.tablename, '.md)') AS link,
+                '' AS definition
+            FROM pg_catalog.pg_tables t1
+            WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t1.schemaname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t1.tablename IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            UNION ALL
+            SELECT
+                coalesce(t2.schemaname, '') AS schema_name,
+                'view' AS table_type,
+                coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t2.schemaname) || '.' || quote_ident(t2.viewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
+                coalesce(t2.viewname, '') AS physical_table_name,
+                ' ' AS remarks,
+                concat('[■](./', current_database(), '/', t2.schemaname, '/view/', t2.viewname, '.md)') AS link,
+                definition AS definition
+            FROM pg_catalog.pg_views t2
+            WHERE t2.schemaname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t2.schemaname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t2.viewname IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+            UNION ALL
+            SELECT
+                coalesce(t3.schemaname, '') AS schema_name,
+                'materialized_view' AS table_type,
+                coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t3.schemaname) || '.' || quote_ident(t3.matviewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
+                coalesce(t3.matviewname, '') AS physical_table_name,
+                ' ' AS remarks,
+                concat('[■](./', current_database(), '/', t3.schemaname, '/materialized_view/', t3.matviewname, '.md)') AS link,
+                definition AS definition
+            FROM pg_catalog.pg_matviews t3
+            WHERE t3.schemaname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t3.schemaname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t3.matviewname IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            current_database() AS "dbName",
+            schema_name AS "schemaName",
+            logical_table_name AS "logicalTableName",
+            physical_table_name AS "physicalTableName",
+            table_type AS "tableType",
+            concat('|', row_number() over (ORDER BY schema_name, physical_table_name), '|', schema_name, '|', logical_table_name, '|', physical_table_name, '|', table_type, '|', link, '|', remarks, '|') AS "tableInfoList",
+            concat('|', schema_name, '|', logical_table_name, '|', physical_table_name, '|', table_type, '|') AS "tableInfo",
+            definition AS definition
+        FROM all_tables
+        ORDER BY schema_name, physical_table_name;
+    </select>
 
     <resultMap id="TableDtoMap" type="TableDto">
         <constructor>
@@ -81,103 +113,136 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllColumnInfo" resultMap="ColumnDtoMap"> WITH all_columns AS ( ( SELECT
-        t1.schemaname AS schema_name, t1.tablename AS table_name, row_number() over (PARTITION BY
-        t1.schemaname, t1.tablename ORDER BY t3.attnum) AS column_num, coalesce((t4.description),
-        '') AS logical_column_name, t3.attname AS physical_column_name,
-        pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type, CASE WHEN
-        information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
-        information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text WHEN t3.atttypid =
-        'pg_catalog.numeric'::regtype AND information_schema._pg_numeric_precision(t3.atttypid,
-        t3.atttypmod) IS NOT NULL THEN information_schema._pg_numeric_precision(t3.atttypid,
-        t3.atttypmod)::text || CASE WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid,
-        t3.atttypmod), 0) != 0 THEN ',' || information_schema._pg_numeric_scale(t3.atttypid,
-        t3.atttypmod)::text ELSE '' END ELSE '' END AS precision_scale, coalesce(( SELECT '○' FROM
-        pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND
-        c.contype = 'p' ), '') AS primary_key, CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS
-        not_null, coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM
-        pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS
-        default_value, '' AS remarks FROM pg_catalog.pg_tables t1 LEFT OUTER JOIN
-        pg_catalog.pg_namespace tn ON tn.nspname = t1.schemaname LEFT OUTER JOIN pg_catalog.pg_class
-        t2 ON t1.tablename = t2.relname AND t2.relnamespace = tn.oid LEFT OUTER JOIN
-        pg_catalog.pg_attribute t3 ON t2.oid = t3.attrelid LEFT OUTER JOIN pg_catalog.pg_description
-        t4 ON t3.attrelid = t4.objoid AND t3.attnum = t4.objsubid WHERE t1.schemaname NOT IN
-        ('pg_catalog', 'information_schema') AND t2.relkind = 'r' AND t3.attnum > 0 AND t3.attname
-        NOT LIKE '%pg.dropped%' <if test="schemaList != null and schemaList.size() > 0"> AND
-        t1.schemaname IN <foreach item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-            <if
-            test="tableList != null and tableList.size() > 0"> AND t1.tablename IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ORDER BY
-        t1.schemaname, t1.tablename, t3.attnum ) UNION ALL ( SELECT t1.schemaname AS schema_name,
-        t1.viewname AS table_name, row_number() over (PARTITION BY t1.schemaname, t1.viewname ORDER
-        BY t3.attnum) AS column_num, coalesce((t4.description), '') AS logical_column_name,
-        t3.attname AS physical_column_name, pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS
-        column_type, CASE WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS
-        NOT NULL THEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text WHEN
-        t3.atttypid = 'pg_catalog.numeric'::regtype AND
-        information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
-        information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN
-        coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ','
-        || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END ELSE ''
-        END AS precision_scale, coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE
-        c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS
-        primary_key, CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null, coalesce((
-        SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE
-        d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value, '' AS remarks FROM
-        pg_catalog.pg_views t1 LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.viewname = t2.relname
-        LEFT OUTER JOIN pg_catalog.pg_attribute t3 ON t2.oid = t3.attrelid LEFT OUTER JOIN
-        pg_catalog.pg_description t4 ON t3.attrelid = t4.objoid AND t3.attnum = t4.objsubid WHERE
-        t1.schemaname NOT IN ('pg_catalog', 'information_schema') AND t2.relkind = 'v' AND t3.attnum
-        > 0 AND t3.attname NOT LIKE '%pg.dropped%' <if
-            test="schemaList != null and schemaList.size() > 0"> AND t1.schemaname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-            <if
-            test="tableList != null and tableList.size() > 0"> AND t1.viewname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ORDER BY
-        t1.schemaname, t1.viewname, t3.attnum ) UNION ALL ( SELECT t1.schemaname AS schema_name,
-        t1.matviewname AS table_name, row_number() over (PARTITION BY t1.schemaname, t1.matviewname
-        ORDER BY t3.attnum) AS column_num, coalesce((t4.description), '') AS logical_column_name,
-        t3.attname AS physical_column_name, pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS
-        column_type, CASE WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS
-        NOT NULL THEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text WHEN
-        t3.atttypid = 'pg_catalog.numeric'::regtype AND
-        information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL THEN
-        information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN
-        coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ','
-        || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END ELSE ''
-        END AS precision_scale, coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE
-        c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS
-        primary_key, CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null, coalesce((
-        SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE
-        d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value, '' AS remarks FROM
-        pg_catalog.pg_matviews t1 LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.matviewname =
-        t2.relname LEFT OUTER JOIN pg_catalog.pg_attribute t3 ON t2.oid = t3.attrelid LEFT OUTER
-        JOIN pg_catalog.pg_description t4 ON t3.attrelid = t4.objoid AND t3.attnum = t4.objsubid
-        WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema') AND t2.relkind = 'm' AND
-        t3.attnum > 0 AND t3.attname NOT LIKE '%pg.dropped%' <if
-            test="schemaList != null and schemaList.size() > 0"> AND t1.schemaname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-            <if
-            test="tableList != null and tableList.size() > 0"> AND t1.matviewname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ORDER BY
-        t1.schemaname, t1.matviewname, t3.attnum ) ) SELECT schema_name AS "schemaName", table_name
-        AS "tableName", concat('|', column_num, '|', logical_column_name, '|', physical_column_name,
-        '|', column_type, '|', precision_scale, '|', primary_key, '|', not_null, '|', default_value,
-        '|') AS "columnInfo", physical_column_name AS "physicalColumnName", column_type AS
-        "columnType", primary_key AS "primaryKey" FROM all_columns ORDER BY schema_name, table_name,
-        column_num; </select>
+    <select id="selectAllColumnInfo" resultMap="ColumnDtoMap">
+        WITH all_columns AS (
+            (
+                SELECT
+                    t1.schemaname AS schema_name,
+                    t1.tablename AS table_name,
+                    row_number() over (PARTITION BY t1.schemaname, t1.tablename ORDER BY t3.attnum) AS column_num,
+                    coalesce((t4.description), '') AS logical_column_name,
+                    t3.attname AS physical_column_name,
+                    pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
+                    CASE
+                        WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS NOT NULL
+                            THEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text
+                        WHEN t3.atttypid = 'pg_catalog.numeric'::regtype AND information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL
+                            THEN information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END
+                        ELSE ''
+                    END AS precision_scale,
+                    coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS primary_key,
+                    CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    '' AS remarks
+                FROM pg_catalog.pg_tables t1
+                LEFT OUTER JOIN pg_catalog.pg_namespace tn ON tn.nspname = t1.schemaname
+                LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.tablename = t2.relname AND t2.relnamespace = tn.oid
+                LEFT OUTER JOIN pg_catalog.pg_attribute t3 ON t2.oid = t3.attrelid
+                LEFT OUTER JOIN pg_catalog.pg_description t4 ON t3.attrelid = t4.objoid AND t3.attnum = t4.objsubid
+                WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema') AND t2.relkind = 'r' AND t3.attnum > 0 AND t3.attname NOT LIKE '%pg.dropped%'
+                    <if test="schemaList != null and schemaList.size() > 0">
+                        AND t1.schemaname IN
+                        <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                            #{schema}
+                        </foreach>
+                    </if>
+                    <if test="tableList != null and tableList.size() > 0">
+                        AND t1.tablename IN
+                        <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                            #{table}
+                        </foreach>
+                    </if>
+                ORDER BY t1.schemaname, t1.tablename, t3.attnum
+            )
+            UNION ALL
+            (
+                SELECT
+                    t1.schemaname AS schema_name,
+                    t1.viewname AS table_name,
+                    row_number() over (PARTITION BY t1.schemaname, t1.viewname ORDER BY t3.attnum) AS column_num,
+                    coalesce((t4.description), '') AS logical_column_name,
+                    t3.attname AS physical_column_name,
+                    pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
+                    CASE
+                        WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS NOT NULL
+                            THEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text
+                        WHEN t3.atttypid = 'pg_catalog.numeric'::regtype AND information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL
+                            THEN information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END
+                        ELSE ''
+                    END AS precision_scale,
+                    coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS primary_key,
+                    CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    '' AS remarks
+                FROM pg_catalog.pg_views t1
+                LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.viewname = t2.relname
+                LEFT OUTER JOIN pg_catalog.pg_attribute t3 ON t2.oid = t3.attrelid
+                LEFT OUTER JOIN pg_catalog.pg_description t4 ON t3.attrelid = t4.objoid AND t3.attnum = t4.objsubid
+                WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema') AND t2.relkind = 'v' AND t3.attnum > 0 AND t3.attname NOT LIKE '%pg.dropped%'
+                    <if test="schemaList != null and schemaList.size() > 0">
+                        AND t1.schemaname IN
+                        <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                            #{schema}
+                        </foreach>
+                    </if>
+                    <if test="tableList != null and tableList.size() > 0">
+                        AND t1.viewname IN
+                        <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                            #{table}
+                        </foreach>
+                    </if>
+                ORDER BY t1.schemaname, t1.viewname, t3.attnum
+            )
+            UNION ALL
+            (
+                SELECT
+                    t1.schemaname AS schema_name,
+                    t1.matviewname AS table_name,
+                    row_number() over (PARTITION BY t1.schemaname, t1.matviewname ORDER BY t3.attnum) AS column_num,
+                    coalesce((t4.description), '') AS logical_column_name,
+                    t3.attname AS physical_column_name,
+                    pg_catalog.format_type(t3.atttypid, t3.atttypmod) AS column_type,
+                    CASE
+                        WHEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod) IS NOT NULL
+                            THEN information_schema._pg_char_max_length(t3.atttypid, t3.atttypmod)::text
+                        WHEN t3.atttypid = 'pg_catalog.numeric'::regtype AND information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod) IS NOT NULL
+                            THEN information_schema._pg_numeric_precision(t3.atttypid, t3.atttypmod)::text || CASE WHEN coalesce(information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod), 0) != 0 THEN ',' || information_schema._pg_numeric_scale(t3.atttypid, t3.atttypmod)::text ELSE '' END
+                        ELSE ''
+                    END AS precision_scale,
+                    coalesce(( SELECT '○' FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ), '') AS primary_key,
+                    CASE t3.attnotnull WHEN true THEN '○' ELSE '' END AS not_null,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    '' AS remarks
+                FROM pg_catalog.pg_matviews t1
+                LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.matviewname = t2.relname
+                LEFT OUTER JOIN pg_catalog.pg_attribute t3 ON t2.oid = t3.attrelid
+                LEFT OUTER JOIN pg_catalog.pg_description t4 ON t3.attrelid = t4.objoid AND t3.attnum = t4.objsubid
+                WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema') AND t2.relkind = 'm' AND t3.attnum > 0 AND t3.attname NOT LIKE '%pg.dropped%'
+                    <if test="schemaList != null and schemaList.size() > 0">
+                        AND t1.schemaname IN
+                        <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                            #{schema}
+                        </foreach>
+                    </if>
+                    <if test="tableList != null and tableList.size() > 0">
+                        AND t1.matviewname IN
+                        <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                            #{table}
+                        </foreach>
+                    </if>
+                ORDER BY t1.schemaname, t1.matviewname, t3.attnum
+            )
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            concat('|', column_num, '|', logical_column_name, '|', physical_column_name, '|', column_type, '|', precision_scale, '|', primary_key, '|', not_null, '|', default_value, '|') AS "columnInfo",
+            physical_column_name AS "physicalColumnName",
+            column_type AS "columnType",
+            primary_key AS "primaryKey"
+        FROM all_columns
+        ORDER BY schema_name, table_name, column_num;
+    </select>
 
     <resultMap id="ColumnDtoMap" type="ColumnDto">
         <constructor>
@@ -190,30 +255,47 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllIndexInfo" resultMap="IndexDtoMap"> WITH all_indexes AS ( SELECT
-        t5.schemaname AS schema_name, t1.relname AS table_name, t2.relname AS index_name, am.amname
-        AS index_method, CASE WHEN t3.indisunique THEN '○' ELSE '' END AS is_unique, CASE WHEN
-        t3.indisprimary THEN '○' ELSE '' END AS is_primary,
-        replace(pg_catalog.pg_get_indexdef(t3.indexrelid), '|', '\|') AS index_definition,
-        coalesce(pg_catalog.obj_description(t2.oid, 'pg_class'), '') AS remarks FROM pg_class AS t1
-        LEFT OUTER JOIN pg_index AS t3 ON t1.oid = t3.indrelid LEFT OUTER JOIN pg_class AS t2 ON
-        t2.oid = t3.indexrelid LEFT OUTER JOIN pg_am AS am ON t2.relam = am.oid LEFT OUTER JOIN
-        pg_tables AS t5 ON t1.relname = t5.tablename WHERE t1.relkind = 'r' AND t3.indexrelid IS NOT
-        NULL AND t5.schemaname NOT IN ('pg_catalog', 'information_schema') <if
-            test="schemaList != null and schemaList.size() > 0"> AND t5.schemaname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND t1.relname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ) SELECT
-        schema_name AS "schemaName", table_name AS "tableName", CASE WHEN index_name IS NOT NULL
-        THEN concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY
-        index_name), '|', index_name, '|', index_method, '|', is_unique, '|', is_primary, '|',
-        index_definition, '|', remarks, '|') ELSE NULL END AS "indexInfo" FROM all_indexes ORDER BY
-        schema_name, table_name; </select>
+    <select id="selectAllIndexInfo" resultMap="IndexDtoMap">
+        WITH all_indexes AS (
+            SELECT
+                t5.schemaname AS schema_name,
+                t1.relname AS table_name,
+                t2.relname AS index_name,
+                am.amname AS index_method,
+                CASE WHEN t3.indisunique THEN '○' ELSE '' END AS is_unique,
+                CASE WHEN t3.indisprimary THEN '○' ELSE '' END AS is_primary,
+                replace(pg_catalog.pg_get_indexdef(t3.indexrelid), '|', '\|') AS index_definition,
+                coalesce(pg_catalog.obj_description(t2.oid, 'pg_class'), '') AS remarks
+            FROM pg_class AS t1
+            LEFT OUTER JOIN pg_index AS t3 ON t1.oid = t3.indrelid
+            LEFT OUTER JOIN pg_class AS t2 ON t2.oid = t3.indexrelid
+            LEFT OUTER JOIN pg_am AS am ON t2.relam = am.oid
+            LEFT OUTER JOIN pg_tables AS t5 ON t1.relname = t5.tablename
+            WHERE t1.relkind = 'r' AND t3.indexrelid IS NOT NULL AND t5.schemaname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t5.schemaname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t1.relname IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            CASE
+                WHEN index_name IS NOT NULL
+                    THEN concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY index_name), '|', index_name, '|', index_method, '|', is_unique, '|', is_primary, '|', index_definition, '|', remarks, '|')
+                ELSE NULL
+            END AS "indexInfo"
+        FROM all_indexes
+        ORDER BY schema_name, table_name;
+    </select>
 
     <resultMap id="IndexDtoMap" type="IndexDto">
         <constructor>
@@ -223,29 +305,45 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllConstraintInfo" resultMap="ConstraintDtoMap"> WITH all_constraints AS (
-        SELECT t3.nspname AS schema_name, t2.relname AS table_name, t1.conname AS constraints_name,
-        CASE t1.contype WHEN 'c' THEN 'CHECK' WHEN 'f' THEN 'FOREIGN KEY' WHEN 'p' THEN 'PRIMARY KEY'
-        WHEN 'u' THEN 'UNIQUE' ELSE NULL END AS constraints_type,
-        replace(pg_get_constraintdef(t1.oid), '|', '\|') AS constraints_definition,
-        coalesce(pg_catalog.obj_description(t1.oid, 'pg_constraint'), '') AS remarks FROM
-        pg_catalog.pg_constraint t1 LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.conrelid = t2.oid
-        LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid WHERE t1.contype in
-        ('c', 'f', 'p', 'u') AND t3.nspname NOT IN ('pg_catalog', 'information_schema') <if
-            test="schemaList != null and schemaList.size() > 0"> AND t3.nspname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND t2.relname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ) SELECT
-        schema_name AS "schemaName", table_name AS "tableName", concat('|', row_number() over
-        (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name), '|',
-        constraints_name, '|', constraints_type, '|', constraints_definition, '|', remarks, '|') AS
-        "constraintInfo" FROM all_constraints ORDER BY schema_name, table_name, constraints_type,
-        constraints_name; </select>
+    <select id="selectAllConstraintInfo" resultMap="ConstraintDtoMap">
+        WITH all_constraints AS (
+            SELECT
+                t3.nspname AS schema_name,
+                t2.relname AS table_name,
+                t1.conname AS constraints_name,
+                CASE t1.contype
+                    WHEN 'c' THEN 'CHECK'
+                    WHEN 'f' THEN 'FOREIGN KEY'
+                    WHEN 'p' THEN 'PRIMARY KEY'
+                    WHEN 'u' THEN 'UNIQUE'
+                    ELSE NULL
+                END AS constraints_type,
+                replace(pg_get_constraintdef(t1.oid), '|', '\|') AS constraints_definition,
+                coalesce(pg_catalog.obj_description(t1.oid, 'pg_constraint'), '') AS remarks
+            FROM pg_catalog.pg_constraint t1
+            LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.conrelid = t2.oid
+            LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
+            WHERE t1.contype in ('c', 'f', 'p', 'u') AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t3.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t2.relname IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name), '|', constraints_name, '|', constraints_type, '|', constraints_definition, '|', remarks, '|') AS "constraintInfo"
+        FROM all_constraints
+        ORDER BY schema_name, table_name, constraints_type, constraints_name;
+    </select>
 
     <resultMap id="ConstraintDtoMap" type="ConstraintDto">
         <constructor>
@@ -255,49 +353,73 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap"> WITH all_foreignkeys AS (
-        SELECT t1.conname AS foreignkey_name, t3.nspname AS schema_name, t2.relname AS table_name,
-        coalesce(( SELECT string_agg(a.attname, ',' ORDER BY k.ord) FROM unnest(t1.conkey) WITH
-        ORDINALITY AS k(attnum, ord) JOIN pg_catalog.pg_attribute a ON a.attrelid = t1.conrelid AND
-        a.attnum = k.attnum ), '') AS column_names, t5.nspname AS reference_schema_name, t4.relname
-        AS reference_table_name, coalesce(( SELECT string_agg(fa.attname, ',' ORDER BY fk.ord) FROM
-        unnest(t1.confkey) WITH ORDINALITY AS fk(attnum, ord) JOIN pg_catalog.pg_attribute fa ON
-        fa.attrelid = t1.confrelid AND fa.attnum = fk.attnum ), '') AS reference_column_names,
-        /* 外部キー列が一意制約・一意索引で覆われているか（1件の親に対し子が高々1件となるか）。
-           一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、
-           列名の一致ではなく包含関係で判定する。
-           条件付きの一意性しか保証しない部分インデックスは除外する */
-        CASE WHEN EXISTS ( SELECT 1 FROM
-        pg_catalog.pg_index i WHERE i.indrelid = t1.conrelid AND i.indisunique AND i.indisvalid AND
-        i.indpred IS NULL AND (string_to_array(i.indkey::text, ' ')::smallint[])[1:i.indnkeyatts]
-        &lt;@ t1.conkey ) THEN '○' ELSE '' END AS child_key_unique,
-        /* 外部キー列がすべてNOT NULLか（1件の子が必ず親を1件持つか）。
-           1列でもNULLを許容すると参照が成立しない行が存在しうるため、親側は0または1となる */
-        CASE WHEN NOT EXISTS (
-        SELECT 1 FROM unnest(t1.conkey) AS k(attnum) JOIN pg_catalog.pg_attribute a ON a.attrelid =
-        t1.conrelid AND a.attnum = k.attnum WHERE NOT a.attnotnull ) THEN '○' ELSE '' END AS
-        child_key_mandatory FROM pg_catalog.pg_constraint t1 LEFT OUTER JOIN pg_catalog.pg_class t2
-        ON t1.conrelid = t2.oid LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace =
-        t3.oid LEFT OUTER JOIN pg_catalog.pg_class t4 ON t1.confrelid = t4.oid LEFT OUTER JOIN
-        pg_catalog.pg_namespace t5 ON t4.relnamespace = t5.oid WHERE t1.contype = 'f' AND t3.nspname
-        NOT IN ('pg_catalog', 'information_schema') <if
-            test="schemaList != null and schemaList.size() > 0"> AND t3.nspname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND t2.relname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ) SELECT
-        schema_name AS "schemaName", table_name AS "tableName", CASE WHEN foreignkey_name IS NOT
-        NULL THEN concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY
-        foreignkey_name), '|', foreignkey_name, '|', column_names, '|', reference_schema_name, '.' ,
-        reference_table_name, '|', reference_column_names, '|') ELSE NULL END AS "foreignkeyInfo",
-        foreignkey_name AS "foreignkeyName", reference_schema_name AS "referenceSchemaName",
-        reference_table_name AS "referenceTableName", child_key_unique AS "childKeyUnique",
-        child_key_mandatory AS "childKeyMandatory" FROM all_foreignkeys ORDER BY schema_name,
-        table_name; </select>
+    <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap">
+        WITH all_foreignkeys AS (
+            SELECT
+                t1.conname AS foreignkey_name,
+                t3.nspname AS schema_name,
+                t2.relname AS table_name,
+                coalesce(( SELECT string_agg(a.attname, ',' ORDER BY k.ord) FROM unnest(t1.conkey) WITH ORDINALITY AS k(attnum, ord) JOIN pg_catalog.pg_attribute a ON a.attrelid = t1.conrelid AND a.attnum = k.attnum ), '') AS column_names,
+                t5.nspname AS reference_schema_name,
+                t4.relname AS reference_table_name,
+                coalesce(( SELECT string_agg(fa.attname, ',' ORDER BY fk.ord) FROM unnest(t1.confkey) WITH ORDINALITY AS fk(attnum, ord) JOIN pg_catalog.pg_attribute fa ON fa.attrelid = t1.confrelid AND fa.attnum = fk.attnum ), '') AS reference_column_names,
+                /* 外部キー列が一意制約・一意索引で覆われているか（1件の親に対し子が高々1件となるか）。
+                   一意キーの列集合が外部キーの列集合に含まれていれば外部キーの値も一意となるため、
+                   列名の一致ではなく包含関係で判定する。
+                   条件付きの一意性しか保証しない部分インデックスは除外する */
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1 FROM pg_catalog.pg_index i
+                        WHERE i.indrelid = t1.conrelid AND i.indisunique AND i.indisvalid AND i.indpred IS NULL
+                            AND (string_to_array(i.indkey::text, ' ')::smallint[])[1:i.indnkeyatts] &lt;@ t1.conkey
+                    ) THEN '○'
+                    ELSE ''
+                END AS child_key_unique,
+                /* 外部キー列がすべてNOT NULLか（1件の子が必ず親を1件持つか）。
+                   1列でもNULLを許容すると参照が成立しない行が存在しうるため、親側は0または1となる */
+                CASE
+                    WHEN NOT EXISTS (
+                        SELECT 1 FROM unnest(t1.conkey) AS k(attnum)
+                        JOIN pg_catalog.pg_attribute a ON a.attrelid = t1.conrelid AND a.attnum = k.attnum
+                        WHERE NOT a.attnotnull
+                    ) THEN '○'
+                    ELSE ''
+                END AS child_key_mandatory
+            FROM pg_catalog.pg_constraint t1
+            LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.conrelid = t2.oid
+            LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
+            LEFT OUTER JOIN pg_catalog.pg_class t4 ON t1.confrelid = t4.oid
+            LEFT OUTER JOIN pg_catalog.pg_namespace t5 ON t4.relnamespace = t5.oid
+            WHERE t1.contype = 'f' AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t3.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t2.relname IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            CASE
+                WHEN foreignkey_name IS NOT NULL
+                    THEN concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY foreignkey_name), '|', foreignkey_name, '|', column_names, '|', reference_schema_name, '.' , reference_table_name, '|', reference_column_names, '|')
+                ELSE NULL
+            END AS "foreignkeyInfo",
+            foreignkey_name AS "foreignkeyName",
+            reference_schema_name AS "referenceSchemaName",
+            reference_table_name AS "referenceTableName",
+            child_key_unique AS "childKeyUnique",
+            child_key_mandatory AS "childKeyMandatory"
+        FROM all_foreignkeys
+        ORDER BY schema_name, table_name;
+    </select>
 
     <resultMap id="ForeignKeyDtoMap" type="ForeignKeyDto">
         <constructor>
@@ -312,35 +434,53 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllTriggerInfo" resultMap="TriggerDtoMap"> WITH all_triggers AS ( SELECT
-        t3.nspname AS schema_name, t2.relname AS table_name, t1.tgname AS trigger_name, CASE WHEN
-        (t1.tgtype &amp; 64) &lt;&gt; 0 THEN 'INSTEAD OF' WHEN (t1.tgtype &amp; 2) &lt;&gt; 0 THEN
-        'BEFORE' ELSE 'AFTER' END AS timing, array_to_string(ARRAY[ CASE WHEN (t1.tgtype &amp; 4)
-        &lt;&gt; 0 THEN 'INSERT' END, CASE WHEN (t1.tgtype &amp; 8) &lt;&gt; 0 THEN 'DELETE' END,
-        CASE WHEN (t1.tgtype &amp; 16) &lt;&gt; 0 THEN 'UPDATE' END, CASE WHEN (t1.tgtype &amp; 32)
-        &lt;&gt; 0 THEN 'TRUNCATE' END ], '/') AS events, CASE WHEN (t1.tgtype &amp; 1) &lt;&gt; 0
-        THEN 'ROW' ELSE 'STATEMENT' END AS orientation, t5.nspname || '.' || t4.proname AS
-        function_name, replace(regexp_replace(pg_catalog.pg_get_triggerdef(t1.oid), '\r|\n|\r\n', ' ',
-        'g'), '|', '\|') AS trigger_definition FROM pg_catalog.pg_trigger t1 LEFT OUTER JOIN
-        pg_catalog.pg_class t2 ON t1.tgrelid = t2.oid LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON
-        t2.relnamespace = t3.oid LEFT OUTER JOIN pg_catalog.pg_proc t4 ON t1.tgfoid = t4.oid LEFT
-        OUTER JOIN pg_catalog.pg_namespace t5 ON t4.pronamespace = t5.oid WHERE NOT t1.tgisinternal
-        AND t3.nspname NOT IN ('pg_catalog', 'information_schema') <if
-            test="schemaList != null and schemaList.size() > 0"> AND t3.nspname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if>
-        <if
-            test="tableList != null and tableList.size() > 0"> AND t2.relname IN <foreach
-                item="table" index="index" collection="tableList"
-                open="(" separator="," close=")"> #{table} </foreach>
-        </if> ) SELECT
-        schema_name AS "schemaName", table_name AS "tableName", concat('|', row_number() over (ORDER
-        BY schema_name, table_name, trigger_name), '|', schema_name, '|', table_name, '|',
-        trigger_name, '|', timing, '|', events, '|', function_name, '|') AS "triggerListInfo",
-        concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY trigger_name),
-        '|', trigger_name, '|', timing, '|', events, '|', orientation, '|', trigger_definition, '|')
-        AS "triggerInfo" FROM all_triggers ORDER BY schema_name, table_name, trigger_name; </select>
+    <select id="selectAllTriggerInfo" resultMap="TriggerDtoMap">
+        WITH all_triggers AS (
+            SELECT
+                t3.nspname AS schema_name,
+                t2.relname AS table_name,
+                t1.tgname AS trigger_name,
+                CASE
+                    WHEN (t1.tgtype &amp; 64) &lt;&gt; 0 THEN 'INSTEAD OF'
+                    WHEN (t1.tgtype &amp; 2) &lt;&gt; 0 THEN 'BEFORE'
+                    ELSE 'AFTER'
+                END AS timing,
+                array_to_string(ARRAY[
+                    CASE WHEN (t1.tgtype &amp; 4) &lt;&gt; 0 THEN 'INSERT' END,
+                    CASE WHEN (t1.tgtype &amp; 8) &lt;&gt; 0 THEN 'DELETE' END,
+                    CASE WHEN (t1.tgtype &amp; 16) &lt;&gt; 0 THEN 'UPDATE' END,
+                    CASE WHEN (t1.tgtype &amp; 32) &lt;&gt; 0 THEN 'TRUNCATE' END
+                ], '/') AS events,
+                CASE WHEN (t1.tgtype &amp; 1) &lt;&gt; 0 THEN 'ROW' ELSE 'STATEMENT' END AS orientation,
+                t5.nspname || '.' || t4.proname AS function_name,
+                replace(regexp_replace(pg_catalog.pg_get_triggerdef(t1.oid), '\r|\n|\r\n', ' ', 'g'), '|', '\|') AS trigger_definition
+            FROM pg_catalog.pg_trigger t1
+            LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.tgrelid = t2.oid
+            LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
+            LEFT OUTER JOIN pg_catalog.pg_proc t4 ON t1.tgfoid = t4.oid
+            LEFT OUTER JOIN pg_catalog.pg_namespace t5 ON t4.pronamespace = t5.oid
+            WHERE NOT t1.tgisinternal AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t3.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+                <if test="tableList != null and tableList.size() > 0">
+                    AND t2.relname IN
+                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
+                        #{table}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            concat('|', row_number() over (ORDER BY schema_name, table_name, trigger_name), '|', schema_name, '|', table_name, '|', trigger_name, '|', timing, '|', events, '|', function_name, '|') AS "triggerListInfo",
+            concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY trigger_name), '|', trigger_name, '|', timing, '|', events, '|', orientation, '|', trigger_definition, '|') AS "triggerInfo"
+        FROM all_triggers
+        ORDER BY schema_name, table_name, trigger_name;
+    </select>
 
     <resultMap id="TriggerDtoMap" type="TriggerDto">
         <constructor>
@@ -351,43 +491,67 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllFunctionInfo" resultMap="FunctionDtoMap"> WITH all_functions AS ( SELECT
-        current_database() AS db_name, t2.nspname AS schema_name, t1.proname AS function_name, CASE
-        t1.prokind WHEN 'p' THEN 'PROCEDURE' ELSE 'FUNCTION' END AS function_kind,
-        pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments, CASE WHEN t1.prokind =
-        'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS
-        function_result, t3.lanname AS language_name, t1.proname || CASE WHEN count(*) OVER
-        (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY
-        t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name FROM pg_catalog.pg_proc t1
-        LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid LEFT OUTER JOIN
-        pg_catalog.pg_language t3 ON t1.prolang = t3.oid WHERE t1.prokind IN ('f', 'p') AND
-        t2.nspname NOT IN ('pg_catalog', 'information_schema') <if
-            test="schemaList != null and schemaList.size() > 0"> AND t2.nspname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if> ) SELECT db_name
-        AS "dbName", schema_name AS "schemaName", function_name AS "functionName", file_name AS
-        "fileName", concat('|', row_number() over (ORDER BY schema_name, function_name, file_name),
-        '|', schema_name, '|', function_kind, '|', function_name, '|', replace(function_arguments,
-        '|', '\|'), '|', replace(function_result, '|', '\|'), '|', language_name, '|',
-        concat('[■](./', db_name, '/', schema_name, '/function/', file_name, '.md)'), '|') AS
-        "functionListInfo", '' AS definition FROM all_functions ORDER BY schema_name, function_name,
-        file_name; </select>
+    <select id="selectAllFunctionInfo" resultMap="FunctionDtoMap">
+        WITH all_functions AS (
+            SELECT
+                current_database() AS db_name,
+                t2.nspname AS schema_name,
+                t1.proname AS function_name,
+                CASE t1.prokind WHEN 'p' THEN 'PROCEDURE' ELSE 'FUNCTION' END AS function_kind,
+                pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments,
+                CASE WHEN t1.prokind = 'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS function_result,
+                t3.lanname AS language_name,
+                t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name
+            FROM pg_catalog.pg_proc t1
+            LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid
+            LEFT OUTER JOIN pg_catalog.pg_language t3 ON t1.prolang = t3.oid
+            WHERE t1.prokind IN ('f', 'p') AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t2.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            db_name AS "dbName",
+            schema_name AS "schemaName",
+            function_name AS "functionName",
+            file_name AS "fileName",
+            concat('|', row_number() over (ORDER BY schema_name, function_name, file_name), '|', schema_name, '|', function_kind, '|', function_name, '|', replace(function_arguments, '|', '\|'), '|', replace(function_result, '|', '\|'), '|', language_name, '|', concat('[■](./', db_name, '/', schema_name, '/function/', file_name, '.md)'), '|') AS "functionListInfo",
+            '' AS definition
+        FROM all_functions
+        ORDER BY schema_name, function_name, file_name;
+    </select>
 
-    <select id="selectAllFunctionDefInfo" resultMap="FunctionDtoMap"> WITH all_functions AS ( SELECT
-        current_database() AS db_name, t2.nspname AS schema_name, t1.proname AS function_name,
-        t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' ||
-        row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS
-        file_name, pg_catalog.pg_get_functiondef(t1.oid) AS definition FROM pg_catalog.pg_proc t1
-        LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid WHERE t1.prokind IN
-        ('f', 'p') AND t2.nspname NOT IN ('pg_catalog', 'information_schema') <if
-            test="schemaList != null and schemaList.size() > 0"> AND t2.nspname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if> ) SELECT db_name
-        AS "dbName", schema_name AS "schemaName", function_name AS "functionName", file_name AS
-        "fileName", '' AS "functionListInfo", definition AS definition FROM all_functions ORDER BY
-        schema_name, function_name, file_name; </select>
+    <select id="selectAllFunctionDefInfo" resultMap="FunctionDtoMap">
+        WITH all_functions AS (
+            SELECT
+                current_database() AS db_name,
+                t2.nspname AS schema_name,
+                t1.proname AS function_name,
+                t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name,
+                pg_catalog.pg_get_functiondef(t1.oid) AS definition
+            FROM pg_catalog.pg_proc t1
+            LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid
+            WHERE t1.prokind IN ('f', 'p') AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t2.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            db_name AS "dbName",
+            schema_name AS "schemaName",
+            function_name AS "functionName",
+            file_name AS "fileName",
+            '' AS "functionListInfo",
+            definition AS definition
+        FROM all_functions
+        ORDER BY schema_name, function_name, file_name;
+    </select>
 
     <resultMap id="FunctionDtoMap" type="FunctionDto">
         <constructor>
@@ -400,31 +564,47 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllSequenceInfo" resultMap="SequenceDtoMap"> WITH all_sequences AS ( SELECT
-        current_database() AS db_name, t2.nspname AS schema_name, t1.relname AS sequence_name,
-        coalesce(s.increment_by::text, '') AS increment_by, coalesce(s.min_value::text, '') AS
-        min_value, coalesce(s.max_value::text, '') AS max_value, coalesce(s.cache_size::text, '') AS
-        cache_size, coalesce(s.start_value::text, '') AS start_value, CASE WHEN s.cycle THEN '○'
-        ELSE '' END AS cycle, coalesce(owned.owned_by, '') AS owned_by FROM pg_catalog.pg_class t1
-        LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid LEFT OUTER JOIN
-        pg_catalog.pg_sequences s ON s.schemaname = t2.nspname AND s.sequencename = t1.relname LEFT
-        OUTER JOIN LATERAL ( SELECT tc.relname || '.' || a.attname AS owned_by FROM
-        pg_catalog.pg_depend d JOIN pg_catalog.pg_class tc ON tc.oid = d.refobjid JOIN
-        pg_catalog.pg_attribute a ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid WHERE
-        d.objid = t1.oid AND d.classid = 'pg_class'::regclass AND d.refclassid =
-        'pg_class'::regclass AND d.deptype = 'a' LIMIT 1 ) owned ON true WHERE t1.relkind = 'S' AND
-        t2.nspname NOT IN ('pg_catalog', 'information_schema') <if
-            test="schemaList != null and schemaList.size() > 0"> AND t2.nspname IN <foreach
-                item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if> ) SELECT db_name
-        AS "dbName", schema_name AS "schemaName", sequence_name AS "sequenceName", concat('|',
-        row_number() over (ORDER BY schema_name, sequence_name), '|', schema_name, '|',
-        sequence_name, '|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|',
-        start_value, '|', cycle, '|', owned_by, '|', concat('[■](./', db_name, '/', schema_name,
-        '/sequence/', sequence_name, '.md)'), '|') AS "sequenceListInfo", concat('|', increment_by,
-        '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|',
-        owned_by, '|') AS "sequenceInfo" FROM all_sequences ORDER BY schema_name, sequence_name; </select>
+    <select id="selectAllSequenceInfo" resultMap="SequenceDtoMap">
+        WITH all_sequences AS (
+            SELECT
+                current_database() AS db_name,
+                t2.nspname AS schema_name,
+                t1.relname AS sequence_name,
+                coalesce(s.increment_by::text, '') AS increment_by,
+                coalesce(s.min_value::text, '') AS min_value,
+                coalesce(s.max_value::text, '') AS max_value,
+                coalesce(s.cache_size::text, '') AS cache_size,
+                coalesce(s.start_value::text, '') AS start_value,
+                CASE WHEN s.cycle THEN '○' ELSE '' END AS cycle,
+                coalesce(owned.owned_by, '') AS owned_by
+            FROM pg_catalog.pg_class t1
+            LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid
+            LEFT OUTER JOIN pg_catalog.pg_sequences s ON s.schemaname = t2.nspname AND s.sequencename = t1.relname
+            LEFT OUTER JOIN LATERAL (
+                SELECT tc.relname || '.' || a.attname AS owned_by
+                FROM pg_catalog.pg_depend d
+                JOIN pg_catalog.pg_class tc ON tc.oid = d.refobjid
+                JOIN pg_catalog.pg_attribute a ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
+                WHERE d.objid = t1.oid AND d.classid = 'pg_class'::regclass AND d.refclassid = 'pg_class'::regclass AND d.deptype = 'a'
+                LIMIT 1
+            ) owned ON true
+            WHERE t1.relkind = 'S' AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t2.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            db_name AS "dbName",
+            schema_name AS "schemaName",
+            sequence_name AS "sequenceName",
+            concat('|', row_number() over (ORDER BY schema_name, sequence_name), '|', schema_name, '|', sequence_name, '|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|', concat('[■](./', db_name, '/', schema_name, '/sequence/', sequence_name, '.md)'), '|') AS "sequenceListInfo",
+            concat('|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|') AS "sequenceInfo"
+        FROM all_sequences
+        ORDER BY schema_name, sequence_name;
+    </select>
 
     <resultMap id="SequenceDtoMap" type="SequenceDto">
         <constructor>
@@ -436,30 +616,49 @@
         </constructor>
     </resultMap>
 
-    <select id="selectAllTypeInfo" resultMap="TypeDtoMap"> WITH all_types AS ( SELECT
-        current_database() AS db_name, t2.nspname AS schema_name, t1.typname AS type_name, CASE
-        t1.typtype WHEN 'e' THEN 'ENUM' WHEN 'c' THEN 'COMPOSITE' WHEN 'd' THEN 'DOMAIN' WHEN 'r'
-        THEN 'RANGE' ELSE t1.typtype::text END AS type_category, replace(coalesce( CASE t1.typtype
-        WHEN 'e' THEN ( SELECT string_agg(e.enumlabel, ', ' ORDER BY e.enumsortorder) FROM
-        pg_catalog.pg_enum e WHERE e.enumtypid = t1.oid ) WHEN 'd' THEN 'DOMAIN OVER ' ||
-        pg_catalog.format_type(t1.typbasetype, t1.typtypmod) WHEN 'r' THEN 'RANGE OF ' || ( SELECT
-        pg_catalog.format_type(r.rngsubtype, NULL) FROM pg_catalog.pg_range r WHERE r.rngtypid =
-        t1.oid ) WHEN 'c' THEN ( SELECT string_agg(a.attname || ' ' ||
-        pg_catalog.format_type(a.atttypid, a.atttypmod), ', ' ORDER BY a.attnum) FROM
-        pg_catalog.pg_attribute a WHERE a.attrelid = t1.typrelid AND a.attnum > 0 AND NOT
-        a.attisdropped ) ELSE '' END, ''), '|', '\|') AS definition FROM pg_catalog.pg_type t1 LEFT
-        OUTER JOIN pg_catalog.pg_namespace t2 ON t1.typnamespace = t2.oid WHERE t1.typtype IN ('e',
-        'c', 'd', 'r') AND (t1.typtype &lt;&gt; 'c' OR EXISTS ( SELECT 1 FROM pg_catalog.pg_class cc
-        WHERE cc.oid = t1.typrelid AND cc.relkind = 'c' )) AND t2.nspname NOT IN ('pg_catalog',
-        'information_schema') <if test="schemaList != null and schemaList.size() > 0"> AND
-        t2.nspname IN <foreach item="schema" index="index" collection="schemaList"
-                open="(" separator="," close=")"> #{schema} </foreach>
-        </if> ) SELECT db_name
-        AS "dbName", schema_name AS "schemaName", type_name AS "typeName", type_category AS
-        "typeCategory", concat('|', row_number() over (ORDER BY schema_name, type_name), '|',
-        schema_name, '|', type_name, '|', type_category, '|', definition, '|', concat('[■](./',
-        db_name, '/', schema_name, '/type/', type_name, '.md)'), '|') AS "typeListInfo", definition
-        AS definition FROM all_types ORDER BY schema_name, type_name; </select>
+    <select id="selectAllTypeInfo" resultMap="TypeDtoMap">
+        WITH all_types AS (
+            SELECT
+                current_database() AS db_name,
+                t2.nspname AS schema_name,
+                t1.typname AS type_name,
+                CASE t1.typtype
+                    WHEN 'e' THEN 'ENUM'
+                    WHEN 'c' THEN 'COMPOSITE'
+                    WHEN 'd' THEN 'DOMAIN'
+                    WHEN 'r' THEN 'RANGE'
+                    ELSE t1.typtype::text
+                END AS type_category,
+                replace(coalesce(
+                    CASE t1.typtype
+                        WHEN 'e' THEN ( SELECT string_agg(e.enumlabel, ', ' ORDER BY e.enumsortorder) FROM pg_catalog.pg_enum e WHERE e.enumtypid = t1.oid )
+                        WHEN 'd' THEN 'DOMAIN OVER ' || pg_catalog.format_type(t1.typbasetype, t1.typtypmod)
+                        WHEN 'r' THEN 'RANGE OF ' || ( SELECT pg_catalog.format_type(r.rngsubtype, NULL) FROM pg_catalog.pg_range r WHERE r.rngtypid = t1.oid )
+                        WHEN 'c' THEN ( SELECT string_agg(a.attname || ' ' || pg_catalog.format_type(a.atttypid, a.atttypmod), ', ' ORDER BY a.attnum) FROM pg_catalog.pg_attribute a WHERE a.attrelid = t1.typrelid AND a.attnum > 0 AND NOT a.attisdropped )
+                        ELSE ''
+                    END, ''), '|', '\|') AS definition
+            FROM pg_catalog.pg_type t1
+            LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.typnamespace = t2.oid
+            WHERE t1.typtype IN ('e', 'c', 'd', 'r')
+                AND (t1.typtype &lt;&gt; 'c' OR EXISTS ( SELECT 1 FROM pg_catalog.pg_class cc WHERE cc.oid = t1.typrelid AND cc.relkind = 'c' ))
+                AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t2.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            db_name AS "dbName",
+            schema_name AS "schemaName",
+            type_name AS "typeName",
+            type_category AS "typeCategory",
+            concat('|', row_number() over (ORDER BY schema_name, type_name), '|', schema_name, '|', type_name, '|', type_category, '|', definition, '|', concat('[■](./', db_name, '/', schema_name, '/type/', type_name, '.md)'), '|') AS "typeListInfo",
+            definition AS definition
+        FROM all_types
+        ORDER BY schema_name, type_name;
+    </select>
 
     <resultMap id="TypeDtoMap" type="TypeDto">
         <constructor>
