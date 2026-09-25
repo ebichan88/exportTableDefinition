@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -385,8 +384,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     if (annotations.isEmpty()) {
       return;
     }
-    if (CollectionUtils.isNotEmpty(targetSchemaList)
-        || CollectionUtils.isNotEmpty(targetTableList)) {
+    if (!targetSchemaList.isEmpty() || !targetTableList.isEmpty()) {
       logger.info("Skipping orphan table annotation check because the output target is filtered.");
       return;
     }
@@ -421,8 +419,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       List<String> targetTableList) {
     final Set<TableKey> existingKeys =
         tables.stream().map(TableKey::of).collect(Collectors.toSet());
-    final boolean isFiltered =
-        CollectionUtils.isNotEmpty(targetSchemaList) || CollectionUtils.isNotEmpty(targetTableList);
+    final boolean isFiltered = !targetSchemaList.isEmpty() || !targetTableList.isEmpty();
     return foreignKeys.stream()
         .filter(
             fk -> {

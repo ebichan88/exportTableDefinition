@@ -1,7 +1,5 @@
 package com.export_table_definition.domain.model.entity;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * 関数・プロシージャ情報に関するrecordクラス
  *
@@ -35,6 +33,6 @@ public record FunctionEntity(
    * @return ヘッダー表示名
    */
   public String getHeaderName() {
-    return StringUtils.isBlank(functionName) ? fileName : functionName;
+    return (functionName == null || functionName.isBlank()) ? fileName : functionName;
   }
 }

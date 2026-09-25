@@ -3,8 +3,6 @@ package com.export_table_definition.domain.model.value;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * {@code table=}に指定された絞り込みパターンを判定する値オブジェクト<br>
@@ -44,13 +42,13 @@ public final class TableTargetFilter {
    * @return 生成したフィルター
    */
   public static TableTargetFilter of(List<String> rawPatterns) {
-    if (CollectionUtils.isEmpty(rawPatterns)) {
+    if (rawPatterns == null || rawPatterns.isEmpty()) {
       return new TableTargetFilter(List.of(), List.of());
     }
     final List<Entry> includes = new ArrayList<>();
     final List<Entry> excludes = new ArrayList<>();
     for (final String rawPattern : rawPatterns) {
-      if (StringUtils.isBlank(rawPattern)) {
+      if (rawPattern == null || rawPattern.isBlank()) {
         continue;
       }
       final boolean negate = rawPattern.startsWith(EXCLUDE_PREFIX);
