@@ -54,10 +54,10 @@ public class TableDefinitionContentTest {
 
     var outgoingFk =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var incomingFk =
         ForeignKeyFixtures.physical(
-            "public", "items", "unused", "fk_items_orders", "public", "orders");
+            "public", "items", "fk_items_orders", "public", "orders");
     var foreignKeys = ForeignKeys.of(List.of(outgoingFk, incomingFk));
 
     var ownTrigger = new TriggerEntity("public", "orders", "unused", "unused");
@@ -136,7 +136,7 @@ public class TableDefinitionContentTest {
     var table = newTable("public", "orders");
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
@@ -163,7 +163,7 @@ public class TableDefinitionContentTest {
     var table = newTable("public", "orders");
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));

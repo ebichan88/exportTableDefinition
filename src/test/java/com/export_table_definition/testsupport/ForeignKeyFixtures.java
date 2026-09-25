@@ -21,15 +21,14 @@ public final class ForeignKeyFixtures {
    *
    * @param schema 参照元スキーマ名
    * @param table 参照元テーブル名
-   * @param info 外部キー情報セクションに掲載する行の文字列
    * @param name 外部キー名
    * @param refSchema 参照先スキーマ名
    * @param refTable 参照先テーブル名
    * @return 物理外部キー
    */
   public static ForeignKeyEntity physical(
-      String schema, String table, String info, String name, String refSchema, String refTable) {
-    return physical(schema, table, info, name, refSchema, refTable, Cardinality.ONE_TO_MANY);
+      String schema, String table, String name, String refSchema, String refTable) {
+    return physical(schema, table, name, refSchema, refTable, Cardinality.ONE_TO_MANY);
   }
 
   /**
@@ -37,7 +36,6 @@ public final class ForeignKeyFixtures {
    *
    * @param schema 参照元スキーマ名
    * @param table 参照元テーブル名
-   * @param info 外部キー情報セクションに掲載する行の文字列
    * @param name 外部キー名
    * @param refSchema 参照先スキーマ名
    * @param refTable 参照先テーブル名
@@ -47,21 +45,12 @@ public final class ForeignKeyFixtures {
   public static ForeignKeyEntity physical(
       String schema,
       String table,
-      String info,
       String name,
       String refSchema,
       String refTable,
       Cardinality cardinality) {
     return new ForeignKeyEntity(
-        schema,
-        table,
-        info,
-        name,
-        UNUSED,
-        refSchema,
-        refTable,
-        UNUSED,
-        cardinality,
+        schema, table, name, UNUSED, refSchema, refTable, UNUSED, cardinality,
         RelationType.PHYSICAL);
   }
 

@@ -445,11 +445,6 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            CASE
-                WHEN foreignkey_name IS NOT NULL
-                    THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY foreignkey_name) || '|' || foreignkey_name || '|' || column_names || '|' || reference_schema_name || '.' || reference_table_name || '|' || reference_column_names || '|'
-                ELSE NULL
-            END AS "foreignkeyInfo",
             foreignkey_name AS "foreignkeyName",
             column_names AS "columnNames",
             reference_schema_name AS "referenceSchemaName",
@@ -471,14 +466,13 @@
             END AS "childKeyMandatory"
         FROM ora_all_foreignkeys f
         WHERE column_names IS NOT NULL
-        ORDER BY schema_name, table_name
+        ORDER BY schema_name, table_name, foreignkey_name
     </select>
 
     <resultMap id="ForeignKeyDtoMap" type="ForeignKeyDto">
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="foreignkeyInfo" javaType="String" />
             <arg column="foreignkeyName" javaType="String" />
             <arg column="columnNames" javaType="String" />
             <arg column="referenceSchemaName" javaType="String" />

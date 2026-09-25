@@ -10,8 +10,6 @@ import com.export_table_definition.domain.model.type.RelationType;
  *
  * @param schemaName 参照元（子）スキーマ名
  * @param tableName 参照元（子）テーブル名
- * @param foreignkeyInfo 外部キー情報セクションに掲載する行の文字列（SQLで組み立て済み）。
- *     論理リレーションはこの文字列を持たず、各フィールドから行を組み立てるため空文字となる
  * @param foreignkeyName 外部キー名（論理リレーションの場合は関連名）
  * @param columnNames 参照元（子）の列名をカンマ区切りで連結した文字列
  * @param referenceSchemaName 参照先（親）スキーマ名
@@ -26,7 +24,6 @@ import com.export_table_definition.domain.model.type.RelationType;
 public record ForeignKeyEntity(
     String schemaName,
     String tableName,
-    String foreignkeyInfo,
     String foreignkeyName,
     String columnNames,
     String referenceSchemaName,
@@ -42,7 +39,6 @@ public record ForeignKeyEntity(
    *
    * @param schemaName 参照元（子）スキーマ名
    * @param tableName 参照元（子）テーブル名
-   * @param foreignkeyInfo 外部キー情報セクションに掲載する行の文字列
    * @param foreignkeyName 外部キー名
    * @param columnNames 参照元（子）の列名をカンマ区切りで連結した文字列
    * @param referenceSchemaName 参照先（親）スキーマ名
@@ -52,7 +48,6 @@ public record ForeignKeyEntity(
   public ForeignKeyEntity(
       String schemaName,
       String tableName,
-      String foreignkeyInfo,
       String foreignkeyName,
       String columnNames,
       String referenceSchemaName,
@@ -61,7 +56,6 @@ public record ForeignKeyEntity(
     this(
         schemaName,
         tableName,
-        foreignkeyInfo,
         foreignkeyName,
         columnNames,
         referenceSchemaName,
@@ -97,7 +91,6 @@ public record ForeignKeyEntity(
     return new ForeignKeyEntity(
         schemaName,
         tableName,
-        "",
         relationName,
         columnNames,
         referenceSchemaName,

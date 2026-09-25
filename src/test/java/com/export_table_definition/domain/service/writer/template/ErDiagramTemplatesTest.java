@@ -35,7 +35,7 @@ public class ErDiagramTemplatesTest {
 
   private ForeignKeyEntity newFk(
       String schema, String table, String fkName, String refSchema, String refTable) {
-    return ForeignKeyFixtures.physical(schema, table, "unused", fkName, refSchema, refTable);
+    return ForeignKeyFixtures.physical(schema, table, fkName, refSchema, refTable);
   }
 
   /** ER図セクションを、ノード算出込みで生成するテスト用ヘルパー */
@@ -83,7 +83,6 @@ public class ErDiagramTemplatesTest {
         ForeignKeyFixtures.physical(
             "public",
             "profiles",
-            "unused",
             "fk_profiles_user",
             "public",
             "users",
@@ -92,7 +91,6 @@ public class ErDiagramTemplatesTest {
         ForeignKeyFixtures.physical(
             "public",
             "orders",
-            "unused",
             "fk_orders_coupon",
             "public",
             "coupons",

@@ -12,8 +12,8 @@ import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス
@@ -108,7 +108,7 @@ public class TableDefinitionTemplates {
         columns,
         table,
         header,
-        c ->
+        (no, c) ->
             c.columnInfo()
                 + MarkdownTemplateSupport.escapeTableCell(
                     annotation.columnRemark(c.physicalColumnName()))
@@ -157,7 +157,7 @@ public class TableDefinitionTemplates {
                 |:---|:---|:---|:---|:---|:---|:---|
                 """;
     return tableSection(
-        indexes, table, header, IndexEntity::indexInfo, IndexEntity::getSchemaTableName);
+        indexes, table, header, (no, e) -> e.indexInfo(), IndexEntity::getSchemaTableName);
   }
 
   /**
@@ -179,7 +179,7 @@ public class TableDefinitionTemplates {
         constraints,
         table,
         header,
-        ConstraintEntity::constraintInfo,
+        (no, e) -> e.constraintInfo(),
         ConstraintEntity::getSchemaTableName);
   }
 
@@ -198,12 +198,25 @@ public class TableDefinitionTemplates {
                 | No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
                 |:---|:---|:---|:---|:---|:---|
                 """;
-    // 多重度はSQLで組み立てた行の末尾に付け足す。ラベルの表記をCardinalityに集約するため
+    // 行番号・多重度はここで組み立てる。多重度のラベル表記をCardinalityに集約するため
     return tableSection(
         foreignkeys,
         table,
         header,
-        fk -> fk.foreignkeyInfo() + fk.cardinality().getLabel() + "|",
+        (no, fk) ->
+            "|"
+                + no
+                + "|"
+                + fk.foreignkeyName()
+                + "|"
+                + fk.columnNames()
+                + "|"
+                + fk.getReferenceSchemaTableName()
+                + "|"
+                + fk.referenceColumnNames()
+                + "|"
+                + fk.cardinality().getLabel()
+                + "|",
         ForeignKeyEntity::getSchemaTableName);
   }
 
@@ -272,7 +285,7 @@ public class TableDefinitionTemplates {
                 |:---|:---|:---|:---|:---|:---|
                 """;
     return tableSection(
-        triggers, table, header, TriggerEntity::triggerInfo, TriggerEntity::getSchemaTableName);
+        triggers, table, header, (no, e) -> e.triggerInfo(), TriggerEntity::getSchemaTableName);
   }
 
   /**
@@ -346,13 +359,14 @@ public class TableDefinitionTemplates {
   }
 
   /**
-   * テーブルごとのセクションを生成する共通メソッド
+   * テーブルごとのセクションを生成する共通メソッド<br>
+   * 行番号は当該テーブルに絞り込んだ後のリスト内での位置（1始まり）から採番する
    *
    * @param <T> エンティティの型
    * @param list エンティティのリスト
    * @param table テーブル情報
    * @param header セクションのヘッダー文字列
-   * @param infoMapper エンティティから情報文字列を生成する関数
+   * @param lineMapper 行番号とエンティティから1行分の文字列を生成する関数
    * @param schemaTableNameGetter エンティティからスキーマ名とテーブル名を結合した文字列を取得する関数
    * @return テーブルごとのセクション文字列
    */
@@ -360,13 +374,19 @@ public class TableDefinitionTemplates {
       List<T> list,
       TableEntity table,
       String header,
-      Function<T, String> infoMapper,
+      BiFunction<Integer, T, String> lineMapper,
       Function<T, String> schemaTableNameGetter) {
-    return header
-        + list.stream()
+    final List<T> filtered =
+        list.stream()
             .filter(e -> schemaTableNameGetter.apply(e).equals(table.getSchemaTableName()))
-            .map(infoMapper)
-            .collect(Collectors.joining(LINE_SEPARATOR))
-        + LINE_SEPARATOR_DOUBLE;
+            .toList();
+    final StringBuilder sb = new StringBuilder(header);
+    for (int i = 0; i < filtered.size(); i++) {
+      if (i > 0) {
+        sb.append(LINE_SEPARATOR);
+      }
+      sb.append(lineMapper.apply(i + 1, filtered.get(i)));
+    }
+    return sb.append(LINE_SEPARATOR_DOUBLE).toString();
   }
 }

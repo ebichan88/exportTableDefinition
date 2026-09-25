@@ -150,13 +150,12 @@ public class TableDefinitionWriterDomainServiceTest {
         ForeignKeyFixtures.physical(
             "public",
             "orders",
-            "|1|fk_orders_customer|customer_id|customers|id|",
             "fk_orders_customer",
             "public",
             "customers");
     var incomingFk =
         ForeignKeyFixtures.physical(
-            "public", "items", "unused", "fk_items_orders", "public", "orders");
+            "public", "items", "fk_items_orders", "public", "orders");
     var trigger =
         new TriggerEntity("public", "orders", "unused", "|1|trg_orders|BEFORE|INSERT|ROW|...|");
 

@@ -169,7 +169,6 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.physical(
             "public",
             "orders",
-            "| 1 | fk_orders_customer | customer_id | customers | id |",
             "fk_orders_customer",
             "public",
             "customers");
@@ -177,7 +176,6 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.physical(
             "sales",
             "orders",
-            "| 1 | fk_sales_orders | x | y | z |",
             "fk_sales_orders",
             "sales",
             "y");
@@ -194,14 +192,13 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.physical(
             "public",
             "profiles",
-            "| 1 | fk_profiles_user | user_id | users | id |",
             "fk_profiles_user",
             "public",
             "users",
             Cardinality.ONE_TO_ONE);
     String section = TableDefinitionTemplates.foreignKeys(List.of(fk), table);
     assertTrue(section.contains("| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
-    assertTrue(section.contains("| 1 | fk_profiles_user | user_id | users | id |1対1|"));
+    assertTrue(section.contains("|1|fk_profiles_user|unused|public.users|unused|1対1|"));
   }
 
   @Test
@@ -243,10 +240,10 @@ public class TableDefinitionTemplatesTest {
         new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
     var outgoing =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var incoming =
         ForeignKeyFixtures.physical(
-            "public", "items", "unused", "fk_items_orders", "public", "orders");
+            "public", "items", "fk_items_orders", "public", "orders");
     String section =
         TableDefinitionTemplates.erDiagram(
             table, List.of(column), List.of(outgoing), List.of(incoming));
@@ -270,7 +267,6 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.physical(
             "public",
             "orders",
-            "unused",
             "fk_orders_coupon",
             "public",
             "coupons",
@@ -279,7 +275,6 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.physical(
             "public",
             "order_details",
-            "unused",
             "fk_details_orders",
             "public",
             "orders",
@@ -299,7 +294,7 @@ public class TableDefinitionTemplatesTest {
     var column = new ColumnEntity("public", "orders", "unused", "amount", "numeric(10,2)", "");
     var outgoing =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     String section =
         TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing), List.of());
     assertTrue(section.contains("numeric amount"));
@@ -366,7 +361,7 @@ public class TableDefinitionTemplatesTest {
     var column = new ColumnEntity("public", "orders", "unused", "order_id", "int", "○");
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     String section =

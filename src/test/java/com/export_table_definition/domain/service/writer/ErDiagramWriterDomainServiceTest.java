@@ -84,7 +84,7 @@ public class ErDiagramWriterDomainServiceTest {
   }
 
   private ForeignKeyEntity fk(String table, String name, String refTable) {
-    return ForeignKeyFixtures.physical("public", table, "unused", name, "public", refTable);
+    return ForeignKeyFixtures.physical("public", table, name, "public", refTable);
   }
 
   private List<String> fileNames() {

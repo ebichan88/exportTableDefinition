@@ -14,7 +14,7 @@ public class ForeignKeyGroupsTest {
 
   private ForeignKeyEntity fk(
       String schema, String table, String name, String refSchema, String refTable) {
-    return ForeignKeyFixtures.physical(schema, table, "unused", name, refSchema, refTable);
+    return ForeignKeyFixtures.physical(schema, table, name, refSchema, refTable);
   }
 
   @Test

@@ -526,7 +526,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     IntStream.rangeClosed(1, 4).forEach(i -> repository.tables.add(table("public", "t" + i)));
     // t4（2チャンク目）がt1（1チャンク目）を参照する
     repository.foreignKeys.add(
-        ForeignKeyFixtures.physical("public", "t4", "unused", "fk_t4_t1", "public", "t1"));
+        ForeignKeyFixtures.physical("public", "t4", "fk_t4_t1", "public", "t1"));
 
     usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of(), null, false);
 
@@ -543,7 +543,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "skip"));
     // keepがskip（絞り込みで除外される）を参照する
     repository.foreignKeys.add(
-        ForeignKeyFixtures.physical("public", "keep", "unused", "fk_keep_skip", "public", "skip"));
+        ForeignKeyFixtures.physical("public", "keep", "fk_keep_skip", "public", "skip"));
 
     usecase.exportTableDefinition(List.of(), List.of("keep"), null, 0, 80, List.of(), null, false);
 
