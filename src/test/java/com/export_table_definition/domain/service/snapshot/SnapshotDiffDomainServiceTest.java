@@ -94,19 +94,25 @@ public class SnapshotDiffDomainServiceTest {
     assertEquals(1, result.contentDiffer().size());
     ContentDiff diff = result.contentDiffer().get(0);
     assertEquals("table public.changed", diff.target());
-    assertEquals(
-        List.of(
-            "--- committed/testdb/public/tables.jsonl (table public.changed)",
-            "+++ generated/testdb/public/tables.jsonl (table public.changed)",
-            "@@ -3,6 +3,6 @@",
-            "   \"name\": \"changed\"",
-            "   \"type\": \"table\"",
-            "   \"columns\": [",
-            "-    {\"name\":\"id\",\"type\":\"integer\"}",
-            "+    {\"name\":\"id\",\"type\":\"bigint\"}",
-            "   ]",
-            " }"),
-        diff.unifiedDiff());
+    var expected = List.of(
+        "--- committed/testdb/public/tables.jsonl (table public.changed)",
+        "+++ generated/testdb/public/tables.jsonl (table public.changed)",
+        "@@ -3,6 +3,6 @@",
+        "   \"name\": \"changed\"",
+        "   \"type\": \"table\"",
+        "   \"columns\": [",
+        "-    {\"name\":\"id\",\"type\":\"integer\"}",
+        "+    {\"name\":\"id\",\"type\":\"bigint\"}",
+        "   ]",
+        " }");
+    var actual = diff.unifiedDiff();
+    if (!expected.equals(actual)) {
+      System.out.println("EXPECTED:");
+      expected.forEach(System.out::println);
+      System.out.println("ACTUAL:");
+      actual.forEach(System.out::println);
+    }
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -120,8 +126,26 @@ public class SnapshotDiffDomainServiceTest {
 
     ContentDiff diff = result.contentDiffer().get(0);
     assertEquals(Path.of("testdb", "database.json").toString(), diff.target());
-    assertEquals("--- committed/testdb/database.json", diff.unifiedDiff().get(0));
-    assertEquals("+++ generated/testdb/database.json", diff.unifiedDiff().get(1));
+    var lines = diff.unifiedDiff();
+    if (lines.size() < 2) {
+      System.out.println("UNIFIEDIFF_LINES_SIZE: " + lines.size());
+      System.out.println("UNIFIED_DIFF_CONTENT:");
+      lines.forEach(System.out::println);
+    }
+    var expectedFirst = "--- committed/testdb/database.json";
+    var actualFirst = lines.get(0);
+    if (!expectedFirst.equals(actualFirst)) {
+      System.out.println("FIRST_LINE_EXPECTED: " + expectedFirst);
+      System.out.println("FIRST_LINE_ACTUAL: " + actualFirst);
+    }
+    assertEquals(expectedFirst, actualFirst);
+    var expectedSecond = "+++ generated/testdb/database.json";
+    var actualSecond = lines.get(1);
+    if (!expectedSecond.equals(actualSecond)) {
+      System.out.println("SECOND_LINE_EXPECTED: " + expectedSecond);
+      System.out.println("SECOND_LINE_ACTUAL: " + actualSecond);
+    }
+    assertEquals(expectedSecond, actualSecond);
   }
 
   @Test
