@@ -32,6 +32,9 @@ public class ExportTableDefinition {
   /** DB vs ドキュメントの差分検知モードを指定するCLIフラグ（値を持たないブールフラグ） */
   private static final String CHECK_FLAG = "--check";
 
+  /** 書き込み前に出力先ディレクトリを事前に削除するCLIフラグ（値を持たないブールフラグ。{@code --check}指定時は無視される） */
+  private static final String RM_DIST_FLAG = "--rm-dist";
+
   /** DB接続情報の上書きに対応するプロパティキーと、対応するCLI引数名・環境変数名 */
   private static final Map<String, ConnectionArg> CONNECTION_ARGS =
       Map.of(
@@ -51,7 +54,8 @@ public class ExportTableDefinition {
    *
    * @param args コマンドライン引数（{@code --db-url=...}のような{@code --キー=値}形式でDB接続情報を上書き可能。 未指定の場合は同名の環境変数（例:
    *     {@code DB_URL}）、さらに未指定の場合は {@code conf/mybatis.properties}の値が使用される。{@code --check}を指定すると、
-   *     通常のドキュメント出力の代わりにDB vs ドキュメントの差分検知モードで実行する）
+   *     通常のドキュメント出力の代わりにDB vs ドキュメントの差分検知モードで実行する。{@code --rm-dist}を指定すると、
+   *     通常実行時に書き込み前へ出力先ディレクトリを事前に削除する）
    */
   public static void main(String[] args) {
     MyBatisSqlSessionFactory.setConnectionOverrides(resolveConnectionOverrides(args));
@@ -59,9 +63,15 @@ public class ExportTableDefinition {
         new ExportTableDefinition(
             Guice.createInjector(new ExportTableDefinitionModule())
                 .getInstance(ExportTableDefinitionController.class));
+    final boolean rmDist = Arrays.asList(args).contains(RM_DIST_FLAG);
     switch (ExecutionMode.from(args)) {
-      case EXPORT -> exportTableDefinition.run();
-      case CHECK -> exportTableDefinition.runCheck();
+      case EXPORT -> exportTableDefinition.run(rmDist);
+      case CHECK -> {
+        if (rmDist) {
+          System.out.println("Note: --rm-dist is ignored in --check mode.");
+        }
+        exportTableDefinition.runCheck();
+      }
     }
   }
 
@@ -132,8 +142,12 @@ public class ExportTableDefinition {
     }
   }
 
-  /** テーブル定義出力処理実行メソッド */
-  void run() {
+  /**
+   * テーブル定義出力処理実行メソッド
+   *
+   * @param rmDist trueの場合、書き込み前に出力先ディレクトリを事前に削除する（{@code --rm-dist}）
+   */
+  void run(boolean rmDist) {
     final ExecutionSettings settings = loadExecutionSettings();
     // 処理開始メッセージ出力
     System.out.println(
@@ -150,7 +164,8 @@ public class ExportTableDefinition {
             settings.chunkSize(),
             settings.erDiagramMaxNodes(),
             settings.outputObjectList(),
-            settings.annotationPath());
+            settings.annotationPath(),
+            rmDist);
     // 処理終了メッセージ出力
     System.out.println(resultDto.getResultMessage());
   }

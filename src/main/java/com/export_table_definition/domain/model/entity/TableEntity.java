@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.model.entity;
 
 import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.value.TableTargetFilter;
 import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,28 +60,33 @@ public record TableEntity(
    * <ul>
    *   <li>スキーマ名リスト・テーブル名リストの両方が空またはnullの場合、常にtrueを返します。
    *   <li>スキーマ名リストのみ指定されている場合、スキーマ名が一致すればtrueを返します。
-   *   <li>テーブル名リストのみ指定されている場合、テーブル名が一致すればtrueを返します。
-   *   <li>両方指定されている場合、スキーマ名・テーブル名の両方が一致した場合のみtrueを返します。
+   *   <li>テーブル名リストのみ指定されている場合、テーブル名パターンが一致すればtrueを返します。
+   *   <li>両方指定されている場合、スキーマ名・テーブル名パターンの両方が一致した場合のみtrueを返します。
    * </ul>
    *
+   * テーブル名リストはワイルドカード（{@code *}）・除外（先頭に{@code !}）・スキーマ修飾（{@code スキーマ名.テーブル名}）に対応する。詳細は{@link
+   * TableTargetFilter}を参照
+   *
    * @param targetSchemaList スキーマ名のリスト
-   * @param targetTableList テーブル名のリスト
+   * @param targetTableList テーブル名パターンのリスト
    * @return テーブル定義書の書き込みが必要かどうか
    */
   public boolean needsWriteTableDefinition(
       List<String> targetSchemaList, List<String> targetTableList) {
     final boolean hasSchemaList = CollectionUtils.isNotEmpty(targetSchemaList);
-    final boolean hasTableList = CollectionUtils.isNotEmpty(targetTableList);
+    final TableTargetFilter tableFilter = TableTargetFilter.of(targetTableList);
+    final boolean hasTableList = !tableFilter.isEmpty();
 
     if (!hasSchemaList && !hasTableList) {
       return true;
     }
     if (!hasSchemaList) {
-      return targetTableList.contains(physicalTableName);
+      return tableFilter.matches(schemaName, physicalTableName);
     }
     if (!hasTableList) {
       return targetSchemaList.contains(schemaName);
     }
-    return targetSchemaList.contains(schemaName) && targetTableList.contains(physicalTableName);
+    return targetSchemaList.contains(schemaName)
+        && tableFilter.matches(schemaName, physicalTableName);
   }
 }
