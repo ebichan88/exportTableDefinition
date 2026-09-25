@@ -126,8 +126,8 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("indexes: schema.table 一致行のみ")
   void testIndexesFiltered() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var idx1 = new IndexEntity("public", "orders", "| 1 | idx_orders_1 | order_id |");
-    var idx2 = new IndexEntity("other", "orders", "| 1 | idx_other | ... |");
+    var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", "", "", "", "");
+    var idx2 = new IndexEntity("other", "orders", "idx_other", "", "", "", "", "");
     String section = TableDefinitionTemplates.indexes(List.of(idx1, idx2), table);
     assertTrue(section.contains("idx_orders_1"));
     assertFalse(section.contains("idx_other"));
@@ -138,8 +138,9 @@ public class TableDefinitionTemplatesTest {
   void testConstraintsFiltered() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     var c1 =
-        new ConstraintEntity("public", "orders", "| 1 | pk_orders | PRIMARY KEY | (order_id) |");
-    var c2 = new ConstraintEntity("x", "y", "| 1 | pk_other | PRIMARY KEY | (id) |");
+        new ConstraintEntity(
+            "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");
+    var c2 = new ConstraintEntity("x", "y", "pk_other", "PRIMARY KEY", "PRIMARY KEY (id)", "");
     String section = TableDefinitionTemplates.constraints(List.of(c1, c2), table);
     assertTrue(section.contains("pk_orders"));
     assertFalse(section.contains("pk_other"));
@@ -178,14 +179,22 @@ public class TableDefinitionTemplatesTest {
         new TriggerEntity(
             "public",
             "orders",
-            "| 1 | public | orders | trg_orders | BEFORE | INSERT | public.f_orders |",
-            "| 1 | trg_orders | BEFORE | INSERT | ROW | CREATE TRIGGER trg_orders ... |");
+            "trg_orders",
+            "BEFORE",
+            "INSERT",
+            "ROW",
+            "public.f_orders",
+            "CREATE TRIGGER trg_orders ...");
     var t2 =
         new TriggerEntity(
             "sales",
             "orders",
-            "| 1 | sales | orders | trg_sales | AFTER | UPDATE | sales.f_sales |",
-            "| 1 | trg_sales | AFTER | UPDATE | ROW | CREATE TRIGGER trg_sales ... |");
+            "trg_sales",
+            "AFTER",
+            "UPDATE",
+            "ROW",
+            "sales.f_sales",
+            "CREATE TRIGGER trg_sales ...");
     String section = TableDefinitionTemplates.triggers(List.of(t1, t2), table);
     assertTrue(section.contains("## トリガー情報"));
     assertTrue(section.contains("trg_orders"));

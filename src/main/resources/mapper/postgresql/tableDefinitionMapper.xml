@@ -294,20 +294,26 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            CASE
-                WHEN index_name IS NOT NULL
-                    THEN concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY index_name), '|', index_name, '|', index_method, '|', is_unique, '|', is_primary, '|', index_definition, '|', remarks, '|')
-                ELSE NULL
-            END AS "indexInfo"
+            index_name AS "indexName",
+            index_method AS "indexMethod",
+            is_unique AS "isUnique",
+            is_primary AS "isPrimary",
+            index_definition AS "indexDefinition",
+            remarks AS "remarks"
         FROM all_indexes
-        ORDER BY schema_name, table_name;
+        ORDER BY schema_name, table_name, index_name;
     </select>
 
     <resultMap id="IndexDtoMap" type="IndexDto">
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="indexInfo" javaType="String" />
+            <arg column="indexName" javaType="String" />
+            <arg column="indexMethod" javaType="String" />
+            <arg column="isUnique" javaType="String" />
+            <arg column="isPrimary" javaType="String" />
+            <arg column="indexDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -346,7 +352,10 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name), '|', constraints_name, '|', constraints_type, '|', constraints_definition, '|', remarks, '|') AS "constraintInfo"
+            constraints_name AS "constraintName",
+            constraints_type AS "constraintType",
+            constraints_definition AS "constraintDefinition",
+            remarks AS "remarks"
         FROM all_constraints
         ORDER BY schema_name, table_name, constraints_type, constraints_name;
     </select>
@@ -355,7 +364,10 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="constraintInfo" javaType="String" />
+            <arg column="constraintName" javaType="String" />
+            <arg column="constraintType" javaType="String" />
+            <arg column="constraintDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -480,8 +492,12 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            concat('|', row_number() over (ORDER BY schema_name, table_name, trigger_name), '|', schema_name, '|', table_name, '|', trigger_name, '|', timing, '|', events, '|', function_name, '|') AS "triggerListInfo",
-            concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY trigger_name), '|', trigger_name, '|', timing, '|', events, '|', orientation, '|', trigger_definition, '|') AS "triggerInfo"
+            trigger_name AS "triggerName",
+            timing AS "timing",
+            events AS "events",
+            orientation AS "orientation",
+            function_name AS "functionName",
+            trigger_definition AS "triggerDefinition"
         FROM all_triggers
         ORDER BY schema_name, table_name, trigger_name;
     </select>
@@ -490,8 +506,12 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="triggerListInfo" javaType="String" />
-            <arg column="triggerInfo" javaType="String" />
+            <arg column="triggerName" javaType="String" />
+            <arg column="timing" javaType="String" />
+            <arg column="events" javaType="String" />
+            <arg column="orientation" javaType="String" />
+            <arg column="functionName" javaType="String" />
+            <arg column="triggerDefinition" javaType="String" />
         </constructor>
     </resultMap>
 

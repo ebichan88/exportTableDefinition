@@ -142,16 +142,20 @@ public class TableDefinitionWriterDomainServiceTest {
   void testWriteTableDefinitionWritesAllSections() {
     TableEntity table = table("orders");
     var column = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "○", "");
-    var index = new IndexEntity("public", "orders", "|1|idx_orders_1|order_id|");
+    var index =
+        new IndexEntity(
+            "public", "orders", "idx_orders_1", "btree", "", "", "CREATE INDEX ...", "");
     var constraint =
-        new ConstraintEntity("public", "orders", "|1|pk_orders|PRIMARY KEY|(order_id)|");
+        new ConstraintEntity(
+            "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");
     var outgoingFk =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
     var incomingFk =
         ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var trigger =
-        new TriggerEntity("public", "orders", "unused", "|1|trg_orders|BEFORE|INSERT|ROW|...|");
+        new TriggerEntity(
+            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "public.f_orders", "...");
 
     var annotation = new TableAnnotation("受注を管理するテーブル", "個人情報を含む", Map.of("order_id", "受注の主キー"));
     var content =

@@ -249,7 +249,8 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "t1"));
     repository.tables.add(table("public", "t2"));
     repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
-    repository.triggers.add(new TriggerEntity("public", "t1", "trg_list", "trg_info"));
+    repository.triggers.add(
+        new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
     repository.functions.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", ""));
     repository.functionDefs.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "f_list", "BODY"));
@@ -305,7 +306,8 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "t1"));
     repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
-    repository.triggers.add(new TriggerEntity("public", "t1", "trg_list", "trg_info"));
+    repository.triggers.add(
+        new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
     repository.functions.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", ""));
     repository.functionDefs.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "f_list", "BODY"));

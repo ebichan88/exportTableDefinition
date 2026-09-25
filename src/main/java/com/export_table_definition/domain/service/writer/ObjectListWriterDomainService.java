@@ -14,7 +14,7 @@ import com.export_table_definition.domain.service.writer.template.ObjectListTemp
 import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,7 +64,22 @@ public class ObjectListWriterDomainService {
         "trigger",
         ObjectListTemplates.triggerTableHeader(),
         triggers,
-        TriggerEntity::triggerListInfo,
+        (no, t) ->
+            "|"
+                + no
+                + "|"
+                + t.schemaName()
+                + "|"
+                + t.tableName()
+                + "|"
+                + t.triggerName()
+                + "|"
+                + t.timing()
+                + "|"
+                + t.events()
+                + "|"
+                + t.functionName()
+                + "|",
         baseInfo,
         outputDirectoryPath);
   }
@@ -78,7 +93,7 @@ public class ObjectListWriterDomainService {
    * @param prefix 一覧ファイル名の接頭辞（例: trigger, function, sequence, type）
    * @param tableHeader 表のヘッダー行
    * @param objects エンティティのリスト
-   * @param listInfoGetter エンティティから一覧行の文字列を取得する関数
+   * @param lineBuilder 行番号とエンティティから一覧行の文字列を生成する関数
    * @param baseInfo データベースの基本情報
    * @param outputDirectoryPath 出力ディレクトリのパス
    */
@@ -87,7 +102,7 @@ public class ObjectListWriterDomainService {
       String prefix,
       String tableHeader,
       List<T> objects,
-      Function<T, String> listInfoGetter,
+      BiFunction<Integer, T, String> lineBuilder,
       BaseInfoEntity baseInfo,
       Path outputDirectoryPath) {
     if (objects.isEmpty()) {
@@ -98,7 +113,7 @@ public class ObjectListWriterDomainService {
             title,
             tableHeader,
             objects,
-            (no, object) -> ObjectListTemplates.listLine(listInfoGetter.apply(object)));
+            (no, object) -> ObjectListTemplates.listLine(lineBuilder.apply(no, object)));
     final PageLayout layout =
         new PageLayout(
             ObjectListTemplates.fileHeader(title, baseInfo),
@@ -134,7 +149,7 @@ public class ObjectListWriterDomainService {
         "function",
         ObjectListTemplates.functionTableHeader(),
         functions,
-        FunctionEntity::functionListInfo,
+        (no, f) -> f.functionListInfo(),
         baseInfo,
         outputDirectoryPath);
   }
@@ -175,7 +190,7 @@ public class ObjectListWriterDomainService {
         "sequence",
         ObjectListTemplates.sequenceTableHeader(),
         sequences,
-        SequenceEntity::sequenceListInfo,
+        (no, s) -> s.sequenceListInfo(),
         baseInfo,
         outputDirectoryPath);
   }
@@ -220,7 +235,7 @@ public class ObjectListWriterDomainService {
         "type",
         ObjectListTemplates.typeTableHeader(),
         types,
-        TypeEntity::typeListInfo,
+        (no, t) -> t.typeListInfo(),
         baseInfo,
         outputDirectoryPath);
   }

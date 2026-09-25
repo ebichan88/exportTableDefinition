@@ -89,7 +89,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteTriggerListWritesFile() {
     var trigger =
         new TriggerEntity(
-            "public", "orders", "|1|public|orders|trg_orders|BEFORE|INSERT|f_orders|", "unused");
+            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "f_orders", "");
     writer.writeTriggerList(List.of(trigger), baseInfo(), OUT);
 
     Path file = OUT.resolve("triggerList_testdb.md");
@@ -196,13 +196,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteTriggerListSplitsWhenExceedingMaxPageSize() {
     List<TriggerEntity> triggers =
         IntStream.rangeClosed(1, 3001)
-            .mapToObj(
-                i ->
-                    new TriggerEntity(
-                        "public",
-                        "t" + i,
-                        "|" + i + "|public|t" + i + "|trg" + i + "|||",
-                        "unused"))
+            .mapToObj(i -> new TriggerEntity("public", "t" + i, "trg" + i, "", "", "", "", ""))
             .toList();
     writer.writeTriggerList(triggers, baseInfo(), OUT);
 

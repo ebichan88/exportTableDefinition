@@ -173,7 +173,26 @@ public class TableDefinitionTemplates {
                 |:---|:---|:---|:---|:---|:---|:---|
                 """;
     return tableSection(
-        indexes, table, header, (no, e) -> e.indexInfo(), IndexEntity::getSchemaTableName);
+        indexes,
+        table,
+        header,
+        (no, idx) ->
+            "|"
+                + no
+                + "|"
+                + idx.indexName()
+                + "|"
+                + idx.indexMethod()
+                + "|"
+                + idx.isUnique()
+                + "|"
+                + idx.isPrimary()
+                + "|"
+                + idx.indexDefinition()
+                + "|"
+                + idx.remarks()
+                + "|",
+        IndexEntity::getSchemaTableName);
   }
 
   /**
@@ -195,7 +214,18 @@ public class TableDefinitionTemplates {
         constraints,
         table,
         header,
-        (no, e) -> e.constraintInfo(),
+        (no, c) ->
+            "|"
+                + no
+                + "|"
+                + c.constraintName()
+                + "|"
+                + c.constraintType()
+                + "|"
+                + c.constraintDefinition()
+                + "|"
+                + c.remarks()
+                + "|",
         ConstraintEntity::getSchemaTableName);
   }
 
@@ -301,7 +331,24 @@ public class TableDefinitionTemplates {
                 |:---|:---|:---|:---|:---|:---|
                 """;
     return tableSection(
-        triggers, table, header, (no, e) -> e.triggerInfo(), TriggerEntity::getSchemaTableName);
+        triggers,
+        table,
+        header,
+        (no, t) ->
+            "|"
+                + no
+                + "|"
+                + t.triggerName()
+                + "|"
+                + t.timing()
+                + "|"
+                + t.events()
+                + "|"
+                + t.orientation()
+                + "|"
+                + t.triggerDefinition()
+                + "|",
+        TriggerEntity::getSchemaTableName);
   }
 
   /**

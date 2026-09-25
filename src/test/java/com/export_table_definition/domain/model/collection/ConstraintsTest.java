@@ -18,9 +18,10 @@ public class ConstraintsTest {
   @Test
   @DisplayName("of: 自テーブルに属する制約のみを、登録順を保って返す")
   void testOfReturnsOwnConstraintsInOrder() {
-    var pk = new ConstraintEntity("public", "orders", "|1|pk_orders|PRIMARY KEY|(id)|");
-    var uq = new ConstraintEntity("public", "orders", "|2|uq_orders_code|UNIQUE|(code)|");
-    var other = new ConstraintEntity("public", "customers", "|1|pk_customers|PRIMARY KEY|(id)|");
+    var pk = new ConstraintEntity("public", "orders", "pk_orders", "PRIMARY KEY", "(id)", "");
+    var uq = new ConstraintEntity("public", "orders", "uq_orders_code", "UNIQUE", "(code)", "");
+    var other =
+        new ConstraintEntity("public", "customers", "pk_customers", "PRIMARY KEY", "(id)", "");
     var constraints = Constraints.of(List.of(pk, uq, other));
 
     assertEquals(List.of(pk, uq), constraints.of(newTable("public", "orders")));
@@ -29,7 +30,7 @@ public class ConstraintsTest {
   @Test
   @DisplayName("of: 該当する制約がないテーブルには空リストを返す")
   void testOfReturnsEmptyForUnknownTable() {
-    var constraints = Constraints.of(List.of(new ConstraintEntity("public", "orders", "unused")));
+    var constraints = Constraints.of(List.of(new ConstraintEntity("public", "orders")));
 
     assertEquals(List.of(), constraints.of(newTable("public", "unknown")));
   }
@@ -37,8 +38,8 @@ public class ConstraintsTest {
   @Test
   @DisplayName("of: 同名テーブルでもスキーマが異なれば別のキーとして扱う")
   void testOfDistinguishesSameTableNameAcrossSchemas() {
-    var publicConstraint = new ConstraintEntity("public", "orders", "unused");
-    var salesConstraint = new ConstraintEntity("sales", "orders", "unused");
+    var publicConstraint = new ConstraintEntity("public", "orders");
+    var salesConstraint = new ConstraintEntity("sales", "orders");
     var constraints = Constraints.of(List.of(publicConstraint, salesConstraint));
 
     assertEquals(List.of(publicConstraint), constraints.of(newTable("public", "orders")));

@@ -240,20 +240,26 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            CASE
-                WHEN index_name IS NOT NULL
-                    THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY index_name) || '|' || index_name || '|' || index_method || '|' || is_unique || '|' || is_primary || '|' || index_definition || '|' || remarks || '|'
-                ELSE NULL
-            END AS "indexInfo"
+            index_name AS "indexName",
+            index_method AS "indexMethod",
+            is_unique AS "isUnique",
+            is_primary AS "isPrimary",
+            index_definition AS "indexDefinition",
+            remarks AS "remarks"
         FROM ora_all_indexes
-        ORDER BY schema_name, table_name
+        ORDER BY schema_name, table_name, index_name
     </select>
 
     <resultMap id="IndexDtoMap" type="IndexDto">
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="indexInfo" javaType="String" />
+            <arg column="indexName" javaType="String" />
+            <arg column="indexMethod" javaType="String" />
+            <arg column="isUnique" javaType="String" />
+            <arg column="isPrimary" javaType="String" />
+            <arg column="indexDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -330,8 +336,10 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            constraints_definition,
-            '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name) || '|' || constraints_name || '|' || constraints_type || '|' || constraints_definition || '|' || '' || '|' AS "constraintInfo"
+            constraints_name AS "constraintName",
+            constraints_type AS "constraintType",
+            constraints_definition AS "constraintDefinition",
+            '' AS "remarks"
         FROM ora_all_constraints
         ORDER BY schema_name, table_name, constraints_type, constraints_name
     </select>
@@ -340,7 +348,10 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="constraintInfo" javaType="String" />
+            <arg column="constraintName" javaType="String" />
+            <arg column="constraintType" javaType="String" />
+            <arg column="constraintDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
