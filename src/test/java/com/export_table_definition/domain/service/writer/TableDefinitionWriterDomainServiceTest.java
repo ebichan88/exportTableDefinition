@@ -46,6 +46,16 @@ public class TableDefinitionWriterDomainServiceTest {
         public void createDirectory(Path filePath) {
             createdDirectories.add(filePath);
         }
+
+        @Override
+        public List<Path> listFiles(Path directory) {
+            return List.of();
+        }
+
+        @Override
+        public List<String> readFile(Path filePath) {
+            return List.of();
+        }
     }
 
     private InMemoryFileRepository fileRepository;

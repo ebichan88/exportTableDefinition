@@ -21,9 +21,25 @@ public interface FileRepository {
     
     /**
      * ディレクトリを作成するメソッド
-     * 
+     *
      * @param filePath 作成するディレクトリのパス
      */
     public void createDirectory(Path filePath);
+
+    /**
+     * ディレクトリ配下のファイルを再帰的に列挙するメソッド
+     *
+     * @param directory 列挙対象のディレクトリのパス
+     * @return ディレクトリ配下に存在する全ファイルのパスのリスト。ディレクトリが存在しない場合は空リスト
+     */
+    public List<Path> listFiles(Path directory);
+
+    /**
+     * ファイルを行リストとして読み込むメソッド（{@link #writeFile(Path, List)}の逆）
+     *
+     * @param filePath 読み込み対象のファイルパス
+     * @return ファイルの内容を1行ずつ格納したリスト
+     */
+    public List<String> readFile(Path filePath);
 
 }

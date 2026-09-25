@@ -147,6 +147,37 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://loca
 
 CLI引数・環境変数で `driver`/`url`/`username`/`password` の4項目すべてを指定する場合、`conf/mybatis.properties`自体が存在しなくても起動できます。
 
+### DB vs ドキュメントの差分検知（`--check`モード）
+
+`--check`を付けて実行すると、通常のドキュメント出力の代わりに、DBの現状から生成したドキュメントと
+`outputPath`配下に既にコミット済みのドキュメントを比較し、差分（＝マイグレーション後にドキュメントの
+再生成・コミットを忘れていないか）を検知するモードで実行されます。CI上で運用事故を機械的に検知する
+用途を想定しています。
+
+```
+java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
+```
+
+* 比較は、生成した一時ディレクトリと`outputPath`配下を**ファイル単位**で突き合わせ、以下の3区分で報告します。
+    * 生成側にのみ存在するファイル（コミット漏れの可能性）
+    * コミット側にのみ存在するファイル（削除されたテーブル等の残骸ファイルの可能性）
+    * 両方に存在するが内容が一致しないファイル
+* 差分が1件でも見つかった場合、または比較処理自体が失敗した場合は終了コード`1`で終了します。差分がない場合は`0`で終了するため、CIのジョブをそのまま失敗させられます。
+* `outputPath`がまだ作成されていない場合（初回実行など）は、生成される全ファイルが「生成側にのみ存在するファイル」として扱われ、差分ありと判定されます。
+* `--check`は内部でドキュメント生成処理を通常の1回に加えてもう1回実行するため、実行時間・DB負荷は通常実行の約2倍になります。
+* `schema`/`table`/`chunkSize`/`erDiagramMaxNodes`/`outputObjects`/`annotationPath`といった設定は、通常実行と同様に適用されます。
+
+GitHub Actionsでの利用例（マイグレーション後にドキュメント再生成を忘れていないかをCIで検知する）:
+
+```yaml
+- name: Check table definition document diff
+  run: java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
+  env:
+    DB_URL: ${{ secrets.DB_URL }}
+    DB_USERNAME: ${{ secrets.DB_USERNAME }}
+    DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+```
+
 ## 出力される内容の詳細
 
 ### ER図

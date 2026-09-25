@@ -13,6 +13,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
@@ -29,6 +30,7 @@ import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
+import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
@@ -56,6 +58,16 @@ public class ExportTableDefinitionUsecaseImplTest {
         @Override
         public void createDirectory(Path filePath) {
             // 何もしない
+        }
+
+        @Override
+        public List<Path> listFiles(Path directory) {
+            return files.keySet().stream().filter(path -> path.startsWith(directory)).sorted().toList();
+        }
+
+        @Override
+        public List<String> readFile(Path filePath) {
+            return List.of(files.getOrDefault(filePath, ""));
         }
     }
 
@@ -167,8 +179,9 @@ public class ExportTableDefinitionUsecaseImplTest {
             receivedAnnotationPath = path;
             return annotations;
         };
+        final DocumentDiffDomainService documentDiffDomainService = new DocumentDiffDomainService(fileRepository);
         usecase = new ExportTableDefinitionUsecaseImpl(repository, writer, erDiagramWriter, objectListWriter,
-                annotationRepository);
+                annotationRepository, documentDiffDomainService);
     }
 
     private TableEntity table(String schema, String physical) {
@@ -437,5 +450,47 @@ public class ExportTableDefinitionUsecaseImplTest {
         assertTrue(t1Content.contains("t1の説明文"));
         assertTrue(t1Content.contains("t1の備考"));
         assertTrue(t1Content.contains("|1|論理ID|id|int|Y|N||主キー|"));
+    }
+
+    @Test
+    @DisplayName("checkDocumentDiff: 一時ディレクトリへ生成した結果と、指定したoutputPath配下を比較する")
+    void testCheckDocumentDiffComparesGeneratedResultAgainstOutputPath() {
+        setUp();
+        repository.tables.add(table("public", "t1"));
+
+        final DiffResult result = usecase.checkDocumentDiff(List.of(), List.of(), "committed", 0, 80, List.of(), null);
+
+        // outputPath（committed）側には何も存在しないため、生成された全ファイルがonlyInGeneratedとして検出される
+        assertTrue(result.hasDifference());
+        assertTrue(result.onlyInCommitted().isEmpty());
+        assertTrue(result.contentDiffer().isEmpty());
+        assertTrue(result.onlyInGenerated().contains(Paths.get("tableList_testdb.md")));
+        assertTrue(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "t1")));
+    }
+
+    @Test
+    @DisplayName("checkDocumentDiff: 比較対象として指定したoutputPath配下には書き込みを行わない")
+    void testCheckDocumentDiffDoesNotWriteToOutputPath() {
+        setUp();
+        repository.tables.add(table("public", "t1"));
+
+        usecase.checkDocumentDiff(List.of(), List.of(), "committed", 0, 80, List.of(), null);
+
+        final Path committedDir = Paths.get("committed");
+        assertTrue(fileRepository.files.keySet().stream().noneMatch(path -> path.startsWith(committedDir)));
+    }
+
+    @Test
+    @DisplayName("checkDocumentDiff: exportTableDefinitionと同じ引数（スキーマ・テーブル絞り込み等）が一時生成に反映される")
+    void testCheckDocumentDiffAppliesSameFiltersAsExport() {
+        setUp();
+        repository.tables.add(table("public", "keep"));
+        repository.tables.add(table("public", "skip"));
+
+        final DiffResult result = usecase.checkDocumentDiff(List.of(), List.of("keep"), "committed", 0, 80, List.of(),
+                null);
+
+        assertTrue(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "keep")));
+        assertFalse(result.onlyInGenerated().contains(tableDefFile(Paths.get(""), "public", "skip")));
     }
 }

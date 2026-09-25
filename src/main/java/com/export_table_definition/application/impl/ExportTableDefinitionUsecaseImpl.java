@@ -1,7 +1,11 @@
 package com.export_table_definition.application.impl;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.TableDefinitionContent;
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.collection.Columns;
@@ -33,6 +38,7 @@ import com.export_table_definition.domain.model.type.OutputObjectType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
+import com.export_table_definition.domain.service.DocumentDiffDomainService;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
@@ -48,31 +54,36 @@ import com.google.inject.Inject;
 public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUsecase {
 
     private static final String OUTPUT_BASE_DIRECTORY = "./output";
+    private static final String CHECK_TEMP_DIR_PREFIX = "exportTableDefinition-check-";
     private static final Logger logger = LogManager.getLogger(ExportTableDefinitionUsecaseImpl.class);
     private final TableDefinitionRepository repository;
     private final TableDefinitionWriterDomainService writer;
     private final ErDiagramWriterDomainService erDiagramWriter;
     private final ObjectListWriterDomainService objectListWriter;
     private final AnnotationRepository annotationRepository;
+    private final DocumentDiffDomainService documentDiffDomainService;
 
     /**
      * コンストラクタ
      *
-     * @param repository           テーブル定義出力に関するリポジトリクラス
-     * @param writer               テーブル一覧・テーブル定義書を書き込むクラス
-     * @param erDiagramWriter      ER図を書き込むクラス
-     * @param objectListWriter     トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
-     * @param annotationRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
+     * @param repository                テーブル定義出力に関するリポジトリクラス
+     * @param writer                    テーブル一覧・テーブル定義書を書き込むクラス
+     * @param erDiagramWriter           ER図を書き込むクラス
+     * @param objectListWriter          トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
+     * @param annotationRepository      手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
+     * @param documentDiffDomainService 生成ドキュメントとコミット済みドキュメントの比較を行うドメインサービス
      */
     @Inject
     public ExportTableDefinitionUsecaseImpl(TableDefinitionRepository repository,
             TableDefinitionWriterDomainService writer, ErDiagramWriterDomainService erDiagramWriter,
-            ObjectListWriterDomainService objectListWriter, AnnotationRepository annotationRepository) {
+            ObjectListWriterDomainService objectListWriter, AnnotationRepository annotationRepository,
+            DocumentDiffDomainService documentDiffDomainService) {
         this.repository = repository;
         this.writer = writer;
         this.erDiagramWriter = erDiagramWriter;
         this.objectListWriter = objectListWriter;
         this.annotationRepository = annotationRepository;
+        this.documentDiffDomainService = documentDiffDomainService;
     }
 
     /**
@@ -82,8 +93,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
             int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList, String annotationPath) {
         // ベースディレクトリパス取得
-        final Path outputBaseDir = Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
-                .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
+        final Path outputBaseDir = resolveOutputBaseDir(outputPath);
         // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
         final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
         // 手動付帯情報（サイドカーYAML）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
@@ -152,6 +162,68 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         tablesBySchema.forEach((schemaName, tablesInSchema) -> exportSchemaTableDefinitions(schemaName, tablesInSchema,
                 targetSchemaList, targetTableList, baseInfoEntity, foreignKeys, triggers, annotations, outputBaseDir,
                 chunkSize));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DiffResult checkDocumentDiff(List<String> targetSchemaList, List<String> targetTableList,
+            String outputPath, int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList,
+            String annotationPath) {
+        final Path committedDir = resolveOutputBaseDir(outputPath);
+        final Path generatedDir = createTempDirectory();
+        try {
+            exportTableDefinition(targetSchemaList, targetTableList, generatedDir.toString(), chunkSize,
+                    erDiagramMaxNodes, outputObjectList, annotationPath);
+            return documentDiffDomainService.compare(generatedDir, committedDir);
+        } finally {
+            deleteRecursively(generatedDir);
+        }
+    }
+
+    /**
+     * 出力先のベースディレクトリパスを解決するメソッド<br>
+     * 未指定・空白の場合は{@link #OUTPUT_BASE_DIRECTORY}にフォールバックする
+     *
+     * @param outputPath テーブル定義出力の出力先のパス
+     * @return 出力先のベースディレクトリパス
+     */
+    private Path resolveOutputBaseDir(String outputPath) {
+        return Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
+                .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
+    }
+
+    /**
+     * 差分比較用の一時ディレクトリを作成するメソッド
+     *
+     * @return 作成した一時ディレクトリのパス
+     */
+    private Path createTempDirectory() {
+        try {
+            return Files.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * ディレクトリを配下のファイルごと再帰的に削除するメソッド
+     *
+     * @param directory 削除対象のディレクトリ
+     */
+    private void deleteRecursively(Path directory) {
+        try (var stream = Files.walk(directory)) {
+            stream.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**

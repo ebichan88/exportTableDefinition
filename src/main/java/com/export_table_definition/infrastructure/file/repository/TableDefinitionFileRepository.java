@@ -2,6 +2,7 @@ package com.export_table_definition.infrastructure.file.repository;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -35,6 +36,33 @@ public class TableDefinitionFileRepository implements FileRepository {
     public void createDirectory(Path filePath) {
         try {
             Files.createDirectories(filePath);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Path> listFiles(Path directory) {
+        if (!Files.isDirectory(directory)) {
+            return List.of();
+        }
+        try (var stream = Files.walk(directory)) {
+            return stream.filter(Files::isRegularFile).sorted().toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<String> readFile(Path filePath) {
+        try {
+            return Files.readAllLines(filePath, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

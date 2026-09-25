@@ -78,6 +78,20 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 `ErDiagramWriterDomainService` と `domain.model.collection.ForeignKeyGroups`（連結成分の算出）、
 `domain.model.type.Cardinality`（多重度判定）が中心。
 
+## DB vs ドキュメントの差分検知（`--check`モード）
+
+`ExportTableDefinition.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
+`ExportTableDefinitionController.checkDiff()` → `ExportTableDefinitionUsecaseImpl.checkDocumentDiff()`を呼び出す。
+
+`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、一時ディレクトリへ向けて
+`exportTableDefinition()`をそのまま呼び出した上で、生成結果と`outputPath`配下を
+`DocumentDiffDomainService.compare()`でファイル単位（追加/削除/内容不一致）に比較する。
+Writer層・SQL層は出力先パスに一切依存しないため無改修で再利用でき、一時ディレクトリは
+`try-finally`で必ず削除される。
+
+差分が1件でもある場合、または比較処理自体が例外で失敗した場合は`System.exit(1)`、差分なしの場合は
+`System.exit(0)`で終了するため、CI上でジョブの成否として扱える。
+
 ## 手動付帯情報（サイドカーYAML）
 
 DBのメタ情報だけでは表現できない備考等を、サイドカーYAML（`annotationPath` で指定）としてテーブル定義に

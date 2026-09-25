@@ -1,5 +1,6 @@
 package com.export_table_definition;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,9 @@ import com.export_table_definition.config.PropertyLoader;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
+import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
+import com.export_table_definition.presentation.type.ProcessResult;
 import com.google.inject.Guice;
 
 /**
@@ -25,6 +28,8 @@ public class ExportTableDefinition {
     private static final int DEFAULT_CHUNK_SIZE = 3000;
     /** erDiagramMaxNodes未設定時のデフォルト値（スキーマ別ER図1枚に描画するテーブル数の上限） */
     private static final int DEFAULT_ER_DIAGRAM_MAX_NODES = 80;
+    /** DB vs ドキュメントの差分検知モードを指定するCLIフラグ（値を持たないブールフラグ） */
+    private static final String CHECK_FLAG = "--check";
     /** DB接続情報の上書きに対応するプロパティキーと、対応するCLI引数名・環境変数名 */
     private static final Map<String, ConnectionArg> CONNECTION_ARGS = Map.of(
             "driver", new ConnectionArg("--db-driver", "DB_DRIVER"),
@@ -42,12 +47,14 @@ public class ExportTableDefinition {
      *
      * @param args コマンドライン引数（{@code --db-url=...}のような{@code --キー=値}形式でDB接続情報を上書き可能。
      *             未指定の場合は同名の環境変数（例: {@code DB_URL}）、さらに未指定の場合は
-     *             {@code conf/mybatis.properties}の値が使用される）
+     *             {@code conf/mybatis.properties}の値が使用される。{@code --check}を指定すると、
+     *             通常のドキュメント出力の代わりにDB vs ドキュメントの差分検知モードで実行する）
      */
     public static void main(String[] args) {
         MyBatisSqlSessionFactory.setConnectionOverrides(resolveConnectionOverrides(args));
+        final boolean checkMode = Arrays.asList(args).contains(CHECK_FLAG);
         new ExportTableDefinition(Guice.createInjector(new ExportTableDefinitionModule())
-                .getInstance(ExportTableDefinitionController.class)).run();
+                .getInstance(ExportTableDefinitionController.class)).run(checkMode);
     }
 
     /**
@@ -99,8 +106,10 @@ public class ExportTableDefinition {
 
     /**
      * テーブル定義出力処理実行メソッド
+     *
+     * @param checkMode trueの場合、通常のドキュメント出力ではなくDB vs ドキュメントの差分検知モードで実行する
      */
-    void run() {
+    void run(boolean checkMode) {
         // プロパティファイルの読み込み
         final List<String> schemaList = PropertyLoader.getList("ExportTableDefinition", "schema");
         final List<String> tableList = PropertyLoader.getList("ExportTableDefinition", "table");
@@ -110,6 +119,25 @@ public class ExportTableDefinition {
                 DEFAULT_ER_DIAGRAM_MAX_NODES);
         final List<String> outputObjectList = PropertyLoader.getList("ExportTableDefinition", "outputObjects");
         final String annotationPath = PropertyLoader.getString("ExportTableDefinition", "annotationPath");
+
+        if (checkMode) {
+            // 処理開始メッセージ出力
+            System.out.println("""
+                    Starting check of table definition document diff.
+                    Please wait a moment ...
+                    """);
+            // DB vs ドキュメントの差分検知処理実行
+            final DiffCheckResultDto diffCheckResultDto = controller.checkDiff(schemaList, tableList, outputPath,
+                    chunkSize, erDiagramMaxNodes, outputObjectList, annotationPath);
+            // 処理終了メッセージ出力
+            System.out.println(diffCheckResultDto.getResultMessage());
+            // 比較処理自体が失敗した場合、または差分が見つかった場合は異常終了とする
+            if (diffCheckResultDto.result() == ProcessResult.FAIL || diffCheckResultDto.hasDifference()) {
+                System.exit(1);
+            }
+            return;
+        }
+
         // 処理開始メッセージ出力
         System.out.println("""
                 Starting output of table definition document.

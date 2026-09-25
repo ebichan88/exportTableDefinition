@@ -37,6 +37,16 @@ public class PagedSectionWriterTest {
         public void createDirectory(Path filePath) {
             // 何もしない
         }
+
+        @Override
+        public List<Path> listFiles(Path directory) {
+            return List.of();
+        }
+
+        @Override
+        public List<String> readFile(Path filePath) {
+            return List.of();
+        }
     }
 
     private InMemoryFileRepository fileRepository;
