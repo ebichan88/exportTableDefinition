@@ -141,11 +141,11 @@ public class ErDiagramTemplates {
     foreignKeys.forEach(
         fk ->
             sb.append("    ")
-                .append(ids.get(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName())))
+                .append(ids.get(fk.referenceTableKey()))
                 .append(' ')
                 .append(fk.cardinality().getNotation(fk.relationType()))
                 .append(' ')
-                .append(ids.get(TableKey.of(fk.schemaName(), fk.tableName())))
+                .append(ids.get(fk.tableKey()))
                 .append(" : \"")
                 .append(fk.foreignkeyName())
                 .append('"')
@@ -244,8 +244,8 @@ public class ErDiagramTemplates {
     final Set<TableKey> nodeKeys = new LinkedHashSet<>();
     foreignKeys.forEach(
         fk -> {
-          nodeKeys.add(TableKey.of(fk.schemaName(), fk.tableName()));
-          nodeKeys.add(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()));
+          nodeKeys.add(fk.tableKey());
+          nodeKeys.add(fk.referenceTableKey());
         });
     return nodeKeys.stream()
         .sorted(Comparator.comparing(TableKey::schema).thenComparing(TableKey::table))

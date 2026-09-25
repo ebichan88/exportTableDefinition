@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
-import com.export_table_definition.infrastructure.file.repository.TableDefinitionFileRepository;
+import com.export_table_definition.infrastructure.file.repository.LocalFileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class SnapshotDiffDomainServiceTest {
 
   private final SnapshotDiffDomainService service =
       new SnapshotDiffDomainService(
-          new TableDefinitionFileRepository(),
+          new LocalFileRepository(),
           new DefaultOutputPathResolver(),
           new JacksonSnapshotSerializer(),
           new UnifiedDiffGenerator());

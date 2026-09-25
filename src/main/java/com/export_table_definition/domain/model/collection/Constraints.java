@@ -18,12 +18,6 @@ public final class Constraints extends AbstractEntities<ConstraintEntity> {
   }
 
   public static Constraints of(List<ConstraintEntity> list) {
-    return new Constraints(index(list, c -> TableKey.of(c.schemaName(), c.tableName())));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  protected TableKey extractKey(ConstraintEntity e) {
-    return TableKey.of(e.schemaName(), e.tableName());
+    return new Constraints(index(list));
   }
 }

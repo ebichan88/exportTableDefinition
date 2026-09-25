@@ -1,5 +1,7 @@
 package com.export_table_definition.domain.model.entity;
 
+import com.export_table_definition.domain.model.value.TableKey;
+
 /**
  * スキーマ名・テーブル名を持つエンティティに共通の振る舞いを提供するインタフェース
  *
@@ -30,5 +32,14 @@ public interface SchemaTableKeyed {
    */
   default String getSchemaTableName() {
     return schemaName() + "." + tableName();
+  }
+
+  /**
+   * 所属するテーブルのテーブルキーを取得するメソッド
+   *
+   * @return テーブルキー
+   */
+  default TableKey tableKey() {
+    return TableKey.of(schemaName(), tableName());
   }
 }

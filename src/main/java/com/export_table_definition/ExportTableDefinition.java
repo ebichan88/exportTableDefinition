@@ -61,7 +61,8 @@ public class ExportTableDefinition {
     MyBatisSqlSessionFactory.setConnectionOverrides(resolveConnectionOverrides(args));
     final ExportTableDefinition exportTableDefinition =
         new ExportTableDefinition(
-            Guice.createInjector(new ExportTableDefinitionModule())
+            Guice.createInjector(
+                    new ExportTableDefinitionModule(MyBatisSqlSessionFactory.getConnectionDbName()))
                 .getInstance(ExportTableDefinitionController.class));
     final boolean rmDist = Arrays.asList(args).contains(RM_DIST_FLAG);
     switch (ExecutionMode.from(args)) {

@@ -2,6 +2,7 @@ package com.export_table_definition.domain.model.entity;
 
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.RelationType;
+import com.export_table_definition.domain.model.value.TableKey;
 
 /**
  * 外部キー情報に関するrecordクラス<br>
@@ -107,6 +108,15 @@ public record ForeignKeyEntity(
    */
   public String getReferenceSchemaTableName() {
     return referenceSchemaName + "." + referenceTableName;
+  }
+
+  /**
+   * 参照先（親）テーブルのテーブルキーを取得するメソッド
+   *
+   * @return 参照先のテーブルキー
+   */
+  public TableKey referenceTableKey() {
+    return TableKey.of(referenceSchemaName, referenceTableName);
   }
 
   /**

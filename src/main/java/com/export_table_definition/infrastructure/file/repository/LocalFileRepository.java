@@ -1,37 +1,58 @@
 package com.export_table_definition.infrastructure.file.repository;
 
 import com.export_table_definition.domain.repository.FileRepository;
-import com.export_table_definition.infrastructure.file.TableDefinitionBufferedWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * ファイル操作に関するリポジトリ実装クラス
+ * ローカルファイルシステムに対するファイル操作のリポジトリ実装クラス
  *
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
  */
-public class TableDefinitionFileRepository implements FileRepository {
+public class LocalFileRepository implements FileRepository {
 
   /** {@inheritDoc} */
   @Override
   public void writeFile(Path filePath, List<String> contents) {
-    try (final var bw = new TableDefinitionBufferedWriter(filePath)) {
-      contents.stream().forEach(content -> bw.write(content));
-    }
+    write(filePath, contents);
   }
 
   /** {@inheritDoc} */
   @Override
   public void appendFile(Path filePath, List<String> contents) {
-    try (final var bw = new TableDefinitionBufferedWriter(filePath, StandardCharsets.UTF_8, true)) {
-      contents.stream().forEach(content -> bw.write(content));
+    write(filePath, contents, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+  }
+
+  /**
+   * 内容をUTF-8で書き込むメソッド<br>
+   * {@link Files#newBufferedWriter}はエンコードできない文字で例外を投げるため、従来どおり置換文字で書き込む {@link
+   * OutputStreamWriter}を用いる
+   *
+   * @param filePath ファイルパス
+   * @param contents 書き込む内容
+   * @param options ファイルのオープン方法（未指定の場合は新規作成または上書き）
+   */
+  private void write(Path filePath, List<String> contents, OpenOption... options) {
+    try (final BufferedWriter writer =
+        new BufferedWriter(
+            new OutputStreamWriter(
+                Files.newOutputStream(filePath, options), StandardCharsets.UTF_8))) {
+      for (final String content : contents) {
+        writer.write(content);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 

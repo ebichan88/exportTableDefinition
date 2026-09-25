@@ -26,7 +26,7 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `domain.model` | `TableDefinitionContent` | 1テーブル分の定義書出力に必要な情報を束ねるrecord（`assemble()`で組み立て） |
-| `domain.model.entity` | `BaseInfoEntity`, `TableEntity`, `ColumnEntity`, `ConstraintEntity`, `ForeignKeyEntity`, `IndexEntity`, `TriggerEntity`, `FunctionEntity`, `SequenceEntity`, `TypeEntity` | DBから取得したメタ情報を表すrecord群。`SchemaTableKeyed`はスキーマ名・テーブル名を持つ共通IF |
+| `domain.model.entity` | `BaseInfoEntity`, `TableEntity`, `ColumnEntity`, `ConstraintEntity`, `ForeignKeyEntity`, `IndexEntity`, `TriggerEntity`, `FunctionEntity`, `SequenceEntity`, `TypeEntity` | DBから取得したメタ情報を表すrecord群。`SchemaTableKeyed`はスキーマ名・テーブル名を持つ共通IFで、所属テーブルの`TableKey`を`tableKey()`で返す（`ForeignKeyEntity`は参照先の`referenceTableKey()`も持つ） |
 | `domain.model.collection` | `Columns`, `Constraints`, `ForeignKeys`, `Indexes`, `Triggers`, `AbstractEntities`, `ForeignKeyGroups` | エンティティのリストをラップし、テーブル単位の絞り込み等を提供するコレクションクラス群。`ForeignKeys`は物理外部キーと論理リレーションを同一集合として保持し、`physicalOf`/`logicalOf`で由来ごとに取り出せる。`ForeignKeyGroups`は外部キーの連結成分（ER図の分割単位）を算出する |
 | `domain.model.type` | `TableType`, `Cardinality`, `RelationType`, `OutputObjectType` | テーブル種別、外部キー多重度（1対1／1対多等）、関連の由来（物理＝FK制約／論理＝サイドカー宣言）、PostgreSQL固有出力対象種別のenum |
 | `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー） |
@@ -70,8 +70,7 @@
 | `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス |
 | | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
 | `infrastructure.db.repository.dto` | `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto`, `BaseInfoDto` | MyBatisのResultMap受け皿となるDTO（`domain.model.entity`へ変換される） |
-| `infrastructure.file` | `TableDefinitionBufferedWriter` | テーブル定義書き込み用`BufferedWriter`のラッパー |
-| `infrastructure.file.repository` | `TableDefinitionFileRepository` | `FileRepository`実装（実ファイル書き込み） |
+| `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
 | | `AnnotationYamlRepository` | `AnnotationRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する |
 | `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
 | `infrastructure.snapshot` | `JacksonSnapshotSerializer` | `SnapshotSerializer`のJackson実装 |
@@ -81,7 +80,7 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `config` | `PropertyLoader` | `conf/*.properties`読み込みユーティリティ |
-| `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
+| `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
 
 ## リソース（Java外）
 

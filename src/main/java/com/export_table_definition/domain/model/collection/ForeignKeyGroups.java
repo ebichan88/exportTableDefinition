@@ -40,20 +40,13 @@ public final class ForeignKeyGroups {
       return List.of();
     }
     final Map<TableKey, TableKey> parents = new HashMap<>();
-    foreignKeys.forEach(
-        fk ->
-            union(
-                parents,
-                TableKey.of(fk.schemaName(), fk.tableName()),
-                TableKey.of(fk.referenceSchemaName(), fk.referenceTableName())));
+    foreignKeys.forEach(fk -> union(parents, fk.tableKey(), fk.referenceTableKey()));
     // 代表テーブルをキーとして外部キーを仕分ける
     final Map<TableKey, List<ForeignKeyEntity>> componentsByRoot = new LinkedHashMap<>();
     foreignKeys.forEach(
         fk ->
             componentsByRoot
-                .computeIfAbsent(
-                    find(parents, TableKey.of(fk.schemaName(), fk.tableName())),
-                    k -> new ArrayList<>())
+                .computeIfAbsent(find(parents, fk.tableKey()), k -> new ArrayList<>())
                 .add(fk));
     final Comparator<List<ForeignKeyEntity>> ordering =
         Comparator.comparingInt(ForeignKeyGroups::nodeCount)
@@ -83,9 +76,8 @@ public final class ForeignKeyGroups {
     final Map<TableKey, Integer> degrees = new HashMap<>();
     foreignKeys.forEach(
         fk -> {
-          degrees.merge(TableKey.of(fk.schemaName(), fk.tableName()), 1, Integer::sum);
-          degrees.merge(
-              TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()), 1, Integer::sum);
+          degrees.merge(fk.tableKey(), 1, Integer::sum);
+          degrees.merge(fk.referenceTableKey(), 1, Integer::sum);
         });
     return degrees.entrySet().stream()
         .sorted(
@@ -108,8 +100,8 @@ public final class ForeignKeyGroups {
     final Set<TableKey> keys = new HashSet<>();
     foreignKeys.forEach(
         fk -> {
-          keys.add(TableKey.of(fk.schemaName(), fk.tableName()));
-          keys.add(TableKey.of(fk.referenceSchemaName(), fk.referenceTableName()));
+          keys.add(fk.tableKey());
+          keys.add(fk.referenceTableKey());
         });
     return keys;
   }

@@ -473,11 +473,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @return 双方が実在する場合はtrue
    */
   private boolean isResolvableRelation(ForeignKeyEntity relation, Set<TableKey> existingKeys) {
-    final boolean childExists =
-        existingKeys.contains(TableKey.of(relation.schemaName(), relation.tableName()));
-    final boolean parentExists =
-        existingKeys.contains(
-            TableKey.of(relation.referenceSchemaName(), relation.referenceTableName()));
+    final boolean childExists = existingKeys.contains(relation.tableKey());
+    final boolean parentExists = existingKeys.contains(relation.referenceTableKey());
     if (childExists && parentExists) {
       return true;
     }
@@ -501,9 +498,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @return 双方が実在する場合はtrue
    */
   private boolean isResolvable(ForeignKeyEntity relation, Set<TableKey> existingKeys) {
-    return existingKeys.contains(TableKey.of(relation.schemaName(), relation.tableName()))
-        && existingKeys.contains(
-            TableKey.of(relation.referenceSchemaName(), relation.referenceTableName()));
+    return existingKeys.contains(relation.tableKey())
+        && existingKeys.contains(relation.referenceTableKey());
   }
 
   /**

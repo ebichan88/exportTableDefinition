@@ -11,7 +11,6 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * テーブル定義出力に関するリポジトリインターフェース
@@ -115,17 +114,4 @@ public interface TableDefinitionRepository {
    * @return データベースのユーザー定義型情報
    */
   List<TypeEntity> selectTypeList(List<String> schemaList);
-
-  /**
-   * DTOのListをEntityのListに変換する共通メソッド
-   *
-   * @param <D> DTOクラスの型
-   * @param <E> Entityクラスの型
-   * @param dtoList DTOのList
-   * @param mapper DTOからEntityへの変換関数
-   * @return EntityのList
-   */
-  default <D, E> List<E> makeEntityList(List<D> dtoList, Function<D, E> mapper) {
-    return dtoList.stream().map(mapper).toList();
-  }
 }

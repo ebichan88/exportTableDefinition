@@ -53,9 +53,9 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 `infrastructure.db.type.DatabaseType` （enum）がDB種別名と対応する
 `infrastructure.db.repository.*TableDefinitionRepository` 実装クラスを紐づけている。
-`ExportTableDefinitionModule.configure()` で
-`MyBatisSqlSessionFactory.getConnectionDbName().getRepositoryClass()` を通じて `TableDefinitionRepository` の
-実装クラスをDBごとに動的に束縛する。DB固有のSQLは
+`ExportTableDefinition.main()` が `MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
+`ExportTableDefinitionModule` のコンストラクタへ渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
+`TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
 [src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
 [src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
 両リポジトリは共通処理を `AbstractTableDefinitionRepository` に持つ。

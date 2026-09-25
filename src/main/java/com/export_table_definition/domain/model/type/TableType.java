@@ -49,7 +49,7 @@ public enum TableType {
     return Arrays.stream(TableType.values())
         .filter(e -> Objects.equals(name, e.getName()))
         .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException());
+        .orElseThrow(() -> new IllegalArgumentException("Unknown table type: " + name));
   }
 
   /**

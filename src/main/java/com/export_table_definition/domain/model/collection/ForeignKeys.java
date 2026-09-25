@@ -30,17 +30,13 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
   }
 
   public static ForeignKeys of(List<ForeignKeyEntity> list) {
-    final Map<TableKey, List<ForeignKeyEntity>> byKey =
-        index(list, c -> TableKey.of(c.schemaName(), c.tableName()));
+    final Map<TableKey, List<ForeignKeyEntity>> byKey = index(list);
     // 自己参照（自テーブルを参照する外部キー）は、被参照側の一覧に含めると
     // 外部キー情報セクションと重複して表示されてしまうため除外する
     final List<ForeignKeyEntity> incomingCandidates =
-        list.stream()
-            .filter(fk -> !fk.getSchemaTableName().equals(fk.getReferenceSchemaTableName()))
-            .toList();
+        list.stream().filter(fk -> !fk.tableKey().equals(fk.referenceTableKey())).toList();
     final Map<TableKey, List<ForeignKeyEntity>> incomingByKey =
-        index(
-            incomingCandidates, c -> TableKey.of(c.referenceSchemaName(), c.referenceTableName()));
+        index(incomingCandidates, ForeignKeyEntity::referenceTableKey);
     return new ForeignKeys(byKey, incomingByKey);
   }
 
@@ -113,11 +109,5 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
         .flatMap(List::stream)
         .filter(fk -> !fk.schemaName().equals(fk.referenceSchemaName()))
         .toList();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  protected TableKey extractKey(ForeignKeyEntity e) {
-    return TableKey.of(e.schemaName(), e.tableName());
   }
 }
