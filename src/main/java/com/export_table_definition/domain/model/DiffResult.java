@@ -3,9 +3,9 @@ package com.export_table_definition.domain.model;
 import java.util.List;
 
 /**
- * DBから生成したドキュメント（またはスナップショット）と、既にコミット済みのものとの差分結果を表すrecord<br>
- * 各要素は差分の対象を表す表示用の文字列で、Markdownのドキュメント同士の比較では比較対象ディレクトリからの相対パス、 スナップショット同士の比較ではオブジェクト（例: {@code
- * table sample.employee}）となる
+ * DBから生成したスキーマのスナップショットと、既にコミット済みのものとの差分結果を表すrecord<br>
+ * 各要素は差分の対象を表す表示用の文字列で、オブジェクト（例: {@code table sample.employee}）または ファイル（例: {@code
+ * database.json}）の識別名となる
  *
  * @param onlyInGenerated 生成側にのみ存在するもの（コミット漏れの可能性）
  * @param onlyInCommitted コミット側にのみ存在するもの（削除されたテーブル等の残骸の可能性）

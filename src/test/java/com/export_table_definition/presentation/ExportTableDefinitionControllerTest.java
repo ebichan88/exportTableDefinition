@@ -23,7 +23,6 @@ public class ExportTableDefinitionControllerTest {
     int capturedErDiagramMaxNodes;
     List<String> capturedOutputObjectList;
     String capturedAnnotationPath;
-    boolean capturedOutputSnapshot;
     boolean capturedRmDist;
     RuntimeException toThrow;
     DiffResult diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
@@ -37,7 +36,6 @@ public class ExportTableDefinitionControllerTest {
         int erDiagramMaxNodes,
         List<String> outputObjectList,
         String annotationPath,
-        boolean outputSnapshot,
         boolean rmDist) {
       this.capturedSchemaList = targetSchemaList;
       this.capturedTableList = targetTableList;
@@ -46,7 +44,6 @@ public class ExportTableDefinitionControllerTest {
       this.capturedErDiagramMaxNodes = erDiagramMaxNodes;
       this.capturedOutputObjectList = outputObjectList;
       this.capturedAnnotationPath = annotationPath;
-      this.capturedOutputSnapshot = outputSnapshot;
       this.capturedRmDist = rmDist;
       if (toThrow != null) {
         throw toThrow;
@@ -61,8 +58,7 @@ public class ExportTableDefinitionControllerTest {
         int chunkSize,
         int erDiagramMaxNodes,
         List<String> outputObjectList,
-        String annotationPath,
-        boolean outputSnapshot) {
+        String annotationPath) {
       this.capturedSchemaList = targetSchemaList;
       this.capturedTableList = targetTableList;
       this.capturedOutputPath = outputPath;
@@ -70,7 +66,6 @@ public class ExportTableDefinitionControllerTest {
       this.capturedErDiagramMaxNodes = erDiagramMaxNodes;
       this.capturedOutputObjectList = outputObjectList;
       this.capturedAnnotationPath = annotationPath;
-      this.capturedOutputSnapshot = outputSnapshot;
       if (toThrow != null) {
         throw toThrow;
       }
@@ -93,7 +88,6 @@ public class ExportTableDefinitionControllerTest {
             80,
             List.of(),
             "conf/annotations.yml",
-            true,
             false);
 
     assertEquals(ProcessResult.SUCCESS, result.result());
@@ -114,7 +108,6 @@ public class ExportTableDefinitionControllerTest {
         80,
         List.of("trigger", "function"),
         "conf/annotations.yml",
-        true,
         true);
 
     assertEquals(List.of("public"), usecase.capturedSchemaList);
@@ -124,7 +117,6 @@ public class ExportTableDefinitionControllerTest {
     assertEquals(80, usecase.capturedErDiagramMaxNodes);
     assertEquals(List.of("trigger", "function"), usecase.capturedOutputObjectList);
     assertEquals("conf/annotations.yml", usecase.capturedAnnotationPath);
-    assertTrue(usecase.capturedOutputSnapshot);
     assertTrue(usecase.capturedRmDist);
   }
 
@@ -135,8 +127,7 @@ public class ExportTableDefinitionControllerTest {
     usecase.toThrow = new RuntimeException("boom");
     var controller = new ExportTableDefinitionController(usecase);
 
-    ResultDto result =
-        controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false, false);
+    ResultDto result = controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false);
 
     assertEquals(ProcessResult.FAIL, result.result());
     assertTrue(result.message().contains("boom"));
@@ -150,7 +141,7 @@ public class ExportTableDefinitionControllerTest {
     var controller = new ExportTableDefinitionController(usecase);
 
     assertDoesNotThrow(
-        () -> controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false, false));
+        () -> controller.execute(List.of(), List.of(), null, 0, 0, List.of(), null, false));
   }
 
   @Test
@@ -161,8 +152,7 @@ public class ExportTableDefinitionControllerTest {
     var controller = new ExportTableDefinitionController(usecase);
 
     DiffCheckResultDto result =
-        controller.checkDiff(
-            List.of("public"), List.of(), "output", 100, 80, List.of(), null, false);
+        controller.checkDiff(List.of("public"), List.of(), "output", 100, 80, List.of(), null);
 
     assertEquals(ProcessResult.SUCCESS, result.result());
     assertFalse(result.hasDifference());
@@ -177,7 +167,7 @@ public class ExportTableDefinitionControllerTest {
     var controller = new ExportTableDefinitionController(usecase);
 
     DiffCheckResultDto result =
-        controller.checkDiff(List.of(), List.of(), "output", 100, 80, List.of(), null, false);
+        controller.checkDiff(List.of(), List.of(), "output", 100, 80, List.of(), null);
 
     assertEquals(ProcessResult.SUCCESS, result.result());
     assertTrue(result.hasDifference());
@@ -199,8 +189,7 @@ public class ExportTableDefinitionControllerTest {
         100,
         80,
         List.of("trigger"),
-        "conf/annotations.yml",
-        true);
+        "conf/annotations.yml");
 
     assertEquals(List.of("public"), usecase.capturedSchemaList);
     assertEquals(List.of("orders"), usecase.capturedTableList);
@@ -209,7 +198,6 @@ public class ExportTableDefinitionControllerTest {
     assertEquals(80, usecase.capturedErDiagramMaxNodes);
     assertEquals(List.of("trigger"), usecase.capturedOutputObjectList);
     assertEquals("conf/annotations.yml", usecase.capturedAnnotationPath);
-    assertTrue(usecase.capturedOutputSnapshot);
   }
 
   @Test
@@ -221,7 +209,7 @@ public class ExportTableDefinitionControllerTest {
 
     DiffCheckResultDto result =
         assertDoesNotThrow(
-            () -> controller.checkDiff(List.of(), List.of(), null, 0, 0, List.of(), null, false));
+            () -> controller.checkDiff(List.of(), List.of(), null, 0, 0, List.of(), null));
 
     assertEquals(ProcessResult.FAIL, result.result());
     assertTrue(result.message().contains("boom"));
