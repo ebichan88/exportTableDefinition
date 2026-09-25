@@ -63,7 +63,11 @@ public class JacksonSnapshotSerializer implements SnapshotSerializer {
     final List<String> lines = new ArrayList<>();
     lines.add("{");
     final java.util.LinkedHashMap<String, JsonNode> fields = new java.util.LinkedHashMap<>();
-    root.properties().forEach(entry -> fields.put(entry.getKey(), entry.getValue()));
+    var fieldNames = root.fieldNames();
+    while (fieldNames.hasNext()) {
+      String fieldName = fieldNames.next();
+      fields.put(fieldName, root.get(fieldName));
+    }
     for (final Map.Entry<String, JsonNode> field : fields.entrySet()) {
       final String key = writeCompact(TextNode.valueOf(field.getKey()));
       final JsonNode value = field.getValue();
