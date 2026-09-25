@@ -14,7 +14,6 @@ import com.export_table_definition.domain.model.type.RelationType;
 public record ForeignKeyDto(
     String schemaName,
     String tableName,
-    String foreignkeyInfo,
     String foreignkeyName,
     String columnNames,
     String referenceSchemaName,
@@ -36,7 +35,6 @@ public record ForeignKeyDto(
     return new ForeignKeyEntity(
         schemaName,
         tableName,
-        foreignkeyInfo,
         foreignkeyName,
         columnNames,
         referenceSchemaName,

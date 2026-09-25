@@ -9,6 +9,13 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * テーブル情報に関するrecordクラス
  *
+ * @param dbName データベース名
+ * @param schemaName スキーマ名
+ * @param logicalTableName 論理テーブル名
+ * @param physicalTableName 物理テーブル名
+ * @param tableType 区分（table/view/materialized_view）
+ * @param remarks テーブル一覧セクションの備考欄（現状は常に空白。手動付帯情報とは無関係）
+ * @param definition view/materialized viewの場合のソース定義（tableの場合は空文字）
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
@@ -19,8 +26,7 @@ public record TableEntity(
     String logicalTableName,
     String physicalTableName,
     String tableType,
-    String tableInfoList,
-    String tableInfo,
+    String remarks,
     String definition) {
 
   /**

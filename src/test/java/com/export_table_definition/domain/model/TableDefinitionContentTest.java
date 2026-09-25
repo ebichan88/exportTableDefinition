@@ -31,39 +31,35 @@ import org.junit.jupiter.api.Test;
 public class TableDefinitionContentTest {
 
   private TableEntity newTable(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "", "", "");
+    return new TableEntity("testdb", schema, "", physical, "table", "", "");
   }
 
   @Test
   @DisplayName("assemble: 対象テーブルに属する情報のみを抽出し、他テーブルの情報は含まれない")
   void testAssembleExtractsOnlyTargetTableInformation() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused");
+    var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
     var target = newTable("public", "orders");
 
-    var ownColumn = new ColumnEntity("public", "orders", "unused", "id", "int", "○");
-    var otherColumn = new ColumnEntity("public", "customers", "unused", "id", "int", "○");
+    var ownColumn = new ColumnEntity("public", "orders", "id", "int", "○");
+    var otherColumn = new ColumnEntity("public", "customers", "id", "int", "○");
     var columns = Columns.of(List.of(ownColumn, otherColumn));
 
-    var ownIndex = new IndexEntity("public", "orders", "unused");
-    var indexes = Indexes.of(List.of(ownIndex, new IndexEntity("public", "customers", "unused")));
+    var ownIndex = new IndexEntity("public", "orders");
+    var indexes = Indexes.of(List.of(ownIndex, new IndexEntity("public", "customers")));
 
-    var ownConstraint = new ConstraintEntity("public", "orders", "unused");
+    var ownConstraint = new ConstraintEntity("public", "orders");
     var constraints =
-        Constraints.of(
-            List.of(ownConstraint, new ConstraintEntity("public", "customers", "unused")));
+        Constraints.of(List.of(ownConstraint, new ConstraintEntity("public", "customers")));
 
     var outgoingFk =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var incomingFk =
-        ForeignKeyFixtures.physical(
-            "public", "items", "unused", "fk_items_orders", "public", "orders");
+        ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var foreignKeys = ForeignKeys.of(List.of(outgoingFk, incomingFk));
 
-    var ownTrigger = new TriggerEntity("public", "orders", "unused", "unused");
-    var triggers =
-        Triggers.of(
-            List.of(ownTrigger, new TriggerEntity("public", "customers", "unused", "unused")));
+    var ownTrigger = new TriggerEntity("public", "orders");
+    var triggers = Triggers.of(List.of(ownTrigger, new TriggerEntity("public", "customers")));
 
     var ownAnnotation = new TableAnnotation("受注テーブル", "備考", java.util.Map.of("id", "主キー"));
     var annotations =
@@ -105,7 +101,7 @@ public class TableDefinitionContentTest {
   @Test
   @DisplayName("assemble: 関連する情報が存在しない場合は空リストになる")
   void testAssembleWithNoRelatedInformationReturnsEmptyLists() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused");
+    var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
     var target = newTable("public", "empty_table");
 
     TableDefinitionContent content =
@@ -136,14 +132,14 @@ public class TableDefinitionContentTest {
     var table = newTable("public", "orders");
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
 
     var content =
         TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused"),
+            new BaseInfoEntity("testdb", "unused", "unused"),
             table,
             Columns.of(List.of()),
             Indexes.of(List.of()),
@@ -163,14 +159,14 @@ public class TableDefinitionContentTest {
     var table = newTable("public", "orders");
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
 
     var content =
         TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused"),
+            new BaseInfoEntity("testdb", "unused", "unused"),
             table,
             Columns.of(List.of()),
             Indexes.of(List.of()),

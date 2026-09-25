@@ -110,15 +110,7 @@ class TableEntityTest {
         boolean expected) {
       // Given
       tableEntity =
-          new TableEntity(
-              "dbName",
-              "test_schema",
-              "テストテーブル",
-              "testTable",
-              "table",
-              "|1|test_schema|テストテーブル|testTable|table|[■](./testdb/test_schema/table/testTable.md)||",
-              "|test_schema|テストテーブル|testTable|table|",
-              "");
+          new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", "table", "", "");
       // When
       boolean result = tableEntity.needsWriteTableDefinition(targetSchemaList, targetTableList);
       // Then

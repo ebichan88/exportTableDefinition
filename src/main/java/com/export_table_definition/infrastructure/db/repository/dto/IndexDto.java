@@ -9,7 +9,15 @@ import com.export_table_definition.domain.model.entity.IndexEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record IndexDto(String schemaName, String tableName, String indexInfo) {
+public record IndexDto(
+    String schemaName,
+    String tableName,
+    String indexName,
+    String indexMethod,
+    String isUnique,
+    String isPrimary,
+    String indexDefinition,
+    String remarks) {
 
   /**
    * DTOからEntityへの変換メソッド
@@ -17,6 +25,14 @@ public record IndexDto(String schemaName, String tableName, String indexInfo) {
    * @return AllIndexEntityのインスタンス
    */
   public IndexEntity toEntity() {
-    return new IndexEntity(schemaName, tableName, indexInfo);
+    return new IndexEntity(
+        schemaName,
+        tableName,
+        indexName,
+        indexMethod,
+        isUnique,
+        isPrimary,
+        indexDefinition,
+        remarks);
   }
 }

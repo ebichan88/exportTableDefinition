@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class AnnotationsTest {
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "", "", "");
+    return new TableEntity("testdb", schema, "", physical, "table", "", "");
   }
 
   @Test

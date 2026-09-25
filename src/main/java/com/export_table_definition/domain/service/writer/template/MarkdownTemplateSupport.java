@@ -32,7 +32,13 @@ public final class MarkdownTemplateSupport {
                 | RDBMS | データベース名 | 作成日 |
                 |:---|:---|:---|
                 """
-        + baseInfo.baseInfo()
+        + "|"
+        + baseInfo.dbmsName()
+        + "|"
+        + baseInfo.dbName()
+        + "|"
+        + baseInfo.generatedDate()
+        + "|"
         + LINE_SEPARATOR_DOUBLE;
   }
 

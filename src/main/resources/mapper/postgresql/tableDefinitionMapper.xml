@@ -5,14 +5,16 @@
     <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
         SELECT
             current_database() AS "dbName",
-            concat('|', 'PostgreSQL', '|', current_database(), '|', to_char(current_timestamp, 'yyyy/MM/dd'), '|') AS "baseInfo"
+            'PostgreSQL' AS "dbmsName",
+            to_char(current_timestamp, 'yyyy/MM/dd') AS "generatedDate"
         fetch first 1 rows only;
     </select>
 
     <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
         <constructor>
             <arg column="dbName" javaType="String" />
-            <arg column="baseInfo" javaType="String" />
+            <arg column="dbmsName" javaType="String" />
+            <arg column="generatedDate" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -24,7 +26,6 @@
                 coalesce(regexp_replace(pg_catalog.obj_description(to_regclass(quote_ident(t1.schemaname) || '.' || quote_ident(t1.tablename))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t1.tablename, '') AS physical_table_name,
                 '' AS remarks,
-                concat('[■](./', current_database(), '/', t1.schemaname, '/table/', t1.tablename, '.md)') AS link,
                 '' AS definition
             FROM pg_catalog.pg_tables t1
             WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -47,7 +48,6 @@
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t2.schemaname) || '.' || quote_ident(t2.viewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t2.viewname, '') AS physical_table_name,
                 ' ' AS remarks,
-                concat('[■](./', current_database(), '/', t2.schemaname, '/view/', t2.viewname, '.md)') AS link,
                 definition AS definition
             FROM pg_catalog.pg_views t2
             WHERE t2.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -70,7 +70,6 @@
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t3.schemaname) || '.' || quote_ident(t3.matviewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t3.matviewname, '') AS physical_table_name,
                 ' ' AS remarks,
-                concat('[■](./', current_database(), '/', t3.schemaname, '/materialized_view/', t3.matviewname, '.md)') AS link,
                 definition AS definition
             FROM pg_catalog.pg_matviews t3
             WHERE t3.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -93,8 +92,7 @@
             logical_table_name AS "logicalTableName",
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
-            concat('|', row_number() over (ORDER BY schema_name, physical_table_name), '|', schema_name, '|', logical_table_name, '|', physical_table_name, '|', table_type, '|', link, '|', remarks, '|') AS "tableInfoList",
-            concat('|', schema_name, '|', logical_table_name, '|', physical_table_name, '|', table_type, '|') AS "tableInfo",
+            remarks AS "remarks",
             definition AS definition
         FROM all_tables
         ORDER BY schema_name, physical_table_name;
@@ -107,8 +105,7 @@
             <arg column="logicalTableName" javaType="String" />
             <arg column="physicalTableName" javaType="String" />
             <arg column="tableType" javaType="String" />
-            <arg column="tableInfoList" javaType="String" />
-            <arg column="tableInfo" javaType="String" />
+            <arg column="remarks" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>
@@ -236,10 +233,13 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            concat('|', column_num, '|', logical_column_name, '|', physical_column_name, '|', column_type, '|', precision_scale, '|', primary_key, '|', not_null, '|', default_value, '|') AS "columnInfo",
+            logical_column_name AS "logicalColumnName",
             physical_column_name AS "physicalColumnName",
             column_type AS "columnType",
-            primary_key AS "primaryKey"
+            precision_scale AS "precisionScale",
+            primary_key AS "primaryKey",
+            not_null AS "notNull",
+            default_value AS "defaultValue"
         FROM all_columns
         ORDER BY schema_name, table_name, column_num;
     </select>
@@ -248,10 +248,13 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="columnInfo" javaType="String" />
+            <arg column="logicalColumnName" javaType="String" />
             <arg column="physicalColumnName" javaType="String" />
             <arg column="columnType" javaType="String" />
+            <arg column="precisionScale" javaType="String" />
             <arg column="primaryKey" javaType="String" />
+            <arg column="notNull" javaType="String" />
+            <arg column="defaultValue" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -288,20 +291,26 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            CASE
-                WHEN index_name IS NOT NULL
-                    THEN concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY index_name), '|', index_name, '|', index_method, '|', is_unique, '|', is_primary, '|', index_definition, '|', remarks, '|')
-                ELSE NULL
-            END AS "indexInfo"
+            index_name AS "indexName",
+            index_method AS "indexMethod",
+            is_unique AS "isUnique",
+            is_primary AS "isPrimary",
+            index_definition AS "indexDefinition",
+            remarks AS "remarks"
         FROM all_indexes
-        ORDER BY schema_name, table_name;
+        ORDER BY schema_name, table_name, index_name;
     </select>
 
     <resultMap id="IndexDtoMap" type="IndexDto">
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="indexInfo" javaType="String" />
+            <arg column="indexName" javaType="String" />
+            <arg column="indexMethod" javaType="String" />
+            <arg column="isUnique" javaType="String" />
+            <arg column="isPrimary" javaType="String" />
+            <arg column="indexDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -340,7 +349,10 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name), '|', constraints_name, '|', constraints_type, '|', constraints_definition, '|', remarks, '|') AS "constraintInfo"
+            constraints_name AS "constraintName",
+            constraints_type AS "constraintType",
+            constraints_definition AS "constraintDefinition",
+            remarks AS "remarks"
         FROM all_constraints
         ORDER BY schema_name, table_name, constraints_type, constraints_name;
     </select>
@@ -349,7 +361,10 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="constraintInfo" javaType="String" />
+            <arg column="constraintName" javaType="String" />
+            <arg column="constraintType" javaType="String" />
+            <arg column="constraintDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -407,11 +422,6 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            CASE
-                WHEN foreignkey_name IS NOT NULL
-                    THEN concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY foreignkey_name), '|', foreignkey_name, '|', column_names, '|', reference_schema_name, '.' , reference_table_name, '|', reference_column_names, '|')
-                ELSE NULL
-            END AS "foreignkeyInfo",
             foreignkey_name AS "foreignkeyName",
             column_names AS "columnNames",
             reference_schema_name AS "referenceSchemaName",
@@ -420,14 +430,13 @@
             child_key_unique AS "childKeyUnique",
             child_key_mandatory AS "childKeyMandatory"
         FROM all_foreignkeys
-        ORDER BY schema_name, table_name;
+        ORDER BY schema_name, table_name, foreignkey_name;
     </select>
 
     <resultMap id="ForeignKeyDtoMap" type="ForeignKeyDto">
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="foreignkeyInfo" javaType="String" />
             <arg column="foreignkeyName" javaType="String" />
             <arg column="columnNames" javaType="String" />
             <arg column="referenceSchemaName" javaType="String" />
@@ -480,8 +489,12 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            concat('|', row_number() over (ORDER BY schema_name, table_name, trigger_name), '|', schema_name, '|', table_name, '|', trigger_name, '|', timing, '|', events, '|', function_name, '|') AS "triggerListInfo",
-            concat('|', row_number() over (PARTITION BY schema_name, table_name ORDER BY trigger_name), '|', trigger_name, '|', timing, '|', events, '|', orientation, '|', trigger_definition, '|') AS "triggerInfo"
+            trigger_name AS "triggerName",
+            timing AS "timing",
+            events AS "events",
+            orientation AS "orientation",
+            function_name AS "functionName",
+            trigger_definition AS "triggerDefinition"
         FROM all_triggers
         ORDER BY schema_name, table_name, trigger_name;
     </select>
@@ -490,8 +503,12 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="triggerListInfo" javaType="String" />
-            <arg column="triggerInfo" javaType="String" />
+            <arg column="triggerName" javaType="String" />
+            <arg column="timing" javaType="String" />
+            <arg column="events" javaType="String" />
+            <arg column="orientation" javaType="String" />
+            <arg column="functionName" javaType="String" />
+            <arg column="triggerDefinition" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -522,7 +539,10 @@
             schema_name AS "schemaName",
             function_name AS "functionName",
             file_name AS "fileName",
-            concat('|', row_number() over (ORDER BY schema_name, function_name, file_name), '|', schema_name, '|', function_kind, '|', function_name, '|', replace(function_arguments, '|', '\|'), '|', replace(function_result, '|', '\|'), '|', language_name, '|', concat('[■](./', db_name, '/', schema_name, '/function/', file_name, '.md)'), '|') AS "functionListInfo",
+            function_kind AS "functionKind",
+            replace(function_arguments, '|', '\|') AS "functionArguments",
+            replace(function_result, '|', '\|') AS "functionResult",
+            language_name AS "languageName",
             '' AS definition
         FROM all_functions
         ORDER BY schema_name, function_name, file_name;
@@ -551,7 +571,10 @@
             schema_name AS "schemaName",
             function_name AS "functionName",
             file_name AS "fileName",
-            '' AS "functionListInfo",
+            '' AS "functionKind",
+            '' AS "functionArguments",
+            '' AS "functionResult",
+            '' AS "languageName",
             definition AS definition
         FROM all_functions
         ORDER BY schema_name, function_name, file_name;
@@ -563,7 +586,10 @@
             <arg column="schemaName" javaType="String" />
             <arg column="functionName" javaType="String" />
             <arg column="fileName" javaType="String" />
-            <arg column="functionListInfo" javaType="String" />
+            <arg column="functionKind" javaType="String" />
+            <arg column="functionArguments" javaType="String" />
+            <arg column="functionResult" javaType="String" />
+            <arg column="languageName" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>
@@ -604,8 +630,13 @@
             db_name AS "dbName",
             schema_name AS "schemaName",
             sequence_name AS "sequenceName",
-            concat('|', row_number() over (ORDER BY schema_name, sequence_name), '|', schema_name, '|', sequence_name, '|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|', concat('[■](./', db_name, '/', schema_name, '/sequence/', sequence_name, '.md)'), '|') AS "sequenceListInfo",
-            concat('|', increment_by, '|', min_value, '|', max_value, '|', cache_size, '|', start_value, '|', cycle, '|', owned_by, '|') AS "sequenceInfo"
+            increment_by AS "incrementBy",
+            min_value AS "minValue",
+            max_value AS "maxValue",
+            cache_size AS "cacheSize",
+            start_value AS "startValue",
+            cycle AS "cycle",
+            owned_by AS "ownedBy"
         FROM all_sequences
         ORDER BY schema_name, sequence_name;
     </select>
@@ -615,8 +646,13 @@
             <arg column="dbName" javaType="String" />
             <arg column="schemaName" javaType="String" />
             <arg column="sequenceName" javaType="String" />
-            <arg column="sequenceListInfo" javaType="String" />
-            <arg column="sequenceInfo" javaType="String" />
+            <arg column="incrementBy" javaType="String" />
+            <arg column="minValue" javaType="String" />
+            <arg column="maxValue" javaType="String" />
+            <arg column="cacheSize" javaType="String" />
+            <arg column="startValue" javaType="String" />
+            <arg column="cycle" javaType="String" />
+            <arg column="ownedBy" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -658,7 +694,6 @@
             schema_name AS "schemaName",
             type_name AS "typeName",
             type_category AS "typeCategory",
-            concat('|', row_number() over (ORDER BY schema_name, type_name), '|', schema_name, '|', type_name, '|', type_category, '|', definition, '|', concat('[■](./', db_name, '/', schema_name, '/type/', type_name, '.md)'), '|') AS "typeListInfo",
             definition AS definition
         FROM all_types
         ORDER BY schema_name, type_name;
@@ -670,7 +705,6 @@
             <arg column="schemaName" javaType="String" />
             <arg column="typeName" javaType="String" />
             <arg column="typeCategory" javaType="String" />
-            <arg column="typeListInfo" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>

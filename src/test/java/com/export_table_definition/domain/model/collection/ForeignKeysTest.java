@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class ForeignKeysTest {
 
   private TableEntity newTable(String schema, String physical) {
-    return new TableEntity("TEST_DB", schema, "", physical, "table", "", "", "");
+    return new TableEntity("TEST_DB", schema, "", physical, "table", "", "");
   }
 
   @Test
@@ -20,7 +20,7 @@ public class ForeignKeysTest {
   void testOfReturnsOwnForeignKeys() {
     var fk =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var foreignKeys = ForeignKeys.of(List.of(fk));
 
     assertEquals(List.of(fk), foreignKeys.of(newTable("public", "orders")));
@@ -32,7 +32,7 @@ public class ForeignKeysTest {
   void testIncomingOfReturnsReferencingForeignKeys() {
     var fk =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var foreignKeys = ForeignKeys.of(List.of(fk));
 
     assertEquals(List.of(fk), foreignKeys.incomingOf(newTable("public", "customers")));
@@ -44,7 +44,7 @@ public class ForeignKeysTest {
   void testIncomingOfExcludesSelfReference() {
     var selfFk =
         ForeignKeyFixtures.physical(
-            "public", "categories", "unused", "fk_categories_parent", "public", "categories");
+            "public", "categories", "fk_categories_parent", "public", "categories");
     var foreignKeys = ForeignKeys.of(List.of(selfFk));
 
     assertEquals(List.of(selfFk), foreignKeys.of(newTable("public", "categories")));
@@ -54,9 +54,7 @@ public class ForeignKeysTest {
   @Test
   @DisplayName("incomingOf: スキーマを跨いだ参照でも正しく解決される")
   void testIncomingOfAcrossSchemas() {
-    var fk =
-        ForeignKeyFixtures.physical(
-            "hr", "assignment", "unused", "fk_assignment_emp", "sales", "emp");
+    var fk = ForeignKeyFixtures.physical("hr", "assignment", "fk_assignment_emp", "sales", "emp");
     var foreignKeys = ForeignKeys.of(List.of(fk));
 
     assertEquals(List.of(fk), foreignKeys.incomingOf(newTable("sales", "emp")));
@@ -66,8 +64,7 @@ public class ForeignKeysTest {
   @DisplayName("groupBySchema: スキーマ跨ぎの外部キーは参照元・参照先の双方のスキーマに登録される")
   void testGroupBySchemaRegistersBothSides() {
     var crossFk =
-        ForeignKeyFixtures.physical(
-            "hr", "assignment", "unused", "fk_assignment_emp", "sales", "emp");
+        ForeignKeyFixtures.physical("hr", "assignment", "fk_assignment_emp", "sales", "emp");
     var bySchema = ForeignKeys.of(List.of(crossFk)).groupBySchema();
 
     assertEquals(List.of(crossFk), bySchema.get("hr"));
@@ -79,7 +76,7 @@ public class ForeignKeysTest {
   void testGroupBySchemaRegistersSameSchemaOnce() {
     var fk =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var bySchema = ForeignKeys.of(List.of(fk)).groupBySchema();
 
     assertEquals(List.of(fk), bySchema.get("public"));
@@ -91,7 +88,7 @@ public class ForeignKeysTest {
   void testGroupBySchemaWithSelfReference() {
     var selfFk =
         ForeignKeyFixtures.physical(
-            "public", "categories", "unused", "fk_categories_parent", "public", "categories");
+            "public", "categories", "fk_categories_parent", "public", "categories");
     var bySchema = ForeignKeys.of(List.of(selfFk)).groupBySchema();
 
     assertEquals(List.of(selfFk), bySchema.get("public"));
@@ -101,9 +98,8 @@ public class ForeignKeysTest {
   @DisplayName("crossSchema: スキーマを跨ぐ外部キーのみを返す")
   void testCrossSchema() {
     var sameSchemaFk =
-        ForeignKeyFixtures.physical("public", "orders", "unused", "fk_same", "public", "customers");
-    var crossSchemaFk =
-        ForeignKeyFixtures.physical("hr", "assignment", "unused", "fk_cross", "sales", "emp");
+        ForeignKeyFixtures.physical("public", "orders", "fk_same", "public", "customers");
+    var crossSchemaFk = ForeignKeyFixtures.physical("hr", "assignment", "fk_cross", "sales", "emp");
     var foreignKeys = ForeignKeys.of(List.of(sameSchemaFk, crossSchemaFk));
 
     assertEquals(List.of(crossSchemaFk), foreignKeys.crossSchema());
@@ -114,7 +110,7 @@ public class ForeignKeysTest {
   void testPhysicalOfExcludesLogical() {
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
@@ -127,7 +123,7 @@ public class ForeignKeysTest {
   void testLogicalOfExcludesPhysical() {
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
@@ -140,7 +136,7 @@ public class ForeignKeysTest {
   void testOfIncludesBothRelationTypes() {
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));

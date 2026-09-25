@@ -185,8 +185,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
   private void setUp() {
     fileRepository = new InMemoryFileRepository();
-    repository =
-        new RecordingRepository(new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-24 |"));
+    repository = new RecordingRepository(new BaseInfoEntity("testdb", "pg", "2026-09-24"));
     final DefaultOutputPathResolver pathResolver = new DefaultOutputPathResolver();
     final PagedSectionWriter pagedSectionWriter = new PagedSectionWriter(fileRepository);
     final TableDefinitionWriterDomainService writer =
@@ -215,15 +214,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity(
-        "testdb",
-        schema,
-        "",
-        physical,
-        "table",
-        "|1|" + schema + "|" + physical + "|" + physical + "|table|[link](x)||",
-        "|" + schema + "||" + physical + "|table|",
-        "");
+    return new TableEntity("testdb", schema, "", physical, "table", "", "");
   }
 
   private String contentOf(Path path) {
@@ -248,14 +239,16 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "t1"));
     repository.tables.add(table("public", "t2"));
-    repository.columns.add(new ColumnEntity("public", "t1", "col1", "id", "int", "○"));
-    repository.triggers.add(new TriggerEntity("public", "t1", "trg_list", "trg_info"));
-    repository.functions.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", ""));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
+    repository.triggers.add(
+        new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
+    repository.functions.add(
+        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", ""));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "f_list", "BODY"));
+        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", "BODY"));
     repository.sequences.add(
-        new SequenceEntity("testdb", "public", "seq1", "seq_list", "seq_info"));
-    repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "type_list", "def"));
+        new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", "", ""));
+    repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "def"));
 
     usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null, false);
 
@@ -304,14 +297,16 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testOutputObjectListRestrictsToSpecifiedTypes() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "col1", "id", "int", "○"));
-    repository.triggers.add(new TriggerEntity("public", "t1", "trg_list", "trg_info"));
-    repository.functions.add(new FunctionEntity("testdb", "public", "f1", "f1", "f_list", ""));
+    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", "○"));
+    repository.triggers.add(
+        new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
+    repository.functions.add(
+        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", ""));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "f_list", "BODY"));
+        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", "BODY"));
     repository.sequences.add(
-        new SequenceEntity("testdb", "public", "seq1", "seq_list", "seq_info"));
-    repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "type_list", "def"));
+        new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", "", ""));
+    repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "def"));
 
     usecase.exportTableDefinition(
         List.of(), List.of(), null, 0, 80, List.of("function"), null, false);
@@ -414,12 +409,15 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testFunctionDefinitionsFetchedPerSchemaNotPerFunction() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.functions.add(new FunctionEntity("testdb", "s1", "f1", "f1", "list", ""));
-    repository.functions.add(new FunctionEntity("testdb", "s1", "f2", "f2", "list", ""));
-    repository.functions.add(new FunctionEntity("testdb", "s2", "f3", "f3", "list", ""));
-    repository.functionDefs.add(new FunctionEntity("testdb", "s1", "f1", "f1", "list", "BODY1"));
-    repository.functionDefs.add(new FunctionEntity("testdb", "s1", "f2", "f2", "list", "BODY2"));
-    repository.functionDefs.add(new FunctionEntity("testdb", "s2", "f3", "f3", "list", "BODY3"));
+    repository.functions.add(new FunctionEntity("testdb", "s1", "f1", "f1", "", "", "", "", ""));
+    repository.functions.add(new FunctionEntity("testdb", "s1", "f2", "f2", "", "", "", "", ""));
+    repository.functions.add(new FunctionEntity("testdb", "s2", "f3", "f3", "", "", "", "", ""));
+    repository.functionDefs.add(
+        new FunctionEntity("testdb", "s1", "f1", "f1", "", "", "", "", "BODY1"));
+    repository.functionDefs.add(
+        new FunctionEntity("testdb", "s1", "f2", "f2", "", "", "", "", "BODY2"));
+    repository.functionDefs.add(
+        new FunctionEntity("testdb", "s2", "f3", "f3", "", "", "", "", "BODY3"));
 
     usecase.exportTableDefinition(List.of(), List.of(), null, 0, 80, List.of(), null, false);
 
@@ -526,7 +524,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     IntStream.rangeClosed(1, 4).forEach(i -> repository.tables.add(table("public", "t" + i)));
     // t4（2チャンク目）がt1（1チャンク目）を参照する
     repository.foreignKeys.add(
-        ForeignKeyFixtures.physical("public", "t4", "unused", "fk_t4_t1", "public", "t1"));
+        ForeignKeyFixtures.physical("public", "t4", "fk_t4_t1", "public", "t1"));
 
     usecase.exportTableDefinition(List.of(), List.of(), null, 2, 80, List.of(), null, false);
 
@@ -543,7 +541,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "skip"));
     // keepがskip（絞り込みで除外される）を参照する
     repository.foreignKeys.add(
-        ForeignKeyFixtures.physical("public", "keep", "unused", "fk_keep_skip", "public", "skip"));
+        ForeignKeyFixtures.physical("public", "keep", "fk_keep_skip", "public", "skip"));
 
     usecase.exportTableDefinition(List.of(), List.of("keep"), null, 0, 80, List.of(), null, false);
 
@@ -558,8 +556,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testAnnotationsAreMergedIntoTableDefinition() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(
-        new ColumnEntity("public", "t1", "|1|論理ID|id|int|Y|N||", "id", "int", "○"));
+    repository.columns.add(new ColumnEntity("public", "t1", "論理ID", "id", "int", "", "○", "○", ""));
     annotations =
         Annotations.of(
             Map.of(
@@ -574,7 +571,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
     assertTrue(t1Content.contains("t1の説明文"));
     assertTrue(t1Content.contains("t1の備考"));
-    assertTrue(t1Content.contains("|1|論理ID|id|int|Y|N||主キー|"));
+    assertTrue(t1Content.contains("|1|論理ID|id|int||○|○||主キー|"));
   }
 
   @Test

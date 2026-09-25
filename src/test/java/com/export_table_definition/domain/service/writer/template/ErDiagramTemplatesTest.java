@@ -18,24 +18,16 @@ import org.junit.jupiter.api.Test;
 public class ErDiagramTemplatesTest {
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+    return new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
   }
 
   private TableEntity newTable(String schema, String physical, String logical) {
-    return new TableEntity(
-        "TEST_DB",
-        schema,
-        logical,
-        physical,
-        "table",
-        "| 1 | " + schema + " | " + logical + " | " + physical + " | T | link | note |",
-        "| " + schema + " | " + logical + " | " + physical + " | T | note |",
-        "");
+    return new TableEntity("TEST_DB", schema, logical, physical, "table", "", "");
   }
 
   private ForeignKeyEntity newFk(
       String schema, String table, String fkName, String refSchema, String refTable) {
-    return ForeignKeyFixtures.physical(schema, table, "unused", fkName, refSchema, refTable);
+    return ForeignKeyFixtures.physical(schema, table, fkName, refSchema, refTable);
   }
 
   /** ER図セクションを、ノード算出込みで生成するテスト用ヘルパー */
@@ -81,18 +73,11 @@ public class ErDiagramTemplatesTest {
   void testErDiagramCardinality() {
     var oneToOne =
         ForeignKeyFixtures.physical(
-            "public",
-            "profiles",
-            "unused",
-            "fk_profiles_user",
-            "public",
-            "users",
-            Cardinality.ONE_TO_ONE);
+            "public", "profiles", "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
     var optional =
         ForeignKeyFixtures.physical(
             "public",
             "orders",
-            "unused",
             "fk_orders_coupon",
             "public",
             "coupons",

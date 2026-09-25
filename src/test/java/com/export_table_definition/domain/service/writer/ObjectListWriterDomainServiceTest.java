@@ -64,7 +64,7 @@ public class ObjectListWriterDomainServiceTest {
   private ObjectListWriterDomainService writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-24 |");
+    return new BaseInfoEntity("testdb", "pg", "2026-09-24");
   }
 
   @BeforeEach
@@ -89,14 +89,14 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteTriggerListWritesFile() {
     var trigger =
         new TriggerEntity(
-            "public", "orders", "|1|public|orders|trg_orders|BEFORE|INSERT|f_orders|", "unused");
+            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "f_orders", "");
     writer.writeTriggerList(List.of(trigger), baseInfo(), OUT);
 
     Path file = OUT.resolve("triggerList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# トリガー一覧（DB名：testdb）"));
-    assertTrue(content.contains("| pg | testdb | 2026-09-24 |"));
+    assertTrue(content.contains("|pg|testdb|2026-09-24|"));
     assertTrue(content.contains("trg_orders"));
     assertTrue(content.contains("[テーブル一覧へ](./tableList_testdb.md)"));
   }
@@ -113,12 +113,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteFunctionListWritesFile() {
     var function =
         new FunctionEntity(
-            "testdb",
-            "public",
-            "calc_total",
-            "calc_total",
-            "|1|public|function|calc_total|()|int|plpgsql|link|",
-            "");
+            "testdb", "public", "calc_total", "calc_total", "FUNCTION", "()", "int", "plpgsql", "");
     writer.writeFunctionList(List.of(function), baseInfo(), OUT);
 
     Path file = OUT.resolve("functionList_testdb.md");
@@ -130,7 +125,8 @@ public class ObjectListWriterDomainServiceTest {
   @DisplayName("writeFunctionDefinition: スキーマ配下のfunctionディレクトリに個別ファイルを出力する")
   void testWriteFunctionDefinitionWritesIndividualFile() {
     var function =
-        new FunctionEntity("testdb", "public", "calc_total", "calc_total", "unused", "SELECT 1;");
+        new FunctionEntity(
+            "testdb", "public", "calc_total", "calc_total", "", "", "", "", "SELECT 1;");
     writer.writeFunctionDefinition(function, baseInfo(), OUT);
 
     Path expectedDir = OUT.resolve("testdb").resolve("public").resolve("function");
@@ -155,7 +151,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteSequenceDefinitionWritesIndividualFile() {
     var sequence =
         new SequenceEntity(
-            "testdb", "public", "seq_orders", "unused", "|1|10|1|999999999|20|1|true|orders.id|");
+            "testdb", "public", "seq_orders", "10", "1", "999999999", "20", "1", "○", "orders.id");
     writer.writeSequenceDefinition(sequence, baseInfo(), OUT);
 
     Path expectedFile =
@@ -163,7 +159,7 @@ public class ObjectListWriterDomainServiceTest {
     assertTrue(fileRepository.files.containsKey(expectedFile));
     String content = fileRepository.files.get(expectedFile);
     assertTrue(content.contains("# seq_orders"));
-    assertTrue(content.contains("|1|10|1|999999999|20|1|true|orders.id|"));
+    assertTrue(content.contains("|10|1|999999999|20|1|○|orders.id|"));
     assertTrue(content.contains("[シーケンス一覧へ](../../../sequenceList_testdb.md)"));
   }
 
@@ -177,9 +173,7 @@ public class ObjectListWriterDomainServiceTest {
   @Test
   @DisplayName("writeTypeDefinition: スキーマ配下のtypeディレクトリに個別ファイルを出力する")
   void testWriteTypeDefinitionWritesIndividualFile() {
-    var type =
-        new TypeEntity(
-            "testdb", "public", "order_status", "enum", "unused", "PENDING,SHIPPED,DONE");
+    var type = new TypeEntity("testdb", "public", "order_status", "enum", "PENDING,SHIPPED,DONE");
     writer.writeTypeDefinition(type, baseInfo(), OUT);
 
     Path expectedFile =
@@ -196,13 +190,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteTriggerListSplitsWhenExceedingMaxPageSize() {
     List<TriggerEntity> triggers =
         IntStream.rangeClosed(1, 3001)
-            .mapToObj(
-                i ->
-                    new TriggerEntity(
-                        "public",
-                        "t" + i,
-                        "|" + i + "|public|t" + i + "|trg" + i + "|||",
-                        "unused"))
+            .mapToObj(i -> new TriggerEntity("public", "t" + i, "trg" + i, "", "", "", "", ""))
             .toList();
     writer.writeTriggerList(triggers, baseInfo(), OUT);
 

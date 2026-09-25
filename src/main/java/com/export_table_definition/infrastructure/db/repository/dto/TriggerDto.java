@@ -10,7 +10,14 @@ import com.export_table_definition.domain.model.entity.TriggerEntity;
  * @author takashi.ebina
  */
 public record TriggerDto(
-    String schemaName, String tableName, String triggerListInfo, String triggerInfo) {
+    String schemaName,
+    String tableName,
+    String triggerName,
+    String timing,
+    String events,
+    String orientation,
+    String functionName,
+    String triggerDefinition) {
 
   /**
    * DTOからEntityへの変換メソッド
@@ -18,6 +25,14 @@ public record TriggerDto(
    * @return TriggerEntityのインスタンス
    */
   public TriggerEntity toEntity() {
-    return new TriggerEntity(schemaName, tableName, triggerListInfo, triggerInfo);
+    return new TriggerEntity(
+        schemaName,
+        tableName,
+        triggerName,
+        timing,
+        events,
+        orientation,
+        functionName,
+        triggerDefinition);
   }
 }

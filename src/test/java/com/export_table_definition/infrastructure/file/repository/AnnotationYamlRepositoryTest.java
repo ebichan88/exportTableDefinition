@@ -23,7 +23,7 @@ public class AnnotationYamlRepositoryTest {
   private final AnnotationYamlRepository repository = new AnnotationYamlRepository();
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "", "", "");
+    return new TableEntity("testdb", schema, "", physical, "table", "", "");
   }
 
   private Path writeYaml(Path dir, String content) throws IOException {

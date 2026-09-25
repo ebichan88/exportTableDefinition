@@ -10,12 +10,7 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
  * @author takashi.ebina
  */
 public record TypeDto(
-    String dbName,
-    String schemaName,
-    String typeName,
-    String typeCategory,
-    String typeListInfo,
-    String definition) {
+    String dbName, String schemaName, String typeName, String typeCategory, String definition) {
 
   /**
    * DTOからEntityへの変換メソッド
@@ -23,6 +18,6 @@ public record TypeDto(
    * @return TypeEntityのインスタンス
    */
   public TypeEntity toEntity() {
-    return new TypeEntity(dbName, schemaName, typeName, typeCategory, typeListInfo, definition);
+    return new TypeEntity(dbName, schemaName, typeName, typeCategory, definition);
   }
 }

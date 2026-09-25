@@ -13,8 +13,13 @@ public record SequenceDto(
     String dbName,
     String schemaName,
     String sequenceName,
-    String sequenceListInfo,
-    String sequenceInfo) {
+    String incrementBy,
+    String minValue,
+    String maxValue,
+    String cacheSize,
+    String startValue,
+    String cycle,
+    String ownedBy) {
 
   /**
    * DTOからEntityへの変換メソッド
@@ -22,6 +27,16 @@ public record SequenceDto(
    * @return SequenceEntityのインスタンス
    */
   public SequenceEntity toEntity() {
-    return new SequenceEntity(dbName, schemaName, sequenceName, sequenceListInfo, sequenceInfo);
+    return new SequenceEntity(
+        dbName,
+        schemaName,
+        sequenceName,
+        incrementBy,
+        minValue,
+        maxValue,
+        cacheSize,
+        startValue,
+        cycle,
+        ownedBy);
   }
 }

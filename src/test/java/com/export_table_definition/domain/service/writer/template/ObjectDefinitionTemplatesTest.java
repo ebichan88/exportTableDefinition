@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 /** ObjectDefinitionTemplates の個別ファイル生成テスト */
 public class ObjectDefinitionTemplatesTest {
 
-  private final BaseInfoEntity base =
-      new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
 
   @Test
   @DisplayName("functionFile: 見出し・SQLコードブロック・一覧リンクを含む")
@@ -24,6 +23,9 @@ public class ObjectDefinitionTemplatesTest {
             "public",
             "f_add",
             "f_add",
+            "",
+            "",
+            "",
             "",
             "CREATE OR REPLACE FUNCTION public.f_add(a integer) RETURNS integer ...");
     String file = ObjectDefinitionTemplates.functionFile(f, base);
@@ -41,8 +43,13 @@ public class ObjectDefinitionTemplatesTest {
             "TEST_DB",
             "public",
             "seq_orders",
-            "unused",
-            "| 1 | 1 | 9223372036854775807 | 1 | 1 |  | orders.id |");
+            "1",
+            "1",
+            "9223372036854775807",
+            "1",
+            "1",
+            "",
+            "orders.id");
     String file = ObjectDefinitionTemplates.sequenceFile(s, base);
     assertTrue(file.startsWith("# seq_orders"));
     assertTrue(file.contains("## シーケンス情報"));
@@ -53,7 +60,7 @@ public class ObjectDefinitionTemplatesTest {
   @Test
   @DisplayName("typeFile: 見出し・定義表・一覧リンクを含む")
   void testTypeFile() {
-    var t = new TypeEntity("TEST_DB", "public", "mood", "ENUM", "unused", "sad, ok, happy");
+    var t = new TypeEntity("TEST_DB", "public", "mood", "ENUM", "sad, ok, happy");
     String file = ObjectDefinitionTemplates.typeFile(t, base);
     assertTrue(file.startsWith("# mood"));
     assertTrue(file.contains("## 定義"));

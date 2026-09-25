@@ -12,10 +12,13 @@ import com.export_table_definition.domain.model.entity.ColumnEntity;
 public record ColumnDto(
     String schemaName,
     String tableName,
-    String columnInfo,
+    String logicalColumnName,
     String physicalColumnName,
     String columnType,
-    String primaryKey) {
+    String precisionScale,
+    String primaryKey,
+    String notNull,
+    String defaultValue) {
 
   /**
    * DTOからEntityへの変換メソッド
@@ -24,6 +27,14 @@ public record ColumnDto(
    */
   public ColumnEntity toEntity() {
     return new ColumnEntity(
-        schemaName, tableName, columnInfo, physicalColumnName, columnType, primaryKey);
+        schemaName,
+        tableName,
+        logicalColumnName,
+        physicalColumnName,
+        columnType,
+        precisionScale,
+        primaryKey,
+        notNull,
+        defaultValue);
   }
 }

@@ -9,7 +9,13 @@ import com.export_table_definition.domain.model.entity.ConstraintEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record ConstraintDto(String schemaName, String tableName, String constraintInfo) {
+public record ConstraintDto(
+    String schemaName,
+    String tableName,
+    String constraintName,
+    String constraintType,
+    String constraintDefinition,
+    String remarks) {
 
   /**
    * DTOからEntityへの変換メソッド
@@ -17,6 +23,7 @@ public record ConstraintDto(String schemaName, String tableName, String constrai
    * @return AllConstraintEntityのインスタンス
    */
   public ConstraintEntity toEntity() {
-    return new ConstraintEntity(schemaName, tableName, constraintInfo);
+    return new ConstraintEntity(
+        schemaName, tableName, constraintName, constraintType, constraintDefinition, remarks);
   }
 }

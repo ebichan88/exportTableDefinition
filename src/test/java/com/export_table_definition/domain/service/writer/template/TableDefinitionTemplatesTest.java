@@ -21,16 +21,7 @@ public class TableDefinitionTemplatesTest {
 
   private TableEntity newTable(
       String schema, String physical, String logical, String type, String def) {
-    // tableInfo（テーブル定義書内の行）は末尾の備考セルをSQLで付与しないため「| 区分 |」で終わる
-    return new TableEntity(
-        "TEST_DB",
-        schema,
-        logical,
-        physical,
-        type,
-        "| 1 | " + schema + " | " + logical + " | " + physical + " | T | link | note |",
-        "| " + schema + " | " + logical + " | " + physical + " | T |",
-        def);
+    return new TableEntity("TEST_DB", schema, logical, physical, type, "", def);
   }
 
   @Test
@@ -44,9 +35,9 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("baseInfo: baseInfo の内容を含む")
   void testBaseInfo() {
-    var base = new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
     String txt = TableDefinitionTemplates.baseInfo(base);
-    assertTrue(txt.contains("| pg | TEST_DB | 2025-01-01 |"));
+    assertTrue(txt.contains("|pg|TEST_DB|2025-01-01|"));
   }
 
   @Test
@@ -54,7 +45,7 @@ public class TableDefinitionTemplatesTest {
   void testTableInfo() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     String info = TableDefinitionTemplates.tableInfo(table, TableAnnotation.EMPTY);
-    assertTrue(info.contains("| public | 受注 | orders |"));
+    assertTrue(info.contains("|public|受注|orders|table|"));
   }
 
   @Test
@@ -63,7 +54,7 @@ public class TableDefinitionTemplatesTest {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     var annotation = new TableAnnotation("", "個人情報|取扱\n注意", Map.of());
     String info = TableDefinitionTemplates.tableInfo(table, annotation);
-    assertTrue(info.contains("| public | 受注 | orders | T |個人情報\\|取扱<br>注意|"));
+    assertTrue(info.contains("|public|受注|orders|table|個人情報\\|取扱<br>注意|"));
   }
 
   @Test
@@ -87,25 +78,12 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("columns: schema.table が一致する行のみ含まれる")
   void testColumnsFiltered() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var match =
-        new ColumnEntity(
-            "public",
-            "orders",
-            "| 1 | 受注ID | order_id | int | Y | N |  |  |",
-            "order_id",
-            "int",
-            "○");
+    var match = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
     var other =
-        new ColumnEntity(
-            "other",
-            "customers",
-            "| 1 | 顧客ID | customer_id | int | Y | N |  |  |",
-            "customer_id",
-            "int",
-            "○");
+        new ColumnEntity("other", "customers", "顧客ID", "customer_id", "int", "", "○", "", "");
     String section =
         TableDefinitionTemplates.columns(List.of(match, other), table, TableAnnotation.EMPTY);
-    assertTrue(section.contains("| 1 | 受注ID | order_id | int |"));
+    assertTrue(section.contains("|1|受注ID|order_id|int|"));
     assertFalse(section.contains("顧客ID"));
   }
 
@@ -113,13 +91,10 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("columns: 物理カラム名をキーにサイドカーのカラム備考を末尾セルへ後付けする")
   void testColumnsWithAnnotation() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    // columnInfo は末尾の備考セルをSQLで付与しないため「| デフォルト |」で終わる
-    var match =
-        new ColumnEntity(
-            "public", "orders", "| 1 | 受注ID | order_id | int |  | ○ |  |", "order_id", "int", "○");
+    var match = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
     var annotation = new TableAnnotation("", "", Map.of("order_id", "受注の主キー|連番"));
     String section = TableDefinitionTemplates.columns(List.of(match), table, annotation);
-    assertTrue(section.contains("| 1 | 受注ID | order_id | int |  | ○ |  |受注の主キー\\|連番|"));
+    assertTrue(section.contains("|1|受注ID|order_id|int||○|||受注の主キー\\|連番|"));
   }
 
   @Test
@@ -142,8 +117,8 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("indexes: schema.table 一致行のみ")
   void testIndexesFiltered() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var idx1 = new IndexEntity("public", "orders", "| 1 | idx_orders_1 | order_id |");
-    var idx2 = new IndexEntity("other", "orders", "| 1 | idx_other | ... |");
+    var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", "", "", "", "");
+    var idx2 = new IndexEntity("other", "orders", "idx_other", "", "", "", "", "");
     String section = TableDefinitionTemplates.indexes(List.of(idx1, idx2), table);
     assertTrue(section.contains("idx_orders_1"));
     assertFalse(section.contains("idx_other"));
@@ -154,8 +129,9 @@ public class TableDefinitionTemplatesTest {
   void testConstraintsFiltered() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     var c1 =
-        new ConstraintEntity("public", "orders", "| 1 | pk_orders | PRIMARY KEY | (order_id) |");
-    var c2 = new ConstraintEntity("x", "y", "| 1 | pk_other | PRIMARY KEY | (id) |");
+        new ConstraintEntity(
+            "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");
+    var c2 = new ConstraintEntity("x", "y", "pk_other", "PRIMARY KEY", "PRIMARY KEY (id)", "");
     String section = TableDefinitionTemplates.constraints(List.of(c1, c2), table);
     assertTrue(section.contains("pk_orders"));
     assertFalse(section.contains("pk_other"));
@@ -167,20 +143,8 @@ public class TableDefinitionTemplatesTest {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     var fk1 =
         ForeignKeyFixtures.physical(
-            "public",
-            "orders",
-            "| 1 | fk_orders_customer | customer_id | customers | id |",
-            "fk_orders_customer",
-            "public",
-            "customers");
-    var fk2 =
-        ForeignKeyFixtures.physical(
-            "sales",
-            "orders",
-            "| 1 | fk_sales_orders | x | y | z |",
-            "fk_sales_orders",
-            "sales",
-            "y");
+            "public", "orders", "fk_orders_customer", "public", "customers");
+    var fk2 = ForeignKeyFixtures.physical("sales", "orders", "fk_sales_orders", "sales", "y");
     String section = TableDefinitionTemplates.foreignKeys(List.of(fk1, fk2), table);
     assertTrue(section.contains("fk_orders_customer"));
     assertFalse(section.contains("fk_sales_orders"));
@@ -192,16 +156,10 @@ public class TableDefinitionTemplatesTest {
     TableEntity table = newTable("public", "profiles", "プロフィール", "table", "");
     var fk =
         ForeignKeyFixtures.physical(
-            "public",
-            "profiles",
-            "| 1 | fk_profiles_user | user_id | users | id |",
-            "fk_profiles_user",
-            "public",
-            "users",
-            Cardinality.ONE_TO_ONE);
+            "public", "profiles", "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
     String section = TableDefinitionTemplates.foreignKeys(List.of(fk), table);
     assertTrue(section.contains("| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
-    assertTrue(section.contains("| 1 | fk_profiles_user | user_id | users | id |1対1|"));
+    assertTrue(section.contains("|1|fk_profiles_user|unused|public.users|unused|1対1|"));
   }
 
   @Test
@@ -212,14 +170,22 @@ public class TableDefinitionTemplatesTest {
         new TriggerEntity(
             "public",
             "orders",
-            "| 1 | public | orders | trg_orders | BEFORE | INSERT | public.f_orders |",
-            "| 1 | trg_orders | BEFORE | INSERT | ROW | CREATE TRIGGER trg_orders ... |");
+            "trg_orders",
+            "BEFORE",
+            "INSERT",
+            "ROW",
+            "public.f_orders",
+            "CREATE TRIGGER trg_orders ...");
     var t2 =
         new TriggerEntity(
             "sales",
             "orders",
-            "| 1 | sales | orders | trg_sales | AFTER | UPDATE | sales.f_sales |",
-            "| 1 | trg_sales | AFTER | UPDATE | ROW | CREATE TRIGGER trg_sales ... |");
+            "trg_sales",
+            "AFTER",
+            "UPDATE",
+            "ROW",
+            "sales.f_sales",
+            "CREATE TRIGGER trg_sales ...");
     String section = TableDefinitionTemplates.triggers(List.of(t1, t2), table);
     assertTrue(section.contains("## トリガー情報"));
     assertTrue(section.contains("trg_orders"));
@@ -239,14 +205,12 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 自テーブルの属性・PK表記と参照先/参照元の関係線が含まれる")
   void testErDiagramWithRelations() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column =
-        new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", "○");
     var outgoing =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var incoming =
-        ForeignKeyFixtures.physical(
-            "public", "items", "unused", "fk_items_orders", "public", "orders");
+        ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     String section =
         TableDefinitionTemplates.erDiagram(
             table, List.of(column), List.of(outgoing), List.of(incoming));
@@ -264,13 +228,11 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 参照先・参照元それぞれの多重度に応じた関係線を出力する")
   void testErDiagramCardinality() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column =
-        new ColumnEntity("public", "orders", "unused", "order_id", "character varying(20)", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", "○");
     var outgoing =
         ForeignKeyFixtures.physical(
             "public",
             "orders",
-            "unused",
             "fk_orders_coupon",
             "public",
             "coupons",
@@ -279,7 +241,6 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.physical(
             "public",
             "order_details",
-            "unused",
             "fk_details_orders",
             "public",
             "orders",
@@ -296,10 +257,10 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: データ型の桁数指定は除去される")
   void testErDiagramSanitizesType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "unused", "amount", "numeric(10,2)", "");
+    var column = new ColumnEntity("public", "orders", "amount", "numeric(10,2)", "");
     var outgoing =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     String section =
         TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing), List.of());
     assertTrue(section.contains("numeric amount"));
@@ -309,7 +270,7 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("footer: 一覧へのリンクが含まれる")
   void testFooter() {
-    var base = new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
     String footer = TableDefinitionTemplates.footer(base);
     assertTrue(footer.contains("[テーブル一覧へ](../../../tableList_TEST_DB.md)"));
     assertTrue(footer.startsWith("___"));
@@ -363,10 +324,10 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 論理リレーションは破線、物理外部キーは実線で描画する")
   void testErDiagramDistinguishesRelationType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "unused", "order_id", "int", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "int", "○");
     var physical =
         ForeignKeyFixtures.physical(
-            "public", "orders", "unused", "fk_orders_customer", "public", "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var logical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     String section =
@@ -381,7 +342,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 被参照側の論理リレーションも破線で描画する")
   void testErDiagramIncomingLogicalIsDashed() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "unused", "order_id", "int", "○");
+    var column = new ColumnEntity("public", "orders", "order_id", "int", "○");
     var incoming =
         ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_orders", "public", "orders");
     String section =

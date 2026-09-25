@@ -9,13 +9,13 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record BaseInfoDto(String dbName, String baseInfo) {
+public record BaseInfoDto(String dbName, String dbmsName, String generatedDate) {
   /**
    * DTOからEntityへの変換メソッド
    *
    * @return BaseInfoEntityのインスタンス
    */
   public BaseInfoEntity toEntity() {
-    return new BaseInfoEntity(dbName, baseInfo);
+    return new BaseInfoEntity(dbName, dbmsName, generatedDate);
   }
 }

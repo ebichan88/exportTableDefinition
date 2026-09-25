@@ -68,19 +68,11 @@ public class TableDefinitionWriterDomainServiceTest {
   private TableDefinitionWriterDomainService writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-24 |");
+    return new BaseInfoEntity("testdb", "pg", "2026-09-24");
   }
 
   private TableEntity table(String physical) {
-    return new TableEntity(
-        "testdb",
-        "public",
-        "受注",
-        physical,
-        "table",
-        "|1|public|受注|" + physical + "|table|[link](x)||",
-        "|public|受注|" + physical + "|table|",
-        "");
+    return new TableEntity("testdb", "public", "受注", physical, "table", "", "");
   }
 
   @BeforeEach
@@ -105,7 +97,7 @@ public class TableDefinitionWriterDomainServiceTest {
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# テーブル一覧（DB名：testdb）"));
-    assertTrue(content.contains("| pg | testdb | 2026-09-24 |"));
+    assertTrue(content.contains("|pg|testdb|2026-09-24|"));
     assertTrue(content.contains("## 関連ドキュメント"));
     assertTrue(content.contains("[ER図一覧](./erDiagramList_testdb.md)"));
     assertTrue(content.contains("|public|受注|orders|table|"));
@@ -141,24 +133,21 @@ public class TableDefinitionWriterDomainServiceTest {
   @DisplayName("writeTableDefinition: 解決されたパスに、カラム・インデックス・制約・外部キー・トリガー・ER図の全セクションを出力する")
   void testWriteTableDefinitionWritesAllSections() {
     TableEntity table = table("orders");
-    var column =
-        new ColumnEntity("public", "orders", "|1|受注ID|order_id|int|Y|N||", "order_id", "int", "○");
-    var index = new IndexEntity("public", "orders", "|1|idx_orders_1|order_id|");
+    var column = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "○", "");
+    var index =
+        new IndexEntity(
+            "public", "orders", "idx_orders_1", "btree", "", "", "CREATE INDEX ...", "");
     var constraint =
-        new ConstraintEntity("public", "orders", "|1|pk_orders|PRIMARY KEY|(order_id)|");
+        new ConstraintEntity(
+            "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");
     var outgoingFk =
         ForeignKeyFixtures.physical(
-            "public",
-            "orders",
-            "|1|fk_orders_customer|customer_id|customers|id|",
-            "fk_orders_customer",
-            "public",
-            "customers");
+            "public", "orders", "fk_orders_customer", "public", "customers");
     var incomingFk =
-        ForeignKeyFixtures.physical(
-            "public", "items", "unused", "fk_items_orders", "public", "orders");
+        ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var trigger =
-        new TriggerEntity("public", "orders", "unused", "|1|trg_orders|BEFORE|INSERT|ROW|...|");
+        new TriggerEntity(
+            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "public.f_orders", "...");
 
     var annotation = new TableAnnotation("受注を管理するテーブル", "個人情報を含む", Map.of("order_id", "受注の主キー"));
     var content =
@@ -205,6 +194,6 @@ public class TableDefinitionWriterDomainServiceTest {
     // サイドカー由来の付帯情報（テーブル説明・テーブル備考・カラム備考）がマージされる
     assertTrue(fileContent.contains("受注を管理するテーブル"));
     assertTrue(fileContent.contains("|public|受注|orders|table|個人情報を含む|"));
-    assertTrue(fileContent.contains("|1|受注ID|order_id|int|Y|N||受注の主キー|"));
+    assertTrue(fileContent.contains("|1|受注ID|order_id|int||○|○||受注の主キー|"));
   }
 }

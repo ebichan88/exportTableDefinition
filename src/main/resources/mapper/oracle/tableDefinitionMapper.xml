@@ -5,7 +5,8 @@
     <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
         SELECT
             SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
-            '|' || 'Oracle' || '|' || SYS_CONTEXT('USERENV','DB_NAME') || '|' || to_char(current_timestamp, 'yyyy/MM/dd') || '|' AS "baseInfo"
+            'Oracle' AS "dbmsName",
+            to_char(current_timestamp, 'yyyy/MM/dd') AS "generatedDate"
         FROM dual
         fetch first 1 rows only
     </select>
@@ -13,7 +14,8 @@
     <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
         <constructor>
             <arg column="dbName" javaType="String" />
-            <arg column="baseInfo" javaType="String" />
+            <arg column="dbmsName" javaType="String" />
+            <arg column="generatedDate" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -25,7 +27,6 @@
                 COALESCE(REGEXP_REPLACE(tcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t1.TABLE_NAME, '') AS physical_table_name,
                 '' AS remarks,
-                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t1.OWNER || '/table/' || t1.TABLE_NAME || '.md)' AS link,
                 NULL AS definition
             FROM ALL_TABLES t1
             LEFT OUTER JOIN ALL_MVIEWS m ON t1.OWNER = m.OWNER AND t1.TABLE_NAME = m.MVIEW_NAME
@@ -51,7 +52,6 @@
                 COALESCE(REGEXP_REPLACE(vcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t2.VIEW_NAME, '') AS physical_table_name,
                 '' AS remarks,
-                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t2.OWNER || '/view/' || t2.VIEW_NAME || '.md)' AS link,
                 '-- Oracleは未対応 --' AS definition
             FROM ALL_VIEWS t2
             LEFT OUTER JOIN ALL_TAB_COMMENTS vcom ON t2.OWNER = vcom.OWNER AND t2.VIEW_NAME = vcom.TABLE_NAME
@@ -75,7 +75,6 @@
                 COALESCE(REGEXP_REPLACE(mcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t3.MVIEW_NAME, '') AS physical_table_name,
                 '' AS remarks,
-                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t3.OWNER || '/materialized_view/' || t3.MVIEW_NAME || '.md)' AS link,
                 '-- Oracleは未対応 --' AS definition
             FROM ALL_MVIEWS t3
             LEFT OUTER JOIN ALL_TAB_COMMENTS mcom ON t3.OWNER = mcom.OWNER AND t3.MVIEW_NAME = mcom.TABLE_NAME
@@ -99,8 +98,7 @@
             logical_table_name AS "logicalTableName",
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
-            '|' || ROW_NUMBER() OVER (ORDER BY schema_name, physical_table_name) || '|' || schema_name || '|' || logical_table_name || '|' || physical_table_name || '|' || table_type || '|' || link || '|' || remarks || '|' AS "tableInfoList",
-            '|' || schema_name || '|' || logical_table_name || '|' || physical_table_name || '|' || table_type || '|' AS "tableInfo",
+            remarks AS "remarks",
             definition AS definition
         FROM ora_all_tables
         ORDER BY schema_name, physical_table_name
@@ -113,8 +111,7 @@
             <arg column="logicalTableName" javaType="String" />
             <arg column="physicalTableName" javaType="String" />
             <arg column="tableType" javaType="String" />
-            <arg column="tableInfoList" javaType="String" />
-            <arg column="tableInfo" javaType="String" />
+            <arg column="remarks" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>
@@ -170,10 +167,13 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            '|' || column_num || '|' || logical_column_name || '|' || physical_column_name || '|' || column_type || '|' || precision_scale || '|' || primary_key || '|' || not_null || '|' || default_value || '|' AS "columnInfo",
+            logical_column_name AS "logicalColumnName",
             physical_column_name AS "physicalColumnName",
             column_type AS "columnType",
-            primary_key AS "primaryKey"
+            precision_scale AS "precisionScale",
+            primary_key AS "primaryKey",
+            not_null AS "notNull",
+            default_value AS "defaultValue"
         FROM ora_all_columns
         ORDER BY schema_name, table_name, column_num
     </select>
@@ -182,10 +182,13 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="columnInfo" javaType="String" />
+            <arg column="logicalColumnName" javaType="String" />
             <arg column="physicalColumnName" javaType="String" />
             <arg column="columnType" javaType="String" />
+            <arg column="precisionScale" javaType="String" />
             <arg column="primaryKey" javaType="String" />
+            <arg column="notNull" javaType="String" />
+            <arg column="defaultValue" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -234,20 +237,26 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            CASE
-                WHEN index_name IS NOT NULL
-                    THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY index_name) || '|' || index_name || '|' || index_method || '|' || is_unique || '|' || is_primary || '|' || index_definition || '|' || remarks || '|'
-                ELSE NULL
-            END AS "indexInfo"
+            index_name AS "indexName",
+            index_method AS "indexMethod",
+            is_unique AS "isUnique",
+            is_primary AS "isPrimary",
+            index_definition AS "indexDefinition",
+            remarks AS "remarks"
         FROM ora_all_indexes
-        ORDER BY schema_name, table_name
+        ORDER BY schema_name, table_name, index_name
     </select>
 
     <resultMap id="IndexDtoMap" type="IndexDto">
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="indexInfo" javaType="String" />
+            <arg column="indexName" javaType="String" />
+            <arg column="indexMethod" javaType="String" />
+            <arg column="isUnique" javaType="String" />
+            <arg column="isPrimary" javaType="String" />
+            <arg column="indexDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -324,8 +333,10 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            constraints_definition,
-            '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY constraints_type, constraints_name) || '|' || constraints_name || '|' || constraints_type || '|' || constraints_definition || '|' || '' || '|' AS "constraintInfo"
+            constraints_name AS "constraintName",
+            constraints_type AS "constraintType",
+            constraints_definition AS "constraintDefinition",
+            '' AS "remarks"
         FROM ora_all_constraints
         ORDER BY schema_name, table_name, constraints_type, constraints_name
     </select>
@@ -334,7 +345,10 @@
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="constraintInfo" javaType="String" />
+            <arg column="constraintName" javaType="String" />
+            <arg column="constraintType" javaType="String" />
+            <arg column="constraintDefinition" javaType="String" />
+            <arg column="remarks" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -445,11 +459,6 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            CASE
-                WHEN foreignkey_name IS NOT NULL
-                    THEN '|' || ROW_NUMBER() OVER (PARTITION BY schema_name, table_name ORDER BY foreignkey_name) || '|' || foreignkey_name || '|' || column_names || '|' || reference_schema_name || '.' || reference_table_name || '|' || reference_column_names || '|'
-                ELSE NULL
-            END AS "foreignkeyInfo",
             foreignkey_name AS "foreignkeyName",
             column_names AS "columnNames",
             reference_schema_name AS "referenceSchemaName",
@@ -471,14 +480,13 @@
             END AS "childKeyMandatory"
         FROM ora_all_foreignkeys f
         WHERE column_names IS NOT NULL
-        ORDER BY schema_name, table_name
+        ORDER BY schema_name, table_name, foreignkey_name
     </select>
 
     <resultMap id="ForeignKeyDtoMap" type="ForeignKeyDto">
         <constructor>
             <arg column="schemaName" javaType="String" />
             <arg column="tableName" javaType="String" />
-            <arg column="foreignkeyInfo" javaType="String" />
             <arg column="foreignkeyName" javaType="String" />
             <arg column="columnNames" javaType="String" />
             <arg column="referenceSchemaName" javaType="String" />
