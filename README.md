@@ -120,16 +120,19 @@ exportTableDefinition
                  └─ export_table_definition
 ```
 
-## Releasesからダウンロードして使う（ビルド不要・Windows向け）
+## Releasesからダウンロードして使う（ビルド不要）
 
-開発環境を用意しなくても、[Releases](../../releases/tag/latest)から実行可能な形式一式をダウンロードしてすぐに使えます。mainブランチが更新される度に`latest`リリースの中身が自動的に最新化されます。
+開発環境を用意しなくても、[Releases](../../releases/tag/latest)から実行可能な形式一式をダウンロードしてすぐに使えます。mainブランチが更新される度に`latest`リリースの中身が自動的に最新化されます。Windows／Linux／macOSそれぞれ向けのzipを用意しています。
 
 ### 入手方法
 
-1. [Releases](../../releases/tag/latest)から`exportTableDefinition-windows.zip`をダウンロードする
+1. [Releases](../../releases/tag/latest)からOSに合ったzipをダウンロードする
+    * Windows: `exportTableDefinition-windows.zip`
+    * Linux: `exportTableDefinition-linux.zip`
+    * macOS: `exportTableDefinition-macos.zip`
 2. 好きな場所に展開する
 
-展開すると以下の構成になっています。
+展開すると以下の構成になっています（Windowsの例。Linux／macOSでは`run.bat`の代わりに`run.sh`が入っています）。
 
 ```
 exportTableDefinition-windows
@@ -145,14 +148,15 @@ Java実行環境（runtimeフォルダ）を同梱しているため、PCにJava
 
 ### 設定
 
-1. `conf\mybatis.properties.template`を`conf\mybatis.properties`にリネームし、接続先DBの情報を記載する（[mybatis.propertiesの記載内容](#mybatisproperties-の記載内容)を参照）
-2. 必要に応じて`conf\ExportTableDefinition.properties`を編集する（[ExportTableDefinition.propertiesの記載内容](#exporttabledefinitionproperties-の記載内容)を参照。未編集でも全スキーマ・全テーブルが`.\output`配下に出力される）
+1. `conf/mybatis.properties.template`を`conf/mybatis.properties`にリネームし、接続先DBの情報を記載する（[mybatis.propertiesの記載内容](#mybatisproperties-の記載内容)を参照）
+2. 必要に応じて`conf/ExportTableDefinition.properties`を編集する（[ExportTableDefinition.propertiesの記載内容](#exporttabledefinitionproperties-の記載内容)を参照。未編集でも全スキーマ・全テーブルが`./output`配下に出力される）
 
 ### 実行
 
-`run.bat`をダブルクリックする。コンソール画面が開いて処理が進み、完了すると`conf\ExportTableDefinition.properties`の`outputPath`（未指定の場合は実行フォルダ直下の`output`フォルダ）にMarkdown形式のテーブル定義書が出力される。
+* Windows: `run.bat`をダブルクリックする
+* Linux／macOS: ターミナルから`./run.sh`を実行する（`chmod +x run.sh`が必要な場合があります）
 
-※Windows専用です。Windows以外の環境ではビルドして[Usage](#usage)の手順でjarファイルを直接実行してください。
+コンソール画面が開いて処理が進み、完了すると`conf/ExportTableDefinition.properties`の`outputPath`（未指定の場合は実行フォルダ直下の`output`フォルダ）にMarkdown形式のテーブル定義書が出力される。
 
 ## Usage
 

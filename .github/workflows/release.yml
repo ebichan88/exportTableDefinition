@@ -14,8 +14,21 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    runs-on: windows-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            archive: exportTableDefinition-windows.zip
+          - os: ubuntu-latest
+            platform: linux
+            archive: exportTableDefinition-linux.zip
+          - os: macos-latest
+            platform: macos
+            archive: exportTableDefinition-macos.zip
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,16 +39,23 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Build with Gradle
+      - name: Build with Gradle (Windows)
+        if: matrix.platform == 'windows'
         shell: cmd
         run: gradlew.bat build
+
+      - name: Build with Gradle (Unix)
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: ./gradlew build
 
       # 依存ライブラリ（JDBCドライバ、log4j、Guice等）が実際に使用するJDKモジュールを検出する。
       # jdk.crypto.ec / jdk.charsets / jdk.unsupported はリフレクションやSPI経由で使われ
       # jdeps検出から漏れやすいため明示的に追加する（jdk.charsetsは日本語(Shift_JIS等)の
       # 文字コード対応に必須）。
-      - name: Detect required JDK modules
-        id: jdeps
+      - name: Detect required JDK modules (Windows)
+        if: matrix.platform == 'windows'
+        id: jdeps_windows
         shell: pwsh
         run: |
           $jar = "build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
@@ -44,20 +64,43 @@ jobs:
           Write-Host "Required modules: $modules"
           "modules=$modules" >> $env:GITHUB_OUTPUT
 
-      - name: Prepare release folder
-        shell: pwsh
-        run: New-Item -ItemType Directory -Force -Path release | Out-Null
+      - name: Detect required JDK modules (Unix)
+        if: matrix.platform != 'windows'
+        id: jdeps_unix
+        shell: bash
+        run: |
+          jar="build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
+          detected=$("$JAVA_HOME/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 21 "$jar" | tail -1 | tr -d '\r')
+          modules="$detected,jdk.crypto.ec,jdk.charsets,jdk.unsupported"
+          echo "Required modules: $modules"
+          echo "modules=$modules" >> "$GITHUB_OUTPUT"
 
-      - name: Build custom Java runtime (jlink)
+      - name: Prepare release folder
+        shell: bash
+        run: mkdir -p release
+
+      - name: Build custom Java runtime (jlink) (Windows)
+        if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           & "$env:JAVA_HOME\bin\jlink.exe" `
             --module-path "$env:JAVA_HOME\jmods" `
-            --add-modules "${{ steps.jdeps.outputs.modules }}" `
+            --add-modules "${{ steps.jdeps_windows.outputs.modules }}" `
             --strip-debug --no-header-files --no-man-pages --compress=2 `
             --output release/runtime
 
-      - name: Assemble release package
+      - name: Build custom Java runtime (jlink) (Unix)
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: |
+          "$JAVA_HOME/bin/jlink" \
+            --module-path "$JAVA_HOME/jmods" \
+            --add-modules "${{ steps.jdeps_unix.outputs.modules }}" \
+            --strip-debug --no-header-files --no-man-pages --compress=2 \
+            --output release/runtime
+
+      - name: Assemble release package (Windows)
+        if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           Copy-Item build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
@@ -65,17 +108,50 @@ jobs:
           Copy-Item README.md release/
           Copy-Item scripts/run.bat release/
 
-      - name: Create ZIP
+      - name: Assemble release package (Unix)
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: |
+          cp build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
+          cp -r build/libs/conf release/conf
+          cp README.md release/
+          cp scripts/run.sh release/
+          chmod +x release/run.sh release/runtime/bin/java
+
+      - name: Create ZIP (Windows)
+        if: matrix.platform == 'windows'
         shell: pwsh
-        run: Compress-Archive -Path release/* -DestinationPath exportTableDefinition-windows.zip -Force
+        run: Compress-Archive -Path release/* -DestinationPath ${{ matrix.archive }} -Force
+
+      - name: Create ZIP (Unix)
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: (cd release && zip -r "../${{ matrix.archive }}" .)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: ${{ matrix.archive }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
       - name: Publish/overwrite "latest" release
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest exportTableDefinition-windows.zip \
+          gh release create latest artifacts/*/*.zip \
             --title "Latest build ($(date -u +'%Y-%m-%d %H:%M UTC'))" \
-            --notes "main ブランチの最新コミット (${{ github.sha }}) から自動生成されたビルドです。Java実行環境なしでそのまま実行できます（run.bat を実行してください）。" \
+            --notes "main ブランチの最新コミット (${{ github.sha }}) から自動生成されたビルドです。Java実行環境なしでそのまま実行できます（Windowsはrun.bat、Linux/macOSはrun.shを実行してください）。" \
             --target "${{ github.sha }}"
