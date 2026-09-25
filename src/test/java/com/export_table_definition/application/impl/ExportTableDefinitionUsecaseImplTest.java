@@ -193,7 +193,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         };
         final DocumentDiffDomainService documentDiffDomainService = new DocumentDiffDomainService(fileRepository);
         usecase = new ExportTableDefinitionUsecaseImpl(repository, writer, erDiagramWriter, objectListWriter,
-                annotationRepository, documentDiffDomainService, fileRepository);
+                annotationRepository, documentDiffDomainService, fileRepository, pathResolver);
     }
 
     private TableEntity table(String schema, String physical) {

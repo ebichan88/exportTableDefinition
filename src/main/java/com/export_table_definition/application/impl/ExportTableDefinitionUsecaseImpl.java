@@ -1,16 +1,13 @@
 package com.export_table_definition.application.impl;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,6 +33,7 @@ import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.DocumentDiffDomainService;
+import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
@@ -50,7 +48,6 @@ import com.google.inject.Inject;
  */
 public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUsecase {
 
-    private static final String OUTPUT_BASE_DIRECTORY = "./output";
     private static final String CHECK_TEMP_DIR_PREFIX = "exportTableDefinition-check-";
     private static final Logger logger = LogManager.getLogger(ExportTableDefinitionUsecaseImpl.class);
     private final TableDefinitionRepository repository;
@@ -60,6 +57,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     private final AnnotationRepository annotationRepository;
     private final DocumentDiffDomainService documentDiffDomainService;
     private final FileRepository fileRepository;
+    private final OutputPathResolver outputPathResolver;
 
     /**
      * コンストラクタ
@@ -71,12 +69,14 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
      * @param annotationRepository      手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
      * @param documentDiffDomainService 生成ドキュメントとコミット済みドキュメントの比較を行うドメインサービス
      * @param fileRepository            差分比較用の一時ディレクトリの作成・削除に用いるファイルリポジトリ
+     * @param outputPathResolver        出力先パス解決クラス
      */
     @Inject
     public ExportTableDefinitionUsecaseImpl(TableDefinitionRepository repository,
             TableDefinitionWriterDomainService writer, ErDiagramWriterDomainService erDiagramWriter,
             ObjectListWriterDomainService objectListWriter, AnnotationRepository annotationRepository,
-            DocumentDiffDomainService documentDiffDomainService, FileRepository fileRepository) {
+            DocumentDiffDomainService documentDiffDomainService, FileRepository fileRepository,
+            OutputPathResolver outputPathResolver) {
         this.repository = repository;
         this.writer = writer;
         this.erDiagramWriter = erDiagramWriter;
@@ -84,6 +84,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         this.annotationRepository = annotationRepository;
         this.documentDiffDomainService = documentDiffDomainService;
         this.fileRepository = fileRepository;
+        this.outputPathResolver = outputPathResolver;
     }
 
     /**
@@ -93,7 +94,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     public void exportTableDefinition(List<String> targetSchemaList, List<String> targetTableList, String outputPath,
             int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList, String annotationPath) {
         // ベースディレクトリパス取得
-        final Path outputBaseDir = resolveOutputBaseDir(outputPath);
+        final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
         // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
         final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
         // 手動付帯情報（サイドカーYAML）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
@@ -171,7 +172,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     public DiffResult checkDocumentDiff(List<String> targetSchemaList, List<String> targetTableList,
             String outputPath, int chunkSize, int erDiagramMaxNodes, List<String> outputObjectList,
             String annotationPath) {
-        final Path committedDir = resolveOutputBaseDir(outputPath);
+        final Path committedDir = outputPathResolver.resolveBaseOutputDir(outputPath);
         final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
         try {
             exportTableDefinition(targetSchemaList, targetTableList, generatedDir.toString(), chunkSize,
@@ -180,18 +181,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         } finally {
             fileRepository.deleteDirectory(generatedDir);
         }
-    }
-
-    /**
-     * 出力先のベースディレクトリパスを解決するメソッド<br>
-     * 未指定・空白の場合は{@link #OUTPUT_BASE_DIRECTORY}にフォールバックする
-     *
-     * @param outputPath テーブル定義出力の出力先のパス
-     * @return 出力先のベースディレクトリパス
-     */
-    private Path resolveOutputBaseDir(String outputPath) {
-        return Optional.ofNullable(outputPath).filter(StringUtils::isNotBlank).map(Paths::get)
-                .orElse(Paths.get(OUTPUT_BASE_DIRECTORY));
     }
 
     /**

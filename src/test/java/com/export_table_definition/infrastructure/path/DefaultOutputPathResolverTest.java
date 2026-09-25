@@ -24,6 +24,27 @@ public class DefaultOutputPathResolverTest {
     }
 
     @Test
+    @DisplayName("resolveBaseOutputDir: 指定したパスをそのまま返す")
+    void testResolveBaseOutputDirUsesSpecifiedPath() {
+        Path result = resolver.resolveBaseOutputDir("custom_out");
+        assertEquals(Path.of("custom_out"), result);
+    }
+
+    @Test
+    @DisplayName("resolveBaseOutputDir: nullの場合は./outputへフォールバックする")
+    void testResolveBaseOutputDirFallbackWhenNull() {
+        Path result = resolver.resolveBaseOutputDir(null);
+        assertEquals(Path.of("./output"), result);
+    }
+
+    @Test
+    @DisplayName("resolveBaseOutputDir: 空白のみの場合も./outputへフォールバックする")
+    void testResolveBaseOutputDirFallbackWhenWhitespace() {
+        Path result = resolver.resolveBaseOutputDir("   ");
+        assertEquals(Path.of("./output"), result);
+    }
+
+    @Test
     @DisplayName("resolveTableDefinitionDirectory: {base}/{DB名}/{スキーマ名}/{テーブル種別}")
     void testResolveTableDefinitionDirectory() {
         Path result = resolver.resolveTableDefinitionDirectory(baseInfo, table("public", "orders", "table"), baseDir);
