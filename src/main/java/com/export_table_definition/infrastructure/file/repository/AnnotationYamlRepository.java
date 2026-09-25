@@ -69,12 +69,6 @@ public class AnnotationYamlRepository implements AnnotationRepository {
   private static final String KEY_NAME = "name";
   private static final String KEY_CARDINALITY = "cardinality";
 
-  /** 関連名が省略された場合に自動生成する名称の接尾辞（実在する制約名と紛れないようにする） */
-  private static final String LOGICAL_RELATION_NAME_SUFFIX = "_lrel";
-
-  /** 多重度が省略された場合の既定値。外部キーの関連として最も一般的な1対多とみなす */
-  private static final Cardinality DEFAULT_CARDINALITY = Cardinality.ONE_TO_MANY;
-
   /** {@inheritDoc} */
   @Override
   public Sidecar load(String annotationPath) {
@@ -193,7 +187,8 @@ public class AnnotationYamlRepository implements AnnotationRepository {
     return ForeignKeyEntity.logical(
         child.schema(),
         child.table(),
-        resolveRelationName(asString(relationMap.get(KEY_NAME)), child, childColumns),
+        ForeignKeyEntity.resolveLogicalRelationName(
+            asString(relationMap.get(KEY_NAME)), child.table(), childColumns),
         String.join(",", childColumns),
         parent.schema(),
         parent.table(),
@@ -202,24 +197,9 @@ public class AnnotationYamlRepository implements AnnotationRepository {
   }
 
   /**
-   * 論理リレーションの関連名を解決するメソッド<br>
-   * 未指定の場合は「テーブル名_列名_lrel」形式で自動生成する。 実在する外部キー制約名と紛れないよう、DBの慣例（{@code _fkey}等）とは異なる接尾辞を用いる
-   *
-   * @param name YAMLで指定された関連名（未指定可）
-   * @param child 参照元（子）テーブルのキー
-   * @param childColumns 参照元（子）の列名リスト
-   * @return 解決した関連名
-   */
-  private String resolveRelationName(String name, TableKey child, List<String> childColumns) {
-    if (name != null && !name.isBlank()) {
-      return name.trim();
-    }
-    return child.table() + "_" + String.join("_", childColumns) + LOGICAL_RELATION_NAME_SUFFIX;
-  }
-
-  /**
    * 論理リレーションの多重度を解決するメソッド<br>
-   * DBに制約が存在せず機械的に判定できないため、YAMLでの明示指定を優先し、 未指定・不正な指定の場合は既定値（1対多）を用いる
+   * DBに制約が存在せず機械的に判定できないため、YAMLでの明示指定を優先し、 未指定・不正な指定の場合は既定値（{@link
+   * Cardinality#DEFAULT_FOR_LOGICAL_RELATION}）を用いる。 未指定の場合は既定値へ黙って落とすが、不正な値が指定された場合は気付けるよう警告する
    *
    * @param label YAMLで指定された多重度のラベル（未指定可）
    * @param child 参照元（子）テーブルのキー（ログ用）
@@ -228,7 +208,7 @@ public class AnnotationYamlRepository implements AnnotationRepository {
    */
   private Cardinality resolveCardinality(String label, TableKey child, Path path) {
     if (label == null || label.isBlank()) {
-      return DEFAULT_CARDINALITY;
+      return Cardinality.DEFAULT_FOR_LOGICAL_RELATION;
     }
     return Cardinality.fromLabel(label)
         .orElseGet(
@@ -237,16 +217,17 @@ public class AnnotationYamlRepository implements AnnotationRepository {
                   "Ignoring unknown 'cardinality' and falling back to the default. "
                       + "[cardinality={}, default={}, table={}.{}, annotationPath={}]",
                   label,
-                  DEFAULT_CARDINALITY.getLabel(),
+                  Cardinality.DEFAULT_FOR_LOGICAL_RELATION.getLabel(),
                   child.schema(),
                   child.table(),
                   path);
-              return DEFAULT_CARDINALITY;
+              return Cardinality.DEFAULT_FOR_LOGICAL_RELATION;
             });
   }
 
   /**
-   * 「スキーマ.テーブル」形式のキー文字列を{@link TableKey}へ変換するメソッド
+   * 「スキーマ.テーブル」形式のキー文字列を{@link TableKey}へ変換するメソッド<br>
+   * 解析自体は{@link TableKey#parse}に委ね、ここでは解析失敗時の警告ログ（読み込み元のパス等の コンテキストを含む）のみを担う
    *
    * @param rawKey キー文字列
    * @param sectionKey 読み込み中のセクション名（ログ用）
@@ -254,26 +235,16 @@ public class AnnotationYamlRepository implements AnnotationRepository {
    * @return 変換したテーブルキー。形式が不正な場合はnull
    */
   private TableKey toTableKey(String rawKey, String sectionKey, Path path) {
-    if (rawKey == null || rawKey.isBlank() || !rawKey.contains(".")) {
-      logger.warn(
-          "Ignoring key not in 'schema.table' format. [key={}, section={}, annotationPath={}]",
-          rawKey,
-          sectionKey,
-          path);
-      return null;
-    }
-    final int separatorIndex = rawKey.indexOf('.');
-    final String schema = rawKey.substring(0, separatorIndex).trim();
-    final String table = rawKey.substring(separatorIndex + 1).trim();
-    if (schema.isEmpty() || table.isEmpty()) {
-      logger.warn(
-          "Ignoring key not in 'schema.table' format. [key={}, section={}, annotationPath={}]",
-          rawKey,
-          sectionKey,
-          path);
-      return null;
-    }
-    return TableKey.of(schema, table);
+    return TableKey.parse(rawKey)
+        .orElseGet(
+            () -> {
+              logger.warn(
+                  "Ignoring key not in 'schema.table' format. [key={}, section={}, annotationPath={}]",
+                  rawKey,
+                  sectionKey,
+                  path);
+              return null;
+            });
   }
 
   /**

@@ -170,6 +170,16 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 実在しないテーブル・カラムに対する付帯情報（リネーム・削除の見落とし）は警告ログで検知する。
 
+`AnnotationYamlRepository`はYAMLの読み込みと型変換に専念し、以下のドメインルールはドメイン層へ委ねる。
+
+- 「スキーマ.テーブル」形式のキー文字列の解析: `domain.model.value.TableKey#parse`
+- 論理リレーションの関連名が省略された場合の自動生成（「テーブル名_列名..._lrel」形式）:
+  `domain.model.entity.ForeignKeyEntity#resolveLogicalRelationName`
+- 論理リレーションの多重度の既定値（1対多）: `domain.model.type.Cardinality#DEFAULT_FOR_LOGICAL_RELATION`
+
+読み込み元のパス等、ログ出力に必要なコンテキストを持つ警告（未知の形式・未知の多重度ラベル等）のみ
+`AnnotationYamlRepository`側に残す。
+
 ### 論理リレーションの合流
 
 外部キー制約を張らないDBではカタログから読み取れる関連だけではER図がほとんど空になるため、

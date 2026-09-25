@@ -3,6 +3,7 @@ package com.export_table_definition.domain.model.value;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,5 +49,32 @@ public class TableKeyTest {
     TableKey base = TableKey.of("public", "orders");
     assertNotEquals(base, TableKey.of("sales", "orders"));
     assertNotEquals(base, TableKey.of("public", "customers"));
+  }
+
+  @Test
+  @DisplayName("parse: 'スキーマ.テーブル'形式を解析する。前後の空白はトリムする")
+  void testParseValid() {
+    assertEquals(Optional.of(TableKey.of("public", "orders")), TableKey.parse("public.orders"));
+    assertEquals(
+        Optional.of(TableKey.of("public", "orders")), TableKey.parse("  public . orders  "));
+  }
+
+  @Test
+  @DisplayName("parse: 最初のドットで分割する（テーブル名にドットが含まれる場合も対応）")
+  void testParseSplitsAtFirstDot() {
+    assertEquals(
+        Optional.of(TableKey.of("public", "v1.orders")), TableKey.parse("public.v1.orders"));
+  }
+
+  @Test
+  @DisplayName("parse: null・空白・ドット無し・トリム後にスキーマ/テーブル名が空の場合は空を返す")
+  void testParseInvalid() {
+    assertEquals(Optional.empty(), TableKey.parse(null));
+    assertEquals(Optional.empty(), TableKey.parse(""));
+    assertEquals(Optional.empty(), TableKey.parse("   "));
+    assertEquals(Optional.empty(), TableKey.parse("no_dot"));
+    assertEquals(Optional.empty(), TableKey.parse(".orders"));
+    assertEquals(Optional.empty(), TableKey.parse("public."));
+    assertEquals(Optional.empty(), TableKey.parse(" . "));
   }
 }

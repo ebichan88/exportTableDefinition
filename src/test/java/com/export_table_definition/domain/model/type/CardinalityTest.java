@@ -100,4 +100,10 @@ public class CardinalityTest {
     assertTrue(Cardinality.fromLabel("   ").isEmpty());
     assertTrue(Cardinality.fromLabel("多対多").isEmpty());
   }
+
+  @Test
+  @DisplayName("DEFAULT_FOR_LOGICAL_RELATION: 論理リレーションの既定値は1対多")
+  void testDefaultForLogicalRelation() {
+    assertEquals(Cardinality.ONE_TO_MANY, Cardinality.DEFAULT_FOR_LOGICAL_RELATION);
+  }
 }

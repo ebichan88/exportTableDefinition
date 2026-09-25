@@ -30,6 +30,12 @@ public enum Cardinality {
   /** 0..1対1。外部キー列はNULLを許容し一意 */
   OPTIONAL_ONE_TO_ONE("|o", "o|", "0..1対1");
 
+  /**
+   * 論理リレーションの多重度が省略された場合、または不正な値が指定された場合に用いる既定値<br>
+   * DBに制約が存在せず機械的に判定できないため、外部キーの関連として最も一般的な1対多とみなす
+   */
+  public static final Cardinality DEFAULT_FOR_LOGICAL_RELATION = ONE_TO_MANY;
+
   /** Mermaidの関連線のうち参照先（親）側の端点表記 */
   private final String parentNotation;
 

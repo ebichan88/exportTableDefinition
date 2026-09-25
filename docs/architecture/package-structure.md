@@ -32,7 +32,7 @@
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の外部キーのまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し） |
 | `domain.model.type` | `TableType`, `Cardinality`, `RelationType`, `OutputObjectType` | テーブル種別、外部キー多重度（1対1／1対多等）、関連の由来（物理＝FK制約／論理＝サイドカー宣言）、PostgreSQL固有出力対象種別のenum |
 | | `ListDocumentType` | 一覧ドキュメント（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー）の種別のenum。一覧ファイル名・個別定義ディレクトリ名の接頭辞とタイトルを持つ |
-| `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー） |
+| `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー）。`parse()`で「スキーマ.テーブル」形式の文字列を解析できる |
 | | `TableTargetFilter` | `table=`の絞り込みパターン（ワイルドカード・除外・スキーマ修飾）を判定する値オブジェクト |
 | | `TableTargetScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋`TableTargetFilter`）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する |
 | `domain.model.annotation` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション）を束ねるrecord |
