@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 /** ObjectDefinitionTemplates の個別ファイル生成テスト */
 public class ObjectDefinitionTemplatesTest {
 
-  private final BaseInfoEntity base =
-      new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
 
   @Test
   @DisplayName("functionFile: 見出し・SQLコードブロック・一覧リンクを含む")

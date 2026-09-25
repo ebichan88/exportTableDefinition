@@ -64,7 +64,7 @@ public class ObjectListWriterDomainServiceTest {
   private ObjectListWriterDomainService writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-24 |");
+    return new BaseInfoEntity("testdb", "pg", "2026-09-24");
   }
 
   @BeforeEach
@@ -96,7 +96,7 @@ public class ObjectListWriterDomainServiceTest {
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# トリガー一覧（DB名：testdb）"));
-    assertTrue(content.contains("| pg | testdb | 2026-09-24 |"));
+    assertTrue(content.contains("|pg|testdb|2026-09-24|"));
     assertTrue(content.contains("trg_orders"));
     assertTrue(content.contains("[テーブル一覧へ](./tableList_testdb.md)"));
   }

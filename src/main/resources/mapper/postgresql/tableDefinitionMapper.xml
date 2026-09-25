@@ -5,14 +5,16 @@
     <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
         SELECT
             current_database() AS "dbName",
-            concat('|', 'PostgreSQL', '|', current_database(), '|', to_char(current_timestamp, 'yyyy/MM/dd'), '|') AS "baseInfo"
+            'PostgreSQL' AS "dbmsName",
+            to_char(current_timestamp, 'yyyy/MM/dd') AS "generatedDate"
         fetch first 1 rows only;
     </select>
 
     <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
         <constructor>
             <arg column="dbName" javaType="String" />
-            <arg column="baseInfo" javaType="String" />
+            <arg column="dbmsName" javaType="String" />
+            <arg column="generatedDate" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -24,7 +26,6 @@
                 coalesce(regexp_replace(pg_catalog.obj_description(to_regclass(quote_ident(t1.schemaname) || '.' || quote_ident(t1.tablename))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t1.tablename, '') AS physical_table_name,
                 '' AS remarks,
-                concat('[■](./', current_database(), '/', t1.schemaname, '/table/', t1.tablename, '.md)') AS link,
                 '' AS definition
             FROM pg_catalog.pg_tables t1
             WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -47,7 +48,6 @@
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t2.schemaname) || '.' || quote_ident(t2.viewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t2.viewname, '') AS physical_table_name,
                 ' ' AS remarks,
-                concat('[■](./', current_database(), '/', t2.schemaname, '/view/', t2.viewname, '.md)') AS link,
                 definition AS definition
             FROM pg_catalog.pg_views t2
             WHERE t2.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -70,7 +70,6 @@
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t3.schemaname) || '.' || quote_ident(t3.matviewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t3.matviewname, '') AS physical_table_name,
                 ' ' AS remarks,
-                concat('[■](./', current_database(), '/', t3.schemaname, '/materialized_view/', t3.matviewname, '.md)') AS link,
                 definition AS definition
             FROM pg_catalog.pg_matviews t3
             WHERE t3.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -93,8 +92,7 @@
             logical_table_name AS "logicalTableName",
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
-            concat('|', row_number() over (ORDER BY schema_name, physical_table_name), '|', schema_name, '|', logical_table_name, '|', physical_table_name, '|', table_type, '|', link, '|', remarks, '|') AS "tableInfoList",
-            concat('|', schema_name, '|', logical_table_name, '|', physical_table_name, '|', table_type, '|') AS "tableInfo",
+            remarks AS "remarks",
             definition AS definition
         FROM all_tables
         ORDER BY schema_name, physical_table_name;
@@ -107,8 +105,7 @@
             <arg column="logicalTableName" javaType="String" />
             <arg column="physicalTableName" javaType="String" />
             <arg column="tableType" javaType="String" />
-            <arg column="tableInfoList" javaType="String" />
-            <arg column="tableInfo" javaType="String" />
+            <arg column="remarks" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>

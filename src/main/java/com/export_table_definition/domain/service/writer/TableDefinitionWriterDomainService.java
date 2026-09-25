@@ -67,7 +67,7 @@ public class TableDefinitionWriterDomainService {
             "テーブル情報",
             TableDefinitionListTemplates.tableListTableHeader(),
             tables,
-            (no, table) -> TableDefinitionListTemplates.tableListLine(table));
+            (no, table) -> TableDefinitionListTemplates.tableListLine(no, table));
     final PageLayout layout =
         new PageLayout(
             TableDefinitionListTemplates.fileHeader(baseInfo),

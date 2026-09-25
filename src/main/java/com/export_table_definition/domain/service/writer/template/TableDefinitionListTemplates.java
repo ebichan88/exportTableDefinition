@@ -74,10 +74,39 @@ public class TableDefinitionListTemplates {
   /**
    * テーブル一覧セクション（テーブル情報1行分）
    *
+   * @param no 行番号（1始まり）
    * @param table テーブル情報
    * @return テーブル一覧セクション文字列
    */
-  public static String tableListLine(TableEntity table) {
-    return table.tableInfoList() + LINE_SEPARATOR;
+  public static String tableListLine(int no, TableEntity table) {
+    return "|"
+        + no
+        + "|"
+        + table.schemaName()
+        + "|"
+        + table.logicalTableName()
+        + "|"
+        + table.physicalTableName()
+        + "|"
+        + table.tableType()
+        + "|"
+        + tableDefinitionLink(table)
+        + "|"
+        + table.remarks()
+        + "|"
+        + LINE_SEPARATOR;
+  }
+
+  /**
+   * テーブル定義書への相対パスをMarkdownのリンク記法で表す文字列を生成するメソッド<br>
+   * テーブル定義書は出力ベースディレクトリ直下に配置されるため、{@code ./{DB名}/{スキーマ名}/{区分}/{物理テーブル名}.md}となる
+   *
+   * @param table テーブル情報
+   * @return テーブル定義書へのリンク文字列
+   */
+  private static String tableDefinitionLink(TableEntity table) {
+    return String.format(
+        "[■](./%s/%s/%s/%s.md)",
+        table.dbName(), table.schemaName(), table.tableType(), table.physicalTableName());
   }
 }

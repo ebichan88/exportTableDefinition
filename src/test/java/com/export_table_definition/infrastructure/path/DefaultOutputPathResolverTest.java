@@ -13,10 +13,10 @@ public class DefaultOutputPathResolverTest {
 
   private final DefaultOutputPathResolver resolver = new DefaultOutputPathResolver();
   private final Path baseDir = Path.of("output");
-  private final BaseInfoEntity baseInfo = new BaseInfoEntity("testdb", "unused");
+  private final BaseInfoEntity baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
 
   private TableEntity table(String schema, String physical, String tableType) {
-    return new TableEntity("testdb", schema, "", physical, tableType, "", "", "");
+    return new TableEntity("testdb", schema, "", physical, tableType, "", "");
   }
 
   @Test

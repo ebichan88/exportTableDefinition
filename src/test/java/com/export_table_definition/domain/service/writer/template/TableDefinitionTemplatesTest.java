@@ -21,16 +21,7 @@ public class TableDefinitionTemplatesTest {
 
   private TableEntity newTable(
       String schema, String physical, String logical, String type, String def) {
-    // tableInfo（テーブル定義書内の行）は末尾の備考セルをSQLで付与しないため「| 区分 |」で終わる
-    return new TableEntity(
-        "TEST_DB",
-        schema,
-        logical,
-        physical,
-        type,
-        "| 1 | " + schema + " | " + logical + " | " + physical + " | T | link | note |",
-        "| " + schema + " | " + logical + " | " + physical + " | T |",
-        def);
+    return new TableEntity("TEST_DB", schema, logical, physical, type, "", def);
   }
 
   @Test
@@ -44,9 +35,9 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("baseInfo: baseInfo の内容を含む")
   void testBaseInfo() {
-    var base = new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
     String txt = TableDefinitionTemplates.baseInfo(base);
-    assertTrue(txt.contains("| pg | TEST_DB | 2025-01-01 |"));
+    assertTrue(txt.contains("|pg|TEST_DB|2025-01-01|"));
   }
 
   @Test
@@ -54,7 +45,7 @@ public class TableDefinitionTemplatesTest {
   void testTableInfo() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     String info = TableDefinitionTemplates.tableInfo(table, TableAnnotation.EMPTY);
-    assertTrue(info.contains("| public | 受注 | orders |"));
+    assertTrue(info.contains("|public|受注|orders|table|"));
   }
 
   @Test
@@ -63,7 +54,7 @@ public class TableDefinitionTemplatesTest {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     var annotation = new TableAnnotation("", "個人情報|取扱\n注意", Map.of());
     String info = TableDefinitionTemplates.tableInfo(table, annotation);
-    assertTrue(info.contains("| public | 受注 | orders | T |個人情報\\|取扱<br>注意|"));
+    assertTrue(info.contains("|public|受注|orders|table|個人情報\\|取扱<br>注意|"));
   }
 
   @Test
@@ -279,7 +270,7 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("footer: 一覧へのリンクが含まれる")
   void testFooter() {
-    var base = new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
     String footer = TableDefinitionTemplates.footer(base);
     assertTrue(footer.contains("[テーブル一覧へ](../../../tableList_TEST_DB.md)"));
     assertTrue(footer.startsWith("___"));

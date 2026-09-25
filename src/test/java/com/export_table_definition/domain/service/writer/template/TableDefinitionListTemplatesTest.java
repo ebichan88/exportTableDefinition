@@ -17,21 +17,11 @@ public class TableDefinitionListTemplatesTest {
   private static final String NL2 = NL + NL;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+    return new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
   }
 
-  private TableEntity newEntity(int no, String schema, String physical, String logical) {
-    String listRow =
-        "| " + no + " | " + schema + " | " + logical + " | " + physical + " | T | link | note |";
-    return new TableEntity(
-        "TEST_DB",
-        schema,
-        logical,
-        physical,
-        "table",
-        listRow,
-        "| " + schema + " | " + logical + " | " + physical + " | T | note |",
-        "");
+  private TableEntity newEntity(String schema, String physical, String logical, String remarks) {
+    return new TableEntity("TEST_DB", schema, logical, physical, "table", remarks, "");
   }
 
   @Test
@@ -53,7 +43,7 @@ public class TableDefinitionListTemplatesTest {
             + NL
             + "|:---|:---|:---|"
             + NL
-            + "| pg | TEST_DB | 2025-01-01 |"
+            + "|pg|TEST_DB|2025-01-01|"
             + NL
             + NL;
     String actual = TableDefinitionListTemplates.baseInfo(baseInfo());
@@ -73,11 +63,11 @@ public class TableDefinitionListTemplatesTest {
   }
 
   @Test
-  @DisplayName("tableListLine: 1行＋末尾改行のみ")
+  @DisplayName("tableListLine: 行番号・リンク・備考を含む1行＋末尾改行")
   void tableListLine_single() {
-    TableEntity e = newEntity(1, "public", "orders", "受注");
-    String expected = e.tableInfoList() + NL;
-    MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.tableListLine(e));
+    TableEntity e = newEntity("public", "orders", "受注", "note");
+    String expected = "|1|public|受注|orders|table|[■](./TEST_DB/public/table/orders.md)|note|" + NL;
+    MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.tableListLine(1, e));
   }
 
   @Test

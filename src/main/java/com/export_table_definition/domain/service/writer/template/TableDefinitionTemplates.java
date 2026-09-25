@@ -80,7 +80,15 @@ public class TableDefinitionTemplates {
                 | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | 備考 |
                 |:---|:---|:---|:---|:---|
                 """
-        + table.tableInfo()
+        + "|"
+        + table.schemaName()
+        + "|"
+        + table.logicalTableName()
+        + "|"
+        + table.physicalTableName()
+        + "|"
+        + table.tableType()
+        + "|"
         + MarkdownTemplateSupport.escapeTableCell(annotation.remarks())
         + "|"
         + LINE_SEPARATOR_DOUBLE;

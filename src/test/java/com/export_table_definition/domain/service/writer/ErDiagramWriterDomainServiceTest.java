@@ -76,11 +76,11 @@ public class ErDiagramWriterDomainServiceTest {
   }
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-23 |");
+    return new BaseInfoEntity("testdb", "pg", "2026-09-23");
   }
 
   private TableEntity table(String physical) {
-    return new TableEntity("testdb", "public", "", physical, "table", "", "", "");
+    return new TableEntity("testdb", "public", "", physical, "table", "", "");
   }
 
   private ForeignKeyEntity fk(String table, String name, String refTable) {

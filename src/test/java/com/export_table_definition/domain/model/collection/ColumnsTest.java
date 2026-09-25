@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class ColumnsTest {
 
   private TableEntity newTable(String schema, String physical) {
-    return new TableEntity("TEST_DB", schema, "", physical, "table", "", "", "");
+    return new TableEntity("TEST_DB", schema, "", physical, "table", "", "");
   }
 
   @Test

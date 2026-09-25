@@ -5,7 +5,8 @@
     <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
         SELECT
             SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
-            '|' || 'Oracle' || '|' || SYS_CONTEXT('USERENV','DB_NAME') || '|' || to_char(current_timestamp, 'yyyy/MM/dd') || '|' AS "baseInfo"
+            'Oracle' AS "dbmsName",
+            to_char(current_timestamp, 'yyyy/MM/dd') AS "generatedDate"
         FROM dual
         fetch first 1 rows only
     </select>
@@ -13,7 +14,8 @@
     <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
         <constructor>
             <arg column="dbName" javaType="String" />
-            <arg column="baseInfo" javaType="String" />
+            <arg column="dbmsName" javaType="String" />
+            <arg column="generatedDate" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -25,7 +27,6 @@
                 COALESCE(REGEXP_REPLACE(tcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t1.TABLE_NAME, '') AS physical_table_name,
                 '' AS remarks,
-                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t1.OWNER || '/table/' || t1.TABLE_NAME || '.md)' AS link,
                 NULL AS definition
             FROM ALL_TABLES t1
             LEFT OUTER JOIN ALL_MVIEWS m ON t1.OWNER = m.OWNER AND t1.TABLE_NAME = m.MVIEW_NAME
@@ -51,7 +52,6 @@
                 COALESCE(REGEXP_REPLACE(vcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t2.VIEW_NAME, '') AS physical_table_name,
                 '' AS remarks,
-                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t2.OWNER || '/view/' || t2.VIEW_NAME || '.md)' AS link,
                 '-- Oracleは未対応 --' AS definition
             FROM ALL_VIEWS t2
             LEFT OUTER JOIN ALL_TAB_COMMENTS vcom ON t2.OWNER = vcom.OWNER AND t2.VIEW_NAME = vcom.TABLE_NAME
@@ -75,7 +75,6 @@
                 COALESCE(REGEXP_REPLACE(mcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t3.MVIEW_NAME, '') AS physical_table_name,
                 '' AS remarks,
-                '[■](./' || SYS_CONTEXT('USERENV','DB_NAME') || '/' || t3.OWNER || '/materialized_view/' || t3.MVIEW_NAME || '.md)' AS link,
                 '-- Oracleは未対応 --' AS definition
             FROM ALL_MVIEWS t3
             LEFT OUTER JOIN ALL_TAB_COMMENTS mcom ON t3.OWNER = mcom.OWNER AND t3.MVIEW_NAME = mcom.TABLE_NAME
@@ -99,8 +98,7 @@
             logical_table_name AS "logicalTableName",
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
-            '|' || ROW_NUMBER() OVER (ORDER BY schema_name, physical_table_name) || '|' || schema_name || '|' || logical_table_name || '|' || physical_table_name || '|' || table_type || '|' || link || '|' || remarks || '|' AS "tableInfoList",
-            '|' || schema_name || '|' || logical_table_name || '|' || physical_table_name || '|' || table_type || '|' AS "tableInfo",
+            remarks AS "remarks",
             definition AS definition
         FROM ora_all_tables
         ORDER BY schema_name, physical_table_name
@@ -113,8 +111,7 @@
             <arg column="logicalTableName" javaType="String" />
             <arg column="physicalTableName" javaType="String" />
             <arg column="tableType" javaType="String" />
-            <arg column="tableInfoList" javaType="String" />
-            <arg column="tableInfo" javaType="String" />
+            <arg column="remarks" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>

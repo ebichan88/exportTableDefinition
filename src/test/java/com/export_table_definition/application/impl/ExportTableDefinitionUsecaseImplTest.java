@@ -185,8 +185,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
   private void setUp() {
     fileRepository = new InMemoryFileRepository();
-    repository =
-        new RecordingRepository(new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-24 |"));
+    repository = new RecordingRepository(new BaseInfoEntity("testdb", "pg", "2026-09-24"));
     final DefaultOutputPathResolver pathResolver = new DefaultOutputPathResolver();
     final PagedSectionWriter pagedSectionWriter = new PagedSectionWriter(fileRepository);
     final TableDefinitionWriterDomainService writer =
@@ -215,15 +214,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity(
-        "testdb",
-        schema,
-        "",
-        physical,
-        "table",
-        "|1|" + schema + "|" + physical + "|" + physical + "|table|[link](x)||",
-        "|" + schema + "||" + physical + "|table|",
-        "");
+    return new TableEntity("testdb", schema, "", physical, "table", "", "");
   }
 
   private String contentOf(Path path) {

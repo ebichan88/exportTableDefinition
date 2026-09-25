@@ -18,19 +18,11 @@ import org.junit.jupiter.api.Test;
 public class ErDiagramTemplatesTest {
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+    return new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
   }
 
   private TableEntity newTable(String schema, String physical, String logical) {
-    return new TableEntity(
-        "TEST_DB",
-        schema,
-        logical,
-        physical,
-        "table",
-        "| 1 | " + schema + " | " + logical + " | " + physical + " | T | link | note |",
-        "| " + schema + " | " + logical + " | " + physical + " | T | note |",
-        "");
+    return new TableEntity("TEST_DB", schema, logical, physical, "table", "", "");
   }
 
   private ForeignKeyEntity newFk(

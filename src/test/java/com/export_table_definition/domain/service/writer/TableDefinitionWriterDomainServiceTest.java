@@ -68,19 +68,11 @@ public class TableDefinitionWriterDomainServiceTest {
   private TableDefinitionWriterDomainService writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "| pg | testdb | 2026-09-24 |");
+    return new BaseInfoEntity("testdb", "pg", "2026-09-24");
   }
 
   private TableEntity table(String physical) {
-    return new TableEntity(
-        "testdb",
-        "public",
-        "受注",
-        physical,
-        "table",
-        "|1|public|受注|" + physical + "|table|[link](x)||",
-        "|public|受注|" + physical + "|table|",
-        "");
+    return new TableEntity("testdb", "public", "受注", physical, "table", "", "");
   }
 
   @BeforeEach
@@ -105,7 +97,7 @@ public class TableDefinitionWriterDomainServiceTest {
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# テーブル一覧（DB名：testdb）"));
-    assertTrue(content.contains("| pg | testdb | 2026-09-24 |"));
+    assertTrue(content.contains("|pg|testdb|2026-09-24|"));
     assertTrue(content.contains("## 関連ドキュメント"));
     assertTrue(content.contains("[ER図一覧](./erDiagramList_testdb.md)"));
     assertTrue(content.contains("|public|受注|orders|table|"));

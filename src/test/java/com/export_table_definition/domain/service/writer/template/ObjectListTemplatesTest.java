@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 /** ObjectListTemplates のセクション生成テスト */
 public class ObjectListTemplatesTest {
 
-  private final BaseInfoEntity base =
-      new BaseInfoEntity("TEST_DB", "| pg | TEST_DB | 2025-01-01 |");
+  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
 
   @Test
   @DisplayName("fileHeader: タイトルとDB名を含む")
@@ -24,7 +23,7 @@ public class ObjectListTemplatesTest {
   void testBaseInfo() {
     String section = ObjectListTemplates.baseInfo(base);
     assertTrue(section.startsWith("## 基本情報"));
-    assertTrue(section.contains("| pg | TEST_DB | 2025-01-01 |"));
+    assertTrue(section.contains("|pg|TEST_DB|2025-01-01|"));
   }
 
   @Test

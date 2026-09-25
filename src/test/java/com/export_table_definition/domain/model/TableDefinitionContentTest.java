@@ -31,13 +31,13 @@ import org.junit.jupiter.api.Test;
 public class TableDefinitionContentTest {
 
   private TableEntity newTable(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "", "", "");
+    return new TableEntity("testdb", schema, "", physical, "table", "", "");
   }
 
   @Test
   @DisplayName("assemble: 対象テーブルに属する情報のみを抽出し、他テーブルの情報は含まれない")
   void testAssembleExtractsOnlyTargetTableInformation() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused");
+    var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
     var target = newTable("public", "orders");
 
     var ownColumn = new ColumnEntity("public", "orders", "id", "int", "○");
@@ -101,7 +101,7 @@ public class TableDefinitionContentTest {
   @Test
   @DisplayName("assemble: 関連する情報が存在しない場合は空リストになる")
   void testAssembleWithNoRelatedInformationReturnsEmptyLists() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused");
+    var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
     var target = newTable("public", "empty_table");
 
     TableDefinitionContent content =
@@ -139,7 +139,7 @@ public class TableDefinitionContentTest {
 
     var content =
         TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused"),
+            new BaseInfoEntity("testdb", "unused", "unused"),
             table,
             Columns.of(List.of()),
             Indexes.of(List.of()),
@@ -166,7 +166,7 @@ public class TableDefinitionContentTest {
 
     var content =
         TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused"),
+            new BaseInfoEntity("testdb", "unused", "unused"),
             table,
             Columns.of(List.of()),
             Indexes.of(List.of()),
