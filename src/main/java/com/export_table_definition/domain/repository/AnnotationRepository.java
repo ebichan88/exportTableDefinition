@@ -11,12 +11,12 @@ import com.export_table_definition.domain.model.annotation.Sidecar;
  */
 public interface AnnotationRepository {
 
-    /**
-     * サイドカーの内容を読み込むメソッド<br>
-     * パスが未指定（null・空）の場合や、ファイルが存在しない場合は空の{@link Sidecar}を返す
-     *
-     * @param annotationPath サイドカーファイルのパス（未指定可）
-     * @return 読み込んだサイドカーの内容。無効な指定の場合は空のSidecar
-     */
-    Sidecar load(String annotationPath);
+  /**
+   * サイドカーの内容を読み込むメソッド<br>
+   * パスが未指定（null・空）の場合や、ファイルが存在しない場合は空の{@link Sidecar}を返す
+   *
+   * @param annotationPath サイドカーファイルのパス（未指定可）
+   * @return 読み込んだサイドカーの内容。無効な指定の場合は空のSidecar
+   */
+  Sidecar load(String annotationPath);
 }

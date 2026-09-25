@@ -1,4 +1,2 @@
-/**
- * Value Objects に関するパッケージ
- */
+/** Value Objects に関するパッケージ */
 package com.export_table_definition.domain.model.value;

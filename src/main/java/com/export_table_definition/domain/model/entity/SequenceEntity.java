@@ -7,6 +7,9 @@ package com.export_table_definition.domain.model.entity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record SequenceEntity(String dbName, String schemaName, String sequenceName, String sequenceListInfo,
-        String sequenceInfo) {
-}
+public record SequenceEntity(
+    String dbName,
+    String schemaName,
+    String sequenceName,
+    String sequenceListInfo,
+    String sequenceInfo) {}

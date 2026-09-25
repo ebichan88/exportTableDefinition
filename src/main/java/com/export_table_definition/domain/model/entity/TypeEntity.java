@@ -7,6 +7,10 @@ package com.export_table_definition.domain.model.entity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record TypeEntity(String dbName, String schemaName, String typeName, String typeCategory, String typeListInfo,
-        String definition) {
-}
+public record TypeEntity(
+    String dbName,
+    String schemaName,
+    String typeName,
+    String typeCategory,
+    String typeListInfo,
+    String definition) {}

@@ -9,14 +9,15 @@ import com.export_table_definition.domain.model.entity.TriggerEntity;
  * @version 1.0
  * @author takashi.ebina
  */
-public record TriggerDto(String schemaName, String tableName, String triggerListInfo, String triggerInfo) {
+public record TriggerDto(
+    String schemaName, String tableName, String triggerListInfo, String triggerInfo) {
 
-    /**
-     * DTOからEntityへの変換メソッド
-     *
-     * @return TriggerEntityのインスタンス
-     */
-    public TriggerEntity toEntity() {
-        return new TriggerEntity(schemaName, tableName, triggerListInfo, triggerInfo);
-    }
+  /**
+   * DTOからEntityへの変換メソッド
+   *
+   * @return TriggerEntityのインスタンス
+   */
+  public TriggerEntity toEntity() {
+    return new TriggerEntity(schemaName, tableName, triggerListInfo, triggerInfo);
+  }
 }
