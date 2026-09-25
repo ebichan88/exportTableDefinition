@@ -229,7 +229,7 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
 * 以下の3区分で報告します。
     * 生成側にのみ存在するもの（コミット漏れの可能性）
     * コミット側にのみ存在するもの（削除されたテーブル等の残骸の可能性）
-    * 両方に存在するが内容が一致しないもの
+    * 両方に存在するが内容が一致しないもの（unified diff形式で変更箇所を表示。詳細は次項）
 * 差分が1件でも見つかった場合、または比較処理自体が失敗した場合は終了コード`1`で終了します。差分がない場合は`0`で終了するため、CIのジョブをそのまま失敗させられます。
 * `outputPath`配下の`snapshot/`がまだ作成されていない場合（初回実行など）は、生成される全オブジェクトが「生成側にのみ存在するもの」として扱われ、差分ありと判定されます。
 * スナップショットは実行のたびに変わる「作成日」を含まないため、ドキュメントを生成した日と別の日に`--check`を実行しても、DBに変更が無ければ差分なしと判定されます。
@@ -237,6 +237,27 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
 * 関数・プロシージャは同名のもの（オーバーロード）を引数で区別するため、引数（デフォルト値を含む）を変更した場合は、変更前の関数の削除と変更後の関数の追加として報告されます。
 * DBからの取得は通常実行と同じく1回です。取得結果を一時ディレクトリへ出力して比較するため、比較対象のスナップショットの書き込み・読み込みの分だけ通常実行より処理が増えます。
 * `schema`/`table`/`chunkSize`/`erDiagramMaxNodes`/`outputObjects`/`annotationPath`といった設定は、通常実行と同様に適用されます。
+
+「両方に存在するが内容が一致しないもの」は、以下のように変更箇所をunified diff形式（`diff -u`やgitと同じ表記）で表示します。
+比較の前にJSONを1項目1行・配列は1要素1行へ整形しているため、行番号はファイル上のものではなく整形後のものです。
+
+```
+Content differs:
+ - table sample.employee
+
+--- committed/testdb/sample/tables.jsonl (table sample.employee)
++++ generated/testdb/sample/tables.jsonl (table sample.employee)
+@@ -8,6 +8,7 @@
+   "columns": [
+     {"name":"employee_id","type":"integer","primaryKey":true,"notNull":true}
+     {"name":"name","type":"character varying(100)","primaryKey":false,"notNull":true}
++    {"name":"nickname","type":"text","primaryKey":false,"notNull":false}
+   ]
+   "indexes": [
+```
+
+* 1オブジェクトあたり200行、全体で2000行を上限に表示します。超えた分は省略した旨のみ表示しますが、対象自体（`table sample.employee`等）はサマリに全件掲載されるため、見落としにはなりません。
+* diffは外部ライブラリを使わず自前で計算しています（Myers法）。
 
 > [!NOTE]
 > 以前のバージョンでは`outputSnapshot=false`（既定値）の場合、Markdownのドキュメント一式をファイル単位で比較していました。
@@ -374,7 +395,7 @@ jq等で機械的に扱えます。
 }
 ```
 
-* 1オブジェクト1行のJSON Lines形式のため、git上の差分がそのままオブジェクト単位の差分になります。1テーブル分の情報が1行にまとまっているため、行内のどこが変わったかは`git diff --word-diff`で確認すると読みやすくなります。
+* 1オブジェクト1行のJSON Lines形式のため、git上の差分がそのままオブジェクト単位の差分になります。1テーブル分の情報が1行にまとまっているため、行内のどこが変わったかは`git diff --word-diff`で確認すると読みやすくなります（`--check`では、変更箇所を項目単位のunified diffとして表示します）。
 * 出力したスナップショットをコミットしておくと、`--check`で差分検知に利用できます（[DB vs ドキュメントの差分検知](#db-vs-ドキュメントの差分検知--checkモード)を参照）。
 * 値が無い項目（コメント未設定の論理名、外部キーを持たないテーブルの`foreignKeys`等）は出力を省略します。真偽値の項目（`primaryKey`・`notNull`等）は`false`も出力します。
 * 実行のたびに変わる「作成日」は含めません。DBに変更が無ければ、何度実行しても同じ内容になります。
