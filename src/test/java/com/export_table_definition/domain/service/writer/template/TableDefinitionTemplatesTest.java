@@ -83,32 +83,29 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
-  @DisplayName("columns: schema.table が一致する行のみ含まれる")
-  void testColumnsFiltered() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var match = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
-    var other =
-        new ColumnEntity("other", "customers", "顧客ID", "customer_id", "int", "", "○", "", "");
+  @DisplayName("columns: 渡されたカラムを1から採番して出力する")
+  void testColumns() {
+    var first = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
+    var second =
+        new ColumnEntity("public", "orders", "顧客ID", "customer_id", "int", "", "", "○", "");
     String section =
-        TableDefinitionTemplates.columns(List.of(match, other), table, TableAnnotation.EMPTY);
+        TableDefinitionTemplates.columns(List.of(first, second), TableAnnotation.EMPTY);
     assertTrue(section.contains("|1|受注ID|order_id|int|"));
-    assertFalse(section.contains("顧客ID"));
+    assertTrue(section.contains("|2|顧客ID|customer_id|int|"));
   }
 
   @Test
   @DisplayName("columns: 物理カラム名をキーにサイドカーのカラム備考を末尾セルへ後付けする")
   void testColumnsWithAnnotation() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
     var match = new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", "○", "", "");
     var annotation = new TableAnnotation("", "", Map.of("order_id", "受注の主キー|連番"));
-    String section = TableDefinitionTemplates.columns(List.of(match), table, annotation);
+    String section = TableDefinitionTemplates.columns(List.of(match), annotation);
     assertTrue(section.contains("|1|受注ID|order_id|int||○|||受注の主キー\\|連番|"));
   }
 
   @Test
   @DisplayName("columns: 論理名（DBコメント由来）・デフォルト値に含まれる|・改行は表を崩さないようエスケープする")
   void testColumnsEscapesLogicalNameAndDefaultValue() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
     var column =
         new ColumnEntity(
             "public",
@@ -120,8 +117,7 @@ public class TableDefinitionTemplatesTest {
             "",
             "○",
             "'ORD-' || nextval('orders_seq')");
-    String section =
-        TableDefinitionTemplates.columns(List.of(column), table, TableAnnotation.EMPTY);
+    String section = TableDefinitionTemplates.columns(List.of(column), TableAnnotation.EMPTY);
     assertTrue(
         section.contains(
             "|1|受注コード\\|旧:伝票番号<br>(廃止予定)|order_code|text|||○|'ORD-' \\|\\| nextval('orders_seq')||"));
@@ -144,58 +140,53 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
-  @DisplayName("indexes: schema.table 一致行のみ")
-  void testIndexesFiltered() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
+  @DisplayName("indexes: 渡されたインデックスを1から採番して出力する")
+  void testIndexes() {
     var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", "", "", "", "");
-    var idx2 = new IndexEntity("other", "orders", "idx_other", "", "", "", "", "");
-    String section = TableDefinitionTemplates.indexes(List.of(idx1, idx2), table);
-    assertTrue(section.contains("idx_orders_1"));
-    assertFalse(section.contains("idx_other"));
+    var idx2 = new IndexEntity("public", "orders", "idx_orders_2", "", "", "", "", "");
+    String section = TableDefinitionTemplates.indexes(List.of(idx1, idx2));
+    assertTrue(section.contains("|1|idx_orders_1|"));
+    assertTrue(section.contains("|2|idx_orders_2|"));
   }
 
   @Test
-  @DisplayName("constraints: schema.table 一致行のみ")
-  void testConstraintsFiltered() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
+  @DisplayName("constraints: 渡された制約を1から採番して出力する")
+  void testConstraints() {
     var c1 =
         new ConstraintEntity(
             "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");
-    var c2 = new ConstraintEntity("x", "y", "pk_other", "PRIMARY KEY", "PRIMARY KEY (id)", "");
-    String section = TableDefinitionTemplates.constraints(List.of(c1, c2), table);
-    assertTrue(section.contains("pk_orders"));
-    assertFalse(section.contains("pk_other"));
+    var c2 = new ConstraintEntity("public", "orders", "uq_orders", "UNIQUE", "UNIQUE (code)", "");
+    String section = TableDefinitionTemplates.constraints(List.of(c1, c2));
+    assertTrue(section.contains("|1|pk_orders|PRIMARY KEY|"));
+    assertTrue(section.contains("|2|uq_orders|UNIQUE|"));
   }
 
   @Test
-  @DisplayName("foreignKeys: schema.table 一致行のみ")
-  void testForeignKeysFiltered() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
+  @DisplayName("foreignKeys: 渡された外部キーを1から採番して出力する")
+  void testForeignKeys() {
     var fk1 =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
-    var fk2 = ForeignKeyFixtures.physical("sales", "orders", "fk_sales_orders", "sales", "y");
-    String section = TableDefinitionTemplates.foreignKeys(List.of(fk1, fk2), table);
-    assertTrue(section.contains("fk_orders_customer"));
-    assertFalse(section.contains("fk_sales_orders"));
+    var fk2 = ForeignKeyFixtures.physical("public", "orders", "fk_orders_staff", "public", "staff");
+    String section = TableDefinitionTemplates.foreignKeys(List.of(fk1, fk2));
+    assertTrue(section.contains("|1|fk_orders_customer|"));
+    assertTrue(section.contains("|2|fk_orders_staff|"));
   }
 
   @Test
   @DisplayName("foreignKeys: 行の末尾に多重度の列を追加する")
   void testForeignKeysCardinalityColumn() {
-    TableEntity table = newTable("public", "profiles", "プロフィール", "table", "");
     var fk =
         ForeignKeyFixtures.physical(
             "public", "profiles", "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
-    String section = TableDefinitionTemplates.foreignKeys(List.of(fk), table);
+    String section = TableDefinitionTemplates.foreignKeys(List.of(fk));
     assertTrue(section.contains("| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
     assertTrue(section.contains("|1|fk_profiles_user|unused|public.users|unused|1対1|"));
   }
 
   @Test
-  @DisplayName("triggers: schema.table 一致行のみ")
-  void testTriggersFiltered() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
+  @DisplayName("triggers: 渡されたトリガーを1から採番して出力する")
+  void testTriggers() {
     var t1 =
         new TriggerEntity(
             "public",
@@ -208,24 +199,23 @@ public class TableDefinitionTemplatesTest {
             "CREATE TRIGGER trg_orders ...");
     var t2 =
         new TriggerEntity(
-            "sales",
+            "public",
             "orders",
-            "trg_sales",
+            "trg_orders_audit",
             "AFTER",
             "UPDATE",
             "ROW",
-            "sales.f_sales",
-            "CREATE TRIGGER trg_sales ...");
-    String section = TableDefinitionTemplates.triggers(List.of(t1, t2), table);
+            "public.f_audit",
+            "CREATE TRIGGER trg_orders_audit ...");
+    String section = TableDefinitionTemplates.triggers(List.of(t1, t2));
     assertTrue(section.contains("## トリガー情報"));
-    assertTrue(section.contains("trg_orders"));
-    assertFalse(section.contains("trg_sales"));
+    assertTrue(section.contains("|1|trg_orders|"));
+    assertTrue(section.contains("|2|trg_orders_audit|"));
   }
 
   @Test
   @DisplayName("indexes/constraints/triggers: 定義に含まれる|は表を崩さないようエスケープする")
   void testDefinitionsEscapePipe() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
     var idx =
         new IndexEntity(
             "public",
@@ -250,29 +240,25 @@ public class TableDefinitionTemplatesTest {
             "public.f_orders",
             "CREATE TRIGGER trg_orders WHEN ((new.a || new.b) IS NOT NULL)");
     assertTrue(
-        TableDefinitionTemplates.indexes(List.of(idx), table)
-            .contains("USING btree (((a \\|\\| b)))|"));
+        TableDefinitionTemplates.indexes(List.of(idx)).contains("USING btree (((a \\|\\| b)))|"));
     assertTrue(
-        TableDefinitionTemplates.constraints(List.of(c), table)
+        TableDefinitionTemplates.constraints(List.of(c))
             .contains("|CHECK ((code ~ '^(A\\|B)$'::text))|"));
     assertTrue(
-        TableDefinitionTemplates.triggers(List.of(t), table)
+        TableDefinitionTemplates.triggers(List.of(t))
             .contains("WHEN ((new.a \\|\\| new.b) IS NOT NULL)|"));
   }
 
   @Test
   @DisplayName("indexes/constraints: 備考（DBコメント由来）に含まれる|・改行は表を崩さないようエスケープする")
   void testRemarksEscapeTableCell() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
     var idx =
         new IndexEntity(
             "public", "orders", "idx_orders_code", "btree", "", "", "", "運用メモ|旧インデックス\n(削除予定)");
     var c = new ConstraintEntity("public", "orders", "chk_code", "CHECK", "", "運用メモ|注意事項\n(要確認)");
     assertTrue(
-        TableDefinitionTemplates.indexes(List.of(idx), table)
-            .contains("|運用メモ\\|旧インデックス<br>(削除予定)|"));
-    assertTrue(
-        TableDefinitionTemplates.constraints(List.of(c), table).contains("|運用メモ\\|注意事項<br>(要確認)|"));
+        TableDefinitionTemplates.indexes(List.of(idx)).contains("|運用メモ\\|旧インデックス<br>(削除予定)|"));
+    assertTrue(TableDefinitionTemplates.constraints(List.of(c)).contains("|運用メモ\\|注意事項<br>(要確認)|"));
   }
 
   @Test
@@ -362,7 +348,6 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("logicalRelations: 論理リレーションを専用セクションに、セクション内で1から採番して出力する")
   void testLogicalRelationsSection() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
     var rel1 =
         ForeignKeyFixtures.logical(
             "public",
@@ -383,7 +368,7 @@ public class TableDefinitionTemplatesTest {
             "coupons",
             "code",
             Cardinality.OPTIONAL_ONE_TO_ONE);
-    String section = TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2), table);
+    String section = TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2));
 
     assertTrue(section.contains("## 論理リレーション情報"));
     assertTrue(section.contains("※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。"));
@@ -396,11 +381,7 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("logicalRelations: 対象が存在しない場合はセクションごと出力しない")
   void testLogicalRelationsSectionOmittedWhenEmpty() {
-    TableEntity table = newTable("public", "orders", "受注", "table", "");
-    assertEquals("", TableDefinitionTemplates.logicalRelations(List.of(), table));
-    // 他テーブルの論理リレーションしか無い場合も出力しない
-    var other = ForeignKeyFixtures.logical("public", "items", "rel_items_staff", "public", "staff");
-    assertEquals("", TableDefinitionTemplates.logicalRelations(List.of(other), table));
+    assertEquals("", TableDefinitionTemplates.logicalRelations(List.of()));
   }
 
   @Test

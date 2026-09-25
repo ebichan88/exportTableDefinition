@@ -4,14 +4,13 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
 
+import com.export_table_definition.domain.model.collection.ForeignKeyGroup;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.value.TableKey;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -114,42 +113,35 @@ public class ErDiagramTemplates {
    * tableList_{DB名}.md}側に掲載されている）。<br>
    * ノード数が上限を超える場合はMermaidの描画を諦め、その旨のメッセージのみを返す （代替として掲載する外部キー一覧は呼び出し側が組み立てる）
    *
-   * @param foreignKeys 当該スキーマに関連する外部キー情報のリスト
-   * @param nodes 図のノードとなるテーブルキーのリスト
+   * @param group 図に描画する外部キーのまとまり
    * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
    * @return ER図セクション文字列
    */
-  public static String erDiagram(
-      List<ForeignKeyEntity> foreignKeys, List<TableKey> nodes, int maxNodes) {
+  public static String erDiagram(ForeignKeyGroup group, int maxNodes) {
     StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
-    if (foreignKeys.isEmpty()) {
+    if (group.foreignKeys().isEmpty()) {
       return sb.append("外部キーによる関連を持つテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
     }
-    if (isOverflow(nodes.size(), maxNodes)) {
+    if (group.exceeds(maxNodes)) {
       return sb.append(
               String.format(
                   "ER図に描画するテーブル数が%d件となり、上限（erDiagramMaxNodes = %d件）を超えるため描画を省略しました。",
-                  nodes.size(), maxNodes))
+                  group.nodeCount(), maxNodes))
           .append(LINE_SEPARATOR)
           .append("代わりに外部キーによる関連を一覧で掲載します。")
           .append(LINE_SEPARATOR_DOUBLE)
           .toString();
     }
-    final Map<TableKey, String> ids = assignNodeIds(nodes);
+    final Map<TableKey, String> ids = assignNodeIds(group.nodes());
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
     // 参照先（親） → 参照元（子） の向きは、テーブル単位のER図の表記と揃える
-    foreignKeys.forEach(
-        fk ->
-            sb.append("    ")
-                .append(ids.get(fk.referenceTableKey()))
-                .append(' ')
-                .append(fk.cardinality().getNotation(fk.relationType()))
-                .append(' ')
-                .append(ids.get(fk.tableKey()))
-                .append(" : \"")
-                .append(fk.foreignkeyName())
-                .append('"')
-                .append(LINE_SEPARATOR));
+    group
+        .foreignKeys()
+        .forEach(
+            fk ->
+                sb.append(
+                    MermaidSupport.relationLine(
+                        ids.get(fk.referenceTableKey()), fk, ids.get(fk.tableKey()))));
     return sb.append("```").append(LINE_SEPARATOR_DOUBLE).toString();
   }
 
@@ -231,36 +223,6 @@ public class ErDiagramTemplates {
             "[スキーマのER図へ](./erDiagram_%s_%s.md) [ER図一覧へ](./erDiagramList_%s.md) [テーブル一覧へ](./tableList_%s.md)",
             baseInfo.dbName(), schemaName, baseInfo.dbName(), baseInfo.dbName())
         + LINE_SEPARATOR;
-  }
-
-  /**
-   * 図のノードとなるテーブルを取得するメソッド<br>
-   * 外部キーの両端のテーブルを収集し、図中の箱を名前から引けるようスキーマ名・テーブル名の順に並べる
-   *
-   * @param foreignKeys 外部キー情報のリスト
-   * @return ノードとなるテーブルキーのリスト
-   */
-  public static List<TableKey> diagramNodes(List<ForeignKeyEntity> foreignKeys) {
-    final Set<TableKey> nodeKeys = new LinkedHashSet<>();
-    foreignKeys.forEach(
-        fk -> {
-          nodeKeys.add(fk.tableKey());
-          nodeKeys.add(fk.referenceTableKey());
-        });
-    return nodeKeys.stream()
-        .sorted(Comparator.comparing(TableKey::schema).thenComparing(TableKey::table))
-        .toList();
-  }
-
-  /**
-   * ノード数が上限を超えているか判定するメソッド
-   *
-   * @param nodeCount ノード数
-   * @param maxNodes ノード数の上限。0以下の場合は上限なし
-   * @return 上限を超えている場合はtrue
-   */
-  public static boolean isOverflow(int nodeCount, int maxNodes) {
-    return maxNodes > 0 && nodeCount > maxNodes;
   }
 
   /**

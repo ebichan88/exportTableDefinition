@@ -104,15 +104,13 @@ public class TableDefinitionWriterDomainService {
             TableDefinitionTemplates.baseInfo(content.baseInfo()), // 基本情報
             TableDefinitionTemplates.tableExplanation(content.annotation()), // テーブル説明
             TableDefinitionTemplates.tableInfo(content.table(), content.annotation()), // テーブル情報
-            TableDefinitionTemplates.columns(
-                content.columns(), content.table(), content.annotation()), // カラム情報
+            TableDefinitionTemplates.columns(content.columns(), content.annotation()), // カラム情報
             TableDefinitionTemplates.view(content.table()), // View情報
-            TableDefinitionTemplates.indexes(content.indexes(), content.table()), // インデックス情報
-            TableDefinitionTemplates.constraints(content.constraints(), content.table()), // 制約情報
-            TableDefinitionTemplates.foreignKeys(content.foreignKeys(), content.table()), // 外部キー情報
-            TableDefinitionTemplates.logicalRelations(
-                content.logicalRelations(), content.table()), // 論理リレーション情報
-            TableDefinitionTemplates.triggers(content.triggers(), content.table()), // トリガー情報
+            TableDefinitionTemplates.indexes(content.indexes()), // インデックス情報
+            TableDefinitionTemplates.constraints(content.constraints()), // 制約情報
+            TableDefinitionTemplates.foreignKeys(content.foreignKeys()), // 外部キー情報
+            TableDefinitionTemplates.logicalRelations(content.logicalRelations()), // 論理リレーション情報
+            TableDefinitionTemplates.triggers(content.triggers()), // トリガー情報
             TableDefinitionTemplates.erDiagram(
                 content.table(),
                 content.columns(),

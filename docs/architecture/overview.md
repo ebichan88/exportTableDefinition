@@ -79,8 +79,9 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 
 ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）はREADME
 （[../../README.md](../../README.md) の「ER図」節）に詳しい。実装は
-`ErDiagramWriterDomainService` と `domain.model.collection.ForeignKeyGroups`（連結成分の算出）、
-`domain.model.type.Cardinality`（多重度判定）が中心。
+`ErDiagramWriterDomainService`（書き込みの段取り）と `domain.model.collection.ForeignKeyGroup`
+（1枚の図のノード算出・上限超過の判定）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
+まとめ直し）、`domain.model.type.Cardinality`（多重度判定）が中心。
 
 ## スキーマのスナップショット（中間表現）
 

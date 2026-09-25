@@ -27,7 +27,8 @@
 |---|---|---|
 | `domain.model` | `TableDefinitionContent` | 1テーブル分の定義書出力に必要な情報を束ねるrecord（`assemble()`で組み立て） |
 | `domain.model.entity` | `BaseInfoEntity`, `TableEntity`, `ColumnEntity`, `ConstraintEntity`, `ForeignKeyEntity`, `IndexEntity`, `TriggerEntity`, `FunctionEntity`, `SequenceEntity`, `TypeEntity` | DBから取得したメタ情報を表すrecord群。`SchemaTableKeyed`はスキーマ名・テーブル名を持つ共通IFで、所属テーブルの`TableKey`を`tableKey()`で返す（`ForeignKeyEntity`は参照先の`referenceTableKey()`も持つ） |
-| `domain.model.collection` | `Columns`, `Constraints`, `ForeignKeys`, `Indexes`, `Triggers`, `AbstractEntities`, `ForeignKeyGroups` | エンティティのリストをラップし、テーブル単位の絞り込み等を提供するコレクションクラス群。`ForeignKeys`は物理外部キーと論理リレーションを同一集合として保持し、`physicalOf`/`logicalOf`で由来ごとに取り出せる。`ForeignKeyGroups`は外部キーの連結成分（ER図の分割単位）を算出する |
+| `domain.model.collection` | `Columns`, `Constraints`, `ForeignKeys`, `Indexes`, `Triggers`, `AbstractEntities` | エンティティのリストをラップし、テーブル単位の絞り込み等を提供するコレクションクラス群。`ForeignKeys`は物理外部キーと論理リレーションを同一集合として保持し、`physicalOf`/`logicalOf`で由来ごとに取り出せる |
+| | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の外部キーのまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し） |
 | `domain.model.type` | `TableType`, `Cardinality`, `RelationType`, `OutputObjectType` | テーブル種別、外部キー多重度（1対1／1対多等）、関連の由来（物理＝FK制約／論理＝サイドカー宣言）、PostgreSQL固有出力対象種別のenum |
 | `domain.model.value` | `TableKey` | スキーマ名+テーブル名の値オブジェクト（付帯情報とテーブル実体の突合キー） |
 | `domain.model.annotation` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション）を束ねるrecord |
@@ -58,7 +59,7 @@
 | | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
 | | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |
 | | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理 |
-| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群 |
+| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群。表の行を含むMarkdownの描画はすべてここで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない |
 | | `MarkdownTemplateSupport`, `MermaidSupport` | テンプレート共通部品、Mermaid記法変換ユーティリティ |
 
 ## infrastructure層

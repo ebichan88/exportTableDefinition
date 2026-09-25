@@ -13,7 +13,6 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス
@@ -100,13 +99,11 @@ public class TableDefinitionTemplates {
    * 論理名（DBコメント）・デフォルト値（DBのデフォルト式。PostgreSQLの{@code ||}連結等で{@code |}を含みうる）は、
    * いずれも自由記述文字列で改行を含む場合もあるためエスケープする
    *
-   * @param columns カラム情報のリスト
-   * @param table テーブル情報
+   * @param columns 当該テーブルのカラム情報のリスト
    * @param annotation テーブルの手動付帯情報
    * @return カラム情報セクション文字列
    */
-  public static String columns(
-      List<ColumnEntity> columns, TableEntity table, TableAnnotation annotation) {
+  public static String columns(List<ColumnEntity> columns, TableAnnotation annotation) {
     String header =
         """
                 ## カラム情報
@@ -117,7 +114,6 @@ public class TableDefinitionTemplates {
     // 末尾の備考セルはSQL由来ではないため、物理カラム名をキーにサイドカー由来の備考を後付けする
     return tableSection(
         columns,
-        table,
         header,
         (no, c) ->
             "|"
@@ -139,8 +135,7 @@ public class TableDefinitionTemplates {
                 + "|"
                 + MarkdownTemplateSupport.escapeTableCell(
                     annotation.columnRemark(c.physicalColumnName()))
-                + "|",
-        ColumnEntity::getSchemaTableName);
+                + "|");
   }
 
   /**
@@ -172,11 +167,10 @@ public class TableDefinitionTemplates {
    * インデックス情報セクション<br>
    * 備考はDBコメント（{@code COMMENT ON INDEX}）由来の自由記述文字列のためエスケープする
    *
-   * @param indexes インデックス情報のリスト
-   * @param table テーブル情報
+   * @param indexes 当該テーブルのインデックス情報のリスト
    * @return インデックス情報セクション文字列
    */
-  public static String indexes(List<IndexEntity> indexes, TableEntity table) {
+  public static String indexes(List<IndexEntity> indexes) {
     String header =
         """
                 ## インデックス情報
@@ -186,7 +180,6 @@ public class TableDefinitionTemplates {
                 """;
     return tableSection(
         indexes,
-        table,
         header,
         (no, idx) ->
             "|"
@@ -203,19 +196,17 @@ public class TableDefinitionTemplates {
                 + MarkdownTemplateSupport.escapePipe(idx.indexDefinition())
                 + "|"
                 + MarkdownTemplateSupport.escapeTableCell(idx.remarks())
-                + "|",
-        IndexEntity::getSchemaTableName);
+                + "|");
   }
 
   /**
    * 制約情報セクション<br>
    * 備考はDBコメント（{@code COMMENT ON CONSTRAINT}）由来の自由記述文字列のためエスケープする
    *
-   * @param constraints 制約情報のリスト
-   * @param table テーブル情報
+   * @param constraints 当該テーブルの制約情報のリスト
    * @return 制約情報セクション文字列
    */
-  public static String constraints(List<ConstraintEntity> constraints, TableEntity table) {
+  public static String constraints(List<ConstraintEntity> constraints) {
     String header =
         """
                 ## 制約情報
@@ -225,7 +216,6 @@ public class TableDefinitionTemplates {
                 """;
     return tableSection(
         constraints,
-        table,
         header,
         (no, c) ->
             "|"
@@ -238,18 +228,16 @@ public class TableDefinitionTemplates {
                 + MarkdownTemplateSupport.escapePipe(c.constraintDefinition())
                 + "|"
                 + MarkdownTemplateSupport.escapeTableCell(c.remarks())
-                + "|",
-        ConstraintEntity::getSchemaTableName);
+                + "|");
   }
 
   /**
    * 外部キー情報セクション
    *
-   * @param foreignkeys 外部キー情報のリスト
-   * @param table テーブル情報
+   * @param foreignkeys 当該テーブルの外部キー情報のリスト
    * @return 外部キー情報セクション文字列
    */
-  public static String foreignKeys(List<ForeignKeyEntity> foreignkeys, TableEntity table) {
+  public static String foreignKeys(List<ForeignKeyEntity> foreignkeys) {
     String header =
         """
                 ## 外部キー情報
@@ -257,26 +245,7 @@ public class TableDefinitionTemplates {
                 | No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
                 |:---|:---|:---|:---|:---|:---|
                 """;
-    // 行番号・多重度はここで組み立てる。多重度のラベル表記をCardinalityに集約するため
-    return tableSection(
-        foreignkeys,
-        table,
-        header,
-        (no, fk) ->
-            "|"
-                + no
-                + "|"
-                + fk.foreignkeyName()
-                + "|"
-                + fk.columnNames()
-                + "|"
-                + fk.getReferenceSchemaTableName()
-                + "|"
-                + fk.referenceColumnNames()
-                + "|"
-                + fk.cardinality().getLabel()
-                + "|",
-        ForeignKeyEntity::getSchemaTableName);
+    return tableSection(foreignkeys, header, TableDefinitionTemplates::relationTableLine);
   }
 
   /**
@@ -284,58 +253,57 @@ public class TableDefinitionTemplates {
    * DBに外部キー制約が存在せず、サイドカーYAMLで宣言された関連のみを掲載する。 読み手が「DBに制約がある」と誤読しないよう外部キー情報とは別セクションとし、注意書きを添える。
    * 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）
    *
-   * @param logicalRelations 論理リレーションのリスト
-   * @param table テーブル情報
+   * @param logicalRelations 当該テーブルの論理リレーションのリスト
    * @return 論理リレーション情報セクション文字列。対象が存在しない場合は空文字
    */
-  public static String logicalRelations(
-      List<ForeignKeyEntity> logicalRelations, TableEntity table) {
-    final List<ForeignKeyEntity> targets =
-        logicalRelations.stream()
-            .filter(relation -> relation.getSchemaTableName().equals(table.getSchemaTableName()))
-            .toList();
-    if (targets.isEmpty()) {
+  public static String logicalRelations(List<ForeignKeyEntity> logicalRelations) {
+    if (logicalRelations.isEmpty()) {
       return "";
     }
-    final StringBuilder sb =
-        new StringBuilder("## 論理リレーション情報")
-            .append(LINE_SEPARATOR_DOUBLE)
-            .append("※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。")
-            .append(LINE_SEPARATOR_DOUBLE)
-            .append(
-                """
-                        | No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
-                        |:---|:---|:---|:---|:---|:---|
-                        """);
-    // 物理外部キーの行番号はSQLのrow_number()が振るが、論理リレーションは当セクション内で1から振り直す
-    for (int i = 0; i < targets.size(); i++) {
-      final ForeignKeyEntity relation = targets.get(i);
-      sb.append('|')
-          .append(i + 1)
-          .append('|')
-          .append(relation.foreignkeyName())
-          .append('|')
-          .append(relation.columnNames())
-          .append('|')
-          .append(relation.getReferenceSchemaTableName())
-          .append('|')
-          .append(relation.referenceColumnNames())
-          .append('|')
-          .append(relation.cardinality().getLabel())
-          .append('|')
-          .append(LINE_SEPARATOR);
-    }
-    return sb.append(LINE_SEPARATOR).toString();
+    final String header =
+        "## 論理リレーション情報"
+            + LINE_SEPARATOR_DOUBLE
+            + "※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。"
+            + LINE_SEPARATOR_DOUBLE
+            + """
+                | No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+                |:---|:---|:---|:---|:---|:---|
+                """;
+    // 物理外部キーの行番号とは独立に、当セクション内で1から採番する
+    return tableSection(logicalRelations, header, TableDefinitionTemplates::relationTableLine);
+  }
+
+  /**
+   * 外部キー・論理リレーションの1行分を生成するメソッド<br>
+   * 多重度のラベル表記は{@link com.export_table_definition.domain.model.type.Cardinality}に集約している
+   *
+   * @param no 行番号
+   * @param fk 外部キーまたは論理リレーション
+   * @return 1行分の文字列（改行を含まない）
+   */
+  private static String relationTableLine(int no, ForeignKeyEntity fk) {
+    return "|"
+        + no
+        + "|"
+        + fk.foreignkeyName()
+        + "|"
+        + fk.columnNames()
+        + "|"
+        + fk.getReferenceSchemaTableName()
+        + "|"
+        + fk.referenceColumnNames()
+        + "|"
+        + fk.cardinality().getLabel()
+        + "|";
   }
 
   /**
    * トリガー情報セクション
    *
-   * @param triggers トリガー情報のリスト
-   * @param table テーブル情報
+   * @param triggers 当該テーブルのトリガー情報のリスト
    * @return トリガー情報セクション文字列
    */
-  public static String triggers(List<TriggerEntity> triggers, TableEntity table) {
+  public static String triggers(List<TriggerEntity> triggers) {
     String header =
         """
                 ## トリガー情報
@@ -345,7 +313,6 @@ public class TableDefinitionTemplates {
                 """;
     return tableSection(
         triggers,
-        table,
         header,
         (no, t) ->
             "|"
@@ -360,8 +327,7 @@ public class TableDefinitionTemplates {
                 + t.orientation()
                 + "|"
                 + MarkdownTemplateSupport.escapePipe(t.triggerDefinition())
-                + "|",
-        TriggerEntity::getSchemaTableName);
+                + "|");
   }
 
   /**
@@ -388,28 +354,16 @@ public class TableDefinitionTemplates {
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
     outgoingFks.forEach(
         fk ->
-            sb.append("    ")
-                .append(MermaidSupport.mermaidId(fk.referenceSchemaName(), fk.referenceTableName()))
-                .append(' ')
-                .append(fk.cardinality().getNotation(fk.relationType()))
-                .append(' ')
-                .append(selfId)
-                .append(" : \"")
-                .append(fk.foreignkeyName())
-                .append('"')
-                .append(LINE_SEPARATOR));
+            sb.append(
+                MermaidSupport.relationLine(
+                    MermaidSupport.mermaidId(fk.referenceSchemaName(), fk.referenceTableName()),
+                    fk,
+                    selfId)));
     incomingFks.forEach(
         fk ->
-            sb.append("    ")
-                .append(selfId)
-                .append(' ')
-                .append(fk.cardinality().getNotation(fk.relationType()))
-                .append(' ')
-                .append(MermaidSupport.mermaidId(fk.schemaName(), fk.tableName()))
-                .append(" : \"")
-                .append(fk.foreignkeyName())
-                .append('"')
-                .append(LINE_SEPARATOR));
+            sb.append(
+                MermaidSupport.relationLine(
+                    selfId, fk, MermaidSupport.mermaidId(fk.schemaName(), fk.tableName()))));
     sb.append("    ").append(selfId).append(" {").append(LINE_SEPARATOR);
     columns.forEach(
         c ->
@@ -436,32 +390,23 @@ public class TableDefinitionTemplates {
 
   /**
    * テーブルごとのセクションを生成する共通メソッド<br>
-   * 行番号は当該テーブルに絞り込んだ後のリスト内での位置（1始まり）から採番する
+   * 行番号はリスト内での位置（1始まり）から採番する。当該テーブルへの絞り込みは{@link
+   * com.export_table_definition.domain.model.TableDefinitionContent#assemble}で済んでいる前提とする
    *
    * @param <T> エンティティの型
-   * @param list エンティティのリスト
-   * @param table テーブル情報
+   * @param list 当該テーブルのエンティティのリスト
    * @param header セクションのヘッダー文字列
    * @param lineMapper 行番号とエンティティから1行分の文字列を生成する関数
-   * @param schemaTableNameGetter エンティティからスキーマ名とテーブル名を結合した文字列を取得する関数
    * @return テーブルごとのセクション文字列
    */
   private static <T> String tableSection(
-      List<T> list,
-      TableEntity table,
-      String header,
-      BiFunction<Integer, T, String> lineMapper,
-      Function<T, String> schemaTableNameGetter) {
-    final List<T> filtered =
-        list.stream()
-            .filter(e -> schemaTableNameGetter.apply(e).equals(table.getSchemaTableName()))
-            .toList();
+      List<T> list, String header, BiFunction<Integer, T, String> lineMapper) {
     final StringBuilder sb = new StringBuilder(header);
-    for (int i = 0; i < filtered.size(); i++) {
+    for (int i = 0; i < list.size(); i++) {
       if (i > 0) {
         sb.append(LINE_SEPARATOR);
       }
-      sb.append(lineMapper.apply(i + 1, filtered.get(i)));
+      sb.append(lineMapper.apply(i + 1, list.get(i)));
     }
     return sb.append(LINE_SEPARATOR_DOUBLE).toString();
   }

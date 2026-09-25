@@ -3,6 +3,10 @@ package com.export_table_definition.domain.service.writer.template;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.model.entity.SequenceEntity;
+import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.entity.TypeEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -59,10 +63,48 @@ public class ObjectListTemplatesTest {
   }
 
   @Test
-  @DisplayName("listLine: SQL側で組み立てた行に改行を付与する")
-  void testListLine() {
-    String row = "| 1 | public | orders | trg_orders | BEFORE | INSERT | public.f_orders |";
-    assertEquals(row + System.lineSeparator(), ObjectListTemplates.listLine(row));
+  @DisplayName("triggerListLine: 行番号付きで1行分を出力し、末尾に改行を付与する")
+  void testTriggerListLine() {
+    var trigger =
+        new TriggerEntity(
+            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "public.f_orders", "");
+    assertEquals(
+        "|1|public|orders|trg_orders|BEFORE|INSERT|public.f_orders|" + System.lineSeparator(),
+        ObjectListTemplates.triggerListLine(1, trigger));
+  }
+
+  @Test
+  @DisplayName("functionListLine: 引数・戻り値の|をエスケープし、個別定義へのリンクを付ける")
+  void testFunctionListLine() {
+    var function =
+        new FunctionEntity(
+            "TEST_DB", "public", "concat", "concat_2", "FUNCTION", "a text|b", "text", "sql", "");
+    assertEquals(
+        "|2|public|FUNCTION|concat|a text\\|b|text|sql|[■](./TEST_DB/public/function/concat_2.md)|"
+            + System.lineSeparator(),
+        ObjectListTemplates.functionListLine(2, function));
+  }
+
+  @Test
+  @DisplayName("sequenceListLine: シーケンスの属性と個別定義へのリンクを出力する")
+  void testSequenceListLine() {
+    var sequence =
+        new SequenceEntity(
+            "TEST_DB", "public", "seq_orders", "10", "1", "999", "20", "1", "○", "orders.id");
+    assertEquals(
+        "|1|public|seq_orders|10|1|999|20|1|○|orders.id|[■](./TEST_DB/public/sequence/seq_orders.md)|"
+            + System.lineSeparator(),
+        ObjectListTemplates.sequenceListLine(1, sequence));
+  }
+
+  @Test
+  @DisplayName("typeListLine: 定義の|をエスケープし、個別定義へのリンクを付ける")
+  void testTypeListLine() {
+    var type = new TypeEntity("TEST_DB", "public", "delimiter", "ENUM", "|, ,");
+    assertEquals(
+        "|1|public|delimiter|ENUM|\\|, ,|[■](./TEST_DB/public/type/delimiter.md)|"
+            + System.lineSeparator(),
+        ObjectListTemplates.typeListLine(1, type));
   }
 
   @Test
