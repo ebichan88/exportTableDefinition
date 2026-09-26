@@ -1,11 +1,11 @@
 package com.export_table_definition.infrastructure.path;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -47,36 +47,36 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
 
   /** {@inheritDoc} */
   @Override
-  public Path resolveTableDefinitionDirectory(
-      BaseInfoEntity baseInfo, TableEntity table, Path baseOutputDir) {
-    return resolveTableDefinitionFile(baseInfo, table, baseOutputDir).getParent();
+  public Path resolveTableDefinitionDirectory(OutputRoot root, TableEntity table) {
+    return resolveTableDefinitionFile(root, table).getParent();
   }
 
   /** {@inheritDoc} */
   @Override
-  public Path resolveTableDefinitionFile(
-      BaseInfoEntity baseInfo, TableEntity table, Path baseOutputDir) {
-    return baseOutputDir.resolve(DocumentLocations.tableDefinitionFile(baseInfo.dbName(), table));
+  public Path resolveTableDefinitionFile(OutputRoot root, TableEntity table) {
+    return root.baseDir()
+        .resolve(DocumentLocations.tableDefinitionFile(root.baseInfo().dbName(), table));
   }
 
   /** {@inheritDoc} */
   @Override
-  public Path resolveListFile(BaseInfoEntity baseInfo, Path baseOutputDir, ListDocumentType type) {
-    return baseOutputDir.resolve(DocumentLocations.listFile(type, baseInfo.dbName()));
+  public Path resolveListFile(OutputRoot root, ListDocumentType type) {
+    return root.baseDir().resolve(DocumentLocations.listFile(type, root.baseInfo().dbName()));
   }
 
   /** {@inheritDoc} */
   @Override
-  public Path resolveErDiagramFile(BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName) {
-    return baseOutputDir.resolve(DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName));
+  public Path resolveErDiagramFile(OutputRoot root, String schemaName) {
+    return root.baseDir()
+        .resolve(DocumentLocations.erDiagramFile(root.baseInfo().dbName(), schemaName));
   }
 
   /** {@inheritDoc} */
   @Override
-  public Path resolveErDiagramGroupFile(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, int groupNo) {
-    return baseOutputDir.resolve(
-        DocumentLocations.erDiagramGroupFile(baseInfo.dbName(), schemaName, groupNo));
+  public Path resolveErDiagramGroupFile(OutputRoot root, String schemaName, int groupNo) {
+    return root.baseDir()
+        .resolve(
+            DocumentLocations.erDiagramGroupFile(root.baseInfo().dbName(), schemaName, groupNo));
   }
 
   /** {@inheritDoc} */
@@ -89,21 +89,19 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   /** {@inheritDoc} */
   @Override
   public Path resolveSchemaObjectDirectory(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, ListDocumentType kind) {
-    return baseOutputDir.resolve(
-        DocumentLocations.schemaObjectDirectory(baseInfo.dbName(), schemaName, kind));
+      OutputRoot root, String schemaName, ListDocumentType kind) {
+    return root.baseDir()
+        .resolve(
+            DocumentLocations.schemaObjectDirectory(root.baseInfo().dbName(), schemaName, kind));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveSchemaObjectFile(
-      BaseInfoEntity baseInfo,
-      Path baseOutputDir,
-      String schemaName,
-      ListDocumentType kind,
-      String name) {
-    return baseOutputDir.resolve(
-        DocumentLocations.schemaObjectFile(baseInfo.dbName(), schemaName, kind, name));
+      OutputRoot root, String schemaName, ListDocumentType kind, String name) {
+    return root.baseDir()
+        .resolve(
+            DocumentLocations.schemaObjectFile(root.baseInfo().dbName(), schemaName, kind, name));
   }
 
   /** {@inheritDoc} */
@@ -114,18 +112,17 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
 
   /** {@inheritDoc} */
   @Override
-  public Path resolveSnapshotDatabaseFile(BaseInfoEntity baseInfo, Path baseOutputDir) {
-    return resolveSnapshotDirectory(baseOutputDir)
-        .resolve(baseInfo.dbName())
+  public Path resolveSnapshotDatabaseFile(OutputRoot root) {
+    return resolveSnapshotDirectory(root.baseDir())
+        .resolve(root.baseInfo().dbName())
         .resolve(SNAPSHOT_DATABASE_FILENAME);
   }
 
   /** {@inheritDoc} */
   @Override
-  public Path resolveSnapshotFile(
-      BaseInfoEntity baseInfo, Path baseOutputDir, String schemaName, SnapshotKind kind) {
-    return resolveSnapshotDirectory(baseOutputDir)
-        .resolve(baseInfo.dbName())
+  public Path resolveSnapshotFile(OutputRoot root, String schemaName, SnapshotKind kind) {
+    return resolveSnapshotDirectory(root.baseDir())
+        .resolve(root.baseInfo().dbName())
         .resolve(schemaName)
         .resolve(String.format(SNAPSHOT_FILENAME_PATTERN, kind.getFileName()));
   }

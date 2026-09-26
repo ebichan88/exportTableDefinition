@@ -1,11 +1,11 @@
 package com.export_table_definition.domain.service.writer;
 
 import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionListTemplates;
@@ -53,16 +53,12 @@ public class TableDefinitionWriterDomainService {
    * 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割し、 本体ページにはリンクのみを掲載する
    *
    * @param tables テーブル情報リスト
-   * @param baseInfo データベースの基本情報
-   * @param outputDirectoryPath 出力ディレクトリのパス
+   * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param relatedDocuments 「関連ドキュメント」としてリンクを掲載する一覧の種別（掲載順）
    */
   public void writeTableDefinitionList(
-      List<TableEntity> tables,
-      BaseInfoEntity baseInfo,
-      Path outputDirectoryPath,
-      List<ListDocumentType> relatedDocuments) {
-    fileRepository.createDirectory(outputDirectoryPath);
+      List<TableEntity> tables, OutputRoot outputRoot, List<ListDocumentType> relatedDocuments) {
+    fileRepository.createDirectory(outputRoot.baseDir());
     final PagedSection<TableEntity> section =
         new PagedSection<>(
             "テーブル情報",
@@ -71,16 +67,16 @@ public class TableDefinitionWriterDomainService {
             TableDefinitionListTemplates::tableListLine);
     final PageLayout layout =
         new PageLayout(
-            TableDefinitionListTemplates.fileHeader(baseInfo),
-            outputPathResolver.resolveListFile(
-                baseInfo, outputDirectoryPath, ListDocumentType.TABLE),
+            TableDefinitionListTemplates.fileHeader(outputRoot.baseInfo()),
+            outputPathResolver.resolveListFile(outputRoot, ListDocumentType.TABLE),
             ListDocumentType.TABLE.getBackLinkLabel());
     final String tableListSection = pagedSectionWriter.writePagedSection(section, layout);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
-            TableDefinitionListTemplates.baseInfo(baseInfo), // 基本情報
-            TableDefinitionListTemplates.relatedDocuments(baseInfo, relatedDocuments), // 関連ドキュメント
+            TableDefinitionListTemplates.baseInfo(outputRoot.baseInfo()), // 基本情報
+            TableDefinitionListTemplates.relatedDocuments(
+                outputRoot.baseInfo(), relatedDocuments), // 関連ドキュメント
             tableListSection);
     fileRepository.writeFile(layout.file(), contents);
   }
@@ -92,12 +88,11 @@ public class TableDefinitionWriterDomainService {
    * @param outputDirectoryPath 出力ディレクトリのパス
    */
   public void writeTableDefinition(TableDefinitionContent content, Path outputDirectoryPath) {
+    final OutputRoot outputRoot = new OutputRoot(outputDirectoryPath, content.baseInfo());
     final Path directoryPath =
-        outputPathResolver.resolveTableDefinitionDirectory(
-            content.baseInfo(), content.table(), outputDirectoryPath);
+        outputPathResolver.resolveTableDefinitionDirectory(outputRoot, content.table());
     final Path filePath =
-        outputPathResolver.resolveTableDefinitionFile(
-            content.baseInfo(), content.table(), outputDirectoryPath);
+        outputPathResolver.resolveTableDefinitionFile(outputRoot, content.table());
     final List<String> contents =
         List.of(
             TableDefinitionTemplates.fileHeader(content.table()), // ヘッダー

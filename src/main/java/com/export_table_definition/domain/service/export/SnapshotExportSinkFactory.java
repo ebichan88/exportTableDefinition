@@ -4,6 +4,7 @@ import com.export_table_definition.domain.model.ExportTargets;
 import com.export_table_definition.domain.model.TableDefinitionContent;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.google.inject.Inject;
 import java.nio.file.Path;
@@ -60,16 +61,17 @@ public class SnapshotExportSinkFactory {
      */
     @Override
     public void writeOverview(ExportTargets targets) {
-      snapshotWriter.writeDatabase(targets.baseInfo(), outputBaseDir);
-      snapshotWriter.writeSequences(targets.sequences(), targets.baseInfo(), outputBaseDir);
-      snapshotWriter.writeTypes(targets.types(), targets.baseInfo(), outputBaseDir);
+      final OutputRoot outputRoot = new OutputRoot(outputBaseDir, targets.baseInfo());
+      snapshotWriter.writeDatabase(outputRoot);
+      snapshotWriter.writeSequences(targets.sequences(), outputRoot);
+      snapshotWriter.writeTypes(targets.types(), outputRoot);
     }
 
     /** {@inheritDoc} */
     @Override
     public void writeFunctionDefinitions(
         String schemaName, List<FunctionEntity> functions, BaseInfoEntity baseInfo) {
-      snapshotWriter.writeFunctions(schemaName, functions, baseInfo, outputBaseDir);
+      snapshotWriter.writeFunctions(schemaName, functions, new OutputRoot(outputBaseDir, baseInfo));
     }
 
     /**
@@ -78,7 +80,7 @@ public class SnapshotExportSinkFactory {
      */
     @Override
     public void beginSchemaTables(String schemaName, BaseInfoEntity baseInfo) {
-      snapshotWriter.initTableFile(schemaName, baseInfo, outputBaseDir);
+      snapshotWriter.initTableFile(schemaName, new OutputRoot(outputBaseDir, baseInfo));
     }
 
     /** {@inheritDoc} */

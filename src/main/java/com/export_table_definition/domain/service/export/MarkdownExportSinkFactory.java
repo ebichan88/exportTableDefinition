@@ -5,6 +5,7 @@ import com.export_table_definition.domain.model.TableDefinitionContent;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
@@ -104,35 +105,31 @@ public class MarkdownExportSinkFactory {
      */
     @Override
     public void writeOverview(ExportTargets targets) {
-      final BaseInfoEntity baseInfo = targets.baseInfo();
+      final OutputRoot outputRoot = new OutputRoot(outputBaseDir, targets.baseInfo());
       // テーブル一覧出力 -> {outputBaseDir}/tableList_{DB名}.md
       tableDefinitionWriter.writeTableDefinitionList(
-          targets.tables(), baseInfo, outputBaseDir, relatedDocuments(targets));
+          targets.tables(), outputRoot, relatedDocuments(targets));
       // スキーマ別ER図と、その索引の出力
       erDiagramWriter.writeErDiagram(
-          targets.tables(), targets.foreignKeys(), baseInfo, outputBaseDir, erDiagramMaxNodes);
+          targets.tables(), targets.foreignKeys(), outputRoot, erDiagramMaxNodes);
       // トリガー・関数・シーケンス・型の一覧出力（対象が存在しない場合は出力されない）
-      objectListWriter.writeTriggerList(targets.triggers(), baseInfo, outputBaseDir);
-      objectListWriter.writeFunctionList(targets.functions(), baseInfo, outputBaseDir);
-      objectListWriter.writeSequenceList(targets.sequences(), baseInfo, outputBaseDir);
-      objectListWriter.writeTypeList(targets.types(), baseInfo, outputBaseDir);
+      objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
+      objectListWriter.writeFunctionList(targets.functions(), outputRoot);
+      objectListWriter.writeSequenceList(targets.sequences(), outputRoot);
+      objectListWriter.writeTypeList(targets.types(), outputRoot);
       // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
       targets
           .sequences()
-          .forEach(
-              sequence ->
-                  objectListWriter.writeSequenceDefinition(sequence, baseInfo, outputBaseDir));
-      targets
-          .types()
-          .forEach(type -> objectListWriter.writeTypeDefinition(type, baseInfo, outputBaseDir));
+          .forEach(sequence -> objectListWriter.writeSequenceDefinition(sequence, outputRoot));
+      targets.types().forEach(type -> objectListWriter.writeTypeDefinition(type, outputRoot));
     }
 
     /** {@inheritDoc} */
     @Override
     public void writeFunctionDefinitions(
         String schemaName, List<FunctionEntity> functions, BaseInfoEntity baseInfo) {
-      functions.forEach(
-          function -> objectListWriter.writeFunctionDefinition(function, baseInfo, outputBaseDir));
+      final OutputRoot outputRoot = new OutputRoot(outputBaseDir, baseInfo);
+      functions.forEach(function -> objectListWriter.writeFunctionDefinition(function, outputRoot));
     }
 
     /** {@inheritDoc} */
