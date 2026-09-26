@@ -13,6 +13,13 @@
 	</Properties>
 
 	<Appenders>
+		<!-- 利用者が確認すべき警告（WARN）をコンソール（標準エラー出力）へ出す設定。
+			処理結果・失敗の報告はFailureHandler等が標準出力へ直接出すため、ERROR以上は出さない -->
+		<Console name="warning" target="SYSTEM_ERR">
+			<LevelRangeFilter minLevel="WARN" maxLevel="WARN" onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="[warn]:%m%n" />
+		</Console>
+
 		<!-- コンソールに出力する設定 -->
 		<!-- <Console name="Console" target="SYSTEM_OUT"> <PatternLayout> <pattern>${format1}</pattern> 
 			</PatternLayout> </Console> -->
@@ -31,6 +38,10 @@
 	</Appenders>
 
 	<Loggers>
+		<!-- このツールの警告のみコンソールにも出す（ライブラリの警告はログファイルのみ）。ログファイルへはRootを通じて出力される -->
+		<Logger name="com.export_table_definition" level="trace">
+			<AppenderRef ref="warning" />
+		</Logger>
 		<Root level="trace">
 			<!-- <AppenderRef ref="Console" /> -->
 			<AppenderRef ref="logfile001" />
