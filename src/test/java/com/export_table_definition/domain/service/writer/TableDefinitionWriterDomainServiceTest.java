@@ -190,7 +190,8 @@ public class TableDefinitionWriterDomainServiceTest {
             List.of(),
             List.of(incomingFk),
             List.of(trigger),
-            annotation);
+            annotation,
+            List.of());
 
     writer.writeTableDefinition(content, OUT);
 

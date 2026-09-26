@@ -8,9 +8,9 @@
 | クラス | 役割 |
 |---|---|
 | `ExportTableDefinition` | `main()`。処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）を1つのtry-catchで囲んで例外を1箇所で捕捉し、`FailureReporter`で報告したうえで、終了状態を終了コードへ変換する |
-| `CliArguments`（パッケージプライベート） | CLI引数の解析（`--check`・`--rm-dist`、DB接続情報の上書き値）。解釈できない引数（書き誤り等）は`requireKnownArguments()`で誤りとする |
+| `CliArguments`（パッケージプライベート） | CLI引数の解析（`--check`・`--rm-dist`、DB接続情報・実行時設定の上書き値）。実行時設定のCLI引数名は設定ファイルのキーから導く。解釈できない引数（書き誤り等）は`requireKnownArguments()`で誤りとする |
 | `OutputDirectoryValidator`（パッケージプライベート） | 出力先（`outputPath`）をDBへ接続する前に検証する。既存のファイル（ディレクトリではないもの）を指す場合と、`--rm-dist`指定時に削除してはならないディレクトリ（`OutputPathResolver.isRemovableOutputDir`）を指す場合は`UserCorrectableException`を投げる。DB種別に依存しない部品のDIコンテナから取得する |
-| `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
+| `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。CLI引数による上書き値で上書きしてから検証する。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
 
 ## presentation層
 
@@ -50,32 +50,35 @@
 | | `Tables` | 出力対象のテーブル一覧のファーストクラスコレクション（テーブルキーでの存在判定・検索、スキーマ単位の分割） |
 | | `TableDetail` | 1テーブル分の詳細情報（カラム・インデックス・制約）のrecord。`assembleAll()`で複数テーブル分の取得結果をテーブルごとに振り分ける |
 | | `Triggers`, `AbstractEntities` | エンティティのリストをテーブルキーで引けるようにしたコレクションとその基底クラス（`Columns`・`Indexes`・`Constraints`は`TableDetail`の組み立て専用のためパッケージプライベート） |
+| | `TableTargetFilter` | テーブル名パターン（`table=`の記法。ワイルドカード・除外・スキーマ修飾）のリストを判定する値オブジェクト。出力対象の範囲（`TableTargetScope`）と観点の所属テーブルの指定で共通に使う。テーブル名・スキーマ名の部分が空のパターンは誤り |
 | `domain.model.relation` | `ForeignKeyEntity` | 関連（DBの外部キー制約＝物理、サイドカーで宣言した論理リレーション＝論理）のrecord。参照先の`referenceTableKey()`、論理リレーションの関連名の自動生成（`resolveLogicalRelationName`）を持つ |
-| | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalOf`/`logicalOf`で由来ごとに、`incomingOf`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を抽出する |
+| | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalOf`/`logicalOf`で由来ごとに、`incomingOf`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`within`/`crossing`でテーブルの集合の内側・境界の関連を抽出する |
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の関連のまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し。`compose()`がページ構成`PageComposition`を決める） |
 | | `Cardinality`, `RelationType` | 多重度（1対1／1対多等。判定と、論理リレーションの既定値を持つ）、関連の由来（物理／論理）のenum |
 | `domain.model.schemaobject` | `FunctionEntity`, `SequenceEntity`, `TypeEntity` | テーブルに属さないスキーマ直下のオブジェクト（関数・プロシージャ／シーケンス／ユーザー定義型）のrecord。`FunctionEntity`は同名関数（オーバーロード）内の番号を持つ |
 | `domain.model.database` | `DatabaseEntity` | DBのカタログから取得するデータベースの情報（DB名・DBMS種別）のrecord |
 | | `BaseInfoEntity` | 各ドキュメントに掲載する基本情報（`DatabaseEntity`の情報＋生成日）のrecord |
-| `domain.model.sidecar` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション）を束ねるrecord |
+| `domain.model.sidecar` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション＋観点）を束ねるrecord |
 | | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブルキーごとの集合とその1件分） |
-| `domain.model.target` | `TableTargetScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は、パッケージプライベートの`TableTargetFilter`が行う。テーブル名・スキーマ名の部分が空のパターンは誤り） |
+| `domain.model.viewpoint` | `Viewpoint`, `Viewpoints` | 観点（業務ドメイン別にテーブルをまとめる切り口）とその集合。`Viewpoint.of()`が識別子の形式・所属テーブルの指定（`TableTargetFilter`）を検証し、`resolve()`で1観点分の出力内容を求める。`Viewpoints.of(TableEntity)`でテーブルから所属する観点を逆引きする |
+| | `ViewpointContent` | 1観点分の出力内容（所属テーブル・所属テーブル同士の関連・観点外のテーブルとの関連）のrecord |
+| `domain.model.target` | `TableTargetScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は`TableTargetFilter`が行う） |
 | | `OutputObjectType` | PostgreSQL固有の出力対象オブジェクト種別のenum。`parse()`で設定値を解釈する（未指定なら全種別、未知の種別名は例外） |
-| | `ExportTargets` | 一括取得する軽量な出力対象の情報（基本情報・テーブル一覧・関連・トリガー・関数/シーケンス/型の一覧・手動付帯情報）の組 |
+| | `ExportTargets` | 一括取得する軽量な出力対象の情報（基本情報・テーブル一覧・関連・トリガー・関数/シーケンス/型の一覧・手動付帯情報・観点）の組 |
 | | `TableDefinitionContent` | 1テーブル分の出力内容を束ねるrecord（`assemble()`で`TableDetail`と一括取得分から組み立て）。出力先は持たない |
-| | `ConsistencyFinding` | 出力対象のテーブルと関連・付帯情報を突き合わせた指摘1件分の値オブジェクト（種類・メッセージ。重要度は種類が決める） |
+| | `ConsistencyFinding` | 出力対象のテーブルと関連・付帯情報・観点を突き合わせた指摘1件分の値オブジェクト（種類・メッセージ。重要度は種類が決める） |
 | `domain.model.snapshot` | `DatabaseSnapshot`, `TableSnapshot`, `FunctionSnapshot`, `SequenceSnapshot`, `TypeSnapshot` | スキーマのスナップショット（JSON Lines）の1行分を表すrecord群。エンティティからの変換時に、値が無いこと（空文字）をnullへ正規化する（パッケージプライベートの`SnapshotValues`） |
 | | `SnapshotKind` | スキーマ単位のJSON Linesファイルに出力するオブジェクト種別（テーブル/関数/シーケンス/型）のenum。行をオブジェクトとして識別する名前（`identify`）を持つ |
 | | `DiffResult` | 生成したスキーマのスナップショットとコミット済みのものの比較結果（追加/削除/内容不一致の対象一覧）を表すrecord。対象はオブジェクト（例: `table sample.employee`）またはファイル（例: `database.json`）の識別名 |
 | | `ContentDiff` | 内容が一致しないオブジェクト（またはファイル）1件分の差分（対象の表示名 + unified diff形式の行リスト）を表すrecord |
-| `domain.model.document` | `ListDocumentType` | 一覧ドキュメント（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー）の種別のenum。一覧ファイル名・個別定義ディレクトリ名の接頭辞とタイトルを持つ |
+| `domain.model.document` | `ListDocumentType` | 一覧ドキュメント（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）の種別のenum。一覧ファイル名・個別定義ディレクトリ名の接頭辞とタイトルを持つ |
 
 ### domain.repository（インターフェースのみ。実装はinfrastructure層）
 
 | クラス | 役割 |
 |---|---|
 | `TableDefinitionRepository` | データベースの情報（`selectDatabase`）・テーブル一覧・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる）。カラム・インデックス・制約は、指定したテーブル分をテーブルごとの`TableDetail`に組み立てて返す（`selectTableDetails`） |
-| `SidecarRepository` | サイドカーYAML（手動付帯情報・論理リレーション）読み込みIF |
+| `SidecarRepository` | サイドカーYAML（手動付帯情報・論理リレーション・観点）読み込みIF |
 | `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`、パスの状態の問い合わせ用の`exists`/`isDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
 ### domain.service
@@ -85,7 +88,7 @@
 | `domain.service` | `UnifiedDiffGenerator` | 2つの行リストからunified diff形式の差分を生成する。Myers法による自前実装（外部ライブラリに依存しない） |
 | `domain.service.export` | `ExportSink` | 取得したスキーマ情報を1つの出力形式で書き出すIF（一括取得分・関数定義・テーブル定義の書き出し） |
 | | `MarkdownExportSinkFactory`, `SnapshotExportSinkFactory` | 出力先（とER図のノード上限）を受け取り、Markdown／スナップショットの`ExportSink`を生成する |
-| `domain.service.target` | `ExportTargetConsistencyDomainService` | 出力対象のテーブルと、外部キー・サイドカー（論理リレーション／付帯情報）を突き合わせる。片側が出力対象外の外部キー・論理リレーションの除外と、実在しないテーブル・カラムへの付帯情報（孤児付帯情報）の検出を行う。結果は指摘（`ConsistencyFinding`）として返し、ログへの出力は呼び出し側が行う |
+| `domain.service.target` | `ExportTargetConsistencyDomainService` | 出力対象のテーブルと、外部キー・サイドカー（論理リレーション／付帯情報／観点）を突き合わせる。片側が出力対象外の外部キー・論理リレーションの除外と、実在しないテーブル・カラムへの付帯情報（孤児付帯情報）・どのテーブルにも一致しない観点のパターンの検出を行う。結果は指摘（`ConsistencyFinding`）として返し、ログへの出力は呼び出し側が行う |
 | `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF。分割ページのパスは本体ページのパスから`resolvePageFile`で求める。`--rm-dist`で削除してよい出力先かの判定（`isRemovableOutputDir`）も持つ |
 | | `DocumentLocations` | Markdownドキュメントのファイル名と出力ベースディレクトリからの相対パス、ドキュメント間の相対リンクの規則を一元的に定める（関数・プロシージャのオーバーロードのファイル名を含む）。`OutputPathResolver`の実装とテンプレートの双方がこの規則を参照する |
 | | `SnapshotLocations` | スナップショットのディレクトリ名・ファイル名と相対パスの規則を一元的に定める。`OutputPathResolver`の実装と、比較時のファイル種別の判定の双方がこの規則を参照する |
@@ -96,15 +99,16 @@
 | `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
 | | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
 | | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |
+| | `ViewpointWriterDomainService` | 観点ページ（所属テーブル同士のER図・所属テーブル・観点外のテーブルとの関連）と観点一覧の書き込み |
 | | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理。分割ページは本体ページと同じディレクトリに置き、ページ間のリンクはファイル名から導く |
-| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群。表の行を含むMarkdownの描画はすべてここで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない |
+| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ViewpointTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群。表の行を含むMarkdownの描画はすべてここで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない |
 | | `MarkdownTemplateSupport`, `MermaidSupport` | テンプレート共通部品、Mermaid記法変換ユーティリティ |
 
 ## infrastructure層
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `infrastructure.db` | `ConnectionSettings` | 検証済みのDB接続情報。`conf/mybatis.properties`の値をCLI引数・環境変数の値で上書きし、組み立てる時に検証する（`driver`・`url`は必須、未知のキーは誤り） |
+| `infrastructure.db` | `ConnectionSettings` | 検証済みのDB接続情報。`conf/mybatis.properties`の値をCLI引数の値で上書きし、組み立てる時に検証する（`driver`・`url`は必須、未知のキーは誤り） |
 | | `MyBatisSqlSessionFactories` | `ConnectionSettings`からMyBatisの`SqlSessionFactory`を生成する（状態を持たない。生成したものはDIコンテナで使い回す） |
 | | `DatabaseTypeDetector` | DBへ接続して接続先のDB種別を判定する。DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
@@ -113,7 +117,7 @@
 | `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
-| | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する。ファイルが無い・YAMLとして解釈できない場合は`UserCorrectableException`を投げ、個々の記述の誤り（未知のキー等）は読み飛ばして警告する |
+| | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）・`relations`（論理リレーション）・`viewpoints`（観点）を解釈する。ファイルが無い・YAMLとして解釈できない場合は`UserCorrectableException`を投げ、個々の記述の誤り（未知のキー等）は読み飛ばして警告する |
 | `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
 | `infrastructure.snapshot` | `JacksonSnapshotSerializer` | `SnapshotSerializer`のJackson実装 |
 

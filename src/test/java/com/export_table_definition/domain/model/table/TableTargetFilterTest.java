@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.model.target;
+package com.export_table_definition.domain.model.table;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -136,5 +136,29 @@ public class TableTargetFilterTest {
     assertFalse(filter.matches("sample", "tmp_work"));
     assertTrue(filter.matches("sample", "employee"));
     assertFalse(filter.matches("public", "employee"));
+  }
+
+  @Test
+  @DisplayName("hasInclusion: 包含パターンが1件以上ある場合のみtrue（除外パターンのみの場合はfalse）")
+  void testHasInclusion() {
+    assertTrue(TableTargetFilter.of(List.of("orders", "!orders_bk")).hasInclusion());
+    assertFalse(TableTargetFilter.of(List.of("!orders_bk")).hasInclusion());
+    assertFalse(TableTargetFilter.of(List.of()).hasInclusion());
+  }
+
+  @Test
+  @DisplayName("unmatchedInclusions: どのテーブルにも一致しない包含パターンを、指定された文字列のまま指定順に返す（除外パターンは対象外）")
+  void testUnmatchedInclusions() {
+    TableTargetFilter filter =
+        TableTargetFilter.of(
+            List.of("sales.order*", " sales.custmer ", "!sales.missing", "other.orders"));
+
+    List<String> unmatched =
+        filter.unmatchedInclusions(
+            List.of(
+                new TableEntity("testdb", "sales", "", "orders", TableType.TABLE, ""),
+                new TableEntity("testdb", "sales", "", "customer", TableType.TABLE, "")));
+
+    assertEquals(List.of("sales.custmer", "other.orders"), unmatched);
   }
 }

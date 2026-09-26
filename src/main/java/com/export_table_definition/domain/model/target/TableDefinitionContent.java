@@ -12,6 +12,8 @@ import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.model.table.Triggers;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,6 +31,7 @@ import java.util.stream.Stream;
  * @param incomingRelations 自テーブルを参照する関連（物理外部キー・論理リレーションの双方）のリスト
  * @param triggers トリガー情報のリスト
  * @param annotation 手動付帯情報
+ * @param viewpoints 当該テーブルが所属する観点のリスト（宣言順。所属する観点が無い場合は空）
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
@@ -43,7 +46,8 @@ public record TableDefinitionContent(
     List<ForeignKeyEntity> logicalRelations,
     List<ForeignKeyEntity> incomingRelations,
     List<TriggerEntity> triggers,
-    TableAnnotation annotation) {
+    TableAnnotation annotation,
+    List<Viewpoint> viewpoints) {
 
   /**
    * テーブル定義出力に必要な情報をまとめたレコードを組み立てる<br>
@@ -56,6 +60,7 @@ public record TableDefinitionContent(
    * @param foreignkeys 対象範囲全体の外部キー（論理リレーションを含む。当該テーブル分を抽出して保持する）
    * @param triggers 対象範囲全体のトリガー情報（当該テーブル分を抽出して保持する）
    * @param annotations 対象範囲全体の手動付帯情報（当該テーブル分を抽出して保持する）
+   * @param viewpoints サイドカーYAMLで宣言された観点（当該テーブルが所属するものを抽出して保持する）
    * @return TableDefinitionContent
    */
   public static TableDefinitionContent assemble(
@@ -63,7 +68,8 @@ public record TableDefinitionContent(
       TableDetail detail,
       ForeignKeys foreignkeys,
       Triggers triggers,
-      Annotations annotations) {
+      Annotations annotations,
+      Viewpoints viewpoints) {
     final TableEntity table = detail.table();
     return new TableDefinitionContent(
         baseInfo,
@@ -75,7 +81,8 @@ public record TableDefinitionContent(
         foreignkeys.logicalOf(table),
         foreignkeys.incomingOf(table),
         triggers.of(table),
-        annotations.of(table));
+        annotations.of(table),
+        viewpoints.of(table));
   }
 
   /**

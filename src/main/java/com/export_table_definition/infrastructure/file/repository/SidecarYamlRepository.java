@@ -6,6 +6,8 @@ import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.sidecar.Sidecar;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.TableKey;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.io.IOException;
@@ -29,7 +31,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
 /**
- * サイドカーYAMLから手動付帯情報・論理リレーションを読み込むリポジトリ実装クラス<br>
+ * サイドカーYAMLから手動付帯情報・論理リレーション・観点を読み込むリポジトリ実装クラス<br>
  * 想定するYAMLの構造は以下の通り。
  *
  * <pre>
@@ -47,6 +49,11 @@ import org.yaml.snakeyaml.error.YAMLException;
  *     parentColumns: [id]
  *     name: rel_logs_users
  *     cardinality: 1対多
+ * viewpoints:
+ *   - id: order
+ *     name: 受注管理
+ *     description: 観点の説明（複数行可）
+ *     tables: [sales.order*, sales.customer, "!sales.order_bk"]
  * </pre>
  *
  * @since 1.0
@@ -73,8 +80,13 @@ public class SidecarYamlRepository implements SidecarRepository {
   private static final String KEY_NAME = "name";
   private static final String KEY_CARDINALITY = "cardinality";
 
+  /** YAMLのトップレベルキー（観点の定義を束ねる） */
+  private static final String KEY_VIEWPOINTS = "viewpoints";
+
+  private static final String KEY_ID = "id";
+
   /** トップレベルに書けるキー */
-  private static final Set<String> ROOT_KEYS = Set.of(KEY_TABLES, KEY_RELATIONS);
+  private static final Set<String> ROOT_KEYS = Set.of(KEY_TABLES, KEY_RELATIONS, KEY_VIEWPOINTS);
 
   /** {@code tables}の1テーブル分に書けるキー */
   private static final Set<String> TABLE_KEYS = Set.of(KEY_DESCRIPTION, KEY_REMARKS, KEY_COLUMNS);
@@ -83,6 +95,10 @@ public class SidecarYamlRepository implements SidecarRepository {
   private static final Set<String> RELATION_KEYS =
       Set.of(
           KEY_TABLE, KEY_COLUMNS, KEY_PARENT_TABLE, KEY_PARENT_COLUMNS, KEY_NAME, KEY_CARDINALITY);
+
+  /** {@code viewpoints}の1件分に書けるキー */
+  private static final Set<String> VIEWPOINT_KEYS =
+      Set.of(KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_TABLES);
 
   /** {@inheritDoc} */
   @Override
@@ -95,22 +111,25 @@ public class SidecarYamlRepository implements SidecarRepository {
       final Object root = parseYaml(reader, path);
       if (root != null && !(root instanceof Map)) {
         logger.warn(
-            "Ignoring the annotation file because its top level is not a mapping of '{}' and '{}'. "
+            "Ignoring the annotation file because its top level is not a mapping of '{}', '{}' and '{}'. "
                 + "[annotationPath={}]",
             KEY_TABLES,
             KEY_RELATIONS,
+            KEY_VIEWPOINTS,
             path);
         return Sidecar.empty();
       }
       warnUnknownKeys(asMap(root), ROOT_KEYS, "the annotation file", path);
       final Annotations annotations = parseAnnotations(root, path);
       final List<ForeignKeyEntity> logicalRelations = parseRelations(root, path);
+      final Viewpoints viewpoints = parseViewpoints(root, path);
       logger.info(
-          "Loaded sidecar. [annotationPath={}, tableCount={}, relationCount={}]",
+          "Loaded sidecar. [annotationPath={}, tableCount={}, relationCount={}, viewpointCount={}]",
           path,
           annotations.tableKeys().size(),
-          logicalRelations.size());
-      return new Sidecar(annotations, logicalRelations);
+          logicalRelations.size(),
+          viewpoints.asList().size());
+      return new Sidecar(annotations, logicalRelations, viewpoints);
     } catch (IOException e) {
       throw new UncheckedIOException(
           "Failed to read the annotation file. [annotationPath=" + path + "]", e);
@@ -135,7 +154,8 @@ public class SidecarYamlRepository implements SidecarRepository {
     }
     if (!Files.exists(path)) {
       throw new UserCorrectableException(
-          "Annotation file not found. Check annotationPath in ExportTableDefinition.properties. "
+          "Annotation file not found. Check annotationPath in ExportTableDefinition.properties "
+              + "(or the --annotation-path argument). "
               + "[annotationPath="
               + path.toAbsolutePath().normalize()
               + "]");
@@ -239,6 +259,67 @@ public class SidecarYamlRepository implements SidecarRepository {
           }
         });
     return List.copyOf(result);
+  }
+
+  /**
+   * SnakeYAMLで読み込んだ生のオブジェクトから、観点の定義を変換するメソッド<br>
+   * 観点として成り立たない定義（識別子の誤り・所属テーブルの指定漏れ等）と、識別子が既出の定義は、警告ログを出して読み飛ばす
+   * （識別子は観点ページのファイル名になるため、重複すると後の観点のページで先の観点のページを上書きしてしまう）
+   *
+   * @param root YAMLのルートオブジェクト
+   * @param path 読み込み元のパス（ログ用）
+   * @return 変換した観点（宣言順）
+   */
+  private Viewpoints parseViewpoints(Object root, Path path) {
+    final Object viewpoints = mapValue(root, KEY_VIEWPOINTS);
+    if (viewpoints == null) {
+      return Viewpoints.empty();
+    }
+    if (!(viewpoints instanceof List<?> viewpointList)) {
+      logger.warn(
+          "Ignoring '{}' because it is not a list. [annotationPath={}]", KEY_VIEWPOINTS, path);
+      return Viewpoints.empty();
+    }
+    final Map<String, Viewpoint> byId = new LinkedHashMap<>();
+    viewpointList.forEach(
+        viewpointValue -> {
+          final Viewpoint viewpoint = toViewpoint(asMap(viewpointValue), path);
+          if (viewpoint == null) {
+            return;
+          }
+          if (byId.containsKey(viewpoint.id())) {
+            logger.warn(
+                "Ignoring viewpoint with a duplicate 'id'. [id={}, annotationPath={}]",
+                viewpoint.id(),
+                path);
+            return;
+          }
+          byId.put(viewpoint.id(), viewpoint);
+        });
+    return Viewpoints.of(List.copyOf(byId.values()));
+  }
+
+  /**
+   * 観点1件分のマップを{@link Viewpoint}へ変換するメソッド<br>
+   * 値の検証（識別子の形式・所属テーブルのパターン）は{@link Viewpoint#of}に委ね、ここでは検証に失敗した場合の警告ログ （読み込み元のパス等のコンテキストを含む）のみを担う
+   *
+   * @param viewpointMap 観点1件分のマップ
+   * @param path 読み込み元のパス（ログ用）
+   * @return 変換した観点。観点として成り立たない場合はnull
+   */
+  private Viewpoint toViewpoint(Map<String, Object> viewpointMap, Path path) {
+    final String id = asString(viewpointMap.get(KEY_ID));
+    warnUnknownKeys(viewpointMap, VIEWPOINT_KEYS, "'" + KEY_VIEWPOINTS + "' entry of " + id, path);
+    try {
+      return Viewpoint.of(
+          id,
+          asString(viewpointMap.get(KEY_NAME)),
+          asString(viewpointMap.get(KEY_DESCRIPTION)),
+          asStringList(viewpointMap.get(KEY_TABLES)));
+    } catch (IllegalArgumentException e) {
+      logger.warn("Ignoring viewpoint '{}'. {} [annotationPath={}]", id, e.getMessage(), path);
+      return null;
+    }
   }
 
   /**

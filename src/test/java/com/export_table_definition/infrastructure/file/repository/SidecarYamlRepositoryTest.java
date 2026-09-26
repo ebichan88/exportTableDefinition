@@ -10,6 +10,8 @@ import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -414,5 +416,78 @@ public class SidecarYamlRepositoryTest {
     TableAnnotation users = sidecar.annotations().of(table("public", "users"));
     assertEquals("テーブル備考", users.remarks());
     assertEquals("", users.columnRemark("email"));
+  }
+
+  @Test
+  @DisplayName("load: viewpoints の観点を宣言順に読み込み、所属テーブルはtable=と同じ記法で指定できる")
+  void testLoadViewpoints(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+                viewpoints:
+                  - id: order
+                    name: 受注管理
+                    description: |
+                      受注から出荷指示まで。
+                      請求は含まない。
+                    tables:
+                      - public.order*
+                      - public.customer
+                      - "!public.order_bk"
+                  - id: master
+                    tables: public.product
+                """);
+
+    Viewpoints viewpoints = repository.load(file.toString()).viewpoints();
+
+    assertEquals(
+        List.of("order", "master"), viewpoints.asList().stream().map(Viewpoint::id).toList());
+    Viewpoint order = viewpoints.asList().get(0);
+    assertEquals("受注管理", order.name());
+    assertEquals("受注から出荷指示まで。\n請求は含まない。", order.description());
+    assertTrue(order.contains(table("public", "order_detail")));
+    assertTrue(order.contains(table("public", "customer")));
+    assertFalse(order.contains(table("public", "order_bk")));
+    Viewpoint master = viewpoints.asList().get(1);
+    assertEquals("master", master.name());
+    assertTrue(master.contains(table("public", "product")));
+  }
+
+  @Test
+  @DisplayName("load: 観点として成り立たない定義（識別子の誤り・所属テーブルの指定漏れ）と識別子が既出の定義は読み飛ばし、他の定義は読み込む")
+  void testLoadViewpointsSkipsInvalidEntries(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+                viewpoints:
+                  - id: 受注
+                    tables: [public.orders]
+                  - id: no_tables
+                  - id: exclude_only
+                    tables: ["!public.orders"]
+                  - id: order
+                    tables: [public.orders]
+                    unknown: ignored
+                  - id: order
+                    tables: [public.customer]
+                  - not a mapping
+                """);
+
+    Viewpoints viewpoints = repository.load(file.toString()).viewpoints();
+
+    assertEquals(List.of("order"), viewpoints.asList().stream().map(Viewpoint::id).toList());
+    assertTrue(viewpoints.asList().getFirst().contains(table("public", "orders")));
+  }
+
+  @Test
+  @DisplayName("load: viewpoints がリストでない場合・未指定の場合は観点なしとする")
+  void testLoadViewpointsNotAList(@TempDir Path dir) throws IOException {
+    Path notAList = writeYaml(dir, "viewpoints:\n  order: [public.orders]\n");
+    assertTrue(repository.load(notAList.toString()).viewpoints().isEmpty());
+
+    Path absent = writeYaml(dir, "tables: {}\n");
+    assertTrue(repository.load(absent.toString()).viewpoints().isEmpty());
   }
 }

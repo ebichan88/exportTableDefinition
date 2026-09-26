@@ -3,7 +3,7 @@ package com.export_table_definition.domain.repository;
 import com.export_table_definition.domain.model.sidecar.Sidecar;
 
 /**
- * サイドカーYAML（手動付帯情報・論理リレーション）の読み込みに関するリポジトリインターフェース
+ * サイドカーYAML（手動付帯情報・論理リレーション・観点）の読み込みに関するリポジトリインターフェース
  *
  * @since 1.0
  * @version 1.0

@@ -3,9 +3,11 @@ package com.export_table_definition.domain.model.relation;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -165,5 +167,23 @@ public class ForeignKeysTest {
 
     assertEquals(List.of(logical), bySchema.get("hr"));
     assertEquals(List.of(logical), bySchema.get("sales"));
+  }
+
+  @Test
+  @DisplayName("within/crossing: テーブルの集合に対し、両端が含まれる関連と片端だけが含まれる関連を分けて返す")
+  void testWithinAndCrossing() {
+    var inside =
+        ForeignKeyFixtures.physical("sales", "orders", "fk_orders_customer", "sales", "customer");
+    var outgoing =
+        ForeignKeyFixtures.logical("sales", "orders", "rel_orders_product", "sales", "product");
+    var incoming =
+        ForeignKeyFixtures.physical("sales", "invoice", "fk_invoice_orders", "sales", "orders");
+    var unrelated =
+        ForeignKeyFixtures.physical("sales", "stock", "fk_stock_product", "sales", "product");
+    var foreignKeys = ForeignKeys.of(List.of(inside, outgoing, incoming, unrelated));
+    var tableKeys = Set.of(TableKey.of("sales", "orders"), TableKey.of("sales", "customer"));
+
+    assertEquals(List.of(inside), foreignKeys.within(tableKeys));
+    assertEquals(List.of(outgoing, incoming), foreignKeys.crossing(tableKeys));
   }
 }

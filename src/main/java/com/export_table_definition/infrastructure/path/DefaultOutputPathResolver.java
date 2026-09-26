@@ -3,6 +3,7 @@ package com.export_table_definition.infrastructure.path;
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
@@ -75,6 +76,13 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
     return root.baseDir()
         .resolve(
             DocumentLocations.erDiagramGroupFile(root.baseInfo().dbName(), schemaName, groupNo));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Path resolveViewpointFile(OutputRoot root, Viewpoint viewpoint) {
+    return root.baseDir()
+        .resolve(DocumentLocations.viewpointFile(root.baseInfo().dbName(), viewpoint));
   }
 
   /** {@inheritDoc} */

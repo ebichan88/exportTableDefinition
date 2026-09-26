@@ -1,24 +1,28 @@
 package com.export_table_definition.domain.model.sidecar;
 
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import java.util.List;
 
 /**
  * サイドカーYAMLから読み込んだ内容全体を保持するrecordクラス<br>
- * サイドカーには性質の異なる2種類の情報が含まれる。
+ * サイドカーには性質の異なる3種類の情報が含まれる。
  *
  * <ul>
  *   <li>{@link Annotations}：テーブル単位の手動付帯情報（説明・備考・カラム備考）。 DBのメタ情報に「文章を足す」もので、テーブル定義書の各セルへマージされる
  *   <li>論理リレーション：DBに外部キー制約が存在しないテーブル間の関連。 「関連という構造を足す」もので、ER図と専用セクションへ反映される
+ *   <li>{@link Viewpoints}：業務ドメイン別にテーブルをまとめる観点。「読む単位を足す」もので、観点ごとのページと観点一覧へ反映される
  * </ul>
  *
  * @param annotations テーブル単位の手動付帯情報
  * @param logicalRelations サイドカーYAMLで宣言された論理リレーションのリスト
+ * @param viewpoints サイドカーYAMLで宣言された観点
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
  */
-public record Sidecar(Annotations annotations, List<ForeignKeyEntity> logicalRelations) {
+public record Sidecar(
+    Annotations annotations, List<ForeignKeyEntity> logicalRelations, Viewpoints viewpoints) {
 
   /**
    * コンパクトコンストラクタ<br>
@@ -27,6 +31,7 @@ public record Sidecar(Annotations annotations, List<ForeignKeyEntity> logicalRel
   public Sidecar {
     annotations = annotations == null ? Annotations.empty() : annotations;
     logicalRelations = logicalRelations == null ? List.of() : List.copyOf(logicalRelations);
+    viewpoints = viewpoints == null ? Viewpoints.empty() : viewpoints;
   }
 
   /**
@@ -36,6 +41,6 @@ public record Sidecar(Annotations annotations, List<ForeignKeyEntity> logicalRel
    * @return 空のSidecarインスタンス
    */
   public static Sidecar empty() {
-    return new Sidecar(Annotations.empty(), List.of());
+    return new Sidecar(Annotations.empty(), List.of(), Viewpoints.empty());
   }
 }

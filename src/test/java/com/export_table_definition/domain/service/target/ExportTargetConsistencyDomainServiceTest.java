@@ -14,6 +14,8 @@ import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.target.ConsistencyFinding;
 import com.export_table_definition.domain.model.target.ConsistencyFinding.Kind;
 import com.export_table_definition.domain.model.target.ConsistencyFinding.Severity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService.ResolvedForeignKeys;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
@@ -218,5 +220,35 @@ public class ExportTargetConsistencyDomainServiceTest {
         "Column annotation exists for a column that was not found (renamed or dropped?)."
             + " [table=public.orders, column=removed_column]",
         findings.get(0).message());
+  }
+
+  @Test
+  @DisplayName("findUnmatchedViewpointPatterns: どのテーブルにも一致しない観点のパターンを、観点・パターンごとに警告として返す")
+  void testFindUnmatchedViewpointPatterns() {
+    var viewpoints =
+        Viewpoints.of(
+            List.of(
+                Viewpoint.of("order", "", "", List.of("public.order*", "public.custmer")),
+                Viewpoint.of("master", "", "", List.of("public.customers"))));
+    var tables = Tables.of(List.of(table("public", "orders"), table("public", "customers")));
+
+    List<ConsistencyFinding> findings =
+        service.findUnmatchedViewpointPatterns(viewpoints, tables, false);
+
+    assertEquals(List.of(Kind.UNMATCHED_VIEWPOINT_PATTERN), kinds(findings));
+    assertEquals(Severity.WARN, findings.getFirst().severity());
+    assertTrue(findings.getFirst().message().contains("viewpoint=order"));
+    assertTrue(findings.getFirst().message().contains("pattern=public.custmer"));
+  }
+
+  @Test
+  @DisplayName("findUnmatchedViewpointPatterns: 出力対象が絞り込まれている場合は、対象外のテーブルを指すパターンを誤って指摘しないよう検出しない")
+  void testFindUnmatchedViewpointPatternsSkippedWhenFiltered() {
+    var viewpoints = Viewpoints.of(List.of(Viewpoint.of("order", "", "", List.of("sales.orders"))));
+
+    assertEquals(
+        List.of(),
+        service.findUnmatchedViewpointPatterns(
+            viewpoints, Tables.of(List.of(table("public", "orders"))), true));
   }
 }

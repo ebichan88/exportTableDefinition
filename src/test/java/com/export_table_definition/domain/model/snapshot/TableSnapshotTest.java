@@ -45,7 +45,8 @@ public class TableSnapshotTest {
         logicalRelations,
         List.of(),
         triggers,
-        annotation);
+        annotation,
+        List.of());
   }
 
   @Test

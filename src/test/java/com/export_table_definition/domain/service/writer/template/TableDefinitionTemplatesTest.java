@@ -12,6 +12,7 @@ import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.time.LocalDate;
@@ -524,5 +525,31 @@ public class TableDefinitionTemplatesTest {
         TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(), List.of(incoming));
 
     assertTrue(section.contains("public_orders ||..o{ public_audit_log : \"rel_audit_orders\""));
+  }
+
+  @Test
+  @DisplayName("viewpoints: 所属する観点が無い場合はセクションごと出力しない（観点を導入しても定義書は変わらない）")
+  void testViewpointsEmpty() {
+    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    assertEquals("", TableDefinitionTemplates.viewpoints(List.of(), base));
+  }
+
+  @Test
+  @DisplayName("viewpoints: 所属する観点の表示名と、観点ページへの相対リンクを宣言順に出力する")
+  void testViewpoints() {
+    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    assertMarkdownEquals(
+        """
+        ## 所属する観点
+
+        * [受注管理](../../../viewpoint_TEST_DB_order.md) \s
+        * [master](../../../viewpoint_TEST_DB_master.md) \s
+
+        """,
+        TableDefinitionTemplates.viewpoints(
+            List.of(
+                Viewpoint.of("order", "受注管理", "", List.of("orders")),
+                Viewpoint.of("master", "", "", List.of("orders"))),
+            base));
   }
 }

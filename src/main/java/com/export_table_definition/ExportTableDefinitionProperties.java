@@ -7,6 +7,7 @@ import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.config.PropertyLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,10 +15,12 @@ import java.util.stream.Collectors;
 /**
  * 実行時設定ファイル（{@code conf/ExportTableDefinition.properties}）の設定項目の仕様を持ち、設定値を検証・変換するクラス<br>
  * 設定項目の仕様（キー・既定値・値の形式。READMEの「ExportTableDefinition.propertiesの記載内容」）をこのクラスに集める。
- * ファイルの探索・読み込みは{@link PropertyLoader}に委ね、このクラスは読み込んだキーと値を仕様に照らして検証し、型へ変換する。
+ * ファイルの探索・読み込みは{@link PropertyLoader}に委ね、このクラスは読み込んだキーと値を、CLI引数による上書き値 （{@link
+ * CliArguments}が解決する）で上書きしたうえで仕様に照らして検証し、型へ変換する。
  *
  * <ul>
  *   <li>キーの省略と値が空は、同じ「未指定」として扱い既定値を用いる
+ *   <li>CLI引数で上書きした値も、設定ファイルに書いた値と同じ仕様で検証する
  *   <li>未知のキー（キー名の書き誤り等）・整数として解釈できない値・出力対象の条件として解釈できない値は誤りとする
  *   <li>見つかった誤りは、1件ずつではなくまとめて{@link InvalidConfigurationException}で報告する
  * </ul>
@@ -43,8 +46,11 @@ final class ExportTableDefinitionProperties {
   /** サイドカーYAMLのパスのキー（既存の設定ファイルとの互換のため、コード上の呼び方sidecarPathではなくannotationPathとする） */
   private static final String ANNOTATION_PATH = "annotationPath";
 
-  /** 設定ファイルに書けるキー（READMEの記載順） */
-  private static final List<String> KEYS =
+  /**
+   * 設定ファイルに書けるキー（READMEの記載順）<br>
+   * CLI引数による上書きも、このキーから引数名を導く（{@link CliArguments}）ため、キーを追加すれば上書きにも自動で対応する
+   */
+  static final List<String> KEYS =
       List.of(
           SCHEMA,
           TABLE,
@@ -77,13 +83,16 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * {@code conf/ExportTableDefinition.properties}を読み込み、検証するメソッド
+   * {@code conf/ExportTableDefinition.properties}を読み込み、CLI引数による上書き値で上書きして検証するメソッド<br>
+   * 上書きする値をすべて指定する場合でも、設定ファイル自体は必要とする（実行するディレクトリを誤った場合に、既定の出力先 （{@code ./output}）へ黙って出力しないよう、{@code
+   * conf}ディレクトリ・設定ファイルが見つからないことを誤りとして報告するため）
    *
+   * @param overrides 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まない）
    * @return 検証済みの設定
    * @throws InvalidConfigurationException {@code conf}ディレクトリ・設定ファイルが見つからない場合や、設定に誤りがある場合
    */
-  static ExportTableDefinitionProperties load() {
-    return of(PropertyLoader.load(FILE_NAME));
+  static ExportTableDefinitionProperties load(Map<String, SettingOverride> overrides) {
+    return of(PropertyLoader.load(FILE_NAME), overrides);
   }
 
   /**
@@ -94,6 +103,23 @@ final class ExportTableDefinitionProperties {
    * @throws InvalidConfigurationException 設定に誤りがある場合（見つかった誤りをすべて示す）
    */
   static ExportTableDefinitionProperties of(Map<String, String> values) {
+    return of(values, Map.of());
+  }
+
+  /**
+   * 設定ファイルのキーと値を上書き値で上書きし、検証済みの設定を生成するメソッド<br>
+   * 誤りの報告には、どの値を上書きしたか（指定元のCLI引数名）を添える。誤った値が設定ファイルではなく
+   * CLI引数から来ている場合に、設定ファイルだけを見直して原因が見つからない、とならないようにするため
+   *
+   * @param fileValues 設定ファイルのキーと値
+   * @param overrides 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まない）
+   * @return 検証済みの設定
+   * @throws InvalidConfigurationException 設定に誤りがある場合（見つかった誤りをすべて示す）
+   */
+  static ExportTableDefinitionProperties of(
+      Map<String, String> fileValues, Map<String, SettingOverride> overrides) {
+    final Map<String, String> values = new HashMap<>(fileValues);
+    overrides.forEach((key, override) -> values.put(key, override.value()));
     final List<String> errors = new ArrayList<>();
     final List<String> unknownKeys =
         values.keySet().stream().filter(key -> !KEYS.contains(key)).sorted().toList();
@@ -126,7 +152,9 @@ final class ExportTableDefinitionProperties {
       throw new InvalidConfigurationException(
           "Invalid configuration in "
               + FILE_NAME
-              + ".properties."
+              + ".properties"
+              + overriddenBy(overrides)
+              + "."
               + errors.stream()
                   .map(error -> System.lineSeparator() + "  - " + error)
                   .collect(Collectors.joining()),
@@ -154,6 +182,21 @@ final class ExportTableDefinitionProperties {
    */
   CheckDiffRequest toCheckDiffRequest() {
     return new CheckDiffRequest(targetSelection, outputPath, chunkSize);
+  }
+
+  /**
+   * 誤りの報告に添える、上書きした値の指定元の説明を組み立てるメソッド
+   *
+   * @param overrides 上書き値
+   * @return 上書きした値がある場合は{@code " (overridden by --output-path, --table)"}の形式の文字列、無い場合は空文字
+   */
+  private static String overriddenBy(Map<String, SettingOverride> overrides) {
+    if (overrides.isEmpty()) {
+      return "";
+    }
+    return overrides.values().stream()
+        .map(SettingOverride::source)
+        .collect(Collectors.joining(", ", " (overridden by ", ")"));
   }
 
   /**
@@ -206,4 +249,12 @@ final class ExportTableDefinitionProperties {
       return defaultValue;
     }
   }
+
+  /**
+   * CLI引数による、設定値1項目分の上書き
+   *
+   * @param value 上書きする値
+   * @param source 値の指定元のCLI引数名（例: {@code --output-path}）
+   */
+  record SettingOverride(String value, String source) {}
 }

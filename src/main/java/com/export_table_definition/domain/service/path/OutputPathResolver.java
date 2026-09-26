@@ -3,6 +3,7 @@ package com.export_table_definition.domain.service.path;
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -56,7 +57,7 @@ public interface OutputPathResolver {
   Path resolveTableDefinitionFile(OutputRoot root, TableEntity table);
 
   /**
-   * 一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー）のパス。 <br>
+   * 一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）のパス。 <br>
    * 例: {base}/{接頭辞}List_{DB名}.md
    *
    * @param root 出力先ベースディレクトリとデータベース基本情報
@@ -85,6 +86,16 @@ public interface OutputPathResolver {
    * @return グループ別ER図ファイルのパス
    */
   Path resolveErDiagramGroupFile(OutputRoot root, String schemaName, int groupNo);
+
+  /**
+   * 観点ページのパス。 <br>
+   * 例: {base}/viewpoint_{DB名}_{観点の識別子}.md
+   *
+   * @param root 出力先ベースディレクトリとデータベース基本情報
+   * @param viewpoint 観点
+   * @return 観点ページのパス
+   */
+  Path resolveViewpointFile(OutputRoot root, Viewpoint viewpoint);
 
   /**
    * 行数の多い表を分割した場合の、分割ページのパス。 <br>

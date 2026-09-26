@@ -84,7 +84,7 @@ final class SchemaExporter {
     final boolean isFiltered = targetScope.isFiltered();
     // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
     final Set<OutputObjectType> outputObjectTypes = targetSelection.outputObjectTypes();
-    // サイドカーYAML（手動付帯情報・論理リレーション）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
+    // サイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
     final Sidecar sidecar = sidecarRepository.load(targetSelection.sidecarPath());
     final Annotations annotations = sidecar.annotations();
 
@@ -103,6 +103,10 @@ final class SchemaExporter {
                 .toList());
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
     report(consistencyDomainService.findOrphanTableAnnotations(annotations, tables, isFiltered));
+    // どのテーブルにも一致しない観点の所属テーブルのパターン（リネーム・削除の可能性）を検出して警告する
+    report(
+        consistencyDomainService.findUnmatchedViewpointPatterns(
+            sidecar.viewpoints(), tables, isFiltered));
     // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
     // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
     // 特定のチャンクに限定せず全件を保持しておく必要がある。selectForeignKeyListはスキーマ単位でのみ絞り込み、
@@ -147,7 +151,8 @@ final class SchemaExporter {
         functionList,
         sequenceList,
         typeList,
-        annotations);
+        annotations,
+        sidecar.viewpoints());
   }
 
   /**
@@ -236,7 +241,12 @@ final class SchemaExporter {
       report(consistencyDomainService.findOrphanColumnAnnotations(detail, targets.annotations()));
       final TableDefinitionContent content =
           TableDefinitionContent.assemble(
-              targets.baseInfo(), detail, targets.foreignKeys(), triggers, targets.annotations());
+              targets.baseInfo(),
+              detail,
+              targets.foreignKeys(),
+              triggers,
+              targets.annotations(),
+              targets.viewpoints());
       sinks.forEach(sink -> sink.writeTableDefinition(content));
     }
   }

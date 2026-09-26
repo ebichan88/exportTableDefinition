@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import java.util.List;
 
 /**
@@ -22,6 +23,7 @@ import java.util.List;
  * @param sequences シーケンス情報のリスト
  * @param types ユーザー定義型情報のリスト
  * @param annotations 対象範囲全体の手動付帯情報
+ * @param viewpoints サイドカーYAMLで宣言された観点
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
@@ -34,4 +36,5 @@ public record ExportTargets(
     List<FunctionEntity> functions,
     List<SequenceEntity> sequences,
     List<TypeEntity> types,
-    Annotations annotations) {}
+    Annotations annotations,
+    Viewpoints viewpoints) {}

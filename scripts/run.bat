@@ -19,7 +19,8 @@ if not defined JAR_FILE (
     exit /b 2
 )
 
-"%JAVA_EXE%" -jar "%JAR_FILE%"
+rem 引数（--check・--output-path=... 等）はそのままツールへ渡す
+"%JAVA_EXE%" -jar "%JAR_FILE%" %*
 
 echo.
 pause

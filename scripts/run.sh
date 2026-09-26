@@ -21,7 +21,8 @@ fi
 
 # javaが0以外で終了した場合（失敗・JVMの起動エラー等）もset -eで中断せず、結果のメッセージを読めるよう終了前に一時停止する
 status=0
-"$JAVA_EXE" -jar "$JAR_FILE" || status=$?
+# 引数（--check・--output-path=... 等）はそのままツールへ渡す
+"$JAVA_EXE" -jar "$JAR_FILE" "$@" || status=$?
 
 echo
 read -r -p "Enterキーで終了します..." _

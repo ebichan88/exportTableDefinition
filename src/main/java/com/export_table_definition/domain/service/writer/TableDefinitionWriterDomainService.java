@@ -99,6 +99,7 @@ public class TableDefinitionWriterDomainService {
             TableDefinitionTemplates.baseInfo(content.baseInfo()), // 基本情報
             TableDefinitionTemplates.tableExplanation(content.annotation()), // テーブル説明
             TableDefinitionTemplates.tableInfo(content.table(), content.annotation()), // テーブル情報
+            TableDefinitionTemplates.viewpoints(content.viewpoints(), content.baseInfo()), // 所属する観点
             TableDefinitionTemplates.columns(content.columns(), content.annotation()), // カラム情報
             TableDefinitionTemplates.view(content.table()), // View情報
             TableDefinitionTemplates.indexes(content.indexes()), // インデックス情報

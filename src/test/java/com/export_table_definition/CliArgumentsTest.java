@@ -2,12 +2,15 @@ package com.export_table_definition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.ExportTableDefinitionProperties.SettingOverride;
 import com.export_table_definition.shared.exception.UserCorrectableException;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** CliArguments のフラグ判定・DB接続情報の上書き解決・解釈できない引数の検知に関するテスト */
+/** CliArguments のフラグ判定・DB接続情報と実行時設定の上書き解決・解釈できない引数の検知に関するテスト */
 public class CliArgumentsTest {
 
   @Test
@@ -46,7 +49,7 @@ public class CliArgumentsTest {
   }
 
   @Test
-  @DisplayName("connectionOverrides: 対応するCLI引数・環境変数が無いキーは含まれない")
+  @DisplayName("connectionOverrides: 対応するCLI引数が無いキーは含まれない")
   void testConnectionOverridesEmptyWhenNothingSpecified() {
     Properties overrides = CliArguments.parse(new String[] {}).connectionOverrides();
     assertTrue(overrides.isEmpty());
@@ -103,5 +106,71 @@ public class CliArgumentsTest {
 
     assertFalse(args.isCheck());
     assertTrue(args.isRmDist());
+  }
+
+  @Test
+  @DisplayName("settingOverrides: 設定ファイルのキーごとに、キーから導いたCLI引数名で上書き値を取り込む（READMEの記載順）")
+  void testSettingOverridesFromCliArgs() {
+    Map<String, SettingOverride> overrides =
+        CliArguments.parse(
+                new String[] {
+                  "--annotation-path=conf/annotations.yml",
+                  "--schema=sample",
+                  "--table=!flyway_schema_history,*_bk",
+                  "--output-path=./docs/db",
+                  "--chunk-size=100",
+                  "--er-diagram-max-nodes=0",
+                  "--output-objects=trigger"
+                })
+            .settingOverrides();
+
+    assertEquals(
+        List.of(
+            "schema",
+            "table",
+            "outputPath",
+            "chunkSize",
+            "erDiagramMaxNodes",
+            "outputObjects",
+            "annotationPath"),
+        List.copyOf(overrides.keySet()));
+    assertEquals(new SettingOverride("sample", "--schema"), overrides.get("schema"));
+    assertEquals(
+        new SettingOverride("!flyway_schema_history,*_bk", "--table"), overrides.get("table"));
+    assertEquals(new SettingOverride("./docs/db", "--output-path"), overrides.get("outputPath"));
+    assertEquals(new SettingOverride("100", "--chunk-size"), overrides.get("chunkSize"));
+    assertEquals(
+        new SettingOverride("0", "--er-diagram-max-nodes"), overrides.get("erDiagramMaxNodes"));
+    assertEquals(
+        new SettingOverride("trigger", "--output-objects"), overrides.get("outputObjects"));
+    assertEquals(
+        new SettingOverride("conf/annotations.yml", "--annotation-path"),
+        overrides.get("annotationPath"));
+  }
+
+  @Test
+  @DisplayName("settingOverrides: 空の値は指定しなかったものとして扱い、設定ファイルの値に委ねる")
+  void testSettingOverridesIgnoresBlankValues() {
+    Map<String, SettingOverride> overrides =
+        CliArguments.parse(new String[] {"--schema=", "--table= "}).settingOverrides();
+
+    assertTrue(overrides.isEmpty());
+  }
+
+  @Test
+  @DisplayName("requireKnownArguments: 実行時設定の--キー=値形式の引数を受け入れ、書き誤りは誤りとして使える引数に含めて示す")
+  void testRequireKnownArgumentsAcceptsSettingArguments() {
+    assertDoesNotThrow(
+        CliArguments.parse(
+                new String[] {"--output-path=./docs", "--er-diagram-max-nodes=0", "--table="})
+            ::requireKnownArguments);
+
+    UserCorrectableException e =
+        assertThrows(
+            UserCorrectableException.class,
+            CliArguments.parse(new String[] {"--outputPath=./docs"})::requireKnownArguments);
+    assertTrue(e.getMessage().contains("Unknown argument: --outputPath=./docs"));
+    assertTrue(e.getMessage().contains("--output-path=<value>"));
+    assertTrue(e.getMessage().contains("--annotation-path=<value>"));
   }
 }

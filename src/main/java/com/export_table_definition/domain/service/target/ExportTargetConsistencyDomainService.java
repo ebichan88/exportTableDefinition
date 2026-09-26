@@ -9,6 +9,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.target.ConsistencyFinding;
 import com.export_table_definition.domain.model.target.ConsistencyFinding.Kind;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -102,6 +103,38 @@ public class ExportTargetConsistencyDomainService {
                     "Annotation exists for a table that was not found (renamed or dropped?). [table="
                         + key.qualifiedName()
                         + "]"))
+        .toList();
+  }
+
+  /**
+   * 観点の所属テーブルのパターンのうち、どのテーブルにも一致しないものを検出するメソッド<br>
+   * リネームや削除により、サイドカーの観点の宣言が現在のスキーマと乖離した場合の気付きとする。
+   * スキーマ・テーブルの出力対象が絞り込まれている場合は、対象外のテーブルを指すパターンを誤って乖離と判定しないよう検出を行わない
+   *
+   * @param viewpoints サイドカーYAMLで宣言された観点
+   * @param tables 出力対象のテーブル
+   * @param isFiltered 出力対象がスキーマ・テーブルで絞り込まれているか
+   * @return 指摘のリスト
+   */
+  public List<ConsistencyFinding> findUnmatchedViewpointPatterns(
+      Viewpoints viewpoints, Tables tables, boolean isFiltered) {
+    if (isFiltered) {
+      return List.of();
+    }
+    return viewpoints.asList().stream()
+        .flatMap(
+            viewpoint ->
+                viewpoint.unmatchedPatterns(tables).stream()
+                    .map(
+                        pattern ->
+                            new ConsistencyFinding(
+                                Kind.UNMATCHED_VIEWPOINT_PATTERN,
+                                "Viewpoint table pattern matches no table (renamed or dropped?). "
+                                    + "[viewpoint="
+                                    + viewpoint.id()
+                                    + ", pattern="
+                                    + pattern
+                                    + "]")))
         .toList();
   }
 

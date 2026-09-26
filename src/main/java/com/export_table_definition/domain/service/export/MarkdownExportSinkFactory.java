@@ -9,6 +9,7 @@ import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
+import com.export_table_definition.domain.service.writer.ViewpointWriterDomainService;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義）を書き出す{@link ExportSink}を生成するクラス
+ * Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点）を書き出す{@link ExportSink}を生成するクラス
  *
  * @since 1.0
  * @version 1.0
@@ -27,6 +28,7 @@ public class MarkdownExportSinkFactory {
   private final TableDefinitionWriterDomainService tableDefinitionWriter;
   private final ErDiagramWriterDomainService erDiagramWriter;
   private final ObjectListWriterDomainService objectListWriter;
+  private final ViewpointWriterDomainService viewpointWriter;
 
   /**
    * コンストラクタ
@@ -34,15 +36,18 @@ public class MarkdownExportSinkFactory {
    * @param tableDefinitionWriter テーブル一覧・テーブル定義書を書き込むクラス
    * @param erDiagramWriter ER図を書き込むクラス
    * @param objectListWriter トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
+   * @param viewpointWriter 観点ページ・観点一覧を書き込むクラス
    */
   @Inject
   public MarkdownExportSinkFactory(
       TableDefinitionWriterDomainService tableDefinitionWriter,
       ErDiagramWriterDomainService erDiagramWriter,
-      ObjectListWriterDomainService objectListWriter) {
+      ObjectListWriterDomainService objectListWriter,
+      ViewpointWriterDomainService viewpointWriter) {
     this.tableDefinitionWriter = tableDefinitionWriter;
     this.erDiagramWriter = erDiagramWriter;
     this.objectListWriter = objectListWriter;
+    this.viewpointWriter = viewpointWriter;
   }
 
   /**
@@ -81,6 +86,9 @@ public class MarkdownExportSinkFactory {
     if (!targets.triggers().isEmpty()) {
       documents.add(ListDocumentType.TRIGGER);
     }
+    if (!targets.viewpoints().isEmpty()) {
+      documents.add(ListDocumentType.VIEWPOINT);
+    }
     return documents;
   }
 
@@ -113,7 +121,8 @@ public class MarkdownExportSinkFactory {
 
     /**
      * {@inheritDoc}<br>
-     * テーブル一覧・ER図・各種一覧・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧と外部キー一覧のみで 生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる
+     * テーブル一覧・ER図・各種一覧・観点・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧と外部キー一覧のみで
+     * 生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる
      */
     @Override
     public void writeOverview(ExportTargets targets) {
@@ -139,6 +148,15 @@ public class MarkdownExportSinkFactory {
       }
       if (documents.contains(ListDocumentType.TYPE)) {
         objectListWriter.writeTypeList(targets.types(), outputRoot);
+      }
+      // 観点ページと観点一覧の出力（観点を宣言していない場合は出力しない）
+      if (documents.contains(ListDocumentType.VIEWPOINT)) {
+        viewpointWriter.writeViewpoints(
+            targets.viewpoints(),
+            targets.tables(),
+            targets.foreignKeys(),
+            outputRoot,
+            erDiagramMaxNodes);
       }
       // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
       targets
