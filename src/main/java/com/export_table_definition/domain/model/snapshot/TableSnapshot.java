@@ -60,6 +60,8 @@ public record TableSnapshot(
   }
 
   /**
+   * カラム情報
+   *
    * @param remarks カラム備考（サイドカーYAML由来）
    */
   public record Column(
@@ -85,6 +87,7 @@ public record TableSnapshot(
     }
   }
 
+  /** インデックス情報 */
   public record Index(
       String name,
       String method,
@@ -105,6 +108,8 @@ public record TableSnapshot(
   }
 
   /**
+   * 制約情報
+   *
    * @param type 制約種別（CHECK/FOREIGN KEY/PRIMARY KEY/UNIQUE）
    */
   public record Constraint(String name, String type, String definition, String remarks) {
@@ -143,6 +148,8 @@ public record TableSnapshot(
   }
 
   /**
+   * トリガー情報
+   *
    * @param timing 実行タイミング（BEFORE/AFTER/INSTEAD OF）
    * @param events 対象イベント（INSERT/UPDATE/DELETE/TRUNCATE）のリスト
    * @param orientation 実行単位（ROW/STATEMENT）
