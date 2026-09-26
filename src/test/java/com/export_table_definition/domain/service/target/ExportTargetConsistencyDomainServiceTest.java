@@ -3,6 +3,7 @@ package com.export_table_definition.domain.service.target;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.collection.ForeignKeys;
+import com.export_table_definition.domain.model.collection.Tables;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.type.TableType;
@@ -36,7 +37,8 @@ public class ExportTargetConsistencyDomainServiceTest {
         ForeignKeyFixtures.physical("public", "orders", "fk_orders_staff", "public", "staff");
 
     ForeignKeys result =
-        service.resolveForeignKeys(List.of(resolvable, missingParent), List.of(), tables, false);
+        service.resolveForeignKeys(
+            List.of(resolvable, missingParent), List.of(), Tables.of(tables), false);
 
     assertEquals(List.of("fk_orders_customer"), names(result.of(table("public", "orders"))));
   }
@@ -54,7 +56,7 @@ public class ExportTargetConsistencyDomainServiceTest {
 
     ForeignKeys result =
         service.resolveForeignKeys(
-            List.of(physical), List.of(logical, unresolvedLogical), tables, true);
+            List.of(physical), List.of(logical, unresolvedLogical), Tables.of(tables), true);
 
     // 物理外部キー、論理リレーションの順に並ぶ
     assertEquals(
@@ -68,7 +70,8 @@ public class ExportTargetConsistencyDomainServiceTest {
   @DisplayName("resolveForeignKeys: 対象が無い場合は空の集合を返す")
   void testResolveForeignKeysReturnsEmptyWhenNothingToResolve() {
     ForeignKeys result =
-        service.resolveForeignKeys(List.of(), List.of(), List.of(table("public", "orders")), false);
+        service.resolveForeignKeys(
+            List.of(), List.of(), Tables.of(List.of(table("public", "orders"))), false);
 
     assertEquals(List.of(), result.of(table("public", "orders")));
     assertEquals(List.of(), result.crossSchema());

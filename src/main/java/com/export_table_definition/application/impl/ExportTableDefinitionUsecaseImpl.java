@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.collection.Columns;
 import com.export_table_definition.domain.model.collection.Constraints;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.collection.Indexes;
+import com.export_table_definition.domain.model.collection.Tables;
 import com.export_table_definition.domain.model.collection.Triggers;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
@@ -35,11 +36,8 @@ import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -168,10 +166,13 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // 基本情報のうち生成日はDBではなく実行時に決まるため、アプリケーションの時計から与える
     final BaseInfoEntity baseInfoEntity =
         BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
-    final List<TableEntity> tableEntityList =
-        repository.selectTableList(targetSchemaList).stream().filter(targetScope::matches).toList();
+    final Tables tables =
+        Tables.of(
+            repository.selectTableList(targetSchemaList).stream()
+                .filter(targetScope::matches)
+                .toList());
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
-    consistencyDomainService.warnOrphanTableAnnotations(annotations, tableEntityList, isFiltered);
+    consistencyDomainService.warnOrphanTableAnnotations(annotations, tables, isFiltered);
     // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
     // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
     // 特定のチャンクに限定せず全件を保持しておく必要がある。selectForeignKeyListはスキーマ単位でのみ絞り込み、
@@ -182,7 +183,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
         consistencyDomainService.resolveForeignKeys(
             repository.selectForeignKeyList(targetSchemaList),
             sidecar.logicalRelations(),
-            tableEntityList,
+            tables,
             isFiltered);
     // トリガーはテーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、
     // テーブル定義書内のセクションとトリガー一覧の両方で利用する。
@@ -208,7 +209,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
             : List.of();
     return new ExportTargets(
         baseInfoEntity,
-        tableEntityList,
+        tables,
         foreignKeys,
         triggerEntityList,
         functionList,
@@ -238,15 +239,13 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // カラム・インデックス・制約は、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
     // これにより、テーブルが1スキーマに集中していても、同時にメモリ保持する詳細情報を最大chunkSize件分に抑える
     final Triggers triggers = Triggers.of(targets.triggers());
-    final Map<String, List<TableEntity>> tablesBySchema =
-        targets.tables().stream()
-            .collect(
-                Collectors.groupingBy(
-                    TableEntity::schemaName, LinkedHashMap::new, Collectors.toList()));
-    tablesBySchema.forEach(
-        (schemaName, tablesInSchema) ->
-            exportSchemaTableDefinitions(
-                schemaName, tablesInSchema, targets, triggers, chunkSize, sinks));
+    targets
+        .tables()
+        .bySchema()
+        .forEach(
+            (schemaName, tablesInSchema) ->
+                exportSchemaTableDefinitions(
+                    schemaName, tablesInSchema, targets, triggers, chunkSize, sinks));
   }
 
   /**

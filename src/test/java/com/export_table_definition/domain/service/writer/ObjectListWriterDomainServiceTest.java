@@ -89,13 +89,6 @@ public class ObjectListWriterDomainServiceTest {
   }
 
   @Test
-  @DisplayName("writeTriggerList: トリガーが0件の場合は何も出力しない")
-  void testWriteTriggerListEmptyWritesNothing() {
-    writer.writeTriggerList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
-  }
-
-  @Test
   @DisplayName("writeTriggerList: トリガーが存在する場合、一覧ファイルにヘッダー・基本情報・行・戻る導線が出力される")
   void testWriteTriggerListWritesFile() {
     var trigger =
@@ -110,13 +103,6 @@ public class ObjectListWriterDomainServiceTest {
     assertTrue(content.contains("|pg|testdb|2026/09/24|"));
     assertTrue(content.contains("trg_orders"));
     assertTrue(content.contains("[テーブル一覧へ](./tableList_testdb.md)"));
-  }
-
-  @Test
-  @DisplayName("writeFunctionList: 関数・プロシージャが0件の場合は何も出力しない")
-  void testWriteFunctionListEmptyWritesNothing() {
-    writer.writeFunctionList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
   }
 
   @Test
@@ -178,13 +164,6 @@ public class ObjectListWriterDomainServiceTest {
   }
 
   @Test
-  @DisplayName("writeSequenceList: シーケンスが0件の場合は何も出力しない")
-  void testWriteSequenceListEmptyWritesNothing() {
-    writer.writeSequenceList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
-  }
-
-  @Test
   @DisplayName("writeSequenceDefinition: スキーマ配下のsequenceディレクトリに個別ファイルを出力する")
   void testWriteSequenceDefinitionWritesIndividualFile() {
     var sequence =
@@ -199,13 +178,6 @@ public class ObjectListWriterDomainServiceTest {
     assertTrue(content.contains("# seq_orders"));
     assertTrue(content.contains("|10|1|999999999|20|1|○|orders.id|"));
     assertTrue(content.contains("[シーケンス一覧へ](../../../sequenceList_testdb.md)"));
-  }
-
-  @Test
-  @DisplayName("writeTypeList: ユーザー定義型が0件の場合は何も出力しない")
-  void testWriteTypeListEmptyWritesNothing() {
-    writer.writeTypeList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
   }
 
   @Test

@@ -52,8 +52,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * トリガー一覧の書き込み処理を行うメソッド<br>
-   * トリガーが存在しない場合は何も出力しない
+   * トリガー一覧の書き込み処理を行うメソッド
    *
    * @param triggers トリガー情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -68,8 +67,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * 関数・プロシージャ一覧の書き込み処理を行うメソッド<br>
-   * 対象が存在しない場合は何も出力しない
+   * 関数・プロシージャ一覧の書き込み処理を行うメソッド
    *
    * @param functions 関数・プロシージャの一覧情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -84,8 +82,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * シーケンス一覧の書き込み処理を行うメソッド<br>
-   * 対象が存在しない場合は何も出力しない
+   * シーケンス一覧の書き込み処理を行うメソッド
    *
    * @param sequences シーケンス情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -100,8 +97,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * ユーザー定義型一覧の書き込み処理を行うメソッド<br>
-   * 対象が存在しない場合は何も出力しない
+   * ユーザー定義型一覧の書き込み処理を行うメソッド
    *
    * @param types ユーザー定義型情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -117,7 +113,7 @@ public class ObjectListWriterDomainService {
 
   /**
    * オブジェクト一覧（トリガー/関数/シーケンス/型）の書き込み処理を行う共通メソッド<br>
-   * 対象が存在しない場合は何も出力しない。 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割する
+   * 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割する。 対象が存在しない一覧を出力しないことの判定は呼び出し側（出力する一覧の決定）が行う
    *
    * @param <T> エンティティの型
    * @param type 一覧の種別
@@ -132,9 +128,6 @@ public class ObjectListWriterDomainService {
       List<T> objects,
       BiFunction<Integer, T, String> lineMapper,
       OutputRoot outputRoot) {
-    if (objects.isEmpty()) {
-      return;
-    }
     final PagedSection<T> section =
         new PagedSection<>(type.getTitle(), tableHeader, objects, lineMapper);
     final PageLayout layout =

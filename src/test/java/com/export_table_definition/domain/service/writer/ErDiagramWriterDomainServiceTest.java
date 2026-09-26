@@ -3,6 +3,7 @@ package com.export_table_definition.domain.service.writer;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.collection.ForeignKeys;
+import com.export_table_definition.domain.model.collection.Tables;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -120,7 +121,7 @@ public class ErDiagramWriterDomainServiceTest {
     final ForeignKeys foreignKeys =
         ForeignKeys.of(List.of(fk("a", "fk_a", "hub"), fk("b", "fk_b", "hub")));
 
-    writer.writeErDiagram(tables, foreignKeys, outputRoot(), 80);
+    writer.writeErDiagram(Tables.of(tables), foreignKeys, outputRoot(), 80);
 
     assertTrue(fileNames().contains("erDiagram_testdb_public.md"));
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")), "グループファイルは生成されない");
@@ -141,7 +142,7 @@ public class ErDiagramWriterDomainServiceTest {
               foreignKeys.add(fk("child" + i, "fk" + i, "parent" + i));
             });
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 4);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 4);
 
     // 1グループあたり2まとまり(4ノード)まで詰め込まれるため、5まとまりは3グループになる
     assertTrue(fileNames().contains("erDiagram_testdb_public_group1.md"));
@@ -171,7 +172,7 @@ public class ErDiagramWriterDomainServiceTest {
               foreignKeys.add(fk("t" + i, "fk" + i, "hub"));
             });
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 4);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 4);
 
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")), "グループファイルは生成されない");
     final String schemaPage = contentOf("erDiagram_testdb_public.md");
@@ -197,7 +198,7 @@ public class ErDiagramWriterDomainServiceTest {
     tables.add(table("y"));
     foreignKeys.add(fk("x", "fk_xy", "y"));
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 4);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 4);
 
     // グループ1は巨大なまとまり（上限超のためフォールバック）
     final String group1 = contentOf("erDiagram_testdb_public_group1.md");
@@ -223,7 +224,7 @@ public class ErDiagramWriterDomainServiceTest {
               foreignKeys.add(fk("t" + i, "fk" + i, "hub"));
             });
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 0);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 0);
 
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")));
     assertTrue(contentOf("erDiagram_testdb_public.md").contains("```mermaid"));

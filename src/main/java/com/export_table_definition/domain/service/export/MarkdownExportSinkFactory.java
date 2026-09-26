@@ -11,8 +11,9 @@ import com.export_table_definition.domain.service.writer.ObjectListWriterDomainS
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義）を書き出す{@link ExportSink}を生成するクラス
@@ -56,30 +57,41 @@ public class MarkdownExportSinkFactory {
   }
 
   /**
-   * テーブル一覧に掲載する関連ドキュメント（各一覧へのリンク）を決めるメソッド<br>
-   * 対象が1件以上存在するカテゴリのみをリンク対象とする（対象が空の一覧は出力されないため）
+   * 出力する一覧ドキュメントの種別を決めるメソッド<br>
+   * テーブル一覧は常に出力し、それ以外の一覧は対象が1件以上存在する場合のみ出力する（空の一覧は出力しない）。
+   * 一覧の書き出しと、テーブル一覧に掲載する関連ドキュメントへのリンクの双方がこの結果を用いるため、両者が食い違わない
    *
    * @param targets 一括取得した出力対象の情報
-   * @return リンクを掲載する一覧の種別（掲載順）
+   * @return 出力する一覧ドキュメントの種別の集合
    */
-  private static List<ListDocumentType> relatedDocuments(ExportTargets targets) {
-    final List<ListDocumentType> relatedDocuments = new ArrayList<>();
+  private static Set<ListDocumentType> listDocuments(ExportTargets targets) {
+    final Set<ListDocumentType> documents = EnumSet.of(ListDocumentType.TABLE);
     if (!targets.tables().isEmpty()) {
-      relatedDocuments.add(ListDocumentType.ER_DIAGRAM);
+      documents.add(ListDocumentType.ER_DIAGRAM);
     }
     if (!targets.functions().isEmpty()) {
-      relatedDocuments.add(ListDocumentType.FUNCTION);
+      documents.add(ListDocumentType.FUNCTION);
     }
     if (!targets.sequences().isEmpty()) {
-      relatedDocuments.add(ListDocumentType.SEQUENCE);
+      documents.add(ListDocumentType.SEQUENCE);
     }
     if (!targets.types().isEmpty()) {
-      relatedDocuments.add(ListDocumentType.TYPE);
+      documents.add(ListDocumentType.TYPE);
     }
     if (!targets.triggers().isEmpty()) {
-      relatedDocuments.add(ListDocumentType.TRIGGER);
+      documents.add(ListDocumentType.TRIGGER);
     }
-    return relatedDocuments;
+    return documents;
+  }
+
+  /**
+   * テーブル一覧に掲載する関連ドキュメント（テーブル一覧以外の一覧へのリンク）を決めるメソッド
+   *
+   * @param documents 出力する一覧ドキュメントの種別の集合
+   * @return リンクを掲載する一覧の種別（掲載順＝{@link ListDocumentType}の宣言順）
+   */
+  private static List<ListDocumentType> relatedDocuments(Set<ListDocumentType> documents) {
+    return documents.stream().filter(type -> type != ListDocumentType.TABLE).toList();
   }
 
   /** 1回の出力先・設定に紐づく、Markdownのドキュメントの{@link ExportSink}実装 */
@@ -106,17 +118,28 @@ public class MarkdownExportSinkFactory {
     @Override
     public void writeOverview(ExportTargets targets) {
       final OutputRoot outputRoot = new OutputRoot(outputBaseDir, targets.baseInfo());
+      final Set<ListDocumentType> documents = listDocuments(targets);
       // テーブル一覧出力 -> {outputBaseDir}/tableList_{DB名}.md
       tableDefinitionWriter.writeTableDefinitionList(
-          targets.tables(), outputRoot, relatedDocuments(targets));
+          targets.tables().asList(), outputRoot, relatedDocuments(documents));
       // スキーマ別ER図と、その索引の出力
-      erDiagramWriter.writeErDiagram(
-          targets.tables(), targets.foreignKeys(), outputRoot, erDiagramMaxNodes);
-      // トリガー・関数・シーケンス・型の一覧出力（対象が存在しない場合は出力されない）
-      objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
-      objectListWriter.writeFunctionList(targets.functions(), outputRoot);
-      objectListWriter.writeSequenceList(targets.sequences(), outputRoot);
-      objectListWriter.writeTypeList(targets.types(), outputRoot);
+      if (documents.contains(ListDocumentType.ER_DIAGRAM)) {
+        erDiagramWriter.writeErDiagram(
+            targets.tables(), targets.foreignKeys(), outputRoot, erDiagramMaxNodes);
+      }
+      // トリガー・関数・シーケンス・型の一覧出力（対象が存在しない一覧は出力しない）
+      if (documents.contains(ListDocumentType.TRIGGER)) {
+        objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
+      }
+      if (documents.contains(ListDocumentType.FUNCTION)) {
+        objectListWriter.writeFunctionList(targets.functions(), outputRoot);
+      }
+      if (documents.contains(ListDocumentType.SEQUENCE)) {
+        objectListWriter.writeSequenceList(targets.sequences(), outputRoot);
+      }
+      if (documents.contains(ListDocumentType.TYPE)) {
+        objectListWriter.writeTypeList(targets.types(), outputRoot);
+      }
       // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
       targets
           .sequences()

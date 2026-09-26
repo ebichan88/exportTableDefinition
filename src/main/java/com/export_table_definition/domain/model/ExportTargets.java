@@ -2,10 +2,10 @@ package com.export_table_definition.domain.model;
 
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
+import com.export_table_definition.domain.model.collection.Tables;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.List;
  */
 public record ExportTargets(
     BaseInfoEntity baseInfo,
-    List<TableEntity> tables,
+    Tables tables,
     ForeignKeys foreignKeys,
     List<TriggerEntity> triggers,
     List<FunctionEntity> functions,

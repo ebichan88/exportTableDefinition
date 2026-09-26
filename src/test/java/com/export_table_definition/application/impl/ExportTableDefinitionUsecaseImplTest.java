@@ -431,6 +431,24 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   @Test
+  @DisplayName("テーブルが0件の場合、テーブル一覧は出力するがER図一覧は出力せず、リンクも掲載しない")
+  void testNoTablesWritesNoErDiagramAndNoLink() {
+    setUp();
+    repository.sequences.add(
+        new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", false, ""));
+
+    usecase.exportTableDefinition(
+        new ExportRequest(
+            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+
+    final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
+    assertFalse(tableListContent.contains("ER図一覧"));
+    assertTrue(tableListContent.contains("シーケンス一覧"));
+    assertFalse(fileExists(DEFAULT_OUT.resolve("erDiagramList_testdb.md")));
+    assertTrue(fileExists(DEFAULT_OUT.resolve("sequenceList_testdb.md")));
+  }
+
+  @Test
   @DisplayName("chunkSize指定時は、指定件数ごとにテーブル詳細を分割取得しつつ全テーブル分を出力する")
   void testChunkSizeSplitsRepositoryCallsPerChunk() {
     setUp();
