@@ -7,6 +7,7 @@ import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.TableDetail;
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.annotation.Sidecar;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
@@ -124,9 +125,9 @@ public class ExportTableDefinitionUsecaseImplTest {
     List<SequenceEntity> sequences = new ArrayList<>();
     List<TypeEntity> types = new ArrayList<>();
 
-    final List<List<String>> columnCallArgs = new ArrayList<>();
-    final List<List<String>> indexCallArgs = new ArrayList<>();
-    final List<List<String>> constraintCallArgs = new ArrayList<>();
+    /** 詳細情報（カラム・インデックス・制約）の取得1回ごとの対象テーブル名 */
+    final List<List<String>> tableDetailCallArgs = new ArrayList<>();
+
     final List<List<String>> functionDefCallArgs = new ArrayList<>();
     int foreignKeyListCalls = 0;
     int tableListCalls = 0;
@@ -153,22 +154,14 @@ public class ExportTableDefinitionUsecaseImplTest {
     }
 
     @Override
-    public List<ColumnEntity> selectColumnList(List<String> schemaList, List<String> tableList) {
-      columnCallArgs.add(tableList);
-      return columns.stream().filter(c -> tableList.contains(c.tableName())).toList();
-    }
-
-    @Override
-    public List<IndexEntity> selectIndexList(List<String> schemaList, List<String> tableList) {
-      indexCallArgs.add(tableList);
-      return indexes.stream().filter(i -> tableList.contains(i.tableName())).toList();
-    }
-
-    @Override
-    public List<ConstraintEntity> selectConstraintList(
-        List<String> schemaList, List<String> tableList) {
-      constraintCallArgs.add(tableList);
-      return constraints.stream().filter(c -> tableList.contains(c.tableName())).toList();
+    public List<TableDetail> selectTableDetails(List<TableEntity> chunk) {
+      final List<String> tableList = chunk.stream().map(TableEntity::physicalTableName).toList();
+      tableDetailCallArgs.add(tableList);
+      return TableDetail.assembleAll(
+          chunk,
+          columns.stream().filter(c -> tableList.contains(c.tableName())).toList(),
+          indexes.stream().filter(i -> tableList.contains(i.tableName())).toList(),
+          constraints.stream().filter(c -> tableList.contains(c.tableName())).toList());
     }
 
     @Override
@@ -214,6 +207,11 @@ public class ExportTableDefinitionUsecaseImplTest {
   /** 生成日を指定してユースケースを組み立てる（同じスタブ・出力先を共有したまま実行日だけを変えるため） */
   private Function<LocalDate, ExportTableDefinitionUsecaseImpl> usecaseAt;
 
+  private CheckDocumentDiffUsecaseImpl checkUsecase;
+
+  /** 生成日を指定して差分検知のユースケースを組み立てる */
+  private Function<LocalDate, CheckDocumentDiffUsecaseImpl> checkUsecaseAt;
+
   /** annotationRepositoryスタブが返す付帯情報（テストごとに差し替え可能） */
   private Annotations annotations = Annotations.empty();
 
@@ -251,20 +249,34 @@ public class ExportTableDefinitionUsecaseImplTest {
     final SnapshotDiffDomainService snapshotDiffDomainService =
         new SnapshotDiffDomainService(
             fileRepository, pathResolver, serializer, new UnifiedDiffGenerator());
-    usecaseAt =
+    final SnapshotExportSinkFactory snapshotSinkFactory =
+        new SnapshotExportSinkFactory(snapshotWriter);
+    final Function<LocalDate, SchemaExporter> schemaExporterAt =
         generatedDate ->
-            new ExportTableDefinitionUsecaseImpl(
+            new SchemaExporter(
                 repository,
                 annotationRepository,
                 new ExportTargetConsistencyDomainService(),
-                new MarkdownExportSinkFactory(writer, erDiagramWriter, objectListWriter),
-                new SnapshotExportSinkFactory(snapshotWriter),
-                snapshotDiffDomainService,
-                fileRepository,
-                pathResolver,
                 Clock.fixed(
                     generatedDate.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
+    usecaseAt =
+        generatedDate ->
+            new ExportTableDefinitionUsecaseImpl(
+                schemaExporterAt.apply(generatedDate),
+                new MarkdownExportSinkFactory(writer, erDiagramWriter, objectListWriter),
+                snapshotSinkFactory,
+                fileRepository,
+                pathResolver);
+    checkUsecaseAt =
+        generatedDate ->
+            new CheckDocumentDiffUsecaseImpl(
+                schemaExporterAt.apply(generatedDate),
+                snapshotSinkFactory,
+                snapshotDiffDomainService,
+                fileRepository,
+                pathResolver);
     usecase = usecaseAt.apply(GENERATED_DATE);
+    checkUsecase = checkUsecaseAt.apply(GENERATED_DATE);
   }
 
   private TableEntity table(String schema, String physical) {
@@ -459,10 +471,9 @@ public class ExportTableDefinitionUsecaseImplTest {
             TargetSelection.of(List.of(), List.of(), List.of(), null), null, 2, 80, false));
 
     // 5件を2件ずつ取得: 3回に分割される
-    assertEquals(3, repository.columnCallArgs.size());
-    assertEquals(3, repository.indexCallArgs.size());
-    assertEquals(3, repository.constraintCallArgs.size());
-    assertEquals(List.of(2, 2, 1), repository.columnCallArgs.stream().map(List::size).toList());
+    assertEquals(3, repository.tableDetailCallArgs.size());
+    assertEquals(
+        List.of(2, 2, 1), repository.tableDetailCallArgs.stream().map(List::size).toList());
 
     // チャンク境界を跨いでも全テーブル分の定義書が出力される
     IntStream.rangeClosed(1, 5)
@@ -485,8 +496,8 @@ public class ExportTableDefinitionUsecaseImplTest {
         new ExportRequest(
             TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
 
-    assertEquals(1, repository.columnCallArgs.size());
-    assertEquals(5, repository.columnCallArgs.get(0).size());
+    assertEquals(1, repository.tableDetailCallArgs.size());
+    assertEquals(5, repository.tableDetailCallArgs.get(0).size());
   }
 
   @Test
@@ -692,7 +703,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "t1"));
 
     final DiffResult result =
-        usecase.checkDocumentDiff(
+        checkUsecase.checkDocumentDiff(
             new CheckDiffRequest(
                 TargetSelection.of(List.of(), List.of(), List.of(), null), "committed", 0));
 
@@ -711,7 +722,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "t1"));
 
-    usecase.checkDocumentDiff(
+    checkUsecase.checkDocumentDiff(
         new CheckDiffRequest(
             TargetSelection.of(List.of(), List.of(), List.of(), null), "committed", 0));
 
@@ -728,7 +739,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "skip"));
 
     final DiffResult result =
-        usecase.checkDocumentDiff(
+        checkUsecase.checkDocumentDiff(
             new CheckDiffRequest(
                 TargetSelection.of(List.of(), List.of("keep"), List.of(), null), "committed", 0));
 
@@ -1039,7 +1050,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
   /** "committed"に対してスナップショット同士の比較を行う */
   private DiffResult checkSnapshotDiff() {
-    return usecase.checkDocumentDiff(
+    return checkUsecase.checkDocumentDiff(
         new CheckDiffRequest(
             TargetSelection.of(List.of(), List.of(), List.of(), null), "committed", 0));
   }
@@ -1077,7 +1088,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     exportCommitted();
 
     // 実行日（作成日）が変わった状態で比較する
-    usecase = usecaseAt.apply(LocalDate.of(2027, 1, 1));
+    checkUsecase = checkUsecaseAt.apply(LocalDate.of(2027, 1, 1));
     final DiffResult result = checkSnapshotDiff();
 
     assertFalse(result.hasDifference());

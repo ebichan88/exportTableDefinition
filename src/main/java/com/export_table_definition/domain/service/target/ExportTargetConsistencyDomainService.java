@@ -1,7 +1,7 @@
 package com.export_table_definition.domain.service.target;
 
+import com.export_table_definition.domain.model.TableDetail;
 import com.export_table_definition.domain.model.annotation.Annotations;
-import com.export_table_definition.domain.model.collection.Columns;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.collection.Tables;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
@@ -109,17 +109,15 @@ public class ExportTargetConsistencyDomainService {
    * 実在しないカラムに対するカラム備考（＝孤児付帯情報）を検出するメソッド<br>
    * 出力対象のテーブルに対してのみ、実在カラムと付帯情報のカラム名を突き合わせて検出する
    *
-   * @param table 出力対象のテーブル情報
-   * @param columns 当該テーブルを含むチャンクのカラム情報
+   * @param detail 出力対象のテーブルの詳細情報
    * @param annotations 対象範囲全体の手動付帯情報
    * @return 指摘のリスト
    */
   public List<ConsistencyFinding> findOrphanColumnAnnotations(
-      TableEntity table, Columns columns, Annotations annotations) {
+      TableDetail detail, Annotations annotations) {
+    final TableEntity table = detail.table();
     final Set<String> actualColumnNames =
-        columns.of(table).stream()
-            .map(ColumnEntity::physicalColumnName)
-            .collect(Collectors.toSet());
+        detail.columns().stream().map(ColumnEntity::physicalColumnName).collect(Collectors.toSet());
     return annotations.of(table).orphanColumnNames(actualColumnNames).stream()
         .map(
             columnName ->

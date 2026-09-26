@@ -1,6 +1,8 @@
 package com.export_table_definition.config.module;
 
+import com.export_table_definition.application.CheckDocumentDiffUsecase;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.application.impl.CheckDocumentDiffUsecaseImpl;
 import com.export_table_definition.application.impl.ExportTableDefinitionUsecaseImpl;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -50,6 +52,7 @@ public class ExportTableDefinitionModule extends AbstractModule {
   protected void configure() {
     bind(TableDefinitionRepository.class).to(databaseType.getRepositoryClass());
     bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
+    bind(CheckDocumentDiffUsecase.class).to(CheckDocumentDiffUsecaseImpl.class);
     bind(FileRepository.class).to(LocalFileRepository.class);
     bind(AnnotationRepository.class).to(AnnotationYamlRepository.class);
     bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);

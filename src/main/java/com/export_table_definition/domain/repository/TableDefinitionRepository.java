@@ -1,11 +1,9 @@
 package com.export_table_definition.domain.repository;
 
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
+import com.export_table_definition.domain.model.TableDetail;
 import com.export_table_definition.domain.model.entity.DatabaseEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
@@ -40,31 +38,13 @@ public interface TableDefinitionRepository {
   List<TableEntity> selectTableList(List<String> schemaList);
 
   /**
-   * データベースのカラム情報を取得するメソッド
+   * 指定したテーブルの詳細情報（カラム・インデックス・制約）を取得するメソッド<br>
+   * テーブル数に比例して重くなる情報のため、呼び出し側はスキーマ・チャンク単位でテーブルを渡す （同一スキーマのテーブルを渡すことを想定する）
    *
-   * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
-   * @return データベースのカラム情報
+   * @param tables 詳細情報を取得するテーブルのリスト
+   * @return テーブルごとの詳細情報のリスト（{@code tables}と同じ順）
    */
-  List<ColumnEntity> selectColumnList(List<String> schemaList, List<String> tableList);
-
-  /**
-   * データベースのインデックス情報を取得するメソッド
-   *
-   * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
-   * @return データベースのインデックス情報
-   */
-  List<IndexEntity> selectIndexList(List<String> schemaList, List<String> tableList);
-
-  /**
-   * データベースの制約情報を取得するメソッド
-   *
-   * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
-   * @return データベースの制約情報
-   */
-  List<ConstraintEntity> selectConstraintList(List<String> schemaList, List<String> tableList);
+  List<TableDetail> selectTableDetails(List<TableEntity> tables);
 
   /**
    * データベースの外部キー情報を取得するメソッド<br>

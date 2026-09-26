@@ -2,10 +2,7 @@ package com.export_table_definition.domain.model;
 
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.collection.Columns;
-import com.export_table_definition.domain.model.collection.Constraints;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
-import com.export_table_definition.domain.model.collection.Indexes;
 import com.export_table_definition.domain.model.collection.Triggers;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
@@ -43,31 +40,26 @@ public record TableDefinitionContent(
    * logicalRelations}）に分けて保持する。 テーブル定義書では別々のセクションへ掲載し、ER図では両者を1つの図にまとめて描画するため。 被参照側（{@code
    * incomingForeignKeys}）はER図でしか用いないため由来を分けない
    *
-   * @param baseInfo
-   * @param table
-   * @param columns
-   * @param indexes
-   * @param constraints
-   * @param foreignkeys
-   * @param triggers
+   * @param baseInfo データベースの基本情報
+   * @param detail 当該テーブルの詳細情報（カラム・インデックス・制約）
+   * @param foreignkeys 対象範囲全体の外部キー（論理リレーションを含む。当該テーブル分を抽出して保持する）
+   * @param triggers 対象範囲全体のトリガー情報（当該テーブル分を抽出して保持する）
    * @param annotations 対象範囲全体の手動付帯情報（当該テーブル分を抽出して保持する）
    * @return TableDefinitionContent
    */
   public static TableDefinitionContent assemble(
       BaseInfoEntity baseInfo,
-      TableEntity table,
-      Columns columns,
-      Indexes indexes,
-      Constraints constraints,
+      TableDetail detail,
       ForeignKeys foreignkeys,
       Triggers triggers,
       Annotations annotations) {
+    final TableEntity table = detail.table();
     return new TableDefinitionContent(
         baseInfo,
         table,
-        columns.of(table),
-        indexes.of(table),
-        constraints.of(table),
+        detail.columns(),
+        detail.indexes(),
+        detail.constraints(),
         foreignkeys.physicalOf(table),
         foreignkeys.logicalOf(table),
         foreignkeys.incomingOf(table),

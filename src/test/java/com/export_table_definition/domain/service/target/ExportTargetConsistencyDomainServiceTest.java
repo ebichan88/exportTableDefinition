@@ -2,9 +2,9 @@ package com.export_table_definition.domain.service.target;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.TableDetail;
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.collection.Columns;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.collection.Tables;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
@@ -204,10 +204,14 @@ public class ExportTargetConsistencyDomainServiceTest {
             Map.of(
                 TableKey.of(orders),
                 new TableAnnotation("", "", Map.of("id", "ID", "removed_column", "削除済み"))));
-    var columns = Columns.of(List.of(EntityFixtures.column("public", "orders", "id", "int", true)));
+    var detail =
+        new TableDetail(
+            orders,
+            List.of(EntityFixtures.column("public", "orders", "id", "int", true)),
+            List.of(),
+            List.of());
 
-    List<ConsistencyFinding> findings =
-        service.findOrphanColumnAnnotations(orders, columns, annotations);
+    List<ConsistencyFinding> findings = service.findOrphanColumnAnnotations(detail, annotations);
 
     assertEquals(List.of(Kind.ORPHAN_COLUMN_ANNOTATION), kinds(findings));
     assertEquals(

@@ -1,5 +1,6 @@
 package com.export_table_definition.infrastructure.db.repository;
 
+import com.export_table_definition.domain.model.TableDetail;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.DatabaseEntity;
@@ -66,24 +67,24 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
     return selectTableDefinition(schemaList, List.of(), "selectAllTableInfo", TableDto::toEntity);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}<br>
+   * カラム・インデックス・制約を種類ごとに対象テーブル分まとめて取得し、テーブルごとに振り分ける
+   */
   @Override
-  public List<ColumnEntity> selectColumnList(List<String> schemaList, List<String> tableList) {
-    return selectTableDefinition(schemaList, tableList, "selectAllColumnInfo", ColumnDto::toEntity);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<IndexEntity> selectIndexList(List<String> schemaList, List<String> tableList) {
-    return selectTableDefinition(schemaList, tableList, "selectAllIndexInfo", IndexDto::toEntity);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<ConstraintEntity> selectConstraintList(
-      List<String> schemaList, List<String> tableList) {
-    return selectTableDefinition(
-        schemaList, tableList, "selectAllConstraintInfo", ConstraintDto::toEntity);
+  public List<TableDetail> selectTableDetails(List<TableEntity> tables) {
+    final List<String> schemaList =
+        tables.stream().map(TableEntity::schemaName).distinct().toList();
+    final List<String> tableList =
+        tables.stream().map(TableEntity::physicalTableName).distinct().toList();
+    final List<ColumnEntity> columns =
+        selectTableDefinition(schemaList, tableList, "selectAllColumnInfo", ColumnDto::toEntity);
+    final List<IndexEntity> indexes =
+        selectTableDefinition(schemaList, tableList, "selectAllIndexInfo", IndexDto::toEntity);
+    final List<ConstraintEntity> constraints =
+        selectTableDefinition(
+            schemaList, tableList, "selectAllConstraintInfo", ConstraintDto::toEntity);
+    return TableDetail.assembleAll(tables, columns, indexes, constraints);
   }
 
   /** {@inheritDoc} */

@@ -6,10 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.collection.Columns;
-import com.export_table_definition.domain.model.collection.Constraints;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
-import com.export_table_definition.domain.model.collection.Indexes;
 import com.export_table_definition.domain.model.collection.Triggers;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -24,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * TableDefinitionContent.assemble の組み立てに関するテスト<br>
- * 各集合クラスから対象テーブル分のみが正しく抽出され、被参照側の外部キーも incomingForeignKeysとして分離されることを検証する
+ * 対象テーブル分のみが正しく抽出され、被参照側の外部キーも incomingForeignKeysとして分離されることを検証する
  */
 public class TableDefinitionContentTest {
 
@@ -40,14 +37,16 @@ public class TableDefinitionContentTest {
 
     var ownColumn = EntityFixtures.column("public", "orders", "id", "int", true);
     var otherColumn = EntityFixtures.column("public", "customers", "id", "int", true);
-    var columns = Columns.of(List.of(ownColumn, otherColumn));
-
     var ownIndex = EntityFixtures.index("public", "orders");
-    var indexes = Indexes.of(List.of(ownIndex, EntityFixtures.index("public", "customers")));
-
     var ownConstraint = EntityFixtures.constraint("public", "orders");
-    var constraints =
-        Constraints.of(List.of(ownConstraint, EntityFixtures.constraint("public", "customers")));
+    // 詳細情報はチャンク単位で複数テーブル分をまとめて取得し、テーブルごとに振り分けたものを渡す
+    var detail =
+        TableDetail.assembleAll(
+                List.of(target),
+                List.of(ownColumn, otherColumn),
+                List.of(ownIndex, EntityFixtures.index("public", "customers")),
+                List.of(ownConstraint, EntityFixtures.constraint("public", "customers")))
+            .get(0);
 
     var outgoingFk =
         ForeignKeyFixtures.physical(
@@ -69,8 +68,7 @@ public class TableDefinitionContentTest {
                 new TableAnnotation("顧客テーブル", "", java.util.Map.of())));
 
     TableDefinitionContent content =
-        TableDefinitionContent.assemble(
-            baseInfo, target, columns, indexes, constraints, foreignKeys, triggers, annotations);
+        TableDefinitionContent.assemble(baseInfo, detail, foreignKeys, triggers, annotations);
 
     assertSame(baseInfo, content.baseInfo());
     assertSame(target, content.table());
@@ -95,10 +93,7 @@ public class TableDefinitionContentTest {
     TableDefinitionContent content =
         TableDefinitionContent.assemble(
             baseInfo,
-            target,
-            Columns.of(List.of()),
-            Indexes.of(List.of()),
-            Constraints.of(List.of()),
+            new TableDetail(target, List.of(), List.of(), List.of()),
             ForeignKeys.of(List.of()),
             Triggers.of(List.of()),
             Annotations.empty());
@@ -127,10 +122,7 @@ public class TableDefinitionContentTest {
     var content =
         TableDefinitionContent.assemble(
             new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH),
-            table,
-            Columns.of(List.of()),
-            Indexes.of(List.of()),
-            Constraints.of(List.of()),
+            new TableDetail(table, List.of(), List.of(), List.of()),
             foreignKeys,
             Triggers.of(List.of()),
             Annotations.empty());
@@ -153,10 +145,7 @@ public class TableDefinitionContentTest {
     var content =
         TableDefinitionContent.assemble(
             new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH),
-            table,
-            Columns.of(List.of()),
-            Indexes.of(List.of()),
-            Constraints.of(List.of()),
+            new TableDetail(table, List.of(), List.of(), List.of()),
             foreignKeys,
             Triggers.of(List.of()),
             Annotations.empty());
