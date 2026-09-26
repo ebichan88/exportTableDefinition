@@ -1,7 +1,7 @@
 package com.export_table_definition.domain.model.target;
 
 /**
- * 出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報）を突き合わせた結果の 指摘1件分を表す値オブジェクト<br>
+ * 出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報／観点）を突き合わせた結果の 指摘1件分を表す値オブジェクト<br>
  * リネーム・削除によるDBとサイドカーの乖離など、利用者が気付くべき事柄を表す。 突き合わせ自体はドメインサービスが行い、指摘をどこへ（ログ等）どう出力するかは呼び出し側が決める
  *
  * @param kind 指摘の種類
@@ -30,6 +30,8 @@ public record ConsistencyFinding(Kind kind, String message) {
     UNRESOLVED_FOREIGN_KEY(Severity.WARN),
     /** 参照元・参照先のテーブルが出力対象に存在しないため除外した論理リレーション */
     UNRESOLVED_LOGICAL_RELATION(Severity.WARN),
+    /** 観点の所属テーブルのパターンのうち、どのテーブルにも一致しないもの（リネーム・削除の可能性） */
+    UNMATCHED_VIEWPOINT_PATTERN(Severity.WARN),
     /** 出力対象が絞り込まれているため、実在しないテーブルに対する付帯情報の検出を行わなかったこと */
     ORPHAN_TABLE_ANNOTATION_CHECK_SKIPPED(Severity.INFO),
     /** サイドカーで宣言された論理リレーションを外部キーの集合へ合流させたこと */

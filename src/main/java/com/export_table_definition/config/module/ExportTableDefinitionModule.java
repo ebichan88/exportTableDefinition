@@ -14,6 +14,7 @@ import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainSe
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
+import com.export_table_definition.domain.service.writer.ViewpointWriterDomainService;
 import com.export_table_definition.infrastructure.file.repository.LocalFileRepository;
 import com.export_table_definition.infrastructure.file.repository.SidecarYamlRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
@@ -46,6 +47,7 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(TableDefinitionWriterDomainService.class);
     bind(ErDiagramWriterDomainService.class);
     bind(ObjectListWriterDomainService.class);
+    bind(ViewpointWriterDomainService.class);
     bind(SchemaSnapshotWriterDomainService.class);
     bind(SnapshotDiffDomainService.class);
     bind(UnifiedDiffGenerator.class);

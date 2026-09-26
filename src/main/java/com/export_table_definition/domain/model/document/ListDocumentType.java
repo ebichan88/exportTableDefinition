@@ -20,7 +20,9 @@ public enum ListDocumentType {
   /** ユーザー定義型一覧 */
   TYPE("type", "ユーザー定義型一覧"),
   /** トリガー一覧 */
-  TRIGGER("trigger", "トリガー一覧");
+  TRIGGER("trigger", "トリガー一覧"),
+  /** 観点一覧（サイドカーYAMLで宣言した観点ごとのページの索引） */
+  VIEWPOINT("viewpoint", "観点一覧");
 
   /** 一覧ファイル名・個別定義ディレクトリ名の接頭辞 */
   private final String prefix;

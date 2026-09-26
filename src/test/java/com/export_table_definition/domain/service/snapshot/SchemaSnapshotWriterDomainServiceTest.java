@@ -107,7 +107,8 @@ public class SchemaSnapshotWriterDomainServiceTest {
         List.of(),
         List.of(),
         List.of(),
-        TableAnnotation.EMPTY);
+        TableAnnotation.EMPTY,
+        List.of());
   }
 
   @Test

@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -340,6 +341,32 @@ public class TableDefinitionTemplates {
                 .append(LINE_SEPARATOR));
     sb.append("    }").append(LINE_SEPARATOR).append("```").append(LINE_SEPARATOR_DOUBLE);
     return sb.toString();
+  }
+
+  /**
+   * 所属する観点セクション<br>
+   * テーブル定義書から、当該テーブルが所属する観点のページへ戻る導線とする。所属する観点が無いテーブル
+   * （観点を宣言していない場合を含む）では、セクションごと出力しない（観点を導入しても、所属しないテーブルの定義書は変わらない）
+   *
+   * @param viewpoints 当該テーブルが所属する観点のリスト（宣言順）
+   * @param baseInfo データベース基本情報
+   * @return 所属する観点セクション文字列。所属する観点が無い場合は空文字
+   */
+  public static String viewpoints(List<Viewpoint> viewpoints, BaseInfoEntity baseInfo) {
+    if (viewpoints.isEmpty()) {
+      return "";
+    }
+    final StringBuilder sb = new StringBuilder("## 所属する観点").append(LINE_SEPARATOR_DOUBLE);
+    viewpoints.forEach(
+        viewpoint ->
+            sb.append(
+                    String.format(
+                        "* [%s](%s)  ",
+                        viewpoint.name(),
+                        DocumentLocations.linkFromDefinition(
+                            DocumentLocations.viewpointFile(baseInfo.dbName(), viewpoint))))
+                .append(LINE_SEPARATOR));
+    return sb.append(LINE_SEPARATOR).toString();
   }
 
   /**

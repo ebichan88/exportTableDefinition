@@ -14,6 +14,10 @@
 |:---|:---|:---|:---|:---|
 |sample|プロジェクト別要員数集計|project_summary_mv|materialized_view||
 
+## 所属する観点
+
+* [プロジェクト管理](../../../viewpoint_testdb_project.md)  
+
 ## カラム情報
 
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |

@@ -14,6 +14,11 @@
 |:---|:---|:---|:---|:---|
 |sample|従業員|employee|table||
 
+## 所属する観点
+
+* [人事管理](../../../viewpoint_testdb_personnel.md)  
+* [プロジェクト管理](../../../viewpoint_testdb_project.md)  
+
 ## カラム情報
 
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |

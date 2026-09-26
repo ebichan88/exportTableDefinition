@@ -6,6 +6,8 @@ import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -85,5 +87,14 @@ public class DocumentLocationsTest {
     assertEquals(
         "../../../tableList_testdb.md",
         DocumentLocations.linkFromDefinition("tableList_testdb.md"));
+  }
+
+  @Test
+  @DisplayName("viewpointFile: 観点ページのファイル名には、表示名ではなく識別子を用いる")
+  void testViewpointFile() {
+    assertEquals(
+        "viewpoint_testdb_order.md",
+        DocumentLocations.viewpointFile(
+            "testdb", Viewpoint.of("order", "受注 管理", "", List.of("orders"))));
   }
 }

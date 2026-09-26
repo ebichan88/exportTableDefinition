@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.Triggers;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.time.LocalDate;
@@ -69,7 +70,8 @@ public class TableDefinitionContentTest {
                 new TableAnnotation("顧客テーブル", "", java.util.Map.of())));
 
     TableDefinitionContent content =
-        TableDefinitionContent.assemble(baseInfo, detail, foreignKeys, triggers, annotations);
+        TableDefinitionContent.assemble(
+            baseInfo, detail, foreignKeys, triggers, annotations, Viewpoints.empty());
 
     assertSame(baseInfo, content.baseInfo());
     assertSame(target, content.table());
@@ -97,7 +99,8 @@ public class TableDefinitionContentTest {
             new TableDetail(target, List.of(), List.of(), List.of()),
             ForeignKeys.of(List.of()),
             Triggers.of(List.of()),
-            Annotations.empty());
+            Annotations.empty(),
+            Viewpoints.empty());
 
     // 付帯情報が存在しないテーブルには空の付帯情報が設定される
     assertSame(TableAnnotation.EMPTY, content.annotation());
@@ -126,7 +129,8 @@ public class TableDefinitionContentTest {
             new TableDetail(table, List.of(), List.of(), List.of()),
             foreignKeys,
             Triggers.of(List.of()),
-            Annotations.empty());
+            Annotations.empty(),
+            Viewpoints.empty());
 
     assertEquals(List.of(physical), content.foreignKeys());
     assertEquals(List.of(logical), content.logicalRelations());
@@ -149,7 +153,8 @@ public class TableDefinitionContentTest {
             new TableDetail(table, List.of(), List.of(), List.of()),
             foreignKeys,
             Triggers.of(List.of()),
-            Annotations.empty());
+            Annotations.empty(),
+            Viewpoints.empty());
 
     assertEquals(List.of(physical, logical), content.outgoingRelations());
   }

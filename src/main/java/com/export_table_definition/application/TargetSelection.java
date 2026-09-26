@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  *
  * @param targetScope テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）
  * @param outputObjectTypes 出力対象とするPostgreSQL固有オブジェクト種別の集合（未指定の場合は全種別）
- * @param sidecarPath サイドカーYAML（手動付帯情報・論理リレーション）のパス（プロパティ{@code annotationPath}の値）。
+ * @param sidecarPath サイドカーYAML（手動付帯情報・論理リレーション・観点）のパス（プロパティ{@code annotationPath}の値）。
  *     空・未指定の場合はマージを行わない
  * @since 1.0
  * @version 1.0

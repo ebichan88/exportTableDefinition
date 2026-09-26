@@ -7,9 +7,11 @@ import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -99,6 +101,14 @@ public class DefaultOutputPathResolverTest {
   void testResolveErDiagramFile() {
     Path result = resolver.resolveErDiagramFile(root, "public");
     assertEquals(Path.of("output", "erDiagram_testdb_public.md"), result);
+  }
+
+  @Test
+  @DisplayName("resolveViewpointFile: {base}/viewpoint_{DB名}_{観点の識別子}.md")
+  void testResolveViewpointFile() {
+    Path result =
+        resolver.resolveViewpointFile(root, Viewpoint.of("order", "受注管理", "", List.of("orders")));
+    assertEquals(Path.of("output", "viewpoint_testdb_order.md"), result);
   }
 
   @Test

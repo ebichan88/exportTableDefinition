@@ -3,6 +3,7 @@ package com.export_table_definition.domain.service.path;
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 
 /**
  * 出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>
@@ -21,6 +22,7 @@ public final class DocumentLocations {
   private static final String ER_DIAGRAM_FILENAME_PATTERN = "erDiagram_%s_%s" + MARKDOWN_EXTENSION;
   private static final String ER_DIAGRAM_GROUP_FILENAME_PATTERN =
       "erDiagram_%s_%s_group%d" + MARKDOWN_EXTENSION;
+  private static final String VIEWPOINT_FILENAME_PATTERN = "viewpoint_%s_%s" + MARKDOWN_EXTENSION;
   private static final String PATH_SEPARATOR = "/";
 
   /** オーバーロードされた関数・プロシージャの個別定義ファイル名で、名前と番号を区切る文字 */
@@ -67,6 +69,18 @@ public final class DocumentLocations {
    */
   public static String erDiagramGroupFile(String dbName, String schemaName, int groupNo) {
     return String.format(ER_DIAGRAM_GROUP_FILENAME_PATTERN, dbName, schemaName, groupNo);
+  }
+
+  /**
+   * 観点ページのファイル名を取得するメソッド<br>
+   * 表示名は日本語・空白を含みうるためファイル名に用いず、ファイル名に使える文字に限った識別子を用いる
+   *
+   * @param dbName データベース名
+   * @param viewpoint 観点
+   * @return {@code viewpoint_{DB名}_{観点の識別子}.md}
+   */
+  public static String viewpointFile(String dbName, Viewpoint viewpoint) {
+    return String.format(VIEWPOINT_FILENAME_PATTERN, dbName, viewpoint.id());
   }
 
   /**

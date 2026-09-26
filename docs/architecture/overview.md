@@ -33,7 +33,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 置くのは失敗の分類を伝える例外だけとし、`shared`の直下や、例外以外の共通部品の置き場所にはしない
 （範囲を広げると、層に属さない何でも置き場になり、依存の向きのルールが形骸化するため）。
 
-`domain.model` は概念ごとのサブパッケージ（`table`・`relation`・`sidecar`・`target` 等）に分かれている。
+`domain.model` は概念ごとのサブパッケージ（`table`・`relation`・`sidecar`・`viewpoint`・`target` 等）に分かれている。
 ドメインの概念・用語・主なルールの置き場所は [domain-model.md](./domain-model.md)、
 パッケージ・クラス単位の役割は [package-structure.md](./package-structure.md) を参照。
 
@@ -69,13 +69,13 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 5. 通常実行のユースケース（`ExportTableDefinitionUsecaseImpl`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
    - `SchemaExporter.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
-     `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込む。
+     `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。
      `ExportTargetConsistencyDomainService`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
      一括取得分を `ExportTargets` にまとめる
    - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）。
      削除してよい出力先かは、ユースケースを呼ぶ前に入口（2.）で検証済みである
    - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
-     - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` /
+     - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ViewpointWriterDomainService` /
        `ObjectListWriterDomainService`（いずれも `domain.service.writer`）がMarkdownを組み立てて `FileRepository` 経由で出力
      - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
@@ -195,6 +195,7 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 | 関連（物理外部キー・論理リレーション）の参照元・参照先が出力対象に存在するか | `resolveForeignKeys` | 除外した関連（物理外部キーは出力対象の絞り込み時は指摘しない） |
 | 付帯情報に対応するテーブルが実在するか | `findOrphanTableAnnotations` | 孤児付帯情報（出力対象の絞り込み時は検出しない） |
 | カラム備考に対応するカラムが実在するか | `findOrphanColumnAnnotations` | 孤児付帯情報（チャンクごとに出力対象のテーブルについて検出） |
+| 観点の所属テーブルのパターンが、出力対象のいずれかのテーブルに一致するか | `findUnmatchedViewpointPatterns` | 一致しないパターン（出力対象の絞り込み時は検出しない） |
 
 ## ER図生成
 
@@ -206,12 +207,13 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 
 ## 出力ファイルの命名規則と相対リンク
 
-Markdownドキュメントのファイル名・配置（一覧・ER図は出力ベースディレクトリ直下、テーブル定義書・関数等の個別定義書は
+Markdownドキュメントのファイル名・配置（一覧・ER図・観点ページは出力ベースディレクトリ直下、テーブル定義書・関数等の個別定義書は
 `{DB名}/{スキーマ名}/{区分}/`配下）は`domain.service.path.DocumentLocations`に一元化している。
 出力先の絶対パス（`OutputPathResolver`の実装）と、ドキュメント間の相対リンク（`domain.service.writer.template`）の
 双方がこの規則を参照するため、ファイル名を変更してもパスとリンクが食い違わない。一覧の種別ごとの接頭辞・タイトルは
 `domain.model.document.ListDocumentType`が持つ。関数・プロシージャの個別定義は関数名をファイル名とし、同じスキーマに
 同名のもの（オーバーロード）がある場合のみ`{関数名}_{番号}`とする（番号はSQLが関数名ごとに振る）。
+観点ページは、日本語・空白を含みうる表示名ではなく、ファイル名に使える文字に限った識別子から`viewpoint_{DB名}_{識別子}.md`とする。
 
 どの一覧ドキュメントを出力するか（テーブル一覧は常に、それ以外は対象が1件以上ある場合のみ）は
 `MarkdownExportSinkFactory`の`listDocuments()`が1箇所で決め、一覧の書き出しと、テーブル一覧に掲載する関連ドキュメントへの
@@ -289,11 +291,11 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 終了コードは、差分なしの場合は0、差分が1件でもある場合は1、比較処理自体が失敗した場合（設定の誤り・DBに接続できない等）は
 2以上（現在は2）となる（`presentation.type.ExitStatus`、[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。CI上でジョブの成否として扱えるほか、「差分あり」と「比較自体の失敗」を区別できる。
 
-## サイドカーYAML（手動付帯情報・論理リレーション）
+## サイドカーYAML（手動付帯情報・論理リレーション・観点）
 
 DBのメタ情報だけでは表現できない情報を、サイドカーYAML（プロパティ`annotationPath`で指定。コード上は`sidecarPath`と呼ぶ）として
 マージできる。読み込みは `SidecarRepository`（実装: `infrastructure.file.repository.SidecarYamlRepository`）が一括で行い、
-`domain.model.sidecar.Sidecar` として返す。`Sidecar` は性質の異なる2種類の情報を束ねる。
+`domain.model.sidecar.Sidecar` として返す。`Sidecar` は性質の異なる3種類の情報を束ねる。
 指定したファイルが無い・YAMLとして読めない場合は`UserCorrectableException`とし、個々の記述の誤りは読み飛ばして警告する
 （[入力の検証](#入力の検証)を参照）。
 
@@ -301,6 +303,7 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 |---|---|---|---|
 | 手動付帯情報 | `tables` | `Annotations` / `TableAnnotation` | テーブル定義書の各セル（説明・備考・カラム備考） |
 | 論理リレーション | `relations` | `ForeignKeyEntity`（`RelationType.LOGICAL`） | 「論理リレーション情報」セクション + ER図 |
+| 観点 | `viewpoints` | `Viewpoints` / `Viewpoint` | 観点ページ・観点一覧 + 所属テーブルの定義書の「所属する観点」セクション |
 
 実在しないテーブル・カラムに対する付帯情報（リネーム・削除の見落とし）は、[出力対象の突き合わせ](#出力対象の突き合わせ)で
 指摘として検出し、警告ログへ出力する。
@@ -311,6 +314,7 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 - 論理リレーションの関連名が省略された場合の自動生成（「テーブル名_列名..._lrel」形式）:
   `domain.model.relation.ForeignKeyEntity#resolveLogicalRelationName`
 - 論理リレーションの多重度の既定値（1対多）: `domain.model.relation.Cardinality#DEFAULT_FOR_LOGICAL_RELATION`
+- 観点の識別子の形式・所属テーブルのパターンの検証、表示名の既定値（識別子）: `domain.model.viewpoint.Viewpoint#of`
 
 読み込み元のパス等、ログ出力に必要なコンテキストを持つ警告（未知の形式・未知の多重度ラベル等）のみ
 `SidecarYamlRepository`側に残す。
@@ -329,6 +333,20 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
   - テーブル定義書：`ForeignKeys.physicalOf()` / `logicalOf()` で由来ごとに取り出し、別セクションへ掲載
   - ER図：`RelationType` が持つ線種を `Cardinality.getNotation(RelationType)` が組み立て、
     物理は実線（`||--o{`）、論理は破線（`||..o{`）で描画する
+
+### 観点
+
+スキーマ単位・連結成分単位のER図は機械的なまとまりで、人が読む単位（「受注管理」「在庫管理」等）にはならないため、
+サイドカーで宣言した観点ごとにページを出力する。設計上の要点は「**描画対象のテーブルの集合の決め方だけを差し替える**」こと。
+
+- 所属テーブルの指定は、出力対象の範囲（`table=`）と同じテーブル名パターンの記法で書く（`domain.model.table.TableTargetFilter`を共有する）。
+  観点（`domain.model.viewpoint`）はサイドカーより下の層にあるため、`TableTargetFilter`は`target`ではなく`table`に置いている
+- `Viewpoint.resolve()` が、一括取得済みの出力対象（`Tables`・`ForeignKeys`）から所属テーブルと、所属テーブル同士の関連（`ForeignKeys.within()`）・
+  観点外のテーブルとの関連（`ForeignKeys.crossing()`）を求める。ER図の描画は`ErDiagramTemplates.erDiagram()`をそのまま使う。
+  人が選んだまとまりのため、スキーマ別ER図のようなグループ分割は行わない（上限を超える場合は関連の一覧表に切り替える点は同じ）
+- 観点は「見せ方」でありスキーマではないため、スナップショットには含めない（観点を変えても`--check`は差分を報告しない）
+- 観点を宣言しない場合の出力は、観点の導入前と変わらない。観点一覧は観点が1件以上あるときだけ出力し
+  （`MarkdownExportSinkFactory.listDocuments`）、テーブル定義書の「所属する観点」セクションは所属する観点が無ければ出力しない
 
 ## 設定・DI
 

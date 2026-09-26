@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 外部キー情報の集合を扱うクラス<br>
@@ -108,6 +109,36 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
     return byKey.values().stream()
         .flatMap(List::stream)
         .filter(fk -> !fk.schemaName().equals(fk.referenceSchemaName()))
+        .toList();
+  }
+
+  /**
+   * 参照元・参照先の両方が指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
+   * 観点のように、テーブルの集合の中だけで閉じた関連（1枚のER図に描く関連）を求めるために用いる
+   *
+   * @param tableKeys テーブルの集合
+   * @return 両端が集合に含まれる関連のリスト
+   */
+  public List<ForeignKeyEntity> within(Set<TableKey> tableKeys) {
+    return byKey.values().stream()
+        .flatMap(List::stream)
+        .filter(
+            fk -> tableKeys.contains(fk.tableKey()) && tableKeys.contains(fk.referenceTableKey()))
+        .toList();
+  }
+
+  /**
+   * 参照元・参照先の一方だけが指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
+   * 観点のように、テーブルの集合とその外側のテーブルとの関連を求めるために用いる
+   *
+   * @param tableKeys テーブルの集合
+   * @return 片端だけが集合に含まれる関連のリスト
+   */
+  public List<ForeignKeyEntity> crossing(Set<TableKey> tableKeys) {
+    return byKey.values().stream()
+        .flatMap(List::stream)
+        .filter(
+            fk -> tableKeys.contains(fk.tableKey()) != tableKeys.contains(fk.referenceTableKey()))
         .toList();
   }
 }

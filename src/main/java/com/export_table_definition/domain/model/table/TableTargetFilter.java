@@ -1,13 +1,16 @@
-package com.export_table_definition.domain.model.target;
+package com.export_table_definition.domain.model.table;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
- * {@code table=}に指定された絞り込みパターンを判定する値オブジェクト<br>
- * 以下の記法に対応する。
+ * テーブル名パターン（{@code table=}の記法）のリストを判定する値オブジェクト<br>
+ * 出力対象の範囲（{@code table=}。{@link
+ * com.export_table_definition.domain.model.target.TableTargetScope}）と、観点に所属するテーブルの指定（サイドカーYAMLの{@code
+ * viewpoints}）で共通に用いる。以下の記法に対応する。
  *
  * <ul>
  *   <li>完全一致（従来どおり）: {@code employee}
@@ -24,7 +27,7 @@ import java.util.regex.Pattern;
  * @version 1.0
  * @author takashi.ebina
  */
-final class TableTargetFilter {
+public final class TableTargetFilter {
 
   private static final String EXCLUDE_PREFIX = "!";
   private static final String SCHEMA_TABLE_SEPARATOR = ".";
@@ -84,6 +87,34 @@ final class TableTargetFilter {
   }
 
   /**
+   * 包含パターン（先頭に{@code !}の無いパターン）が1件以上あるか判定するメソッド<br>
+   * 包含パターンが無い場合は除外に一致しない全テーブルが対象となるため、観点のように「どのテーブルを含めるか」を 明示させたい用途で、指定漏れを判定するために用いる
+   *
+   * @return 包含パターンが1件以上ある場合はtrue
+   */
+  public boolean hasInclusion() {
+    return !includes.isEmpty();
+  }
+
+  /**
+   * どのテーブルにも一致しない包含パターンを求めるメソッド<br>
+   * テーブルのリネーム・削除によって、パターンがDBと乖離していないかの気付きに用いる
+   *
+   * @param tables 判定対象のテーブル
+   * @return どのテーブルにも一致しない包含パターン（指定された文字列のまま、指定順）
+   */
+  public List<String> unmatchedInclusions(Collection<TableEntity> tables) {
+    return includes.stream()
+        .filter(
+            entry ->
+                tables.stream()
+                    .noneMatch(
+                        table -> entry.matches(table.schemaName(), table.physicalTableName())))
+        .map(Entry::raw)
+        .toList();
+  }
+
+  /**
    * 指定されたテーブルがこのフィルターの対象となるか判定するメソッド<br>
    * 除外パターンに一致する場合は常にfalse。包含パターンが1件もない場合、除外に一致しない限りtrue
    *
@@ -104,10 +135,11 @@ final class TableTargetFilter {
   /**
    * 1件分のパターン（スキーマ修飾の有無 + テーブル名のワイルドカードパターン）
    *
+   * @param raw 指定されたパターン文字列（{@code !}を除く。一致しないパターンの報告に用いる）
    * @param schema スキーマ名。スキーマ修飾がない場合はnull（全スキーマが対象）
    * @param tablePattern テーブル名を判定する正規表現
    */
-  private record Entry(String schema, Pattern tablePattern) {
+  private record Entry(String raw, String schema, Pattern tablePattern) {
 
     /**
      * パターン文字列を解析するメソッド
@@ -124,7 +156,7 @@ final class TableTargetFilter {
       if (tablePart.isEmpty() || (schema != null && schema.isEmpty())) {
         return Optional.empty();
       }
-      return Optional.of(new Entry(schema, toPattern(tablePart)));
+      return Optional.of(new Entry(pattern, schema, toPattern(tablePart)));
     }
 
     /**

@@ -27,6 +27,7 @@ flowchart TB
   snapshot["snapshot<br/>スナップショット・差分"]
   target["target<br/>出力対象"]
   sidecar["sidecar<br/>サイドカー"]
+  viewpoint["viewpoint<br/>観点"]
   relation["relation<br/>関連"]
   table["table<br/>テーブル"]
   schemaobject["schemaobject<br/>スキーマ直下のオブジェクト"]
@@ -37,7 +38,9 @@ flowchart TB
   target --> sidecar
   target --> schemaobject
   target --> database
+  sidecar --> viewpoint
   sidecar --> relation
+  viewpoint --> relation
   relation --> table
 ```
 
@@ -98,6 +101,8 @@ classDiagram
     logicalOf(table)
     incomingOf(table)
     crossSchema()
+    within(tableKeys)
+    crossing(tableKeys)
   }
   class ForeignKeyGroup {
     nodes()
@@ -159,17 +164,65 @@ classDiagram
     RelationType relationType = LOGICAL
   }
 
+  class Viewpoints
+
   Sidecar "1" *-- "1" Annotations : 手動付帯情報（tables）
   Sidecar "1" *-- "0..*" ForeignKeyEntity : 論理リレーション（relations）
+  Sidecar "1" *-- "1" Viewpoints : 観点（viewpoints）
   Annotations "1" *-- "0..*" TableAnnotation : テーブルキーごと
 ```
 
-- **サイドカー（`Sidecar`）**は、DBから取得できない情報を記述したYAMLの内容。性質の異なる2種類の情報を持つ
+- **サイドカー（`Sidecar`）**は、DBから取得できない情報を記述したYAMLの内容。性質の異なる3種類の情報を持つ
   - **手動付帯情報（`Annotations`／`TableAnnotation`）**：テーブル説明・テーブル備考・カラム備考。DBのメタ情報に「文章を足す」もので、
     テーブル定義書の各セルへマージされる
   - **論理リレーション**：DBに外部キー制約が無いテーブル間の関連。「関連という構造を足す」もので、物理外部キーと同じ集合へ合流する
+  - **観点（`Viewpoints`）**：業務ドメイン別にテーブルをまとめる切り口。「読む単位を足す」もので、観点ごとのページになる（次節）
 - 付帯情報はテーブルキーで出力対象のテーブルと突き合わせる。対応するテーブル・カラムが実在しないもの（孤児付帯情報）は
   突き合わせの指摘（`ConsistencyFinding`）になる
+
+## 観点
+
+```mermaid
+classDiagram
+  direction LR
+  class Viewpoint {
+    String id
+    String name
+    String description
+    of(id, name, description, tablePatterns)$
+    contains(table)
+    unmatchedPatterns(tables)
+    resolve(tables, foreignKeys)
+  }
+  class Viewpoints {
+    of(table)
+  }
+  class ViewpointContent {
+    List~TableEntity~ tables
+    List~ForeignKeyEntity~ outsideRelations
+  }
+  class TableTargetFilter {
+    hasInclusion()
+    unmatchedInclusions(tables)
+    matches(schemaName, physicalTableName)
+  }
+
+  Viewpoints "1" o-- "0..*" Viewpoint : 宣言順
+  Viewpoint "1" *-- "1" TableTargetFilter : 所属テーブルの指定
+  Viewpoint ..> ViewpointContent : resolve
+  ViewpointContent "1" --> "1" Viewpoint
+  ViewpointContent "1" --> "1" ForeignKeyGroup : 所属テーブル同士の関連
+```
+
+- **観点（`Viewpoint`）**は、スキーマ・連結成分（グループ）による機械的なまとまりとは別に、人が読む単位でテーブルを束ねたもの。
+  所属テーブルは出力対象の範囲（`table=`）と同じテーブル名パターン（`TableTargetFilter`）で指定し、包含パターンが1件以上必要
+  （除外パターンだけでは全テーブルが所属してしまうため）
+- **識別子（`id`）**は観点ページのファイル名に使うため、英数字・`-`・`_`に限る。表示名（`name`）は省略すると識別子になる
+- **1観点分の出力内容（`ViewpointContent`）**は、出力対象のテーブル・関連から`Viewpoint.resolve`で求める。所属テーブル同士の関連
+  （両端が所属）はER図に描き、片端だけが所属する関連は「観点外のテーブルとの関連」として一覧にする
+- 1つのテーブルが複数の観点に所属してよい。テーブルから所属する観点は`Viewpoints.of(table)`で逆引きし、
+  1テーブル分の出力内容（`TableDefinitionContent.viewpoints`）に持たせる
+- 観点は見せ方でありスキーマではないため、スナップショットには含めない
 
 ## 出力対象
 
@@ -195,8 +248,9 @@ classDiagram
     List~ForeignKeyEntity~ foreignKeys
     List~ForeignKeyEntity~ logicalRelations
     List~ForeignKeyEntity~ incomingRelations
+    List~Viewpoint~ viewpoints
     outgoingRelations()
-    assemble(baseInfo, detail, foreignKeys, triggers, annotations)$
+    assemble(baseInfo, detail, foreignKeys, triggers, annotations, viewpoints)$
   }
   class BaseInfoEntity {
     LocalDate generatedDate
@@ -217,6 +271,7 @@ classDiagram
   ExportTargets "1" *-- "1" Tables
   ExportTargets "1" *-- "1" ForeignKeys
   ExportTargets "1" *-- "1" Annotations
+  ExportTargets "1" *-- "1" Viewpoints
   ExportTargets "1" *-- "0..*" TriggerEntity
   ExportTargets "1" *-- "0..*" FunctionEntity
   ExportTargets "1" *-- "0..*" SequenceEntity
@@ -228,12 +283,12 @@ classDiagram
 ```
 
 - **出力対象の範囲（`TableTargetScope`）**は設定（`schema`・`table`）から入口で1回だけ組み立て、テーブルごとに`matches`で判定する。
-  テーブル名パターン（`TableTargetFilter`、パッケージプライベート）はワイルドカード・除外（`!`）・スキーマ修飾に対応し、
+  テーブル名パターン（`TableTargetFilter`。観点の所属テーブルの指定と共有するため`table`に置く）はワイルドカード・除外（`!`）・スキーマ修飾に対応し、
   除外が包含より優先される。**出力対象オブジェクト種別（`OutputObjectType`）**は、トリガー・関数等のうちどれを取得・出力するかを決める
 - **出力対象（`ExportTargets`）**は対象範囲全体を一括取得した軽量な情報の組。これとチャンク単位で取得した詳細情報
   （`TableDetail`）から、1テーブル分の出力内容（`TableDefinitionContent`）を組み立てる。`TableDefinitionContent`は
   参照側の関連を由来ごと（`foreignKeys`＝物理／`logicalRelations`＝論理）に分けて持ち、被参照側（`incomingRelations`）は由来を分けない
-- **突き合わせの指摘（`ConsistencyFinding`）**は、出力対象のテーブルと関連・付帯情報を突き合わせた結果。
+- **突き合わせの指摘（`ConsistencyFinding`）**は、出力対象のテーブルと関連・付帯情報・観点を突き合わせた結果。
   ドメインサービス（`ExportTargetConsistencyDomainService`）が値として返し、ログ等への出力は呼び出し側（アプリケーション層）が
   重要度（`Severity`）に応じて行う
 - **基本情報（`BaseInfoEntity`）**は、DBのカタログから取得するデータベースの情報（`DatabaseEntity`）にドキュメントの生成日を
@@ -253,9 +308,12 @@ classDiagram
 | 論理リレーションの関連名の自動生成（`{参照元テーブル名}_{列名...}_lrel`） | `ForeignKeyEntity.resolveLogicalRelationName` |
 | 関連は参照元・参照先の双方が出力対象のときだけ合流させる（除外した物理外部キーは絞り込み時は指摘しない。論理リレーションは常に指摘する） | `ExportTargetConsistencyDomainService.resolveForeignKeys` |
 | 実在しないテーブル・カラムに対する付帯情報の検出（絞り込み時はテーブルの検出を行わない） | `ExportTargetConsistencyDomainService.findOrphan*` / `TableAnnotation.orphanColumnNames` |
+| 観点の識別子の形式（英数字・`-`・`_`）・所属テーブルの包含パターンが必須・表示名の既定値（識別子） | `Viewpoint.of` |
+| 観点の所属テーブルと、所属テーブル同士の関連・観点外のテーブルとの関連の求め方 | `Viewpoint.resolve` / `ForeignKeys.within` / `ForeignKeys.crossing` |
+| どのテーブルにも一致しない観点のパターンの検出（絞り込み時は検出を行わない） | `ExportTargetConsistencyDomainService.findUnmatchedViewpointPatterns` / `TableTargetFilter.unmatchedInclusions` |
 | ER図のページ構成（上限に収まらなければ連結成分ごとにまとめ直す） | `ForeignKeyGroups.compose` |
-| 一覧ドキュメントは対象が1件以上あるときだけ出力し、関連ドキュメントとしてリンクする（テーブル一覧は常に出力） | `MarkdownExportSinkFactory.listDocuments` |
-| Markdownのファイル名・配置・相対リンク（関数・プロシージャのオーバーロードは`{名前}_{番号}`） | `DocumentLocations` |
+| 一覧ドキュメント（観点一覧を含む）は対象が1件以上あるときだけ出力し、関連ドキュメントとしてリンクする（テーブル一覧は常に出力） | `MarkdownExportSinkFactory.listDocuments` |
+| Markdownのファイル名・配置・相対リンク（関数・プロシージャのオーバーロードは`{名前}_{番号}`、観点ページは識別子から`viewpoint_{DB名}_{識別子}`） | `DocumentLocations` |
 | スナップショットのファイル名・配置 | `SnapshotLocations` |
 | スナップショットの行をオブジェクトとして識別する名前（関数・プロシージャは引数を含む） | `SnapshotKind.identify` |
 
@@ -273,17 +331,21 @@ classDiagram
 | 多重度 | 多重度（1対多 等） | `Cardinality` | 関連の両端の件数の関係 |
 | グループ | グループ（連結成分のまとまり） | `ForeignKeyGroup` / `ForeignKeyGroups` | 1枚のER図に描く関連の集合と、その分割 |
 | スキーマ跨ぎの関連 | スキーマ跨ぎの外部キー | `ForeignKeys.crossSchema` | 参照元と参照先のスキーマが異なる関連 |
-| サイドカー | サイドカーYAML（`annotationPath`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション）。コード上のパスは`sidecarPath` |
+| サイドカー | サイドカーYAML（`annotationPath`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション＋観点）。コード上のパスは`sidecarPath` |
 | 手動付帯情報 | 手動付帯情報（`tables`） | `Annotations` / `TableAnnotation` | テーブル説明・テーブル備考・カラム備考 |
 | 孤児付帯情報 | 実在しないテーブル・カラムに対する付帯情報 | `ConsistencyFinding.Kind.ORPHAN_*` | リネーム・削除によりDBと乖離した付帯情報 |
 | 出力対象の範囲 | `schema`・`table` | `TableTargetScope` / `TableTargetFilter` | 設定から組み立てる絞り込み条件 |
+| テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableTargetFilter` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法 |
+| 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |
+| 所属テーブル | 観点の所属テーブル | `ViewpointContent.tables` / `Viewpoint.contains` | 観点に含まれるテーブル |
+| 観点外のテーブルとの関連 | 観点外のテーブルとの関連 | `ViewpointContent.outsideRelations` / `ForeignKeys.crossing` | 片端だけが所属テーブルの関連 |
 | 出力対象オブジェクト種別 | `outputObjects` | `OutputObjectType` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型 |
 | 出力対象 | － | `ExportTargets` | 対象範囲全体を一括取得する軽量な情報の組 |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |
-| 突き合わせの指摘 | 警告ログ | `ConsistencyFinding` | 出力対象と関連・付帯情報を突き合わせた結果（孤児付帯情報・除外した関連等） |
+| 突き合わせの指摘 | 警告ログ | `ConsistencyFinding` | 出力対象と関連・付帯情報・観点を突き合わせた結果（孤児付帯情報・除外した関連・一致しない観点のパターン等） |
 | 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`）＋生成日 |
 | スキーマ直下のオブジェクト | 関数・プロシージャ／シーケンス／ユーザー定義型 | `FunctionEntity` / `SequenceEntity` / `TypeEntity` | テーブルに属さないオブジェクト |
 | オーバーロード | 同名の関数・プロシージャ | `FunctionEntity.isOverloaded` | 同じスキーマの同名の関数・プロシージャ。個別定義のファイル名に番号を付ける |
-| 一覧ドキュメント | テーブル一覧・ER図一覧 等 | `ListDocumentType` | 種別ごとの一覧ページ |
+| 一覧ドキュメント | テーブル一覧・ER図一覧・観点一覧 等 | `ListDocumentType` | 種別ごとの一覧ページ |
 | スナップショット | スキーマのスナップショット | `domain.model.snapshot` | 取得結果を構造化したJSON Lines（生成日を含まない） |
 | 差分検知 | `--check`モード | `CheckDocumentDiffUsecase` / `DiffResult` | 生成したスナップショットとコミット済みのスナップショットの比較 |

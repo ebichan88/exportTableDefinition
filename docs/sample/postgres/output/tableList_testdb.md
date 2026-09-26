@@ -13,6 +13,7 @@
 * [シーケンス一覧](./sequenceList_testdb.md)  
 * [ユーザー定義型一覧](./typeList_testdb.md)  
 * [トリガー一覧](./triggerList_testdb.md)  
+* [観点一覧](./viewpointList_testdb.md)  
 
 ## テーブル情報
 

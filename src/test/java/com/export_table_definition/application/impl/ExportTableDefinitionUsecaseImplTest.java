@@ -24,6 +24,8 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.viewpoint.Viewpoint;
+import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
@@ -37,6 +39,7 @@ import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainSe
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
+import com.export_table_definition.domain.service.writer.ViewpointWriterDomainService;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
 import com.export_table_definition.testsupport.EntityFixtures;
@@ -226,6 +229,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   private Annotations annotations = Annotations.empty();
 
   private List<ForeignKeyEntity> logicalRelations = List.of();
+  private Viewpoints viewpoints = Viewpoints.empty();
 
   /** annotationRepositoryへ渡されたパスを記録する */
   private String receivedSidecarPath;
@@ -251,7 +255,7 @@ public class ExportTableDefinitionUsecaseImplTest {
           if (sidecarFailure != null) {
             throw sidecarFailure;
           }
-          return new Sidecar(annotations, logicalRelations);
+          return new Sidecar(annotations, logicalRelations, viewpoints);
         };
     final JacksonSnapshotSerializer serializer = new JacksonSnapshotSerializer();
     final SchemaSnapshotWriterDomainService snapshotWriter =
@@ -273,7 +277,12 @@ public class ExportTableDefinitionUsecaseImplTest {
         generatedDate ->
             new ExportTableDefinitionUsecaseImpl(
                 schemaExporterAt.apply(generatedDate),
-                new MarkdownExportSinkFactory(writer, erDiagramWriter, objectListWriter),
+                new MarkdownExportSinkFactory(
+                    writer,
+                    erDiagramWriter,
+                    objectListWriter,
+                    new ViewpointWriterDomainService(
+                        fileRepository, pathResolver, pagedSectionWriter)),
                 snapshotSinkFactory,
                 fileRepository,
                 pathResolver);
@@ -1123,5 +1132,51 @@ public class ExportTableDefinitionUsecaseImplTest {
     fileRepository.files.remove(tableDefFile(Paths.get("committed"), "public", "t1"));
 
     assertFalse(checkSnapshotDiff().hasDifference());
+  }
+
+  @Test
+  @DisplayName("サイドカーの観点が、観点ページ・観点一覧・テーブル一覧の関連ドキュメント・所属テーブルの定義書に反映される")
+  void testViewpointsAreExported() {
+    setUp();
+    repository.tables.add(table("public", "orders"));
+    repository.tables.add(table("public", "stock"));
+    viewpoints =
+        Viewpoints.of(List.of(Viewpoint.of("order", "受注管理", "", List.of("public.orders"))));
+
+    usecase.exportTableDefinition(
+        new ExportRequest(
+            TargetSelection.of(List.of(), List.of(), List.of(), "conf/annotations.yml"),
+            null,
+            0,
+            80,
+            false));
+
+    assertTrue(fileExists(DEFAULT_OUT.resolve("viewpoint_testdb_order.md")));
+    assertTrue(fileExists(DEFAULT_OUT.resolve("viewpointList_testdb.md")));
+    assertTrue(
+        contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"))
+            .contains("* [観点一覧](./viewpointList_testdb.md)"));
+    assertTrue(
+        contentOf(tableDefFile(DEFAULT_OUT, "public", "orders"))
+            .contains("* [受注管理](../../../viewpoint_testdb_order.md)"));
+    // 所属しないテーブルの定義書には、所属する観点のセクションを出力しない
+    assertFalse(contentOf(tableDefFile(DEFAULT_OUT, "public", "stock")).contains("## 所属する観点"));
+  }
+
+  @Test
+  @DisplayName("観点を宣言していない場合は、観点ページ・観点一覧を出力せず、テーブル一覧からもリンクしない")
+  void testViewpointsAreNotExportedWhenNotDeclared() {
+    setUp();
+    repository.tables.add(table("public", "orders"));
+
+    usecase.exportTableDefinition(
+        new ExportRequest(
+            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+
+    assertTrue(
+        fileRepository.files.keySet().stream()
+            .noneMatch(path -> path.getFileName().toString().startsWith("viewpoint")));
+    assertFalse(contentOf(DEFAULT_OUT.resolve("tableList_testdb.md")).contains("観点一覧"));
+    assertFalse(contentOf(tableDefFile(DEFAULT_OUT, "public", "orders")).contains("## 所属する観点"));
   }
 }

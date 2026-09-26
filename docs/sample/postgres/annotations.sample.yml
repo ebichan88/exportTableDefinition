@@ -52,3 +52,29 @@ relations:
     # 多重度。DBに制約が無く機械的に判定できないため、ここで明示できます。
     # 指定できる値: 1対多 / 0..1対多 / 1対1 / 0..1対1 ※省略時・未知の値は 1対多 とみなします。
     cardinality: 0..1対多
+
+# 業務ドメイン別にテーブルをまとめる「観点」を宣言します。
+# スキーマ単位・関連で繋がったまとまり（グループ）単位の機械的な分割とは別に、人が読む単位で
+# テーブルを束ねたページ（観点ごとのER図・所属テーブルの一覧）と、観点一覧が出力されます。
+# 所属するテーブルの定義書には「所属する観点」として観点ページへのリンクが付きます。
+viewpoints:
+  - id: personnel                    # 識別子。観点ページのファイル名（viewpoint_{DB名}_{id}.md）に使います（英数字・-・_のみ）
+    name: 人事管理                    # 表示名（省略時は識別子）
+    description: |                   # 観点ページの「説明」セクションへ出力されます（複数行可。観点一覧には1行目のみ）
+      従業員と、その所属・付帯情報を扱うテーブル群。
+      プロジェクトへのアサインは「プロジェクト管理」の観点を参照。
+    # 所属テーブルは table= と同じ記法（ワイルドカード・除外・スキーマ修飾）で指定します。
+    # 先頭の ! や * はYAMLの記号として解釈されるため、引用符で囲んでください。
+    tables:
+      - sample.employee*
+      - "!sample.employee_directory_view"
+      - sample.department
+      - sample.parking_spot
+  - id: project
+    name: プロジェクト管理
+    description: プロジェクトと要員のアサインを扱うテーブル群。
+    # 1つのテーブルが複数の観点に所属してもかまいません（employee は人事管理にも所属）。
+    tables: [sample.project*, sample.employee]
+  - id: logistics
+    name: 物流
+    tables: [sample.shipment, sample.warehouse_zone]

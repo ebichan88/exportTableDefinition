@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.model.target;
 
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableTargetFilter;
 import java.util.List;
 import java.util.Objects;
 
