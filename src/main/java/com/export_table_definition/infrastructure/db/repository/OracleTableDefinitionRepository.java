@@ -32,7 +32,7 @@ public final class OracleTableDefinitionRepository extends AbstractTableDefiniti
    * <p>Oracleではトリガー出力に非対応のため空リストを返却する。
    */
   @Override
-  public List<TriggerEntity> selectTriggerList(List<String> schemaList, List<String> tableList) {
+  public List<TriggerEntity> selectTriggerList(List<String> schemaList) {
     return List.of();
   }
 

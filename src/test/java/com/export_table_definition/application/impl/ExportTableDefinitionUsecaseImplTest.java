@@ -134,7 +134,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     }
 
     @Override
-    public List<TableEntity> selectTableList(List<String> schemaList, List<String> tableList) {
+    public List<TableEntity> selectTableList(List<String> schemaList) {
       return List.copyOf(tables);
     }
 
@@ -158,14 +158,13 @@ public class ExportTableDefinitionUsecaseImplTest {
     }
 
     @Override
-    public List<ForeignKeyEntity> selectForeignKeyList(
-        List<String> schemaList, List<String> tableList) {
+    public List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList) {
       foreignKeyListCalls++;
       return List.copyOf(foreignKeys);
     }
 
     @Override
-    public List<TriggerEntity> selectTriggerList(List<String> schemaList, List<String> tableList) {
+    public List<TriggerEntity> selectTriggerList(List<String> schemaList) {
       return List.copyOf(triggers);
     }
 

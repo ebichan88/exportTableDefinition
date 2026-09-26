@@ -156,21 +156,18 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
     final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
     final List<TableEntity> tableEntityList =
-        repository.selectTableList(targetSchemaList, List.of()).stream()
-            .filter(targetScope::matches)
-            .toList();
+        repository.selectTableList(targetSchemaList).stream().filter(targetScope::matches).toList();
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
     consistencyDomainService.warnOrphanTableAnnotations(annotations, tableEntityList, isFiltered);
     // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
     // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
-    // 特定のチャンクに限定せず全件を保持しておく必要がある。テーブル名は上記の理由によりSQLで絞り込まず、
-    // スキーマ全体を取得する（tableListによる絞り込みが利く分、schemaのみ指定時よりDB負荷が増え得る）。
-    // その代わり、参照元・参照先の一方でもtableListの絞り込みで除外された関係は、テーブル一覧・ER図の
-    // 双方から一貫して除外されるよう、出力対象のテーブルに含まれるものだけへ絞り込む。
+    // 特定のチャンクに限定せず全件を保持しておく必要がある。selectForeignKeyListはスキーマ単位でのみ絞り込み、
+    // テーブル単位の絞り込みは行わないため、参照元・参照先の一方でもtargetTableListの絞り込みで除外された関係は、
+    // テーブル一覧・ER図の双方から一貫して除外されるよう、出力対象のテーブルに含まれるものだけへ絞り込む。
     // サイドカー由来の論理リレーションも、出力対象に含まれるテーブル同士のものだけを同じ集合へ合流させる
     final ForeignKeys foreignKeys =
         consistencyDomainService.resolveForeignKeys(
-            repository.selectForeignKeyList(targetSchemaList, List.of()),
+            repository.selectForeignKeyList(targetSchemaList),
             sidecar.logicalRelations(),
             tableEntityList,
             isFiltered);
@@ -179,7 +176,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // outputObjectListでトリガーが対象外とされた場合は、取得自体を行わず一覧・テーブル定義書双方から除外する
     final List<TriggerEntity> triggerEntityList =
         outputObjectTypes.contains(OutputObjectType.TRIGGER)
-            ? repository.selectTriggerList(targetSchemaList, List.of())
+            ? repository.selectTriggerList(targetSchemaList)
             : List.of();
     // スキーマレベルのオブジェクト（関数/シーケンス/型）はテーブルフィルタの対象外。スキーマフィルタのみ適用する。
     // 関数一覧は定義本体を含まない軽量情報のみ先に取得する（定義本体はスキーマ単位で別途取得する）。

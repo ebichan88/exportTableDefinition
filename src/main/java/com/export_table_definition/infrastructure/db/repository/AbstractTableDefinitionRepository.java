@@ -62,8 +62,8 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
 
   /** {@inheritDoc} */
   @Override
-  public List<TableEntity> selectTableList(List<String> schemaList, List<String> tableList) {
-    return selectTableDefinition(schemaList, tableList, "selectAllTableInfo", TableDto::toEntity);
+  public List<TableEntity> selectTableList(List<String> schemaList) {
+    return selectTableDefinition(schemaList, List.of(), "selectAllTableInfo", TableDto::toEntity);
   }
 
   /** {@inheritDoc} */
@@ -88,17 +88,16 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
 
   /** {@inheritDoc} */
   @Override
-  public List<ForeignKeyEntity> selectForeignKeyList(
-      List<String> schemaList, List<String> tableList) {
+  public List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList) {
     return selectTableDefinition(
-        schemaList, tableList, "selectAllForeignKeyInfo", ForeignKeyDto::toEntity);
+        schemaList, List.of(), "selectAllForeignKeyInfo", ForeignKeyDto::toEntity);
   }
 
   /** {@inheritDoc} */
   @Override
-  public List<TriggerEntity> selectTriggerList(List<String> schemaList, List<String> tableList) {
+  public List<TriggerEntity> selectTriggerList(List<String> schemaList) {
     return selectTableDefinition(
-        schemaList, tableList, "selectAllTriggerInfo", TriggerDto::toEntity);
+        schemaList, List.of(), "selectAllTriggerInfo", TriggerDto::toEntity);
   }
 
   /** {@inheritDoc} */

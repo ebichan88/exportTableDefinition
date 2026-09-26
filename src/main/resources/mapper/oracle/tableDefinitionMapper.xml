@@ -39,12 +39,6 @@
                         #{schema}
                     </foreach>
                 </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t1.TABLE_NAME IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
-                    </foreach>
-                </if>
             UNION ALL
             SELECT
                 COALESCE(t2.OWNER, '') AS schema_name,
@@ -62,12 +56,6 @@
                         #{schema}
                     </foreach>
                 </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t2.VIEW_NAME IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
-                    </foreach>
-                </if>
             UNION ALL
             SELECT
                 COALESCE(t3.OWNER, '') AS schema_name,
@@ -83,12 +71,6 @@
                     AND t3.OWNER IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
                         #{schema}
-                    </foreach>
-                </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t3.MVIEW_NAME IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
                     </foreach>
                 </if>
         )
@@ -371,12 +353,6 @@
                         #{schema}
                     </foreach>
                 </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND ac.table_name IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
-                    </foreach>
-                </if>
         ),
         ora_unique_keys AS (
             /* 一意性を保証するキーを構成する列。一意索引と、一意索引に支えられない場合がある
@@ -445,12 +421,6 @@
                     AND ac.owner IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
                         #{schema}
-                    </foreach>
-                </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND ac.table_name IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
                     </foreach>
                 </if>
             GROUP BY ac.constraint_name, ac.owner, ac.table_name, ac_r.owner, ac_r.table_name

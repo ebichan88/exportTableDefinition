@@ -35,12 +35,6 @@
                         #{schema}
                     </foreach>
                 </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t1.tablename IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
-                    </foreach>
-                </if>
             UNION ALL
             SELECT
                 coalesce(t2.schemaname, '') AS schema_name,
@@ -57,12 +51,6 @@
                         #{schema}
                     </foreach>
                 </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t2.viewname IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
-                    </foreach>
-                </if>
             UNION ALL
             SELECT
                 coalesce(t3.schemaname, '') AS schema_name,
@@ -77,12 +65,6 @@
                     AND t3.schemaname IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
                         #{schema}
-                    </foreach>
-                </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t3.matviewname IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
                     </foreach>
                 </if>
         )
@@ -406,12 +388,6 @@
                         #{schema}
                     </foreach>
                 </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t2.relname IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
-                    </foreach>
-                </if>
         )
         SELECT
             schema_name AS "schemaName",
@@ -471,12 +447,6 @@
                     AND t3.nspname IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
                         #{schema}
-                    </foreach>
-                </if>
-                <if test="tableList != null and tableList.size() > 0">
-                    AND t2.relname IN
-                    <foreach item="table" index="index" collection="tableList" open="(" separator="," close=")">
-                        #{table}
                     </foreach>
                 </if>
         )
