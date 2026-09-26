@@ -9,13 +9,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 実行時設定ファイル（{@code conf/ExportTableDefinition.properties}）の読み込み・検証を行うクラス<br>
+ * 実行時設定ファイル（{@code conf/ExportTableDefinition.properties}）の設定項目の仕様を持ち、設定値を検証・変換するクラス<br>
  * 設定項目の仕様（キー・既定値・値の形式。READMEの「ExportTableDefinition.propertiesの記載内容」）をこのクラスに集める。
+ * ファイルの探索・読み込みは{@link PropertyLoader}に委ね、このクラスは読み込んだキーと値を仕様に照らして検証し、型へ変換する。
  *
  * <ul>
  *   <li>キーの省略と値が空は、同じ「未指定」として扱い既定値を用いる
@@ -84,9 +83,7 @@ final class ExportTableDefinitionProperties {
    * @throws InvalidConfigurationException {@code conf}ディレクトリ・設定ファイルが見つからない場合や、設定に誤りがある場合
    */
   static ExportTableDefinitionProperties load() {
-    final ResourceBundle bundle = PropertyLoader.getResourceBundle(FILE_NAME);
-    return of(
-        bundle.keySet().stream().collect(Collectors.toMap(Function.identity(), bundle::getString)));
+    return of(PropertyLoader.load(FILE_NAME));
   }
 
   /**

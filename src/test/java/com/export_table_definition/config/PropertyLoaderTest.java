@@ -2,8 +2,7 @@ package com.export_table_definition.config;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Properties;
-import java.util.ResourceBundle;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,28 +17,17 @@ public class PropertyLoaderTest {
   private static final String FIXTURE = "PropertyLoaderTestFixture";
 
   @Test
-  @DisplayName("getResourceBundle: 設定ファイル自体が存在しない場合は、ファイル名を含むInvalidConfigurationExceptionをスローする")
-  void testGetResourceBundleMissingFileThrows() {
+  @DisplayName("load: プロパティファイルの全キー・値を、キーと値の組として返す")
+  void testLoadReturnsAllKeyValuePairs() {
+    assertEquals(Map.of("stringValue", "hello", "intValid", "42"), PropertyLoader.load(FIXTURE));
+  }
+
+  @Test
+  @DisplayName("load: プロパティファイル自体が存在しない場合は、ファイル名を含むInvalidConfigurationExceptionをスローする")
+  void testLoadMissingFileThrows() {
     final InvalidConfigurationException e =
         assertThrows(
-            InvalidConfigurationException.class,
-            () -> PropertyLoader.getResourceBundle("DoesNotExistFixture"));
+            InvalidConfigurationException.class, () -> PropertyLoader.load("DoesNotExistFixture"));
     assertTrue(e.getMessage().contains("DoesNotExistFixture.properties"));
-  }
-
-  @Test
-  @DisplayName("getResourceBundle: 同一ファイル名の呼び出しはキャッシュされ、同一インスタンスを返す")
-  void testGetResourceBundleIsCached() {
-    ResourceBundle first = PropertyLoader.getResourceBundle(FIXTURE);
-    ResourceBundle second = PropertyLoader.getResourceBundle(FIXTURE);
-    assertSame(first, second);
-  }
-
-  @Test
-  @DisplayName("getProperties: 全キー・値をPropertiesオブジェクトとして返す")
-  void testGetPropertiesReturnsAllKeyValuePairs() {
-    Properties props = PropertyLoader.getProperties(FIXTURE);
-    assertEquals("hello", props.getProperty("stringValue"));
-    assertEquals("42", props.getProperty("intValid"));
   }
 }

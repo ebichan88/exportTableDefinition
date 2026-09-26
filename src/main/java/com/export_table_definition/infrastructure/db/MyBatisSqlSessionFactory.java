@@ -138,13 +138,14 @@ public final class MyBatisSqlSessionFactory {
    * @return 読み込んだProperties（ファイルが存在しない場合は空）
    */
   private static Properties loadBaseProperties() {
+    final Properties properties = new Properties();
     try {
-      return PropertyLoader.getProperties(PROPERTY_BUNDLE_NAME);
+      properties.putAll(PropertyLoader.load(PROPERTY_BUNDLE_NAME));
     } catch (InvalidConfigurationException e) {
       logger.info(
           "conf/mybatis.properties not found. Relying on CLI/env connection overrides only.");
-      return new Properties();
     }
+    return properties;
   }
 
   /**

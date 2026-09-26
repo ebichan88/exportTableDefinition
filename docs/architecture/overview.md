@@ -304,8 +304,8 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 ## 設定・DI
 
-- `config.PropertyLoader`: `conf`ディレクトリ配下のプロパティファイルの読み込みユーティリティ（読み込みのみを担う）
-- `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: `conf/ExportTableDefinition.properties`の
+- `config.PropertyLoader`: `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担う）
+- `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: 読み込みは`PropertyLoader`に委ね、`conf/ExportTableDefinition.properties`の
   設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）
 - `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）
 

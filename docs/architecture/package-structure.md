@@ -9,7 +9,7 @@
 |---|---|
 | `ExportTableDefinition` | `main()`。処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）を`FailureHandler`経由で実行し、終了状態を終了コードへ変換する |
 | `CliArguments`（パッケージプライベート） | CLI引数の解析（`--check`・`--rm-dist`、DB接続情報の上書き値）。解釈できない引数（書き誤り等）は`requireKnownArguments()`で誤りとする |
-| `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
+| `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
 
 ## presentation層
 
@@ -124,7 +124,7 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `config` | `PropertyLoader` | `conf/*.properties`読み込みユーティリティ（読み込みのみを担い、設定項目の仕様は読み込む側が持つ）。`conf`ディレクトリ・設定ファイルが見つからない場合は`InvalidConfigurationException`をスローする |
+| `config` | `PropertyLoader` | `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担い、設定項目の仕様と検証は読み込む側が持つ）。`conf`ディレクトリ・設定ファイルが見つからない場合は`InvalidConfigurationException`をスローする |
 | | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`PropertyLoader`・`ExportTableDefinitionProperties`・`MyBatisSqlSessionFactory`が投げる |
 | `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
 
