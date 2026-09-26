@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.writer;
 
 import com.export_table_definition.domain.model.collection.ForeignKeyGroup;
 import com.export_table_definition.domain.model.collection.ForeignKeyGroups;
+import com.export_table_definition.domain.model.collection.ForeignKeyGroups.PageComposition;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -114,40 +115,36 @@ public class ErDiagramWriterDomainService {
       Map<TableKey, TableEntity> tableByKey,
       OutputRoot outputRoot,
       int maxNodes) {
-    final ForeignKeyGroup schemaGroup = ForeignKeyGroup.of(relatedForeignKeys);
-    final List<ForeignKeyGroup> groups =
-        schemaGroup.exceeds(maxNodes)
-            ? ForeignKeyGroups.pack(
-                ForeignKeyGroups.connectedComponents(relatedForeignKeys), maxNodes)
-            : List.of();
-    // グループが1つ以下の場合は分割しても1枚に収まらない単一の巨大なまとまりであり、
-    // スキーマページと同じ内容のグループページができるだけなので分割しない
-    if (groups.size() <= 1) {
-      final PageLayout layout =
-          new PageLayout(
-              ErDiagramTemplates.schemaFileHeader(schemaName, outputRoot.baseInfo()),
-              outputPathResolver.resolveErDiagramFile(outputRoot, schemaName),
-              ER_DIAGRAM_BACK_LABEL);
-      writeErDiagramPage(
-          layout,
-          schemaGroup,
-          ErDiagramTemplates.schemaFooter(outputRoot.baseInfo()),
-          tableByKey,
-          maxNodes,
-          outputRoot);
-      return;
+    final PageComposition composition = ForeignKeyGroups.compose(relatedForeignKeys, maxNodes);
+    switch (composition) {
+      case PageComposition.Single(ForeignKeyGroup group) -> {
+        final PageLayout layout =
+            new PageLayout(
+                ErDiagramTemplates.schemaFileHeader(schemaName, outputRoot.baseInfo()),
+                outputPathResolver.resolveErDiagramFile(outputRoot, schemaName),
+                ER_DIAGRAM_BACK_LABEL);
+        writeErDiagramPage(
+            layout,
+            group,
+            ErDiagramTemplates.schemaFooter(outputRoot.baseInfo()),
+            tableByKey,
+            maxNodes,
+            outputRoot);
+      }
+      case PageComposition.Grouped(List<ForeignKeyGroup> groups, int nodeCount) -> {
+        IntStream.rangeClosed(1, groups.size())
+            .forEach(
+                groupNo ->
+                    writeGroupErDiagram(
+                        schemaName,
+                        groupNo,
+                        groups.get(groupNo - 1),
+                        tableByKey,
+                        outputRoot,
+                        maxNodes));
+        writeSchemaGroupIndex(schemaName, groups, nodeCount, outputRoot, maxNodes);
+      }
     }
-    IntStream.rangeClosed(1, groups.size())
-        .forEach(
-            groupNo ->
-                writeGroupErDiagram(
-                    schemaName,
-                    groupNo,
-                    groups.get(groupNo - 1),
-                    tableByKey,
-                    outputRoot,
-                    maxNodes));
-    writeSchemaGroupIndex(schemaName, groups, schemaGroup.nodeCount(), outputRoot, maxNodes);
   }
 
   /**

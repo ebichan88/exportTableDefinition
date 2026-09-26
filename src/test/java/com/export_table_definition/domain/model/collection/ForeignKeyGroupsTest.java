@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -129,5 +131,100 @@ public class ForeignKeyGroupsTest {
     assertEquals(2, groups.size());
     assertEquals(3, groups.get(0).nodeCount());
     assertEquals(2, groups.get(1).nodeCount());
+  }
+
+  @Test
+  @DisplayName("compose: 外部キーが無い場合は空のグループ1枚のSingleを返す")
+  void testComposeEmptyReturnsSingle() {
+    var composition = ForeignKeyGroups.compose(List.of(), 4);
+    assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
+    var single = (ForeignKeyGroups.PageComposition.Single) composition;
+    assertEquals(0, single.group().nodeCount());
+  }
+
+  @Test
+  @DisplayName("compose: ノード数が上限内の場合は分割せずSingleを返す")
+  void testComposeWithinLimitReturnsSingle() {
+    var fk1 = fk("public", "a", "fk1", "public", "hub");
+    var fk2 = fk("public", "b", "fk2", "public", "hub");
+    var composition = ForeignKeyGroups.compose(List.of(fk1, fk2), 80);
+    assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
+    var single = (ForeignKeyGroups.PageComposition.Single) composition;
+    assertEquals(3, single.group().nodeCount());
+    assertEquals(List.of(fk1, fk2), single.group().foreignKeys());
+  }
+
+  @Test
+  @DisplayName("compose: 上限超過かつ独立したまとまりが複数ある場合はGroupedを返す")
+  void testComposeOverflowWithMultipleComponentsReturnsGrouped() {
+    // 2ノードずつの独立したまとまりを5組（ノード数10件）作り、上限4件で超過させる
+    var foreignKeys =
+        IntStream.rangeClosed(1, 5)
+            .mapToObj(i -> fk("public", "child" + i, "fk" + i, "public", "parent" + i))
+            .toList();
+
+    var composition = ForeignKeyGroups.compose(foreignKeys, 4);
+
+    assertInstanceOf(ForeignKeyGroups.PageComposition.Grouped.class, composition);
+    var grouped = (ForeignKeyGroups.PageComposition.Grouped) composition;
+    assertEquals(10, grouped.nodeCount());
+    // 1グループあたり2まとまり(4ノード)まで詰め込まれるため、5まとまりは3グループになる
+    assertEquals(3, grouped.groups().size());
+    assertTrue(grouped.groups().stream().allMatch(g -> g.nodeCount() <= 4));
+  }
+
+  @Test
+  @DisplayName("compose: 上限超過でも単一の巨大なまとまりしかない場合は分割してもSingleのまま（フォールバックはWriter側の役目）")
+  void testComposeOverflowWithSingleComponentReturnsSingle() {
+    // 全テーブルが1つのハブに繋がる構成のため、分割しても1つのまとまりにしかならない
+    var foreignKeys =
+        IntStream.rangeClosed(1, 10)
+            .mapToObj(i -> fk("public", "t" + i, "fk" + i, "public", "hub"))
+            .toList();
+
+    var composition = ForeignKeyGroups.compose(foreignKeys, 4);
+
+    assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
+    var single = (ForeignKeyGroups.PageComposition.Single) composition;
+    // 上限を超えたままであることが、呼び出し側が外部キー一覧へフォールバックする判断材料になる
+    assertTrue(single.group().exceeds(4));
+    assertEquals(11, single.group().nodeCount());
+  }
+
+  @Test
+  @DisplayName("compose: 巨大なまとまりと小さなまとまりが混在する場合はGroupedを返し、各グループのノード数を保つ")
+  void testComposeMixedComponentsReturnsGrouped() {
+    var foreignKeys = new ArrayList<ForeignKeyEntity>();
+    // 上限を超える巨大なまとまり（11ノード）
+    IntStream.rangeClosed(1, 10)
+        .forEach(i -> foreignKeys.add(fk("public", "t" + i, "fk" + i, "public", "hub")));
+    // 巨大なまとまりに繋がっていない小さなまとまり
+    foreignKeys.add(fk("public", "x", "fk_xy", "public", "y"));
+
+    var composition = ForeignKeyGroups.compose(foreignKeys, 4);
+
+    assertInstanceOf(ForeignKeyGroups.PageComposition.Grouped.class, composition);
+    var grouped = (ForeignKeyGroups.PageComposition.Grouped) composition;
+    assertEquals(13, grouped.nodeCount());
+    assertEquals(2, grouped.groups().size());
+    // 巨大なまとまりは単独グループのまま上限を超え続ける（Writer側で外部キー一覧へフォールバックする対象）
+    assertEquals(11, grouped.groups().get(0).nodeCount());
+    assertTrue(grouped.groups().get(0).exceeds(4));
+    // 小さなまとまりは上限内に収まる
+    assertEquals(2, grouped.groups().get(1).nodeCount());
+    assertFalse(grouped.groups().get(1).exceeds(4));
+  }
+
+  @Test
+  @DisplayName("compose: 上限なし（0以下）の場合はテーブル数に関わらずSingleを返す")
+  void testComposeNoLimitReturnsSingle() {
+    var foreignKeys =
+        IntStream.rangeClosed(1, 50)
+            .mapToObj(i -> fk("public", "t" + i, "fk" + i, "public", "hub"))
+            .toList();
+
+    var composition = ForeignKeyGroups.compose(foreignKeys, 0);
+
+    assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
   }
 }
