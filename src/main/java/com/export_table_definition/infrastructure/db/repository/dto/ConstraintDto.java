@@ -1,6 +1,6 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
 
 /**
  * 制約情報に関してORMのデータの受け渡しに利用するDTOクラス
@@ -24,6 +24,11 @@ public record ConstraintDto(
    */
   public ConstraintEntity toEntity() {
     return new ConstraintEntity(
-        schemaName, tableName, constraintName, constraintType, constraintDefinition, remarks);
+        schemaName,
+        tableName,
+        constraintName,
+        DtoValues.text(constraintType),
+        DtoValues.text(constraintDefinition),
+        DtoValues.text(remarks));
   }
 }

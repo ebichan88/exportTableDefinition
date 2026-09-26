@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -19,9 +19,9 @@
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 |1|プロジェクトID|project_id|integer||○|○|nextval('sample.project_project_id_seq'::regclass)||
-|2|プロジェクトコード|project_code|character varying(10)|10||○| ||
-|3|プロジェクト名|project_name|character varying(100)|100||○| ||
-|4|予算|budget|sample.positive_numeric|||| ||
+|2|プロジェクトコード|project_code|character varying(10)|10||○|||
+|3|プロジェクト名|project_name|character varying(100)|100||○|||
+|4|予算|budget|sample.positive_numeric||||||
 
 ## インデックス情報
 

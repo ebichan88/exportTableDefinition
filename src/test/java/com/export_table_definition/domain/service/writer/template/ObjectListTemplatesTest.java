@@ -2,18 +2,20 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
+import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** ObjectListTemplates のセクション生成テスト */
 public class ObjectListTemplatesTest {
 
-  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
+  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
 
   @Test
   @DisplayName("fileHeader: タイトルとDB名を含む")
@@ -27,7 +29,7 @@ public class ObjectListTemplatesTest {
   void testBaseInfo() {
     String section = ObjectListTemplates.baseInfo(base);
     assertTrue(section.startsWith("## 基本情報"));
-    assertTrue(section.contains("|pg|TEST_DB|2025-01-01|"));
+    assertTrue(section.contains("|pg|TEST_DB|2025/01/01|"));
   }
 
   @Test
@@ -67,7 +69,14 @@ public class ObjectListTemplatesTest {
   void testTriggerListLine() {
     var trigger =
         new TriggerEntity(
-            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "public.f_orders", "");
+            "public",
+            "orders",
+            "trg_orders",
+            "BEFORE",
+            List.of("INSERT"),
+            "ROW",
+            "public.f_orders",
+            "");
     assertEquals(
         "|1|public|orders|trg_orders|BEFORE|INSERT|public.f_orders|" + System.lineSeparator(),
         ObjectListTemplates.triggerListLine(1, trigger));
@@ -78,7 +87,7 @@ public class ObjectListTemplatesTest {
   void testFunctionListLine() {
     var function =
         new FunctionEntity(
-            "TEST_DB", "public", "concat", "concat_2", "FUNCTION", "a text|b", "text", "sql", "");
+            "TEST_DB", "public", "concat", 2, 2, "FUNCTION", "a text|b", "text", "sql", "");
     assertEquals(
         "|2|public|FUNCTION|concat|a text\\|b|text|sql|[■](./TEST_DB/public/function/concat_2.md)|"
             + System.lineSeparator(),

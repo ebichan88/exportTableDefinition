@@ -3,7 +3,6 @@ package com.export_table_definition.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import org.junit.jupiter.api.DisplayName;
@@ -26,17 +25,39 @@ public class PropertyLoaderTest {
   }
 
   @Test
-  @DisplayName("getString: 存在しないキーの場合はMissingResourceExceptionをスローする")
+  @DisplayName("getString: 存在しないキーの場合は、ファイル名・キー名を含むInvalidConfigurationExceptionをスローする")
   void testGetStringMissingKeyThrows() {
-    assertThrows(
-        MissingResourceException.class, () -> PropertyLoader.getString(FIXTURE, "doesNotExist"));
+    final InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () -> PropertyLoader.getString(FIXTURE, "doesNotExist"));
+    assertTrue(e.getMessage().contains(FIXTURE + ".properties"));
+    assertTrue(e.getMessage().contains("key=doesNotExist"));
   }
 
   @Test
-  @DisplayName("getList: カンマ区切りの値を分割し、空要素のみ除去する（前後の空白はトリムしない）")
-  void testGetListSplitsCommaSeparatedAndRemovesBlankElementsOnly() {
+  @DisplayName("getString: 設定ファイル自体が存在しない場合はInvalidConfigurationExceptionをスローする")
+  void testGetStringMissingFileThrows() {
+    final InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () -> PropertyLoader.getString("DoesNotExistFixture", "stringValue"));
+    assertTrue(e.getMessage().contains("DoesNotExistFixture.properties"));
+  }
+
+  @Test
+  @DisplayName("getInt: 設定ファイル自体が存在しない場合はデフォルト値を返さず、InvalidConfigurationExceptionをスローする")
+  void testGetIntMissingFileThrows() {
+    assertThrows(
+        InvalidConfigurationException.class,
+        () -> PropertyLoader.getInt("DoesNotExistFixture", "intValid", 999));
+  }
+
+  @Test
+  @DisplayName("getList: カンマ区切りの値を分割し、各要素の前後の空白を除去して空要素を除く")
+  void testGetListSplitsCommaSeparatedAndStripsElements() {
     assertEquals(
-        List.of("alpha", "beta", " gamma ", "delta"), PropertyLoader.getList(FIXTURE, "csvValue"));
+        List.of("alpha", "beta", "gamma", "delta"), PropertyLoader.getList(FIXTURE, "csvValue"));
   }
 
   @Test

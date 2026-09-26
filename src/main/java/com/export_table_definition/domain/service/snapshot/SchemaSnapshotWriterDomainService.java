@@ -1,19 +1,19 @@
 package com.export_table_definition.domain.service.snapshot;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.snapshot.DatabaseSnapshot;
 import com.export_table_definition.domain.model.snapshot.FunctionSnapshot;
 import com.export_table_definition.domain.model.snapshot.SequenceSnapshot;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.model.snapshot.TableSnapshot;
 import com.export_table_definition.domain.model.snapshot.TypeSnapshot;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;

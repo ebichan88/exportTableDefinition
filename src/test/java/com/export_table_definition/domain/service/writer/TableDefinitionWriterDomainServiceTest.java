@@ -2,20 +2,22 @@ package com.export_table_definition.domain.service.writer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -75,7 +77,7 @@ public class TableDefinitionWriterDomainServiceTest {
   private TableDefinitionWriterDomainService writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "pg", "2026-09-24");
+    return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 24));
   }
 
   private OutputRoot outputRoot() {
@@ -83,7 +85,7 @@ public class TableDefinitionWriterDomainServiceTest {
   }
 
   private TableEntity table(String physical) {
-    return new TableEntity("testdb", "public", "受注", physical, "table", "");
+    return new TableEntity("testdb", "public", "受注", physical, TableType.TABLE, "");
   }
 
   @BeforeEach
@@ -106,7 +108,7 @@ public class TableDefinitionWriterDomainServiceTest {
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# テーブル一覧（DB名：testdb）"));
-    assertTrue(content.contains("|pg|testdb|2026-09-24|"));
+    assertTrue(content.contains("|pg|testdb|2026/09/24|"));
     assertTrue(content.contains("## 関連ドキュメント"));
     assertTrue(content.contains("[ER図一覧](./erDiagramList_testdb.md)"));
     assertTrue(content.contains("|public|受注|orders|table|"));
@@ -157,7 +159,14 @@ public class TableDefinitionWriterDomainServiceTest {
         ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var trigger =
         new TriggerEntity(
-            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "public.f_orders", "...");
+            "public",
+            "orders",
+            "trg_orders",
+            "BEFORE",
+            List.of("INSERT"),
+            "ROW",
+            "public.f_orders",
+            "...");
 
     var annotation = new TableAnnotation("受注を管理するテーブル", "個人情報を含む", Map.of("order_id", "受注の主キー"));
     var content =

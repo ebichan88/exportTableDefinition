@@ -2,17 +2,19 @@ package com.export_table_definition.domain.model.snapshot;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
-import com.export_table_definition.domain.model.type.RelationType;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +24,7 @@ import org.junit.jupiter.api.Test;
 public class TableSnapshotTest {
 
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity("testdb", "PostgreSQL", "2026/09/25");
+      new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2026, 9, 25));
 
   private TableDefinitionContent content(
       TableEntity table,
@@ -49,7 +51,7 @@ public class TableSnapshotTest {
   @Test
   @DisplayName("of: テーブル・カラムの各項目を個別の値として保持し、サイドカーの付帯情報をマージする")
   void testOfConvertsTableAndColumns() {
-    var table = new TableEntity("testdb", "public", "受注", "orders", "table", "");
+    var table = new TableEntity("testdb", "public", "受注", "orders", TableType.TABLE, "");
     var id = new ColumnEntity("public", "orders", "受注ID", "id", "integer", "", true, true, " ");
     var amount =
         new ColumnEntity(
@@ -86,7 +88,7 @@ public class TableSnapshotTest {
   @Test
   @DisplayName("of: インデックス・制約・外部キー・論理リレーション・トリガーを構造化して保持する")
   void testOfConvertsRelatedObjects() {
-    var table = new TableEntity("testdb", "public", "", "orders", "table", "");
+    var table = new TableEntity("testdb", "public", "", "orders", TableType.TABLE, "");
     var index =
         new IndexEntity(
             "public", "orders", "orders_pkey", "btree", true, true, "CREATE UNIQUE INDEX ...", "");
@@ -98,10 +100,10 @@ public class TableSnapshotTest {
             "public",
             "orders",
             "fk_orders_item",
-            "item_id,item_seq",
+            List.of("item_id", "item_seq"),
             "master",
             "items",
-            "id,seq",
+            List.of("id", "seq"),
             Cardinality.OPTIONAL_ONE_TO_MANY,
             RelationType.PHYSICAL);
     var logicalRelation =
@@ -109,10 +111,10 @@ public class TableSnapshotTest {
             "public",
             "orders",
             "orders_user_id_lrel",
-            "user_id",
+            List.of("user_id"),
             "public",
             "users",
-            "id",
+            List.of("id"),
             Cardinality.ONE_TO_MANY);
     var trigger =
         new TriggerEntity(
@@ -120,7 +122,7 @@ public class TableSnapshotTest {
             "orders",
             "trg_orders",
             "BEFORE",
-            "INSERT/UPDATE",
+            List.of("INSERT", "UPDATE"),
             "ROW",
             "public.f_orders",
             "CREATE TRIGGER trg_orders ...");
@@ -184,7 +186,8 @@ public class TableSnapshotTest {
   @DisplayName("of: view・materialized viewはソース定義を保持する")
   void testOfKeepsViewDefinition() {
     var view =
-        new TableEntity("testdb", "public", "", "v_orders", "view", " SELECT id FROM orders;");
+        new TableEntity(
+            "testdb", "public", "", "v_orders", TableType.VIEW, " SELECT id FROM orders;");
 
     TableSnapshot snapshot =
         TableSnapshot.of(

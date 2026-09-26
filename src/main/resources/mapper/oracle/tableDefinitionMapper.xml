@@ -2,20 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.export_table_definition.domain.repository.oracle.TableDefinitionRepository">
 
-    <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
+    <select id="selectDatabaseInfo" resultMap="DatabaseDtoMap">
         SELECT
             SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
-            'Oracle' AS "dbmsName",
-            to_char(current_timestamp, 'yyyy/MM/dd') AS "generatedDate"
+            'Oracle' AS "dbmsName"
         FROM dual
         fetch first 1 rows only
     </select>
 
-    <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
+    <resultMap id="DatabaseDtoMap" type="DatabaseDto">
         <constructor>
             <arg column="dbName" javaType="String" />
             <arg column="dbmsName" javaType="String" />
-            <arg column="generatedDate" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -122,7 +120,7 @@
                     ELSE 0
                 END AS primary_key,
                 CASE c.NULLABLE WHEN 'N' THEN 1 ELSE 0 END AS not_null,
-                ' ' AS default_value,
+                '' AS default_value,
                 '' AS remarks
             FROM ALL_TAB_COLUMNS c
             LEFT OUTER JOIN ALL_COL_COMMENTS com ON c.OWNER = com.OWNER AND c.TABLE_NAME = com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME
@@ -283,7 +281,7 @@
                     ELSE NULL
                 END AS constraints_type,
                 CASE ac.constraint_type
-                    WHEN 'C' THEN ' '
+                    WHEN 'C' THEN ''
                     WHEN 'R' THEN 'FOREIGN KEY (' || acc.column_name || ') REFERENCES' || ac_r.table_name || '(' || acc_r.column_name || ')'
                     WHEN 'U' THEN 'UNIQUE ('|| acc.column_name || ')'
                     ELSE NULL

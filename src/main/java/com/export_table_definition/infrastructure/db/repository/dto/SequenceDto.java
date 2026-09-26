@@ -1,6 +1,6 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 
 /**
  * シーケンス情報に関してORMのデータの受け渡しに利用するDTOクラス
@@ -31,12 +31,12 @@ public record SequenceDto(
         dbName,
         schemaName,
         sequenceName,
-        incrementBy,
-        minValue,
-        maxValue,
-        cacheSize,
-        startValue,
+        DtoValues.text(incrementBy),
+        DtoValues.text(minValue),
+        DtoValues.text(maxValue),
+        DtoValues.text(cacheSize),
+        DtoValues.text(startValue),
         cycle,
-        ownedBy);
+        DtoValues.text(ownedBy));
   }
 }

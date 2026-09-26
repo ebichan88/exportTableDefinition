@@ -1,7 +1,8 @@
 package com.export_table_definition.domain.service.path;
 
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
 
 /**
  * 出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>
@@ -21,6 +22,9 @@ public final class DocumentLocations {
   private static final String ER_DIAGRAM_GROUP_FILENAME_PATTERN =
       "erDiagram_%s_%s_group%d" + MARKDOWN_EXTENSION;
   private static final String PATH_SEPARATOR = "/";
+
+  /** オーバーロードされた関数・プロシージャの個別定義ファイル名で、名前と番号を区切る文字 */
+  private static final String OVERLOAD_SEPARATOR = "_";
 
   /** 出力ベースディレクトリ直下のドキュメントから、出力ベースディレクトリを指す相対パス */
   private static final String FROM_BASE = "./";
@@ -96,8 +100,23 @@ public final class DocumentLocations {
         PATH_SEPARATOR,
         dbName,
         table.schemaName(),
-        table.tableType(),
+        table.tableType().getName(),
         table.physicalTableName() + MARKDOWN_EXTENSION);
+  }
+
+  /**
+   * 関数・プロシージャの個別定義ファイル名（拡張子を除く）を取得するメソッド<br>
+   * 同じスキーマに同名の関数・プロシージャ（オーバーロード）が複数存在する場合は、ファイル名が重複しないよう 作成順の番号を付ける（例: {@code calc_1}, {@code
+   * calc_2}）。存在しない場合は関数・プロシージャ名をそのまま用いる
+   *
+   * @param function 関数・プロシージャ情報
+   * @return 個別定義ファイル名（拡張子を除く）
+   */
+  public static String functionDefinitionName(FunctionEntity function) {
+    if (!function.isOverloaded()) {
+      return function.functionName();
+    }
+    return function.functionName() + OVERLOAD_SEPARATOR + function.overloadIndex();
   }
 
   /**

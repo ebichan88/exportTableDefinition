@@ -1,7 +1,7 @@
 package com.export_table_definition.presentation;
 
-import com.export_table_definition.domain.model.ContentDiff;
-import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.snapshot.ContentDiff;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
 import java.util.List;
 
 /**

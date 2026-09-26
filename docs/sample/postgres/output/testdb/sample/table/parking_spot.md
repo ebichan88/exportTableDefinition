@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -19,7 +19,7 @@
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 |1||parking_spot_id|integer||○|○|nextval('sample.parking_spot_parking_spot_id_seq'::regclass)||
-|2||spot_code|character varying(10)|10||○| ||
+|2||spot_code|character varying(10)|10||○|||
 
 ## インデックス情報
 

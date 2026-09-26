@@ -4,9 +4,9 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.row;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import java.util.List;
 
@@ -93,7 +93,7 @@ public class TableDefinitionListTemplates {
             table.schemaName(),
             MarkdownTemplateSupport.escapeTableCell(table.logicalTableName()),
             table.physicalTableName(),
-            table.tableType(),
+            table.tableType().getName(),
             tableDefinitionLink(table))
         + LINE_SEPARATOR;
   }

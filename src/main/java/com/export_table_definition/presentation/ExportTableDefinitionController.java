@@ -1,13 +1,14 @@
 package com.export_table_definition.presentation;
 
 import com.export_table_definition.application.CheckDiffRequest;
+import com.export_table_definition.application.CheckDocumentDiffUsecase;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
-import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ProcessResult;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,16 +23,20 @@ public class ExportTableDefinitionController {
 
   private static final Logger logger = LogManager.getLogger(ExportTableDefinitionController.class);
   private final ExportTableDefinitionUsecase exportTableDefinitionUsecase;
+  private final CheckDocumentDiffUsecase checkDocumentDiffUsecase;
 
   /**
    * コンストラクタ
    *
-   * @param exportTableDefinitionUsecase テーブル定義出力に関するユースケースクラス
+   * @param exportTableDefinitionUsecase テーブル定義出力（通常実行）のユースケースクラス
+   * @param checkDocumentDiffUsecase DB vs ドキュメントの差分検知（{@code --check}モード）のユースケースクラス
    */
   @Inject
   public ExportTableDefinitionController(
-      ExportTableDefinitionUsecase exportTableDefinitionUsecase) {
+      ExportTableDefinitionUsecase exportTableDefinitionUsecase,
+      CheckDocumentDiffUsecase checkDocumentDiffUsecase) {
     this.exportTableDefinitionUsecase = exportTableDefinitionUsecase;
+    this.checkDocumentDiffUsecase = checkDocumentDiffUsecase;
   }
 
   /**
@@ -66,7 +71,7 @@ public class ExportTableDefinitionController {
     logger.info("[START] checkDocumentDiff");
     final DiffResult diffResult;
     try {
-      diffResult = exportTableDefinitionUsecase.checkDocumentDiff(request);
+      diffResult = checkDocumentDiffUsecase.checkDocumentDiff(request);
     } catch (Exception e) {
       logger.error(e);
       return new DiffCheckResultDto(

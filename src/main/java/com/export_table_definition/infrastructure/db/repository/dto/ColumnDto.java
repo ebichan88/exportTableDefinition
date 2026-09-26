@@ -1,6 +1,6 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.ColumnEntity;
+import com.export_table_definition.domain.model.table.ColumnEntity;
 
 /**
  * カラム情報に関してORMのデータの受け渡しに利用するDTOクラス
@@ -29,12 +29,12 @@ public record ColumnDto(
     return new ColumnEntity(
         schemaName,
         tableName,
-        logicalColumnName,
+        DtoValues.text(logicalColumnName),
         physicalColumnName,
         columnType,
-        precisionScale,
+        DtoValues.text(precisionScale),
         primaryKey,
         notNull,
-        defaultValue);
+        DtoValues.text(defaultValue));
   }
 }

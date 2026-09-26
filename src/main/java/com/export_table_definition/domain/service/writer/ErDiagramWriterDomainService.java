@@ -1,13 +1,13 @@
 package com.export_table_definition.domain.service.writer;
 
-import com.export_table_definition.domain.model.collection.ForeignKeyGroup;
-import com.export_table_definition.domain.model.collection.ForeignKeyGroups;
-import com.export_table_definition.domain.model.collection.ForeignKeyGroups.PageComposition;
-import com.export_table_definition.domain.model.collection.ForeignKeys;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
-import com.export_table_definition.domain.model.value.TableKey;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
+import com.export_table_definition.domain.model.relation.ForeignKeyGroups;
+import com.export_table_definition.domain.model.relation.ForeignKeyGroups.PageComposition;
+import com.export_table_definition.domain.model.relation.ForeignKeys;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
@@ -16,11 +16,9 @@ import com.export_table_definition.domain.service.writer.PagedSectionWriter.Page
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
 import com.export_table_definition.domain.service.writer.template.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
-import com.google.inject.Inject;
-import java.util.LinkedHashMap;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,38 +60,26 @@ public class ErDiagramWriterDomainService {
   /**
    * スキーマ別ER図（全体ER図）の書き込み処理を行うメソッド<br>
    * 1つの図にすべてのテーブルを載せるとMermaidが描画できる規模を超えるため、スキーマ単位に分割して出力し、 それらへのリンクをまとめた索引ファイルを併せて出力する。
-   * 利用する情報はテーブル一覧と外部キー一覧のみで、テーブル詳細を必要としない
+   * 利用する情報はテーブル一覧と外部キー一覧のみで、テーブル詳細を必要としない。 テーブルが存在しない場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う
    *
-   * @param tables テーブル情報リスト
+   * @param tables 出力対象のテーブル
    * @param foreignKeys 対象範囲全体の外部キー情報
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
    */
   public void writeErDiagram(
-      List<TableEntity> tables, ForeignKeys foreignKeys, OutputRoot outputRoot, int maxNodes) {
-    if (tables.isEmpty()) {
-      return;
-    }
-    final Map<String, List<TableEntity>> tablesBySchema =
-        tables.stream()
-            .collect(
-                Collectors.groupingBy(
-                    TableEntity::schemaName, LinkedHashMap::new, Collectors.toList()));
+      Tables tables, ForeignKeys foreignKeys, OutputRoot outputRoot, int maxNodes) {
+    final Map<String, List<TableEntity>> tablesBySchema = tables.bySchema();
     // 外部キーのスキーマ単位のグループ化は1度だけ行う。スキーマごとに全件を走査すると
     // 外部キー数×スキーマ数の走査となり、対象範囲が広い場合に処理時間が膨らむ
     final Map<String, List<ForeignKeyEntity>> foreignKeysBySchema = foreignKeys.groupBySchema();
-    // ER図には他スキーマのテーブルも箱として登場するため、全テーブルを引けるマップを用意する
-    final Map<TableKey, TableEntity> tableByKey =
-        tables.stream()
-            .collect(
-                Collectors.toMap(
-                    TableKey::of, table -> table, (first, duplicate) -> first, LinkedHashMap::new));
+    // ER図には他スキーマのテーブルも箱として登場するため、スキーマを問わず全テーブルから引けるようにする
     tablesBySchema.forEach(
         (schemaName, tablesInSchema) ->
             writeSchemaErDiagram(
                 schemaName,
                 foreignKeysBySchema.getOrDefault(schemaName, List.of()),
-                tableByKey,
+                tables,
                 outputRoot,
                 maxNodes));
     writeErDiagramIndex(tablesBySchema, foreignKeys.crossSchema(), outputRoot);
@@ -105,14 +91,14 @@ public class ErDiagramWriterDomainService {
    *
    * @param schemaName 出力対象のスキーマ名
    * @param relatedForeignKeys 当該スキーマのテーブルが関与する外部キー（他スキーマとの関連を含む）のリスト
-   * @param tableByKey テーブルキーをキー、テーブル情報を値とするマップ
+   * @param tables 出力対象のテーブル（ER図に登場するテーブルの情報を引くために用いる）
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
    */
   private void writeSchemaErDiagram(
       String schemaName,
       List<ForeignKeyEntity> relatedForeignKeys,
-      Map<TableKey, TableEntity> tableByKey,
+      Tables tables,
       OutputRoot outputRoot,
       int maxNodes) {
     final PageComposition composition = ForeignKeyGroups.compose(relatedForeignKeys, maxNodes);
@@ -127,7 +113,7 @@ public class ErDiagramWriterDomainService {
             layout,
             group,
             ErDiagramTemplates.schemaFooter(outputRoot.baseInfo()),
-            tableByKey,
+            tables,
             maxNodes,
             outputRoot);
       }
@@ -139,7 +125,7 @@ public class ErDiagramWriterDomainService {
                         schemaName,
                         groupNo,
                         groups.get(groupNo - 1),
-                        tableByKey,
+                        tables,
                         outputRoot,
                         maxNodes));
         writeSchemaGroupIndex(schemaName, groups, nodeCount, outputRoot, maxNodes);
@@ -153,7 +139,7 @@ public class ErDiagramWriterDomainService {
    * @param schemaName 出力対象のスキーマ名
    * @param groupNo グループ番号（1始まり）
    * @param group 当該グループに属する外部キーのまとまり
-   * @param tableByKey テーブルキーをキー、テーブル情報を値とするマップ
+   * @param tables 出力対象のテーブル（ER図に登場するテーブルの情報を引くために用いる）
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param maxNodes 1つの図に描画するノード数の上限
    */
@@ -161,7 +147,7 @@ public class ErDiagramWriterDomainService {
       String schemaName,
       int groupNo,
       ForeignKeyGroup group,
-      Map<TableKey, TableEntity> tableByKey,
+      Tables tables,
       OutputRoot outputRoot,
       int maxNodes) {
     final PageLayout layout =
@@ -173,7 +159,7 @@ public class ErDiagramWriterDomainService {
         layout,
         group,
         ErDiagramTemplates.groupFooter(schemaName, outputRoot.baseInfo()),
-        tableByKey,
+        tables,
         maxNodes,
         outputRoot);
   }
@@ -186,7 +172,7 @@ public class ErDiagramWriterDomainService {
    * @param layout 出力先のファイルパスとファイルヘッダー（一覧が長い場合の分割ページと共通）
    * @param group 当該ページに描画する外部キーのまとまり
    * @param footer フッター
-   * @param tableByKey テーブルキーをキー、テーブル情報を値とするマップ
+   * @param tables 出力対象のテーブル（ER図に登場するテーブルの情報を引くために用いる）
    * @param maxNodes 1つの図に描画するノード数の上限
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    */
@@ -194,7 +180,7 @@ public class ErDiagramWriterDomainService {
       PageLayout layout,
       ForeignKeyGroup group,
       String footer,
-      Map<TableKey, TableEntity> tableByKey,
+      Tables tables,
       int maxNodes,
       OutputRoot outputRoot) {
     final PagedSection<?> detail =
@@ -208,7 +194,8 @@ public class ErDiagramWriterDomainService {
                 ErDiagramTemplates.diagramTableHeading(),
                 ErDiagramTemplates.diagramTableHeader(),
                 group.nodes(),
-                (no, key) -> ErDiagramTemplates.diagramTableLine(no, key, tableByKey.get(key)));
+                (no, key) ->
+                    ErDiagramTemplates.diagramTableLine(no, key, tables.find(key).orElse(null)));
     final String detailSection = pagedSectionWriter.writePagedSection(detail, layout);
     final List<String> contents =
         List.of(

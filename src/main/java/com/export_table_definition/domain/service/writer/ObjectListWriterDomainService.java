@@ -1,18 +1,19 @@
 package com.export_table_definition.domain.service.writer;
 
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
 import com.export_table_definition.domain.service.writer.template.ObjectDefinitionTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectListTemplates;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -51,8 +52,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * トリガー一覧の書き込み処理を行うメソッド<br>
-   * トリガーが存在しない場合は何も出力しない
+   * トリガー一覧の書き込み処理を行うメソッド
    *
    * @param triggers トリガー情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -67,8 +67,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * 関数・プロシージャ一覧の書き込み処理を行うメソッド<br>
-   * 対象が存在しない場合は何も出力しない
+   * 関数・プロシージャ一覧の書き込み処理を行うメソッド
    *
    * @param functions 関数・プロシージャの一覧情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -83,8 +82,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * シーケンス一覧の書き込み処理を行うメソッド<br>
-   * 対象が存在しない場合は何も出力しない
+   * シーケンス一覧の書き込み処理を行うメソッド
    *
    * @param sequences シーケンス情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -99,8 +97,7 @@ public class ObjectListWriterDomainService {
   }
 
   /**
-   * ユーザー定義型一覧の書き込み処理を行うメソッド<br>
-   * 対象が存在しない場合は何も出力しない
+   * ユーザー定義型一覧の書き込み処理を行うメソッド
    *
    * @param types ユーザー定義型情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
@@ -116,7 +113,7 @@ public class ObjectListWriterDomainService {
 
   /**
    * オブジェクト一覧（トリガー/関数/シーケンス/型）の書き込み処理を行う共通メソッド<br>
-   * 対象が存在しない場合は何も出力しない。 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割する
+   * 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割する。 対象が存在しない一覧を出力しないことの判定は呼び出し側（出力する一覧の決定）が行う
    *
    * @param <T> エンティティの型
    * @param type 一覧の種別
@@ -131,9 +128,6 @@ public class ObjectListWriterDomainService {
       List<T> objects,
       BiFunction<Integer, T, String> lineMapper,
       OutputRoot outputRoot) {
-    if (objects.isEmpty()) {
-      return;
-    }
     final PagedSection<T> section =
         new PagedSection<>(type.getTitle(), tableHeader, objects, lineMapper);
     final PageLayout layout =
@@ -162,7 +156,7 @@ public class ObjectListWriterDomainService {
     writeSchemaObjectDefinition(
         ListDocumentType.FUNCTION,
         function.schemaName(),
-        function.fileName(),
+        DocumentLocations.functionDefinitionName(function),
         ObjectDefinitionTemplates.functionFile(function, outputRoot.baseInfo()),
         outputRoot);
   }

@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.service.writer.template;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import java.time.format.DateTimeFormatter;
 
 /**
  * 各テンプレートクラスで共通して利用するMarkdownの定数・部品を集約したクラス<br>
@@ -15,6 +16,10 @@ public final class MarkdownTemplateSupport {
   public static final String LINE_SEPARATOR = System.lineSeparator();
   public static final String LINE_SEPARATOR_DOUBLE = LINE_SEPARATOR + LINE_SEPARATOR;
   public static final String HORIZON = "___";
+
+  /** 基本情報に掲載する作成日の書式 */
+  private static final DateTimeFormatter GENERATED_DATE_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
   /** 表のセルで真偽値の「真」を表すマーカー文字列（「偽」は空文字とする） */
   private static final String MARKER = "○";
@@ -35,7 +40,10 @@ public final class MarkdownTemplateSupport {
                 | RDBMS | データベース名 | 作成日 |
                 |:---|:---|:---|
                 """
-        + row(baseInfo.dbmsName(), baseInfo.dbName(), baseInfo.generatedDate())
+        + row(
+            baseInfo.dbmsName(),
+            baseInfo.dbName(),
+            baseInfo.generatedDate().format(GENERATED_DATE_FORMAT))
         + LINE_SEPARATOR_DOUBLE;
   }
 

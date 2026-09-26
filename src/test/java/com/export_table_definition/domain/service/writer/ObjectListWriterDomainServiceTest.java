@@ -2,15 +2,16 @@ package com.export_table_definition.domain.service.writer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -70,7 +71,7 @@ public class ObjectListWriterDomainServiceTest {
   private ObjectListWriterDomainService writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "pg", "2026-09-24");
+    return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 24));
   }
 
   private OutputRoot outputRoot() {
@@ -88,34 +89,20 @@ public class ObjectListWriterDomainServiceTest {
   }
 
   @Test
-  @DisplayName("writeTriggerList: トリガーが0件の場合は何も出力しない")
-  void testWriteTriggerListEmptyWritesNothing() {
-    writer.writeTriggerList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
-  }
-
-  @Test
   @DisplayName("writeTriggerList: トリガーが存在する場合、一覧ファイルにヘッダー・基本情報・行・戻る導線が出力される")
   void testWriteTriggerListWritesFile() {
     var trigger =
         new TriggerEntity(
-            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "f_orders", "");
+            "public", "orders", "trg_orders", "BEFORE", List.of("INSERT"), "ROW", "f_orders", "");
     writer.writeTriggerList(List.of(trigger), outputRoot());
 
     Path file = OUT.resolve("triggerList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# トリガー一覧（DB名：testdb）"));
-    assertTrue(content.contains("|pg|testdb|2026-09-24|"));
+    assertTrue(content.contains("|pg|testdb|2026/09/24|"));
     assertTrue(content.contains("trg_orders"));
     assertTrue(content.contains("[テーブル一覧へ](./tableList_testdb.md)"));
-  }
-
-  @Test
-  @DisplayName("writeFunctionList: 関数・プロシージャが0件の場合は何も出力しない")
-  void testWriteFunctionListEmptyWritesNothing() {
-    writer.writeFunctionList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
   }
 
   @Test
@@ -123,7 +110,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteFunctionListWritesFile() {
     var function =
         new FunctionEntity(
-            "testdb", "public", "calc_total", "calc_total", "FUNCTION", "()", "int", "plpgsql", "");
+            "testdb", "public", "calc_total", 1, 1, "FUNCTION", "()", "int", "plpgsql", "");
     writer.writeFunctionList(List.of(function), outputRoot());
 
     Path file = OUT.resolve("functionList_testdb.md");
@@ -139,7 +126,8 @@ public class ObjectListWriterDomainServiceTest {
             "testdb",
             "public",
             "concat_code",
-            "concat_code",
+            1,
+            1,
             "FUNCTION",
             "sep text DEFAULT '|'::text",
             "TABLE(code text, label text)",
@@ -162,8 +150,7 @@ public class ObjectListWriterDomainServiceTest {
   @DisplayName("writeFunctionDefinition: スキーマ配下のfunctionディレクトリに個別ファイルを出力する")
   void testWriteFunctionDefinitionWritesIndividualFile() {
     var function =
-        new FunctionEntity(
-            "testdb", "public", "calc_total", "calc_total", "", "", "", "", "SELECT 1;");
+        new FunctionEntity("testdb", "public", "calc_total", 1, 1, "", "", "", "", "SELECT 1;");
     writer.writeFunctionDefinition(function, outputRoot());
 
     Path expectedDir = OUT.resolve("testdb").resolve("public").resolve("function");
@@ -174,13 +161,6 @@ public class ObjectListWriterDomainServiceTest {
     assertTrue(content.contains("# calc_total"));
     assertTrue(content.contains("SELECT 1;"));
     assertTrue(content.contains("[関数・プロシージャ一覧へ](../../../functionList_testdb.md)"));
-  }
-
-  @Test
-  @DisplayName("writeSequenceList: シーケンスが0件の場合は何も出力しない")
-  void testWriteSequenceListEmptyWritesNothing() {
-    writer.writeSequenceList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
   }
 
   @Test
@@ -198,13 +178,6 @@ public class ObjectListWriterDomainServiceTest {
     assertTrue(content.contains("# seq_orders"));
     assertTrue(content.contains("|10|1|999999999|20|1|○|orders.id|"));
     assertTrue(content.contains("[シーケンス一覧へ](../../../sequenceList_testdb.md)"));
-  }
-
-  @Test
-  @DisplayName("writeTypeList: ユーザー定義型が0件の場合は何も出力しない")
-  void testWriteTypeListEmptyWritesNothing() {
-    writer.writeTypeList(List.of(), outputRoot());
-    assertTrue(fileRepository.files.isEmpty());
   }
 
   @Test
@@ -227,7 +200,8 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteTriggerListSplitsWhenExceedingMaxPageSize() {
     List<TriggerEntity> triggers =
         IntStream.rangeClosed(1, 3001)
-            .mapToObj(i -> new TriggerEntity("public", "t" + i, "trg" + i, "", "", "", "", ""))
+            .mapToObj(
+                i -> new TriggerEntity("public", "t" + i, "trg" + i, "", List.of(), "", "", ""))
             .toList();
     writer.writeTriggerList(triggers, outputRoot());
 

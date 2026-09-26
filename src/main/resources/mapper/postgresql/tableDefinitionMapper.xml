@@ -2,19 +2,17 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository">
 
-    <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
+    <select id="selectDatabaseInfo" resultMap="DatabaseDtoMap">
         SELECT
             current_database() AS "dbName",
-            'PostgreSQL' AS "dbmsName",
-            to_char(current_timestamp, 'yyyy/MM/dd') AS "generatedDate"
+            'PostgreSQL' AS "dbmsName"
         fetch first 1 rows only;
     </select>
 
-    <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
+    <resultMap id="DatabaseDtoMap" type="DatabaseDto">
         <constructor>
             <arg column="dbName" javaType="String" />
             <arg column="dbmsName" javaType="String" />
-            <arg column="generatedDate" javaType="String" />
         </constructor>
     </resultMap>
 
@@ -106,7 +104,7 @@
                     END AS precision_scale,
                     EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
                     t3.attnotnull AS not_null,
-                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), '') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_tables t1
                 LEFT OUTER JOIN pg_catalog.pg_namespace tn ON tn.nspname = t1.schemaname
@@ -146,7 +144,7 @@
                     END AS precision_scale,
                     EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
                     t3.attnotnull AS not_null,
-                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), '') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_views t1
                 LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.viewname = t2.relname
@@ -185,7 +183,7 @@
                     END AS precision_scale,
                     EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
                     t3.attnotnull AS not_null,
-                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), '') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_matviews t1
                 LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.matviewname = t2.relname
@@ -481,7 +479,10 @@
                 pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments,
                 CASE WHEN t1.prokind = 'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS function_result,
                 t3.lanname AS language_name,
-                t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name
+                /* 同じスキーマ内の同名の関数・プロシージャ（オーバーロード）のうち何番目か（作成順）と、その数。
+                   個別定義のファイル名の規則はアプリケーション側（DocumentLocations）が持つため、ここでは事実のみを返す */
+                row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) AS overload_index,
+                count(*) OVER (PARTITION BY t2.nspname, t1.proname) AS overload_count
             FROM pg_catalog.pg_proc t1
             LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid
             LEFT OUTER JOIN pg_catalog.pg_language t3 ON t1.prolang = t3.oid
@@ -497,14 +498,15 @@
             db_name AS "dbName",
             schema_name AS "schemaName",
             function_name AS "functionName",
-            file_name AS "fileName",
+            overload_index AS "overloadIndex",
+            overload_count AS "overloadCount",
             function_kind AS "functionKind",
             function_arguments AS "functionArguments",
             function_result AS "functionResult",
             language_name AS "languageName",
             '' AS definition
         FROM all_functions
-        ORDER BY schema_name, function_name, file_name;
+        ORDER BY schema_name, function_name, overload_index;
     </select>
 
     <select id="selectAllFunctionDefInfo" resultMap="FunctionDtoMap">
@@ -517,7 +519,10 @@
                 pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments,
                 CASE WHEN t1.prokind = 'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS function_result,
                 t3.lanname AS language_name,
-                t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name,
+                /* 同じスキーマ内の同名の関数・プロシージャ（オーバーロード）のうち何番目か（作成順）と、その数。
+                   個別定義のファイル名の規則はアプリケーション側（DocumentLocations）が持つため、ここでは事実のみを返す */
+                row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) AS overload_index,
+                count(*) OVER (PARTITION BY t2.nspname, t1.proname) AS overload_count,
                 pg_catalog.pg_get_functiondef(t1.oid) AS definition
             FROM pg_catalog.pg_proc t1
             LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid
@@ -534,14 +539,15 @@
             db_name AS "dbName",
             schema_name AS "schemaName",
             function_name AS "functionName",
-            file_name AS "fileName",
+            overload_index AS "overloadIndex",
+            overload_count AS "overloadCount",
             function_kind AS "functionKind",
             function_arguments AS "functionArguments",
             function_result AS "functionResult",
             language_name AS "languageName",
             definition AS definition
         FROM all_functions
-        ORDER BY schema_name, function_name, file_name;
+        ORDER BY schema_name, function_name, overload_index;
     </select>
 
     <resultMap id="FunctionDtoMap" type="FunctionDto">
@@ -549,7 +555,8 @@
             <arg column="dbName" javaType="String" />
             <arg column="schemaName" javaType="String" />
             <arg column="functionName" javaType="String" />
-            <arg column="fileName" javaType="String" />
+            <arg column="overloadIndex" javaType="_int" />
+            <arg column="overloadCount" javaType="_int" />
             <arg column="functionKind" javaType="String" />
             <arg column="functionArguments" javaType="String" />
             <arg column="functionResult" javaType="String" />

@@ -2,8 +2,10 @@ package com.export_table_definition.domain.service.path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +47,7 @@ public class DocumentLocationsTest {
   @Test
   @DisplayName("tableDefinitionFile/schemaObjectFile: {DB名}/{スキーマ名}/{区分}/{名前}.md")
   void testDefinitionFiles() {
-    var table = new TableEntity("testdb", "public", "", "orders", "view", "");
+    var table = new TableEntity("testdb", "public", "", "orders", TableType.VIEW, "");
     assertEquals(
         "testdb/public/view/orders.md", DocumentLocations.tableDefinitionFile("testdb", table));
     assertEquals(
@@ -54,6 +56,26 @@ public class DocumentLocationsTest {
     assertEquals(
         "testdb/public/type/status.md",
         DocumentLocations.schemaObjectFile("testdb", "public", ListDocumentType.TYPE, "status"));
+  }
+
+  @Test
+  @DisplayName("functionDefinitionName: オーバーロードが無い関数は関数名をそのまま用いる")
+  void testFunctionDefinitionNameWithoutOverload() {
+    var function =
+        new FunctionEntity("testdb", "public", "calc", 1, 1, "FUNCTION", "", "int", "sql", "");
+    assertEquals("calc", DocumentLocations.functionDefinitionName(function));
+  }
+
+  @Test
+  @DisplayName("functionDefinitionName: オーバーロードされた関数は作成順の番号を付ける")
+  void testFunctionDefinitionNameWithOverload() {
+    var first =
+        new FunctionEntity("testdb", "public", "calc", 1, 2, "FUNCTION", "a int", "int", "sql", "");
+    var second =
+        new FunctionEntity(
+            "testdb", "public", "calc", 2, 2, "FUNCTION", "a text", "int", "sql", "");
+    assertEquals("calc_1", DocumentLocations.functionDefinitionName(first));
+    assertEquals("calc_2", DocumentLocations.functionDefinitionName(second));
   }
 
   @Test

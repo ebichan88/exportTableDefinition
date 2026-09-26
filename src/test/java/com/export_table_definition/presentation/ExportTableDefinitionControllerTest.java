@@ -3,11 +3,12 @@ package com.export_table_definition.presentation;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.application.CheckDiffRequest;
+import com.export_table_definition.application.CheckDocumentDiffUsecase;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.application.TargetSelection;
-import com.export_table_definition.domain.model.ContentDiff;
-import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.snapshot.ContentDiff;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ProcessResult;
@@ -19,7 +20,8 @@ import org.junit.jupiter.api.Test;
 public class ExportTableDefinitionControllerTest {
 
   /** 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ */
-  private static class RecordingUsecase implements ExportTableDefinitionUsecase {
+  private static class RecordingUsecase
+      implements ExportTableDefinitionUsecase, CheckDocumentDiffUsecase {
     ExportRequest capturedExportRequest;
     CheckDiffRequest capturedCheckDiffRequest;
     RuntimeException toThrow;
@@ -50,10 +52,10 @@ public class ExportTableDefinitionControllerTest {
       int chunkSize,
       int erDiagramMaxNodes,
       List<String> outputObjectList,
-      String annotationPath,
+      String sidecarPath,
       boolean rmDist) {
     return new ExportRequest(
-        new TargetSelection(schemaList, tableList, outputObjectList, annotationPath),
+        TargetSelection.of(schemaList, tableList, outputObjectList, sidecarPath),
         outputPath,
         chunkSize,
         erDiagramMaxNodes,
@@ -66,9 +68,9 @@ public class ExportTableDefinitionControllerTest {
       String outputPath,
       int chunkSize,
       List<String> outputObjectList,
-      String annotationPath) {
+      String sidecarPath) {
     return new CheckDiffRequest(
-        new TargetSelection(schemaList, tableList, outputObjectList, annotationPath),
+        TargetSelection.of(schemaList, tableList, outputObjectList, sidecarPath),
         outputPath,
         chunkSize);
   }
@@ -77,7 +79,7 @@ public class ExportTableDefinitionControllerTest {
   @DisplayName("execute: ユースケースが正常終了した場合はSUCCESSの結果を返す")
   void testExecuteSuccessReturnsSuccessResult() {
     var usecase = new RecordingUsecase();
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     ResultDto result =
         controller.execute(
@@ -99,7 +101,7 @@ public class ExportTableDefinitionControllerTest {
   @DisplayName("execute: 引数（ExportRequest）をそのままユースケースへ渡す")
   void testExecutePassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     ExportRequest request =
         exportRequest(
@@ -122,7 +124,7 @@ public class ExportTableDefinitionControllerTest {
   void testExecuteExceptionReturnsFailResult() {
     var usecase = new RecordingUsecase();
     usecase.toThrow = new RuntimeException("boom");
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     ResultDto result =
         controller.execute(exportRequest(List.of(), List.of(), null, 0, 0, List.of(), null, false));
@@ -136,7 +138,7 @@ public class ExportTableDefinitionControllerTest {
   void testExecuteExceptionDoesNotPropagate() {
     var usecase = new RecordingUsecase();
     usecase.toThrow = new IllegalStateException("unexpected");
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     assertDoesNotThrow(
         () ->
@@ -149,7 +151,7 @@ public class ExportTableDefinitionControllerTest {
   void testCheckDiffNoDifferenceReturnsSuccessWithoutDifference() {
     var usecase = new RecordingUsecase();
     usecase.diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     DiffCheckResultDto result =
         controller.checkDiff(
@@ -176,7 +178,7 @@ public class ExportTableDefinitionControllerTest {
                         "@@ -1 +1 @@",
                         "-old",
                         "+new"))));
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     DiffCheckResultDto result =
         controller.checkDiff(
@@ -198,7 +200,7 @@ public class ExportTableDefinitionControllerTest {
   @DisplayName("checkDiff: 引数（CheckDiffRequest）をそのままユースケースへ渡す")
   void testCheckDiffPassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     CheckDiffRequest request =
         checkDiffRequest(
@@ -219,7 +221,7 @@ public class ExportTableDefinitionControllerTest {
   void testCheckDiffExceptionReturnsFailResultWithoutPropagating() {
     var usecase = new RecordingUsecase();
     usecase.toThrow = new RuntimeException("boom");
-    var controller = new ExportTableDefinitionController(usecase);
+    var controller = new ExportTableDefinitionController(usecase, usecase);
 
     DiffCheckResultDto result =
         assertDoesNotThrow(

@@ -2,7 +2,7 @@ package com.export_table_definition.domain.model.snapshot;
 
 import static com.export_table_definition.domain.model.snapshot.SnapshotValues.text;
 
-import com.export_table_definition.domain.model.entity.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 
 /**
  * スキーマのスナップショットのうち、1シーケンス分の情報を表すrecordクラス<br>

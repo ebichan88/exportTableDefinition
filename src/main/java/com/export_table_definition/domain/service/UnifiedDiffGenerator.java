@@ -1,6 +1,6 @@
 package com.export_table_definition.domain.service;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

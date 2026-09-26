@@ -1,7 +1,8 @@
 # アーキテクチャ概要
 
 本プロジェクトは、DBのメタ情報（テーブル・カラム・制約・外部キー・トリガー・関数・シーケンス・ユーザー定義型等）を
-取得し、Markdown形式のテーブル定義書・ER図を出力するCLIアプリケーションである。
+取得し、Markdown形式のテーブル定義書・ER図を出力するCLIアプリケーションである。あわせて、同じ取得結果から
+機械可読なスキーマのスナップショット（JSON Lines）を出力し、`--check`モードではDBとコミット済みのスナップショットの差分を検知する。
 Java 21 / Gradle製で、DIコンテナにGoogle Guiceを、O/RマッパーにMyBatisを使用する。
 
 ## レイヤー構成
@@ -22,35 +23,45 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | 層 | パッケージ | 役割 |
 |---|---|---|
 | presentation | `presentation`, `presentation.dto`, `presentation.type` | エントリーポイントからの呼び出しを受け、ユースケースを実行して結果を返す |
-| application | `application`, `application.impl` | ユースケース（テーブル定義出力処理全体のフロー制御）を実装する |
-| domain | `domain.model`, `domain.repository`, `domain.service` | エンティティ・値オブジェクト・リポジトリIF・書き込み処理（ドメインサービス）を持つ、DB種別に依存しない中核 |
-| infrastructure | `infrastructure.db`, `infrastructure.file`, `infrastructure.path` | MyBatisによるDBアクセス、ファイル書き込み、出力パス解決などドメインIFの実装を提供する |
+| application | `application`, `application.impl` | ユースケース（テーブル定義出力・差分検知それぞれのフロー制御）を実装する |
+| domain | `domain.model.*`, `domain.repository`, `domain.service.*` | エンティティ・値オブジェクト・リポジトリIF・書き込み処理（ドメインサービス）を持つ、DB種別に依存しない中核 |
+| infrastructure | `infrastructure.db`, `infrastructure.file`, `infrastructure.path`, `infrastructure.snapshot` | MyBatisによるDBアクセス、ファイル入出力、出力パス解決、JSON変換などドメインIFの実装を提供する |
 | config | `config`, `config.module` | プロパティ読み込み、Guiceによる依存関係の束縛（DI設定） |
 
-詳しいパッケージ・クラス単位の役割は [package-structure.md](./package-structure.md) を参照。
+`domain.model` は概念ごとのサブパッケージ（`table`・`relation`・`sidecar`・`target` 等）に分かれている。
+ドメインの概念・用語・主なルールの置き場所は [domain-model.md](./domain-model.md)、
+パッケージ・クラス単位の役割は [package-structure.md](./package-structure.md) を参照。
 
 ## 実行フロー
 
 1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・環境変数からのDB接続情報の
    上書き値の解決・`--check`/`--rm-dist`フラグの判定）を介して `MyBatisSqlSessionFactory` に接続情報を設定する。
 2. Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、
-   `ExportTableDefinitionController` を取得して `run()` を呼び出す。
-3. `ExportTableDefinition.run()` が `conf/ExportTableDefinition.properties` の設定値
+   `ExportTableDefinitionController` を取得する。
+3. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が `conf/ExportTableDefinition.properties` の設定値
    （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を
-   `ExportRequest`（record）へ読み込み、`ExportTableDefinitionController.execute()` へそのまま渡す
-   （`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`を用いる。エントリーポイント→コントローラー→
-   ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する）。
-4. コントローラーは `ExportTableDefinitionUsecaseImpl.exportTableDefinition()` を呼び出し、例外を捕捉して
-   `ResultDto`（成功/失敗）に変換する。
-5. ユースケース実装が以下を順に行う（詳細は
-   [ExportTableDefinitionUsecaseImpl.java](../../src/main/java/com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.java) 参照）。
-   - `TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得
-   - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込み、
-     `ExportTargetConsistencyDomainService`（`domain.service.target` 配下）が出力対象のテーブルと突き合わせる
-   - 取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export` 配下）へ渡して書き出す
+   `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ読み込む。
+   - 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
+     `TargetSelection.of()`がここで型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する。
+     未知の`outputObjects`などの設定誤りは、DBへの問い合わせや`--rm-dist`による削除より前に`[result]:FAIL`として報告される。
+     設定誤りは`config.InvalidConfigurationException`1種類で表す（`PropertyLoader`は`conf`ディレクトリ・設定ファイル・キーが
+     見つからない場合に、エントリーポイントは値の検証で`IllegalArgumentException`となった場合にこの例外へ変換する）ため、
+     エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
+   - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
+4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
+   `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、例外を捕捉して `ResultDto`（成功/失敗）等に変換する。
+5. 通常実行のユースケース（`ExportTableDefinitionUsecaseImpl`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
+   段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
+   - `--rm-dist`指定時は、削除してよい出力先か（ルート・ホームディレクトリ等でないか）をDBへの問い合わせより前に判定する
+   - `SchemaExporter.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
+     `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込む。
+     `ExportTargetConsistencyDomainService`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
+     一括取得分を `ExportTargets` にまとめる
+   - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）
+   - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
      - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` /
-       `ObjectListWriterDomainService`（いずれも `domain.service.writer` 配下）がMarkdownを組み立てて `FileRepository` 経由で出力
-     - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot` 配下）が、
+       `ObjectListWriterDomainService`（いずれも `domain.service.writer`）がMarkdownを組み立てて `FileRepository` 経由で出力
+     - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
 
 ## DB種別の切り替え（Oracle / PostgreSQL）
@@ -65,27 +76,51 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 両リポジトリは共通処理を `AbstractTableDefinitionRepository` に持つ。
 
 PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は
-`domain.model.type.OutputObjectType` で種別ごとに絞り込み可能。Oracle接続時はこれらの取得・出力自体が行われない。
+`domain.model.target.OutputObjectType` で種別ごとに絞り込み可能。Oracle接続時はこれらの取得・出力自体が行われない。
 
 なお論理リレーション（サイドカーYAML由来）はDBに依存しないため、PostgreSQL／Oracleの双方で利用できる。
 
 ## メモリ効率のための分割取得
 
-対象スキーマ全体を一度にメモリへ載せないよう、`ExportTableDefinitionUsecaseImpl` は以下の方針で処理する。
+対象スキーマ全体を一度にメモリへ載せないよう、`SchemaExporter` は以下の方針で処理する。
 
-- テーブル一覧・外部キー・トリガーは軽量なため対象範囲全体を一括取得する
+- テーブル一覧・外部キー・トリガーは軽量なため対象範囲全体を一括取得する（`fetchTargets`）
   （ER図でスキーマ・チャンクを跨いだ参照関係を解決するために全件が必要なため）
 - カラム・インデックス・制約はテーブル数に比例して重くなるため、スキーマ単位かつ `chunkSize` 件ごとに
-  取得・出力・破棄する（`exportSchemaTableDefinitions` / `exportTableDefinitionChunk`）
+  取得・出力・破棄する（`exportSchemaTableDefinitions` / `exportTableDefinitionChunk`）。
+  `TableDefinitionRepository.selectTableDetails()` がチャンク分をまとめて取得し、テーブルごとの `TableDetail` に
+  組み立てて返す。そこへ一括取得分の外部キー・トリガー・手動付帯情報を合わせ、1テーブル分の出力内容
+  （`TableDefinitionContent`）として各 `ExportSink` へ渡す
 - 関数・プロシージャの定義本体はスキーマ単位で取得・出力・破棄する（`exportSchemaFunctionDefinitions`）
+
+## 基本情報と生成日
+
+各ドキュメントの先頭に掲載する基本情報（`domain.model.database.BaseInfoEntity`）は、DBのカタログから取得する
+データベースの情報（`DatabaseEntity`：DB名・DBMS種別。`TableDefinitionRepository.selectDatabase()`）に、
+ドキュメントの生成日を加えたもの。生成日はDBではなく実行時に決まる値のため、`SchemaExporter` がDIで受け取る
+`java.time.Clock` から与える（`ExportTableDefinitionModule` が実行環境のタイムゾーンの時計を束縛する。テストでは固定の時計を渡せる）。
+
+## 出力対象の突き合わせ
+
+外部キーはスキーマ全体から、サイドカーYAMLは出力対象に関係なく読み込むため、出力対象の絞り込みで除外したテーブルや、
+リネーム・削除されたテーブル／カラムを参照していることがある。`ExportTargetConsistencyDomainService` がそれらを
+出力から除外し、利用者が気付くべき事柄を指摘（`domain.model.target.ConsistencyFinding`）として値で返す。
+ログへの出力は呼び出し側の `SchemaExporter` が指摘の重要度（`INFO`／`WARN`）に応じて行う
+（ドメインサービスはログ出力の手段に依存しない）。
+
+| 突き合わせ | メソッド | 指摘 |
+|---|---|---|
+| 関連（物理外部キー・論理リレーション）の参照元・参照先が出力対象に存在するか | `resolveForeignKeys` | 除外した関連（物理外部キーは出力対象の絞り込み時は指摘しない） |
+| 付帯情報に対応するテーブルが実在するか | `findOrphanTableAnnotations` | 孤児付帯情報（出力対象の絞り込み時は検出しない） |
+| カラム備考に対応するカラムが実在するか | `findOrphanColumnAnnotations` | 孤児付帯情報（チャンクごとに出力対象のテーブルについて検出） |
 
 ## ER図生成
 
 ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）はREADME
 （[../../README.md](../../README.md) の「ER図」節）に詳しい。実装は
-`ErDiagramWriterDomainService`（書き込みの段取り）と `domain.model.collection.ForeignKeyGroup`
+`ErDiagramWriterDomainService`（書き込みの段取り）と `domain.model.relation.ForeignKeyGroup`
 （1枚の図のノード算出・上限超過の判定）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
-まとめ直し）、`domain.model.type.Cardinality`（多重度判定）が中心。
+まとめ直し。`compose()`がページ構成（`PageComposition`）を1回で決める）、`domain.model.relation.Cardinality`（多重度判定）が中心。
 
 ## 出力ファイルの命名規則と相対リンク
 
@@ -93,7 +128,12 @@ Markdownドキュメントのファイル名・配置（一覧・ER図は出力�
 `{DB名}/{スキーマ名}/{区分}/`配下）は`domain.service.path.DocumentLocations`に一元化している。
 出力先の絶対パス（`OutputPathResolver`の実装）と、ドキュメント間の相対リンク（`domain.service.writer.template`）の
 双方がこの規則を参照するため、ファイル名を変更してもパスとリンクが食い違わない。一覧の種別ごとの接頭辞・タイトルは
-`domain.model.type.ListDocumentType`が持つ。
+`domain.model.document.ListDocumentType`が持つ。関数・プロシージャの個別定義は関数名をファイル名とし、同じスキーマに
+同名のもの（オーバーロード）がある場合のみ`{関数名}_{番号}`とする（番号はSQLが関数名ごとに振る）。
+
+どの一覧ドキュメントを出力するか（テーブル一覧は常に、それ以外は対象が1件以上ある場合のみ）は
+`MarkdownExportSinkFactory`の`listDocuments()`が1箇所で決め、一覧の書き出しと、テーブル一覧に掲載する関連ドキュメントへの
+リンクの双方がこの結果を用いる（空の一覧を出力しない・存在しない一覧へリンクしない）。
 
 行数の多い表を分割した分割ページは、本体ページと同じディレクトリに`{本体ページのファイル名}_{ページ番号}.md`として
 置く（`OutputPathResolver.resolvePageFile`）。`PagedSectionWriter`は本体ページのパスのみを受け取り、分割ページの
@@ -106,8 +146,11 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
 
 - モデルは`domain.model.snapshot`配下のrecord（`TableSnapshot`等）。エンティティから変換する際に、
-  連結文字列（カンマ・スラッシュ区切り）や空白1文字等の値をリスト・nullへ正規化する。
+  値が無いこと（エンティティでは空文字）をnullで表す（JSONでは項目ごと省略される）。
   実行のたびに変わる生成日は含めない
+- 配置（`snapshot/{DB名}/database.json`、`snapshot/{DB名}/{スキーマ名}/{種別}.jsonl`）は
+  `domain.service.path.SnapshotLocations`に一元化し、出力先の絶対パス（`OutputPathResolver`の実装）と
+  比較時のファイル種別の判定の双方がこの規則を参照する
 - JSONへの変換はドメイン層のIF（`SnapshotSerializer`）を介し、実装（`JacksonSnapshotSerializer`）はインフラ層に置く。
   Jacksonへの依存をドメイン層へ持ち込まないため
 - 書き込みは`SchemaSnapshotWriterDomainService`が`FileRepository`・`OutputPathResolver`経由で行う
@@ -118,22 +161,27 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 
 なお、SQLは構造化した値のみを返し、Markdown向けの表示用の組み立て・エスケープ（`|`→`\|`等）は
 `domain.service.writer.template`配下で行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
+SQLの取得結果（DTO）からエンティティへの変換時（`infrastructure.db.repository.dto`）に、値の形をドメインの表現へ揃える。
+値が無いことは空文字で表し（Oracleでは空文字がNULLとして返るため、DBによらず揃える）、SQLが区切り文字で連結して返す
+外部キーの列名（カンマ区切り）・トリガーの対象イベント（スラッシュ区切り）は`List<String>`へ分解する。
+表示用の連結・空欄の描画はテンプレートが行う。
 主キー・NOT NULL・一意性・循環などの真偽値もSQLは真偽値で返し（PostgreSQLは`boolean`、`boolean`型を持たない
 Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセルの「○」は`MarkdownTemplateSupport.marker()`で描画する。
 
 ## DB vs ドキュメントの差分検知（`--check`モード）
 
 `ExportTableDefinition.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
-`ExportTableDefinitionController.checkDiff()` → `ExportTableDefinitionUsecaseImpl.checkDocumentDiff()`を呼び出す。
+`ExportTableDefinitionController.checkDiff()` → `CheckDocumentDiffUsecaseImpl.checkDocumentDiff()`を呼び出す。
 
-`ExportTableDefinitionUsecaseImpl`は、DBからの取得と出力を以下のように分けている。通常実行と`--check`は
-取得処理を共有し、書き出し先の出力形式（`ExportSink`のリスト）だけを切り替える。
+DBからの取得と出力は`SchemaExporter`が以下のように分けて持ち、通常実行（`ExportTableDefinitionUsecaseImpl`）と
+`--check`（`CheckDocumentDiffUsecaseImpl`）の双方が利用する。両者は取得処理を共有し、書き出し先の出力形式
+（`ExportSink`のリスト）だけを切り替える。
 
 - `fetchTargets()`: 一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・
-  サイドカー）を取得し、`domain.model.ExportTargets`にまとめる
+  サイドカー）を取得し、`domain.model.target.ExportTargets`にまとめる
 - `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を`ExportSink.writeOverview()`で書き出した後、
   関数の定義本体をスキーマ単位で、テーブルの詳細情報をスキーマ・チャンク単位で取得し、各`ExportSink`へ渡す。
-  出力形式ごとの違い（何をどのファイルへ書くか）は`ExportSink`の実装が持ち、ユースケースは出力形式を意識しない
+  出力形式ごとの違い（何をどのファイルへ書くか）は`ExportSink`の実装が持ち、`SchemaExporter`は出力形式を意識しない
 
 `checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、スナップショットの`ExportSink`のみで一時ディレクトリへ向けて
 `export()`を呼び出した上で（Markdownの描画・ER図の生成は行わない）、生成結果と`outputPath`配下の`snapshot/`を
@@ -144,7 +192,7 @@ Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセ�
 スナップショットは生成日を含まないため、生成日と別の日に`--check`を実行しても差分にならない。その代わり、
 Markdownのみに生じた差分（手作業での編集等）は検知しない。
 
-内容が一致しないオブジェクトには、変更箇所を示すunified diffを付ける（`domain.model.ContentDiff`）。
+内容が一致しないオブジェクトには、変更箇所を示すunified diffを付ける（`domain.model.snapshot.ContentDiff`）。
 `SnapshotDiffDomainService`が、比較前に生成側・コミット側それぞれの行を`SnapshotSerializer.formatForDiff()`で
 1項目1行・配列は1要素1行へ整形し（生の1行のJSONのままだと行単位のdiffが「丸ごと削除+丸ごと追加」にしか
 ならないため）、`UnifiedDiffGenerator`（Myers法による自前実装。外部ライブラリに依存しない）へ渡してdiffを
@@ -161,26 +209,27 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 
 ## サイドカーYAML（手動付帯情報・論理リレーション）
 
-DBのメタ情報だけでは表現できない情報を、サイドカーYAML（`annotationPath` で指定）としてマージできる。
-読み込みは `AnnotationRepository`（実装: `infrastructure.file.repository.AnnotationYamlRepository`）が一括で行い、
-`domain.model.annotation.Sidecar` として返す。`Sidecar` は性質の異なる2種類の情報を束ねる。
+DBのメタ情報だけでは表現できない情報を、サイドカーYAML（プロパティ`annotationPath`で指定。コード上は`sidecarPath`と呼ぶ）として
+マージできる。読み込みは `SidecarRepository`（実装: `infrastructure.file.repository.SidecarYamlRepository`）が一括で行い、
+`domain.model.sidecar.Sidecar` として返す。`Sidecar` は性質の異なる2種類の情報を束ねる。
 
 | 種別 | YAMLキー | モデル | 反映先 |
 |---|---|---|---|
 | 手動付帯情報 | `tables` | `Annotations` / `TableAnnotation` | テーブル定義書の各セル（説明・備考・カラム備考） |
 | 論理リレーション | `relations` | `ForeignKeyEntity`（`RelationType.LOGICAL`） | 「論理リレーション情報」セクション + ER図 |
 
-実在しないテーブル・カラムに対する付帯情報（リネーム・削除の見落とし）は警告ログで検知する。
+実在しないテーブル・カラムに対する付帯情報（リネーム・削除の見落とし）は、[出力対象の突き合わせ](#出力対象の突き合わせ)で
+指摘として検出し、警告ログへ出力する。
 
-`AnnotationYamlRepository`はYAMLの読み込みと型変換に専念し、以下のドメインルールはドメイン層へ委ねる。
+`SidecarYamlRepository`はYAMLの読み込みと型変換に専念し、以下のドメインルールはドメイン層へ委ねる。
 
-- 「スキーマ.テーブル」形式のキー文字列の解析: `domain.model.value.TableKey#parse`
+- 「スキーマ.テーブル」形式のキー文字列の解析: `domain.model.table.TableKey#parse`
 - 論理リレーションの関連名が省略された場合の自動生成（「テーブル名_列名..._lrel」形式）:
-  `domain.model.entity.ForeignKeyEntity#resolveLogicalRelationName`
-- 論理リレーションの多重度の既定値（1対多）: `domain.model.type.Cardinality#DEFAULT_FOR_LOGICAL_RELATION`
+  `domain.model.relation.ForeignKeyEntity#resolveLogicalRelationName`
+- 論理リレーションの多重度の既定値（1対多）: `domain.model.relation.Cardinality#DEFAULT_FOR_LOGICAL_RELATION`
 
 読み込み元のパス等、ログ出力に必要なコンテキストを持つ警告（未知の形式・未知の多重度ラベル等）のみ
-`AnnotationYamlRepository`側に残す。
+`SidecarYamlRepository`側に残す。
 
 ### 論理リレーションの合流
 
@@ -188,8 +237,8 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 サイドカーで宣言した関連を補う。設計上の要点は「**物理外部キーと同じ集合へ合流させる**」こと。
 
 - `ExportTargetConsistencyDomainService.resolveForeignKeys()` が、DBから取得した外部キーとサイドカー由来の
-  論理リレーションを結合して `ForeignKeys.of()` に渡す。参照元・参照先の双方が出力対象に
-  存在しない関連は、ER図に片側だけのノードが現れるのを避けるため警告ログを出して除外する
+  論理リレーションを結合して `ForeignKeys.of()` に渡す。参照元・参照先の一方でも出力対象に
+  存在しない関連は、ER図に片側だけのノードが現れるのを避けるため除外し、除外したことを指摘として返す
 - 合流させることで、ER図のグループ分割（`ForeignKeyGroups` の連結成分算出）、スキーマ跨ぎ関連の抽出
   （`ForeignKeys.crossSchema()`）、被参照側の解決（`incomingOf`）にも**追加実装なしで反映される**
 - 読み手が「DBに制約がある」と誤読しないよう、2箇所で区別する
@@ -200,6 +249,11 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 ## 設定・DI
 
 - `config.PropertyLoader`: `conf/ExportTableDefinition.properties` 等のプロパティ読み込みユーティリティ
+  （カンマ区切りの値は各要素の前後の空白を除去し、空要素を除いて返す）
 - `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）
 
 新しいリポジトリ実装やドメインサービスを追加する場合は、ここに束縛を追加する。
+各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。
+`application.impl.SchemaExporter`はパッケージプライベートのためモジュールでは束縛せず、Guiceのジャストインタイム束縛
+（`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、実際にDIコンテナを組み立てる
+`ExportTableDefinitionModuleTest`で検知する。

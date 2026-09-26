@@ -1,9 +1,7 @@
 package com.export_table_definition.config;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -38,20 +36,32 @@ public class PropertyLoader {
    * @param fileName プロパティファイルのファイル名
    * @param key 取得するキー
    * @return キーに対応する値
+   * @throws InvalidConfigurationException 設定ファイル、またはキーが存在しない場合
    */
   public static String getString(String fileName, String key) {
-    return getResourceBundle(fileName).getString(key);
+    final ResourceBundle bundle = getResourceBundle(fileName);
+    if (!bundle.containsKey(key)) {
+      throw new InvalidConfigurationException(
+          "Required property is not set. [file=" + fileName + ".properties, key=" + key + "]");
+    }
+    return bundle.getString(key);
   }
 
   /**
-   * プロパティファイルの読み込みを行うメソッド（カンマ区切りの値をリストで取得）
+   * プロパティファイルの読み込みを行うメソッド（カンマ区切りの値をリストで取得）<br>
+   * 各要素の前後の空白は除去する。{@code schema=public, sample}のようにカンマの後に空白を入れた場合に、 {@code "
+   * sample"}が別の名前として扱われ、対象から黙って外れてしまうことを防ぐため
    *
    * @param fileName プロパティファイルのファイル名
    * @param key 取得するキー
-   * @return キーに対応するカンマ区切りの値を分割したリスト
+   * @return キーに対応するカンマ区切りの値を分割し、前後の空白を除去したリスト（空要素は含めない）
+   * @throws InvalidConfigurationException 設定ファイル、またはキーが存在しない場合
    */
   public static List<String> getList(String fileName, String key) {
-    return Arrays.stream(getString(fileName, key).split(",")).filter(s -> !s.isBlank()).toList();
+    return Arrays.stream(getString(fileName, key).split(","))
+        .map(String::strip)
+        .filter(s -> !s.isEmpty())
+        .toList();
   }
 
   /**
@@ -62,15 +72,20 @@ public class PropertyLoader {
    * @param key 取得するキー
    * @param defaultValue キーに対応する値が取得できない場合のデフォルト値
    * @return キーに対応する数値。取得できない場合はデフォルト値
+   * @throws InvalidConfigurationException 設定ファイルが存在しない場合
    */
   public static int getInt(String fileName, String key, int defaultValue) {
+    final ResourceBundle bundle = getResourceBundle(fileName);
+    if (!bundle.containsKey(key)) {
+      return defaultValue;
+    }
+    final String value = bundle.getString(key);
+    if (value.isBlank()) {
+      return defaultValue;
+    }
     try {
-      final String value = getString(fileName, key);
-      if (value == null || value.isBlank()) {
-        return defaultValue;
-      }
       return Integer.parseInt(value.trim());
-    } catch (MissingResourceException | NumberFormatException e) {
+    } catch (NumberFormatException e) {
       return defaultValue;
     }
   }
@@ -80,21 +95,10 @@ public class PropertyLoader {
    *
    * @param fileName プロパティファイルのファイル名
    * @return プロパティファイルを読み込んだResourceBundleオブジェクト
+   * @throws InvalidConfigurationException {@code conf}ディレクトリ、または設定ファイルが存在しない場合
    */
   public static ResourceBundle getResourceBundle(String fileName) {
-    return CACHE.computeIfAbsent(
-        fileName,
-        f -> {
-          try {
-            return ResourceBundle.getBundle(
-                f,
-                Locale.JAPAN,
-                new URLClassLoader(new URL[] {getPropertiesFileDir().toURI().toURL()}));
-          } catch (IOException e) {
-            throw new UncheckedIOException(
-                "Failed to get the URL of the property file directory.", e);
-          }
-        });
+    return CACHE.computeIfAbsent(fileName, PropertyLoader::loadResourceBundle);
   }
 
   /**
@@ -102,6 +106,7 @@ public class PropertyLoader {
    *
    * @param fileName プロパティファイルのファイル名
    * @return プロパティファイルを読み込んだPropertiesオブジェクト
+   * @throws InvalidConfigurationException {@code conf}ディレクトリ、または設定ファイルが存在しない場合
    */
   public static Properties getProperties(String fileName) {
     final Properties props = new Properties();
@@ -111,16 +116,46 @@ public class PropertyLoader {
   }
 
   /**
+   * プロパティファイルを読み込むメソッド（キャッシュに無い場合のみ呼ばれる）
+   *
+   * @param fileName プロパティファイルのファイル名
+   * @return プロパティファイルを読み込んだResourceBundleオブジェクト
+   * @throws InvalidConfigurationException {@code conf}ディレクトリ、または設定ファイルが存在しない場合
+   */
+  private static ResourceBundle loadResourceBundle(String fileName) {
+    final Path propertiesFileDir = getPropertiesFileDir();
+    final URL propertiesFileDirUrl;
+    try {
+      propertiesFileDirUrl = propertiesFileDir.toUri().toURL();
+    } catch (MalformedURLException e) {
+      // 実在するディレクトリのパスから組み立てるため、設定誤りでは起こり得ない（想定外の不具合として扱う）
+      throw new UncheckedIOException("Failed to get the URL of the property file directory.", e);
+    }
+    try {
+      return ResourceBundle.getBundle(
+          fileName, Locale.JAPAN, new URLClassLoader(new URL[] {propertiesFileDirUrl}));
+    } catch (MissingResourceException e) {
+      throw new InvalidConfigurationException(
+          "Property file does not exist. [file="
+              + propertiesFileDir.resolve(fileName + ".properties")
+              + "]",
+          e);
+    }
+  }
+
+  /**
    * プロパティファイルが存在するディレクトリを取得するメソッド
    *
-   * @return プロパティファイルが存在するディレクトリのFileオブジェクト
-   * @throws FileNotFoundException プロパティファイルが存在するディレクトリが見つからない場合
+   * @return プロパティファイルが存在するディレクトリ
+   * @throws InvalidConfigurationException プロパティファイルが存在するディレクトリが見つからない場合
    */
-  private static File getPropertiesFileDir() throws FileNotFoundException {
+  private static Path getPropertiesFileDir() {
     return Stream.of(Path.of("conf"), Path.of("src", "main", "resources", "conf"))
         .filter(Files::exists)
         .findFirst()
-        .map(Path::toFile)
-        .orElseThrow(() -> new FileNotFoundException("conf directory does not exist."));
+        .orElseThrow(
+            () ->
+                new InvalidConfigurationException(
+                    "conf directory does not exist. Run the jar from the directory containing conf."));
   }
 }

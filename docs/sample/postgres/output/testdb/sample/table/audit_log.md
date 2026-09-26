@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -21,11 +21,11 @@ employeeテーブルの変更を記録する監査ログ。トリガー経由で
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 |1||log_id|bigint||○|○|nextval('sample.audit_log_log_id_seq'::regclass)||
-|2||table_name|character varying(50)|50||○| |変更対象のテーブル名|
-|3||record_id|integer|||| |変更対象の主キー値|
-|4||action|character varying(10)|10||○| |変更種別（INSERT / UPDATE / DELETE）|
+|2||table_name|character varying(50)|50||○||変更対象のテーブル名|
+|3||record_id|integer|||||変更対象の主キー値|
+|4||action|character varying(10)|10||○||変更種別（INSERT / UPDATE / DELETE）|
 |5||changed_at|timestamp without time zone|||○|now()|変更日時<br>（サーバータイムゾーン基準 \| UTC変換は未実施）<br>|
-|6||changed_by|character varying(50)|50||| |変更を行ったDBユーザー|
+|6||changed_by|character varying(50)|50||||変更を行ったDBユーザー|
 
 ## インデックス情報
 

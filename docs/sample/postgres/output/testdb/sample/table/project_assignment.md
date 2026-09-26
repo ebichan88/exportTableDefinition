@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -18,8 +18,8 @@
 
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-|1||project_id|integer||○|○| ||
-|2||employee_id|integer||○|○| ||
+|1||project_id|integer||○|○|||
+|2||employee_id|integer||○|○|||
 |3||role|character varying(30)|30||○|'MEMBER'::character varying||
 |4||assigned_at|date|||○|CURRENT_DATE||
 

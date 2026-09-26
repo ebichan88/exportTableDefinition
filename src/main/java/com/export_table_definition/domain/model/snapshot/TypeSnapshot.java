@@ -2,7 +2,7 @@ package com.export_table_definition.domain.model.snapshot;
 
 import static com.export_table_definition.domain.model.snapshot.SnapshotValues.text;
 
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 
 /**
  * スキーマのスナップショットのうち、1ユーザー定義型分の情報を表すrecordクラス

@@ -2,12 +2,14 @@ package com.export_table_definition.infrastructure.path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,11 +19,11 @@ public class DefaultOutputPathResolverTest {
 
   private final DefaultOutputPathResolver resolver = new DefaultOutputPathResolver();
   private final Path baseDir = Path.of("output");
-  private final BaseInfoEntity baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
+  private final BaseInfoEntity baseInfo = new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH);
   private final OutputRoot root = new OutputRoot(baseDir, baseInfo);
 
   private TableEntity table(String schema, String physical, String tableType) {
-    return new TableEntity("testdb", schema, "", physical, tableType, "");
+    return new TableEntity("testdb", schema, "", physical, TableType.findByName(tableType), "");
   }
 
   @Test

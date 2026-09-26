@@ -2,15 +2,18 @@ package com.export_table_definition.domain.service.writer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.collection.ForeignKeys;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeys;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -82,7 +85,7 @@ public class ErDiagramWriterDomainServiceTest {
   }
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "pg", "2026-09-23");
+    return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 23));
   }
 
   private OutputRoot outputRoot() {
@@ -90,7 +93,7 @@ public class ErDiagramWriterDomainServiceTest {
   }
 
   private TableEntity table(String physical) {
-    return new TableEntity("testdb", "public", "", physical, "table", "");
+    return new TableEntity("testdb", "public", "", physical, TableType.TABLE, "");
   }
 
   private ForeignKeyEntity fk(String table, String name, String refTable) {
@@ -118,7 +121,7 @@ public class ErDiagramWriterDomainServiceTest {
     final ForeignKeys foreignKeys =
         ForeignKeys.of(List.of(fk("a", "fk_a", "hub"), fk("b", "fk_b", "hub")));
 
-    writer.writeErDiagram(tables, foreignKeys, outputRoot(), 80);
+    writer.writeErDiagram(Tables.of(tables), foreignKeys, outputRoot(), 80);
 
     assertTrue(fileNames().contains("erDiagram_testdb_public.md"));
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")), "グループファイルは生成されない");
@@ -139,7 +142,7 @@ public class ErDiagramWriterDomainServiceTest {
               foreignKeys.add(fk("child" + i, "fk" + i, "parent" + i));
             });
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 4);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 4);
 
     // 1グループあたり2まとまり(4ノード)まで詰め込まれるため、5まとまりは3グループになる
     assertTrue(fileNames().contains("erDiagram_testdb_public_group1.md"));
@@ -169,7 +172,7 @@ public class ErDiagramWriterDomainServiceTest {
               foreignKeys.add(fk("t" + i, "fk" + i, "hub"));
             });
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 4);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 4);
 
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")), "グループファイルは生成されない");
     final String schemaPage = contentOf("erDiagram_testdb_public.md");
@@ -195,7 +198,7 @@ public class ErDiagramWriterDomainServiceTest {
     tables.add(table("y"));
     foreignKeys.add(fk("x", "fk_xy", "y"));
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 4);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 4);
 
     // グループ1は巨大なまとまり（上限超のためフォールバック）
     final String group1 = contentOf("erDiagram_testdb_public_group1.md");
@@ -221,7 +224,7 @@ public class ErDiagramWriterDomainServiceTest {
               foreignKeys.add(fk("t" + i, "fk" + i, "hub"));
             });
 
-    writer.writeErDiagram(tables, ForeignKeys.of(foreignKeys), outputRoot(), 0);
+    writer.writeErDiagram(Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), 0);
 
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")));
     assertTrue(contentOf("erDiagram_testdb_public.md").contains("```mermaid"));

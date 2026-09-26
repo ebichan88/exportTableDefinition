@@ -1,8 +1,8 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
-import com.export_table_definition.domain.model.type.RelationType;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
 
 /**
  * 外部キー情報に関してORMのデータの受け渡しに利用するDTOクラス
@@ -24,7 +24,7 @@ public record ForeignKeyDto(
 
   /**
    * DTOからEntityへの変換メソッド<br>
-   * DBのカタログから取得した外部キー制約のため、由来は常に{@link RelationType#PHYSICAL}となる
+   * DBのカタログから取得した外部キー制約のため、由来は常に{@link RelationType#PHYSICAL}となる。 SQLがカンマ区切りで連結して返す列名は、ここでリストへ分解する
    *
    * @return ForeignKeyEntityのインスタンス
    */
@@ -33,10 +33,10 @@ public record ForeignKeyDto(
         schemaName,
         tableName,
         foreignkeyName,
-        columnNames,
+        DtoValues.split(columnNames, ","),
         referenceSchemaName,
         referenceTableName,
-        referenceColumnNames,
+        DtoValues.split(referenceColumnNames, ","),
         Cardinality.of(childKeyUnique, childKeyMandatory),
         RelationType.PHYSICAL);
   }

@@ -2,19 +2,21 @@ package com.export_table_definition.domain.service.snapshot;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
+import com.export_table_definition.testsupport.EntityFixtures;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +31,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   private static final Path OUT = Path.of("output");
   private static final Path SNAPSHOT_DIR = OUT.resolve("snapshot").resolve("testdb");
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity("testdb", "PostgreSQL", "2026/09/25");
+      new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2026, 9, 25));
   private static final OutputRoot ROOT = new OutputRoot(OUT, BASE_INFO);
 
   /** 書き込み内容・ディレクトリ作成呼び出しをメモリ上に収集するFileRepositoryのスタブ */
@@ -87,8 +89,8 @@ public class SchemaSnapshotWriterDomainServiceTest {
   private TableDefinitionContent tableContent(String schema, String table, String column) {
     return new TableDefinitionContent(
         BASE_INFO,
-        new TableEntity("testdb", schema, "", table, "table", ""),
-        List.of(new ColumnEntity(schema, table, column, "integer", true)),
+        new TableEntity("testdb", schema, "", table, TableType.TABLE, ""),
+        List.of(EntityFixtures.column(schema, table, column, "integer", true)),
         List.of(),
         List.of(),
         List.of(),
@@ -183,14 +185,15 @@ public class SchemaSnapshotWriterDomainServiceTest {
                 "testdb",
                 "public",
                 "calc",
-                "calc_1",
+                1,
+                1,
                 "FUNCTION",
                 "x integer",
                 "integer",
                 "sql",
                 "CREATE FUNCTION public.calc(x integer)\n RETURNS integer ..."),
             new FunctionEntity(
-                "testdb", "public", "calc", "calc_2", "PROCEDURE", "", "", "plpgsql", "BODY")),
+                "testdb", "public", "calc", 2, 2, "PROCEDURE", "", "", "plpgsql", "BODY")),
         ROOT);
 
     List<String> lines =

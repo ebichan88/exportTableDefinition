@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -22,8 +22,8 @@
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 |1||department_id|integer||○|○|nextval('sample.department_department_id_seq'::regclass)||
-|2||department_code|character varying(10)|10||○| |部署コード。他システム連携時のキーとして使用|
-|3||department_name|character varying(50)|50||○| |部署名称|
+|2||department_code|character varying(10)|10||○||部署コード。他システム連携時のキーとして使用|
+|3||department_name|character varying(50)|50||○||部署名称|
 
 ## インデックス情報
 

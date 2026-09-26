@@ -1,12 +1,12 @@
 package com.export_table_definition.domain.service.snapshot;
 
-import com.export_table_definition.domain.model.ContentDiff;
-import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.snapshot.ContentDiff;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;

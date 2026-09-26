@@ -7,7 +7,7 @@
 		<setting name="cacheEnabled" value="false"/>
 	</settings>
 	<typeAliases>
-		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.BaseInfoDto" alias="BaseInfoDto"/>
+		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.DatabaseDto" alias="DatabaseDto"/>
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.TableDto" alias="TableDto"/>
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.ColumnDto" alias="ColumnDto"/>
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.IndexDto" alias="IndexDto"/>

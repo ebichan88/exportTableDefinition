@@ -2,15 +2,18 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +24,7 @@ public class TableDefinitionTemplatesTest {
 
   private TableEntity newTable(
       String schema, String physical, String logical, String type, String def) {
-    return new TableEntity("TEST_DB", schema, logical, physical, type, def);
+    return new TableEntity("TEST_DB", schema, logical, physical, TableType.findByName(type), def);
   }
 
   @Test
@@ -35,9 +38,9 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("baseInfo: baseInfo の内容を含む")
   void testBaseInfo() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
+    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
     String txt = TableDefinitionTemplates.baseInfo(base);
-    assertTrue(txt.contains("|pg|TEST_DB|2025-01-01|"));
+    assertTrue(txt.contains("|pg|TEST_DB|2025/01/01|"));
   }
 
   @Test
@@ -195,7 +198,7 @@ public class TableDefinitionTemplatesTest {
             "orders",
             "trg_orders",
             "BEFORE",
-            "INSERT",
+            List.of("INSERT"),
             "ROW",
             "public.f_orders",
             "CREATE TRIGGER trg_orders ...");
@@ -205,7 +208,7 @@ public class TableDefinitionTemplatesTest {
             "orders",
             "trg_orders_audit",
             "AFTER",
-            "UPDATE",
+            List.of("UPDATE"),
             "ROW",
             "public.f_audit",
             "CREATE TRIGGER trg_orders_audit ...");
@@ -237,7 +240,7 @@ public class TableDefinitionTemplatesTest {
             "orders",
             "trg_orders",
             "BEFORE",
-            "INSERT",
+            List.of("INSERT"),
             "ROW",
             "public.f_orders",
             "CREATE TRIGGER trg_orders WHEN ((new.a || new.b) IS NOT NULL)");
@@ -283,7 +286,8 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 自テーブルの属性・PK表記と参照先/参照元の関係線が含まれる")
   void testErDiagramWithRelations() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", true);
+    var column =
+        EntityFixtures.column("public", "orders", "order_id", "character varying(20)", true);
     var outgoing =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -306,7 +310,8 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 参照先・参照元それぞれの多重度に応じた関係線を出力する")
   void testErDiagramCardinality() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "character varying(20)", true);
+    var column =
+        EntityFixtures.column("public", "orders", "order_id", "character varying(20)", true);
     var outgoing =
         ForeignKeyFixtures.physical(
             "public",
@@ -335,7 +340,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: データ型の桁数指定は除去される")
   void testErDiagramSanitizesType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "amount", "numeric(10,2)", false);
+    var column = EntityFixtures.column("public", "orders", "amount", "numeric(10,2)", false);
     var outgoing =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -348,7 +353,7 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("footer: 一覧へのリンクが含まれる")
   void testFooter() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
+    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
     String footer = TableDefinitionTemplates.footer(base);
     assertTrue(footer.contains("[テーブル一覧へ](../../../tableList_TEST_DB.md)"));
     assertTrue(footer.startsWith("___"));
@@ -362,20 +367,20 @@ public class TableDefinitionTemplatesTest {
             "public",
             "orders",
             "rel_orders_staff",
-            "staff_id",
+            List.of("staff_id"),
             "public",
             "staff",
-            "id",
+            List.of("id"),
             Cardinality.ONE_TO_MANY);
     var rel2 =
         ForeignKeyFixtures.logical(
             "public",
             "orders",
             "rel_orders_coupon",
-            "coupon_code",
+            List.of("coupon_code"),
             "public",
             "coupons",
-            "code",
+            List.of("code"),
             Cardinality.OPTIONAL_ONE_TO_ONE);
     String section = TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2));
 
@@ -397,7 +402,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 論理リレーションは破線、物理外部キーは実線で描画する")
   void testErDiagramDistinguishesRelationType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "int", true);
+    var column = EntityFixtures.column("public", "orders", "order_id", "int", true);
     var physical =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
@@ -415,7 +420,7 @@ public class TableDefinitionTemplatesTest {
   @DisplayName("erDiagram: 被参照側の論理リレーションも破線で描画する")
   void testErDiagramIncomingLogicalIsDashed() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    var column = new ColumnEntity("public", "orders", "order_id", "int", true);
+    var column = EntityFixtures.column("public", "orders", "order_id", "int", true);
     var incoming =
         ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_orders", "public", "orders");
     String section =

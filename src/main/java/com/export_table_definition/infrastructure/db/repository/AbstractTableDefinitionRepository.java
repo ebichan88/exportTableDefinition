@@ -1,20 +1,21 @@
 package com.export_table_definition.infrastructure.db.repository;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.database.DatabaseEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TableDetail;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
-import com.export_table_definition.infrastructure.db.repository.dto.BaseInfoDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ColumnDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ConstraintDto;
+import com.export_table_definition.infrastructure.db.repository.dto.DatabaseDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ForeignKeyDto;
 import com.export_table_definition.infrastructure.db.repository.dto.FunctionDto;
 import com.export_table_definition.infrastructure.db.repository.dto.IndexDto;
@@ -53,9 +54,9 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
 
   /** {@inheritDoc} */
   @Override
-  public BaseInfoEntity selectBaseInfo() {
+  public DatabaseEntity selectDatabase() {
     try (SqlSession session = MyBatisSqlSessionFactory.openSession()) {
-      final BaseInfoDto dto = session.selectOne(baseSqlPath + "selectBaseInfo");
+      final DatabaseDto dto = session.selectOne(baseSqlPath + "selectDatabaseInfo");
       return dto.toEntity();
     }
   }
@@ -66,24 +67,24 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
     return selectTableDefinition(schemaList, List.of(), "selectAllTableInfo", TableDto::toEntity);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}<br>
+   * カラム・インデックス・制約を種類ごとに対象テーブル分まとめて取得し、テーブルごとに振り分ける
+   */
   @Override
-  public List<ColumnEntity> selectColumnList(List<String> schemaList, List<String> tableList) {
-    return selectTableDefinition(schemaList, tableList, "selectAllColumnInfo", ColumnDto::toEntity);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<IndexEntity> selectIndexList(List<String> schemaList, List<String> tableList) {
-    return selectTableDefinition(schemaList, tableList, "selectAllIndexInfo", IndexDto::toEntity);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<ConstraintEntity> selectConstraintList(
-      List<String> schemaList, List<String> tableList) {
-    return selectTableDefinition(
-        schemaList, tableList, "selectAllConstraintInfo", ConstraintDto::toEntity);
+  public List<TableDetail> selectTableDetails(List<TableEntity> tables) {
+    final List<String> schemaList =
+        tables.stream().map(TableEntity::schemaName).distinct().toList();
+    final List<String> tableList =
+        tables.stream().map(TableEntity::physicalTableName).distinct().toList();
+    final List<ColumnEntity> columns =
+        selectTableDefinition(schemaList, tableList, "selectAllColumnInfo", ColumnDto::toEntity);
+    final List<IndexEntity> indexes =
+        selectTableDefinition(schemaList, tableList, "selectAllIndexInfo", IndexDto::toEntity);
+    final List<ConstraintEntity> constraints =
+        selectTableDefinition(
+            schemaList, tableList, "selectAllConstraintInfo", ConstraintDto::toEntity);
+    return TableDetail.assembleAll(tables, columns, indexes, constraints);
   }
 
   /** {@inheritDoc} */

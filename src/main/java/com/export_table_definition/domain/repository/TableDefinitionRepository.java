@@ -1,15 +1,13 @@
 package com.export_table_definition.domain.repository;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.database.DatabaseEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.TableDetail;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import java.util.List;
 
 /**
@@ -22,16 +20,17 @@ import java.util.List;
 public interface TableDefinitionRepository {
 
   /**
-   * データベースの基本情報を取得するメソッド
+   * データベースの情報（データベース名・DBMS種別）を取得するメソッド<br>
+   * ドキュメントの生成日はDBではなく実行時に決まるため含まない
    *
-   * @return データベースの基本情報
+   * @return データベースの情報
    */
-  BaseInfoEntity selectBaseInfo();
+  DatabaseEntity selectDatabase();
 
   /**
    * データベースのテーブル情報を取得するメソッド<br>
    * テーブル単位の絞り込みは呼び出し側（{@link
-   * com.export_table_definition.domain.model.value.TableTargetScope}）がJava側で行うため、 スキーマ単位でのみ絞り込む
+   * com.export_table_definition.domain.model.target.TableTargetScope}）がJava側で行うため、 スキーマ単位でのみ絞り込む
    *
    * @param schemaList テーブル定義出力対象のスキーマのリスト
    * @return データベースのテーブル情報
@@ -39,31 +38,13 @@ public interface TableDefinitionRepository {
   List<TableEntity> selectTableList(List<String> schemaList);
 
   /**
-   * データベースのカラム情報を取得するメソッド
+   * 指定したテーブルの詳細情報（カラム・インデックス・制約）を取得するメソッド<br>
+   * テーブル数に比例して重くなる情報のため、呼び出し側はスキーマ・チャンク単位でテーブルを渡す （同一スキーマのテーブルを渡すことを想定する）
    *
-   * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
-   * @return データベースのカラム情報
+   * @param tables 詳細情報を取得するテーブルのリスト
+   * @return テーブルごとの詳細情報のリスト（{@code tables}と同じ順）
    */
-  List<ColumnEntity> selectColumnList(List<String> schemaList, List<String> tableList);
-
-  /**
-   * データベースのインデックス情報を取得するメソッド
-   *
-   * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
-   * @return データベースのインデックス情報
-   */
-  List<IndexEntity> selectIndexList(List<String> schemaList, List<String> tableList);
-
-  /**
-   * データベースの制約情報を取得するメソッド
-   *
-   * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
-   * @return データベースの制約情報
-   */
-  List<ConstraintEntity> selectConstraintList(List<String> schemaList, List<String> tableList);
+  List<TableDetail> selectTableDetails(List<TableEntity> tables);
 
   /**
    * データベースの外部キー情報を取得するメソッド<br>

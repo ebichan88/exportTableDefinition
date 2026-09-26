@@ -1,8 +1,8 @@
 package com.export_table_definition.domain.service.writer;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
@@ -10,7 +10,7 @@ import com.export_table_definition.domain.service.writer.PagedSectionWriter.Page
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionListTemplates;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionTemplates;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
@@ -110,7 +110,7 @@ public class TableDefinitionWriterDomainService {
                 content.table(),
                 content.columns(),
                 content.outgoingRelations(),
-                content.incomingForeignKeys()), // ER図
+                content.incomingRelations()), // ER図
             TableDefinitionTemplates.footer(content.baseInfo()) // フッター
             );
     fileRepository.createDirectory(directoryPath);

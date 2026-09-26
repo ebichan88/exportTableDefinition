@@ -1,17 +1,16 @@
 package com.export_table_definition.domain.model.snapshot;
 
-import static com.export_table_definition.domain.model.snapshot.SnapshotValues.split;
 import static com.export_table_definition.domain.model.snapshot.SnapshotValues.text;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import java.util.List;
 
 /**
@@ -64,7 +63,7 @@ public record TableSnapshot(
         table.schemaName(),
         table.physicalTableName(),
         text(table.logicalTableName()),
-        table.tableType(),
+        table.tableType().getName(),
         text(annotation.description()),
         text(annotation.remarks()),
         text(table.definition()),
@@ -180,10 +179,10 @@ public record TableSnapshot(
     static Relation of(ForeignKeyEntity foreignKey) {
       return new Relation(
           foreignKey.foreignkeyName(),
-          split(foreignKey.columnNames(), ","),
+          foreignKey.columnNames(),
           foreignKey.referenceSchemaName(),
           foreignKey.referenceTableName(),
-          split(foreignKey.referenceColumnNames(), ","),
+          foreignKey.referenceColumnNames(),
           foreignKey.cardinality());
     }
   }
@@ -210,7 +209,7 @@ public record TableSnapshot(
       return new Trigger(
           trigger.triggerName(),
           text(trigger.timing()),
-          split(trigger.events(), "/"),
+          trigger.events(),
           text(trigger.orientation()),
           text(trigger.functionName()),
           text(trigger.triggerDefinition()));

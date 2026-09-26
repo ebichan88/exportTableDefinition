@@ -1,6 +1,6 @@
 package com.export_table_definition.domain.model.snapshot;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
 
 /**
  * スキーマのスナップショットのうち、DB全体の情報を表すrecordクラス<br>
