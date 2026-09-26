@@ -1,5 +1,6 @@
 package com.export_table_definition.domain.service.writer.template;
 
+import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
@@ -39,35 +40,55 @@ public class ErDiagramTemplatesTest {
   }
 
   @Test
-  @DisplayName("fileHeader: タイトルとDB名を含むヘッダーを生成する")
+  @DisplayName("fileHeader: タイトルとDB名の見出しと空行を出力する")
   void testFileHeader() {
-    String header = ErDiagramTemplates.fileHeader("ER図一覧", baseInfo());
-    assertTrue(header.startsWith("# ER図一覧（DB名：TEST_DB）"));
+    assertMarkdownEquals(
+        """
+        # ER図一覧（DB名：TEST_DB）
+
+        """,
+        ErDiagramTemplates.fileHeader("ER図一覧", baseInfo()));
   }
 
   @Test
-  @DisplayName("schemaFileHeader: DB名とスキーマ名を含むヘッダーを生成する")
+  @DisplayName("schemaFileHeader: DB名とスキーマ名の見出しと空行を出力する")
   void testSchemaFileHeader() {
-    String header = ErDiagramTemplates.schemaFileHeader("public", baseInfo());
-    assertTrue(header.startsWith("# ER図（DB名：TEST_DB / スキーマ名：public）"));
+    assertMarkdownEquals(
+        """
+        # ER図（DB名：TEST_DB / スキーマ名：public）
+
+        """,
+        ErDiagramTemplates.schemaFileHeader("public", baseInfo()));
   }
 
   @Test
-  @DisplayName("erDiagram: 外部キーがない場合はMermaidを出力しない")
+  @DisplayName("erDiagram: 外部キーがない場合はMermaidを出力せずメッセージのみ")
   void testErDiagramNoForeignKeys() {
-    String section = erDiagram(List.of(), 80);
-    assertTrue(section.contains("外部キーによる関連を持つテーブルはありません。"));
-    assertFalse(section.contains("```mermaid"));
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        外部キーによる関連を持つテーブルはありません。
+
+        """,
+        erDiagram(List.of(), 80));
   }
 
   @Test
   @DisplayName("erDiagram: 参照先 ||--o{ 参照元 の向きで関係線を出力する")
   void testErDiagramRelationDirection() {
     var fk = newFk("public", "orders", "fk_orders_customer", "public", "customers");
-    String section = erDiagram(List.of(fk), 80);
-    assertTrue(section.contains("```mermaid"));
-    assertTrue(section.contains("erDiagram"));
-    assertTrue(section.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        ```mermaid
+        erDiagram
+            public_customers ||--o{ public_orders : "fk_orders_customer"
+        ```
+
+        """,
+        erDiagram(List.of(fk), 80));
   }
 
   @Test
@@ -124,9 +145,15 @@ public class ErDiagramTemplatesTest {
     var fk1 = newFk("public", "orders", "fk_orders_customer", "public", "customers");
     var fk2 = newFk("public", "items", "fk_items_orders", "public", "orders");
     // ノードは orders / customers / items の3件のため、上限2件で超過する
-    String section = erDiagram(List.of(fk1, fk2), 2);
-    assertFalse(section.contains("```mermaid"));
-    assertTrue(section.contains("ER図に描画するテーブル数が3件となり、上限（erDiagramMaxNodes = 2件）を超えるため描画を省略しました。"));
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        ER図に描画するテーブル数が3件となり、上限（erDiagramMaxNodes = 2件）を超えるため描画を省略しました。
+        代わりに外部キーによる関連を一覧で掲載します。
+
+        """,
+        erDiagram(List.of(fk1, fk2), 2));
   }
 
   @Test
@@ -141,84 +168,103 @@ public class ErDiagramTemplatesTest {
   @DisplayName("diagramTableLine: 定義書へのリンク付きで1行分を出力する（既存一覧と同じ[■]表記）")
   void testDiagramTableLine() {
     var table = newTable("public", "orders", "受注");
-    String line = ErDiagramTemplates.diagramTableLine(1, TableKey.of(table), table);
-    assertTrue(
-        line.startsWith(
-            "| 1 | public | orders | 受注 | table | [■](./TEST_DB/public/table/orders.md) |"));
+    assertMarkdownEquals(
+        "| 1 | public | orders | 受注 | table | [■](./TEST_DB/public/table/orders.md) |\n",
+        ErDiagramTemplates.diagramTableLine(1, TableKey.of(table), table));
   }
 
   @Test
   @DisplayName("diagramTableLine: 出力対象範囲外のテーブルはリンクを張らない")
   void testDiagramTableLineWithoutDefinition() {
-    String line =
-        ErDiagramTemplates.diagramTableLine(1, TableKey.of("external", "master_data"), null);
-    assertTrue(line.startsWith("| 1 | external | master_data |  |  | - |"));
+    assertMarkdownEquals(
+        "| 1 | external | master_data |  |  | - |\n",
+        ErDiagramTemplates.diagramTableLine(1, TableKey.of("external", "master_data"), null));
   }
 
   @Test
   @DisplayName("foreignKeyTableLine: 参照元・外部キー名・参照先を出力する")
   void testForeignKeyTableLine() {
     var fk = newFk("sales", "orders", "fk_cross", "master", "customers");
-    String line = ErDiagramTemplates.foreignKeyTableLine(1, fk);
-    assertTrue(line.startsWith("| 1 | sales.orders | fk_cross | master.customers |"));
+    assertMarkdownEquals(
+        "| 1 | sales.orders | fk_cross | master.customers |\n",
+        ErDiagramTemplates.foreignKeyTableLine(1, fk));
   }
 
   @Test
-  @DisplayName("groupFileHeader: DB名・スキーマ名・グループ番号を含むヘッダーを生成する")
+  @DisplayName("groupFileHeader: DB名・スキーマ名・グループ番号の見出しと空行を出力する")
   void testGroupFileHeader() {
-    String header = ErDiagramTemplates.groupFileHeader("public", 2, baseInfo());
-    assertTrue(header.startsWith("# ER図（DB名：TEST_DB / スキーマ名：public / グループ2）"));
+    assertMarkdownEquals(
+        """
+        # ER図（DB名：TEST_DB / スキーマ名：public / グループ2）
+
+        """,
+        ErDiagramTemplates.groupFileHeader("public", 2, baseInfo()));
   }
 
   @Test
-  @DisplayName("groupedMessage: 分割した理由とグループ数を出力する")
+  @DisplayName("groupedMessage: 分割した理由とグループ数を出力する（Mermaidは出力しない）")
   void testGroupedMessage() {
-    String section = ErDiagramTemplates.groupedMessage(200, 80, 3);
-    assertTrue(section.startsWith("## ER図"));
-    assertTrue(section.contains("ER図に描画するテーブル数が200件となり、上限（erDiagramMaxNodes = 80件）を超えるため、"));
-    assertTrue(section.contains("外部キーで繋がったテーブルのまとまりごとに3個のグループへ分割しました。"));
-    assertFalse(section.contains("```mermaid"));
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        ER図に描画するテーブル数が200件となり、上限（erDiagramMaxNodes = 80件）を超えるため、
+        外部キーで繋がったテーブルのまとまりごとに3個のグループへ分割しました。
+
+        """,
+        ErDiagramTemplates.groupedMessage(200, 80, 3));
   }
 
   @Test
   @DisplayName("groupIndexLine: グループの規模と主なテーブルを出力する")
   void testGroupIndexLine() {
-    String line =
+    assertMarkdownEquals(
+        "| 1 | 12 | 15 | public.orders | [■](./erDiagram_TEST_DB_public_group1.md) |\n",
         ErDiagramTemplates.groupIndexLine(
-            1, 12, 15, TableKey.of("public", "orders"), "./erDiagram_TEST_DB_public_group1.md");
-    assertTrue(
-        line.startsWith(
-            "| 1 | 12 | 15 | public.orders | [■](./erDiagram_TEST_DB_public_group1.md) |"));
+            1, 12, 15, TableKey.of("public", "orders"), "./erDiagram_TEST_DB_public_group1.md"));
   }
 
   @Test
-  @DisplayName("groupFooter: スキーマのER図へ戻るリンクを含む")
+  @DisplayName("groupFooter: スキーマのER図・ER図一覧・テーブル一覧へ戻るリンクを出力する")
   void testGroupFooter() {
-    String footer = ErDiagramTemplates.groupFooter("public", baseInfo());
-    assertTrue(footer.startsWith("___"));
-    assertTrue(footer.contains("[スキーマのER図へ](./erDiagram_TEST_DB_public.md)"));
-    assertTrue(footer.contains("[ER図一覧へ](./erDiagramList_TEST_DB.md)"));
-    assertTrue(footer.contains("[テーブル一覧へ](./tableList_TEST_DB.md)"));
+    assertMarkdownEquals(
+        """
+        ___
+
+        [スキーマのER図へ](./erDiagram_TEST_DB_public.md) [ER図一覧へ](./erDiagramList_TEST_DB.md) [テーブル一覧へ](./tableList_TEST_DB.md)
+        """,
+        ErDiagramTemplates.groupFooter("public", baseInfo()));
   }
 
   @Test
-  @DisplayName("schemaIndex: スキーマ別ER図へのリンクとテーブル数を出力する")
+  @DisplayName("schemaIndex: スキーマ別ER図へのリンクとテーブル数を、渡された順に出力する")
   void testSchemaIndex() {
     final Map<String, List<TableEntity>> tablesBySchema = new LinkedHashMap<>();
     tablesBySchema.put(
         "public", List.of(newTable("public", "orders", "受注"), newTable("public", "items", "明細")));
     tablesBySchema.put("master", List.of(newTable("master", "customers", "顧客")));
-    String section = ErDiagramTemplates.schemaIndex(baseInfo(), tablesBySchema);
-    assertTrue(section.contains("| 1 | public | 2 | [■](./erDiagram_TEST_DB_public.md) |"));
-    assertTrue(section.contains("| 2 | master | 1 | [■](./erDiagram_TEST_DB_master.md) |"));
+    assertMarkdownEquals(
+        """
+        ## スキーマ別ER図
+
+        | No. | スキーマ名 | テーブル数 | Link |
+        |:---|:---|:---|:---|
+        | 1 | public | 2 | [■](./erDiagram_TEST_DB_public.md) |
+        | 2 | master | 1 | [■](./erDiagram_TEST_DB_master.md) |
+
+        """,
+        ErDiagramTemplates.schemaIndex(baseInfo(), tablesBySchema));
   }
 
   @Test
-  @DisplayName("schemaFooter: ER図一覧とテーブル一覧へのリンクを含む")
+  @DisplayName("schemaFooter: ER図一覧とテーブル一覧へ戻るリンクを出力する")
   void testSchemaFooter() {
-    String footer = ErDiagramTemplates.schemaFooter(baseInfo());
-    assertTrue(footer.startsWith("___"));
-    assertTrue(footer.contains("[ER図一覧へ](./erDiagramList_TEST_DB.md)"));
-    assertTrue(footer.contains("[テーブル一覧へ](./tableList_TEST_DB.md)"));
+    assertMarkdownEquals(
+        """
+        ___
+
+        [ER図一覧へ](./erDiagramList_TEST_DB.md) [テーブル一覧へ](./tableList_TEST_DB.md)
+        """,
+        ErDiagramTemplates.schemaFooter(baseInfo()));
   }
 }

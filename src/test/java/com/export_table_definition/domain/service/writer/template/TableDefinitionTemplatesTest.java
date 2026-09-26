@@ -1,5 +1,6 @@
 package com.export_table_definition.domain.service.writer.template;
 
+import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
@@ -28,27 +29,47 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
-  @DisplayName("fileHeader: テーブル名ヘッダー + 改行2つ")
+  @DisplayName("fileHeader: 論理名つきのテーブル名の見出しと空行を出力する")
   void testFileHeader() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    String header = TableDefinitionTemplates.fileHeader(table);
-    assertTrue(header.startsWith("# orders（受注）"));
+    assertMarkdownEquals(
+        """
+        # orders（受注）
+
+        """,
+        TableDefinitionTemplates.fileHeader(table));
   }
 
   @Test
-  @DisplayName("baseInfo: baseInfo の内容を含む")
+  @DisplayName("baseInfo: RDBMS・DB名・作成日の表を出力する")
   void testBaseInfo() {
     var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
-    String txt = TableDefinitionTemplates.baseInfo(base);
-    assertTrue(txt.contains("|pg|TEST_DB|2025/01/01|"));
+    assertMarkdownEquals(
+        """
+        ## 基本情報
+
+        | RDBMS | データベース名 | 作成日 |
+        |:---|:---|:---|
+        |pg|TEST_DB|2025/01/01|
+
+        """,
+        TableDefinitionTemplates.baseInfo(base));
   }
 
   @Test
-  @DisplayName("tableInfo: 単体テーブル行が含まれる")
+  @DisplayName("tableInfo: テーブル1行の表を出力する（サイドカーの備考が無い場合は末尾セルが空）")
   void testTableInfo() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    String info = TableDefinitionTemplates.tableInfo(table, TableAnnotation.EMPTY);
-    assertTrue(info.contains("|public|受注|orders|table|"));
+    assertMarkdownEquals(
+        """
+        ## テーブル情報
+
+        | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | 備考 |
+        |:---|:---|:---|:---|:---|
+        |public|受注|orders|table||
+
+        """,
+        TableDefinitionTemplates.tableInfo(table, TableAnnotation.EMPTY));
   }
 
   @Test
@@ -69,33 +90,49 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
-  @DisplayName("tableExplanation: サイドカーの説明が無い場合は空セクション")
+  @DisplayName("tableExplanation: サイドカーの説明が無い場合は見出しだけの空セクション")
   void testTableExplanationEmpty() {
-    String section = TableDefinitionTemplates.tableExplanation(TableAnnotation.EMPTY);
-    assertTrue(section.contains("## テーブル説明"));
-    assertFalse(section.contains("ユーザー"));
+    assertMarkdownEquals(
+        """
+        ## テーブル説明
+
+        """,
+        TableDefinitionTemplates.tableExplanation(TableAnnotation.EMPTY));
   }
 
   @Test
   @DisplayName("tableExplanation: サイドカーの説明本文を出力する（改行はそのまま）")
   void testTableExplanationWithDescription() {
     var annotation = new TableAnnotation("1行目\n2行目", "", Map.of());
-    String section = TableDefinitionTemplates.tableExplanation(annotation);
-    assertTrue(section.contains("## テーブル説明"));
-    assertTrue(section.contains("1行目\n2行目"));
+    assertMarkdownEquals(
+        """
+        ## テーブル説明
+
+        1行目
+        2行目
+
+        """,
+        TableDefinitionTemplates.tableExplanation(annotation));
   }
 
   @Test
-  @DisplayName("columns: 渡されたカラムを1から採番して出力する")
+  @DisplayName("columns: 渡されたカラムを1から採番し、PK・Not Nullを○で表す")
   void testColumns() {
     var first =
         new ColumnEntity("public", "orders", "受注ID", "order_id", "int", "", true, false, "");
     var second =
         new ColumnEntity("public", "orders", "顧客ID", "customer_id", "int", "", false, true, "");
-    String section =
-        TableDefinitionTemplates.columns(List.of(first, second), TableAnnotation.EMPTY);
-    assertTrue(section.contains("|1|受注ID|order_id|int|"));
-    assertTrue(section.contains("|2|顧客ID|customer_id|int|"));
+    assertMarkdownEquals(
+        """
+        ## カラム情報
+
+        | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
+        |:---|:---|:---|:---|:---|:---|:---|:---|:---|
+        |1|受注ID|order_id|int||○||||
+        |2|顧客ID|customer_id|int|||○|||
+
+        """,
+        TableDefinitionTemplates.columns(List.of(first, second), TableAnnotation.EMPTY));
   }
 
   @Test
@@ -136,12 +173,21 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
-  @DisplayName("view: view の場合はSQLコードブロック含む")
+  @DisplayName("view: view の場合は定義をSQLコードブロックで出力する")
   void testViewSectionView() {
     TableEntity table = newTable("public", "v_orders", "受注ビュー", "view", "SELECT * FROM orders");
-    String section = TableDefinitionTemplates.view(table);
-    assertTrue(section.contains("```sql"));
-    assertTrue(section.contains("SELECT * FROM orders"));
+    assertMarkdownEquals(
+        """
+        ## ソース
+
+        ```sql
+
+        SELECT * FROM orders
+
+        ```
+
+        """,
+        TableDefinitionTemplates.view(table));
   }
 
   @Test
@@ -149,9 +195,17 @@ public class TableDefinitionTemplatesTest {
   void testIndexes() {
     var idx1 = new IndexEntity("public", "orders", "idx_orders_1", "", false, false, "", "");
     var idx2 = new IndexEntity("public", "orders", "idx_orders_2", "", false, false, "", "");
-    String section = TableDefinitionTemplates.indexes(List.of(idx1, idx2));
-    assertTrue(section.contains("|1|idx_orders_1|"));
-    assertTrue(section.contains("|2|idx_orders_2|"));
+    assertMarkdownEquals(
+        """
+        ## インデックス情報
+
+        | No. | インデックス名 | 種別 | UNIQUE | PRIMARY | 定義 | 備考 |
+        |:---|:---|:---|:---|:---|:---|:---|
+        |1|idx_orders_1||||||
+        |2|idx_orders_2||||||
+
+        """,
+        TableDefinitionTemplates.indexes(List.of(idx1, idx2)));
   }
 
   @Test
@@ -161,9 +215,17 @@ public class TableDefinitionTemplatesTest {
         new ConstraintEntity(
             "public", "orders", "pk_orders", "PRIMARY KEY", "PRIMARY KEY (order_id)", "");
     var c2 = new ConstraintEntity("public", "orders", "uq_orders", "UNIQUE", "UNIQUE (code)", "");
-    String section = TableDefinitionTemplates.constraints(List.of(c1, c2));
-    assertTrue(section.contains("|1|pk_orders|PRIMARY KEY|"));
-    assertTrue(section.contains("|2|uq_orders|UNIQUE|"));
+    assertMarkdownEquals(
+        """
+        ## 制約情報
+
+        | No. | 制約名 | 種類 | 制約定義 | 備考 |
+        |:---|:---|:---|:---|:---|
+        |1|pk_orders|PRIMARY KEY|PRIMARY KEY (order_id)||
+        |2|uq_orders|UNIQUE|UNIQUE (code)||
+
+        """,
+        TableDefinitionTemplates.constraints(List.of(c1, c2)));
   }
 
   @Test
@@ -184,9 +246,16 @@ public class TableDefinitionTemplatesTest {
     var fk =
         ForeignKeyFixtures.physical(
             "public", "profiles", "fk_profiles_user", "public", "users", Cardinality.ONE_TO_ONE);
-    String section = TableDefinitionTemplates.foreignKeys(List.of(fk));
-    assertTrue(section.contains("| No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
-    assertTrue(section.contains("|1|fk_profiles_user|unused|public.users|unused|1対1|"));
+    assertMarkdownEquals(
+        """
+        ## 外部キー情報
+
+        | No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+        |:---|:---|:---|:---|:---|:---|
+        |1|fk_profiles_user|unused|public.users|unused|1対1|
+
+        """,
+        TableDefinitionTemplates.foreignKeys(List.of(fk)));
   }
 
   @Test
@@ -212,10 +281,17 @@ public class TableDefinitionTemplatesTest {
             "ROW",
             "public.f_audit",
             "CREATE TRIGGER trg_orders_audit ...");
-    String section = TableDefinitionTemplates.triggers(List.of(t1, t2));
-    assertTrue(section.contains("## トリガー情報"));
-    assertTrue(section.contains("|1|trg_orders|"));
-    assertTrue(section.contains("|2|trg_orders_audit|"));
+    assertMarkdownEquals(
+        """
+        ## トリガー情報
+
+        | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
+        |:---|:---|:---|:---|:---|:---|
+        |1|trg_orders|BEFORE|INSERT|ROW|CREATE TRIGGER trg_orders ...|
+        |2|trg_orders_audit|AFTER|UPDATE|ROW|CREATE TRIGGER trg_orders_audit ...|
+
+        """,
+        TableDefinitionTemplates.triggers(List.of(t1, t2)));
   }
 
   @Test
@@ -274,16 +350,21 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
-  @DisplayName("erDiagram: 関連テーブルがない場合はメッセージのみ")
+  @DisplayName("erDiagram: 関連テーブルがない場合はMermaidを出力せずメッセージのみ")
   void testErDiagramNoRelations() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
-    String section = TableDefinitionTemplates.erDiagram(table, List.of(), List.of(), List.of());
-    assertTrue(section.contains("関連するテーブルはありません。"));
-    assertFalse(section.contains("```mermaid"));
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        関連するテーブルはありません。
+
+        """,
+        TableDefinitionTemplates.erDiagram(table, List.of(), List.of(), List.of()));
   }
 
   @Test
-  @DisplayName("erDiagram: 自テーブルの属性・PK表記と参照先/参照元の関係線が含まれる")
+  @DisplayName("erDiagram: 参照先/参照元の関係線と、自テーブルの属性（型の括弧除去・空白はアンダースコア・PK表記）を出力する")
   void testErDiagramWithRelations() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
     var column =
@@ -293,17 +374,23 @@ public class TableDefinitionTemplatesTest {
             "public", "orders", "fk_orders_customer", "public", "customers");
     var incoming =
         ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
-    String section =
+    // 参照先(customers) -> 自テーブル(orders) -> 参照元(items) の順に関係線を出力する
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        ```mermaid
+        erDiagram
+            public_customers ||--o{ public_orders : "fk_orders_customer"
+            public_orders ||--o{ public_items : "fk_items_orders"
+            public_orders {
+                character_varying order_id PK
+            }
+        ```
+
+        """,
         TableDefinitionTemplates.erDiagram(
-            table, List.of(column), List.of(outgoing), List.of(incoming));
-    assertTrue(section.contains("```mermaid"));
-    assertTrue(section.contains("erDiagram"));
-    // 参照先(customers) -> 自テーブル(orders)
-    assertTrue(section.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
-    // 自テーブル(orders) -> 参照元(items)
-    assertTrue(section.contains("public_orders ||--o{ public_items : \"fk_items_orders\""));
-    // 自テーブルの属性: 型の括弧部分は除去、空白はアンダースコア、PKマーカー付き
-    assertTrue(section.contains("character_varying order_id PK"));
+            table, List.of(column), List.of(outgoing), List.of(incoming)));
   }
 
   @Test
@@ -351,12 +438,16 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
-  @DisplayName("footer: 一覧へのリンクが含まれる")
+  @DisplayName("footer: 区切り線とテーブル一覧へのリンクを出力する")
   void testFooter() {
     var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
-    String footer = TableDefinitionTemplates.footer(base);
-    assertTrue(footer.contains("[テーブル一覧へ](../../../tableList_TEST_DB.md)"));
-    assertTrue(footer.startsWith("___"));
+    assertMarkdownEquals(
+        """
+        ___
+
+        [テーブル一覧へ](../../../tableList_TEST_DB.md)
+        """,
+        TableDefinitionTemplates.footer(base));
   }
 
   @Test
@@ -382,14 +473,20 @@ public class TableDefinitionTemplatesTest {
             "coupons",
             List.of("code"),
             Cardinality.OPTIONAL_ONE_TO_ONE);
-    String section = TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2));
-
-    assertTrue(section.contains("## 論理リレーション情報"));
-    assertTrue(section.contains("※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。"));
-    assertTrue(section.contains("| No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |"));
     // 物理外部キーの採番とは独立に、当セクション内で1から振り直す
-    assertTrue(section.contains("|1|rel_orders_staff|staff_id|public.staff|id|1対多|"));
-    assertTrue(section.contains("|2|rel_orders_coupon|coupon_code|public.coupons|code|0..1対1|"));
+    assertMarkdownEquals(
+        """
+        ## 論理リレーション情報
+
+        ※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。
+
+        | No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+        |:---|:---|:---|:---|:---|:---|
+        |1|rel_orders_staff|staff_id|public.staff|id|1対多|
+        |2|rel_orders_coupon|coupon_code|public.coupons|code|0..1対1|
+
+        """,
+        TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2)));
   }
 
   @Test
