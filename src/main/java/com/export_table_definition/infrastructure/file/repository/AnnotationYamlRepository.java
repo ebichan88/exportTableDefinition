@@ -177,11 +177,9 @@ public class AnnotationYamlRepository implements AnnotationRepository {
     if (childColumns.size() != parentColumns.size()) {
       logger.warn(
           "Relation has a different number of 'columns' and 'parentColumns'. "
-              + "[table={}.{}, parentTable={}.{}, annotationPath={}]",
-          child.schema(),
-          child.table(),
-          parent.schema(),
-          parent.table(),
+              + "[table={}, parentTable={}, annotationPath={}]",
+          child.qualifiedName(),
+          parent.qualifiedName(),
           path);
     }
     return ForeignKeyEntity.logical(
@@ -215,11 +213,10 @@ public class AnnotationYamlRepository implements AnnotationRepository {
             () -> {
               logger.warn(
                   "Ignoring unknown 'cardinality' and falling back to the default. "
-                      + "[cardinality={}, default={}, table={}.{}, annotationPath={}]",
+                      + "[cardinality={}, default={}, table={}, annotationPath={}]",
                   label,
                   Cardinality.DEFAULT_FOR_LOGICAL_RELATION.getLabel(),
-                  child.schema(),
-                  child.table(),
+                  child.qualifiedName(),
                   path);
               return Cardinality.DEFAULT_FOR_LOGICAL_RELATION;
             });

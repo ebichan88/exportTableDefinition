@@ -155,11 +155,12 @@ public class ObjectListWriterDomainService {
             ObjectListTemplates.fileHeader(type.getTitle(), baseInfo),
             outputPathResolver.resolveListFile(baseInfo, outputDirectoryPath, type),
             type.getBackLinkLabel());
+    final String objectListSection = pagedSectionWriter.writePagedSection(section, layout);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
             ObjectListTemplates.baseInfo(baseInfo), // 基本情報
-            pagedSectionWriter.writePagedSection(section, layout), // 一覧
+            objectListSection, // 一覧
             ObjectListTemplates.footer(baseInfo) // フッター
             );
     fileRepository.writeFile(layout.file(), contents);

@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.model.entity;
 
 import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.value.TableKey;
 
 /**
  * テーブル情報に関するrecordクラス
@@ -31,7 +32,7 @@ public record TableEntity(
    * @return スキーマ.テーブル 形式の名称
    */
   public String getSchemaTableName() {
-    return schemaName + "." + physicalTableName;
+    return TableKey.of(this).qualifiedName();
   }
 
   /**

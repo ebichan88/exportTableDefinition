@@ -75,13 +75,13 @@ public class TableDefinitionWriterDomainService {
             outputPathResolver.resolveListFile(
                 baseInfo, outputDirectoryPath, ListDocumentType.TABLE),
             ListDocumentType.TABLE.getBackLinkLabel());
+    final String tableListSection = pagedSectionWriter.writePagedSection(section, layout);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
             TableDefinitionListTemplates.baseInfo(baseInfo), // 基本情報
             TableDefinitionListTemplates.relatedDocuments(baseInfo, relatedDocuments), // 関連ドキュメント
-            pagedSectionWriter.writePagedSection(section, layout) // テーブル一覧
-            );
+            tableListSection);
     fileRepository.writeFile(layout.file(), contents);
   }
 

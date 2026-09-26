@@ -89,7 +89,7 @@ public final class ForeignKeyGroups {
    */
   private static String firstKeyText(ForeignKeyGroup component) {
     return component.nodes().stream()
-        .map(key -> key.schema() + "." + key.table())
+        .map(TableKey::qualifiedName)
         .min(Comparator.naturalOrder())
         .orElseThrow();
   }

@@ -31,7 +31,7 @@ public interface SchemaTableKeyed {
    * @return スキーマ.テーブル 形式の名称
    */
   default String getSchemaTableName() {
-    return schemaName() + "." + tableName();
+    return tableKey().qualifiedName();
   }
 
   /**

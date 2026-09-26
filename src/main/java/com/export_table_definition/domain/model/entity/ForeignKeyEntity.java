@@ -129,7 +129,7 @@ public record ForeignKeyEntity(
    * @return 参照先の スキーマ.テーブル 形式の名称
    */
   public String getReferenceSchemaTableName() {
-    return referenceSchemaName + "." + referenceTableName;
+    return referenceTableKey().qualifiedName();
   }
 
   /**

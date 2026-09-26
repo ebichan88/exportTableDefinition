@@ -59,4 +59,13 @@ public record TableKey(String schema, String table) {
     }
     return Optional.of(new TableKey(schema, table));
   }
+
+  /**
+   * {@code スキーマ.テーブル} 形式の名称を取得するメソッド
+   *
+   * @return {@code スキーマ.テーブル} 形式の名称
+   */
+  public String qualifiedName() {
+    return schema + SCHEMA_TABLE_SEPARATOR + table;
+  }
 }

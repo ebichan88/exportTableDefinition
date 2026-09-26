@@ -70,22 +70,6 @@ public class PropertyLoaderTest {
   }
 
   @Test
-  @DisplayName("getBoolean: true（大文字小文字・前後の空白を問わない）の場合はtrue、それ以外はfalseを返す")
-  void testGetBooleanParsesValue() {
-    assertTrue(PropertyLoader.getBoolean(FIXTURE, "booleanTrue", false));
-    assertFalse(PropertyLoader.getBoolean(FIXTURE, "booleanFalse", true));
-    assertFalse(PropertyLoader.getBoolean(FIXTURE, "stringValue", true));
-  }
-
-  @Test
-  @DisplayName("getBoolean: 値が空・キー自体が存在しない場合はデフォルト値を返す")
-  void testGetBooleanFallsBackOnBlankOrMissing() {
-    assertTrue(PropertyLoader.getBoolean(FIXTURE, "blankValue", true));
-    assertTrue(PropertyLoader.getBoolean(FIXTURE, "doesNotExist", true));
-    assertFalse(PropertyLoader.getBoolean(FIXTURE, "doesNotExist", false));
-  }
-
-  @Test
   @DisplayName("getResourceBundle: 同一ファイル名の呼び出しはキャッシュされ、同一インスタンスを返す")
   void testGetResourceBundleIsCached() {
     ResourceBundle first = PropertyLoader.getResourceBundle(FIXTURE);

@@ -76,27 +76,6 @@ public class PropertyLoader {
   }
 
   /**
-   * プロパティファイルの読み込みを行うメソッド（真偽値で取得）<br>
-   * キーが存在しない・空の場合はデフォルト値を返す。それ以外は{@code true}（大文字小文字を区別しない）の場合のみtrueとなる
-   *
-   * @param fileName プロパティファイルのファイル名
-   * @param key 取得するキー
-   * @param defaultValue キーに対応する値が取得できない場合のデフォルト値
-   * @return キーに対応する真偽値。取得できない場合はデフォルト値
-   */
-  public static boolean getBoolean(String fileName, String key, boolean defaultValue) {
-    try {
-      final String value = getString(fileName, key);
-      if (value == null || value.isBlank()) {
-        return defaultValue;
-      }
-      return Boolean.parseBoolean(value.trim());
-    } catch (MissingResourceException e) {
-      return defaultValue;
-    }
-  }
-
-  /**
    * プロパティファイルの読み込みを行うメソッド（キャッシュを利用）
    *
    * @param fileName プロパティファイルのファイル名

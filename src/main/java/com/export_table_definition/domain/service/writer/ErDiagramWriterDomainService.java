@@ -226,12 +226,13 @@ public class ErDiagramWriterDomainService {
                 ErDiagramTemplates.diagramTableHeader(),
                 group.nodes(),
                 (no, key) -> ErDiagramTemplates.diagramTableLine(no, key, tableByKey.get(key)));
+    final String detailSection = pagedSectionWriter.writePagedSection(detail, layout);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
             ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
             ErDiagramTemplates.erDiagram(group, maxNodes), // ER図（描画結果または省略メッセージ）
-            pagedSectionWriter.writePagedSection(detail, layout), // 掲載テーブル または 外部キー一覧
+            detailSection, // 掲載テーブル または 外部キー一覧
             footer // フッター
             );
     fileRepository.writeFile(layout.file(), contents);
@@ -310,12 +311,14 @@ public class ErDiagramWriterDomainService {
             outputPathResolver.resolveListFile(
                 baseInfo, outputDirectoryPath, ListDocumentType.ER_DIAGRAM),
             ListDocumentType.ER_DIAGRAM.getBackLinkLabel());
+    final String crossSchemaDetail =
+        pagedSectionWriter.writePagedSection(crossSchemaSection, layout);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
             ErDiagramTemplates.baseInfo(baseInfo), // 基本情報
             ErDiagramTemplates.schemaIndex(baseInfo, tablesBySchema), // スキーマ別ER図へのリンク
-            pagedSectionWriter.writePagedSection(crossSchemaSection, layout), // スキーマ跨ぎの外部キー
+            crossSchemaDetail, // スキーマ跨ぎの外部キー
             ErDiagramTemplates.indexFooter(baseInfo) // フッター
             );
     fileRepository.writeFile(layout.file(), contents);

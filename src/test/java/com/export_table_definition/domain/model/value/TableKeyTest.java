@@ -67,6 +67,12 @@ public class TableKeyTest {
   }
 
   @Test
+  @DisplayName("qualifiedName: 'スキーマ.テーブル'形式の文字列を返す")
+  void testQualifiedName() {
+    assertEquals("public.orders", TableKey.of("public", "orders").qualifiedName());
+  }
+
+  @Test
   @DisplayName("parse: null・空白・ドット無し・トリム後にスキーマ/テーブル名が空の場合は空を返す")
   void testParseInvalid() {
     assertEquals(Optional.empty(), TableKey.parse(null));

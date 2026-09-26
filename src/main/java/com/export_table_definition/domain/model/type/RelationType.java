@@ -12,25 +12,20 @@ package com.export_table_definition.domain.model.type;
  */
 public enum RelationType {
   /** DBに実在する外部キー制約による関連。Mermaidでは実線で描画する */
-  PHYSICAL("--", "物理"),
+  PHYSICAL("--"),
   /** サイドカーYAMLで宣言された論理的な関連。Mermaidでは破線（非識別関連）で描画する */
-  LOGICAL("..", "論理");
+  LOGICAL("..");
 
   /** Mermaidの関連線の線種（実線／破線） */
   private final String lineNotation;
-
-  /** 一覧表などに掲載する日本語のラベル */
-  private final String label;
 
   /**
    * コンストラクタ
    *
    * @param lineNotation Mermaidの関連線の線種
-   * @param label 日本語のラベル
    */
-  RelationType(String lineNotation, String label) {
+  RelationType(String lineNotation) {
     this.lineNotation = lineNotation;
-    this.label = label;
   }
 
   /**
@@ -41,14 +36,5 @@ public enum RelationType {
    */
   public String getLineNotation() {
     return lineNotation;
-  }
-
-  /**
-   * 日本語のラベルを返却するメソッド
-   *
-   * @return 日本語のラベル
-   */
-  public String getLabel() {
-    return label;
   }
 }

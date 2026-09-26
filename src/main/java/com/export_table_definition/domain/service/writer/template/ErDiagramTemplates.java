@@ -203,11 +203,7 @@ public class ErDiagramTemplates {
       int no, int tableCount, int fkCount, TableKey mainTable, String href) {
     return String.format(
             "| %d | %d | %d | %s | [■](%s) |",
-            no,
-            tableCount,
-            fkCount,
-            mainTable == null ? "" : mainTable.schema() + "." + mainTable.table(),
-            href)
+            no, tableCount, fkCount, mainTable == null ? "" : mainTable.qualifiedName(), href)
         + LINE_SEPARATOR;
   }
 
