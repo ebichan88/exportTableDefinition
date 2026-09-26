@@ -38,6 +38,7 @@ public class ObjectListWriterDomainService {
     this.pagedSectionWriter = pagedSectionWriter;
   }
 
+  /** トリガー一覧を書き込む */
   public void writeTriggerList(List<TriggerEntity> triggers, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.TRIGGER,
@@ -47,6 +48,7 @@ public class ObjectListWriterDomainService {
         outputRoot);
   }
 
+  /** 関数・プロシージャ一覧を書き込む */
   public void writeFunctionList(List<FunctionEntity> functions, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.FUNCTION,
@@ -56,6 +58,7 @@ public class ObjectListWriterDomainService {
         outputRoot);
   }
 
+  /** シーケンス一覧を書き込む */
   public void writeSequenceList(List<SequenceEntity> sequences, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.SEQUENCE,
@@ -65,6 +68,7 @@ public class ObjectListWriterDomainService {
         outputRoot);
   }
 
+  /** ユーザー定義型一覧を書き込む */
   public void writeTypeList(List<TypeEntity> types, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.TYPE,
@@ -99,6 +103,7 @@ public class ObjectListWriterDomainService {
     fileRepository.writeFile(layout.file(), contents);
   }
 
+  /** 関数・プロシージャ1件分の個別定義を書き込む */
   public void writeFunctionDefinition(FunctionEntity function, OutputRoot outputRoot) {
     writeSchemaObjectDefinition(
         ListDocumentType.FUNCTION,
@@ -108,6 +113,7 @@ public class ObjectListWriterDomainService {
         outputRoot);
   }
 
+  /** シーケンス1件分の個別定義を書き込む */
   public void writeSequenceDefinition(SequenceEntity sequence, OutputRoot outputRoot) {
     writeSchemaObjectDefinition(
         ListDocumentType.SEQUENCE,
@@ -117,6 +123,7 @@ public class ObjectListWriterDomainService {
         outputRoot);
   }
 
+  /** ユーザー定義型1件分の個別定義を書き込む */
   public void writeTypeDefinition(TypeEntity type, OutputRoot outputRoot) {
     writeSchemaObjectDefinition(
         ListDocumentType.TYPE,

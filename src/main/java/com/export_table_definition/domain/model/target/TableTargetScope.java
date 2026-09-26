@@ -75,7 +75,6 @@ public final class TableTargetScope {
    * テーブル名リストはワイルドカード（{@code *}）・除外（先頭に{@code !}）・スキーマ修飾（{@code スキーマ名.テーブル名}）に 対応する。詳細は{@link
    * TableTargetFilter}を参照
    *
-   * @param table 判定対象のテーブル
    * @return 出力対象の範囲に含まれる場合はtrue
    */
   public boolean matches(TableEntity table) {

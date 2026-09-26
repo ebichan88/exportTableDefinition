@@ -23,11 +23,6 @@ public enum ExitStatus {
 
   private final int code;
 
-  /**
-   * コンストラクタ
-   *
-   * @param code プロセスの終了コード
-   */
   ExitStatus(int code) {
     this.code = code;
   }

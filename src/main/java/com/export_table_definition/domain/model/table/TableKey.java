@@ -8,13 +8,7 @@ public record TableKey(String schema, String table) {
   /** {@code スキーマ.テーブル} 形式の文字列の区切り文字 */
   private static final char SCHEMA_TABLE_SEPARATOR = '.';
 
-  /**
-   * スキーマ名とテーブル名からTableKeyインスタンスを生成する静的ファクトリメソッド
-   *
-   * @param schema スキーマ名
-   * @param table テーブル名
-   * @return TableKeyインスタンス
-   */
+  /** スキーマ名とテーブル名からTableKeyインスタンスを生成する静的ファクトリメソッド */
   public static TableKey of(String schema, String table) {
     return new TableKey(schema, table);
   }
@@ -23,7 +17,6 @@ public record TableKey(String schema, String table) {
    * TableEntityからTableKeyインスタンスを生成する静的ファクトリメソッド
    *
    * @param t TableEntityインスタンス
-   * @return TableKeyインスタンス
    */
   public static TableKey of(TableEntity t) {
     return new TableKey(t.schemaName(), t.physicalTableName());

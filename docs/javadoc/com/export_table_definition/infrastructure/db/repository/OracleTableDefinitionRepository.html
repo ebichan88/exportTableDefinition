@@ -115,9 +115,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.ibatis.session.SqlSessionFactory)" class="member-name-link">OracleTableDefinitionRepository</a><wbr>(org.apache.ibatis.session.SqlSessionFactory&nbsp;sqlSessionFactory)</code></div>
-<div class="col-last even-row-color">
-<div class="block">コンストラクタ</div>
-</div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -144,7 +142,9 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../domain/model/schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectSequenceList(java.util.List)" class="member-name-link">selectSequenceList</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">指定したスキーマに属するシーケンスの一覧を取得する</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../domain/model/table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectTriggerList(java.util.List)" class="member-name-link">selectTriggerList</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -152,7 +152,9 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../domain/model/schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectTypeList(java.util.List)" class="member-name-link">selectTypeList</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">指定したスキーマに属するユーザー定義型の一覧を取得する</div>
+</div>
 </div>
 </div>
 </div>
@@ -178,11 +180,6 @@ loadScripts(document, 'script');</script>
 <h3>OracleTableDefinitionRepository</h3>
 <div class="member-signature"><span class="annotations">@Inject
 </span><span class="modifiers">public</span>&nbsp;<span class="element-name">OracleTableDefinitionRepository</span><wbr><span class="parameters">(org.apache.ibatis.session.SqlSessionFactory&nbsp;sqlSessionFactory)</span></div>
-<div class="block">コンストラクタ</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>sqlSessionFactory</code> - 接続先DBのSqlSessionFactory</dd>
-</dl>
 </section>
 </li>
 </ul>
@@ -242,7 +239,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="selectSequenceList(java.util.List)">
 <h3>selectSequenceList</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../domain/model/schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</span>&nbsp;<span class="element-name">selectSequenceList</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</span></div>
-<div class="block">
+<div class="block">指定したスキーマに属するシーケンスの一覧を取得する
 
  <p>Oracleではシーケンス出力に非対応のため空リストを返却する。</div>
 <dl class="notes">
@@ -257,7 +254,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="selectTypeList(java.util.List)">
 <h3>selectTypeList</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../domain/model/schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</span>&nbsp;<span class="element-name">selectTypeList</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</span></div>
-<div class="block">
+<div class="block">指定したスキーマに属するユーザー定義型の一覧を取得する
 
  <p>Oracleではユーザー定義型出力に非対応のため空リストを返却する。</div>
 <dl class="notes">

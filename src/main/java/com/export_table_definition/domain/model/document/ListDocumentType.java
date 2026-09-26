@@ -26,12 +26,6 @@ public enum ListDocumentType {
   /** 一覧のタイトル */
   private final String title;
 
-  /**
-   * コンストラクタ
-   *
-   * @param prefix 一覧ファイル名・個別定義ディレクトリ名の接頭辞
-   * @param title 一覧のタイトル
-   */
   ListDocumentType(String prefix, String title) {
     this.prefix = prefix;
     this.title = title;

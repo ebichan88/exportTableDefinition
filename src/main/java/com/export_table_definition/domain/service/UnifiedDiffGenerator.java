@@ -260,6 +260,7 @@ public class UnifiedDiffGenerator {
     INSERT
   }
 
+  /** 差分の1行（行の種別と内容） */
   private record Op(OpType type, String line) {
 
     String render() {
@@ -272,6 +273,8 @@ public class UnifiedDiffGenerator {
   }
 
   /**
+   * unified diffの1ハンク（変更箇所と前後の文脈行のまとまり）
+   *
    * @param aStart 変更前側の開始行番号（1始まり。該当行が0件の場合はその直前の行番号）
    * @param bStart 変更後側の開始行番号（1始まり。該当行が0件の場合はその直前の行番号）
    */

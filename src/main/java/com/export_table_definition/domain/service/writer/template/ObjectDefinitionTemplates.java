@@ -13,23 +13,12 @@ import com.export_table_definition.domain.service.path.DocumentLocations;
 /** 関数/プロシージャ・シーケンス・ユーザー定義型の個別定義書き込みに利用する Markdownのテンプレートを扱うクラス */
 public class ObjectDefinitionTemplates {
 
-  /**
-   * 基本情報セクション
-   *
-   * @param baseInfo データベース基本情報
-   * @return 基本情報セクション文字列
-   */
+  /** 基本情報セクション */
   private static String baseInfo(BaseInfoEntity baseInfo) {
     return MarkdownTemplateSupport.baseInfoSection(baseInfo);
   }
 
-  /**
-   * 一覧へ戻るフッター
-   *
-   * @param listType 戻り先の一覧の種別
-   * @param baseInfo データベース基本情報
-   * @return フッター文字列
-   */
+  /** 一覧へ戻るフッター */
   private static String footer(ListDocumentType listType, BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.backOnlyFooter(
         DocumentLocations.linkFromDefinition(
@@ -37,13 +26,7 @@ public class ObjectDefinitionTemplates {
         listType.getBackLinkLabel());
   }
 
-  /**
-   * 関数・プロシージャの個別定義ファイル内容
-   *
-   * @param function 関数・プロシージャ情報
-   * @param baseInfo データベース基本情報
-   * @return ファイル内容文字列
-   */
+  /** 関数・プロシージャの個別定義ファイル内容 */
   public static String functionFile(FunctionEntity function, BaseInfoEntity baseInfo) {
     return "# "
         + function.getHeaderName()
@@ -60,13 +43,7 @@ public class ObjectDefinitionTemplates {
         + footer(ListDocumentType.FUNCTION, baseInfo);
   }
 
-  /**
-   * シーケンスの個別定義ファイル内容
-   *
-   * @param sequence シーケンス情報
-   * @param baseInfo データベース基本情報
-   * @return ファイル内容文字列
-   */
+  /** シーケンスの個別定義ファイル内容 */
   public static String sequenceFile(SequenceEntity sequence, BaseInfoEntity baseInfo) {
     String properties =
         """
@@ -99,13 +76,7 @@ public class ObjectDefinitionTemplates {
         + footer(ListDocumentType.SEQUENCE, baseInfo);
   }
 
-  /**
-   * ユーザー定義型の個別定義ファイル内容
-   *
-   * @param type ユーザー定義型情報
-   * @param baseInfo データベース基本情報
-   * @return ファイル内容文字列
-   */
+  /** ユーザー定義型の個別定義ファイル内容 */
   public static String typeFile(TypeEntity type, BaseInfoEntity baseInfo) {
     String definition =
         """

@@ -12,8 +12,6 @@ public class InvalidConfigurationException extends UserCorrectableException {
   private static final long serialVersionUID = 1L;
 
   /**
-   * コンストラクタ
-   *
    * @param message 誤りの内容（利用者向けのメッセージ）
    */
   public InvalidConfigurationException(String message) {
@@ -21,8 +19,6 @@ public class InvalidConfigurationException extends UserCorrectableException {
   }
 
   /**
-   * コンストラクタ
-   *
    * @param message 誤りの内容（利用者向けのメッセージ）
    * @param cause 誤りの原因となった例外
    */

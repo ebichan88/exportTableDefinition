@@ -7,19 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * エンティティの集合を扱う抽象クラス
- *
- * @param <T> エンティティの型
- */
+/** エンティティの集合を扱う抽象クラス */
 public abstract class AbstractEntities<T extends SchemaTableKeyed> {
   protected final Map<TableKey, List<T>> byKey;
 
-  /**
-   * コンストラクタ
-   *
-   * @param byKey テーブルキーをキー、エンティティのリストを値とするマップ
-   */
   protected AbstractEntities(Map<TableKey, List<T>> byKey) {
     this.byKey = Collections.unmodifiableMap(byKey);
   }
@@ -27,8 +18,6 @@ public abstract class AbstractEntities<T extends SchemaTableKeyed> {
   /**
    * リストを、各エンティティが所属するテーブルのテーブルキーでインデックス化するユーティリティメソッド
    *
-   * @param <E> エンティティの型
-   * @param list エンティティのリスト
    * @return テーブルキーをキー、エンティティのリストを値とするマップ
    */
   protected static <E extends SchemaTableKeyed> Map<TableKey, List<E>> index(List<E> list) {
@@ -38,8 +27,6 @@ public abstract class AbstractEntities<T extends SchemaTableKeyed> {
   /**
    * リストをテーブルキーでインデックス化するユーティリティメソッド
    *
-   * @param <E> エンティティの型
-   * @param list エンティティのリスト
    * @param keyFn エンティティからテーブルキーを抽出する関数
    * @return テーブルキーをキー、エンティティのリストを値とするマップ
    */
@@ -54,7 +41,6 @@ public abstract class AbstractEntities<T extends SchemaTableKeyed> {
   /**
    * 指定されたテーブルに関連するエンティティのリストを取得するメソッド
    *
-   * @param table テーブルエンティティ
    * @return エンティティのリスト。該当するエンティティがない場合は空のリストを返す
    */
   public List<T> of(TableEntity table) {

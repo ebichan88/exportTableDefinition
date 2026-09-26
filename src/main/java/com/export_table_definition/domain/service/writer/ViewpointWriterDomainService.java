@@ -31,13 +31,6 @@ public class ViewpointWriterDomainService {
   private final OutputPathResolver outputPathResolver;
   private final PagedSectionWriter pagedSectionWriter;
 
-  /**
-   * コンストラクタ
-   *
-   * @param fileRepository ファイルリポジトリ
-   * @param outputPathResolver 出力パス解決クラス
-   * @param pagedSectionWriter 行数の多い表のページ分割書き込みを行うクラス
-   */
   @Inject
   public ViewpointWriterDomainService(
       FileRepository fileRepository,
@@ -53,7 +46,6 @@ public class ViewpointWriterDomainService {
    * 観点が1件も無い場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う
    *
    * @param viewpoints サイドカーYAMLで宣言された観点
-   * @param tables 出力対象のテーブル
    * @param foreignKeys 出力対象のテーブル同士の関連（外部キー・論理リレーション）
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
@@ -79,7 +71,6 @@ public class ViewpointWriterDomainService {
    * 行数の多い表の分割は所属テーブルの一覧のみで行う（分割ページのファイル名は本体ページから決まるため、1ページで分割できる表は1つに限られる）。
    * 関連の一覧は、人が選んだテーブルのまとまりに関わるものに限られ、分割が必要になる規模にはならない想定とする
    *
-   * @param content 1観点分の出力内容
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param maxNodes 1つの図に描画するノード数の上限
    */

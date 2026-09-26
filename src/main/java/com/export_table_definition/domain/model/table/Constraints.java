@@ -9,6 +9,7 @@ final class Constraints extends AbstractEntities<ConstraintEntity> {
     super(byKey);
   }
 
+  /** 制約情報のリストを、所属テーブルのテーブルキーで引けるようにする */
   public static Constraints of(List<ConstraintEntity> list) {
     return new Constraints(index(list));
   }

@@ -21,10 +21,7 @@ import java.util.List;
 public record Sidecar(
     Annotations annotations, List<ForeignKeyEntity> logicalRelations, Viewpoints viewpoints) {
 
-  /**
-   * コンパクトコンストラクタ<br>
-   * null安全のため、各値がnullの場合は空の状態に正規化する
-   */
+  /** null安全のため、各値がnullの場合は空の状態に正規化する */
   public Sidecar {
     annotations = annotations == null ? Annotations.empty() : annotations;
     logicalRelations = logicalRelations == null ? List.of() : List.copyOf(logicalRelations);

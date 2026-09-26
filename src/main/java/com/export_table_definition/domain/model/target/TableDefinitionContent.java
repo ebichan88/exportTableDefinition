@@ -21,15 +21,9 @@ import java.util.stream.Stream;
  * テーブル定義出力に必要な情報をまとめたレコード<br>
  * 1テーブル分の「何を出力するか」のみを持ち、出力先（ディレクトリ）は出力形式ごとの書き込み側が持つ
  *
- * @param baseInfo データベースの基本情報
- * @param table テーブル情報
- * @param columns カラム情報のリスト
- * @param indexes インデックス情報のリスト
- * @param constraints 制約情報のリスト
  * @param foreignKeys 自テーブルが参照する関連のうち、DBに実在する外部キー制約（物理）のリスト
  * @param logicalRelations 自テーブルが参照する関連のうち、サイドカーYAMLで宣言された論理リレーションのリスト
  * @param incomingRelations 自テーブルを参照する関連（物理外部キー・論理リレーションの双方）のリスト
- * @param triggers トリガー情報のリスト
  * @param annotation 手動付帯情報
  * @param viewpoints 当該テーブルが所属する観点のリスト（宣言順。所属する観点が無い場合は空）
  */
@@ -52,7 +46,6 @@ public record TableDefinitionContent(
    * logicalRelations}）に分けて保持する。 テーブル定義書では別々のセクションへ掲載し、ER図では両者を1つの図にまとめて描画するため。 被参照側（{@code
    * incomingRelations}）はER図でしか用いないため由来を分けない（物理外部キーと論理リレーションの双方を含む）
    *
-   * @param baseInfo データベースの基本情報
    * @param detail 当該テーブルの詳細情報（カラム・インデックス・制約）
    * @param foreignkeys 対象範囲全体の外部キー（論理リレーションを含む。当該テーブル分を抽出して保持する）
    * @param triggers 対象範囲全体のトリガー情報（当該テーブル分を抽出して保持する）

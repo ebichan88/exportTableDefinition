@@ -33,8 +33,6 @@ public class LocalFileRepository implements FileRepository {
    * {@link Files#newBufferedWriter}はエンコードできない文字で例外を投げるため、従来どおり置換文字で書き込む {@link
    * OutputStreamWriter}を用いる
    *
-   * @param filePath ファイルパス
-   * @param contents 書き込む内容
    * @param options ファイルのオープン方法（未指定の場合は新規作成または上書き）
    */
   private void write(Path filePath, List<String> contents, OpenOption... options) {

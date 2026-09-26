@@ -10,7 +10,6 @@ public enum ProcessResult {
   /**
    * 処理結果の種別を先頭に付けた、コンソール出力用のメッセージを組み立てるメソッド
    *
-   * @param message 処理結果のメッセージ
    * @return 処理結果の種別とメッセージを改行で連結した文字列
    */
   public String formatMessage(String message) {

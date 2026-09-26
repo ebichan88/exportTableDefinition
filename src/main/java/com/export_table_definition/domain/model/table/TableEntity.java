@@ -3,10 +3,6 @@ package com.export_table_definition.domain.model.table;
 /**
  * テーブル情報に関するrecordクラス
  *
- * @param dbName データベース名
- * @param schemaName スキーマ名
- * @param logicalTableName 論理テーブル名
- * @param physicalTableName 物理テーブル名
  * @param tableType 区分（table/view/materialized_view）
  * @param definition view/materialized viewの場合のソース定義（tableの場合は空文字）
  */

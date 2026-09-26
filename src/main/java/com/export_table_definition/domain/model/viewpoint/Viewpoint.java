@@ -42,7 +42,6 @@ public final class Viewpoint {
    * @param name 表示名（未指定可）
    * @param description 説明（未指定可）
    * @param tablePatterns 所属テーブルのテーブル名パターンのリスト（ワイルドカード・除外・スキーマ修飾を指定可）
-   * @return 観点
    * @throws IllegalArgumentException 識別子が空・使えない文字を含む場合、テーブル名パターンの書き誤り（テーブル名・スキーマ名の部分が空）がある場合、
    *     包含パターン（先頭に{@code !}の無いパターン）が1件も無い場合
    */
@@ -100,7 +99,6 @@ public final class Viewpoint {
   /**
    * 指定されたテーブルがこの観点に所属するか判定するメソッド
    *
-   * @param table テーブル
    * @return 所属する場合はtrue
    */
   public boolean contains(TableEntity table) {
@@ -111,7 +109,6 @@ public final class Viewpoint {
    * どのテーブルにも一致しない包含パターンを求めるメソッド<br>
    * テーブルのリネーム・削除によって、観点の宣言がDBと乖離していないかの気付きに用いる
    *
-   * @param tables 出力対象のテーブル
    * @return どのテーブルにも一致しない包含パターン（指定された文字列のまま、指定順）
    */
   public List<String> unmatchedPatterns(Tables tables) {
@@ -122,9 +119,7 @@ public final class Viewpoint {
    * 出力対象のテーブル・関連から、この観点の出力内容（所属テーブルと、それに関わる関連）を求めるメソッド<br>
    * 関連は、両端がこの観点に所属するもの（観点のER図に描く）と、片端だけが所属するもの（観点外のテーブルとの関連）に分ける
    *
-   * @param tables 出力対象のテーブル
    * @param foreignKeys 出力対象のテーブル同士の関連（外部キー・論理リレーション）
-   * @return この観点の出力内容
    */
   public ViewpointContent resolve(Tables tables, ForeignKeys foreignKeys) {
     final List<TableEntity> members = tables.asList().stream().filter(this::contains).toList();

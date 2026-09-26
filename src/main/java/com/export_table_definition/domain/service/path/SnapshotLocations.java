@@ -24,7 +24,6 @@ public final class SnapshotLocations {
 
   private static final String PATH_SEPARATOR = "/";
 
-  /** コンストラクタ（インスタンス化不可） */
   private SnapshotLocations() {}
 
   /**
@@ -39,7 +38,6 @@ public final class SnapshotLocations {
   /**
    * DB全体の情報のファイルの、スナップショットのディレクトリからの相対パスを取得するメソッド
    *
-   * @param dbName データベース名
    * @return {@code {DB名}/database.json}
    */
   public static String databaseFile(String dbName) {
@@ -49,9 +47,6 @@ public final class SnapshotLocations {
   /**
    * スキーマ配下のオブジェクトのファイルの、スナップショットのディレクトリからの相対パスを取得するメソッド
    *
-   * @param dbName データベース名
-   * @param schemaName スキーマ名
-   * @param kind オブジェクトの種別
    * @return {@code {DB名}/{スキーマ名}/{種別のファイル名}.jsonl}
    */
   public static String objectFile(String dbName, String schemaName, SnapshotKind kind) {
@@ -62,7 +57,6 @@ public final class SnapshotLocations {
    * スナップショットのファイル名から、出力しているオブジェクトの種別を判定するメソッド<br>
    * {@link #objectFile}の逆変換。スナップショット同士の比較で、ファイルごとの比較方法を決めるために用いる
    *
-   * @param fileName スナップショットのファイル名
    * @return オブジェクトの種別。スキーマ配下のオブジェクトのファイルでない場合（{@code database.json}等）は空
    */
   public static Optional<SnapshotKind> kindOf(String fileName) {
@@ -74,7 +68,6 @@ public final class SnapshotLocations {
   /**
    * スキーマ配下のオブジェクトのファイル名を取得するメソッド
    *
-   * @param kind オブジェクトの種別
    * @return {@code {種別のファイル名}.jsonl}
    */
   private static String objectFileName(SnapshotKind kind) {

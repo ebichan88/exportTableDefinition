@@ -38,17 +38,12 @@ public final class ForeignKeyGroup {
    * 外部キーのリストからまとまりを生成するメソッド
    *
    * @param foreignKeys まとまりに属する外部キーのリスト
-   * @return 外部キーのまとまり
    */
   public static ForeignKeyGroup of(List<ForeignKeyEntity> foreignKeys) {
     return new ForeignKeyGroup(foreignKeys);
   }
 
-  /**
-   * まとまりに属する外部キーのリストを取得するメソッド
-   *
-   * @return 外部キーのリスト
-   */
+  /** まとまりに属する外部キーのリストを取得するメソッド */
   public List<ForeignKeyEntity> foreignKeys() {
     return foreignKeys;
   }

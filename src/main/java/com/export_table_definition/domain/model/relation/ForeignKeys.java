@@ -26,6 +26,7 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
     this.incomingByKey = Collections.unmodifiableMap(incomingByKey);
   }
 
+  /** 物理外部キー・論理リレーションのリストから、参照元・被参照側の両方のテーブルキーで引けるコレクションを生成する */
   public static ForeignKeys of(List<ForeignKeyEntity> list) {
     final Map<TableKey, List<ForeignKeyEntity>> byKey = index(list);
     // 自己参照（自テーブルを参照する外部キー）は、被参照側の一覧に含めると
@@ -40,7 +41,6 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
   /**
    * 指定されたテーブルを参照している外部キー（被参照側）のリストを取得するメソッド
    *
-   * @param table テーブルエンティティ
    * @return 当該テーブルを参照している外部キーのリスト。存在しない場合は空のリストを返す
    */
   public List<ForeignKeyEntity> incomingOf(TableEntity table) {
@@ -51,7 +51,6 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    * 指定されたテーブルが持つ、DBに実在する外部キー制約のリストを取得するメソッド<br>
    * テーブル定義書の「外部キー情報」セクションには制約として実在するものだけを掲載する
    *
-   * @param table テーブルエンティティ
    * @return 当該テーブルの物理外部キーのリスト。存在しない場合は空のリストを返す
    */
   public List<ForeignKeyEntity> physicalOf(TableEntity table) {
@@ -62,7 +61,6 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    * 指定されたテーブルが持つ、サイドカーYAML由来の論理リレーションのリストを取得するメソッド<br>
    * テーブル定義書では「論理リレーション情報」セクションとして物理外部キーとは別に掲載する
    *
-   * @param table テーブルエンティティ
    * @return 当該テーブルの論理リレーションのリスト。存在しない場合は空のリストを返す
    */
   public List<ForeignKeyEntity> logicalOf(TableEntity table) {
@@ -112,7 +110,6 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    * 参照元・参照先の両方が指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
    * 観点のように、テーブルの集合の中だけで閉じた関連（1枚のER図に描く関連）を求めるために用いる
    *
-   * @param tableKeys テーブルの集合
    * @return 両端が集合に含まれる関連のリスト
    */
   public List<ForeignKeyEntity> within(Set<TableKey> tableKeys) {
@@ -127,7 +124,6 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    * 参照元・参照先の一方だけが指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
    * 観点のように、テーブルの集合とその外側のテーブルとの関連を求めるために用いる
    *
-   * @param tableKeys テーブルの集合
    * @return 片端だけが集合に含まれる関連のリスト
    */
   public List<ForeignKeyEntity> crossing(Set<TableKey> tableKeys) {

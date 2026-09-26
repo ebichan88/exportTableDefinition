@@ -59,7 +59,6 @@ public final class Viewpoints {
    * 指定されたテーブルが所属する観点を取得するメソッド<br>
    * テーブル定義書から観点ページへ戻る導線（「所属する観点」）に用いる
    *
-   * @param table テーブル
    * @return 当該テーブルが所属する観点のリスト（宣言順）。所属する観点が無い場合は空のリスト
    */
   public List<Viewpoint> of(TableEntity table) {

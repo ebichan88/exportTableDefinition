@@ -31,6 +31,7 @@ import java.time.Clock;
  */
 public class ExportTableDefinitionModule extends AbstractModule {
 
+  /** {@inheritDoc} */
   @Override
   protected void configure() {
     bind(FileRepository.class).to(LocalFileRepository.class);

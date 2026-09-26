@@ -14,11 +14,6 @@ public enum TableType {
 
   private final String name;
 
-  /**
-   * コンストラクタ
-   *
-   * @param name テーブル種類名
-   */
   TableType(String name) {
     this.name = name;
   }
@@ -35,7 +30,6 @@ public enum TableType {
   /**
    * テーブルの種類に紐づくEnumを返却する。
    *
-   * @param name Enum逆引きに用いる値
    * @return TableTypeを返却する。
    * @throws IllegalArgumentException 対象のEnumが存在しない場合にthrowする。
    */

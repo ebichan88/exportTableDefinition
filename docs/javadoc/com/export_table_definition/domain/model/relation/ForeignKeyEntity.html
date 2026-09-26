@@ -99,7 +99,6 @@ loadScripts(document, 'script');</script>
 <dd><code><span id="param-referenceSchemaName">referenceSchemaName</span></code> - 参照先（親）スキーマ名</dd>
 <dd><code><span id="param-referenceTableName">referenceTableName</span></code> - 参照先（親）テーブル名</dd>
 <dd><code><span id="param-referenceColumnNames">referenceColumnNames</span></code> - 参照先（親）の列名のリスト（<code>columnNames</code>と同じ順）</dd>
-<dd><code><span id="param-cardinality">cardinality</span></code> - 多重度</dd>
 <dd><code><span id="param-relationType">relationType</span></code> - 関連の由来（物理／論理）</dd>
 </dl>
 <dl class="notes">
@@ -133,7 +132,7 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
  <a href="Cardinality.html" title="enum class in com.export_table_definition.domain.model.relation">Cardinality</a>&nbsp;cardinality,
  <a href="RelationType.html" title="enum class in com.export_table_definition.domain.model.relation">RelationType</a>&nbsp;relationType)</code></div>
 <div class="col-last even-row-color">
-<div class="block">コンパクトコンストラクタ（列名のリストは変更不可な複製として保持する）</div>
+<div class="block">列名のリストは変更不可な複製として保持する</div>
 </div>
 </div>
 </section>
@@ -152,7 +151,7 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="Cardinality.html" title="enum class in com.export_table_definition.domain.model.relation">Cardinality</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#cardinality()" class="member-name-link">cardinality</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-cardinality"><code>cardinality</code></a> record component.</div>
+<div class="block">Returns the value of the <code>cardinality</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#columnNames()" class="member-name-link">columnNames</a>()</code></div>
@@ -278,7 +277,7 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;referenceColumnNames,
  <a href="Cardinality.html" title="enum class in com.export_table_definition.domain.model.relation">Cardinality</a>&nbsp;cardinality,
  <a href="RelationType.html" title="enum class in com.export_table_definition.domain.model.relation">RelationType</a>&nbsp;relationType)</span></div>
-<div class="block">コンパクトコンストラクタ（列名のリストは変更不可な複製として保持する）</div>
+<div class="block">列名のリストは変更不可な複製として保持する</div>
 </section>
 </li>
 </ul>
@@ -306,12 +305,10 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <dt>Parameters:</dt>
 <dd><code>schemaName</code> - 参照元（子）スキーマ名</dd>
 <dd><code>tableName</code> - 参照元（子）テーブル名</dd>
-<dd><code>relationName</code> - 関連名</dd>
 <dd><code>columnNames</code> - 参照元（子）の列名のリスト</dd>
 <dd><code>referenceSchemaName</code> - 参照先（親）スキーマ名</dd>
 <dd><code>referenceTableName</code> - 参照先（親）テーブル名</dd>
 <dd><code>referenceColumnNames</code> - 参照先（親）の列名のリスト</dd>
-<dd><code>cardinality</code> - 多重度</dd>
 <dt>Returns:</dt>
 <dd>論理リレーションを表すForeignKeyEntity</dd>
 </dl>
@@ -331,8 +328,6 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <dd><code>rawName</code> - YAMLで指定された関連名（未指定の場合はnull・空白可）</dd>
 <dd><code>childTableName</code> - 参照元（子）テーブル名</dd>
 <dd><code>childColumnNames</code> - 参照元（子）の列名のリスト</dd>
-<dt>Returns:</dt>
-<dd>解決した関連名</dd>
 </dl>
 </section>
 </li>
@@ -352,10 +347,6 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <h3>referenceTableKey</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a></span>&nbsp;<span class="element-name">referenceTableKey</span>()</div>
 <div class="block">参照先（親）テーブルのテーブルキーを取得するメソッド</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>参照先のテーブルキー</dd>
-</dl>
 </section>
 </li>
 <li>
@@ -495,10 +486,10 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <section class="detail" id="cardinality()">
 <h3>cardinality</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="Cardinality.html" title="enum class in com.export_table_definition.domain.model.relation">Cardinality</a></span>&nbsp;<span class="element-name">cardinality</span>()</div>
-<div class="block">Returns the value of the <a href="#param-cardinality"><code>cardinality</code></a> record component.</div>
+<div class="block">Returns the value of the <code>cardinality</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-cardinality"><code>cardinality</code></a> record component</dd>
+<dd>the value of the <code>cardinality</code> record component</dd>
 </dl>
 </section>
 </li>

@@ -18,7 +18,6 @@ public final class MyBatisSqlSessionFactories {
   private static final Logger logger = LogManager.getLogger(MyBatisSqlSessionFactories.class);
   private static final String MYBATIS_CONFIG = "mybatis-config.xml";
 
-  /** コンストラクタ（インスタンス化不可） */
   private MyBatisSqlSessionFactories() {}
 
   /**

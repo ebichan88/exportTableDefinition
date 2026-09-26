@@ -21,7 +21,6 @@ public class DatabaseDependentModule extends AbstractModule {
   private final SqlSessionFactory sqlSessionFactory;
 
   /**
-   * コンストラクタ<br>
    * 束縛の定義（{@link #configure()}）の中でDBへ接続しないよう、接続先DBの種別は呼び出し元で判定して受け取る。<br>
    * DIコンテナの中（束縛の定義やProvider）で接続すると、接続の失敗がGuiceの例外（CreationException・ProvisionException）に包まれて届き、
    * エントリーポイントが「DBに接続できない」を利用者が直せる誤りとして報告できなくなるため
@@ -34,6 +33,7 @@ public class DatabaseDependentModule extends AbstractModule {
     this.sqlSessionFactory = sqlSessionFactory;
   }
 
+  /** {@inheritDoc} */
   @Override
   protected void configure() {
     bind(SqlSessionFactory.class).toInstance(sqlSessionFactory);

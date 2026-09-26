@@ -26,15 +26,6 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
 
-  /**
-   * コンストラクタ
-   *
-   * @param schemaExporter DBからスキーマ情報を取得し、出力形式ごとに書き出す段取りを担うクラス
-   * @param snapshotSinkFactory スキーマのスナップショットを書き出すExportSinkの生成クラス
-   * @param snapshotDiffDomainService 生成したスナップショットとコミット済みスナップショットの比較を行うドメインサービス
-   * @param fileRepository 差分比較用の一時ディレクトリの作成・削除に用いるファイルリポジトリ
-   * @param outputPathResolver 出力先パス解決クラス
-   */
   @Inject
   public CheckDocumentDiffUsecaseImpl(
       SchemaExporter schemaExporter,

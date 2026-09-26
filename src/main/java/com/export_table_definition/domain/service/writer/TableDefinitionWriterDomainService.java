@@ -25,13 +25,6 @@ public class TableDefinitionWriterDomainService {
   private final OutputPathResolver outputPathResolver;
   private final PagedSectionWriter pagedSectionWriter;
 
-  /**
-   * コンストラクタ
-   *
-   * @param fileRepository ファイルリポジトリ
-   * @param outputPathResolver 出力パス解決クラス
-   * @param pagedSectionWriter 行数の多い表のページ分割書き込みを行うクラス
-   */
   @Inject
   public TableDefinitionWriterDomainService(
       FileRepository fileRepository,
@@ -46,7 +39,6 @@ public class TableDefinitionWriterDomainService {
    * テーブル一覧の書き込み処理を行うメソッド<br>
    * 行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割し、 本体ページにはリンクのみを掲載する
    *
-   * @param tables テーブル情報リスト
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param relatedDocuments 「関連ドキュメント」としてリンクを掲載する一覧の種別（掲載順）
    */
@@ -79,7 +71,6 @@ public class TableDefinitionWriterDomainService {
    * テーブル定義の書き込み処理を行うメソッド
    *
    * @param content テーブル定義出力に必要な情報をまとめたレコード
-   * @param outputDirectoryPath 出力ディレクトリのパス
    */
   public void writeTableDefinition(TableDefinitionContent content, Path outputDirectoryPath) {
     final OutputRoot outputRoot = new OutputRoot(outputDirectoryPath, content.baseInfo());

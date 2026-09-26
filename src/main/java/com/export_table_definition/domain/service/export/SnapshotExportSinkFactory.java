@@ -15,11 +15,6 @@ public class SnapshotExportSinkFactory {
 
   private final SchemaSnapshotWriterDomainService snapshotWriter;
 
-  /**
-   * コンストラクタ
-   *
-   * @param snapshotWriter スキーマのスナップショットを書き込むクラス
-   */
   @Inject
   public SnapshotExportSinkFactory(SchemaSnapshotWriterDomainService snapshotWriter) {
     this.snapshotWriter = snapshotWriter;
@@ -40,11 +35,6 @@ public class SnapshotExportSinkFactory {
 
     private final Path outputBaseDir;
 
-    /**
-     * コンストラクタ
-     *
-     * @param outputBaseDir 出力先のベースディレクトリパス
-     */
     private SnapshotExportSink(Path outputBaseDir) {
       this.outputBaseDir = outputBaseDir;
     }

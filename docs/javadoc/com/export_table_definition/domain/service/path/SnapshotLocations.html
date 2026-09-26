@@ -166,8 +166,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">databaseFile</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName)</span></div>
 <div class="block">DB全体の情報のファイルの、スナップショットのディレクトリからの相対パスを取得するメソッド</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>dbName</code> - データベース名</dd>
 <dt>Returns:</dt>
 <dd><code>{DB名}/database.json</code></dd>
 </dl>
@@ -181,10 +179,6 @@ loadScripts(document, 'script');</script>
  <a href="../../model/snapshot/SnapshotKind.html" title="enum class in com.export_table_definition.domain.model.snapshot">SnapshotKind</a>&nbsp;kind)</span></div>
 <div class="block">スキーマ配下のオブジェクトのファイルの、スナップショットのディレクトリからの相対パスを取得するメソッド</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>dbName</code> - データベース名</dd>
-<dd><code>schemaName</code> - スキーマ名</dd>
-<dd><code>kind</code> - オブジェクトの種別</dd>
 <dt>Returns:</dt>
 <dd><code>{DB名}/{スキーマ名}/{種別のファイル名}.jsonl</code></dd>
 </dl>
@@ -197,8 +191,6 @@ loadScripts(document, 'script');</script>
 <div class="block">スナップショットのファイル名から、出力しているオブジェクトの種別を判定するメソッド<br>
  <a href="#objectFile(java.lang.String,java.lang.String,com.export_table_definition.domain.model.snapshot.SnapshotKind)"><code>objectFile(java.lang.String, java.lang.String, com.export_table_definition.domain.model.snapshot.SnapshotKind)</code></a>の逆変換。スナップショット同士の比較で、ファイルごとの比較方法を決めるために用いる</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>fileName</code> - スナップショットのファイル名</dd>
 <dt>Returns:</dt>
 <dd>オブジェクトの種別。スキーマ配下のオブジェクトのファイルでない場合（<code>database.json</code>等）は空</dd>
 </dl>

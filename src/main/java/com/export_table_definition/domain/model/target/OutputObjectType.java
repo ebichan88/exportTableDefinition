@@ -20,11 +20,6 @@ public enum OutputObjectType {
 
   private final String name;
 
-  /**
-   * コンストラクタ
-   *
-   * @param name 出力対象オブジェクト種別名
-   */
   OutputObjectType(String name) {
     this.name = name;
   }
@@ -41,7 +36,6 @@ public enum OutputObjectType {
   /**
    * 出力対象オブジェクト種別に紐づくEnumを返却する。
    *
-   * @param name Enum逆引きに用いる値
    * @return OutputObjectTypeを返却する。
    * @throws IllegalArgumentException 対象のEnumが存在しない場合にthrowする。
    */

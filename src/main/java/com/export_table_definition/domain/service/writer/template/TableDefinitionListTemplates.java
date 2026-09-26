@@ -13,22 +13,12 @@ import java.util.List;
 /** テーブル定義一覧書き込みに利用するMarkdownのテンプレートを扱うクラス */
 public class TableDefinitionListTemplates {
 
-  /**
-   * テーブル定義一覧ヘッダー
-   *
-   * @param baseInfo データベース基本情報
-   * @return ヘッダー文字列
-   */
+  /** テーブル定義一覧ヘッダー */
   public static String fileHeader(BaseInfoEntity baseInfo) {
     return MarkdownTemplateSupport.titledFileHeader(ListDocumentType.TABLE.getTitle(), baseInfo);
   }
 
-  /**
-   * 基本情報セクション
-   *
-   * @param baseInfo データベース基本情報
-   * @return 基本情報セクション文字列
-   */
+  /** 基本情報セクション */
   public static String baseInfo(BaseInfoEntity baseInfo) {
     return MarkdownTemplateSupport.baseInfoSection(baseInfo);
   }
@@ -37,7 +27,6 @@ public class TableDefinitionListTemplates {
    * 関連ドキュメントセクション<br>
    * トリガー・関数/プロシージャ・シーケンス・ユーザー定義型など、 存在するオブジェクト一覧へのリンクを列挙する
    *
-   * @param baseInfo データベース基本情報
    * @param types リンクを掲載する一覧の種別（掲載順）
    * @return 関連ドキュメントセクション文字列。typesが空の場合は空文字列
    */
@@ -63,8 +52,6 @@ public class TableDefinitionListTemplates {
    * 見出しは{@link PagedSectionTemplates#heading(String)}で付与するため含まない。
    * 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 トリガー・関数/プロシージャなどの一覧（{@link
    * ObjectListTemplates}）と同じ方針である
-   *
-   * @return 表ヘッダー文字列
    */
   public static String tableListTableHeader() {
     return """
@@ -78,8 +65,6 @@ public class TableDefinitionListTemplates {
    * 論理テーブル名はDBコメント由来の自由記述文字列（{@code |}・改行を含みうる）のためエスケープする
    *
    * @param no 行番号（1始まり）
-   * @param table テーブル情報
-   * @return テーブル一覧セクション文字列
    */
   public static String tableListLine(int no, TableEntity table) {
     return row(
@@ -96,7 +81,6 @@ public class TableDefinitionListTemplates {
    * テーブル定義書への相対パスをMarkdownのリンク記法で表す文字列を生成するメソッド<br>
    * テーブル一覧は出力ベースディレクトリ直下に配置されるため、出力ベースディレクトリからの相対パスで参照する
    *
-   * @param table テーブル情報
    * @return テーブル定義書へのリンク文字列
    */
   private static String tableDefinitionLink(TableEntity table) {

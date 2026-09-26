@@ -13,13 +13,11 @@ final class DiffReportFormatter {
   /** 差分メッセージに含めるunified diffの行数の上限（全体合計）。超えた場合、それ以降のオブジェクトの差分本体は省略する */
   private static final int MAX_DIFF_LINES_TOTAL = 2000;
 
-  /** コンストラクタ（インスタンス化不可） */
   private DiffReportFormatter() {}
 
   /**
    * 比較結果からメッセージを組み立てるメソッド
    *
-   * @param diffResult 比較結果
    * @return 差分の内容を含むメッセージ
    */
   static String format(DiffResult diffResult) {
@@ -53,8 +51,6 @@ final class DiffReportFormatter {
    * 差分の対象（ファイルパスまたはオブジェクト）の一覧をメッセージへ追記するメソッド。対象が空の場合は何も追記しない
    *
    * @param message 追記先のメッセージ
-   * @param lineSeparator 改行文字
-   * @param title 区分のタイトル
    * @param targets 区分に属する差分の対象のリスト
    */
   private static void appendSection(
@@ -72,7 +68,6 @@ final class DiffReportFormatter {
    * 超えた分は省略した旨のみ表示する（対象自体は{@link #format}が組み立てる「Content differs:」の一覧に すべて含まれるため、見落としにはならない）
    *
    * @param message 追記先のメッセージ
-   * @param lineSeparator 改行文字
    * @param contentDiffer 内容が一致しないものの一覧
    */
   private static void appendContentDiffs(

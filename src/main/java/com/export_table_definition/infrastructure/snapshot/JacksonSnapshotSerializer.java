@@ -82,7 +82,6 @@ public class JacksonSnapshotSerializer implements SnapshotSerializer {
   /**
    * JSONノードを、改行を含まない1行のJSON文字列へ変換するメソッド
    *
-   * @param node JSONノード
    * @return 1行のJSON文字列
    */
   private String writeCompact(JsonNode node) {

@@ -131,9 +131,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">PagedSectionWriter</a><wbr>(<a href="../../repository/FileRepository.html" title="interface in com.export_table_definition.domain.repository">FileRepository</a>&nbsp;fileRepository,
  <a href="../path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a>&nbsp;outputPathResolver)</code></div>
-<div class="col-last even-row-color">
-<div class="block">コンストラクタ</div>
-</div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -179,12 +177,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@Inject
 </span><span class="modifiers">public</span>&nbsp;<span class="element-name">PagedSectionWriter</span><wbr><span class="parameters">(<a href="../../repository/FileRepository.html" title="interface in com.export_table_definition.domain.repository">FileRepository</a>&nbsp;fileRepository,
  <a href="../path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a>&nbsp;outputPathResolver)</span></div>
-<div class="block">コンストラクタ</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>fileRepository</code> - ファイルリポジトリ</dd>
-<dd><code>outputPathResolver</code> - 出力パス解決クラス（分割ページのファイルパスの解決に用いる）</dd>
-</dl>
 </section>
 </li>
 </ul>
@@ -204,11 +196,6 @@ loadScripts(document, 'script');</script>
  行数がMarkdownの表に表示できる最大件数以下の場合は本体ページに直接埋め込み、 超える場合は別ファイルへ分割して、本体ページにはリンクのみを掲載する。
  行の文字列生成はページ単位で行い、全行分を同時にメモリ保持しない</div>
 <dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>T</code> - 行の元になる要素の型</dd>
-<dt>Parameters:</dt>
-<dd><code>section</code> - 書き込む表のセクション</dd>
-<dd><code>layout</code> - 分割ページの配置</dd>
 <dt>Returns:</dt>
 <dd>本体ページに掲載するセクション文字列</dd>
 </dl>

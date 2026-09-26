@@ -16,12 +16,6 @@ public enum DatabaseType {
   private final String name;
   private final Class<? extends TableDefinitionRepository> repositoryClass;
 
-  /**
-   * コンストラクタ
-   *
-   * @param name Database名
-   * @param repositoryClass Databaseに紐づくリポジトリクラス
-   */
   DatabaseType(String name, Class<? extends TableDefinitionRepository> repositoryClass) {
     this.name = name;
     this.repositoryClass = repositoryClass;
@@ -48,7 +42,6 @@ public enum DatabaseType {
   /**
    * Database名に紐づくEnumを返却する。
    *
-   * @param name Enum逆引きに用いる値
    * @return DatabaseTypeを返却する。
    * @throws IllegalArgumentException 対象のEnumが存在しない場合にthrowする。
    */

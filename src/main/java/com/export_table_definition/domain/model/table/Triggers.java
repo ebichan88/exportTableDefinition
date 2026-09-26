@@ -9,6 +9,7 @@ public final class Triggers extends AbstractEntities<TriggerEntity> {
     super(byKey);
   }
 
+  /** トリガー情報のリストを、所属テーブルのテーブルキーで引けるようにする */
   public static Triggers of(List<TriggerEntity> list) {
     return new Triggers(index(list));
   }

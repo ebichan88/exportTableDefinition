@@ -18,8 +18,6 @@ public class UserCorrectableException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
   /**
-   * コンストラクタ
-   *
    * @param message 誤りの内容と、何を直せばよいか（利用者向けのメッセージ）
    */
   public UserCorrectableException(String message) {
@@ -27,8 +25,6 @@ public class UserCorrectableException extends RuntimeException {
   }
 
   /**
-   * コンストラクタ
-   *
    * @param message 誤りの内容と、何を直せばよいか（利用者向けのメッセージ）
    * @param cause 誤りの原因となった例外
    */

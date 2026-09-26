@@ -37,12 +37,6 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
   private final String baseSqlPath;
   private final SqlSessionFactory sqlSessionFactory;
 
-  /**
-   * コンストラクタ
-   *
-   * @param databaseType データベースの種類
-   * @param sqlSessionFactory 接続先DBのSqlSessionFactory
-   */
   protected AbstractTableDefinitionRepository(
       DatabaseType databaseType, SqlSessionFactory sqlSessionFactory) {
     this.baseSqlPath =
@@ -145,10 +139,8 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
    * SQLを実行するメソッド<br>
    * SQLの失敗は、どのSQLで失敗したかを添えて包む。DBが返したエラー（原因）は包んだ例外の原因として残り、 エントリーポイントの境界が表示・ログ出力する
    *
-   * @param <T> 取得結果の型
    * @param sqlId 実行するSQLのID（DB種別ごとの名前空間を除く）
    * @param query SqlSessionとSQLの完全修飾IDを受け取り、SQLを実行する処理
-   * @return 取得結果
    */
   private <T> T select(String sqlId, BiFunction<SqlSession, String, T> query) {
     final String sqlPath = baseSqlPath + sqlId;

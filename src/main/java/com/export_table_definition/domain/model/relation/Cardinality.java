@@ -41,13 +41,6 @@ public enum Cardinality {
   /** 一覧表などに掲載する日本語のラベル */
   private final String label;
 
-  /**
-   * コンストラクタ
-   *
-   * @param parentNotation Mermaidの関連線の親側端点表記
-   * @param childNotation Mermaidの関連線の子側端点表記
-   * @param label 日本語のラベル
-   */
   Cardinality(String parentNotation, String childNotation, String label) {
     this.parentNotation = parentNotation;
     this.childNotation = childNotation;
@@ -79,7 +72,6 @@ public enum Cardinality {
    *
    * @param unique 外部キー列が一意制約・一意索引で覆われている場合はtrue
    * @param mandatory 外部キー列がすべてNOT NULLの場合はtrue
-   * @return 多重度
    */
   public static Cardinality of(boolean unique, boolean mandatory) {
     if (unique) {

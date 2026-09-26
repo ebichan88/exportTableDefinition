@@ -90,6 +90,8 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
+   * CLI引数による上書きをせず、設定ファイルの値だけから組み立てる
+   *
    * @throws InvalidConfigurationException 設定に誤りがある場合（見つかった誤りをすべて示す）
    */
   static ExportTableDefinitionProperties of(Map<String, String> values) {
@@ -152,6 +154,8 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
+   * 通常実行のユースケースへの入力に変換する
+   *
    * @param rmDist trueの場合、書き込みを開始する前に出力先ディレクトリを再帰的に削除する（{@code --rm-dist}）
    */
   ExportRequest toExportRequest(boolean rmDist) {

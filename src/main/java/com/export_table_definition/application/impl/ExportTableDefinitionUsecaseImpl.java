@@ -26,15 +26,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
 
-  /**
-   * コンストラクタ
-   *
-   * @param schemaExporter DBからスキーマ情報を取得し、出力形式ごとに書き出す段取りを担うクラス
-   * @param markdownSinkFactory Markdownのドキュメントを書き出すExportSinkの生成クラス
-   * @param snapshotSinkFactory スキーマのスナップショットを書き出すExportSinkの生成クラス
-   * @param fileRepository 出力先ディレクトリの削除（{@code --rm-dist}）に用いるファイルリポジトリ
-   * @param outputPathResolver 出力先パス解決クラス
-   */
   @Inject
   public ExportTableDefinitionUsecaseImpl(
       SchemaExporter schemaExporter,
@@ -72,8 +63,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * {@code --rm-dist}指定時に、出力先ベースディレクトリを書き込み前に削除するメソッド<br>
    * 削除されたテーブル等の残骸ファイルを残さないため、書き込み前にディレクトリごと削除する。
    * 削除してよいディレクトリか（既存のファイルを指していないか、ルート・ホームディレクトリ等でないか）は、 ユースケースを呼ぶ前に入口で検証済みであること
-   *
-   * @param outputBaseDir 出力先ベースディレクトリ
    */
   private void removeOutputBaseDir(Path outputBaseDir) {
     logger.info(

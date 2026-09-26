@@ -227,12 +227,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">baseInfoSection</span><wbr><span class="parameters">(<a href="../../../model/database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo)</span></div>
 <div class="block">基本情報セクション<br>
  テーブル定義書・各種一覧・ER図など、ほぼ全てのファイルの先頭に共通で掲載する</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>baseInfo</code> - データベース基本情報</dd>
-<dt>Returns:</dt>
-<dd>基本情報セクション文字列</dd>
-</dl>
 </section>
 </li>
 <li>
@@ -269,13 +263,6 @@ loadScripts(document, 'script');</script>
  <a href="../../../model/database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo)</span></div>
 <div class="block">タイトル付きファイルヘッダー（「# タイトル（DB名：xxx）」の形式）<br>
  ER図一覧・オブジェクト一覧など、タイトルとDB名のみで組み立てられるヘッダーで共通利用する</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>title</code> - ページのタイトル</dd>
-<dd><code>baseInfo</code> - データベース基本情報</dd>
-<dt>Returns:</dt>
-<dd>ヘッダー文字列</dd>
-</dl>
 </section>
 </li>
 <li>
@@ -313,8 +300,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">marker</span><wbr><span class="parameters">(boolean&nbsp;value)</span></div>
 <div class="block">真偽値を表のセルに表示するマーカー文字列へ変換するメソッド</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>value</code> - 真偽値</dd>
 <dt>Returns:</dt>
 <dd>真の場合は<code>○</code>、偽の場合は空文字</dd>
 </dl>

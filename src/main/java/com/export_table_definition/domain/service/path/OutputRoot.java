@@ -9,6 +9,5 @@ import java.nio.file.Path;
  * OutputPathResolver}へそのまま渡す。両者は常に対で必要とされるにもかかわらず、4層以上にわたって 分解・再構築されながら渡されていたため、1つの値オブジェクトにまとめた
  *
  * @param baseDir 出力先のベースディレクトリパス
- * @param baseInfo データベースの基本情報
  */
 public record OutputRoot(Path baseDir, BaseInfoEntity baseInfo) {}

@@ -24,9 +24,7 @@ public interface ExportSink {
   /**
    * スキーマ単位で取得した関数・プロシージャ（定義本体を含む）を書き出すメソッド
    *
-   * @param schemaName スキーマ名
    * @param functions 当該スキーマの関数・プロシージャ情報（定義本体を含む）のリスト
-   * @param baseInfo データベースの基本情報
    */
   void writeFunctionDefinitions(
       String schemaName, List<FunctionEntity> functions, BaseInfoEntity baseInfo);
@@ -34,9 +32,6 @@ public interface ExportSink {
   /**
    * スキーマ内のテーブル定義を書き出し始める前に呼ばれるメソッド<br>
    * 以降、当該スキーマのテーブルについて{@link #writeTableDefinition}がチャンク単位で繰り返し呼ばれる
-   *
-   * @param schemaName スキーマ名
-   * @param baseInfo データベースの基本情報
    */
   default void beginSchemaTables(String schemaName, BaseInfoEntity baseInfo) {}
 

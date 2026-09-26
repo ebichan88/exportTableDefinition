@@ -4,7 +4,6 @@ package com.export_table_definition.domain.model.target;
  * 出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報／観点）を突き合わせた結果の 指摘1件分を表す値オブジェクト<br>
  * リネーム・削除によるDBとサイドカーの乖離など、利用者が気付くべき事柄を表す。 突き合わせ自体はドメインサービスが行い、指摘をどこへ（ログ等）どう出力するかは呼び出し側が決める
  *
- * @param kind 指摘の種類
  * @param message 指摘の内容（利用者向けのメッセージ）
  */
 public record ConsistencyFinding(Kind kind, String message) {
@@ -36,30 +35,17 @@ public record ConsistencyFinding(Kind kind, String message) {
 
     private final Severity severity;
 
-    /**
-     * コンストラクタ
-     *
-     * @param severity 指摘の重要度
-     */
     Kind(Severity severity) {
       this.severity = severity;
     }
 
-    /**
-     * 指摘の重要度を返却するメソッド
-     *
-     * @return 指摘の重要度
-     */
+    /** 指摘の重要度を返却するメソッド */
     public Severity getSeverity() {
       return severity;
     }
   }
 
-  /**
-   * 指摘の重要度を返却するメソッド
-   *
-   * @return 指摘の重要度
-   */
+  /** 指摘の重要度を返却するメソッド */
   public Severity severity() {
     return kind.getSeverity();
   }
