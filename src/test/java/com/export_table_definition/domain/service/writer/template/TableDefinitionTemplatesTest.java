@@ -10,6 +10,7 @@ import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.util.List;
@@ -22,7 +23,7 @@ public class TableDefinitionTemplatesTest {
 
   private TableEntity newTable(
       String schema, String physical, String logical, String type, String def) {
-    return new TableEntity("TEST_DB", schema, logical, physical, type, def);
+    return new TableEntity("TEST_DB", schema, logical, physical, TableType.findByName(type), def);
   }
 
   @Test

@@ -6,6 +6,7 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -21,7 +22,7 @@ public class DefaultOutputPathResolverTest {
   private final OutputRoot root = new OutputRoot(baseDir, baseInfo);
 
   private TableEntity table(String schema, String physical, String tableType) {
-    return new TableEntity("testdb", schema, "", physical, tableType, "");
+    return new TableEntity("testdb", schema, "", physical, TableType.findByName(tableType), "");
   }
 
   @Test

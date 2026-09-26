@@ -273,7 +273,7 @@ public class ErDiagramTemplates {
             table.schemaName(),
             table.physicalTableName(),
             Objects.toString(table.logicalTableName(), ""),
-            table.tableType(),
+            table.tableType().getName(),
             MarkdownTemplateSupport.linkCell(
                 DocumentLocations.linkFromBase(
                     DocumentLocations.tableDefinitionFile(table.dbName(), table))))

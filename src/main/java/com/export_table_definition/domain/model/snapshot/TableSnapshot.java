@@ -64,7 +64,7 @@ public record TableSnapshot(
         table.schemaName(),
         table.physicalTableName(),
         text(table.logicalTableName()),
-        table.tableType(),
+        table.tableType().getName(),
         text(annotation.description()),
         text(annotation.remarks()),
         text(table.definition()),

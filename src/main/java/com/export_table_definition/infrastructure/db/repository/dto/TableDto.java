@@ -1,6 +1,7 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.TableType;
 
 /**
  * テーブル情報に関してORMのデータの受け渡しに利用するDTOクラス
@@ -18,12 +19,19 @@ public record TableDto(
     String definition) {
 
   /**
-   * DTOからEntityへの変換メソッド
+   * DTOからEntityへの変換メソッド<br>
+   * 区分はこの時点で{@link TableType}へ変換するため、未知の区分は読み込み時に検知される
    *
-   * @return AllTableEntityのインスタンス
+   * @return TableEntityのインスタンス
+   * @throws IllegalArgumentException 区分が未知の値の場合
    */
   public TableEntity toEntity() {
     return new TableEntity(
-        dbName, schemaName, logicalTableName, physicalTableName, tableType, definition);
+        dbName,
+        schemaName,
+        logicalTableName,
+        physicalTableName,
+        TableType.findByName(tableType),
+        definition);
   }
 }

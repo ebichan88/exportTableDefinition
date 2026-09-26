@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.collection.Indexes;
 import com.export_table_definition.domain.model.collection.Triggers;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
@@ -27,7 +28,7 @@ import org.junit.jupiter.api.Test;
 public class TableDefinitionContentTest {
 
   private TableEntity newTable(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "");
+    return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");
   }
 
   @Test

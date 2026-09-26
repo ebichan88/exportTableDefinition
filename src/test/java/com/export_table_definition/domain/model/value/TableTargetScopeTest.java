@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.*;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.TableType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -18,7 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 class TableTargetScopeTest {
 
   private static TableEntity table() {
-    return new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", "table", "");
+    return new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", TableType.TABLE, "");
   }
 
   @Nested

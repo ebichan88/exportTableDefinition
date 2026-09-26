@@ -93,7 +93,7 @@ public class TableDefinitionListTemplates {
             table.schemaName(),
             MarkdownTemplateSupport.escapeTableCell(table.logicalTableName()),
             table.physicalTableName(),
-            table.tableType(),
+            table.tableType().getName(),
             tableDefinitionLink(table))
         + LINE_SEPARATOR;
   }

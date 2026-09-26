@@ -3,6 +3,7 @@ package com.export_table_definition.domain.model.value;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.TableType;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ public class TableKeyTest {
   @Test
   @DisplayName("of(TableEntity): スキーマ名・物理テーブル名からTableKeyを生成する")
   void testOfWithTableEntity() {
-    TableEntity table = new TableEntity("testdb", "public", "受注", "orders", "table", "");
+    TableEntity table = new TableEntity("testdb", "public", "受注", "orders", TableType.TABLE, "");
     TableKey key = TableKey.of(table);
     assertEquals(new TableKey("public", "orders"), key);
   }
@@ -29,8 +30,8 @@ public class TableKeyTest {
   @Test
   @DisplayName("of(TableEntity): 論理テーブル名やDB名の違いはキーに影響しない")
   void testOfWithTableEntityIgnoresLogicalNameAndDbName() {
-    TableEntity a = new TableEntity("db1", "public", "論理名A", "orders", "table", "");
-    TableEntity b = new TableEntity("db2", "public", "論理名B", "orders", "view", "");
+    TableEntity a = new TableEntity("db1", "public", "論理名A", "orders", TableType.TABLE, "");
+    TableEntity b = new TableEntity("db2", "public", "論理名B", "orders", TableType.VIEW, "");
     assertEquals(TableKey.of(a), TableKey.of(b));
   }
 

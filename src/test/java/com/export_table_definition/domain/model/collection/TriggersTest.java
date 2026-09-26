@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.testsupport.EntityFixtures;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 public class TriggersTest {
 
   private TableEntity newTable(String schema, String physical) {
-    return new TableEntity("TEST_DB", schema, "", physical, "table", "");
+    return new TableEntity("TEST_DB", schema, "", physical, TableType.TABLE, "");
   }
 
   @Test

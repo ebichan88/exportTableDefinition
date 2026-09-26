@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
@@ -83,7 +84,7 @@ public class TableDefinitionWriterDomainServiceTest {
   }
 
   private TableEntity table(String physical) {
-    return new TableEntity("testdb", "public", "受注", physical, "table", "");
+    return new TableEntity("testdb", "public", "受注", physical, TableType.TABLE, "");
   }
 
   @BeforeEach

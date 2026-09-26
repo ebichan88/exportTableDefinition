@@ -7,6 +7,7 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.util.LinkedHashMap;
@@ -23,7 +24,7 @@ public class ErDiagramTemplatesTest {
   }
 
   private TableEntity newTable(String schema, String physical, String logical) {
-    return new TableEntity("TEST_DB", schema, logical, physical, "table", "");
+    return new TableEntity("TEST_DB", schema, logical, physical, TableType.TABLE, "");
   }
 
   private ForeignKeyEntity newFk(

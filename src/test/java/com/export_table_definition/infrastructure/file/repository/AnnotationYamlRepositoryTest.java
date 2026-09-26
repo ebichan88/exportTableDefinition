@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.RelationType;
+import com.export_table_definition.domain.model.type.TableType;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -23,7 +24,7 @@ public class AnnotationYamlRepositoryTest {
   private final AnnotationYamlRepository repository = new AnnotationYamlRepository();
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "");
+    return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");
   }
 
   private Path writeYaml(Path dir, String content) throws IOException {

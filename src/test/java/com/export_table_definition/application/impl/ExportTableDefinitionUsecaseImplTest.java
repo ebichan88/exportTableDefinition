@@ -21,6 +21,7 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -239,7 +240,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "");
+    return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");
   }
 
   private String contentOf(Path path) {

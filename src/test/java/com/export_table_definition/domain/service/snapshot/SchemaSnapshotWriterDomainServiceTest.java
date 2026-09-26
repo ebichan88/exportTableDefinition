@@ -9,6 +9,7 @@ import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
@@ -87,7 +88,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   private TableDefinitionContent tableContent(String schema, String table, String column) {
     return new TableDefinitionContent(
         BASE_INFO,
-        new TableEntity("testdb", schema, "", table, "table", ""),
+        new TableEntity("testdb", schema, "", table, TableType.TABLE, ""),
         List.of(EntityFixtures.column(schema, table, column, "integer", true)),
         List.of(),
         List.of(),

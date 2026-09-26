@@ -53,15 +53,14 @@ public enum TableType {
   }
 
   /**
-   * 指定された文字列がビュータイプかどうかを判定する
+   * view または materialized viewであるか判定するメソッド
    *
-   * @param raw 判定対象の文字列
-   * @return ビュータイプの場合はtrue、そうでない場合はfalse
+   * @return view または materialized viewの場合はtrue、それ以外の場合はfalse
    */
-  public static boolean isViewType(String raw) {
-    return switch (findByName(raw)) {
+  public boolean isView() {
+    return switch (this) {
       case VIEW, MATERIALIZED_VIEW -> true;
-      default -> false;
+      case TABLE -> false;
     };
   }
 }

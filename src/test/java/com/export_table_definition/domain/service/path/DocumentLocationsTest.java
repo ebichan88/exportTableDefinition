@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.type.TableType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +46,7 @@ public class DocumentLocationsTest {
   @Test
   @DisplayName("tableDefinitionFile/schemaObjectFile: {DB名}/{スキーマ名}/{区分}/{名前}.md")
   void testDefinitionFiles() {
-    var table = new TableEntity("testdb", "public", "", "orders", "view", "");
+    var table = new TableEntity("testdb", "public", "", "orders", TableType.VIEW, "");
     assertEquals(
         "testdb/public/view/orders.md", DocumentLocations.tableDefinitionFile("testdb", table));
     assertEquals(

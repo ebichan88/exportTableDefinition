@@ -96,7 +96,7 @@ public final class DocumentLocations {
         PATH_SEPARATOR,
         dbName,
         table.schemaName(),
-        table.tableType(),
+        table.tableType().getName(),
         table.physicalTableName() + MARKDOWN_EXTENSION);
   }
 

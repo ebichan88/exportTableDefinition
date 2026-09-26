@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ public class ExportTargetConsistencyDomainServiceTest {
       new ExportTargetConsistencyDomainService();
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "");
+    return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");
   }
 
   private List<String> names(List<ForeignKeyEntity> foreignKeys) {

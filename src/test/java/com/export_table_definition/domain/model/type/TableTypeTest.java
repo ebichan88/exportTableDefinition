@@ -41,27 +41,21 @@ public class TableTypeTest {
   }
 
   @Test
-  @DisplayName("isViewType: 'table' はfalse")
-  void testIsViewTypeTable() {
-    assertFalse(TableType.isViewType("table"));
+  @DisplayName("isView: TABLEはfalse")
+  void testIsViewTable() {
+    assertFalse(TableType.TABLE.isView());
   }
 
   @Test
-  @DisplayName("isViewType: 'view' はtrue")
-  void testIsViewTypeView() {
-    assertTrue(TableType.isViewType("view"));
+  @DisplayName("isView: VIEWはtrue")
+  void testIsViewView() {
+    assertTrue(TableType.VIEW.isView());
   }
 
   @Test
-  @DisplayName("isViewType: 'materialized_view' はtrue")
-  void testIsViewTypeMaterializedView() {
-    assertTrue(TableType.isViewType("materialized_view"));
-  }
-
-  @Test
-  @DisplayName("isViewType: 未知の値の場合はIllegalArgumentExceptionをスローする")
-  void testIsViewTypeUnknownThrows() {
-    assertThrows(IllegalArgumentException.class, () -> TableType.isViewType("unknown"));
+  @DisplayName("isView: MATERIALIZED_VIEWはtrue")
+  void testIsViewMaterializedView() {
+    assertTrue(TableType.MATERIALIZED_VIEW.isView());
   }
 
   @Test

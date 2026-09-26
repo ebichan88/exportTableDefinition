@@ -87,7 +87,7 @@ public class TableDefinitionTemplates {
             table.schemaName(),
             MarkdownTemplateSupport.escapeTableCell(table.logicalTableName()),
             table.physicalTableName(),
-            table.tableType(),
+            table.tableType().getName(),
             MarkdownTemplateSupport.escapeTableCell(annotation.remarks()))
         + LINE_SEPARATOR_DOUBLE;
   }

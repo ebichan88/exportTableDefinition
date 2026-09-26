@@ -21,7 +21,7 @@ public record TableEntity(
     String schemaName,
     String logicalTableName,
     String physicalTableName,
-    String tableType,
+    TableType tableType,
     String definition) {
 
   /**
@@ -49,9 +49,9 @@ public record TableEntity(
   /**
    * view または materialized viewであるか判定するメソッド
    *
-   * @return view または materialized viewの場合はture。それ以外の場合はfalseを返却
+   * @return view または materialized viewの場合はtrue。それ以外の場合はfalseを返却
    */
   public boolean isView() {
-    return TableType.isViewType(this.tableType);
+    return tableType.isView();
   }
 }

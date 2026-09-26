@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.testsupport.MarkdownAssert;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,7 @@ public class TableDefinitionListTemplatesTest {
   }
 
   private TableEntity newEntity(String schema, String physical, String logical) {
-    return new TableEntity("TEST_DB", schema, logical, physical, "table", "");
+    return new TableEntity("TEST_DB", schema, logical, physical, TableType.TABLE, "");
   }
 
   @Test
