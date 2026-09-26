@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.testsupport.EntityFixtures;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ public class TriggersTest {
   @Test
   @DisplayName("of: 該当するトリガーがないテーブルには空リストを返す")
   void testOfReturnsEmptyForUnknownTable() {
-    var triggers = Triggers.of(List.of(new TriggerEntity("public", "orders")));
+    var triggers = Triggers.of(List.of(EntityFixtures.trigger("public", "orders")));
 
     assertEquals(List.of(), triggers.of(newTable("public", "unknown")));
   }
@@ -41,8 +42,8 @@ public class TriggersTest {
   @Test
   @DisplayName("of: 同名テーブルでもスキーマが異なれば別のキーとして扱う")
   void testOfDistinguishesSameTableNameAcrossSchemas() {
-    var publicTrigger = new TriggerEntity("public", "orders");
-    var salesTrigger = new TriggerEntity("sales", "orders");
+    var publicTrigger = EntityFixtures.trigger("public", "orders");
+    var salesTrigger = EntityFixtures.trigger("sales", "orders");
     var triggers = Triggers.of(List.of(publicTrigger, salesTrigger));
 
     assertEquals(List.of(publicTrigger), triggers.of(newTable("public", "orders")));

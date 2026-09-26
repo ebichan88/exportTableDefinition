@@ -24,16 +24,4 @@ public record IndexEntity(
     boolean isPrimary,
     String indexDefinition,
     String remarks)
-    implements SchemaTableKeyed {
-
-  /**
-   * スキーマ名・テーブル名のみを持つインデックスを生成するコンストラクタ<br>
-   * テーブルへの紐付けのみを参照し、表示内容を参照しない呼び出し元向けの簡易コンストラクタ
-   *
-   * @param schemaName スキーマ名
-   * @param tableName テーブル名
-   */
-  public IndexEntity(String schemaName, String tableName) {
-    this(schemaName, tableName, "", "", false, false, "", "");
-  }
-}
+    implements SchemaTableKeyed {}

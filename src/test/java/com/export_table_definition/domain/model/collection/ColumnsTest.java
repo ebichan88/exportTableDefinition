@@ -2,8 +2,8 @@ package com.export_table_definition.domain.model.collection;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.testsupport.EntityFixtures;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,9 +18,9 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 自テーブルに属するカラムのみを、登録順を保って返す")
   void testOfReturnsOwnColumnsInOrder() {
-    var id = new ColumnEntity("public", "orders", "id", "int", true);
-    var name = new ColumnEntity("public", "orders", "name", "varchar", false);
-    var other = new ColumnEntity("public", "customers", "id", "int", true);
+    var id = EntityFixtures.column("public", "orders", "id", "int", true);
+    var name = EntityFixtures.column("public", "orders", "name", "varchar", false);
+    var other = EntityFixtures.column("public", "customers", "id", "int", true);
     var columns = Columns.of(List.of(id, name, other));
 
     assertEquals(List.of(id, name), columns.of(newTable("public", "orders")));
@@ -29,7 +29,7 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 該当するカラムがないテーブルには空リストを返す")
   void testOfReturnsEmptyForUnknownTable() {
-    var columns = Columns.of(List.of(new ColumnEntity("public", "orders", "id", "int", true)));
+    var columns = Columns.of(List.of(EntityFixtures.column("public", "orders", "id", "int", true)));
 
     assertEquals(List.of(), columns.of(newTable("public", "unknown")));
   }
@@ -37,8 +37,8 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 同名テーブルでもスキーマが異なれば別のキーとして扱う")
   void testOfDistinguishesSameTableNameAcrossSchemas() {
-    var publicCol = new ColumnEntity("public", "orders", "id", "int", true);
-    var salesCol = new ColumnEntity("sales", "orders", "id", "int", true);
+    var publicCol = EntityFixtures.column("public", "orders", "id", "int", true);
+    var salesCol = EntityFixtures.column("sales", "orders", "id", "int", true);
     var columns = Columns.of(List.of(publicCol, salesCol));
 
     assertEquals(List.of(publicCol), columns.of(newTable("public", "orders")));
@@ -48,9 +48,9 @@ public class ColumnsTest {
   @Test
   @DisplayName("of: 入力リストで他テーブルの行と入り交じっていても、同一テーブルの行は集約される")
   void testOfAggregatesInterleavedRows() {
-    var ordersId = new ColumnEntity("public", "orders", "id", "int", true);
-    var customersId = new ColumnEntity("public", "customers", "id", "int", true);
-    var ordersName = new ColumnEntity("public", "orders", "name", "varchar", false);
+    var ordersId = EntityFixtures.column("public", "orders", "id", "int", true);
+    var customersId = EntityFixtures.column("public", "customers", "id", "int", true);
+    var ordersName = EntityFixtures.column("public", "orders", "name", "varchar", false);
     var columns = Columns.of(List.of(ordersId, customersId, ordersName));
 
     assertEquals(List.of(ordersId, ordersName), columns.of(newTable("public", "orders")));

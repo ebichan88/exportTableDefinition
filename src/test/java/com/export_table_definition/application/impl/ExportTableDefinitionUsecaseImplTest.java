@@ -37,6 +37,7 @@ import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
+import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -263,7 +264,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "t1"));
     repository.tables.add(table("public", "t2"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
+    repository.columns.add(EntityFixtures.column("public", "t1", "id", "int", true));
     repository.triggers.add(
         new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
     repository.functions.add(
@@ -323,7 +324,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testOutputObjectListRestrictsToSpecifiedTypes() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
+    repository.columns.add(EntityFixtures.column("public", "t1", "id", "int", true));
     repository.triggers.add(
         new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
     repository.functions.add(
@@ -862,7 +863,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testExportWritesSnapshotAlongsideMarkdown() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
+    repository.columns.add(EntityFixtures.column("public", "t1", "id", "int", true));
     repository.functions.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", ""));
     repository.functionDefs.add(
@@ -971,7 +972,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testCheckSnapshotDiffNoDifference() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.columns.add(new ColumnEntity("public", "t1", "id", "int", true));
+    repository.columns.add(EntityFixtures.column("public", "t1", "id", "int", true));
     exportCommitted();
 
     // 実行日（作成日）が変わった状態で比較する
@@ -987,13 +988,13 @@ public class ExportTableDefinitionUsecaseImplTest {
     setUp();
     repository.tables.add(table("public", "changed"));
     repository.tables.add(table("public", "dropped"));
-    repository.columns.add(new ColumnEntity("public", "changed", "id", "int", true));
+    repository.columns.add(EntityFixtures.column("public", "changed", "id", "int", true));
     exportCommitted();
 
     repository.tables.clear();
     repository.tables.add(table("public", "added"));
     repository.tables.add(table("public", "changed"));
-    repository.columns.add(new ColumnEntity("public", "changed", "name", "text", false));
+    repository.columns.add(EntityFixtures.column("public", "changed", "name", "text", false));
     final DiffResult result = checkSnapshotDiff();
 
     assertEquals(List.of("table public.added"), result.onlyInGenerated());

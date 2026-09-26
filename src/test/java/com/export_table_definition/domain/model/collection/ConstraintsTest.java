@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.testsupport.EntityFixtures;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ public class ConstraintsTest {
   @Test
   @DisplayName("of: 該当する制約がないテーブルには空リストを返す")
   void testOfReturnsEmptyForUnknownTable() {
-    var constraints = Constraints.of(List.of(new ConstraintEntity("public", "orders")));
+    var constraints = Constraints.of(List.of(EntityFixtures.constraint("public", "orders")));
 
     assertEquals(List.of(), constraints.of(newTable("public", "unknown")));
   }
@@ -38,8 +39,8 @@ public class ConstraintsTest {
   @Test
   @DisplayName("of: 同名テーブルでもスキーマが異なれば別のキーとして扱う")
   void testOfDistinguishesSameTableNameAcrossSchemas() {
-    var publicConstraint = new ConstraintEntity("public", "orders");
-    var salesConstraint = new ConstraintEntity("sales", "orders");
+    var publicConstraint = EntityFixtures.constraint("public", "orders");
+    var salesConstraint = EntityFixtures.constraint("sales", "orders");
     var constraints = Constraints.of(List.of(publicConstraint, salesConstraint));
 
     assertEquals(List.of(publicConstraint), constraints.of(newTable("public", "orders")));

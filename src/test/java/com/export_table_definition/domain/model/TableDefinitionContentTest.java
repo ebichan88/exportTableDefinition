@@ -12,12 +12,9 @@ import com.export_table_definition.domain.model.collection.ForeignKeys;
 import com.export_table_definition.domain.model.collection.Indexes;
 import com.export_table_definition.domain.model.collection.Triggers;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.value.TableKey;
+import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -39,16 +36,16 @@ public class TableDefinitionContentTest {
     var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
     var target = newTable("public", "orders");
 
-    var ownColumn = new ColumnEntity("public", "orders", "id", "int", true);
-    var otherColumn = new ColumnEntity("public", "customers", "id", "int", true);
+    var ownColumn = EntityFixtures.column("public", "orders", "id", "int", true);
+    var otherColumn = EntityFixtures.column("public", "customers", "id", "int", true);
     var columns = Columns.of(List.of(ownColumn, otherColumn));
 
-    var ownIndex = new IndexEntity("public", "orders");
-    var indexes = Indexes.of(List.of(ownIndex, new IndexEntity("public", "customers")));
+    var ownIndex = EntityFixtures.index("public", "orders");
+    var indexes = Indexes.of(List.of(ownIndex, EntityFixtures.index("public", "customers")));
 
-    var ownConstraint = new ConstraintEntity("public", "orders");
+    var ownConstraint = EntityFixtures.constraint("public", "orders");
     var constraints =
-        Constraints.of(List.of(ownConstraint, new ConstraintEntity("public", "customers")));
+        Constraints.of(List.of(ownConstraint, EntityFixtures.constraint("public", "customers")));
 
     var outgoingFk =
         ForeignKeyFixtures.physical(
@@ -57,8 +54,8 @@ public class TableDefinitionContentTest {
         ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var foreignKeys = ForeignKeys.of(List.of(outgoingFk, incomingFk));
 
-    var ownTrigger = new TriggerEntity("public", "orders");
-    var triggers = Triggers.of(List.of(ownTrigger, new TriggerEntity("public", "customers")));
+    var ownTrigger = EntityFixtures.trigger("public", "orders");
+    var triggers = Triggers.of(List.of(ownTrigger, EntityFixtures.trigger("public", "customers")));
 
     var ownAnnotation = new TableAnnotation("受注テーブル", "備考", java.util.Map.of("id", "主キー"));
     var annotations =

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.TableDefinitionContent;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -14,6 +13,7 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
+import com.export_table_definition.testsupport.EntityFixtures;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -88,7 +88,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
     return new TableDefinitionContent(
         BASE_INFO,
         new TableEntity("testdb", schema, "", table, "table", ""),
-        List.of(new ColumnEntity(schema, table, column, "integer", true)),
+        List.of(EntityFixtures.column(schema, table, column, "integer", true)),
         List.of(),
         List.of(),
         List.of(),
