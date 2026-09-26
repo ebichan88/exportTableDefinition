@@ -2,6 +2,7 @@ package com.export_table_definition.domain.model.value;
 
 import com.export_table_definition.domain.model.entity.TableEntity;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト<br>
@@ -23,7 +24,8 @@ public final class TableTargetScope {
   }
 
   /**
-   * テーブル定義出力対象のスキーマ・テーブルのリストから{@link TableTargetScope}を生成する静的ファクトリメソッド
+   * テーブル定義出力対象のスキーマ・テーブルのリストから{@link TableTargetScope}を生成する静的ファクトリメソッド<br>
+   * スキーマ名は前後の空白を除去し、空要素を除く
    *
    * @param targetSchemaList テーブル定義出力対象のスキーマのリスト（未指定の場合は空リストまたはnull）
    * @param targetTableList テーブル定義出力対象のテーブルのリスト（ワイルドカード・除外・スキーマ修飾を指定可。 未指定の場合は空リストまたはnull）
@@ -31,8 +33,24 @@ public final class TableTargetScope {
    */
   public static TableTargetScope of(List<String> targetSchemaList, List<String> targetTableList) {
     return new TableTargetScope(
-        targetSchemaList == null ? List.of() : List.copyOf(targetSchemaList),
+        targetSchemaList == null
+            ? List.of()
+            : targetSchemaList.stream()
+                .filter(Objects::nonNull)
+                .map(String::strip)
+                .filter(schemaName -> !schemaName.isEmpty())
+                .toList(),
         TableTargetFilter.of(targetTableList));
+  }
+
+  /**
+   * 出力対象として指定されたスキーマ名のリストを取得するメソッド<br>
+   * DBからの取得をスキーマ単位でSQL側で絞り込むために用いる（テーブル単位の絞り込みは{@link #matches}で行う）
+   *
+   * @return スキーマ名のリスト。未指定の場合は空リスト（全スキーマが対象）
+   */
+  public List<String> schemaNames() {
+    return targetSchemaList;
   }
 
   /**

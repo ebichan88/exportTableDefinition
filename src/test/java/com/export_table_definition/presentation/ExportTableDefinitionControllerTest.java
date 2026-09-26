@@ -53,7 +53,7 @@ public class ExportTableDefinitionControllerTest {
       String annotationPath,
       boolean rmDist) {
     return new ExportRequest(
-        new TargetSelection(schemaList, tableList, outputObjectList, annotationPath),
+        TargetSelection.of(schemaList, tableList, outputObjectList, annotationPath),
         outputPath,
         chunkSize,
         erDiagramMaxNodes,
@@ -68,7 +68,7 @@ public class ExportTableDefinitionControllerTest {
       List<String> outputObjectList,
       String annotationPath) {
     return new CheckDiffRequest(
-        new TargetSelection(schemaList, tableList, outputObjectList, annotationPath),
+        TargetSelection.of(schemaList, tableList, outputObjectList, annotationPath),
         outputPath,
         chunkSize);
   }

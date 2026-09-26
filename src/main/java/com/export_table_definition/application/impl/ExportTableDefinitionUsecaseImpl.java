@@ -101,10 +101,17 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // ベースディレクトリパス取得
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     if (request.rmDist()) {
+      // 削除してよい出力先かは、DBへの問い合わせより前に判定する（設定誤りに早く気付けるようにするため）
+      requireRemovableOutputBaseDir(outputBaseDir);
+    }
+    final ExportTargets targets = fetchTargets(request.targetSelection());
+    if (request.rmDist()) {
+      // 削除は一括取得（サイドカーの読み込みを含む）に成功してから行う。
+      // 取得に失敗した場合に、既存の出力だけが削除されて何も残らない状態にしないため
       removeOutputBaseDir(outputBaseDir);
     }
     export(
-        fetchTargets(request.targetSelection()),
+        targets,
         List.of(
             markdownSinkFactory.create(outputBaseDir, request.erDiagramMaxNodes()),
             snapshotSinkFactory.create(outputBaseDir)),
@@ -137,17 +144,15 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @return 一括取得した出力対象の情報
    */
   private ExportTargets fetchTargets(TargetSelection targetSelection) {
-    final List<String> targetSchemaList = targetSelection.targetSchemaList();
-    final List<String> targetTableList = targetSelection.targetTableList();
+    // スキーマ・テーブルの絞り込み条件（入口で1回だけ組み立て済み。テーブルごとにワイルドカードパターンを解析し直さない）
+    final TableTargetScope targetScope = targetSelection.targetScope();
+    final List<String> targetSchemaList = targetScope.schemaNames();
+    final boolean isFiltered = targetScope.isFiltered();
     // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
-    final Set<OutputObjectType> outputObjectTypes =
-        OutputObjectType.parse(targetSelection.outputObjectList());
+    final Set<OutputObjectType> outputObjectTypes = targetSelection.outputObjectTypes();
     // サイドカーYAML（手動付帯情報・論理リレーション）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
     final Sidecar sidecar = annotationRepository.load(targetSelection.annotationPath());
     final Annotations annotations = sidecar.annotations();
-    // スキーマ・テーブルの絞り込み条件を1回だけ組み立てる（テーブルごとにワイルドカードパターンを解析し直さない）
-    final TableTargetScope targetScope = TableTargetScope.of(targetSchemaList, targetTableList);
-    final boolean isFiltered = targetScope.isFiltered();
 
     // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する。
     // targetTableListにはワイルドカード（*）・除外（!）・スキーマ修飾（schema.table）を指定できるため、
@@ -237,22 +242,33 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   }
 
   /**
-   * {@code --rm-dist}指定時に、出力先ベースディレクトリを事前に削除するメソッド<br>
-   * 削除されたテーブル等の残骸ファイルを残さないため、書き込み前にディレクトリごと削除する。 ルート・ホームディレクトリ・カレントディレクトリ自体など、設定誤りによる被害が甚大な
-   * パスを解決した場合は削除を拒否する
+   * {@code --rm-dist}で削除してよい出力先ベースディレクトリか判定し、削除してはならない場合は例外をスローするメソッド<br>
+   * ルート・ホームディレクトリ・カレントディレクトリ自体など、設定誤りによる被害が甚大なパスを解決した場合は削除を拒否する
    *
    * @param outputBaseDir 出力先ベースディレクトリ
+   * @throws IllegalStateException 削除してはならないディレクトリの場合
    */
-  private void removeOutputBaseDir(Path outputBaseDir) {
-    final Path absolute = outputBaseDir.toAbsolutePath().normalize();
+  private void requireRemovableOutputBaseDir(Path outputBaseDir) {
     if (!outputPathResolver.isRemovableOutputDir(outputBaseDir)) {
       throw new IllegalStateException(
           "Refusing to run --rm-dist because outputPath resolves to an unsafe directory. "
               + "[outputBaseDir="
-              + absolute
+              + outputBaseDir.toAbsolutePath().normalize()
               + "]");
     }
-    logger.info("Removing existing output directory before export. [outputBaseDir={}]", absolute);
+  }
+
+  /**
+   * {@code --rm-dist}指定時に、出力先ベースディレクトリを書き込み前に削除するメソッド<br>
+   * 削除されたテーブル等の残骸ファイルを残さないため、書き込み前にディレクトリごと削除する。 削除してよいディレクトリかは{@link
+   * #requireRemovableOutputBaseDir}で判定済みであること
+   *
+   * @param outputBaseDir 出力先ベースディレクトリ
+   */
+  private void removeOutputBaseDir(Path outputBaseDir) {
+    logger.info(
+        "Removing existing output directory before export. [outputBaseDir={}]",
+        outputBaseDir.toAbsolutePath().normalize());
     fileRepository.deleteDirectory(outputBaseDir);
   }
 

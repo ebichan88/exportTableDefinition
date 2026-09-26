@@ -139,5 +139,32 @@ class TableTargetScopeTest {
     void testIsFilteredTrueWhenOnlyTableSpecified() {
       assertTrue(TableTargetScope.of(List.of(), List.of("testTable")).isFiltered());
     }
+
+    @Test
+    @DisplayName("isFiltered: 空白のみのスキーマ名は指定されていないものとみなす")
+    void testIsFilteredFalseWhenSchemaIsBlank() {
+      assertFalse(TableTargetScope.of(List.of(" "), List.of()).isFiltered());
+    }
+  }
+
+  @Nested
+  class testSchemaNames {
+
+    @Test
+    @DisplayName("schemaNames: 前後の空白を除去し、空要素を除いたスキーマ名を返す")
+    void testSchemaNamesAreStripped() {
+      // 「schema=public, test_schema」のようにカンマの後へ空白を入れた場合を想定する
+      TableTargetScope scope =
+          TableTargetScope.of(Arrays.asList("public", " test_schema", ""), null);
+
+      assertEquals(List.of("public", "test_schema"), scope.schemaNames());
+      assertTrue(scope.matches(table()));
+    }
+
+    @Test
+    @DisplayName("schemaNames: 未指定の場合は空リストを返す")
+    void testSchemaNamesEmptyWhenNotSpecified() {
+      assertEquals(List.of(), TableTargetScope.of(null, List.of("testTable")).schemaNames());
+    }
   }
 }

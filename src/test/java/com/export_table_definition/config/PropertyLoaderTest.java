@@ -33,10 +33,10 @@ public class PropertyLoaderTest {
   }
 
   @Test
-  @DisplayName("getList: カンマ区切りの値を分割し、空要素のみ除去する（前後の空白はトリムしない）")
-  void testGetListSplitsCommaSeparatedAndRemovesBlankElementsOnly() {
+  @DisplayName("getList: カンマ区切りの値を分割し、各要素の前後の空白を除去して空要素を除く")
+  void testGetListSplitsCommaSeparatedAndStripsElements() {
     assertEquals(
-        List.of("alpha", "beta", " gamma ", "delta"), PropertyLoader.getList(FIXTURE, "csvValue"));
+        List.of("alpha", "beta", "gamma", "delta"), PropertyLoader.getList(FIXTURE, "csvValue"));
   }
 
   @Test

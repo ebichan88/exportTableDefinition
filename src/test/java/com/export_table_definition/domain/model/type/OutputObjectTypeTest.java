@@ -40,6 +40,21 @@ public class OutputObjectTypeTest {
   }
 
   @Test
+  @DisplayName("parse: 前後の空白を除去して解釈し、空要素は無視する")
+  void testParseStripsNames() {
+    // 「outputObjects=trigger, function」のようにカンマの後へ空白を入れた場合を想定する
+    final Set<OutputObjectType> result =
+        OutputObjectType.parse(List.of("trigger", " function ", ""));
+    assertEquals(Set.of(OutputObjectType.TRIGGER, OutputObjectType.FUNCTION), result);
+  }
+
+  @Test
+  @DisplayName("parse: 空白のみの要素しかない場合は全種別を返す")
+  void testParseBlankOnlyReturnsAllTypes() {
+    assertEquals(EnumSet.allOf(OutputObjectType.class), OutputObjectType.parse(List.of(" ")));
+  }
+
+  @Test
   @DisplayName("parse: 未知の値が含まれる場合はIllegalArgumentExceptionをスローする")
   void testParseUnknownThrows() {
     assertThrows(

@@ -31,6 +31,16 @@ public class TableTargetFilterTest {
   }
 
   @Test
+  @DisplayName("of: 前後に空白があっても、除外パターンは除外として解釈される")
+  void testExcludePatternWithSurroundingSpaces() {
+    // 「table=!flyway_schema_history, !tmp_*」のようにカンマの後へ空白を入れた場合を想定する
+    TableTargetFilter filter = TableTargetFilter.of(List.of("!flyway_schema_history", " !tmp_* "));
+    assertTrue(filter.matches("public", "employee"));
+    assertFalse(filter.matches("public", "tmp_work"));
+    assertFalse(filter.matches("public", "flyway_schema_history"));
+  }
+
+  @Test
   @DisplayName("matches: 完全一致パターンは同名のテーブルのみに一致する")
   void testMatchesExactPattern() {
     TableTargetFilter filter = TableTargetFilter.of(List.of("employee"));

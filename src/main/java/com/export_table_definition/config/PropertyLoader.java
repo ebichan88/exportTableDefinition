@@ -44,14 +44,19 @@ public class PropertyLoader {
   }
 
   /**
-   * プロパティファイルの読み込みを行うメソッド（カンマ区切りの値をリストで取得）
+   * プロパティファイルの読み込みを行うメソッド（カンマ区切りの値をリストで取得）<br>
+   * 各要素の前後の空白は除去する。{@code schema=public, sample}のようにカンマの後に空白を入れた場合に、 {@code "
+   * sample"}が別の名前として扱われ、対象から黙って外れてしまうことを防ぐため
    *
    * @param fileName プロパティファイルのファイル名
    * @param key 取得するキー
-   * @return キーに対応するカンマ区切りの値を分割したリスト
+   * @return キーに対応するカンマ区切りの値を分割し、前後の空白を除去したリスト（空要素は含めない）
    */
   public static List<String> getList(String fileName, String key) {
-    return Arrays.stream(getString(fileName, key).split(",")).filter(s -> !s.isBlank()).toList();
+    return Arrays.stream(getString(fileName, key).split(","))
+        .map(String::strip)
+        .filter(s -> !s.isEmpty())
+        .toList();
   }
 
   /**

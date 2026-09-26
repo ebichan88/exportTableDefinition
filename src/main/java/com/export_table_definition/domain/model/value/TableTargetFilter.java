@@ -36,7 +36,8 @@ public final class TableTargetFilter {
   }
 
   /**
-   * 生のパターン文字列のリストから{@link TableTargetFilter}を生成する静的ファクトリメソッド
+   * 生のパターン文字列のリストから{@link TableTargetFilter}を生成する静的ファクトリメソッド<br>
+   * 各パターンは前後の空白を除去してから解釈する（除外の{@code !}の判定も空白を除去した後に行う）
    *
    * @param rawPatterns {@code table=}に指定されたパターン文字列のリスト
    * @return 生成したフィルター
@@ -51,8 +52,9 @@ public final class TableTargetFilter {
       if (rawPattern == null || rawPattern.isBlank()) {
         continue;
       }
-      final boolean negate = rawPattern.startsWith(EXCLUDE_PREFIX);
-      final String pattern = negate ? rawPattern.substring(EXCLUDE_PREFIX.length()) : rawPattern;
+      final String stripped = rawPattern.strip();
+      final boolean negate = stripped.startsWith(EXCLUDE_PREFIX);
+      final String pattern = negate ? stripped.substring(EXCLUDE_PREFIX.length()) : stripped;
       (negate ? excludes : includes).add(Entry.parse(pattern));
     }
     return new TableTargetFilter(List.copyOf(includes), List.copyOf(excludes));

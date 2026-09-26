@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.model.type;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -59,18 +60,20 @@ public enum OutputObjectType {
 
   /**
    * 設定ファイルから読み込んだ出力対象オブジェクト種別名のリストから、出力を有効化する種別の集合を解決する。<br>
-   * 指定が空の場合は、すべての種別を出力対象とする。
+   * 種別名は前後の空白を除去して解釈し、空要素は無視する。指定が空の場合は、すべての種別を出力対象とする。
    *
    * @param rawList 出力対象オブジェクト種別名のリスト（{@link #getName()}の値。空の場合は全種別を対象とみなす）
-   * @return 出力を有効化する種別の集合
+   * @return 出力を有効化する種別の集合（変更不可）
    * @throws IllegalArgumentException 未知の種別名が含まれる場合にthrowする。
    */
   public static Set<OutputObjectType> parse(List<String> rawList) {
-    if (rawList.isEmpty()) {
-      return EnumSet.allOf(OutputObjectType.class);
+    final List<String> names =
+        rawList.stream().map(String::strip).filter(name -> !name.isEmpty()).toList();
+    if (names.isEmpty()) {
+      return Collections.unmodifiableSet(EnumSet.allOf(OutputObjectType.class));
     }
     final EnumSet<OutputObjectType> result = EnumSet.noneOf(OutputObjectType.class);
-    rawList.stream().map(OutputObjectType::findByName).forEach(result::add);
-    return result;
+    names.stream().map(OutputObjectType::findByName).forEach(result::add);
+    return Collections.unmodifiableSet(result);
   }
 }
