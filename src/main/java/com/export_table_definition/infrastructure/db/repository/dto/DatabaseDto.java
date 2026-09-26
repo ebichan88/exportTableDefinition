@@ -7,9 +7,6 @@ import com.export_table_definition.domain.model.database.DatabaseEntity;
  *
  * @param dbName データベース名
  * @param dbmsName DBMS種別（PostgreSQL/Oracle）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record DatabaseDto(String dbName, String dbmsName) {
   /**

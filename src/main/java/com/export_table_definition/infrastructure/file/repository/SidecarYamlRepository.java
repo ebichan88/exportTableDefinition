@@ -55,48 +55,31 @@ import org.yaml.snakeyaml.error.YAMLException;
  *     description: 観点の説明（複数行可）
  *     tables: [sales.order*, sales.customer, "!sales.order_bk"]
  * </pre>
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class SidecarYamlRepository implements SidecarRepository {
 
   private static final Logger logger = LogManager.getLogger(SidecarYamlRepository.class);
 
-  /** YAMLのトップレベルキー（テーブルごとの付帯情報を束ねる） */
   private static final String KEY_TABLES = "tables";
-
   private static final String KEY_DESCRIPTION = "description";
   private static final String KEY_REMARKS = "remarks";
   private static final String KEY_COLUMNS = "columns";
 
-  /** YAMLのトップレベルキー（論理リレーションの定義を束ねる） */
   private static final String KEY_RELATIONS = "relations";
-
   private static final String KEY_TABLE = "table";
   private static final String KEY_PARENT_TABLE = "parentTable";
   private static final String KEY_PARENT_COLUMNS = "parentColumns";
   private static final String KEY_NAME = "name";
   private static final String KEY_CARDINALITY = "cardinality";
 
-  /** YAMLのトップレベルキー（観点の定義を束ねる） */
   private static final String KEY_VIEWPOINTS = "viewpoints";
-
   private static final String KEY_ID = "id";
 
-  /** トップレベルに書けるキー */
   private static final Set<String> ROOT_KEYS = Set.of(KEY_TABLES, KEY_RELATIONS, KEY_VIEWPOINTS);
-
-  /** {@code tables}の1テーブル分に書けるキー */
   private static final Set<String> TABLE_KEYS = Set.of(KEY_DESCRIPTION, KEY_REMARKS, KEY_COLUMNS);
-
-  /** {@code relations}の1件分に書けるキー */
   private static final Set<String> RELATION_KEYS =
       Set.of(
           KEY_TABLE, KEY_COLUMNS, KEY_PARENT_TABLE, KEY_PARENT_COLUMNS, KEY_NAME, KEY_CARDINALITY);
-
-  /** {@code viewpoints}の1件分に書けるキー */
   private static final Set<String> VIEWPOINT_KEYS =
       Set.of(KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_TABLES);
 
@@ -137,11 +120,9 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * 指定されたサイドカーYAMLのパスが、実在するファイルを指しているか確かめるメソッド<br>
    * 指定したのにファイルが無い場合に付帯情報なしで続行すると、付帯情報の消えた定義書が気付かれずに出力されるため、 利用者が直せる誤りとして報告する
    *
    * @param sidecarPath サイドカーYAMLのパス（前後の空白を除去済み）
-   * @return サイドカーYAMLのパス
    * @throws UserCorrectableException パスとして解釈できない場合や、ファイルが存在しない・ファイルでない場合
    */
   private Path requireFile(String sidecarPath) {
@@ -170,13 +151,9 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * サイドカーYAMLを解析し、SnakeYAMLの生のオブジェクトとして読み込むメソッド<br>
-   * YAMLとして解釈できないのは利用者が手で書いたファイルの誤りのため、どのファイルを直せばよいかを添えて {@link
-   * UserCorrectableException}として伝える（解析の失敗箇所は原因の例外のメッセージが示す）
+   * YAMLとして解釈できないのは利用者が手で書いたファイルの誤りのため、どのファイルを直せばよいかを添えて {@link UserCorrectableException}として伝える
+   * （解析の失敗箇所は原因の例外のメッセージが示す）
    *
-   * @param reader サイドカーYAMLの読み込み元
-   * @param path 読み込み元のパス（メッセージ用）
-   * @return YAMLのルートオブジェクト
    * @throws UserCorrectableException YAMLとして解釈できない場合（構文誤り・UTF-8以外の文字コード等）
    */
   private Object parseYaml(Reader reader, Path path) {
@@ -192,14 +169,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     }
   }
 
-  /**
-   * SnakeYAMLで読み込んだ生のオブジェクトから、テーブル単位の付帯情報を{@link Annotations}へ変換するメソッド<br>
-   * 想定外の構造の箇所は警告ログを出して読み飛ばし、可能な範囲で読み込みを継続する
-   *
-   * @param root YAMLのルートオブジェクト
-   * @param path 読み込み元のパス（ログ用）
-   * @return 変換した付帯情報
-   */
+  /** 想定外の構造の箇所は警告ログを出して読み飛ばし、可能な範囲で読み込みを継続する */
   private Annotations parseAnnotations(Object root, Path path) {
     final Object tablesValue = mapValue(root, KEY_TABLES);
     if (tablesValue != null && !(tablesValue instanceof Map)) {
@@ -233,14 +203,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     return Annotations.of(byKey);
   }
 
-  /**
-   * SnakeYAMLで読み込んだ生のオブジェクトから、論理リレーションの定義を変換するメソッド<br>
-   * 参照元・参照先のテーブルや列が欠けている定義はER図の関連線を描けないため読み飛ばす。 列数の不一致は関連線の描画自体は成立するため、警告のみ出して定義は維持する
-   *
-   * @param root YAMLのルートオブジェクト
-   * @param path 読み込み元のパス（ログ用）
-   * @return 変換した論理リレーションのリスト
-   */
+  /** 参照元・参照先のテーブルや列が欠けている定義はER図の関連線を描けないため読み飛ばす。 列数の不一致は関連線の描画自体は成立するため、警告のみ出して定義は維持する */
   private List<ForeignKeyEntity> parseRelations(Object root, Path path) {
     final Object relations = mapValue(root, KEY_RELATIONS);
     if (relations == null) {
@@ -262,13 +225,8 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * SnakeYAMLで読み込んだ生のオブジェクトから、観点の定義を変換するメソッド<br>
    * 観点として成り立たない定義（識別子の誤り・所属テーブルの指定漏れ等）と、識別子が既出の定義は、警告ログを出して読み飛ばす
    * （識別子は観点ページのファイル名になるため、重複すると後の観点のページで先の観点のページを上書きしてしまう）
-   *
-   * @param root YAMLのルートオブジェクト
-   * @param path 読み込み元のパス（ログ用）
-   * @return 変換した観点（宣言順）
    */
   private Viewpoints parseViewpoints(Object root, Path path) {
     final Object viewpoints = mapValue(root, KEY_VIEWPOINTS);
@@ -300,11 +258,8 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * 観点1件分のマップを{@link Viewpoint}へ変換するメソッド<br>
-   * 値の検証（識別子の形式・所属テーブルのパターン）は{@link Viewpoint#of}に委ね、ここでは検証に失敗した場合の警告ログ （読み込み元のパス等のコンテキストを含む）のみを担う
+   * 値の検証（識別子の形式・所属テーブルのパターン）は{@link Viewpoint#of}に委ね、ここでは検証に失敗した場合の警告ログのみを担う
    *
-   * @param viewpointMap 観点1件分のマップ
-   * @param path 読み込み元のパス（ログ用）
    * @return 変換した観点。観点として成り立たない場合はnull
    */
   private Viewpoint toViewpoint(Map<String, Object> viewpointMap, Path path) {
@@ -323,10 +278,6 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * 論理リレーション1件分のマップを{@link ForeignKeyEntity}へ変換するメソッド
-   *
-   * @param relationMap 論理リレーション1件分のマップ
-   * @param path 読み込み元のパス（ログ用）
    * @return 変換した論理リレーション。必須項目が欠けている場合はnull
    */
   private ForeignKeyEntity toLogicalRelation(Map<String, Object> relationMap, Path path) {
@@ -369,14 +320,11 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * 論理リレーションの多重度を解決するメソッド<br>
    * DBに制約が存在せず機械的に判定できないため、YAMLでの明示指定を優先し、 未指定・不正な指定の場合は既定値（{@link
-   * Cardinality#DEFAULT_FOR_LOGICAL_RELATION}）を用いる。 未指定の場合は既定値へ黙って落とすが、不正な値が指定された場合は気付けるよう警告する
+   * Cardinality#DEFAULT_FOR_LOGICAL_RELATION}）を用いる。未指定の場合は既定値へ黙って落とすが、不正な値が指定された場合は気付けるよう警告する
    *
    * @param label YAMLで指定された多重度のラベル（未指定可）
-   * @param child 参照元（子）テーブルのキー（ログ用）
-   * @param path 読み込み元のパス（ログ用）
-   * @return 解決した多重度
+   * @param child 警告ログにのみ使う参照元（子）テーブルのキー
    */
   private Cardinality resolveCardinality(String label, TableKey child, Path path) {
     if (label == null || label.isBlank()) {
@@ -397,12 +345,8 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * 「スキーマ.テーブル」形式のキー文字列を{@link TableKey}へ変換するメソッド<br>
-   * 解析自体は{@link TableKey#parse}に委ね、ここでは解析失敗時の警告ログ（読み込み元のパス等の コンテキストを含む）のみを担う
+   * 解析自体は{@link TableKey#parse}に委ね、ここでは解析失敗時の警告ログのみを担う
    *
-   * @param rawKey キー文字列
-   * @param sectionKey 読み込み中のセクション名（ログ用）
-   * @param path 読み込み元のパス（ログ用）
    * @return 変換したテーブルキー。形式が不正な場合はnull
    */
   private TableKey toTableKey(String rawKey, String sectionKey, Path path) {
@@ -418,14 +362,6 @@ public class SidecarYamlRepository implements SidecarRepository {
             });
   }
 
-  /**
-   * 1テーブル分の付帯情報マップを{@link TableAnnotation}へ変換するメソッド
-   *
-   * @param tableMap 1テーブル分の付帯情報マップ
-   * @param tableKey テーブルキー（ログ用）
-   * @param path 読み込み元のパス（ログ用）
-   * @return 変換した付帯情報
-   */
   private TableAnnotation toTableAnnotation(
       Map<String, Object> tableMap, TableKey tableKey, Path path) {
     warnUnknownKeys(
@@ -452,15 +388,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     return new TableAnnotation(description, remarks, columnRemarks);
   }
 
-  /**
-   * 書けるキー以外のキーを警告するメソッド<br>
-   * 未知のキーは読み飛ばすが、キー名の書き誤り（{@code descripton}等）で付帯情報が黙って消えないよう警告する
-   *
-   * @param map 対象のマップ
-   * @param knownKeys 書けるキー
-   * @param location キーの場所（ログ用）
-   * @param path 読み込み元のパス（ログ用）
-   */
+  /** 未知のキーは読み飛ばすが、キー名の書き誤り（{@code descripton}等）で付帯情報が黙って消えないよう警告する */
   private void warnUnknownKeys(
       Map<String, Object> map, Set<String> knownKeys, String location, Path path) {
     map.keySet().stream()
@@ -474,22 +402,12 @@ public class SidecarYamlRepository implements SidecarRepository {
                     path));
   }
 
-  /**
-   * マップから指定キーの値を取得するメソッド
-   *
-   * @param obj 対象オブジェクト（マップ想定）
-   * @param key 取得するキー
-   * @return キーに対応する値。対象がマップでない場合や未設定の場合はnull
-   */
   private Object mapValue(Object obj, String key) {
     return asMap(obj).get(key);
   }
 
   /**
-   * オブジェクトをキー文字列のマップとして安全に取得するメソッド
-   *
-   * @param obj 対象オブジェクト
-   * @return マップ。対象がマップでない場合は空マップ
+   * @return 対象がマップでない場合は空マップ
    */
   private Map<String, Object> asMap(Object obj) {
     if (!(obj instanceof Map<?, ?> map)) {
@@ -506,10 +424,8 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * オブジェクトを文字列のリストとして安全に取得するメソッド<br>
    * 単一列の関連を{@code columns: user_id}のように書けるよう、スカラー値も1要素のリストとして受け付ける
    *
-   * @param obj 対象オブジェクト
    * @return 空白要素を除いた文字列のリスト。対象がリスト・スカラーのいずれでもない場合は空リスト
    */
   private List<String> asStringList(Object obj) {
@@ -525,10 +441,7 @@ public class SidecarYamlRepository implements SidecarRepository {
   }
 
   /**
-   * オブジェクトを文字列として安全に取得するメソッド
-   *
-   * @param obj 対象オブジェクト
-   * @return 文字列。nullの場合は空文字
+   * @return nullの場合は空文字
    */
   private String asString(Object obj) {
     return obj == null ? "" : String.valueOf(obj);

@@ -3,13 +3,7 @@ package com.export_table_definition.domain.model.table;
 import java.util.Arrays;
 import java.util.Objects;
 
-/**
- * テーブルの種類を表す列挙型
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** テーブルの種類を表す列挙型 */
 public enum TableType {
   /** テーブル */
   TABLE("table"),

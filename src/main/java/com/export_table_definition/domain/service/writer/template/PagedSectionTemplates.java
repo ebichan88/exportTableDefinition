@@ -9,10 +9,6 @@ import java.util.List;
 /**
  * 行数の多い表を複数ページに分割して出力する際に共通で利用するMarkdownのテンプレートを扱うクラス<br>
  * GitHub上で表として表示できる行数には上限があるため、一覧系のドキュメントは行数が多い場合に 別ファイルへ分割して出力する。本体ページに載せるリンク一覧と、分割ページのページ送りを扱う
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class PagedSectionTemplates {
 

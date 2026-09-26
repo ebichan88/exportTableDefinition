@@ -18,10 +18,6 @@ import java.util.stream.Stream;
  * conf/ExportTableDefinition.properties}の設定値）の上書き値の解決を担う。 設定ファイルの読み込みと、上書きした値の検証は含まない（{@link
  * ExportTableDefinitionProperties}・{@code ConnectionSettings}が行う）。
  * 解釈できない引数（書き誤り等）は、意図しないモード・設定で実行されないよう誤りとする（{@link #requireKnownArguments()}）
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 final class CliArguments {
 
@@ -69,13 +65,11 @@ final class CliArguments {
   }
 
   /**
-   * コマンドライン引数を解析するメソッド<br>
    * 解釈できない引数があっても例外は投げない（実行モードの判定に使えるよう解析は最後まで行い、誤りは {@link #requireKnownArguments()}で報告する）
    *
    * @param args コマンドライン引数（{@code --db-url=...}・{@code --output-path=...}のような{@code --キー=値}形式で
    *     DB接続情報・実行時設定を上書き可能。未指定の場合は設定ファイル（{@code conf/mybatis.properties}・{@code
    *     conf/ExportTableDefinition.properties}）の値が使用される）
-   * @return 解析結果
    */
   static CliArguments parse(String[] args) {
     final List<String> argList = Arrays.asList(args);
@@ -88,27 +82,15 @@ final class CliArguments {
         argList.stream().filter(arg -> !isKnown(arg)).toList());
   }
 
-  /**
-   * {@code --check}が指定されているか判定するメソッド
-   *
-   * @return DB vs ドキュメントの差分検知モードで実行する場合はtrue
-   */
   boolean isCheck() {
     return check;
   }
 
-  /**
-   * {@code --rm-dist}が指定されているか判定するメソッド
-   *
-   * @return 通常実行時に、書き込み前へ出力先ディレクトリを事前に削除する場合はtrue
-   */
   boolean isRmDist() {
     return rmDist;
   }
 
   /**
-   * DB接続情報の上書き値を取得するメソッド
-   *
    * @return 上書きするDB接続情報（未指定のキーは含まれない）
    */
   Properties connectionOverrides() {
@@ -116,8 +98,6 @@ final class CliArguments {
   }
 
   /**
-   * 実行時設定（{@code conf/ExportTableDefinition.properties}の設定値）の上書き値を取得するメソッド
-   *
    * @return 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まれない。READMEの記載順）
    */
   Map<String, SettingOverride> settingOverrides() {
@@ -125,7 +105,6 @@ final class CliArguments {
   }
 
   /**
-   * 解釈できない引数が指定されていないことを確かめるメソッド<br>
    * {@code --chek}のような書き誤りを黙って無視すると、差分検知のつもりで通常実行（{@code --rm-dist}なら出力先の削除）が
    * 行われてしまうため、処理を始める前に誤りとして報告する
    *
@@ -147,12 +126,6 @@ final class CliArguments {
             + ")");
   }
 
-  /**
-   * 解釈できる引数か判定するメソッド
-   *
-   * @param arg コマンドライン引数
-   * @return フラグ、またはDB接続情報・実行時設定の{@code --キー=値}形式の引数の場合はtrue
-   */
   private static boolean isKnown(String arg) {
     if (FLAGS.contains(arg)) {
       return true;
@@ -164,13 +137,7 @@ final class CliArguments {
                 overrideArg -> overrideArg.cliName().equals(arg.substring(0, separatorIndex)));
   }
 
-  /**
-   * CLI引数からDB接続情報の上書き値を解決するメソッド<br>
-   * 値が空（空白のみを含む）の場合は、指定しなかったものとして{@code conf/mybatis.properties}の値をそのまま使用する
-   *
-   * @param cliArgs {@code --キー=値}形式のコマンドライン引数
-   * @return 上書きするDB接続情報（未指定のキーは含まれない）
-   */
+  /** 値が空（空白のみを含む）の場合は、指定しなかったものとして{@code conf/mybatis.properties}の値をそのまま使用する */
   private static Properties resolveConnectionOverrides(Map<String, String> cliArgs) {
     final Properties overrides = new Properties();
     CONNECTION_ARGS.forEach(
@@ -183,13 +150,7 @@ final class CliArguments {
     return overrides;
   }
 
-  /**
-   * CLI引数から実行時設定の上書き値を解決するメソッド<br>
-   * 値が空（空白のみを含む）の場合は、指定しなかったものとして{@code conf/ExportTableDefinition.properties}の値をそのまま使用する
-   *
-   * @param cliArgs {@code --キー=値}形式のコマンドライン引数
-   * @return 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まれない）
-   */
+  /** 値が空（空白のみを含む）の場合は、指定しなかったものとして{@code conf/ExportTableDefinition.properties}の値をそのまま使用する */
   private static Map<String, SettingOverride> resolveSettingOverrides(Map<String, String> cliArgs) {
     final Map<String, SettingOverride> overrides = new LinkedHashMap<>();
     SETTING_ARGS.forEach(
@@ -202,12 +163,6 @@ final class CliArguments {
     return overrides;
   }
 
-  /**
-   * {@code --キー=値}形式のコマンドライン引数を解析するメソッド
-   *
-   * @param args コマンドライン引数
-   * @return 引数名（{@code --}付き）と値のマップ
-   */
   private static Map<String, String> parseArgs(String[] args) {
     final Map<String, String> result = new HashMap<>();
     for (final String arg : args) {
@@ -220,22 +175,11 @@ final class CliArguments {
     return result;
   }
 
-  /**
-   * 上書きできる1項目分のプロパティキーとCLI引数名の組
-   *
-   * @param key 設定ファイル（{@code conf/mybatis.properties}・{@code
-   *     conf/ExportTableDefinition.properties}）のキー
-   * @param cliName CLI引数名（{@code --}付き）
-   */
   private record OverrideArg(String key, String cliName) {
 
     /**
-     * 実行時設定のキーから、CLI引数名を導くメソッド<br>
      * キーの単語の区切り（キャメルケースの大文字）を、ハイフン区切りの小文字にする （例: {@code outputPath} → {@code
      * --output-path}）。設定項目を追加すれば、上書きにも自動で対応する
-     *
-     * @param key {@code conf/ExportTableDefinition.properties}のキー
-     * @return 上書きできる1項目分の組
      */
     static OverrideArg forSetting(String key) {
       return new OverrideArg(

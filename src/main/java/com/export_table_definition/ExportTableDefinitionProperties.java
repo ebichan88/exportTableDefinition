@@ -26,10 +26,6 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * 設定値は生の文字列のまま後続へ渡さず、ここで前後の空白を除去し、型へ変換・検証する （出力対象の条件の変換・検証は{@link TargetSelection#of}に委ねる）
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 final class ExportTableDefinitionProperties {
 
@@ -83,12 +79,10 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * {@code conf/ExportTableDefinition.properties}を読み込み、CLI引数による上書き値で上書きして検証するメソッド<br>
    * 上書きする値をすべて指定する場合でも、設定ファイル自体は必要とする（実行するディレクトリを誤った場合に、既定の出力先 （{@code ./output}）へ黙って出力しないよう、{@code
    * conf}ディレクトリ・設定ファイルが見つからないことを誤りとして報告するため）
    *
    * @param overrides 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まない）
-   * @return 検証済みの設定
    * @throws InvalidConfigurationException {@code conf}ディレクトリ・設定ファイルが見つからない場合や、設定に誤りがある場合
    */
   static ExportTableDefinitionProperties load(Map<String, SettingOverride> overrides) {
@@ -96,10 +90,6 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * 設定ファイルのキーと値から、検証済みの設定を生成するメソッド
-   *
-   * @param values 設定ファイルのキーと値
-   * @return 検証済みの設定
    * @throws InvalidConfigurationException 設定に誤りがある場合（見つかった誤りをすべて示す）
    */
   static ExportTableDefinitionProperties of(Map<String, String> values) {
@@ -107,13 +97,10 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * 設定ファイルのキーと値を上書き値で上書きし、検証済みの設定を生成するメソッド<br>
    * 誤りの報告には、どの値を上書きしたか（指定元のCLI引数名）を添える。誤った値が設定ファイルではなく
    * CLI引数から来ている場合に、設定ファイルだけを見直して原因が見つからない、とならないようにするため
    *
-   * @param fileValues 設定ファイルのキーと値
    * @param overrides 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まない）
-   * @return 検証済みの設定
    * @throws InvalidConfigurationException 設定に誤りがある場合（見つかった誤りをすべて示す）
    */
   static ExportTableDefinitionProperties of(
@@ -165,29 +152,18 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * テーブル定義出力（通常実行）の入力へ変換するメソッド
-   *
    * @param rmDist trueの場合、書き込みを開始する前に出力先ディレクトリを再帰的に削除する（{@code --rm-dist}）
-   * @return テーブル定義出力の入力
    */
   ExportRequest toExportRequest(boolean rmDist) {
     return new ExportRequest(targetSelection, outputPath, chunkSize, erDiagramMaxNodes, rmDist);
   }
 
-  /**
-   * DB vs ドキュメントの差分検知（{@code --check}モード）の入力へ変換するメソッド<br>
-   * 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}は含めない
-   *
-   * @return 差分検知の入力
-   */
+  /** 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}は含めない */
   CheckDiffRequest toCheckDiffRequest() {
     return new CheckDiffRequest(targetSelection, outputPath, chunkSize);
   }
 
   /**
-   * 誤りの報告に添える、上書きした値の指定元の説明を組み立てるメソッド
-   *
-   * @param overrides 上書き値
    * @return 上書きした値がある場合は{@code " (overridden by --output-path, --table)"}の形式の文字列、無い場合は空文字
    */
   private static String overriddenBy(Map<String, SettingOverride> overrides) {
@@ -200,10 +176,6 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * 設定値を、前後の空白を除いた文字列として取得するメソッド
-   *
-   * @param values 設定ファイルのキーと値
-   * @param key キー
    * @return 設定値。未指定（キーの省略・空）の場合は空文字
    */
   private static String text(Map<String, String> values, String key) {
@@ -211,12 +183,9 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * カンマ区切りの設定値を、各要素の前後の空白を除いたリストとして取得するメソッド<br>
    * {@code schema=public, sample}のようにカンマの後に空白を入れた場合に、{@code " sample"}が
    * 別の名前として扱われ、対象から黙って外れてしまうことを防ぐため、各要素の前後の空白を除去する
    *
-   * @param values 設定ファイルのキーと値
-   * @param key キー
    * @return 空要素を除いたリスト。未指定の場合は空リスト
    */
   private static List<String> list(Map<String, String> values, String key) {
@@ -227,13 +196,8 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * 設定値を整数として取得するメソッド<br>
    * 整数として解釈できない場合は、既定値へ黙って置き換えず、誤りとして記録する
    *
-   * @param values 設定ファイルのキーと値
-   * @param key キー
-   * @param defaultValue 未指定の場合の既定値
-   * @param errors 誤りの記録先
    * @return 設定値。未指定の場合と、解釈できない場合（誤りを記録済み）は既定値
    */
   private static int parseInt(
@@ -253,7 +217,6 @@ final class ExportTableDefinitionProperties {
   /**
    * CLI引数による、設定値1項目分の上書き
    *
-   * @param value 上書きする値
    * @param source 値の指定元のCLI引数名（例: {@code --output-path}）
    */
   record SettingOverride(String value, String source) {}

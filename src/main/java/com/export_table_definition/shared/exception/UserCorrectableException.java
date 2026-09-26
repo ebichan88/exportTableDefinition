@@ -12,10 +12,6 @@ package com.export_table_definition.shared.exception;
  * </ul>
  *
  * 入口とインフラの双方から投げるため、どの層からも依存できるレイヤーの外（{@code shared.exception}）に置く。 ドメインの概念ではないため、ドメイン層には置かない
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class UserCorrectableException extends RuntimeException {
 

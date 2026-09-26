@@ -1,12 +1,6 @@
 package com.export_table_definition.application;
 
-/**
- * テーブル定義出力（通常実行）のユースケースを扱うインターフェース
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** テーブル定義出力（通常実行）のユースケースを扱うインターフェース */
 public interface ExportTableDefinitionUsecase {
 
   /**

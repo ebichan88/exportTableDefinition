@@ -6,10 +6,6 @@ import java.util.Map;
 /**
  * スキーマのスナップショット（{@code domain.model.snapshot}配下のrecord）とJSON文字列の相互変換を行うインタフェース<br>
  * JSONライブラリへの依存をドメイン層へ持ち込まないため、変換処理はインフラ層で実装する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public interface SnapshotSerializer {
 

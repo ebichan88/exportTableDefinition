@@ -8,10 +8,6 @@ import java.util.List;
 /**
  * 2つの行リストから、unified diff形式（{@code diff -u}やgitと同じ表記）の差分を生成するクラス<br>
  * Myers法（最短の編集手順を求めるアルゴリズム）で編集距離を求め、前後{@value #CONTEXT_LINES}行の文脈を付けたhunkを組み立てる。 外部ライブラリに依存しない
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class UnifiedDiffGenerator {
 
@@ -24,7 +20,6 @@ public class UnifiedDiffGenerator {
    */
   static final int MAX_EDIT_DISTANCE = 1000;
 
-  /** コンストラクタ */
   @Inject
   public UnifiedDiffGenerator() {}
 
@@ -33,10 +28,7 @@ public class UnifiedDiffGenerator {
    * 内容が同じ場合は空リストを返す
    *
    * @param committedLabel コミット済み側（{@code ---}）のラベル
-   * @param committed コミット済み側の行リスト
    * @param generatedLabel 生成側（{@code +++}）のラベル
-   * @param generated 生成側の行リスト
-   * @return unified diff形式の行リスト（先頭2行が{@code ---}/{@code +++}ヘッダ、以降がhunk）。 内容が同じ場合は空リスト
    */
   public List<String> generate(
       String committedLabel,
@@ -60,14 +52,7 @@ public class UnifiedDiffGenerator {
     return lines;
   }
 
-  /**
-   * 2つの行リストから編集手順（{@link Op}のリスト）を求めるメソッド<br>
-   * 先頭・末尾の共通行を除いてからMyers法を適用することで、差分が局所的な場合の探索範囲を小さく抑える
-   *
-   * @param a 変更前の行リスト
-   * @param b 変更後の行リスト
-   * @return 編集手順
-   */
+  /** 先頭・末尾の共通行を除いてからMyers法を適用することで、差分が局所的な場合の探索範囲を小さく抑える */
   private List<Op> diff(List<String> a, List<String> b) {
     final int maxPrefix = Math.min(a.size(), b.size());
     int prefix = 0;
@@ -97,7 +82,6 @@ public class UnifiedDiffGenerator {
    *
    * @param a 変更前の行リスト（先頭・末尾の共通行を除いたもの）
    * @param b 変更後の行リスト（先頭・末尾の共通行を除いたもの）
-   * @return 編集手順
    */
   private List<Op> myers(List<String> a, List<String> b) {
     final int n = a.size();
@@ -153,12 +137,8 @@ public class UnifiedDiffGenerator {
   /**
    * Myers法の探索過程（{@code trace}）から、末尾から先頭へ辿って編集手順を復元するメソッド
    *
-   * @param a 変更前の行リスト
-   * @param b 変更後の行リスト
    * @param trace 各編集距離{@code d}の探索開始時点でのv配列のスナップショット
-   * @param distance 求まった最短編集距離
    * @param offset v配列上の{@code k=0}に対応するオフセット
-   * @return 編集手順（先頭から末尾の順）
    */
   private List<Op> backtrack(
       List<String> a, List<String> b, List<int[]> trace, int distance, int offset) {
@@ -195,13 +175,7 @@ public class UnifiedDiffGenerator {
     return ops;
   }
 
-  /**
-   * 編集手順から、前後の文脈を付けたhunkのリストを組み立てるメソッド<br>
-   * 変更箇所（連続する非EQUAL区間）の間が{@code 2 * CONTEXT_LINES}行以内の場合は1つのhunkへ結合する
-   *
-   * @param ops 編集手順
-   * @return hunkのリスト
-   */
+  /** 変更箇所（連続する非EQUAL区間）の間が{@code 2 * CONTEXT_LINES}行以内の場合は1つのhunkへ結合する */
   private List<Hunk> buildHunks(List<Op> ops) {
     final List<int[]> clusters = findClusters(ops);
     if (clusters.isEmpty()) {
@@ -224,12 +198,7 @@ public class UnifiedDiffGenerator {
     return hunks;
   }
 
-  /**
-   * 編集手順のうち、非EQUAL（変更箇所）が連続する区間（{@code [開始, 終了)}）のリストを求めるメソッド
-   *
-   * @param ops 編集手順
-   * @return 変更箇所の区間のリスト
-   */
+  /** 編集手順のうち、非EQUAL（変更箇所）が連続する区間（{@code [開始, 終了)}）のリストを求める */
   private List<int[]> findClusters(List<Op> ops) {
     final List<int[]> clusters = new ArrayList<>();
     int i = 0;
@@ -248,12 +217,7 @@ public class UnifiedDiffGenerator {
   }
 
   /**
-   * 変更箇所の区間（{@code [groupStart, groupEnd)}）に前後の文脈を付けてhunkを組み立てるメソッド
-   *
-   * @param ops 編集手順
    * @param groupStart 変更箇所の開始位置（{@code ops}内のインデックス）
-   * @param groupEnd 変更箇所の終了位置（{@code ops}内のインデックス、含まない）
-   * @return 組み立てたhunk
    */
   private Hunk toHunk(List<Op> ops, int groupStart, int groupEnd) {
     final int start = Math.max(0, groupStart - CONTEXT_LINES);
@@ -296,19 +260,8 @@ public class UnifiedDiffGenerator {
     INSERT
   }
 
-  /**
-   * 編集手順1件分（1行分の種別と内容）
-   *
-   * @param type 種別
-   * @param line 行の内容
-   */
   private record Op(OpType type, String line) {
 
-    /**
-     * unified diff形式の1行（種別を表す接頭辞付き）へ変換するメソッド
-     *
-     * @return 種別を表す接頭辞（{@code " "}/{@code "-"}/{@code "+"}）付きの行
-     */
     String render() {
       return switch (type) {
         case EQUAL -> " " + line;
@@ -319,33 +272,16 @@ public class UnifiedDiffGenerator {
   }
 
   /**
-   * unified diff形式のhunk1件分
-   *
    * @param aStart 変更前側の開始行番号（1始まり。該当行が0件の場合はその直前の行番号）
-   * @param aCount 変更前側の行数
    * @param bStart 変更後側の開始行番号（1始まり。該当行が0件の場合はその直前の行番号）
-   * @param bCount 変更後側の行数
-   * @param ops 文脈を含む、このhunkに属する編集手順
    */
   private record Hunk(int aStart, int aCount, int bStart, int bCount, List<Op> ops) {
 
-    /**
-     * hunkヘッダ（{@code @@ -l,s +l,s @@}形式）を組み立てるメソッド
-     *
-     * @return hunkヘッダ
-     */
     String header() {
       return "@@ -" + formatRange(aStart, aCount) + " +" + formatRange(bStart, bCount) + " @@";
     }
 
-    /**
-     * hunkヘッダの片側（開始行番号・行数）を組み立てるメソッド<br>
-     * 行数が1の場合は開始行番号のみとする（GNU diff・gitと同じ表記）
-     *
-     * @param start 開始行番号
-     * @param count 行数
-     * @return {@code start} または {@code start,count}
-     */
+    /** 行数が1の場合は開始行番号のみとする（GNU diff・gitと同じ表記） */
     private static String formatRange(int start, int count) {
       return count == 1 ? String.valueOf(start) : start + "," + count;
     }

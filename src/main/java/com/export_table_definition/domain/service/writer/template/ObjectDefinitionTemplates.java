@@ -10,13 +10,7 @@ import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 
-/**
- * 関数/プロシージャ・シーケンス・ユーザー定義型の個別定義書き込みに利用する Markdownのテンプレートを扱うクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** 関数/プロシージャ・シーケンス・ユーザー定義型の個別定義書き込みに利用する Markdownのテンプレートを扱うクラス */
 public class ObjectDefinitionTemplates {
 
   /**

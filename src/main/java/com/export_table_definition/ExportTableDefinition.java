@@ -20,10 +20,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
  * テーブル定義出力処理を呼び出すクラス<br>
  * 処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）で起きた例外を{@link #main}の1箇所で捕捉し、 {@link
  * FailureReporter}で報告したうえで、終了状態をプロセスの終了コードへ変換する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class ExportTableDefinition {
 

@@ -16,13 +16,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * テーブル一覧・テーブル定義書を書き込むクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** テーブル一覧・テーブル定義書を書き込むクラス */
 public class TableDefinitionWriterDomainService {
 
   private static final Logger logger =

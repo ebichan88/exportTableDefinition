@@ -20,10 +20,6 @@ import java.nio.file.Path;
  *
  * 出力先パスの解決（未指定時の既定値）と、削除してよいディレクトリかの判定は{@link OutputPathResolver}に、 パスの状態の問い合わせは{@link
  * FileRepository}に委ねる
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 class OutputDirectoryValidator {
 

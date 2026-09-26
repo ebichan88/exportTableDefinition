@@ -17,10 +17,6 @@ import java.util.function.Predicate;
  * 出力パス解決のデフォルト実装<br>
  * Markdownドキュメントのファイル名・配置は{@link DocumentLocations}、スナップショットのそれは{@link SnapshotLocations}の規則に従い、
  * 出力ベースディレクトリを起点に解決する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class DefaultOutputPathResolver implements OutputPathResolver {
 

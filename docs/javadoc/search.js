@@ -24,22 +24,22 @@
  */
 "use strict";
 const messages = {
-    enterTerm: "検索語を入力してください",
-    noResult: "結果が見つかりませんでした",
-    oneResult: "1件の結果が見つかりました",
-    manyResults: "{0}の結果が見つかりました",
-    loading: "検索索引をロード中...",
-    searching: "検索中...",
-    redirecting: "最初の結果にリダイレクト中...",
-    linkIcon: "リンク・アイコン",
-    linkToSection: "このセクションにリンク"
+    enterTerm: "Enter a search term",
+    noResult: "No results found",
+    oneResult: "Found one result",
+    manyResults: "Found {0} results",
+    loading: "Loading search index...",
+    searching: "Searching...",
+    redirecting: "Redirecting to first result...",
+    linkIcon: "Link icon",
+    linkToSection: "Link to this section"
 }
 const categories = {
-    modules: "モジュール",
-    packages: "パッケージ",
-    types: "クラスとインタフェース",
-    members: "メンバー",
-    searchTags: "タグの検索"
+    modules: "Modules",
+    packages: "Packages",
+    types: "Classes and Interfaces",
+    members: "Members",
+    searchTags: "Search Tags"
 };
 const highlight = "<span class='result-highlight'>$&</span>";
 const NO_MATCH = {};

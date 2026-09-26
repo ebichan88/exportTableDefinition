@@ -7,10 +7,6 @@ import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 /**
  * Mermaid記法の出力に必要な文字列変換を扱う共通ユーティリティクラス<br>
  * テーブル単位のER図（{@link TableDefinitionTemplates}）とスキーマ単位のER図（{@link ErDiagramTemplates}）の 両方から利用する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 final class MermaidSupport {
 

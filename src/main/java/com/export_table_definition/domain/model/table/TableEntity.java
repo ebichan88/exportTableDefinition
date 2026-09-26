@@ -9,9 +9,6 @@ package com.export_table_definition.domain.model.table;
  * @param physicalTableName 物理テーブル名
  * @param tableType 区分（table/view/materialized_view）
  * @param definition view/materialized viewの場合のソース定義（tableの場合は空文字）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record TableEntity(
     String dbName,

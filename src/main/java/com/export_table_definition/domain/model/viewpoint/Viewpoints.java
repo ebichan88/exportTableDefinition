@@ -6,10 +6,6 @@ import java.util.List;
 /**
  * 観点（{@link Viewpoint}）の集合を扱うクラス<br>
  * サイドカーYAMLで宣言された順に保持する（観点一覧・テーブル定義書の「所属する観点」の掲載順）
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class Viewpoints {
 

@@ -15,10 +15,6 @@ import java.util.Optional;
  * 「親1件につき子が1件以上存在すること」はテーブル定義では表現できないため、子側が「1以上」となることはない。<br>
  * なお論理リレーション（{@link RelationType#LOGICAL}）はDBに制約が存在しないため上記の機械的判定ができない。 この場合はサイドカーYAMLでの明示指定（{@link
  * #fromLabel(String)}）か、既定値の1対多が用いられる
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public enum Cardinality {
   /** 1対多。外部キー列はNOT NULLで一意ではない */

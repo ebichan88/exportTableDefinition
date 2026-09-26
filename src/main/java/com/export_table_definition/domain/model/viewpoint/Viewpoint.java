@@ -16,10 +16,6 @@ import java.util.stream.Collectors;
  * スキーマ単位・連結成分単位の機械的なまとまりとは別に、「受注管理」「在庫管理」のような人が読む単位でテーブルを束ね、
  * 観点ごとのER図と所属テーブルの一覧を出力するために用いる。サイドカーYAMLの{@code viewpoints}で宣言する。<br>
  * 所属テーブルは、出力対象の範囲（{@code table=}）と同じテーブル名パターンの記法（ワイルドカード・除外・スキーマ修飾）で指定する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class Viewpoint {
 

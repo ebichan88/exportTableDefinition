@@ -7,13 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * 出力対象を絞り込めるPostgreSQL固有オブジェクトの種別を表す列挙型
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** 出力対象を絞り込めるPostgreSQL固有オブジェクトの種別を表す列挙型 */
 public enum OutputObjectType {
   /** トリガー */
   TRIGGER("trigger"),

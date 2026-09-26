@@ -12,9 +12,6 @@ import java.util.Set;
  * @param description テーブル説明（複数行可）。未設定の場合は空文字
  * @param remarks テーブル備考（1行想定）。未設定の場合は空文字
  * @param columnRemarks 物理カラム名をキー、カラム備考を値とするマップ
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record TableAnnotation(
     String description, String remarks, Map<String, String> columnRemarks) {

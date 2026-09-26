@@ -16,10 +16,6 @@ import org.apache.logging.log4j.Logger;
 /**
  * テーブル定義出力（通常実行）のユースケースクラス<br>
  * DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力先へ書き出す。 取得・書き出しの段取りは{@link SchemaExporter}に委ねる
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUsecase {
 

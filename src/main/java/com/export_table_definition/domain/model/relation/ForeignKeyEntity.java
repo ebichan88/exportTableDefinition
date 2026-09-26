@@ -18,9 +18,6 @@ import java.util.List;
  * @param referenceColumnNames 参照先（親）の列名のリスト（{@code columnNames}と同じ順）
  * @param cardinality 多重度
  * @param relationType 関連の由来（物理／論理）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record ForeignKeyEntity(
     String schemaName,

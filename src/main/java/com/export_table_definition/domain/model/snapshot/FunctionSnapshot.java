@@ -15,9 +15,6 @@ import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
  * @param result 戻り値の型（プロシージャの場合はnull）
  * @param language 実装言語
  * @param definition 定義本体
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record FunctionSnapshot(
     String schema,

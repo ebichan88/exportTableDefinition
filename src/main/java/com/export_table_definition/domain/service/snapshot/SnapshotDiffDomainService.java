@@ -22,10 +22,6 @@ import java.util.function.Predicate;
  * {@code table sample.employee}）で報告する。 それ以外のファイル（{@code database.json}等）はファイル単位で比較する。
  * 内容が一致しないものは、{@link SnapshotSerializer#formatForDiff}で差分表示用に整形した上で {@link
  * UnifiedDiffGenerator}によりunified diff形式の差分を付ける
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class SnapshotDiffDomainService {
 
@@ -38,14 +34,6 @@ public class SnapshotDiffDomainService {
   private final SnapshotSerializer serializer;
   private final UnifiedDiffGenerator diffGenerator;
 
-  /**
-   * コンストラクタ
-   *
-   * @param fileRepository ファイルリポジトリ
-   * @param outputPathResolver 出力パス解決クラス
-   * @param serializer スナップショットのJSON変換を行うクラス
-   * @param diffGenerator unified diffを生成するクラス
-   */
   @Inject
   public SnapshotDiffDomainService(
       FileRepository fileRepository,
@@ -58,13 +46,6 @@ public class SnapshotDiffDomainService {
     this.diffGenerator = diffGenerator;
   }
 
-  /**
-   * 2つのスナップショットのディレクトリ配下を比較するメソッド
-   *
-   * @param generatedDir DBから生成したスナップショットのディレクトリ
-   * @param committedDir 既にコミット済みのスナップショットのディレクトリ
-   * @return 比較結果
-   */
   public DiffResult compare(Path generatedDir, Path committedDir) {
     final Map<Target, List<String>> generated = index(generatedDir);
     final Map<Target, List<String>> committed = index(committedDir);
@@ -74,13 +55,7 @@ public class SnapshotDiffDomainService {
         contentDiffs(generated, committed));
   }
 
-  /**
-   * 両方に存在するが内容が一致しないものについて、unified diff付きの差分を組み立てるメソッド
-   *
-   * @param generated 生成側のインデックス
-   * @param committed コミット側のインデックス
-   * @return 内容が一致しないものの一覧（表示名順）
-   */
+  /** 両方に存在するが内容が一致しないものについて、unified diff付きの差分を組み立てる */
   private List<ContentDiff> contentDiffs(
       Map<Target, List<String>> generated, Map<Target, List<String>> committed) {
     return generated.keySet().stream()
@@ -101,13 +76,6 @@ public class SnapshotDiffDomainService {
         .toList();
   }
 
-  /**
-   * 差分の対象の生の行（スナップショットの1行、または{@code database.json}等の全行）を、 {@link
-   * SnapshotSerializer#formatForDiff}で差分表示用に整形するメソッド
-   *
-   * @param rawLines 生の行のリスト
-   * @return 整形した行のリスト
-   */
   private List<String> formatForDiff(List<String> rawLines) {
     return rawLines.stream().flatMap(line -> serializer.formatForDiff(line).stream()).toList();
   }
@@ -117,10 +85,6 @@ public class SnapshotDiffDomainService {
    * オブジェクト単位で比較するもの（{@code tables.jsonl}等）は{@code committed/相対パス (表示名)}、 ファイル単位で比較するもの（{@code
    * database.json}等）は表示名がファイルパスそのものであるため{@code committed/相対パス}のみとする<br>
    * 相対パスは{@link Path#toString()}ではなく、OSに依らず常に{@code /}区切りで組み立てる（unified diffの慣習に合わせるため）
-   *
-   * @param side {@code committed}または{@code generated}
-   * @param target 差分の対象
-   * @return ラベル
    */
   private String sideLabel(String side, Target target) {
     final String relativeFile = toSlashSeparatedPath(target.file());
@@ -130,12 +94,8 @@ public class SnapshotDiffDomainService {
   }
 
   /**
-   * パスを、OSに依らず常に{@code /}区切りの文字列へ変換するメソッド<br>
    * {@link Path#toString()}はWindows環境では{@code \}区切りとなるため、unified diffのヘッダのように
    * プラットフォームに依らない一貫した表記が必要な箇所ではこのメソッドを用いる
-   *
-   * @param path 変換対象のパス
-   * @return {@code /}区切りのパス文字列
    */
   private static String toSlashSeparatedPath(Path path) {
     final StringBuilder builder = new StringBuilder();
@@ -148,12 +108,6 @@ public class SnapshotDiffDomainService {
     return builder.toString();
   }
 
-  /**
-   * ディレクトリ配下のスナップショットを、差分の対象（オブジェクトまたはファイル）ごとの内容へ分解するメソッド
-   *
-   * @param directory スナップショットのディレクトリ
-   * @return 差分の対象をキー、その内容（行のリスト）を値とするマップ
-   */
   private Map<Target, List<String>> index(Path directory) {
     final Map<Target, List<String>> targets = new LinkedHashMap<>();
     for (final Path file : fileRepository.listFiles(directory)) {
@@ -178,23 +132,12 @@ public class SnapshotDiffDomainService {
   }
 
   /**
-   * スナップショットの1行から、差分の報告に用いるオブジェクトの表示名を組み立てるメソッド
-   *
-   * @param kind オブジェクトの種別
-   * @param line スナップショットの1行
    * @return 表示名（例: {@code table sample.employee}）
    */
   private String label(SnapshotKind kind, String line) {
     return kind.getLabel() + " " + kind.identify(serializer.deserialize(line));
   }
 
-  /**
-   * 条件に一致する差分の対象の表示名を、並び順を揃えて抽出するメソッド
-   *
-   * @param targets 差分の対象をキーとするマップ
-   * @param condition 抽出条件
-   * @return 表示名のリスト
-   */
   private List<String> labels(Map<Target, List<String>> targets, Predicate<Target> condition) {
     return targets.keySet().stream()
         .filter(condition)
@@ -206,9 +149,6 @@ public class SnapshotDiffDomainService {
   /**
    * 差分の対象（オブジェクトまたはファイル）<br>
    * 同名のオブジェクトが別のファイル（別DB等）に存在しても取り違えないよう、所属するファイルも含めて識別する
-   *
-   * @param file スナップショットのディレクトリからの相対パス
-   * @param label 差分の報告に用いる表示名
    */
   private record Target(Path file, String label) {}
 }

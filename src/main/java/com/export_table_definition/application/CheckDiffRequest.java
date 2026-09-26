@@ -8,8 +8,5 @@ package com.export_table_definition.application;
  * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）
  * @param outputPath 比較対象となる、既にコミット済みのドキュメントが配置されたパス
  * @param chunkSize 詳細情報をまとめて取得するテーブル数の上限。0以下の場合はスキーマ単位で分割せず取得する
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record CheckDiffRequest(TargetSelection targetSelection, String outputPath, int chunkSize) {}

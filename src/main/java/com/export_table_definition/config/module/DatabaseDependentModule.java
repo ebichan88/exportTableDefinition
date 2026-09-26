@@ -14,10 +14,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
  * DBへ接続して接続先のDB種別を判定した後、{@link ExportTableDefinitionModule}で組み立てたDIコンテナの子として組み立てる。 接続先の{@link
  * SqlSessionFactory}と、DB種別で実装が変わる{@link TableDefinitionRepository}、それに依存するユースケースを束縛する
  * （親のコンテナでは、接続先・DB種別が未定のためこれらを解決できない）
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class DatabaseDependentModule extends AbstractModule {
 

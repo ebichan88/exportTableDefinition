@@ -14,10 +14,6 @@ import java.util.Set;
  * 外部キー情報の集合を扱うクラス<br>
  * DBに実在する外部キー制約と、サイドカーYAML由来の論理リレーションを同一の集合として保持する。 ER図はテーブル間の関連をまとめて描く必要があるため両者を区別せず扱い、
  * テーブル定義書のセクションは{@link #physicalOf(TableEntity)}／{@link #logicalOf(TableEntity)}で 由来ごとに取り出して掲載する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
   /** 被参照側（自テーブルを参照している外部キー）をテーブルキーでインデックス化したマップ */

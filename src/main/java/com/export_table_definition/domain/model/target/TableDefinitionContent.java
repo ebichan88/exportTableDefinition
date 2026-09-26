@@ -32,9 +32,6 @@ import java.util.stream.Stream;
  * @param triggers トリガー情報のリスト
  * @param annotation 手動付帯情報
  * @param viewpoints 当該テーブルが所属する観点のリスト（宣言順。所属する観点が無い場合は空）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record TableDefinitionContent(
     BaseInfoEntity baseInfo,

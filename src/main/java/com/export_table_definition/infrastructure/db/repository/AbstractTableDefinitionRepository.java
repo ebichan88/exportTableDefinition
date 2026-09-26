@@ -31,13 +31,7 @@ import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
-/**
- * テーブル定義出力に関するリポジトリの基底クラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** テーブル定義出力に関するリポジトリの基底クラス */
 public abstract class AbstractTableDefinitionRepository implements TableDefinitionRepository {
 
   private final String baseSqlPath;

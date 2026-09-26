@@ -6,10 +6,6 @@ import java.util.Objects;
 /**
  * スナップショットのうち、スキーマ単位のJSON Linesファイルに出力するオブジェクトの種別を表す列挙型<br>
  * 種別ごとに1ファイルとし、1行に1オブジェクトを出力する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public enum SnapshotKind {
   /** テーブル（view・materialized viewを含む） */

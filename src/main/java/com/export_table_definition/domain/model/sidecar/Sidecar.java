@@ -17,9 +17,6 @@ import java.util.List;
  * @param annotations テーブル単位の手動付帯情報
  * @param logicalRelations サイドカーYAMLで宣言された論理リレーションのリスト
  * @param viewpoints サイドカーYAMLで宣言された観点
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record Sidecar(
     Annotations annotations, List<ForeignKeyEntity> logicalRelations, Viewpoints viewpoints) {

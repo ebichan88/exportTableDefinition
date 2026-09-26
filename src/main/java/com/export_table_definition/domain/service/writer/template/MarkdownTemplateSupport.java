@@ -6,10 +6,6 @@ import java.time.format.DateTimeFormatter;
 /**
  * 各テンプレートクラスで共通して利用するMarkdownの定数・部品を集約したクラス<br>
  * 改行コードや水平線、「## 基本情報」セクション、タイトル付きファイルヘッダーなど、 複数のテンプレートクラスで内容が重複していたものをここに集約する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class MarkdownTemplateSupport {
 

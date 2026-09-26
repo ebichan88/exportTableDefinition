@@ -3,13 +3,7 @@ package com.export_table_definition.domain.repository;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * ファイル操作に関するリポジトリインターフェース
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** ファイル操作に関するリポジトリインターフェース */
 public interface FileRepository {
   /**
    * ファイルに書き込むメソッド

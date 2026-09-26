@@ -15,10 +15,6 @@ import org.apache.logging.log4j.Logger;
  * 検証済みのDB接続情報を表すクラス<br>
  * {@code conf/mybatis.properties}の値を、CLI引数の値で上書きしたもの。組み立てる時に検証するため、
  * インスタンスがあれば必須の項目がそろい、未知のキーを含まないことが保証される
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class ConnectionSettings {
 

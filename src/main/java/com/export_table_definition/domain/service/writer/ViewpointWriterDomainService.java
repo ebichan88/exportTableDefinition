@@ -20,10 +20,6 @@ import org.apache.logging.log4j.Logger;
 /**
  * 観点ページ（観点ごとのER図・所属テーブル）と観点一覧を書き込むクラス<br>
  * 利用する情報はテーブル一覧と関連の一覧のみで、テーブル詳細を必要としない（スキーマ別ER図と同じ）
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class ViewpointWriterDomainService {
 

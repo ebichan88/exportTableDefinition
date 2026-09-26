@@ -7,9 +7,6 @@ import com.export_table_definition.presentation.type.ProcessResult;
  * 失敗した場合の報告は{@link com.export_table_definition.presentation.FailureReporter}が組み立てるため、成功した場合の結果のみを表す
  *
  * @param message 処理結果のメッセージ
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record ResultDto(String message) {
 

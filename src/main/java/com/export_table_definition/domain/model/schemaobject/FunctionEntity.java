@@ -13,9 +13,6 @@ package com.export_table_definition.domain.model.schemaobject;
  * @param functionResult 戻り値の型（プロシージャの場合は空文字）
  * @param languageName 実装言語
  * @param definition 定義本体（一覧取得時は空文字）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record FunctionEntity(
     String dbName,

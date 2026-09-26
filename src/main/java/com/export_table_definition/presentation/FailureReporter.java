@@ -24,10 +24,6 @@ import org.apache.logging.log4j.Logger;
  *
  * いずれの場合も、例外の連鎖（原因）のうち表示に含まれていない情報を持つものを{@code [cause]}として併記する
  * （例外を包んだ箇所で、DBが返したエラー等の原因のメッセージが失われないようにするため）
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class FailureReporter {
 

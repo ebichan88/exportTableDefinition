@@ -16,10 +16,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
  * 参考リンク：https://support.oracle.com/knowledge/Middleware/832903_1.html
  *
  * <p>トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（ENUM等）の出力はPostgreSQL専用のため、 Oracleでは空リストを返却し出力しない。
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class OracleTableDefinitionRepository extends AbstractTableDefinitionRepository {
 

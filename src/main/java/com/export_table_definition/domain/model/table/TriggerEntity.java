@@ -13,9 +13,6 @@ import java.util.List;
  * @param orientation 実行単位（ROW/STATEMENT）
  * @param functionName 実行される関数名（スキーマ修飾）
  * @param triggerDefinition トリガー定義
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record TriggerEntity(
     String schemaName,

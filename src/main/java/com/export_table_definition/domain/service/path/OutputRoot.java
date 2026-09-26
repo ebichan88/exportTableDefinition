@@ -10,8 +10,5 @@ import java.nio.file.Path;
  *
  * @param baseDir 出力先のベースディレクトリパス
  * @param baseInfo データベースの基本情報
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record OutputRoot(Path baseDir, BaseInfoEntity baseInfo) {}

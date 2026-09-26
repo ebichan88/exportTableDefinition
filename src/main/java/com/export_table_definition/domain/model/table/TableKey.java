@@ -2,13 +2,7 @@ package com.export_table_definition.domain.model.table;
 
 import java.util.Optional;
 
-/**
- * スキーマ名とテーブル名を組み合わせた値オブジェクト
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** スキーマ名とテーブル名を組み合わせた値オブジェクト */
 public record TableKey(String schema, String table) {
 
   /** {@code スキーマ.テーブル} 形式の文字列の区切り文字 */

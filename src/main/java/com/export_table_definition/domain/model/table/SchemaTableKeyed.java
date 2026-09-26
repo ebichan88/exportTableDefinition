@@ -1,12 +1,6 @@
 package com.export_table_definition.domain.model.table;
 
-/**
- * スキーマ名・テーブル名を持つエンティティに共通の振る舞いを提供するインタフェース
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** スキーマ名・テーブル名を持つエンティティに共通の振る舞いを提供するインタフェース */
 public interface SchemaTableKeyed {
 
   /**

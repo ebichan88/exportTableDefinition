@@ -6,13 +6,7 @@ import com.export_table_definition.infrastructure.db.repository.PostgresTableDef
 import java.util.Arrays;
 import java.util.Objects;
 
-/**
- * Databaseの種別をもつ列挙型クラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** Databaseの種別をもつ列挙型クラス */
 public enum DatabaseType {
   /** PostgreSQL */
   POSTGRESQL("postgresql", PostgresTableDefinitionRepository.class),

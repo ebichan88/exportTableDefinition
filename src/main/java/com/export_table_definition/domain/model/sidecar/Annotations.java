@@ -10,10 +10,6 @@ import java.util.Set;
 /**
  * テーブル単位の手動付帯情報（{@link TableAnnotation}）の集合を扱うクラス<br>
  * サイドカーYAMLを読み込んだ結果を、スキーマ.テーブルをキーとして保持する。 該当する付帯情報が存在しないテーブルに対しては空の付帯情報を返すため、 呼び出し側はnullを気にせず利用できる
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class Annotations {
 

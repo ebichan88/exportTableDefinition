@@ -10,10 +10,6 @@ import java.util.Optional;
  * OutputPathResolver}）はこのクラスの規則を参照する。<br>
  * 配置は次のとおり。DB全体の情報は{@code snapshot/{DB名}/database.json}、 スキーマ配下のオブジェクトは種別ごとに{@code
  * snapshot/{DB名}/{スキーマ名}/{種別のファイル名}.jsonl}に置く
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class SnapshotLocations {
 

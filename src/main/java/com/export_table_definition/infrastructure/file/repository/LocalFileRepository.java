@@ -13,13 +13,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * ローカルファイルシステムに対するファイル操作のリポジトリ実装クラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** ローカルファイルシステムに対するファイル操作のリポジトリ実装クラス */
 public class LocalFileRepository implements FileRepository {
 
   /** {@inheritDoc} */

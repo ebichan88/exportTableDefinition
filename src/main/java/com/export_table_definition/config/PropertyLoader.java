@@ -20,10 +20,6 @@ import java.util.stream.Stream;
  * どのキーを書けるか・既定値・値の形式といった設定項目の仕様と検証は、ファイルごとに読み込む側が持つ （{@code
  * ExportTableDefinition.properties}は{@code ExportTableDefinitionProperties}、{@code
  * mybatis.properties}は{@code MyBatisSqlSessionFactory}）
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class PropertyLoader {
 
