@@ -10,16 +10,13 @@ import java.util.Properties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** CliArguments のフラグ判定・DB接続情報と実行時設定の上書き解決・解釈できない引数・環境変数の検知に関するテスト */
+/** CliArguments のフラグ判定・DB接続情報と実行時設定の上書き解決・解釈できない引数の検知に関するテスト */
 public class CliArgumentsTest {
-
-  /** 環境変数が1つも設定されていない状態（テストを実行する環境の環境変数に左右されないようにする） */
-  private static final Map<String, String> NO_ENV = Map.of();
 
   @Test
   @DisplayName("parse: --checkが無い場合はisCheck=false、--rm-distが無い場合はisRmDist=false")
   void testParseFlagsAbsent() {
-    CliArguments args = CliArguments.parse(new String[] {}, NO_ENV);
+    CliArguments args = CliArguments.parse(new String[] {});
     assertFalse(args.isCheck());
     assertFalse(args.isRmDist());
   }
@@ -27,7 +24,7 @@ public class CliArgumentsTest {
   @Test
   @DisplayName("parse: --check・--rm-distが指定されている場合はそれぞれtrueを返す")
   void testParseFlagsPresent() {
-    CliArguments args = CliArguments.parse(new String[] {"--check", "--rm-dist"}, NO_ENV);
+    CliArguments args = CliArguments.parse(new String[] {"--check", "--rm-dist"});
     assertTrue(args.isCheck());
     assertTrue(args.isRmDist());
   }
@@ -42,8 +39,7 @@ public class CliArgumentsTest {
               "--db-url=jdbc:postgresql://localhost:5432/testdb",
               "--db-username=user",
               "--db-password=pass"
-            },
-            NO_ENV);
+            });
 
     Properties overrides = args.connectionOverrides();
     assertEquals("org.postgresql.Driver", overrides.getProperty("driver"));
@@ -53,17 +49,16 @@ public class CliArgumentsTest {
   }
 
   @Test
-  @DisplayName("connectionOverrides: 対応するCLI引数・環境変数が無いキーは含まれない")
+  @DisplayName("connectionOverrides: 対応するCLI引数が無いキーは含まれない")
   void testConnectionOverridesEmptyWhenNothingSpecified() {
-    Properties overrides = CliArguments.parse(new String[] {}, NO_ENV).connectionOverrides();
+    Properties overrides = CliArguments.parse(new String[] {}).connectionOverrides();
     assertTrue(overrides.isEmpty());
   }
 
   @Test
   @DisplayName("connectionOverrides: 空文字を指定した場合は上書きしない")
   void testConnectionOverridesIgnoresBlankValue() {
-    Properties overrides =
-        CliArguments.parse(new String[] {"--db-url="}, NO_ENV).connectionOverrides();
+    Properties overrides = CliArguments.parse(new String[] {"--db-url="}).connectionOverrides();
     assertFalse(overrides.containsKey("url"));
   }
 
@@ -71,8 +66,7 @@ public class CliArgumentsTest {
   @DisplayName("connectionOverrides: '--'で始まらない、または'='を含まない引数は無視する")
   void testConnectionOverridesIgnoresMalformedArgs() {
     Properties overrides =
-        CliArguments.parse(new String[] {"db-url=jdbc:test", "--db-driver"}, NO_ENV)
-            .connectionOverrides();
+        CliArguments.parse(new String[] {"db-url=jdbc:test", "--db-driver"}).connectionOverrides();
     assertTrue(overrides.isEmpty());
   }
 
@@ -88,8 +82,7 @@ public class CliArgumentsTest {
               "--db-url=jdbc:postgresql://localhost:5432/testdb",
               "--db-username=",
               "--db-password=pass"
-            },
-            NO_ENV);
+            });
 
     assertDoesNotThrow(args::requireKnownArguments);
   }
@@ -98,8 +91,7 @@ public class CliArgumentsTest {
   @DisplayName("requireKnownArguments: 解釈できない引数（書き誤り・値の無い--db-*・値付きのフラグ）をすべて示して誤りとする")
   void testRequireKnownArgumentsRejectsUnknownArguments() {
     CliArguments args =
-        CliArguments.parse(
-            new String[] {"--chek", "--rm-dist", "--db-url", "--check=true", "x"}, NO_ENV);
+        CliArguments.parse(new String[] {"--chek", "--rm-dist", "--db-url", "--check=true", "x"});
 
     UserCorrectableException e =
         assertThrows(UserCorrectableException.class, args::requireKnownArguments);
@@ -110,33 +102,10 @@ public class CliArgumentsTest {
   @Test
   @DisplayName("parse: 解釈できない引数があっても、実行モードの判定はできる（誤りの報告はrequireKnownArgumentsで行う）")
   void testParseDoesNotThrowOnUnknownArguments() {
-    CliArguments args = CliArguments.parse(new String[] {"--chek", "--rm-dist"}, NO_ENV);
+    CliArguments args = CliArguments.parse(new String[] {"--chek", "--rm-dist"});
 
     assertFalse(args.isCheck());
     assertTrue(args.isRmDist());
-  }
-
-  @Test
-  @DisplayName("connectionOverrides: CLI引数が無い項目は環境変数から取り込み、両方ある項目はCLI引数を優先する")
-  void testConnectionOverridesFromEnvironment() {
-    Properties overrides =
-        CliArguments.parse(
-                new String[] {"--db-url=jdbc:cli"},
-                Map.of("DB_URL", "jdbc:env", "DB_USERNAME", "env-user"))
-            .connectionOverrides();
-
-    assertEquals("jdbc:cli", overrides.getProperty("url"));
-    assertEquals("env-user", overrides.getProperty("username"));
-  }
-
-  @Test
-  @DisplayName("connectionOverrides: 空のCLI引数は指定しなかったものとして扱い、環境変数の値を用いる")
-  void testConnectionOverridesFallsBackToEnvironmentWhenCliArgIsBlank() {
-    Properties overrides =
-        CliArguments.parse(new String[] {"--db-url="}, Map.of("DB_URL", "jdbc:env"))
-            .connectionOverrides();
-
-    assertEquals("jdbc:env", overrides.getProperty("url"));
   }
 
   @Test
@@ -152,8 +121,7 @@ public class CliArgumentsTest {
                   "--chunk-size=100",
                   "--er-diagram-max-nodes=0",
                   "--output-objects=trigger"
-                },
-                NO_ENV)
+                })
             .settingOverrides();
 
     assertEquals(
@@ -181,45 +149,12 @@ public class CliArgumentsTest {
   }
 
   @Test
-  @DisplayName("settingOverrides: ETD_接頭辞の環境変数から取り込み、CLI引数と両方ある項目はCLI引数を優先する")
-  void testSettingOverridesFromEnvironment() {
-    Map<String, SettingOverride> overrides =
-        CliArguments.parse(
-                new String[] {"--output-path=./cli"},
-                Map.of(
-                    "ETD_OUTPUT_PATH", "./env",
-                    "ETD_ER_DIAGRAM_MAX_NODES", "50",
-                    "ETD_TABLE", "!tmp_*"))
-            .settingOverrides();
-
-    assertEquals(new SettingOverride("./cli", "--output-path"), overrides.get("outputPath"));
-    assertEquals(
-        new SettingOverride("50", "ETD_ER_DIAGRAM_MAX_NODES"), overrides.get("erDiagramMaxNodes"));
-    assertEquals(new SettingOverride("!tmp_*", "ETD_TABLE"), overrides.get("table"));
-  }
-
-  @Test
-  @DisplayName("settingOverrides: 空の値は指定しなかったものとして扱い、次の指定元（環境変数→設定ファイル）へ委ねる")
+  @DisplayName("settingOverrides: 空の値は指定しなかったものとして扱い、設定ファイルの値に委ねる")
   void testSettingOverridesIgnoresBlankValues() {
     Map<String, SettingOverride> overrides =
-        CliArguments.parse(
-                new String[] {"--schema=", "--table= "},
-                Map.of("ETD_SCHEMA", "sample", "ETD_OUTPUT_PATH", ""))
-            .settingOverrides();
+        CliArguments.parse(new String[] {"--schema=", "--table= "}).settingOverrides();
 
-    assertEquals(new SettingOverride("sample", "ETD_SCHEMA"), overrides.get("schema"));
-    assertFalse(overrides.containsKey("table"));
-    assertFalse(overrides.containsKey("outputPath"));
-  }
-
-  @Test
-  @DisplayName("settingOverrides: ETD_接頭辞の無い環境変数（SCHEMA等）は取り込まない")
-  void testSettingOverridesIgnoresEnvironmentWithoutPrefix() {
-    CliArguments args =
-        CliArguments.parse(new String[] {}, Map.of("SCHEMA", "public", "OUTPUT_PATH", "/tmp"));
-
-    assertTrue(args.settingOverrides().isEmpty());
-    assertDoesNotThrow(args::requireKnownArguments);
+    assertTrue(overrides.isEmpty());
   }
 
   @Test
@@ -227,34 +162,15 @@ public class CliArgumentsTest {
   void testRequireKnownArgumentsAcceptsSettingArguments() {
     assertDoesNotThrow(
         CliArguments.parse(
-                new String[] {"--output-path=./docs", "--er-diagram-max-nodes=0", "--table="},
-                NO_ENV)
+                new String[] {"--output-path=./docs", "--er-diagram-max-nodes=0", "--table="})
             ::requireKnownArguments);
 
     UserCorrectableException e =
         assertThrows(
             UserCorrectableException.class,
-            CliArguments.parse(new String[] {"--outputPath=./docs"}, NO_ENV)
-                ::requireKnownArguments);
+            CliArguments.parse(new String[] {"--outputPath=./docs"})::requireKnownArguments);
     assertTrue(e.getMessage().contains("Unknown argument: --outputPath=./docs"));
     assertTrue(e.getMessage().contains("--output-path=<value>"));
     assertTrue(e.getMessage().contains("--annotation-path=<value>"));
-  }
-
-  @Test
-  @DisplayName("requireKnownArguments: ETD_接頭辞の未知の環境変数（書き誤り）は、使える環境変数を添えて誤りとする")
-  void testRequireKnownArgumentsRejectsUnknownEnvironmentVariables() {
-    CliArguments args =
-        CliArguments.parse(
-            new String[] {"--chek"},
-            Map.of("ETD_OUTPUTPATH", "./docs", "ETD_SCHEMAS", "sample", "ETD_SCHEMA", "sample"));
-
-    UserCorrectableException e =
-        assertThrows(UserCorrectableException.class, args::requireKnownArguments);
-    assertTrue(e.getMessage().contains("Unknown argument: --chek"));
-    assertTrue(
-        e.getMessage().contains("Unknown environment variable: ETD_OUTPUTPATH, ETD_SCHEMAS"));
-    assertTrue(e.getMessage().contains("ETD_OUTPUT_PATH"));
-    assertFalse(args.settingOverrides().containsKey("outputPath"));
   }
 }

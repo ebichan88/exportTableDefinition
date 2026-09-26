@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * 検証済みのDB接続情報を表すクラス<br>
- * {@code conf/mybatis.properties}の値を、CLI引数・環境変数由来の値で上書きしたもの。組み立てる時に検証するため、
+ * {@code conf/mybatis.properties}の値を、CLI引数の値で上書きしたもの。組み立てる時に検証するため、
  * インスタンスがあれば必須の項目がそろい、未知のキーを含まないことが保証される
  *
  * @since 1.0
@@ -25,7 +25,7 @@ public final class ConnectionSettings {
   private static final Logger logger = LogManager.getLogger(ConnectionSettings.class);
   private static final String PROPERTY_BUNDLE_NAME = "mybatis";
 
-  /** DB接続情報のキー（mybatis-config.xmlが参照する。conf/mybatis.properties・CLI引数・環境変数で指定する） */
+  /** DB接続情報のキー（mybatis-config.xmlが参照する。conf/mybatis.properties・CLI引数で指定する） */
   private static final List<String> CONNECTION_KEYS =
       List.of("driver", "url", "username", "password");
 
@@ -39,10 +39,10 @@ public final class ConnectionSettings {
   }
 
   /**
-   * {@code conf/mybatis.properties}を読み込み、CLI引数・環境変数由来の値で上書きしたDB接続情報を組み立てるメソッド<br>
-   * {@code conf/mybatis.properties}が存在しない場合は、上書きする値だけで組み立てる（CLI引数・環境変数のみで接続情報を賄うケースを許容するため）
+   * {@code conf/mybatis.properties}を読み込み、CLI引数の値で上書きしたDB接続情報を組み立てるメソッド<br>
+   * {@code conf/mybatis.properties}が存在しない場合は、上書きする値だけで組み立てる（CLI引数のみで接続情報を賄うケースを許容するため）
    *
-   * @param overrides 上書きする接続情報（CLI引数・環境変数由来。未指定のキーは含まない）
+   * @param overrides 上書きする接続情報（CLI引数由来。未指定のキーは含まない）
    * @return 検証済みのDB接続情報
    * @throws InvalidConfigurationException 未知のキーがある場合や、必須の項目が未指定の場合
    */
@@ -114,7 +114,7 @@ public final class ConnectionSettings {
                     key
                         + " is not set. Set it in conf/"
                         + PROPERTY_BUNDLE_NAME
-                        + ".properties, or with the --db-* argument or the DB_* environment variable."));
+                        + ".properties, or with the --db-* argument."));
     if (!errors.isEmpty()) {
       throw new InvalidConfigurationException(
           "Invalid database connection settings."
@@ -126,7 +126,7 @@ public final class ConnectionSettings {
 
   /**
    * conf/mybatis.propertiesを読み込む<br>
-   * ファイルが存在しない場合は空を返す（CLI引数・環境変数のみで接続情報を賄うケースを許容するため）
+   * ファイルが存在しない場合は空を返す（CLI引数のみで接続情報を賄うケースを許容するため）
    *
    * @return 読み込んだキーと値の組（ファイルが存在しない場合は空）
    */
@@ -134,8 +134,7 @@ public final class ConnectionSettings {
     try {
       return PropertyLoader.load(PROPERTY_BUNDLE_NAME);
     } catch (InvalidConfigurationException e) {
-      logger.info(
-          "conf/mybatis.properties not found. Relying on CLI/env connection overrides only.");
+      logger.info("conf/mybatis.properties not found. Relying on the --db-* arguments only.");
       return Map.of();
     }
   }

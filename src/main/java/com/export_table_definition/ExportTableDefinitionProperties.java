@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 /**
  * 実行時設定ファイル（{@code conf/ExportTableDefinition.properties}）の設定項目の仕様を持ち、設定値を検証・変換するクラス<br>
  * 設定項目の仕様（キー・既定値・値の形式。READMEの「ExportTableDefinition.propertiesの記載内容」）をこのクラスに集める。
- * ファイルの探索・読み込みは{@link PropertyLoader}に委ね、このクラスは読み込んだキーと値を、CLI引数・環境変数による上書き値 （{@link
+ * ファイルの探索・読み込みは{@link PropertyLoader}に委ね、このクラスは読み込んだキーと値を、CLI引数による上書き値 （{@link
  * CliArguments}が解決する）で上書きしたうえで仕様に照らして検証し、型へ変換する。
  *
  * <ul>
  *   <li>キーの省略と値が空は、同じ「未指定」として扱い既定値を用いる
- *   <li>CLI引数・環境変数で上書きした値も、設定ファイルに書いた値と同じ仕様で検証する
+ *   <li>CLI引数で上書きした値も、設定ファイルに書いた値と同じ仕様で検証する
  *   <li>未知のキー（キー名の書き誤り等）・整数として解釈できない値・出力対象の条件として解釈できない値は誤りとする
  *   <li>見つかった誤りは、1件ずつではなくまとめて{@link InvalidConfigurationException}で報告する
  * </ul>
@@ -48,7 +48,7 @@ final class ExportTableDefinitionProperties {
 
   /**
    * 設定ファイルに書けるキー（READMEの記載順）<br>
-   * CLI引数・環境変数による上書きも、このキーから名前を導く（{@link CliArguments}）ため、キーを追加すれば上書きにも自動で対応する
+   * CLI引数による上書きも、このキーから引数名を導く（{@link CliArguments}）ため、キーを追加すれば上書きにも自動で対応する
    */
   static final List<String> KEYS =
       List.of(
@@ -83,7 +83,7 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * {@code conf/ExportTableDefinition.properties}を読み込み、CLI引数・環境変数による上書き値で上書きして検証するメソッド<br>
+   * {@code conf/ExportTableDefinition.properties}を読み込み、CLI引数による上書き値で上書きして検証するメソッド<br>
    * 上書きする値をすべて指定する場合でも、設定ファイル自体は必要とする（実行するディレクトリを誤った場合に、既定の出力先 （{@code ./output}）へ黙って出力しないよう、{@code
    * conf}ディレクトリ・設定ファイルが見つからないことを誤りとして報告するため）
    *
@@ -108,8 +108,8 @@ final class ExportTableDefinitionProperties {
 
   /**
    * 設定ファイルのキーと値を上書き値で上書きし、検証済みの設定を生成するメソッド<br>
-   * 誤りの報告には、どの値を上書きしたか（指定元のCLI引数名・環境変数名）を添える。誤った値が設定ファイルではなく
-   * CLI引数・環境変数から来ている場合に、設定ファイルだけを見直して原因が見つからない、とならないようにするため
+   * 誤りの報告には、どの値を上書きしたか（指定元のCLI引数名）を添える。誤った値が設定ファイルではなく
+   * CLI引数から来ている場合に、設定ファイルだけを見直して原因が見つからない、とならないようにするため
    *
    * @param fileValues 設定ファイルのキーと値
    * @param overrides 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まない）
@@ -188,7 +188,7 @@ final class ExportTableDefinitionProperties {
    * 誤りの報告に添える、上書きした値の指定元の説明を組み立てるメソッド
    *
    * @param overrides 上書き値
-   * @return 上書きした値がある場合は{@code " (overridden by --output-path, ETD_TABLE)"}の形式の文字列、無い場合は空文字
+   * @return 上書きした値がある場合は{@code " (overridden by --output-path, --table)"}の形式の文字列、無い場合は空文字
    */
   private static String overriddenBy(Map<String, SettingOverride> overrides) {
     if (overrides.isEmpty()) {
@@ -251,10 +251,10 @@ final class ExportTableDefinitionProperties {
   }
 
   /**
-   * CLI引数・環境変数による、設定値1項目分の上書き
+   * CLI引数による、設定値1項目分の上書き
    *
    * @param value 上書きする値
-   * @param source 値の指定元（CLI引数名（例: {@code --output-path}）または環境変数名（例: {@code ETD_OUTPUT_PATH}））
+   * @param source 値の指定元のCLI引数名（例: {@code --output-path}）
    */
   record SettingOverride(String value, String source) {}
 }

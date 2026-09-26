@@ -39,14 +39,14 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## 実行フロー
 
-1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・CLI引数と環境変数からのDB接続情報・実行時設定の
+1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・DB接続情報と実行時設定の
    上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を1つのtry-catchで囲んで実行する。
    例外の捕捉と終了コードへの変換はここで1箇所にまとめて行い、捕捉した例外は`presentation.FailureReporter`が報告する
    （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
 2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
-   - `CliArguments.requireKnownArguments()`が、解釈できない引数・`ETD_`で始まる環境変数（書き誤り等）が無いことを確かめる
+   - `CliArguments.requireKnownArguments()`が、解釈できない引数（書き誤り等）が無いことを確かめる
    - `ExportTableDefinitionProperties.load()`が `conf/ExportTableDefinition.properties` の設定値（出力対象スキーマ／テーブル、
-     出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、CLI引数・環境変数による上書き値
+     出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、CLI引数による上書き値
      （`CliArguments.settingOverrides()`）で上書きしてから検証し、
      `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ変換する。
      出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
@@ -57,7 +57,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - DB種別に依存しない部品のDIコンテナ（`ExportTableDefinitionModule`）を組み立て、`OutputDirectoryValidator`が出力先
      （`outputPath`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
      ディレクトリ・カレントディレクトリ自体）を指す場合は、DBへ接続する前に`[result]:FAIL`として報告する
-   - `ConnectionSettings.load()`（`infrastructure.db`）が`conf/mybatis.properties`をCLI引数・環境変数の値で上書きし、
+   - `ConnectionSettings.load()`（`infrastructure.db`）が`conf/mybatis.properties`をCLI引数の値で上書きし、
      DB接続情報を検証する
 3. 入力の検証に成功した後、`MyBatisSqlSessionFactories.create()`で`SqlSessionFactory`を1回だけ生成し、
    `DatabaseTypeDetector.detect()`がDBへ接続して接続先のDB種別を判定する。
@@ -99,7 +99,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
   組み立てを含む処理全体を1つのtry-catchで囲むため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない。
   捕捉した例外は`presentation.FailureReporter`へ渡し、種類に応じた報告（画面・ログ）を任せる
 - 途中の層でcatchしてよいのは、(a) 検査例外を非検査例外で包む、(b) 下位の例外を利用者が直せる誤りへ置き換える、
-  (c) フォールバックする（`conf/mybatis.properties`が無い場合に、CLI引数・環境変数の接続情報だけで続ける等）場合のみ。
+  (c) フォールバックする（`conf/mybatis.properties`が無い場合に、CLI引数の接続情報だけで続ける等）場合のみ。
   包むときは原因（`cause`）を必ず渡し、tryの範囲は置き換えたい呼び出しだけに絞る
   （例: `AbstractTableDefinitionRepository`はSQLの呼び出しだけを包み、DTO→エンティティの変換の失敗は包まない）。
   catchしてログを出してから再スローすることはしない（ログの出力も`FailureReporter`が行う）
@@ -136,8 +136,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 | 入力 | 検証する場所 | 検証のタイミング |
 |---|---|---|
-| CLI引数・`ETD_`で始まる環境変数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
-| 設定ファイルの形式（キー・整数。CLI引数・環境変数で上書きした値を含む） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
+| CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
+| 設定ファイルの形式（キー・整数。CLI引数で上書きした値を含む） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
 | 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
 | 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |

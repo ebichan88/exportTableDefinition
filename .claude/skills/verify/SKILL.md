@@ -81,19 +81,23 @@ Markdownに加えて、常に`docs/sample/postgres/output/snapshot/`配下へス
 
 ### 4. 実行する
 
-DB接続情報は環境変数で渡せる（`conf/mybatis.properties` を用意しなくてよい）。
+DB接続情報はCLI引数で渡せる（`conf/mybatis.properties` を用意しなくてよい）。
 `PropertyLoader`はカレントディレクトリ相対の`./conf`→`./src/main/resources/conf`の順で探すため、
 **`build/libs` に `cd` してから実行する**こと（リポジトリ直下から実行すると `src/main/resources/conf`
 側の設定＝schema空白＝全スキーマ対象を拾ってしまう）。
 
 ```bash
 cd build/libs
-DB_DRIVER=org.postgresql.Driver \
-DB_URL=jdbc:postgresql://localhost:15432/testdb \
-DB_USERNAME=postgres \
-DB_PASSWORD=postgres \
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar
+java -jar exportTableDefinition-1.0-SNAPSHOT.jar \
+  --db-driver=org.postgresql.Driver \
+  --db-url=jdbc:postgresql://localhost:15432/testdb \
+  --db-username=postgres \
+  --db-password=postgres
 ```
+
+手順3の設定ファイルの編集の代わりに、`--schema=sample --output-path=<リポジトリの絶対パス>/docs/sample/postgres/output
+--annotation-path=<リポジトリの絶対パス>/docs/sample/postgres/annotations.sample.yml` を付けて実行してもよい
+（CLI引数は設定ファイルの値より優先される）。
 
 `[result]:SUCCESS` が出れば成功。`[result]:FAIL` の場合は次の「原因調査」を参照。
 

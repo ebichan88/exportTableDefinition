@@ -62,7 +62,7 @@ public class ConnectionSettingsTest {
   }
 
   @Test
-  @DisplayName("merge: CLI引数・環境変数由来の値が設定ファイルの値より優先され、指定されなかったキーは設定ファイルの値を使う")
+  @DisplayName("merge: CLI引数由来の値が設定ファイルの値より優先され、指定されなかったキーは設定ファイルの値を使う")
   void testOverridesTakePrecedenceOverBaseValues() {
     final ConnectionSettings settings =
         ConnectionSettings.merge(

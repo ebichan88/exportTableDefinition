@@ -42,7 +42,7 @@ public class ExportTableDefinition {
    * テーブル定義出力処理のエントリーポイントメソッド<br>
    * 終了コードは、成功（{@code --check}で差分なしを含む）は0、{@code --check}で差分ありは1、失敗は2以上（現在は2のみ）
    *
-   * @param args コマンドライン引数（CLI引数・フラグ・環境変数の解析は{@link CliArguments}を参照）
+   * @param args コマンドライン引数（CLI引数・フラグの解析は{@link CliArguments}を参照）
    */
   public static void main(String[] args) {
     final CliArguments cliArguments = CliArguments.parse(args);
@@ -74,7 +74,7 @@ public class ExportTableDefinition {
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル（CLI引数・環境変数で上書きした値を含む）・出力先・DB接続情報の検証
+    // CLI引数・設定ファイル（CLI引数で上書きした値を含む）・出力先・DB接続情報の検証
     // （DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
     cliArguments.requireKnownArguments();
     final ExportRequest request =
@@ -107,7 +107,7 @@ public class ExportTableDefinition {
                 Starting check of table definition document diff.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル（CLI引数・環境変数で上書きした値を含む）・出力先・DB接続情報の検証
+    // CLI引数・設定ファイル（CLI引数で上書きした値を含む）・出力先・DB接続情報の検証
     // （DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
     cliArguments.requireKnownArguments();
     final CheckDiffRequest request =

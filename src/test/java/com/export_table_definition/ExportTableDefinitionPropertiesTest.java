@@ -186,14 +186,14 @@ public class ExportTableDefinitionPropertiesTest {
   }
 
   @Test
-  @DisplayName("of: CLI引数・環境変数による上書き値は設定ファイルの値より優先し、上書きしないキーは設定ファイルの値を用いる")
+  @DisplayName("of: CLI引数による上書き値は設定ファイルの値より優先し、上書きしないキーは設定ファイルの値を用いる")
   void testOfAppliesOverrides() {
     ExportRequest request =
         ExportTableDefinitionProperties.of(
                 Map.of("schema", "sample", "outputPath", "./docs/db", "chunkSize", "100"),
                 Map.of(
                     "outputPath", new SettingOverride("./docs/prod", "--output-path"),
-                    "table", new SettingOverride("!tmp_*", "ETD_TABLE")))
+                    "table", new SettingOverride("!tmp_*", "--table")))
             .toExportRequest(false);
 
     assertEquals(List.of("sample"), request.targetSelection().targetScope().schemaNames());
@@ -213,13 +213,13 @@ public class ExportTableDefinitionPropertiesTest {
                     Map.of("chunkSize", "100"),
                     Map.of(
                         "chunkSize", new SettingOverride("abc", "--chunk-size"),
-                        "outputObjects", new SettingOverride("trigers", "ETD_OUTPUT_OBJECTS"))));
+                        "outputObjects", new SettingOverride("trigers", "--output-objects"))));
 
     assertTrue(e.getMessage().contains("chunkSize must be an integer: abc"));
     assertTrue(e.getMessage().contains("trigers"));
     assertTrue(e.getMessage().contains("overridden by "));
     assertTrue(e.getMessage().contains("--chunk-size"));
-    assertTrue(e.getMessage().contains("ETD_OUTPUT_OBJECTS"));
+    assertTrue(e.getMessage().contains("--output-objects"));
   }
 
   @Test
