@@ -22,10 +22,6 @@ import java.util.regex.Pattern;
  * 除外パターンは包含パターンより常に優先される。包含パターンが1件も指定されていない場合は、 除外パターンに一致しない限りすべてのテーブルが対象となる。
  * テーブル名の部分が空のパターン（{@code !}のみ、{@code sample.}等）と、スキーマ名の部分が空のパターン（{@code .employee}等）は、
  * どのテーブルにも一致しない書き誤りのため、黙って受け入れずに誤りとする
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class TableTargetFilter {
 
@@ -42,11 +38,8 @@ public final class TableTargetFilter {
   }
 
   /**
-   * 生のパターン文字列のリストから{@link TableTargetFilter}を生成する静的ファクトリメソッド<br>
    * 各パターンは前後の空白を除去してから解釈する（除外の{@code !}の判定も空白を除去した後に行う）
    *
-   * @param rawPatterns {@code table=}に指定されたパターン文字列のリスト
-   * @return 生成したフィルター
    * @throws IllegalArgumentException テーブル名またはスキーマ名の部分が空のパターンが含まれる場合（該当するパターンをすべて示す）
    */
   public static TableTargetFilter of(List<String> rawPatterns) {
@@ -77,32 +70,16 @@ public final class TableTargetFilter {
     return new TableTargetFilter(List.copyOf(includes), List.copyOf(excludes));
   }
 
-  /**
-   * パターンが1件も指定されていないか判定するメソッド
-   *
-   * @return 包含・除外いずれのパターンも指定されていない場合はtrue
-   */
   public boolean isEmpty() {
     return includes.isEmpty() && excludes.isEmpty();
   }
 
-  /**
-   * 包含パターン（先頭に{@code !}の無いパターン）が1件以上あるか判定するメソッド<br>
-   * 包含パターンが無い場合は除外に一致しない全テーブルが対象となるため、観点のように「どのテーブルを含めるか」を 明示させたい用途で、指定漏れを判定するために用いる
-   *
-   * @return 包含パターンが1件以上ある場合はtrue
-   */
+  /** 包含パターンが無い場合は除外に一致しない全テーブルが対象となるため、観点のように「どのテーブルを含めるか」を 明示させたい用途で、指定漏れを判定するために用いる */
   public boolean hasInclusion() {
     return !includes.isEmpty();
   }
 
-  /**
-   * どのテーブルにも一致しない包含パターンを求めるメソッド<br>
-   * テーブルのリネーム・削除によって、パターンがDBと乖離していないかの気付きに用いる
-   *
-   * @param tables 判定対象のテーブル
-   * @return どのテーブルにも一致しない包含パターン（指定された文字列のまま、指定順）
-   */
+  /** テーブルのリネーム・削除によって、パターンがDBと乖離していないかの気付きに用いる */
   public List<String> unmatchedInclusions(Collection<TableEntity> tables) {
     return includes.stream()
         .filter(
@@ -114,14 +91,7 @@ public final class TableTargetFilter {
         .toList();
   }
 
-  /**
-   * 指定されたテーブルがこのフィルターの対象となるか判定するメソッド<br>
-   * 除外パターンに一致する場合は常にfalse。包含パターンが1件もない場合、除外に一致しない限りtrue
-   *
-   * @param schemaName スキーマ名
-   * @param physicalTableName 物理テーブル名
-   * @return 対象となる場合はtrue
-   */
+  /** 除外パターンに一致する場合は常にfalse。包含パターンが1件もない場合、除外に一致しない限りtrue */
   public boolean matches(String schemaName, String physicalTableName) {
     if (excludes.stream().anyMatch(entry -> entry.matches(schemaName, physicalTableName))) {
       return false;
@@ -137,14 +107,10 @@ public final class TableTargetFilter {
    *
    * @param raw 指定されたパターン文字列（{@code !}を除く。一致しないパターンの報告に用いる）
    * @param schema スキーマ名。スキーマ修飾がない場合はnull（全スキーマが対象）
-   * @param tablePattern テーブル名を判定する正規表現
    */
   private record Entry(String raw, String schema, Pattern tablePattern) {
 
     /**
-     * パターン文字列を解析するメソッド
-     *
-     * @param pattern {@code !}を除いたパターン文字列
      * @return 解析結果。テーブル名またはスキーマ名の部分が空の場合は空
      */
     static Optional<Entry> parse(String pattern) {
@@ -159,13 +125,6 @@ public final class TableTargetFilter {
       return Optional.of(new Entry(pattern, schema, toPattern(tablePart)));
     }
 
-    /**
-     * このエントリがテーブルに一致するか判定するメソッド
-     *
-     * @param schemaName スキーマ名
-     * @param physicalTableName 物理テーブル名
-     * @return 一致する場合はtrue
-     */
     boolean matches(String schemaName, String physicalTableName) {
       if (schema != null && !schema.equals(schemaName)) {
         return false;
@@ -173,12 +132,6 @@ public final class TableTargetFilter {
       return tablePattern.matcher(physicalTableName).matches();
     }
 
-    /**
-     * {@code *}をワイルドカードとして扱う正規表現へ変換するメソッド
-     *
-     * @param glob {@code *}を含みうるテーブル名パターン
-     * @return 変換した正規表現
-     */
     private static Pattern toPattern(String glob) {
       final StringBuilder regex = new StringBuilder();
       for (int i = 0; i < glob.length(); i++) {

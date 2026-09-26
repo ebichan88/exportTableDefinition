@@ -10,13 +10,7 @@ import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * スキーマのスナップショット（JSON Lines）を書き出す{@link ExportSink}を生成するクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** スキーマのスナップショット（JSON Lines）を書き出す{@link ExportSink}を生成するクラス */
 public class SnapshotExportSinkFactory {
 
   private final SchemaSnapshotWriterDomainService snapshotWriter;

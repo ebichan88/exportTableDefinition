@@ -13,9 +13,6 @@ package com.export_table_definition.domain.model.schemaobject;
  * @param startValue 開始値
  * @param cycle 最大値（最小値）到達時に循環するか
  * @param ownedBy 所有カラム（テーブル.カラム形式）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record SequenceEntity(
     String dbName,

@@ -16,13 +16,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点）を書き出す{@link ExportSink}を生成するクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点）を書き出す{@link ExportSink}を生成するクラス */
 public class MarkdownExportSinkFactory {
 
   private final TableDefinitionWriterDomainService tableDefinitionWriter;

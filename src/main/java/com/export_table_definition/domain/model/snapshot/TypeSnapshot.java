@@ -11,9 +11,6 @@ import com.export_table_definition.domain.model.schemaobject.TypeEntity;
  * @param name 型名
  * @param category 種別（ENUM/COMPOSITE/DOMAIN/RANGE）
  * @param definition 定義
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record TypeSnapshot(String schema, String name, String category, String definition) {
 

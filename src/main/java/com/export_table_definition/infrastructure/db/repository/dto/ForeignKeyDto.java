@@ -4,13 +4,7 @@ import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.RelationType;
 
-/**
- * 外部キー情報に関してORMのデータの受け渡しに利用するDTOクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** 外部キー情報に関してORMのデータの受け渡しに利用するDTOクラス */
 public record ForeignKeyDto(
     String schemaName,
     String tableName,

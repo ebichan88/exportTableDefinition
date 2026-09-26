@@ -9,13 +9,7 @@ import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
-/**
- * DBへ接続し、接続先のDB種別を判定するクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** DBへ接続し、接続先のDB種別を判定するクラス */
 public final class DatabaseTypeDetector {
 
   /** コンストラクタ（インスタンス化不可） */

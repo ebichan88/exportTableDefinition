@@ -18,31 +18,15 @@ import com.export_table_definition.domain.service.path.DocumentLocations;
 import java.util.List;
 import java.util.function.BiFunction;
 
-/**
- * テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス */
 public class TableDefinitionTemplates {
 
-  /**
-   * テーブル定義ヘッダー
-   *
-   * @param table テーブル情報
-   * @return ヘッダー文字列
-   */
+  /** テーブル定義ヘッダー */
   public static String fileHeader(TableEntity table) {
     return "# " + table.getHeaderTableName() + LINE_SEPARATOR_DOUBLE;
   }
 
-  /**
-   * 基本情報セクション
-   *
-   * @param baseInfo データベース基本情報
-   * @return 基本情報セクション文字列
-   */
+  /** 基本情報セクション */
   public static String baseInfo(BaseInfoEntity baseInfo) {
     return MarkdownTemplateSupport.baseInfoSection(baseInfo);
   }
@@ -50,9 +34,6 @@ public class TableDefinitionTemplates {
   /**
    * テーブル説明セクション<br>
    * サイドカー由来の説明が存在する場合はその本文を、存在しない場合は従来通り空のセクションを出力する。 説明本文は自由記述のブロックとしてそのまま出力するため、改行はエスケープしない
-   *
-   * @param annotation テーブルの手動付帯情報
-   * @return テーブル説明セクション文字列
    */
   public static String tableExplanation(TableAnnotation annotation) {
     final String description = annotation.description();
@@ -72,10 +53,6 @@ public class TableDefinitionTemplates {
    * テーブル情報セクション<br>
    * 論理テーブル名はDBコメント由来の自由記述文字列（{@code |}・改行を含みうる）のためエスケープする。 末尾の備考セルはSQLでは付与されないため、サイドカー由来のテーブル備考を
    * エスケープした上でここで後付けする（FK多重度と同様の後付け方式）
-   *
-   * @param table テーブル情報
-   * @param annotation テーブルの手動付帯情報
-   * @return テーブル情報セクション文字列
    */
   public static String tableInfo(TableEntity table, TableAnnotation annotation) {
     return """
@@ -97,10 +74,6 @@ public class TableDefinitionTemplates {
    * カラム情報セクション<br>
    * 論理名（DBコメント）・デフォルト値（DBのデフォルト式。PostgreSQLの{@code ||}連結等で{@code |}を含みうる）は、
    * いずれも自由記述文字列で改行を含む場合もあるためエスケープする
-   *
-   * @param columns 当該テーブルのカラム情報のリスト
-   * @param annotation テーブルの手動付帯情報
-   * @return カラム情報セクション文字列
    */
   public static String columns(List<ColumnEntity> columns, TableAnnotation annotation) {
     String header =
@@ -128,12 +101,6 @@ public class TableDefinitionTemplates {
                     annotation.columnRemark(c.physicalColumnName()))));
   }
 
-  /**
-   * ビュー情報セクション
-   *
-   * @param table テーブル情報
-   * @return ビュー情報セクション文字列
-   */
   public static String view(TableEntity table) {
     if (!table.isView()) {
       return "";
@@ -156,9 +123,6 @@ public class TableDefinitionTemplates {
   /**
    * インデックス情報セクション<br>
    * 備考はDBコメント（{@code COMMENT ON INDEX}）由来の自由記述文字列のためエスケープする
-   *
-   * @param indexes 当該テーブルのインデックス情報のリスト
-   * @return インデックス情報セクション文字列
    */
   public static String indexes(List<IndexEntity> indexes) {
     String header =
@@ -185,9 +149,6 @@ public class TableDefinitionTemplates {
   /**
    * 制約情報セクション<br>
    * 備考はDBコメント（{@code COMMENT ON CONSTRAINT}）由来の自由記述文字列のためエスケープする
-   *
-   * @param constraints 当該テーブルの制約情報のリスト
-   * @return 制約情報セクション文字列
    */
   public static String constraints(List<ConstraintEntity> constraints) {
     String header =
@@ -209,12 +170,6 @@ public class TableDefinitionTemplates {
                 MarkdownTemplateSupport.escapeTableCell(c.remarks())));
   }
 
-  /**
-   * 外部キー情報セクション
-   *
-   * @param foreignkeys 当該テーブルの外部キー情報のリスト
-   * @return 外部キー情報セクション文字列
-   */
   public static String foreignKeys(List<ForeignKeyEntity> foreignkeys) {
     String header =
         """
@@ -231,8 +186,7 @@ public class TableDefinitionTemplates {
    * DBに外部キー制約が存在せず、サイドカーYAMLで宣言された関連のみを掲載する。 読み手が「DBに制約がある」と誤読しないよう外部キー情報とは別セクションとし、注意書きを添える。
    * 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）
    *
-   * @param logicalRelations 当該テーブルの論理リレーションのリスト
-   * @return 論理リレーション情報セクション文字列。対象が存在しない場合は空文字
+   * @return 対象が存在しない場合は空文字
    */
   public static String logicalRelations(List<ForeignKeyEntity> logicalRelations) {
     if (logicalRelations.isEmpty()) {
@@ -252,11 +206,8 @@ public class TableDefinitionTemplates {
   }
 
   /**
-   * 外部キー・論理リレーションの1行分を生成するメソッド<br>
    * 多重度のラベル表記は{@link com.export_table_definition.domain.model.relation.Cardinality}に集約している
    *
-   * @param no 行番号
-   * @param fk 外部キーまたは論理リレーション
    * @return 1行分の文字列（改行を含まない）
    */
   private static String relationTableLine(int no, ForeignKeyEntity fk) {
@@ -269,12 +220,6 @@ public class TableDefinitionTemplates {
         fk.cardinality().getLabel());
   }
 
-  /**
-   * トリガー情報セクション
-   *
-   * @param triggers 当該テーブルのトリガー情報のリスト
-   * @return トリガー情報セクション文字列
-   */
   public static String triggers(List<TriggerEntity> triggers) {
     String header =
         """
@@ -301,11 +246,8 @@ public class TableDefinitionTemplates {
    * 自テーブルはカラム・PK情報付きの箱として、関連テーブル（参照元・参照先）は 属性なしの箱として描画する。関連テーブルの属性情報を必要としないため、
    * チャンク単位の分割取得（他チャンク・他スキーマのテーブル詳細を保持しないこと）の影響を受けない
    *
-   * @param table テーブル情報
-   * @param columns 自テーブルのカラム情報のリスト
    * @param outgoingFks 自テーブルが参照している外部キー（自テーブル → 参照先）のリスト
    * @param incomingFks 自テーブルを参照している外部キー（参照元 → 自テーブル）のリスト
-   * @return ER図セクション文字列
    */
   public static String erDiagram(
       TableEntity table,
@@ -349,8 +291,7 @@ public class TableDefinitionTemplates {
    * （観点を宣言していない場合を含む）では、セクションごと出力しない（観点を導入しても、所属しないテーブルの定義書は変わらない）
    *
    * @param viewpoints 当該テーブルが所属する観点のリスト（宣言順）
-   * @param baseInfo データベース基本情報
-   * @return 所属する観点セクション文字列。所属する観点が無い場合は空文字
+   * @return 所属する観点が無い場合は空文字
    */
   public static String viewpoints(List<Viewpoint> viewpoints, BaseInfoEntity baseInfo) {
     if (viewpoints.isEmpty()) {
@@ -369,12 +310,6 @@ public class TableDefinitionTemplates {
     return sb.append(LINE_SEPARATOR).toString();
   }
 
-  /**
-   * フッター
-   *
-   * @param baseInfo データベース基本情報
-   * @return フッター文字列
-   */
   public static String footer(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.backOnlyFooter(
         DocumentLocations.linkFromDefinition(
@@ -383,15 +318,8 @@ public class TableDefinitionTemplates {
   }
 
   /**
-   * テーブルごとのセクションを生成する共通メソッド<br>
    * 行番号はリスト内での位置（1始まり）から採番する。当該テーブルへの絞り込みは{@link
    * com.export_table_definition.domain.model.target.TableDefinitionContent#assemble}で済んでいる前提とする
-   *
-   * @param <T> エンティティの型
-   * @param list 当該テーブルのエンティティのリスト
-   * @param header セクションのヘッダー文字列
-   * @param lineMapper 行番号とエンティティから1行分の文字列を生成する関数
-   * @return テーブルごとのセクション文字列
    */
   private static <T> String tableSection(
       List<T> list, String header, BiFunction<Integer, T, String> lineMapper) {

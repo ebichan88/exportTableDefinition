@@ -10,9 +10,6 @@ import java.util.List;
  * @param onlyInGenerated 生成側にのみ存在するもの（コミット漏れの可能性）
  * @param onlyInCommitted コミット側にのみ存在するもの（削除されたテーブル等の残骸の可能性）
  * @param contentDiffer 両方に存在するが内容が一致しないもの（unified diff付き）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record DiffResult(
     List<String> onlyInGenerated, List<String> onlyInCommitted, List<ContentDiff> contentDiffer) {

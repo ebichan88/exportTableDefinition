@@ -28,10 +28,6 @@ import java.time.Clock;
  * 接続先のDB種別で実装が変わらないものはここに束縛する。DB種別が決まってから束縛するもの（{@link
  * com.export_table_definition.domain.repository.TableDefinitionRepository}と、それに依存するユースケース）は、
  * このモジュールで組み立てたコンテナの子として{@link DatabaseDependentModule}で束縛する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class ExportTableDefinitionModule extends AbstractModule {
 

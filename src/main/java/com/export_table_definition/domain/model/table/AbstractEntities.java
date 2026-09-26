@@ -10,9 +10,6 @@ import java.util.function.Function;
 /**
  * エンティティの集合を扱う抽象クラス
  *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  * @param <T> エンティティの型
  */
 public abstract class AbstractEntities<T extends SchemaTableKeyed> {

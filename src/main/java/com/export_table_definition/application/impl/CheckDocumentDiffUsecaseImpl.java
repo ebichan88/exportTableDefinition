@@ -16,10 +16,6 @@ import java.util.List;
  * DB vs ドキュメントの差分検知（{@code --check}モード）のユースケースクラス<br>
  * DBからの取得は通常実行と同じ{@link SchemaExporter}で行い、差分の判定に不要なMarkdownの描画・ER図の生成は行わず、
  * スナップショットのみを一時ディレクトリへ生成して、コミット済みのスナップショットとオブジェクト単位で比較する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
 

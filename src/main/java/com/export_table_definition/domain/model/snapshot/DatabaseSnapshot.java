@@ -9,9 +9,6 @@ import com.export_table_definition.domain.model.database.BaseInfoEntity;
  * @param formatVersion スナップショットの形式のバージョン（形式を互換性なく変更した場合に上げる）
  * @param name データベース名
  * @param dbms DBMS種別（PostgreSQL/Oracle）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record DatabaseSnapshot(int formatVersion, String name, String dbms) {
 

@@ -10,9 +10,6 @@ import java.util.List;
  * @param columns 当該テーブルのカラム情報のリスト
  * @param indexes 当該テーブルのインデックス情報のリスト
  * @param constraints 当該テーブルの制約情報のリスト
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record TableDetail(
     TableEntity table,

@@ -10,9 +10,6 @@ import com.export_table_definition.presentation.type.ProcessResult;
  *
  * @param message 処理結果のメッセージ（差分の報告）
  * @param hasDifference 生成ドキュメントとコミット済みドキュメントに差分が見つかったか
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record DiffCheckResultDto(String message, boolean hasDifference) {
 

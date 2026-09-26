@@ -10,10 +10,6 @@ import java.util.Optional;
 /**
  * 出力対象のテーブル（テーブル一覧）の集合を扱うクラス<br>
  * スキーマ単位のまとまり・テーブルキーによる検索・出力対象に含まれるかの判定など、 テーブル一覧に対して複数の箇所で必要になる見方をこのクラスに集約する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class Tables {
 

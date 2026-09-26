@@ -6,9 +6,6 @@ package com.export_table_definition.domain.model.target;
  *
  * @param kind 指摘の種類
  * @param message 指摘の内容（利用者向けのメッセージ）
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record ConsistencyFinding(Kind kind, String message) {
 

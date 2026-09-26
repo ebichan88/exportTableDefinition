@@ -4,13 +4,7 @@ import com.export_table_definition.domain.model.snapshot.ContentDiff;
 import com.export_table_definition.domain.model.snapshot.DiffResult;
 import java.util.List;
 
-/**
- * DB vs ドキュメントの差分検知（{@code --check}モード）の比較結果からレポート用のメッセージを組み立てるクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** DB vs ドキュメントの差分検知（{@code --check}モード）の比較結果からレポート用のメッセージを組み立てるクラス */
 final class DiffReportFormatter {
 
   /** 差分メッセージに含めるunified diffの行数の上限（オブジェクト単位）。超えた分は残り行数のみ表示する */

@@ -12,10 +12,6 @@ import java.util.Set;
  * 1枚のER図に描画する外部キーのまとまりを扱うクラス<br>
  * スキーマ単位のER図全体、または連結成分をまとめ直したグループ（{@link ForeignKeyGroups}参照）を表す。
  * 図に登場するテーブル（ノード）の算出と、図の規模に関わる判定（ノード数の上限超過・主なテーブル）を提供する
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public final class ForeignKeyGroup {
 

@@ -37,10 +37,6 @@ import org.apache.logging.log4j.Logger;
  * 対象範囲全体を一度にメモリへ載せないよう、軽量な情報は一括取得し（{@link #fetchTargets}）、
  * テーブル数に比例して重くなる情報はスキーマ・チャンク単位で取得・書き出し・破棄する（{@link #export}）。 取得した情報同士の突き合わせは{@link
  * ExportTargetConsistencyDomainService}に委ねる
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 final class SchemaExporter {
 
@@ -51,11 +47,6 @@ final class SchemaExporter {
   private final Clock clock;
 
   /**
-   * コンストラクタ
-   *
-   * @param repository テーブル定義出力に関するリポジトリクラス
-   * @param sidecarRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
-   * @param consistencyDomainService 出力対象のテーブルと外部キー・サイドカーの突き合わせを行うドメインサービス
    * @param clock ドキュメントの生成日を決める時計
    */
   @Inject
@@ -73,16 +64,12 @@ final class SchemaExporter {
   /**
    * 出力対象のうち、一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・ 手動付帯情報）を取得するメソッド<br>
    * テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は、 出力時（{@link #export}）にスキーマ・チャンク単位で取得する
-   *
-   * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）
-   * @return 一括取得した出力対象の情報
    */
   ExportTargets fetchTargets(TargetSelection targetSelection) {
     // スキーマ・テーブルの絞り込み条件（入口で1回だけ組み立て済み。テーブルごとにワイルドカードパターンを解析し直さない）
     final TableTargetScope targetScope = targetSelection.targetScope();
     final List<String> targetSchemaList = targetScope.schemaNames();
     final boolean isFiltered = targetScope.isFiltered();
-    // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
     final Set<OutputObjectType> outputObjectTypes = targetSelection.outputObjectTypes();
     // サイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
     final Sidecar sidecar = sidecarRepository.load(targetSelection.sidecarPath());
@@ -93,7 +80,6 @@ final class SchemaExporter {
     // SQLの完全一致IN句では絞り込めない。スキーマのみSQLで絞り込み、テーブル単位の絞り込みは
     // TableTargetScopeによりJava側で行う。
     // ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
-    // 基本情報のうち生成日はDBではなく実行時に決まるため、アプリケーションの時計から与える
     final BaseInfoEntity baseInfoEntity =
         BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
     final Tables tables =
@@ -160,8 +146,6 @@ final class SchemaExporter {
    * 一括取得した情報から出力できるもの（一覧・ER図等）を先に書き出し、その後に関数の定義本体をスキーマ単位で、
    * テーブルの詳細情報をスキーマ・チャンク単位で取得・書き出し・破棄する。どの形式で書き出す場合も取得処理は共通
    *
-   * @param targets 一括取得した出力対象の情報
-   * @param sinks 書き出し先の出力形式
    * @param chunkSize 1回の取得でまとめて処理するテーブル数の上限。0以下の場合は分割しない
    */
   void export(ExportTargets targets, List<ExportSink> sinks, int chunkSize) {
@@ -185,14 +169,7 @@ final class SchemaExporter {
                     schemaName, tablesInSchema, targets, triggers, chunkSize, sinks));
   }
 
-  /**
-   * 指定スキーマに属する関数・プロシージャの定義本体を取得し、書き出すメソッド<br>
-   * 定義本体はスキーマ単位で取得・出力・破棄することで、同時にメモリ保持する定義本体を抑える
-   *
-   * @param schemaName 出力対象のスキーマ名
-   * @param targets 一括取得した出力対象の情報（基本情報を参照する）
-   * @param sinks 書き出し先の出力形式
-   */
+  /** 定義本体はスキーマ単位で取得・出力・破棄することで、同時にメモリ保持する定義本体を抑える */
   private void exportSchemaFunctionDefinitions(
       String schemaName, ExportTargets targets, List<ExportSink> sinks) {
     final List<FunctionEntity> functions = repository.selectFunctionDefList(List.of(schemaName));
@@ -200,14 +177,7 @@ final class SchemaExporter {
   }
 
   /**
-   * 指定スキーマに属するテーブルの定義書を、chunkSize件ずつに分割して書き出すメソッド
-   *
-   * @param schemaName 出力対象のスキーマ名
    * @param tablesInSchema 当該スキーマに属するテーブルのリスト（呼び出し元で絞り込み済み）
-   * @param targets 一括取得した出力対象の情報（基本情報・外部キー・手動付帯情報を参照する）
-   * @param triggers 対象範囲全体のトリガー情報
-   * @param chunkSize 1回の取得でまとめて処理するテーブル数の上限。0以下の場合は分割しない
-   * @param sinks 書き出し先の出力形式
    */
   private void exportSchemaTableDefinitions(
       String schemaName,
@@ -227,13 +197,9 @@ final class SchemaExporter {
   }
 
   /**
-   * 1チャンク分のテーブルの定義書を書き出すメソッド<br>
    * 当該チャンクのテーブルの詳細情報（カラム・インデックス・制約）のみを取得し、 出力後にローカル変数のスコープを抜けることでメモリ解放対象とする
    *
    * @param chunk 1チャンク分のテーブルのリスト（同一スキーマ。呼び出し元で絞り込み済み）
-   * @param targets 一括取得した出力対象の情報（基本情報・外部キー・手動付帯情報を参照する）
-   * @param triggers 対象範囲全体のトリガー情報
-   * @param sinks 書き出し先の出力形式
    */
   private void exportTableDefinitionChunk(
       List<TableEntity> chunk, ExportTargets targets, Triggers triggers, List<ExportSink> sinks) {
@@ -251,11 +217,6 @@ final class SchemaExporter {
     }
   }
 
-  /**
-   * 出力対象の突き合わせで見つかった指摘を、重要度に応じてログへ出力するメソッド
-   *
-   * @param findings 指摘のリスト
-   */
   private static void report(List<ConsistencyFinding> findings) {
     findings.forEach(
         finding -> {

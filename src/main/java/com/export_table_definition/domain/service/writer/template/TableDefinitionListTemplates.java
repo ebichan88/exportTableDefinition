@@ -10,13 +10,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import java.util.List;
 
-/**
- * テーブル定義一覧書き込みに利用するMarkdownのテンプレートを扱うクラス
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
- */
+/** テーブル定義一覧書き込みに利用するMarkdownのテンプレートを扱うクラス */
 public class TableDefinitionListTemplates {
 
   /**

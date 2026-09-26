@@ -24,31 +24,15 @@ import java.util.Set;
  * すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
  * 表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（{@link
  * TableDefinitionListTemplates}）と同じ方針である
- *
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public class ErDiagramTemplates {
 
-  /**
-   * ER図ファイルヘッダー
-   *
-   * @param title ページのタイトル
-   * @param baseInfo データベース基本情報
-   * @return ヘッダー文字列
-   */
+  /** ER図ファイルヘッダー */
   public static String fileHeader(String title, BaseInfoEntity baseInfo) {
     return MarkdownTemplateSupport.titledFileHeader(title, baseInfo);
   }
 
-  /**
-   * スキーマ別ER図ページのファイルヘッダー
-   *
-   * @param schemaName スキーマ名
-   * @param baseInfo データベース基本情報
-   * @return ヘッダー文字列
-   */
+  /** スキーマ別ER図ページのファイルヘッダー */
   public static String schemaFileHeader(String schemaName, BaseInfoEntity baseInfo) {
     return "# "
         + String.format("ER図（DB名：%s / スキーマ名：%s）", baseInfo.dbName(), schemaName)
@@ -58,10 +42,7 @@ public class ErDiagramTemplates {
   /**
    * グループ別ER図ページのファイルヘッダー
    *
-   * @param schemaName スキーマ名
    * @param groupNo グループ番号（1始まり）
-   * @param baseInfo データベース基本情報
-   * @return ヘッダー文字列
    */
   public static String groupFileHeader(String schemaName, int groupNo, BaseInfoEntity baseInfo) {
     return "# "
@@ -69,23 +50,12 @@ public class ErDiagramTemplates {
         + LINE_SEPARATOR_DOUBLE;
   }
 
-  /**
-   * 基本情報セクション
-   *
-   * @param baseInfo データベース基本情報
-   * @return 基本情報セクション文字列
-   */
+  /** 基本情報セクション */
   public static String baseInfo(BaseInfoEntity baseInfo) {
     return MarkdownTemplateSupport.baseInfoSection(baseInfo);
   }
 
-  /**
-   * ER図索引セクション（スキーマ別ER図へのリンク一覧）
-   *
-   * @param baseInfo データベース基本情報
-   * @param tablesBySchema スキーマ名をキー、当該スキーマのテーブルのリストを値とするマップ
-   * @return ER図索引セクション文字列
-   */
+  /** ER図索引セクション（スキーマ別ER図へのリンク一覧） */
   public static String schemaIndex(
       BaseInfoEntity baseInfo, Map<String, List<TableEntity>> tablesBySchema) {
     StringBuilder sb =
@@ -117,9 +87,7 @@ public class ErDiagramTemplates {
    * tableList_{DB名}.md}側に掲載されている）。<br>
    * ノード数が上限を超える場合はMermaidの描画を諦め、その旨のメッセージのみを返す （代替として掲載する外部キー一覧は呼び出し側が組み立てる）
    *
-   * @param group 図に描画する外部キーのまとまり
    * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
-   * @return ER図セクション文字列
    */
   public static String erDiagram(ForeignKeyGroup group, int maxNodes) {
     StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
@@ -149,14 +117,7 @@ public class ErDiagramTemplates {
     return sb.append("```").append(LINE_SEPARATOR_DOUBLE).toString();
   }
 
-  /**
-   * ER図をグループに分割した場合の、スキーマページに掲載する説明セクション
-   *
-   * @param nodeCount 当該スキーマの関連テーブル数
-   * @param maxNodes 1つの図に描画するノード数の上限
-   * @param groupCount 分割後のグループ数
-   * @return 説明セクション文字列
-   */
+  /** ER図をグループに分割した場合の、スキーマページに掲載する説明セクション */
   public static String groupedMessage(int nodeCount, int maxNodes, int groupCount) {
     return new StringBuilder("## ER図")
         .append(LINE_SEPARATOR_DOUBLE)
@@ -169,20 +130,12 @@ public class ErDiagramTemplates {
         .toString();
   }
 
-  /**
-   * グループ一覧セクションの見出し
-   *
-   * @return 見出し文字列
-   */
+  /** グループ一覧セクションの見出し */
   public static String groupIndexHeading() {
     return "グループ一覧";
   }
 
-  /**
-   * グループ一覧セクションの表ヘッダー
-   *
-   * @return 表ヘッダー文字列
-   */
+  /** グループ一覧セクションの表ヘッダー */
   public static String groupIndexHeader() {
     return """
                 | No. | テーブル数 | 外部キー数 | 主なテーブル | Link |
@@ -194,11 +147,7 @@ public class ErDiagramTemplates {
    * グループ一覧セクションの1行分
    *
    * @param no グループ番号（1始まり）
-   * @param tableCount 当該グループのテーブル数
-   * @param fkCount 当該グループの外部キー数
    * @param mainTable 当該グループで最も多くの外部キーが接続するテーブル
-   * @param href グループ別ER図ページへの相対パス
-   * @return グループ一覧1行分の文字列
    */
   public static String groupIndexLine(
       int no, int tableCount, int fkCount, TableKey mainTable, String href) {
@@ -215,10 +164,6 @@ public class ErDiagramTemplates {
   /**
    * グループ別ER図ページのフッター<br>
    * スキーマ全体のER図（グループ一覧）へ戻る導線を加える
-   *
-   * @param schemaName スキーマ名
-   * @param baseInfo データベース基本情報
-   * @return フッター文字列
    */
   public static String groupFooter(String schemaName, BaseInfoEntity baseInfo) {
     return HORIZON
@@ -231,20 +176,12 @@ public class ErDiagramTemplates {
         + LINE_SEPARATOR;
   }
 
-  /**
-   * 掲載テーブルセクションの見出し
-   *
-   * @return 見出し文字列
-   */
+  /** 掲載テーブルセクションの見出し */
   public static String diagramTableHeading() {
     return "ER図に掲載しているテーブル";
   }
 
-  /**
-   * 掲載テーブルセクションの表ヘッダー
-   *
-   * @return 表ヘッダー文字列
-   */
+  /** 掲載テーブルセクションの表ヘッダー */
   public static String diagramTableHeader() {
     return """
                 | No. | スキーマ名 | 物理テーブル名 | 論理テーブル名 | 区分 | Link |
@@ -256,10 +193,7 @@ public class ErDiagramTemplates {
    * 掲載テーブルセクションの1行分<br>
    * Mermaidの{@code click}構文はGitHub上では無効化されるため、図中のノードからの導線をこの一覧で代替する
    *
-   * @param no 行番号
-   * @param key テーブルキー
    * @param table テーブル情報。出力対象範囲外で定義書が存在しない場合はnull
-   * @return 掲載テーブル1行分の文字列
    */
   public static String diagramTableLine(int no, TableKey key, TableEntity table) {
     // 出力対象範囲外のテーブルを参照している場合、定義書が存在しないためリンクを張らない
@@ -280,11 +214,7 @@ public class ErDiagramTemplates {
         + LINE_SEPARATOR;
   }
 
-  /**
-   * 外部キー一覧セクションの見出し（ER図の描画を省略した場合の代替掲載）
-   *
-   * @return 見出し文字列
-   */
+  /** 外部キー一覧セクションの見出し（ER図の描画を省略した場合の代替掲載） */
   public static String foreignKeyHeading() {
     return "外部キー一覧";
   }
@@ -292,18 +222,12 @@ public class ErDiagramTemplates {
   /**
    * スキーマ跨ぎ外部キーセクションの見出し<br>
    * スキーマ単位にER図を分割すると、スキーマをまたぐ関連は双方の図に現れて全体像が追いにくいため、 索引ページに一覧としてまとめて掲載する
-   *
-   * @return 見出し文字列
    */
   public static String crossSchemaForeignKeyHeading() {
     return "スキーマ跨ぎの外部キー";
   }
 
-  /**
-   * 外部キー一覧セクションの表ヘッダー
-   *
-   * @return 表ヘッダー文字列
-   */
+  /** 外部キー一覧セクションの表ヘッダー */
   public static String foreignKeyTableHeader() {
     return """
                 | No. | 参照元 | 外部キー名 | 参照先 |
@@ -311,13 +235,7 @@ public class ErDiagramTemplates {
                 """;
   }
 
-  /**
-   * 外部キー一覧セクションの1行分
-   *
-   * @param no 行番号
-   * @param fk 外部キー情報
-   * @return 外部キー一覧1行分の文字列
-   */
+  /** 外部キー一覧セクションの1行分 */
   public static String foreignKeyTableLine(int no, ForeignKeyEntity fk) {
     return String.format(
             "| %d | %s | %s | %s |",
@@ -325,33 +243,18 @@ public class ErDiagramTemplates {
         + LINE_SEPARATOR;
   }
 
-  /**
-   * スキーマ別ER図ページのフッター
-   *
-   * @param baseInfo データベース基本情報
-   * @return フッター文字列
-   */
+  /** スキーマ別ER図ページのフッター */
   public static String schemaFooter(BaseInfoEntity baseInfo) {
     return HORIZON + LINE_SEPARATOR_DOUBLE + listLinks(baseInfo) + LINE_SEPARATOR;
   }
 
-  /**
-   * ER図索引ページのフッター
-   *
-   * @param baseInfo データベース基本情報
-   * @return フッター文字列
-   */
+  /** ER図索引ページのフッター */
   public static String indexFooter(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.backOnlyFooter(
         listLink(ListDocumentType.TABLE, baseInfo), ListDocumentType.TABLE.getBackLinkLabel());
   }
 
-  /**
-   * ER図一覧・テーブル一覧へ戻るリンクを並べた文字列を生成するメソッド
-   *
-   * @param baseInfo データベース基本情報
-   * @return ER図一覧・テーブル一覧へのリンク
-   */
+  /** ER図一覧・テーブル一覧へ戻るリンクを並べた文字列を生成するメソッド */
   private static String listLinks(BaseInfoEntity baseInfo) {
     return String.format(
         "[%s](%s) [%s](%s)",
@@ -364,10 +267,6 @@ public class ErDiagramTemplates {
   /**
    * 一覧への相対リンクを生成するメソッド<br>
    * ER図は出力ベースディレクトリ直下に配置される
-   *
-   * @param type 一覧の種別
-   * @param baseInfo データベース基本情報
-   * @return 一覧への相対リンク
    */
   private static String listLink(ListDocumentType type, BaseInfoEntity baseInfo) {
     return DocumentLocations.linkFromBase(DocumentLocations.listFile(type, baseInfo.dbName()));
@@ -377,9 +276,6 @@ public class ErDiagramTemplates {
    * ノードごとに一意なMermaid識別子を採番するメソッド<br>
    * 識別子のサニタイズでは記号がすべてアンダースコアに潰れるため、 多数のテーブルを1つの図に載せると別テーブルが同一識別子となり1ノードに融合する恐れがある。
    * 衝突した場合は連番を付与して一意性を担保する
-   *
-   * @param nodes ノードとなるテーブルキーのリスト
-   * @return テーブルキーをキー、Mermaid識別子を値とするマップ
    */
   private static Map<TableKey, String> assignNodeIds(List<TableKey> nodes) {
     final Map<TableKey, String> ids = new LinkedHashMap<>();

@@ -13,9 +13,6 @@ import java.util.List;
  * @param tables 所属テーブルのリスト（出力対象のテーブルの並び順）
  * @param relations 両端が所属テーブルの関連（外部キー・論理リレーション）のまとまり。観点のER図に描画する
  * @param outsideRelations 片端だけが所属テーブルの関連（観点外のテーブルとの関連）のリスト
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record ViewpointContent(
     Viewpoint viewpoint,

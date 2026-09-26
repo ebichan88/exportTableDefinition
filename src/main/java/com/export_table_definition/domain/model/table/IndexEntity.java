@@ -11,9 +11,6 @@ package com.export_table_definition.domain.model.table;
  * @param isPrimary 主キーのインデックスか
  * @param indexDefinition インデックスの定義
  * @param remarks 備考
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record IndexEntity(
     String schemaName,

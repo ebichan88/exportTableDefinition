@@ -12,9 +12,6 @@ package com.export_table_definition.domain.model.table;
  * @param primaryKey 主キーを構成するカラムか
  * @param notNull NOT NULL制約を持つか
  * @param defaultValue デフォルト値
- * @since 1.0
- * @version 1.0
- * @author takashi.ebina
  */
 public record ColumnEntity(
     String schemaName,
