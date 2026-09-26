@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -18,9 +18,9 @@
 
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-|1||warehouse_code|character varying(5)|5|○|○| ||
-|2||zone_code|character varying(5)|5|○|○| ||
-|3||zone_name|character varying(50)|50||○| ||
+|1||warehouse_code|character varying(5)|5|○|○|||
+|2||zone_code|character varying(5)|5|○|○|||
+|3||zone_name|character varying(50)|50||○|||
 
 ## インデックス情報
 

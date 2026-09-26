@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -18,11 +18,11 @@
 
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-|1||employee_id|integer|||| ||
-|2||employee_code|character varying(10)|10||| ||
-|3||employee_name|character varying(50)|50||| ||
-|4||department_name|character varying(50)|50||| ||
-|5||status|sample.employee_status_enum|||| ||
+|1||employee_id|integer||||||
+|2||employee_code|character varying(10)|10|||||
+|3||employee_name|character varying(50)|50|||||
+|4||department_name|character varying(50)|50|||||
+|5||status|sample.employee_status_enum||||||
 
 ## ソース
 

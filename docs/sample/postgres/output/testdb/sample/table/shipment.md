@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -19,8 +19,8 @@
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 |1||shipment_id|integer||○|○|nextval('sample.shipment_shipment_id_seq'::regclass)||
-|2||warehouse_code|character varying(5)|5||○| ||
-|3||zone_code|character varying(5)|5||○| ||
+|2||warehouse_code|character varying(5)|5||○|||
+|3||zone_code|character varying(5)|5||○|||
 |4||shipped_at|timestamp without time zone|||○|now()||
 
 ## インデックス情報

@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/25|
+|PostgreSQL|testdb|2026/09/26|
 
 ## テーブル説明
 
@@ -19,11 +19,11 @@
 | No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 |1|従業員ID|employee_id|integer||○|○|nextval('sample.employee_employee_id_seq'::regclass)||
-|2|従業員コード|employee_code|character varying(10)|10||○| ||
-|3|従業員名|employee_name|character varying(50)|50||○| ||
-|4|所属部署ID|department_id|integer|||○| ||
-|5|上長の従業員ID|manager_id|integer|||| ||
-|6|駐車場ID|parking_spot_id|integer|||| ||
+|2|従業員コード|employee_code|character varying(10)|10||○|||
+|3|従業員名|employee_name|character varying(50)|50||○|||
+|4|所属部署ID|department_id|integer|||○|||
+|5|上長の従業員ID|manager_id|integer||||||
+|6|駐車場ID|parking_spot_id|integer||||||
 |7|在籍状況|status|sample.employee_status_enum|||○|'ACTIVE'::sample.employee_status_enum||
 |8|給与|salary|numeric(10,2)|10,2||○|0||
 |9|プロフィール（JSON）|profile|jsonb|||○|'{}'::jsonb||
