@@ -2,6 +2,7 @@ package com.export_table_definition;
 
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.config.PropertyLoader;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
@@ -99,14 +100,11 @@ public class ExportTableDefinition {
    */
   private static ExportRequest loadExportRequest(boolean rmDist) {
     return new ExportRequest(
-        PropertyLoader.getList("ExportTableDefinition", "schema"),
-        PropertyLoader.getList("ExportTableDefinition", "table"),
+        loadTargetSelection(),
         PropertyLoader.getString("ExportTableDefinition", "outputPath"),
         PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE),
         PropertyLoader.getInt(
             "ExportTableDefinition", "erDiagramMaxNodes", DEFAULT_ER_DIAGRAM_MAX_NODES),
-        PropertyLoader.getList("ExportTableDefinition", "outputObjects"),
-        PropertyLoader.getString("ExportTableDefinition", "annotationPath"),
         rmDist);
   }
 
@@ -119,10 +117,21 @@ public class ExportTableDefinition {
    */
   private static CheckDiffRequest loadCheckDiffRequest() {
     return new CheckDiffRequest(
+        loadTargetSelection(),
+        PropertyLoader.getString("ExportTableDefinition", "outputPath"),
+        PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE));
+  }
+
+  /**
+   * {@code conf/ExportTableDefinition.properties}から出力対象の絞り込み条件を読み込むメソッド<br>
+   * 通常実行・{@code --check}実行の双方で共通の読み込み処理
+   *
+   * @return 読み込んだ出力対象の絞り込み条件
+   */
+  private static TargetSelection loadTargetSelection() {
+    return new TargetSelection(
         PropertyLoader.getList("ExportTableDefinition", "schema"),
         PropertyLoader.getList("ExportTableDefinition", "table"),
-        PropertyLoader.getString("ExportTableDefinition", "outputPath"),
-        PropertyLoader.getInt("ExportTableDefinition", "chunkSize", DEFAULT_CHUNK_SIZE),
         PropertyLoader.getList("ExportTableDefinition", "outputObjects"),
         PropertyLoader.getString("ExportTableDefinition", "annotationPath"));
   }

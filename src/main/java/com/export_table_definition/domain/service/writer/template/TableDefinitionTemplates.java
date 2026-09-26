@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.row;
 
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
@@ -82,17 +83,12 @@ public class TableDefinitionTemplates {
                 | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | 備考 |
                 |:---|:---|:---|:---|:---|
                 """
-        + "|"
-        + table.schemaName()
-        + "|"
-        + MarkdownTemplateSupport.escapeTableCell(table.logicalTableName())
-        + "|"
-        + table.physicalTableName()
-        + "|"
-        + table.tableType()
-        + "|"
-        + MarkdownTemplateSupport.escapeTableCell(annotation.remarks())
-        + "|"
+        + row(
+            table.schemaName(),
+            MarkdownTemplateSupport.escapeTableCell(table.logicalTableName()),
+            table.physicalTableName(),
+            table.tableType(),
+            MarkdownTemplateSupport.escapeTableCell(annotation.remarks()))
         + LINE_SEPARATOR_DOUBLE;
   }
 
@@ -118,26 +114,17 @@ public class TableDefinitionTemplates {
         columns,
         header,
         (no, c) ->
-            "|"
-                + no
-                + "|"
-                + MarkdownTemplateSupport.escapeTableCell(c.logicalColumnName())
-                + "|"
-                + c.physicalColumnName()
-                + "|"
-                + c.columnType()
-                + "|"
-                + c.precisionScale()
-                + "|"
-                + MarkdownTemplateSupport.marker(c.primaryKey())
-                + "|"
-                + MarkdownTemplateSupport.marker(c.notNull())
-                + "|"
-                + MarkdownTemplateSupport.escapeTableCell(c.defaultValue())
-                + "|"
-                + MarkdownTemplateSupport.escapeTableCell(
-                    annotation.columnRemark(c.physicalColumnName()))
-                + "|");
+            row(
+                no,
+                MarkdownTemplateSupport.escapeTableCell(c.logicalColumnName()),
+                c.physicalColumnName(),
+                c.columnType(),
+                c.precisionScale(),
+                MarkdownTemplateSupport.marker(c.primaryKey()),
+                MarkdownTemplateSupport.marker(c.notNull()),
+                MarkdownTemplateSupport.escapeTableCell(c.defaultValue()),
+                MarkdownTemplateSupport.escapeTableCell(
+                    annotation.columnRemark(c.physicalColumnName()))));
   }
 
   /**
@@ -184,21 +171,14 @@ public class TableDefinitionTemplates {
         indexes,
         header,
         (no, idx) ->
-            "|"
-                + no
-                + "|"
-                + idx.indexName()
-                + "|"
-                + idx.indexMethod()
-                + "|"
-                + MarkdownTemplateSupport.marker(idx.isUnique())
-                + "|"
-                + MarkdownTemplateSupport.marker(idx.isPrimary())
-                + "|"
-                + MarkdownTemplateSupport.escapePipe(idx.indexDefinition())
-                + "|"
-                + MarkdownTemplateSupport.escapeTableCell(idx.remarks())
-                + "|");
+            row(
+                no,
+                idx.indexName(),
+                idx.indexMethod(),
+                MarkdownTemplateSupport.marker(idx.isUnique()),
+                MarkdownTemplateSupport.marker(idx.isPrimary()),
+                MarkdownTemplateSupport.escapePipe(idx.indexDefinition()),
+                MarkdownTemplateSupport.escapeTableCell(idx.remarks())));
   }
 
   /**
@@ -220,17 +200,12 @@ public class TableDefinitionTemplates {
         constraints,
         header,
         (no, c) ->
-            "|"
-                + no
-                + "|"
-                + c.constraintName()
-                + "|"
-                + c.constraintType()
-                + "|"
-                + MarkdownTemplateSupport.escapePipe(c.constraintDefinition())
-                + "|"
-                + MarkdownTemplateSupport.escapeTableCell(c.remarks())
-                + "|");
+            row(
+                no,
+                c.constraintName(),
+                c.constraintType(),
+                MarkdownTemplateSupport.escapePipe(c.constraintDefinition()),
+                MarkdownTemplateSupport.escapeTableCell(c.remarks())));
   }
 
   /**
@@ -284,19 +259,13 @@ public class TableDefinitionTemplates {
    * @return 1行分の文字列（改行を含まない）
    */
   private static String relationTableLine(int no, ForeignKeyEntity fk) {
-    return "|"
-        + no
-        + "|"
-        + fk.foreignkeyName()
-        + "|"
-        + fk.columnNames()
-        + "|"
-        + fk.getReferenceSchemaTableName()
-        + "|"
-        + fk.referenceColumnNames()
-        + "|"
-        + fk.cardinality().getLabel()
-        + "|";
+    return row(
+        no,
+        fk.foreignkeyName(),
+        fk.columnNames(),
+        fk.getReferenceSchemaTableName(),
+        fk.referenceColumnNames(),
+        fk.cardinality().getLabel());
   }
 
   /**
@@ -317,19 +286,13 @@ public class TableDefinitionTemplates {
         triggers,
         header,
         (no, t) ->
-            "|"
-                + no
-                + "|"
-                + t.triggerName()
-                + "|"
-                + t.timing()
-                + "|"
-                + t.events()
-                + "|"
-                + t.orientation()
-                + "|"
-                + MarkdownTemplateSupport.escapePipe(t.triggerDefinition())
-                + "|");
+            row(
+                no,
+                t.triggerName(),
+                t.timing(),
+                t.events(),
+                t.orientation(),
+                MarkdownTemplateSupport.escapePipe(t.triggerDefinition())));
   }
 
   /**
@@ -386,9 +349,7 @@ public class TableDefinitionTemplates {
    * @return フッター文字列
    */
   public static String footer(BaseInfoEntity baseInfo) {
-    return PagedSectionTemplates.pageFooter(
-        null,
-        null,
+    return PagedSectionTemplates.backOnlyFooter(
         DocumentLocations.linkFromDefinition(
             DocumentLocations.listFile(ListDocumentType.TABLE, baseInfo.dbName())),
         ListDocumentType.TABLE.getBackLinkLabel());

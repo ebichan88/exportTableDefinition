@@ -148,7 +148,7 @@ Markdownのみに生じた差分（手作業での編集等）は検知しない
 `SnapshotDiffDomainService`が、比較前に生成側・コミット側それぞれの行を`SnapshotSerializer.formatForDiff()`で
 1項目1行・配列は1要素1行へ整形し（生の1行のJSONのままだと行単位のdiffが「丸ごと削除+丸ごと追加」にしか
 ならないため）、`UnifiedDiffGenerator`（Myers法による自前実装。外部ライブラリに依存しない）へ渡してdiffを
-生成する。整形後の行番号はファイル上の行番号とは対応しない。`ExportTableDefinitionController.buildDiffMessage()`
+生成する。整形後の行番号はファイル上の行番号とは対応しない。`presentation.DiffReportFormatter.format()`
 が、1オブジェクトあたり・全体それぞれに行数の上限を設けてメッセージへ含める（超えた分は省略した旨のみ表示。
 対象自体はサマリの一覧に全件掲載されるため見落としにはならない）。
 

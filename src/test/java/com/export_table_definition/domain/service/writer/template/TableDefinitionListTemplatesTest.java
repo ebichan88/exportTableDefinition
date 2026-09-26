@@ -20,8 +20,8 @@ public class TableDefinitionListTemplatesTest {
     return new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
   }
 
-  private TableEntity newEntity(String schema, String physical, String logical, String remarks) {
-    return new TableEntity("TEST_DB", schema, logical, physical, "table", remarks, "");
+  private TableEntity newEntity(String schema, String physical, String logical) {
+    return new TableEntity("TEST_DB", schema, logical, physical, "table", "");
   }
 
   @Test
@@ -55,27 +55,27 @@ public class TableDefinitionListTemplatesTest {
   void tableListHeader_fullMatch() {
     String expected =
         """
-                | No. | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | Link | 備考 |
-                |:---|:---|:---|:---|:---|:---|:---|
+                | No. | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | Link |
+                |:---|:---|:---|:---|:---|:---|
                 """;
     MarkdownAssert.assertMarkdownEquals(
         expected, TableDefinitionListTemplates.tableListTableHeader());
   }
 
   @Test
-  @DisplayName("tableListLine: 行番号・リンク・備考を含む1行＋末尾改行")
+  @DisplayName("tableListLine: 行番号・リンクを含む1行＋末尾改行")
   void tableListLine_single() {
-    TableEntity e = newEntity("public", "orders", "受注", "note");
-    String expected = "|1|public|受注|orders|table|[■](./TEST_DB/public/table/orders.md)|note|" + NL;
+    TableEntity e = newEntity("public", "orders", "受注");
+    String expected = "|1|public|受注|orders|table|[■](./TEST_DB/public/table/orders.md)|" + NL;
     MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.tableListLine(1, e));
   }
 
   @Test
   @DisplayName("tableListLine: 論理テーブル名（DBコメント由来）に含まれる|・改行は表を崩さないようエスケープする")
   void tableListLine_escapesLogicalTableName() {
-    TableEntity e = newEntity("public", "orders", "受注|管理\n(旧:注文)", "");
+    TableEntity e = newEntity("public", "orders", "受注|管理\n(旧:注文)");
     String expected =
-        "|1|public|受注\\|管理<br>(旧:注文)|orders|table|[■](./TEST_DB/public/table/orders.md)||" + NL;
+        "|1|public|受注\\|管理<br>(旧:注文)|orders|table|[■](./TEST_DB/public/table/orders.md)|" + NL;
     MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.tableListLine(1, e));
   }
 

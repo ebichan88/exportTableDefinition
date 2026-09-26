@@ -1,7 +1,6 @@
 package com.export_table_definition.domain.service.snapshot;
 
 import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
@@ -13,6 +12,7 @@ import com.export_table_definition.domain.model.snapshot.TableSnapshot;
 import com.export_table_definition.domain.model.snapshot.TypeSnapshot;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -62,13 +62,12 @@ public class SchemaSnapshotWriterDomainService {
   /**
    * DB全体の情報（{@code database.json}）の書き込み処理を行うメソッド
    *
-   * @param baseInfo データベースの基本情報
-   * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    */
-  public void writeDatabase(BaseInfoEntity baseInfo, Path outputBaseDir) {
+  public void writeDatabase(OutputRoot outputRoot) {
     write(
-        outputPathResolver.resolveSnapshotDatabaseFile(baseInfo, outputBaseDir),
-        List.of(DatabaseSnapshot.of(baseInfo)));
+        outputPathResolver.resolveSnapshotDatabaseFile(outputRoot),
+        List.of(DatabaseSnapshot.of(outputRoot.baseInfo())));
   }
 
   /**
@@ -76,18 +75,15 @@ public class SchemaSnapshotWriterDomainService {
    * スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない
    *
    * @param sequences シーケンス情報リスト
-   * @param baseInfo データベースの基本情報
-   * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    */
-  public void writeSequences(
-      List<SequenceEntity> sequences, BaseInfoEntity baseInfo, Path outputBaseDir) {
+  public void writeSequences(List<SequenceEntity> sequences, OutputRoot outputRoot) {
     writeBySchema(
         sequences,
         SequenceEntity::schemaName,
         SequenceSnapshot::of,
         SnapshotKind.SEQUENCE,
-        baseInfo,
-        outputBaseDir);
+        outputRoot);
   }
 
   /**
@@ -95,17 +91,10 @@ public class SchemaSnapshotWriterDomainService {
    * スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない
    *
    * @param types ユーザー定義型情報リスト
-   * @param baseInfo データベースの基本情報
-   * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    */
-  public void writeTypes(List<TypeEntity> types, BaseInfoEntity baseInfo, Path outputBaseDir) {
-    writeBySchema(
-        types,
-        TypeEntity::schemaName,
-        TypeSnapshot::of,
-        SnapshotKind.TYPE,
-        baseInfo,
-        outputBaseDir);
+  public void writeTypes(List<TypeEntity> types, OutputRoot outputRoot) {
+    writeBySchema(types, TypeEntity::schemaName, TypeSnapshot::of, SnapshotKind.TYPE, outputRoot);
   }
 
   /**
@@ -114,17 +103,12 @@ public class SchemaSnapshotWriterDomainService {
    *
    * @param schemaName スキーマ名
    * @param functions 当該スキーマの関数・プロシージャ情報（定義本体を含む）のリスト
-   * @param baseInfo データベースの基本情報
-   * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    */
   public void writeFunctions(
-      String schemaName,
-      List<FunctionEntity> functions,
-      BaseInfoEntity baseInfo,
-      Path outputBaseDir) {
+      String schemaName, List<FunctionEntity> functions, OutputRoot outputRoot) {
     write(
-        outputPathResolver.resolveSnapshotFile(
-            baseInfo, outputBaseDir, schemaName, SnapshotKind.FUNCTION),
+        outputPathResolver.resolveSnapshotFile(outputRoot, schemaName, SnapshotKind.FUNCTION),
         functions.stream().map(FunctionSnapshot::of).toList());
   }
 
@@ -133,13 +117,11 @@ public class SchemaSnapshotWriterDomainService {
    * 前回実行時のファイルが残っている場合でも、その内容へ追記してしまわないよう上書きで空にする。 当該スキーマの{@link #appendTable}より前に1回だけ呼び出すこと
    *
    * @param schemaName スキーマ名
-   * @param baseInfo データベースの基本情報
-   * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    */
-  public void initTableFile(String schemaName, BaseInfoEntity baseInfo, Path outputBaseDir) {
+  public void initTableFile(String schemaName, OutputRoot outputRoot) {
     write(
-        outputPathResolver.resolveSnapshotFile(
-            baseInfo, outputBaseDir, schemaName, SnapshotKind.TABLE),
+        outputPathResolver.resolveSnapshotFile(outputRoot, schemaName, SnapshotKind.TABLE),
         List.of());
   }
 
@@ -151,9 +133,10 @@ public class SchemaSnapshotWriterDomainService {
    * @param outputBaseDir 出力先のベースディレクトリパス
    */
   public void appendTable(TableDefinitionContent content, Path outputBaseDir) {
+    final OutputRoot outputRoot = new OutputRoot(outputBaseDir, content.baseInfo());
     final Path filePath =
         outputPathResolver.resolveSnapshotFile(
-            content.baseInfo(), outputBaseDir, content.table().schemaName(), SnapshotKind.TABLE);
+            outputRoot, content.table().schemaName(), SnapshotKind.TABLE);
     fileRepository.appendFile(filePath, List.of(toLine(TableSnapshot.of(content))));
   }
 
@@ -165,23 +148,20 @@ public class SchemaSnapshotWriterDomainService {
    * @param schemaNameGetter エンティティからスキーマ名を取得する関数
    * @param toSnapshot エンティティをスナップショットへ変換する関数
    * @param kind オブジェクトの種別
-   * @param baseInfo データベースの基本情報
-   * @param outputBaseDir 出力先のベースディレクトリパス
+   * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    */
   private <T> void writeBySchema(
       List<T> entities,
       Function<T, String> schemaNameGetter,
       Function<T, ?> toSnapshot,
       SnapshotKind kind,
-      BaseInfoEntity baseInfo,
-      Path outputBaseDir) {
+      OutputRoot outputRoot) {
     entities.stream()
         .collect(Collectors.groupingBy(schemaNameGetter, LinkedHashMap::new, Collectors.toList()))
         .forEach(
             (schemaName, entitiesInSchema) ->
                 write(
-                    outputPathResolver.resolveSnapshotFile(
-                        baseInfo, outputBaseDir, schemaName, kind),
+                    outputPathResolver.resolveSnapshotFile(outputRoot, schemaName, kind),
                     entitiesInSchema.stream().map(toSnapshot).toList()));
   }
 

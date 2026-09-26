@@ -43,17 +43,7 @@ public record TableAnnotation(
   }
 
   /**
-   * 備考が設定されている物理カラム名の集合を取得するメソッド<br>
-   * 孤児注釈（実在しないカラムに対する備考）の検出に利用する
-   *
-   * @return 備考が設定されている物理カラム名の集合
-   */
-  public Set<String> annotatedColumnNames() {
-    return columnRemarks.keySet();
-  }
-
-  /**
-   * 実在するカラムのうち、この注釈に含まれる物理カラム名に該当しないもの（＝孤児注釈）を抽出するメソッド
+   * この注釈に含まれる物理カラム名のうち、実在するカラムに該当しないもの（＝孤児注釈）を抽出するメソッド
    *
    * @param actualColumnNames テーブルに実在する物理カラム名の集合
    * @return 実在カラムに該当しない、注釈側の物理カラム名の集合

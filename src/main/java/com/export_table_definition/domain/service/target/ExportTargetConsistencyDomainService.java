@@ -81,9 +81,8 @@ public class ExportTargetConsistencyDomainService {
         .forEach(
             key ->
                 logger.warn(
-                    "Annotation exists for a table that was not found (renamed or dropped?). [table={}.{}]",
-                    key.schema(),
-                    key.table()));
+                    "Annotation exists for a table that was not found (renamed or dropped?). [table={}]",
+                    key.qualifiedName()));
   }
 
   /**

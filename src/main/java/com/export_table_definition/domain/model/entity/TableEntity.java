@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.model.entity;
 
 import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.value.TableKey;
 
 /**
  * テーブル情報に関するrecordクラス
@@ -10,7 +11,6 @@ import com.export_table_definition.domain.model.type.TableType;
  * @param logicalTableName 論理テーブル名
  * @param physicalTableName 物理テーブル名
  * @param tableType 区分（table/view/materialized_view）
- * @param remarks テーブル一覧セクションの備考欄（現状は常に空白。手動付帯情報とは無関係）
  * @param definition view/materialized viewの場合のソース定義（tableの場合は空文字）
  * @since 1.0
  * @version 1.0
@@ -22,7 +22,6 @@ public record TableEntity(
     String logicalTableName,
     String physicalTableName,
     String tableType,
-    String remarks,
     String definition) {
 
   /**
@@ -31,7 +30,7 @@ public record TableEntity(
    * @return スキーマ.テーブル 形式の名称
    */
   public String getSchemaTableName() {
-    return schemaName + "." + physicalTableName;
+    return TableKey.of(this).qualifiedName();
   }
 
   /**

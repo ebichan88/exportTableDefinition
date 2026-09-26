@@ -29,13 +29,14 @@ public interface TableDefinitionRepository {
   BaseInfoEntity selectBaseInfo();
 
   /**
-   * データベースのテーブル情報を取得するメソッド
+   * データベースのテーブル情報を取得するメソッド<br>
+   * テーブル単位の絞り込みは呼び出し側（{@link
+   * com.export_table_definition.domain.model.value.TableTargetScope}）がJava側で行うため、 スキーマ単位でのみ絞り込む
    *
    * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
    * @return データベースのテーブル情報
    */
-  List<TableEntity> selectTableList(List<String> schemaList, List<String> tableList);
+  List<TableEntity> selectTableList(List<String> schemaList);
 
   /**
    * データベースのカラム情報を取得するメソッド
@@ -65,22 +66,22 @@ public interface TableDefinitionRepository {
   List<ConstraintEntity> selectConstraintList(List<String> schemaList, List<String> tableList);
 
   /**
-   * データベースの外部キー情報を取得するメソッド
+   * データベースの外部キー情報を取得するメソッド<br>
+   * テーブル単位の絞り込みは行わず、スキーマ全体を取得する（{@link #selectTableList}を参照）
    *
    * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
    * @return データベースの外部キー情報
    */
-  List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList, List<String> tableList);
+  List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList);
 
   /**
-   * データベースのトリガー情報を取得するメソッド
+   * データベースのトリガー情報を取得するメソッド<br>
+   * テーブル単位の絞り込みは行わず、スキーマ全体を取得する（{@link #selectTableList}を参照）
    *
    * @param schemaList テーブル定義出力対象のスキーマのリスト
-   * @param tableList テーブル定義出力対象のテーブルのリスト
    * @return データベースのトリガー情報
    */
-  List<TriggerEntity> selectTriggerList(List<String> schemaList, List<String> tableList);
+  List<TriggerEntity> selectTriggerList(List<String> schemaList);
 
   /**
    * データベースの関数・プロシージャの一覧情報（定義本体を含まない軽量情報）を取得するメソッド

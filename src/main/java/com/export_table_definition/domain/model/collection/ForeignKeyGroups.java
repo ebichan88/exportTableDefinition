@@ -24,6 +24,51 @@ public final class ForeignKeyGroups {
   private ForeignKeyGroups() {}
 
   /**
+   * 1スキーマ分のER図として出力するページ構成<br>
+   * {@link #compose}が1回で決定し、呼び出し側（Writer）はこの結果に応じて書き込み先を振り分けるだけでよい
+   */
+  public sealed interface PageComposition {
+
+    /**
+     * 分割せず1枚のページに収める構成<br>
+     * {@code group}のノード数が上限を超える場合もあり得る（連結成分単独で上限を超え、これ以上分割できない場合）。
+     * その場合、ページ側はER図の描画を省略し外部キー一覧にフォールバックする
+     *
+     * @param group ページに描画する外部キーのまとまり（スキーマ全体）
+     */
+    record Single(ForeignKeyGroup group) implements PageComposition {}
+
+    /**
+     * 連結成分を1枚に収まる範囲でまとめ直した、複数ページへの分割構成
+     *
+     * @param groups グループごとにまとめ直した外部キーのまとまりのリスト
+     * @param nodeCount 分割前のスキーマ全体のノード数（グループ索引ページの説明文に用いる）
+     */
+    record Grouped(List<ForeignKeyGroup> groups, int nodeCount) implements PageComposition {}
+  }
+
+  /**
+   * 1スキーマ分の外部キーとノード数の上限から、出力するページ構成を決めるメソッド<br>
+   * スキーマ全体が上限に収まる場合、または分割しても連結成分が1つ以下にしかならない場合（分割してもスキーマページと
+   * 同じ内容のグループページができるだけのため）は分割しない。それ以外は連結成分を1枚に収まる範囲でグループへ まとめ直し、複数ページへ分割する
+   *
+   * @param relatedForeignKeys 当該スキーマのテーブルが関与する外部キー（他スキーマとの関連を含む）のリスト
+   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
+   * @return 出力するページ構成
+   */
+  public static PageComposition compose(List<ForeignKeyEntity> relatedForeignKeys, int maxNodes) {
+    final ForeignKeyGroup schemaGroup = ForeignKeyGroup.of(relatedForeignKeys);
+    if (!schemaGroup.exceeds(maxNodes)) {
+      return new PageComposition.Single(schemaGroup);
+    }
+    final List<ForeignKeyGroup> groups = pack(connectedComponents(relatedForeignKeys), maxNodes);
+    if (groups.size() <= 1) {
+      return new PageComposition.Single(schemaGroup);
+    }
+    return new PageComposition.Grouped(groups, schemaGroup.nodeCount());
+  }
+
+  /**
    * 外部キーを連結成分ごとに仕分けるメソッド<br>
    * 外部キーの両端のテーブルを同じまとまりとして併合するため、 {@code a → b}と{@code b → c}は1つの連結成分になる。
    * 自己参照・スキーマ跨ぎの外部キーも他と同様に扱う（スキーマを跨ぐ成分は複数スキーマにまたがる）<br>
@@ -89,7 +134,7 @@ public final class ForeignKeyGroups {
    */
   private static String firstKeyText(ForeignKeyGroup component) {
     return component.nodes().stream()
-        .map(key -> key.schema() + "." + key.table())
+        .map(TableKey::qualifiedName)
         .min(Comparator.naturalOrder())
         .orElseThrow();
   }

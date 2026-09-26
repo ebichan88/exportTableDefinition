@@ -39,38 +39,6 @@ public record ForeignKeyEntity(
   private static final String LOGICAL_RELATION_NAME_SUFFIX = "_lrel";
 
   /**
-   * 多重度を指定しない場合のコンストラクタ<br>
-   * 多重度を判定できない場合は、外部キーの関連として最も一般的な1対多とみなす
-   *
-   * @param schemaName 参照元（子）スキーマ名
-   * @param tableName 参照元（子）テーブル名
-   * @param foreignkeyName 外部キー名
-   * @param columnNames 参照元（子）の列名をカンマ区切りで連結した文字列
-   * @param referenceSchemaName 参照先（親）スキーマ名
-   * @param referenceTableName 参照先（親）テーブル名
-   * @param referenceColumnNames 参照先（親）の列名をカンマ区切りで連結した文字列
-   */
-  public ForeignKeyEntity(
-      String schemaName,
-      String tableName,
-      String foreignkeyName,
-      String columnNames,
-      String referenceSchemaName,
-      String referenceTableName,
-      String referenceColumnNames) {
-    this(
-        schemaName,
-        tableName,
-        foreignkeyName,
-        columnNames,
-        referenceSchemaName,
-        referenceTableName,
-        referenceColumnNames,
-        Cardinality.ONE_TO_MANY,
-        RelationType.PHYSICAL);
-  }
-
-  /**
    * サイドカーYAML由来の論理リレーションを生成する静的ファクトリメソッド<br>
    * DBに外部キー制約が存在しないため、多重度は機械的に判定できない。 呼び出し側でYAMLの明示指定を解決した上で渡すこと
    *
@@ -129,7 +97,7 @@ public record ForeignKeyEntity(
    * @return 参照先の スキーマ.テーブル 形式の名称
    */
   public String getReferenceSchemaTableName() {
-    return referenceSchemaName + "." + referenceTableName;
+    return referenceTableKey().qualifiedName();
   }
 
   /**

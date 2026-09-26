@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
 import java.nio.file.Path;
@@ -29,6 +30,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   private static final Path SNAPSHOT_DIR = OUT.resolve("snapshot").resolve("testdb");
   private static final BaseInfoEntity BASE_INFO =
       new BaseInfoEntity("testdb", "PostgreSQL", "2026/09/25");
+  private static final OutputRoot ROOT = new OutputRoot(OUT, BASE_INFO);
 
   /** 書き込み内容・ディレクトリ作成呼び出しをメモリ上に収集するFileRepositoryのスタブ */
   private static class InMemoryFileRepository implements FileRepository {
@@ -85,7 +87,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   private TableDefinitionContent tableContent(String schema, String table, String column) {
     return new TableDefinitionContent(
         BASE_INFO,
-        new TableEntity("testdb", schema, "", table, "table", "", ""),
+        new TableEntity("testdb", schema, "", table, "table", ""),
         List.of(new ColumnEntity(schema, table, column, "integer", true)),
         List.of(),
         List.of(),
@@ -99,7 +101,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   @Test
   @DisplayName("writeDatabase: DB名・DBMS種別・形式バージョンを出力し、生成日は含めない")
   void testWriteDatabaseExcludesGeneratedDate() {
-    writer.writeDatabase(BASE_INFO, OUT);
+    writer.writeDatabase(ROOT);
 
     Path file = SNAPSHOT_DIR.resolve("database.json");
     assertEquals(
@@ -111,7 +113,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   @Test
   @DisplayName("initTableFile + appendTable: スキーマ単位のファイルへ1テーブル1行で追記する")
   void testAppendTableWritesOneLinePerTable() {
-    writer.initTableFile("public", BASE_INFO, OUT);
+    writer.initTableFile("public", ROOT);
     writer.appendTable(tableContent("public", "t1", "id"), OUT);
     writer.appendTable(tableContent("public", "t2", "code"), OUT);
 
@@ -131,7 +133,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
     Path file = SNAPSHOT_DIR.resolve("public").resolve("tables.jsonl");
     fileRepository.files.put(file, "{\"stale\":true}\n");
 
-    writer.initTableFile("public", BASE_INFO, OUT);
+    writer.initTableFile("public", ROOT);
     writer.appendTable(tableContent("public", "t1", "id"), OUT);
 
     assertFalse(fileRepository.files.get(file).contains("stale"));
@@ -145,10 +147,8 @@ public class SchemaSnapshotWriterDomainServiceTest {
         List.of(
             new SequenceEntity("testdb", "public", "seq_a", "1", "1", "100", "1", "1", true, ""),
             new SequenceEntity("testdb", "sales", "seq_b", "1", "1", "100", "1", "1", false, "")),
-        BASE_INFO,
-        OUT);
-    writer.writeTypes(
-        List.of(new TypeEntity("testdb", "public", "mood", "ENUM", "sad, ok")), BASE_INFO, OUT);
+        ROOT);
+    writer.writeTypes(List.of(new TypeEntity("testdb", "public", "mood", "ENUM", "sad, ok")), ROOT);
 
     assertEquals(
         "{\"schema\":\"public\",\"name\":\"seq_a\",\"incrementBy\":\"1\",\"minValue\":\"1\","
@@ -169,7 +169,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   @Test
   @DisplayName("writeSequences: 対象が0件の場合は何も出力しない")
   void testWriteSequencesEmptyWritesNothing() {
-    writer.writeSequences(List.of(), BASE_INFO, OUT);
+    writer.writeSequences(List.of(), ROOT);
     assertTrue(fileRepository.files.isEmpty());
   }
 
@@ -191,8 +191,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
                 "CREATE FUNCTION public.calc(x integer)\n RETURNS integer ..."),
             new FunctionEntity(
                 "testdb", "public", "calc", "calc_2", "PROCEDURE", "", "", "plpgsql", "BODY")),
-        BASE_INFO,
-        OUT);
+        ROOT);
 
     List<String> lines =
         fileRepository

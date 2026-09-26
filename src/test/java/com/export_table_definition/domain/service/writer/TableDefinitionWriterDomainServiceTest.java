@@ -12,6 +12,7 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
@@ -77,8 +78,12 @@ public class TableDefinitionWriterDomainServiceTest {
     return new BaseInfoEntity("testdb", "pg", "2026-09-24");
   }
 
+  private OutputRoot outputRoot() {
+    return new OutputRoot(OUT, baseInfo());
+  }
+
   private TableEntity table(String physical) {
-    return new TableEntity("testdb", "public", "受注", physical, "table", "", "");
+    return new TableEntity("testdb", "public", "受注", physical, "table", "");
   }
 
   @BeforeEach
@@ -95,7 +100,7 @@ public class TableDefinitionWriterDomainServiceTest {
   @DisplayName("writeTableDefinitionList: ヘッダー・基本情報・関連ドキュメント・テーブル一覧行が出力される")
   void testWriteTableDefinitionListWritesAllSections() {
     writer.writeTableDefinitionList(
-        List.of(table("orders")), baseInfo(), OUT, List.of(ListDocumentType.ER_DIAGRAM));
+        List.of(table("orders")), outputRoot(), List.of(ListDocumentType.ER_DIAGRAM));
 
     Path file = OUT.resolve("tableList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
@@ -111,7 +116,7 @@ public class TableDefinitionWriterDomainServiceTest {
   @Test
   @DisplayName("writeTableDefinitionList: 関連ドキュメントが空の場合はセクション自体が出力されない")
   void testWriteTableDefinitionListOmitsRelatedDocumentsWhenEmpty() {
-    writer.writeTableDefinitionList(List.of(table("orders")), baseInfo(), OUT, List.of());
+    writer.writeTableDefinitionList(List.of(table("orders")), outputRoot(), List.of());
 
     String content = fileRepository.files.get(OUT.resolve("tableList_testdb.md"));
     assertFalse(content.contains("## 関連ドキュメント"));
@@ -123,7 +128,7 @@ public class TableDefinitionWriterDomainServiceTest {
     List<TableEntity> tables =
         IntStream.rangeClosed(1, 3001).mapToObj(i -> table("t" + i)).toList();
 
-    writer.writeTableDefinitionList(tables, baseInfo(), OUT, List.of());
+    writer.writeTableDefinitionList(tables, outputRoot(), List.of());
 
     assertTrue(fileRepository.files.containsKey(OUT.resolve("tableList_testdb_1.md")));
     assertTrue(fileRepository.files.containsKey(OUT.resolve("tableList_testdb_2.md")));

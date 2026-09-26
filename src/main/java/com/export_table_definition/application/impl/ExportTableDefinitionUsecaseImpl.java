@@ -3,6 +3,7 @@ package com.export_table_definition.application.impl;
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.ExportTargets;
 import com.export_table_definition.domain.model.TableDefinitionContent;
@@ -103,11 +104,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       removeOutputBaseDir(outputBaseDir);
     }
     export(
-        fetchTargets(
-            request.targetSchemaList(),
-            request.targetTableList(),
-            request.outputObjectList(),
-            request.annotationPath()),
+        fetchTargets(request.targetSelection()),
         List.of(
             markdownSinkFactory.create(outputBaseDir, request.erDiagramMaxNodes()),
             snapshotSinkFactory.create(outputBaseDir)),
@@ -120,12 +117,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     final Path committedDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
     try {
-      final ExportTargets targets =
-          fetchTargets(
-              request.targetSchemaList(),
-              request.targetTableList(),
-              request.outputObjectList(),
-              request.annotationPath());
+      final ExportTargets targets = fetchTargets(request.targetSelection());
       // DBからの取得は通常実行と同じだが、差分の判定に不要なMarkdownの描画・ER図の生成は行わず、
       // スナップショットのみを生成してオブジェクト単位で比較する
       export(targets, List.of(snapshotSinkFactory.create(generatedDir)), request.chunkSize());
@@ -141,21 +133,17 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * 出力対象のうち、一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・ 手動付帯情報）を取得するメソッド<br>
    * テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は、 出力時（{@link #export}）にスキーマ・チャンク単位で取得する
    *
-   * @param targetSchemaList テーブル定義出力対象のスキーマのリスト
-   * @param targetTableList テーブル定義出力対象のテーブルのリスト
-   * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名のリスト
-   * @param annotationPath 手動付帯情報を記述したサイドカーYAMLのパス
+   * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・annotationPath）
    * @return 一括取得した出力対象の情報
    */
-  private ExportTargets fetchTargets(
-      List<String> targetSchemaList,
-      List<String> targetTableList,
-      List<String> outputObjectList,
-      String annotationPath) {
+  private ExportTargets fetchTargets(TargetSelection targetSelection) {
+    final List<String> targetSchemaList = targetSelection.targetSchemaList();
+    final List<String> targetTableList = targetSelection.targetTableList();
     // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
-    final Set<OutputObjectType> outputObjectTypes = OutputObjectType.parse(outputObjectList);
+    final Set<OutputObjectType> outputObjectTypes =
+        OutputObjectType.parse(targetSelection.outputObjectList());
     // サイドカーYAML（手動付帯情報・論理リレーション）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
-    final Sidecar sidecar = annotationRepository.load(annotationPath);
+    final Sidecar sidecar = annotationRepository.load(targetSelection.annotationPath());
     final Annotations annotations = sidecar.annotations();
     // スキーマ・テーブルの絞り込み条件を1回だけ組み立てる（テーブルごとにワイルドカードパターンを解析し直さない）
     final TableTargetScope targetScope = TableTargetScope.of(targetSchemaList, targetTableList);
@@ -168,21 +156,18 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
     final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
     final List<TableEntity> tableEntityList =
-        repository.selectTableList(targetSchemaList, List.of()).stream()
-            .filter(targetScope::matches)
-            .toList();
+        repository.selectTableList(targetSchemaList).stream().filter(targetScope::matches).toList();
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
     consistencyDomainService.warnOrphanTableAnnotations(annotations, tableEntityList, isFiltered);
     // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
     // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
-    // 特定のチャンクに限定せず全件を保持しておく必要がある。テーブル名は上記の理由によりSQLで絞り込まず、
-    // スキーマ全体を取得する（tableListによる絞り込みが利く分、schemaのみ指定時よりDB負荷が増え得る）。
-    // その代わり、参照元・参照先の一方でもtableListの絞り込みで除外された関係は、テーブル一覧・ER図の
-    // 双方から一貫して除外されるよう、出力対象のテーブルに含まれるものだけへ絞り込む。
+    // 特定のチャンクに限定せず全件を保持しておく必要がある。selectForeignKeyListはスキーマ単位でのみ絞り込み、
+    // テーブル単位の絞り込みは行わないため、参照元・参照先の一方でもtargetTableListの絞り込みで除外された関係は、
+    // テーブル一覧・ER図の双方から一貫して除外されるよう、出力対象のテーブルに含まれるものだけへ絞り込む。
     // サイドカー由来の論理リレーションも、出力対象に含まれるテーブル同士のものだけを同じ集合へ合流させる
     final ForeignKeys foreignKeys =
         consistencyDomainService.resolveForeignKeys(
-            repository.selectForeignKeyList(targetSchemaList, List.of()),
+            repository.selectForeignKeyList(targetSchemaList),
             sidecar.logicalRelations(),
             tableEntityList,
             isFiltered);
@@ -191,7 +176,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // outputObjectListでトリガーが対象外とされた場合は、取得自体を行わず一覧・テーブル定義書双方から除外する
     final List<TriggerEntity> triggerEntityList =
         outputObjectTypes.contains(OutputObjectType.TRIGGER)
-            ? repository.selectTriggerList(targetSchemaList, List.of())
+            ? repository.selectTriggerList(targetSchemaList)
             : List.of();
     // スキーマレベルのオブジェクト（関数/シーケンス/型）はテーブルフィルタの対象外。スキーマフィルタのみ適用する。
     // 関数一覧は定義本体を含まない軽量情報のみ先に取得する（定義本体はスキーマ単位で別途取得する）。

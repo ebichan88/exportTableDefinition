@@ -21,7 +21,7 @@ public class TableKeyTest {
   @Test
   @DisplayName("of(TableEntity): スキーマ名・物理テーブル名からTableKeyを生成する")
   void testOfWithTableEntity() {
-    TableEntity table = new TableEntity("testdb", "public", "受注", "orders", "table", "", "");
+    TableEntity table = new TableEntity("testdb", "public", "受注", "orders", "table", "");
     TableKey key = TableKey.of(table);
     assertEquals(new TableKey("public", "orders"), key);
   }
@@ -29,8 +29,8 @@ public class TableKeyTest {
   @Test
   @DisplayName("of(TableEntity): 論理テーブル名やDB名の違いはキーに影響しない")
   void testOfWithTableEntityIgnoresLogicalNameAndDbName() {
-    TableEntity a = new TableEntity("db1", "public", "論理名A", "orders", "table", "", "");
-    TableEntity b = new TableEntity("db2", "public", "論理名B", "orders", "view", "", "");
+    TableEntity a = new TableEntity("db1", "public", "論理名A", "orders", "table", "");
+    TableEntity b = new TableEntity("db2", "public", "論理名B", "orders", "view", "");
     assertEquals(TableKey.of(a), TableKey.of(b));
   }
 
@@ -64,6 +64,12 @@ public class TableKeyTest {
   void testParseSplitsAtFirstDot() {
     assertEquals(
         Optional.of(TableKey.of("public", "v1.orders")), TableKey.parse("public.v1.orders"));
+  }
+
+  @Test
+  @DisplayName("qualifiedName: 'スキーマ.テーブル'形式の文字列を返す")
+  void testQualifiedName() {
+    assertEquals("public.orders", TableKey.of("public", "orders").qualifiedName());
   }
 
   @Test

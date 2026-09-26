@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -72,6 +73,10 @@ public class ObjectListWriterDomainServiceTest {
     return new BaseInfoEntity("testdb", "pg", "2026-09-24");
   }
 
+  private OutputRoot outputRoot() {
+    return new OutputRoot(OUT, baseInfo());
+  }
+
   @BeforeEach
   void setUp() {
     fileRepository = new InMemoryFileRepository();
@@ -85,7 +90,7 @@ public class ObjectListWriterDomainServiceTest {
   @Test
   @DisplayName("writeTriggerList: トリガーが0件の場合は何も出力しない")
   void testWriteTriggerListEmptyWritesNothing() {
-    writer.writeTriggerList(List.of(), baseInfo(), OUT);
+    writer.writeTriggerList(List.of(), outputRoot());
     assertTrue(fileRepository.files.isEmpty());
   }
 
@@ -95,7 +100,7 @@ public class ObjectListWriterDomainServiceTest {
     var trigger =
         new TriggerEntity(
             "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "f_orders", "");
-    writer.writeTriggerList(List.of(trigger), baseInfo(), OUT);
+    writer.writeTriggerList(List.of(trigger), outputRoot());
 
     Path file = OUT.resolve("triggerList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
@@ -109,7 +114,7 @@ public class ObjectListWriterDomainServiceTest {
   @Test
   @DisplayName("writeFunctionList: 関数・プロシージャが0件の場合は何も出力しない")
   void testWriteFunctionListEmptyWritesNothing() {
-    writer.writeFunctionList(List.of(), baseInfo(), OUT);
+    writer.writeFunctionList(List.of(), outputRoot());
     assertTrue(fileRepository.files.isEmpty());
   }
 
@@ -119,7 +124,7 @@ public class ObjectListWriterDomainServiceTest {
     var function =
         new FunctionEntity(
             "testdb", "public", "calc_total", "calc_total", "FUNCTION", "()", "int", "plpgsql", "");
-    writer.writeFunctionList(List.of(function), baseInfo(), OUT);
+    writer.writeFunctionList(List.of(function), outputRoot());
 
     Path file = OUT.resolve("functionList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
@@ -141,8 +146,8 @@ public class ObjectListWriterDomainServiceTest {
             "sql",
             "");
     var type = new TypeEntity("testdb", "public", "delimiter", "ENUM", "|, ,, ;");
-    writer.writeFunctionList(List.of(function), baseInfo(), OUT);
-    writer.writeTypeList(List.of(type), baseInfo(), OUT);
+    writer.writeFunctionList(List.of(function), outputRoot());
+    writer.writeTypeList(List.of(type), outputRoot());
 
     assertTrue(
         fileRepository
@@ -159,7 +164,7 @@ public class ObjectListWriterDomainServiceTest {
     var function =
         new FunctionEntity(
             "testdb", "public", "calc_total", "calc_total", "", "", "", "", "SELECT 1;");
-    writer.writeFunctionDefinition(function, baseInfo(), OUT);
+    writer.writeFunctionDefinition(function, outputRoot());
 
     Path expectedDir = OUT.resolve("testdb").resolve("public").resolve("function");
     Path expectedFile = expectedDir.resolve("calc_total.md");
@@ -174,7 +179,7 @@ public class ObjectListWriterDomainServiceTest {
   @Test
   @DisplayName("writeSequenceList: シーケンスが0件の場合は何も出力しない")
   void testWriteSequenceListEmptyWritesNothing() {
-    writer.writeSequenceList(List.of(), baseInfo(), OUT);
+    writer.writeSequenceList(List.of(), outputRoot());
     assertTrue(fileRepository.files.isEmpty());
   }
 
@@ -184,7 +189,7 @@ public class ObjectListWriterDomainServiceTest {
     var sequence =
         new SequenceEntity(
             "testdb", "public", "seq_orders", "10", "1", "999999999", "20", "1", true, "orders.id");
-    writer.writeSequenceDefinition(sequence, baseInfo(), OUT);
+    writer.writeSequenceDefinition(sequence, outputRoot());
 
     Path expectedFile =
         OUT.resolve("testdb").resolve("public").resolve("sequence").resolve("seq_orders.md");
@@ -198,7 +203,7 @@ public class ObjectListWriterDomainServiceTest {
   @Test
   @DisplayName("writeTypeList: ユーザー定義型が0件の場合は何も出力しない")
   void testWriteTypeListEmptyWritesNothing() {
-    writer.writeTypeList(List.of(), baseInfo(), OUT);
+    writer.writeTypeList(List.of(), outputRoot());
     assertTrue(fileRepository.files.isEmpty());
   }
 
@@ -206,7 +211,7 @@ public class ObjectListWriterDomainServiceTest {
   @DisplayName("writeTypeDefinition: スキーマ配下のtypeディレクトリに個別ファイルを出力する")
   void testWriteTypeDefinitionWritesIndividualFile() {
     var type = new TypeEntity("testdb", "public", "order_status", "enum", "PENDING,SHIPPED,DONE");
-    writer.writeTypeDefinition(type, baseInfo(), OUT);
+    writer.writeTypeDefinition(type, outputRoot());
 
     Path expectedFile =
         OUT.resolve("testdb").resolve("public").resolve("type").resolve("order_status.md");
@@ -224,7 +229,7 @@ public class ObjectListWriterDomainServiceTest {
         IntStream.rangeClosed(1, 3001)
             .mapToObj(i -> new TriggerEntity("public", "t" + i, "trg" + i, "", "", "", "", ""))
             .toList();
-    writer.writeTriggerList(triggers, baseInfo(), OUT);
+    writer.writeTriggerList(triggers, outputRoot());
 
     assertTrue(fileRepository.files.containsKey(OUT.resolve("triggerList_testdb_1.md")));
     assertTrue(fileRepository.files.containsKey(OUT.resolve("triggerList_testdb_2.md")));
