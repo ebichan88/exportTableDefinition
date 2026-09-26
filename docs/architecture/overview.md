@@ -38,15 +38,15 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を
    `presentation.FailureHandler`経由で実行する。例外の捕捉と終了コードへの変換は、ここで1箇所にまとめて行う
    （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
-2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず `conf/ExportTableDefinition.properties` の設定値
-   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を
-   `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ読み込む。
-   - 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
-     `TargetSelection.of()`がここで型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する。
-     未知の`outputObjects`などの設定誤りは、DBへの接続や`--rm-dist`による削除より前に`[result]:FAIL`として報告される。
-     設定誤りは`config.InvalidConfigurationException`1種類で表す（`PropertyLoader`は`conf`ディレクトリ・設定ファイル・キーが
-     見つからない場合に、エントリーポイントは値の検証で`IllegalArgumentException`となった場合にこの例外へ変換する）ため、
-     エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
+2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
+   - `CliArguments.requireKnownArguments()`が、解釈できない引数（書き誤り等）が無いことを確かめる
+   - `ExportTableDefinitionProperties.load()`が `conf/ExportTableDefinition.properties` の設定値（出力対象スキーマ／テーブル、
+     出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み・検証し、
+     `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ変換する。
+     出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
+     `TargetSelection.of()`が型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する
+   - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
+     削除より前に`[result]:FAIL`として報告されるため、エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
 3. 設定の読み込みに成功した後、`MyBatisSqlSessionFactory` に接続情報を設定してDBへ接続し、接続先のDB種別を判定する。
    Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、`ExportTableDefinitionController` を取得する。
@@ -87,8 +87,36 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 - `FailureHandler`は例外の連鎖（原因）をたどり、表示に含まれていない情報を持つ原因を`[cause]`として併記する
   （包んだ箇所で、DBが返したエラー等の原因が失われないようにするため。原因のメッセージを繰り返しているだけのMyBatisの例外等は省く）
 - ドメイン層に検査例外は使わない。呼び出し側に判断を委ねたい結果は、値（`Optional`・`ConsistencyFinding`・真偽値等）で返す
+- 警告（処理は続けられるが利用者が確認すべき事柄。孤児付帯情報、サイドカーYAMLの記述の誤り等）は、WARNレベルのログとして出す。
+  `log4j2.xml`が、このツールのWARNログをログファイルに加えてコンソール（標準エラー出力）へも`[warn]:`付きで出す
+  （ログファイルにしか出ないと、「警告して続行」が実際には「黙って続行」になるため）。警告は終了コードに影響しない
 - 終了コード（`presentation.type.ExitStatus`）は、0＝成功（`--check`で差分なしを含む）、1＝`--check`で差分あり、2＝失敗。
   JVMのエラー（`Error`）も`FailureHandler`で捕捉するのは、捕捉しないとJVMが終了コード1で終わり、差分ありと区別できなくなるため
+
+## 入力の検証
+
+入力ごとの仕様（必須・値の形式・未指定の場合・誤りとして扱う値）はREADMEの各節に記載し、以下の方針で扱う。
+
+- 「必須」は値で決める。キーの省略と値が空は同じ「未指定」として扱い、既定値がある項目は未指定を許す。
+  既定値が無いもの（DB接続情報の`driver`・`url`）だけを必須とする
+- 実行のしかたを決める入力（設定ファイル・CLI引数・DB接続情報）は、未知のキー・引数、値の形式の違反、指定した参照先
+  （`annotationPath`のファイル）が無いことを、すべて失敗にする。既定値へ黙って置き換えたり、警告で続行したりしない
+  （書き誤りに気付けないまま、意図しない出力やモードで実行されるのを防ぐため）。なお、指定したスキーマがDBに存在するかは検証しない
+- ドキュメントに載せる内容の入力（サイドカーYAML）は、ファイルとして読めない場合だけ失敗にし、個々の記述の誤り
+  （キーの形式の誤り、必須項目の欠け、未知の多重度、未知のキー、マップであるべき箇所がマップでない等）は該当箇所を
+  読み飛ばして警告する（付帯情報の一部の書き誤りで、定義書全体の再生成を止めないため）
+- 検証は入口でまとめて行い、見つかった誤りを一度に報告する（1つ直して再実行するたびに次の誤りが見つかる、を繰り返させない）
+
+| 入力 | 検証する場所 | 検証のタイミング |
+|---|---|---|
+| CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
+| 設定ファイルの形式（キー・整数） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
+| 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
+| DB接続情報 | `MyBatisSqlSessionFactory.requireValidConnectionSettings` | DBへの接続の直前 |
+| サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
+
+値の意味に関するルール（出力対象オブジェクト種別の値・テーブル名パターンの書式）はドメインの型に、設定ファイルという形式に
+関するルール（キーの有無・未知のキー・整数として読めるか）は入口側に持たせ、重複させない。
 
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
@@ -238,6 +266,8 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 DBのメタ情報だけでは表現できない情報を、サイドカーYAML（プロパティ`annotationPath`で指定。コード上は`sidecarPath`と呼ぶ）として
 マージできる。読み込みは `SidecarRepository`（実装: `infrastructure.file.repository.SidecarYamlRepository`）が一括で行い、
 `domain.model.sidecar.Sidecar` として返す。`Sidecar` は性質の異なる2種類の情報を束ねる。
+指定したファイルが無い・YAMLとして読めない場合は`UserCorrectableException`とし、個々の記述の誤りは読み飛ばして警告する
+（[入力の検証](#入力の検証)を参照）。
 
 | 種別 | YAMLキー | モデル | 反映先 |
 |---|---|---|---|
@@ -274,8 +304,9 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 ## 設定・DI
 
-- `config.PropertyLoader`: `conf/ExportTableDefinition.properties` 等のプロパティ読み込みユーティリティ
-  （カンマ区切りの値は各要素の前後の空白を除去し、空要素を除いて返す）
+- `config.PropertyLoader`: `conf`ディレクトリ配下のプロパティファイルの読み込みユーティリティ（読み込みのみを担う）
+- `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: `conf/ExportTableDefinition.properties`の
+  設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）
 - `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）
 
 新しいリポジトリ実装やドメインサービスを追加する場合は、ここに束縛を追加する。

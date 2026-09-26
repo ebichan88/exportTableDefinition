@@ -51,6 +51,11 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 捕捉は`presentation.FailureHandler`の1箇所だけ。コントローラー・ユースケース等の途中の層でcatchしてよいのは、検査例外を包む・
     利用者が直せる誤りへ置き換える・フォールバックする場合だけ。包むときは`cause`を渡し、tryの範囲は置き換えたい呼び出しだけに絞る
     （`catch (Exception e)`で広く包むと、別の失敗まで同じ文言になり原因も表示から消える）。catchしてログを出してから再スローしない。
+- 入力（設定ファイル・CLI引数・DB接続情報・サイドカーYAML）の検証は [overview.md の「入力の検証」](./docs/architecture/overview.md#入力の検証) に従い、
+  仕様はREADMEの各節に記載する。設定項目・引数を追加・変更した場合は、READMEの仕様の表と、検証する場所
+  （`ExportTableDefinitionProperties`・`CliArguments`等）を同じ変更で更新する。
+  - 未指定（キーの省略・空）は既定値。未知のキー・引数や解釈できない値は、既定値へ黙って置き換えずに失敗にする。
+  - サイドカーYAMLの個々の記述の誤りは、読み飛ばして警告する（WARNログはコンソールにも出る）。
 - `tableDefinitionMapper.xml` やドメイン層（エンティティ・テンプレート・ER図生成ロジック等）を変更した後は、
   `verify` スキル（`.claude/skills/verify/SKILL.md`）に従って実際に出力結果を確認すること。
 - 新規ロジックを書く前・既存クラスに数行足す前に、以下のような「小さな責務の混在」が
@@ -62,7 +67,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
     分解・再構築されながら渡っていないか。渡す先で使われない引数が混ざっていないかも見る。
     該当する場合はrequestレコードにまとめる（例: `application.ExportRequest`/`CheckDiffRequest`）。
   - 設定値（プロパティの文字列）を生のまま深い層へ渡していないか。空白の除去・型への変換・検証は入口で1回だけ行い、
-    設定誤りはDBへの問い合わせや出力先の削除より前に検知する（例: `application.TargetSelection#of`）。
+    設定誤りはDBへの問い合わせや出力先の削除より前に検知する（例: `ExportTableDefinitionProperties`・`application.TargetSelection#of`）。
   - インフラ層（Repository実装）が、デフォルト値の決定・名前の自動生成・識別子の解析といった
     業務ルールを直接持っていないか。インフラは読み込みと型変換に専念し、ルールはドメイン層
     （エンティティ・値オブジェクト・enum）のメソッドに持たせる

@@ -247,7 +247,7 @@ classDiagram
 | ルール | 場所 |
 |---|---|
 | 「スキーマ.テーブル」形式のキーの解析 | `TableKey.parse` |
-| 出力対象の絞り込み（スキーマ名・テーブル名パターン。除外が包含より優先） | `TableTargetScope` / `TableTargetFilter` |
+| 出力対象の絞り込み（スキーマ名・テーブル名パターン。除外が包含より優先。テーブル名・スキーマ名の部分が空のパターンは設定誤り） | `TableTargetScope` / `TableTargetFilter` |
 | 出力対象オブジェクト種別の解釈（未指定なら全種別。未知の種別名は設定誤り） | `OutputObjectType.parse` |
 | 多重度の判定・論理リレーションの多重度の既定値 | `Cardinality.of` / `Cardinality.DEFAULT_FOR_LOGICAL_RELATION` |
 | 論理リレーションの関連名の自動生成（`{参照元テーブル名}_{列名...}_lrel`） | `ForeignKeyEntity.resolveLogicalRelationName` |
