@@ -474,14 +474,17 @@ exportTableDefinition
 │      ├─output
 │      └─exportTableDefinition-1.0-SNAPSHOT.jar ・・・ 実行可能形式Jarファイル
 ├─docs           ・・・ JavaDoc等のドキュメントが格納されているフォルダ
-│  └─javadoc
+│  ├─javadoc
+│  └─sample       ・・・ サンプルDBのDDLと出力のベースライン（結合テストの入力）
 ├─gradle
 │  └─wrapper
 └─src
-    └─ main     ・・・ javaソースコードが格納されているフォルダ
-        └─ java
-             └─ com
-                 └─ export_table_definition
+    ├─ main     ・・・ javaソースコードが格納されているフォルダ
+    │   └─ java
+    │        └─ com
+    │            └─ export_table_definition
+    ├─ test     ・・・ 単体テスト（DB不要）
+    └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQLを使う）
 ```
 
 ### build
@@ -491,6 +494,19 @@ exportTableDefinition
 ```
 gradlew build
 ```
+
+### テスト
+
+`gradlew build`（`gradlew test`）で実行される単体テストはDBを使わない。
+mapperのSQLを実DBに対して確かめる結合テストは、Dockerで使い捨てのPostgreSQLを起動するため別のタスクに分けてある（Dockerが必要）。
+
+```
+gradlew integrationTest
+```
+
+結合テストは`docs/sample/postgres/ddl.sql`を流し込んだDBに対して、各SQLの取得結果と、出力全体がコミット済みのベースライン
+（`docs/sample/postgres/output`）と一致することを確かめる（基本情報の作成日は比較しない）。出力仕様を意図して変えた場合は、
+ベースラインを出力し直してコミットする。PRではGitHub Actions（`.github/workflows/ci.yml`）で両方のテストが実行される。
 
 ### Javadoc
 
