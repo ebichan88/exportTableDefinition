@@ -17,7 +17,7 @@ public class ExportTargetConsistencyDomainServiceTest {
       new ExportTargetConsistencyDomainService();
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "", "");
+    return new TableEntity("testdb", schema, "", physical, "table", "");
   }
 
   private List<String> names(List<ForeignKeyEntity> foreignKeys) {

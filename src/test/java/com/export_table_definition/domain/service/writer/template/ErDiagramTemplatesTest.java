@@ -23,7 +23,7 @@ public class ErDiagramTemplatesTest {
   }
 
   private TableEntity newTable(String schema, String physical, String logical) {
-    return new TableEntity("TEST_DB", schema, logical, physical, "table", "", "");
+    return new TableEntity("TEST_DB", schema, logical, physical, "table", "");
   }
 
   private ForeignKeyEntity newFk(

@@ -18,7 +18,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 class TableTargetScopeTest {
 
   private static TableEntity table() {
-    return new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", "table", "", "");
+    return new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", "table", "");
   }
 
   @Nested

@@ -78,7 +78,7 @@ public class TableDefinitionWriterDomainServiceTest {
   }
 
   private TableEntity table(String physical) {
-    return new TableEntity("testdb", "public", "受注", physical, "table", "", "");
+    return new TableEntity("testdb", "public", "受注", physical, "table", "");
   }
 
   @BeforeEach

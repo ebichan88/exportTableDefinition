@@ -238,7 +238,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   private TableEntity table(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "", "");
+    return new TableEntity("testdb", schema, "", physical, "table", "");
   }
 
   private String contentOf(Path path) {

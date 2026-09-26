@@ -49,7 +49,7 @@ public class TableSnapshotTest {
   @Test
   @DisplayName("of: テーブル・カラムの各項目を個別の値として保持し、サイドカーの付帯情報をマージする")
   void testOfConvertsTableAndColumns() {
-    var table = new TableEntity("testdb", "public", "受注", "orders", "table", "", "");
+    var table = new TableEntity("testdb", "public", "受注", "orders", "table", "");
     var id = new ColumnEntity("public", "orders", "受注ID", "id", "integer", "", true, true, " ");
     var amount =
         new ColumnEntity(
@@ -86,7 +86,7 @@ public class TableSnapshotTest {
   @Test
   @DisplayName("of: インデックス・制約・外部キー・論理リレーション・トリガーを構造化して保持する")
   void testOfConvertsRelatedObjects() {
-    var table = new TableEntity("testdb", "public", "", "orders", "table", "", "");
+    var table = new TableEntity("testdb", "public", "", "orders", "table", "");
     var index =
         new IndexEntity(
             "public", "orders", "orders_pkey", "btree", true, true, "CREATE UNIQUE INDEX ...", "");
@@ -184,7 +184,7 @@ public class TableSnapshotTest {
   @DisplayName("of: view・materialized viewはソース定義を保持する")
   void testOfKeepsViewDefinition() {
     var view =
-        new TableEntity("testdb", "public", "", "v_orders", "view", "", " SELECT id FROM orders;");
+        new TableEntity("testdb", "public", "", "v_orders", "view", " SELECT id FROM orders;");
 
     TableSnapshot snapshot =
         TableSnapshot.of(

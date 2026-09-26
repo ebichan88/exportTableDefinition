@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 public class TableDefinitionContentTest {
 
   private TableEntity newTable(String schema, String physical) {
-    return new TableEntity("testdb", schema, "", physical, "table", "", "");
+    return new TableEntity("testdb", schema, "", physical, "table", "");
   }
 
   @Test

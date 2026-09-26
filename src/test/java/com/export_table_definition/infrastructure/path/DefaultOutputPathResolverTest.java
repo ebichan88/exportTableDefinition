@@ -19,7 +19,7 @@ public class DefaultOutputPathResolverTest {
   private final BaseInfoEntity baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
 
   private TableEntity table(String schema, String physical, String tableType) {
-    return new TableEntity("testdb", schema, "", physical, tableType, "", "");
+    return new TableEntity("testdb", schema, "", physical, tableType, "");
   }
 
   @Test

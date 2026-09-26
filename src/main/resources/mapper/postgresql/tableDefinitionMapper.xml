@@ -25,7 +25,6 @@
                 'table' AS table_type,
                 coalesce(regexp_replace(pg_catalog.obj_description(to_regclass(quote_ident(t1.schemaname) || '.' || quote_ident(t1.tablename))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t1.tablename, '') AS physical_table_name,
-                '' AS remarks,
                 '' AS definition
             FROM pg_catalog.pg_tables t1
             WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -41,7 +40,6 @@
                 'view' AS table_type,
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t2.schemaname) || '.' || quote_ident(t2.viewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t2.viewname, '') AS physical_table_name,
-                ' ' AS remarks,
                 definition AS definition
             FROM pg_catalog.pg_views t2
             WHERE t2.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -57,7 +55,6 @@
                 'materialized_view' AS table_type,
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t3.schemaname) || '.' || quote_ident(t3.matviewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t3.matviewname, '') AS physical_table_name,
-                ' ' AS remarks,
                 definition AS definition
             FROM pg_catalog.pg_matviews t3
             WHERE t3.schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -74,7 +71,6 @@
             logical_table_name AS "logicalTableName",
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
-            remarks AS "remarks",
             definition AS definition
         FROM all_tables
         ORDER BY schema_name, physical_table_name;
@@ -87,7 +83,6 @@
             <arg column="logicalTableName" javaType="String" />
             <arg column="physicalTableName" javaType="String" />
             <arg column="tableType" javaType="String" />
-            <arg column="remarks" javaType="String" />
             <arg column="definition" javaType="String" />
         </constructor>
     </resultMap>

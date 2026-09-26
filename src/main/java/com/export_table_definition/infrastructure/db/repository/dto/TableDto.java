@@ -15,7 +15,6 @@ public record TableDto(
     String logicalTableName,
     String physicalTableName,
     String tableType,
-    String remarks,
     String definition) {
 
   /**
@@ -25,6 +24,6 @@ public record TableDto(
    */
   public TableEntity toEntity() {
     return new TableEntity(
-        dbName, schemaName, logicalTableName, physicalTableName, tableType, remarks, definition);
+        dbName, schemaName, logicalTableName, physicalTableName, tableType, definition);
   }
 }

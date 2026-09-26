@@ -73,8 +73,8 @@ public class TableDefinitionListTemplates {
    */
   public static String tableListTableHeader() {
     return """
-                | No. | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | Link | 備考 |
-                |:---|:---|:---|:---|:---|:---|:---|
+                | No. | スキーマ名 | 論理テーブル名 | 物理テーブル名 | 区分 | Link |
+                |:---|:---|:---|:---|:---|:---|
                 """;
   }
 
@@ -99,8 +99,6 @@ public class TableDefinitionListTemplates {
         + table.tableType()
         + "|"
         + tableDefinitionLink(table)
-        + "|"
-        + table.remarks()
         + "|"
         + LINE_SEPARATOR;
   }
