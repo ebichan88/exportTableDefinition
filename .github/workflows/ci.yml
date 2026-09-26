@@ -27,11 +27,12 @@ jobs:
           cache: gradle
 
       # build（test含む）の中で、ドメイン層のカバレッジがAGENTS.mdに定めた基準を下回ると
-      # jacocoTestCoverageVerificationが失敗し、buildごと失敗する
+      # jacocoTestCoverageVerificationが失敗し、buildごと失敗する。
+      # javadocは、doclintで壊れたJavadoc（タグの誤り・参照先の無いリンク等）を検知するために実行する
       - name: Build and run tests
         run: |
           chmod +x ./gradlew
-          ./gradlew build integrationTest --console=plain
+          ./gradlew build javadoc integrationTest --console=plain
 
       - name: Upload test reports
         if: failure()
