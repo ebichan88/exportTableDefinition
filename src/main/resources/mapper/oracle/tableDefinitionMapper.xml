@@ -190,7 +190,7 @@
             FROM all_indexes idx
             LEFT JOIN all_ind_columns col ON idx.index_name = col.index_name AND idx.owner = col.index_owner
             LEFT JOIN (
-                SELECT index_name, index_owner, column_position, SUBSTR(column_expression, 1, 1000) AS column_expression
+                SELECT /*+ NO_MERGE */ index_name, index_owner, column_position, SUBSTR(column_expression, 1, 1000) AS column_expression
                 FROM all_ind_expressions
             ) ie ON idx.index_name = ie.index_name AND idx.owner = ie.index_owner AND col.column_position = ie.column_position
             WHERE idx.index_type != 'LOB'
