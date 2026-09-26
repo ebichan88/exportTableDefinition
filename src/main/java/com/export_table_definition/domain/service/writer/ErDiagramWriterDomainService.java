@@ -16,7 +16,7 @@ import com.export_table_definition.domain.service.writer.PagedSectionWriter.Page
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
 import com.export_table_definition.domain.service.writer.template.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

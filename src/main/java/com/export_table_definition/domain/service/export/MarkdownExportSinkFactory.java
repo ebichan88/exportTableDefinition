@@ -9,7 +9,7 @@ import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;

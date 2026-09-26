@@ -13,7 +13,7 @@ import com.export_table_definition.domain.model.snapshot.TypeSnapshot;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;

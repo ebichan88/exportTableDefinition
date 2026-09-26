@@ -3,7 +3,7 @@ package com.export_table_definition.domain.service.writer;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiFunction;

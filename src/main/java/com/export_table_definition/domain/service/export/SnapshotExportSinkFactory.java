@@ -6,7 +6,7 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 

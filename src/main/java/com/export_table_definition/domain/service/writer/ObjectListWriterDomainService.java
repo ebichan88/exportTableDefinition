@@ -12,7 +12,7 @@ import com.export_table_definition.domain.service.writer.PagedSectionWriter.Page
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
 import com.export_table_definition.domain.service.writer.template.ObjectDefinitionTemplates;
 import com.export_table_definition.domain.service.writer.template.ObjectListTemplates;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiFunction;

@@ -31,7 +31,7 @@ import com.export_table_definition.domain.service.export.SnapshotExportSinkFacto
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
 import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;

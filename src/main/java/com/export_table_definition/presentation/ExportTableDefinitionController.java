@@ -7,7 +7,7 @@ import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ProcessResult;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -10,7 +10,7 @@ import com.export_table_definition.domain.service.writer.PagedSectionWriter.Page
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionListTemplates;
 import com.export_table_definition.domain.service.writer.template.TableDefinitionTemplates;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
