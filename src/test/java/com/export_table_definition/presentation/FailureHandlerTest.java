@@ -139,6 +139,22 @@ public class FailureHandlerTest {
   }
 
   @Test
+  @DisplayName("複数行の原因のメッセージは、各行が箇条書き等に整形されて表示済みであれば重ねて表示しない")
+  void testOmitsMultiLineCauseAlreadyReformattedInMessage() {
+    handler.run(
+        () -> {
+          throw new InvalidConfigurationException(
+              "Invalid configuration.\n  - Invalid table pattern: x.\n  - Unknown output object type: y",
+              new IllegalArgumentException(
+                  "Invalid table pattern: x."
+                      + System.lineSeparator()
+                      + "Unknown output object type: y"));
+        });
+
+    assertFalse(report().contains("[cause]"));
+  }
+
+  @Test
   @DisplayName("メッセージを持たない例外は、クラス名で報告する")
   void testDescribesExceptionWithoutMessageByClassName() {
     handler.run(

@@ -115,4 +115,26 @@ public class TableTargetFilterTest {
     assertTrue(filter.matches("public", "employee"));
     assertFalse(filter.matches("public", "other"));
   }
+
+  @Test
+  @DisplayName("of: テーブル名・スキーマ名の部分が空のパターンは、該当するものをすべて示して誤りとする")
+  void testOfRejectsPatternsWithEmptyParts() {
+    IllegalArgumentException e =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> TableTargetFilter.of(List.of("!", "sample.", ".employee", "employee")));
+
+    // 正しいパターン（employee）は含めず、誤りのあるパターンだけを示す
+    assertTrue(e.getMessage().startsWith("Invalid table pattern: !, sample., .employee ("));
+  }
+
+  @Test
+  @DisplayName("of: 除外の!やスキーマ修飾の.の前後に空白があっても、名前が空でなければ受け入れる")
+  void testOfAcceptsPatternsWithSpacesAroundSeparators() {
+    TableTargetFilter filter = TableTargetFilter.of(List.of("! tmp_*", "sample . employee"));
+
+    assertFalse(filter.matches("sample", "tmp_work"));
+    assertTrue(filter.matches("sample", "employee"));
+    assertFalse(filter.matches("public", "employee"));
+  }
 }

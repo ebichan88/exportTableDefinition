@@ -58,4 +58,18 @@ public class TargetSelectionTest {
     assertFalse(selection.targetScope().matches(table("public", "employee")));
     assertEquals("sidecar.yml", selection.sidecarPath());
   }
+
+  @Test
+  @DisplayName("of: テーブル名パターンと出力対象オブジェクト種別の両方に誤りがある場合は、まとめて（1行に1件）示す")
+  void testOfReportsBothErrorsAtOnce() {
+    IllegalArgumentException e =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> TargetSelection.of(List.of(), List.of("sample."), List.of("trigers"), null));
+
+    List<String> lines = e.getMessage().lines().toList();
+    assertEquals(2, lines.size());
+    assertTrue(lines.get(0).contains("sample."));
+    assertTrue(lines.get(1).contains("trigers"));
+  }
 }

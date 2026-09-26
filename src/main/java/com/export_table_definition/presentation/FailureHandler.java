@@ -110,16 +110,32 @@ public final class FailureHandler {
     for (int i = 0; i < causes.size(); i++) {
       final String causeMessage = describe(causes.get(i));
       final boolean alreadyShown =
-          shownMessages.stream().anyMatch(shown -> shown.contains(causeMessage));
+          shownMessages.stream().anyMatch(shown -> containsAllLines(shown, causeMessage));
       final boolean repeatsDeeperCause =
           causes.subList(i + 1, causes.size()).stream()
-              .anyMatch(deeper -> causeMessage.contains(describe(deeper)));
+              .anyMatch(deeper -> containsAllLines(causeMessage, describe(deeper)));
       if (!alreadyShown && !repeatsDeeperCause) {
         shownMessages.add(causeMessage);
         result.add(causes.get(i));
       }
     }
     return result;
+  }
+
+  /**
+   * メッセージの各行がすべて、別の文章に含まれているか判定するメソッド<br>
+   * 複数の誤りをまとめたメッセージを、包む側が箇条書き等に整形し直していても、同じ内容と判定できるよう行単位で比べる
+   *
+   * @param text 含んでいるか調べる文章
+   * @param message メッセージ
+   * @return メッセージの空でない各行（前後の空白を除く）がすべて{@code text}に含まれる場合はtrue
+   */
+  private static boolean containsAllLines(String text, String message) {
+    return message
+        .lines()
+        .map(String::strip)
+        .filter(line -> !line.isEmpty())
+        .allMatch(text::contains);
   }
 
   /**

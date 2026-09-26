@@ -8,8 +8,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
@@ -30,6 +33,13 @@ public final class MyBatisSqlSessionFactory {
   private static final Logger logger = LogManager.getLogger(MyBatisSqlSessionFactory.class);
   private static final String MYBATIS_CONFIG = "mybatis-config.xml";
   private static final String PROPERTY_BUNDLE_NAME = "mybatis";
+
+  /** DB接続情報のキー（mybatis-config.xmlが参照する。conf/mybatis.properties・CLI引数・環境変数で指定する） */
+  private static final List<String> CONNECTION_KEYS =
+      List.of("driver", "url", "username", "password");
+
+  /** DB接続情報のうち、既定値が無く指定が必須のキー（username・passwordはDBの認証方式によっては空でよい） */
+  private static final List<String> REQUIRED_CONNECTION_KEYS = List.of("driver", "url");
 
   /** 唯一のSqlSessionFactoryインスタンス */
   private static SqlSessionFactory sqlSessionFactory;
@@ -58,6 +68,7 @@ public final class MyBatisSqlSessionFactory {
    * SqlSessionFactoryインスタンスの取得
    *
    * @return SqlSessionFactory
+   * @throws InvalidConfigurationException DB接続情報に誤りがある場合（{@link #requireValidConnectionSettings}）
    */
   public static synchronized SqlSessionFactory getSqlSessionFactory() {
     if (sqlSessionFactory != null) {
@@ -65,18 +76,59 @@ public final class MyBatisSqlSessionFactory {
     }
     logger.info(
         "Initializing SqlSessionFactory from {} (bundle={})", MYBATIS_CONFIG, PROPERTY_BUNDLE_NAME);
+    final Properties properties = loadBaseProperties();
+    properties.putAll(connectionOverrides);
+    requireValidConnectionSettings(properties);
     try (final InputStream inputStream = Resources.getResourceAsStream(MYBATIS_CONFIG)) {
       if (inputStream == null) {
         throw new IllegalStateException("Could not find resource: " + MYBATIS_CONFIG);
       }
-      final Properties properties = loadBaseProperties();
-      properties.putAll(connectionOverrides);
       sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream, properties);
     } catch (IOException e) {
       throw new IllegalStateException("SqlSessionFactory initialization failed.", e);
     }
     logger.info("SqlSessionFactory initialization completed.");
     return sqlSessionFactory;
+  }
+
+  /**
+   * DB接続情報を検証するメソッド<br>
+   * 必須の項目が未指定のまま接続すると、置換されないプレースホルダ（{@code ${driver}}等）で接続を試みて 原因の分かりにくい失敗になるため、接続する前に報告する
+   *
+   * @param properties conf/mybatis.propertiesの値を、CLI引数・環境変数の値で上書きした接続情報
+   * @throws InvalidConfigurationException 未知のキーがある場合や、必須の項目が未指定の場合（見つかった誤りをすべて示す）
+   */
+  static void requireValidConnectionSettings(Properties properties) {
+    final List<String> errors = new ArrayList<>();
+    final List<String> unknownKeys =
+        properties.stringPropertyNames().stream()
+            .filter(key -> !CONNECTION_KEYS.contains(key))
+            .sorted()
+            .toList();
+    if (!unknownKeys.isEmpty()) {
+      errors.add(
+          "Unknown key: "
+              + String.join(", ", unknownKeys)
+              + " (available keys: "
+              + String.join(", ", CONNECTION_KEYS)
+              + ")");
+    }
+    REQUIRED_CONNECTION_KEYS.stream()
+        .filter(key -> properties.getProperty(key, "").isBlank())
+        .forEach(
+            key ->
+                errors.add(
+                    key
+                        + " is not set. Set it in conf/"
+                        + PROPERTY_BUNDLE_NAME
+                        + ".properties, or with the --db-* argument or the DB_* environment variable."));
+    if (!errors.isEmpty()) {
+      throw new InvalidConfigurationException(
+          "Invalid database connection settings."
+              + errors.stream()
+                  .map(error -> System.lineSeparator() + "  - " + error)
+                  .collect(Collectors.joining()));
+    }
   }
 
   /**

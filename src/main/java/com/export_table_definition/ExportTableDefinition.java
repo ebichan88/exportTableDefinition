@@ -2,9 +2,6 @@ package com.export_table_definition;
 
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
-import com.export_table_definition.application.TargetSelection;
-import com.export_table_definition.config.InvalidConfigurationException;
-import com.export_table_definition.config.PropertyLoader;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
@@ -13,7 +10,6 @@ import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ExitStatus;
 import com.google.inject.Guice;
-import java.util.List;
 
 /**
  * テーブル定義出力処理を呼び出すクラス<br>
@@ -25,15 +21,6 @@ import java.util.List;
  * @author takashi.ebina
  */
 public class ExportTableDefinition {
-
-  /** 実行時設定を記述したプロパティファイル名（{@code conf/}配下。拡張子を除く） */
-  private static final String PROPERTY_FILE_NAME = "ExportTableDefinition";
-
-  /** chunkSize未設定時のデフォルト値（1スキーマあたりこの件数ごとに詳細情報を取得・出力する） */
-  private static final int DEFAULT_CHUNK_SIZE = 3000;
-
-  /** erDiagramMaxNodes未設定時のデフォルト値（スキーマ別ER図1枚に描画するテーブル数の上限） */
-  private static final int DEFAULT_ER_DIAGRAM_MAX_NODES = 80;
 
   /** 通常実行が失敗した場合の報告の要旨 */
   private static final String EXPORT_FAILURE_SUMMARY =
@@ -75,8 +62,10 @@ public class ExportTableDefinition {
     return new FailureHandler(EXPORT_FAILURE_SUMMARY, System.out::println)
         .run(
             () -> {
-              // 設定ファイルの読み込み・検証（DBへの接続・問い合わせや出力先の削除より前に行う）
-              final ExportRequest request = loadExportRequest(cliArguments.isRmDist());
+              // CLI引数・設定ファイルの検証（DBへの接続・問い合わせや出力先の削除より前に行う）
+              cliArguments.requireKnownArguments();
+              final ExportRequest request =
+                  ExportTableDefinitionProperties.load().toExportRequest(cliArguments.isRmDist());
               // テーブル定義出力処理実行
               final ResultDto resultDto = createController(cliArguments).execute(request);
               // 処理終了メッセージ出力
@@ -104,8 +93,10 @@ public class ExportTableDefinition {
     return new FailureHandler(CHECK_FAILURE_SUMMARY, System.out::println)
         .run(
             () -> {
-              // 設定ファイルの読み込み・検証（DBへの接続・問い合わせより前に行う）
-              final CheckDiffRequest request = loadCheckDiffRequest();
+              // CLI引数・設定ファイルの検証（DBへの接続・問い合わせより前に行う）
+              cliArguments.requireKnownArguments();
+              final CheckDiffRequest request =
+                  ExportTableDefinitionProperties.load().toCheckDiffRequest();
               // DB vs ドキュメントの差分検知処理実行
               final DiffCheckResultDto diffCheckResultDto =
                   createController(cliArguments).checkDiff(request);
@@ -126,59 +117,5 @@ public class ExportTableDefinition {
     return Guice.createInjector(
             new ExportTableDefinitionModule(MyBatisSqlSessionFactory.getConnectionDbName()))
         .getInstance(ExportTableDefinitionController.class);
-  }
-
-  /**
-   * {@code conf/ExportTableDefinition.properties}からテーブル定義出力（通常実行）の入力を読み込むメソッド
-   *
-   * @param rmDist trueの場合、書き込みを開始する前に出力先ディレクトリを再帰的に削除する（{@code --rm-dist}）
-   * @return 読み込んだ入力
-   * @throws InvalidConfigurationException 設定ファイル・キーが見つからない場合や、値が不正な場合
-   */
-  private static ExportRequest loadExportRequest(boolean rmDist) {
-    return new ExportRequest(
-        loadTargetSelection(),
-        PropertyLoader.getString(PROPERTY_FILE_NAME, "outputPath"),
-        PropertyLoader.getInt(PROPERTY_FILE_NAME, "chunkSize", DEFAULT_CHUNK_SIZE),
-        PropertyLoader.getInt(
-            PROPERTY_FILE_NAME, "erDiagramMaxNodes", DEFAULT_ER_DIAGRAM_MAX_NODES),
-        rmDist);
-  }
-
-  /**
-   * {@code conf/ExportTableDefinition.properties}からDB vs ドキュメントの差分検知（{@code --check}モード）の
-   * 入力を読み込むメソッド<br>
-   * 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}は読み込まない
-   *
-   * @return 読み込んだ入力
-   * @throws InvalidConfigurationException 設定ファイル・キーが見つからない場合や、値が不正な場合
-   */
-  private static CheckDiffRequest loadCheckDiffRequest() {
-    return new CheckDiffRequest(
-        loadTargetSelection(),
-        PropertyLoader.getString(PROPERTY_FILE_NAME, "outputPath"),
-        PropertyLoader.getInt(PROPERTY_FILE_NAME, "chunkSize", DEFAULT_CHUNK_SIZE));
-  }
-
-  /**
-   * {@code conf/ExportTableDefinition.properties}から出力対象の絞り込み条件を読み込むメソッド<br>
-   * 通常実行・{@code --check}実行の双方で共通の読み込み処理。生の文字列のまま後続へ渡さず、ここで型へ変換・検証する
-   *
-   * @return 読み込んだ出力対象の絞り込み条件
-   * @throws InvalidConfigurationException キーの記載漏れや、未知の出力対象オブジェクト種別名が指定されている場合
-   */
-  private static TargetSelection loadTargetSelection() {
-    final List<String> schemas = PropertyLoader.getList(PROPERTY_FILE_NAME, "schema");
-    final List<String> tables = PropertyLoader.getList(PROPERTY_FILE_NAME, "table");
-    final List<String> outputObjects = PropertyLoader.getList(PROPERTY_FILE_NAME, "outputObjects");
-    // サイドカーYAMLのパスは、既存の設定ファイルとの互換のためプロパティキーannotationPathで指定する
-    final String sidecarPath = PropertyLoader.getString(PROPERTY_FILE_NAME, "annotationPath");
-    try {
-      return TargetSelection.of(schemas, tables, outputObjects, sidecarPath);
-    } catch (IllegalArgumentException e) {
-      // 値の検証（TargetSelection.ofの契約）で見つかった誤りを、どの設定ファイルの誤りかを添えて設定誤りとして伝える
-      throw new InvalidConfigurationException(
-          "Invalid value in " + PROPERTY_FILE_NAME + ".properties. " + e.getMessage(), e);
-    }
   }
 }
