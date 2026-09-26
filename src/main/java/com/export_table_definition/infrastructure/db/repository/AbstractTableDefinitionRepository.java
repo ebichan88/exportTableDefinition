@@ -61,7 +61,8 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
   /** {@inheritDoc} */
   @Override
   public DatabaseEntity selectDatabase() {
-    final DatabaseDto dto = select("selectDatabaseInfo", SqlSession::selectOne);
+    final DatabaseDto dto =
+        select("selectDatabaseInfo", (session, sqlPath) -> session.selectOne(sqlPath));
     return dto.toEntity();
   }
 

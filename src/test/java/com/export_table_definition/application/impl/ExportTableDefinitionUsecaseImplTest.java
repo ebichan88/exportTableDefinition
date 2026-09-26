@@ -143,7 +143,6 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     final List<List<String>> functionDefCallArgs = new ArrayList<>();
     int foreignKeyListCalls = 0;
-    int tableListCalls = 0;
 
     /** テーブル一覧の取得時に投げる例外（DBからの取得失敗の再現用。nullの場合は投げない） */
     RuntimeException tableListFailure;
@@ -159,7 +158,6 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     @Override
     public List<TableEntity> selectTableList(List<String> schemaList) {
-      tableListCalls++;
       if (tableListFailure != null) {
         throw tableListFailure;
       }
