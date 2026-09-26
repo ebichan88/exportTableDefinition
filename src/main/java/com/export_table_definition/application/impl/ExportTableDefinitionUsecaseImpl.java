@@ -22,6 +22,7 @@ import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.OutputObjectType;
+import com.export_table_definition.domain.model.value.ConsistencyFinding;
 import com.export_table_definition.domain.model.value.TableTargetScope;
 import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -32,6 +33,7 @@ import com.export_table_definition.domain.service.export.SnapshotExportSinkFacto
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
 import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
+import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService.ResolvedForeignKeys;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -172,19 +174,21 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
                 .filter(targetScope::matches)
                 .toList());
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
-    consistencyDomainService.warnOrphanTableAnnotations(annotations, tables, isFiltered);
+    report(consistencyDomainService.findOrphanTableAnnotations(annotations, tables, isFiltered));
     // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
     // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
     // 特定のチャンクに限定せず全件を保持しておく必要がある。selectForeignKeyListはスキーマ単位でのみ絞り込み、
     // テーブル単位の絞り込みは行わないため、参照元・参照先の一方でもtargetTableListの絞り込みで除外された関係は、
     // テーブル一覧・ER図の双方から一貫して除外されるよう、出力対象のテーブルに含まれるものだけへ絞り込む。
     // サイドカー由来の論理リレーションも、出力対象に含まれるテーブル同士のものだけを同じ集合へ合流させる
-    final ForeignKeys foreignKeys =
+    final ResolvedForeignKeys resolvedForeignKeys =
         consistencyDomainService.resolveForeignKeys(
             repository.selectForeignKeyList(targetSchemaList),
             sidecar.logicalRelations(),
             tables,
             isFiltered);
+    report(resolvedForeignKeys.findings());
+    final ForeignKeys foreignKeys = resolvedForeignKeys.foreignKeys();
     // トリガーはテーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、
     // テーブル定義書内のセクションとトリガー一覧の両方で利用する。
     // outputObjectListでトリガーが対象外とされた場合は、取得自体を行わず一覧・テーブル定義書双方から除外する
@@ -348,8 +352,9 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
 
     chunk.forEach(
         tableEntity -> {
-          consistencyDomainService.warnOrphanColumnAnnotations(
-              tableEntity, columns, targets.annotations());
+          report(
+              consistencyDomainService.findOrphanColumnAnnotations(
+                  tableEntity, columns, targets.annotations()));
           final TableDefinitionContent content =
               TableDefinitionContent.assemble(
                   targets.baseInfo(),
@@ -361,6 +366,21 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
                   triggers,
                   targets.annotations());
           sinks.forEach(sink -> sink.writeTableDefinition(content));
+        });
+  }
+
+  /**
+   * 出力対象の突き合わせで見つかった指摘を、重要度に応じてログへ出力するメソッド
+   *
+   * @param findings 指摘のリスト
+   */
+  private static void report(List<ConsistencyFinding> findings) {
+    findings.forEach(
+        finding -> {
+          switch (finding.severity()) {
+            case INFO -> logger.info(finding.message());
+            case WARN -> logger.warn(finding.message());
+          }
         });
   }
 }
