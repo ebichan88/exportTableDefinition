@@ -2,6 +2,7 @@ package com.export_table_definition.infrastructure.file.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.RelationType;
@@ -17,6 +18,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.yaml.snakeyaml.error.YAMLException;
 
 /** SidecarYamlRepository のサイドカーYAML読み込みに関するテスト */
 public class SidecarYamlRepositoryTest {
@@ -315,5 +317,27 @@ public class SidecarYamlRepositoryTest {
 
     assertTrue(sidecar.annotations().isEmpty());
     assertEquals(1, sidecar.logicalRelations().size());
+  }
+
+  @Test
+  @DisplayName("load: YAMLとして解釈できない場合は、ファイルのパスを添えた利用者が直せる誤りを投げ、解析の失敗箇所を原因に残す")
+  void testLoadRejectsInvalidYaml(@TempDir Path dir) throws IOException {
+    Path file = writeYaml(dir, "tables:\n  public.users:\n    description: [unclosed\n");
+
+    UserCorrectableException e =
+        assertThrows(UserCorrectableException.class, () -> repository.load(file.toString()));
+
+    assertTrue(e.getMessage().contains(file.toString()));
+    assertInstanceOf(YAMLException.class, e.getCause());
+  }
+
+  @Test
+  @DisplayName("load: UTF-8として読めないファイルも、利用者が直せる誤りとして投げる")
+  void testLoadRejectsNonUtf8File(@TempDir Path dir) throws IOException {
+    Path file = dir.resolve("annotations.yml");
+    // Shift_JISで保存した「説明」（UTF-8としては不正なバイト列）
+    Files.write(file, "tables:\n  public.users:\n    description: 説明\n".getBytes("Shift_JIS"));
+
+    assertThrows(UserCorrectableException.class, () -> repository.load(file.toString()));
   }
 }

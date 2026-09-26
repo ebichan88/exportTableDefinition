@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.TargetSelection;
+import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.domain.model.database.DatabaseEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
@@ -895,13 +896,13 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   @Test
-  @DisplayName("rmDist=trueかつoutputPathがカレントディレクトリ自体に解決される場合は例外を投げて削除を拒否する")
+  @DisplayName("rmDist=trueかつoutputPathがカレントディレクトリ自体に解決される場合は、利用者が直せる誤りとして削除を拒否する")
   void testRmDistRefusesToRemoveCurrentDirectory() {
     setUp();
     repository.tables.add(table("public", "t1"));
 
     assertThrows(
-        IllegalStateException.class,
+        UserCorrectableException.class,
         () ->
             usecase.exportTableDefinition(
                 new ExportRequest(

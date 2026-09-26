@@ -1,5 +1,6 @@
 package com.export_table_definition.infrastructure.file.repository;
 
+import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.sidecar.Annotations;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * サイドカーYAMLから手動付帯情報・論理リレーションを読み込むリポジトリ実装クラス<br>
@@ -83,7 +85,7 @@ public class SidecarYamlRepository implements SidecarRepository {
       return Sidecar.empty();
     }
     try (final Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-      final Object root = new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);
+      final Object root = parseYaml(reader, path);
       final Annotations annotations = parseAnnotations(root, path);
       final List<ForeignKeyEntity> logicalRelations = parseRelations(root, path);
       logger.info(
@@ -95,6 +97,29 @@ public class SidecarYamlRepository implements SidecarRepository {
     } catch (IOException e) {
       throw new UncheckedIOException(
           "Failed to read the annotation file. [annotationPath=" + path + "]", e);
+    }
+  }
+
+  /**
+   * サイドカーYAMLを解析し、SnakeYAMLの生のオブジェクトとして読み込むメソッド<br>
+   * YAMLとして解釈できないのは利用者が手で書いたファイルの誤りのため、どのファイルを直せばよいかを添えて {@link
+   * UserCorrectableException}として伝える（解析の失敗箇所は原因の例外のメッセージが示す）
+   *
+   * @param reader サイドカーYAMLの読み込み元
+   * @param path 読み込み元のパス（メッセージ用）
+   * @return YAMLのルートオブジェクト
+   * @throws UserCorrectableException YAMLとして解釈できない場合（構文誤り・UTF-8以外の文字コード等）
+   */
+  private Object parseYaml(Reader reader, Path path) {
+    try {
+      return new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);
+    } catch (YAMLException e) {
+      throw new UserCorrectableException(
+          "Failed to parse the annotation file. Check that it is valid YAML saved in UTF-8. "
+              + "[annotationPath="
+              + path
+              + "]",
+          e);
     }
   }
 

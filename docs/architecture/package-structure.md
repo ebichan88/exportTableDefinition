@@ -7,11 +7,13 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`/`DiffCheckResultDto`変換を行う |
+| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースを実行して結果を`ResultDto`/`DiffCheckResultDto`へ変換する。例外は捕捉せず`FailureHandler`まで伝える |
+| | `FailureHandler` | 処理全体の失敗（例外）を1箇所で捕捉する共通クラス。利用者が直せる誤り（`UserCorrectableException`）か想定外の失敗かに応じて報告し（表示に含まれない原因の併記、想定外の失敗はスタックトレースをログへ）、終了状態`ExitStatus.FAILURE`へ変換する |
 | | `DiffReportFormatter`（パッケージプライベート） | `checkDiff`の差分メッセージ組み立て。`ContentDiff`のunified diffを1オブジェクトあたり・全体それぞれ行数の上限付きで含める |
-| `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成否・メッセージ）を表すrecord |
-| | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（成否・メッセージ・差分有無）を表すrecord |
-| `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum |
+| `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成功時のメッセージ）を表すrecord。失敗時の報告は`FailureHandler`が組み立てる |
+| | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（差分の報告・差分の有無）を表すrecord。差分の有無から終了状態を返す |
+| `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum。コンソールに出す`[result]:`の行を組み立てる |
+| | `ExitStatus` | 終了状態と終了コード（0＝成功・差分なし／1＝`--check`で差分あり／2＝失敗）のenum |
 
 ## application層
 
@@ -26,6 +28,12 @@
 | | `SchemaExporter`（パッケージプライベート） | 両ユースケースが共有する、DBからの取得（一括取得・スキーマ単位・チャンク単位）と書き出しの段取り。取得（`fetchTargets`）と出力（`export`）を分け、書き出しは出力形式ごとの`ExportSink`に、取得した情報同士の突き合わせは`ExportTargetConsistencyDomainService`に委ね、返された指摘（`ConsistencyFinding`）を重要度に応じてログへ出力する。ドキュメントの生成日は`Clock`から与える |
 
 ## domain層
+
+### domain（直下）
+
+| クラス | 役割 |
+|---|---|
+| `UserCorrectableException` | 利用者が設定・入力・実行環境を見直せば解消する誤り（設定の誤り・サイドカーYAMLの構文誤り・DBに接続できない等）を表す例外。設定・アプリケーション・インフラのいずれの層からも投げられるよう、最も内側のドメイン層に置く。`FailureHandler`はこの例外かそれ以外かで報告を切り替える |
 
 ### domain.model
 
@@ -93,14 +101,14 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `infrastructure.db` | `MyBatisSqlSessionFactory` | MyBatisの`SqlSessionFactory`生成・DB接続情報の上書き管理 |
+| `infrastructure.db` | `MyBatisSqlSessionFactory` | MyBatisの`SqlSessionFactory`生成・DB接続情報の上書き管理。接続先のDB種別の判定で、DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
-| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス |
+| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
 | | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
 | `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
-| | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する |
+| | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する。YAMLとして解釈できない場合は`UserCorrectableException`を投げる |
 | `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
 | `infrastructure.snapshot` | `JacksonSnapshotSerializer` | `SnapshotSerializer`のJackson実装 |
 
@@ -109,7 +117,7 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `config` | `PropertyLoader` | `conf/*.properties`読み込みユーティリティ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）。`conf`ディレクトリ・設定ファイル・キーが見つからない場合は`InvalidConfigurationException`をスローする |
-| | `InvalidConfigurationException` | 設定の誤り（設定ファイル・キーが見つからない、値が不正等）を表す例外。エントリーポイントはこの例外だけを捕捉して`[result]:FAIL`とする |
+| | `InvalidConfigurationException` | 設定の誤り（設定ファイル・キーが見つからない、値が不正等）を表す例外（`UserCorrectableException`の派生）。`PropertyLoader`と、値を検証するエントリーポイントが投げる |
 | `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
 
 ## リソース（Java外）

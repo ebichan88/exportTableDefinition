@@ -35,21 +35,24 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 ## 実行フロー
 
 1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・環境変数からのDB接続情報の
-   上書き値の解決・`--check`/`--rm-dist`フラグの判定）を介して `MyBatisSqlSessionFactory` に接続情報を設定する。
-2. Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、
-   `ExportTableDefinitionController` を取得する。
-3. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が `conf/ExportTableDefinition.properties` の設定値
+   上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を
+   `presentation.FailureHandler`経由で実行する。例外の捕捉と終了コードへの変換は、ここで1箇所にまとめて行う
+   （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
+2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず `conf/ExportTableDefinition.properties` の設定値
    （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を
    `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ読み込む。
    - 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
      `TargetSelection.of()`がここで型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する。
-     未知の`outputObjects`などの設定誤りは、DBへの問い合わせや`--rm-dist`による削除より前に`[result]:FAIL`として報告される。
+     未知の`outputObjects`などの設定誤りは、DBへの接続や`--rm-dist`による削除より前に`[result]:FAIL`として報告される。
      設定誤りは`config.InvalidConfigurationException`1種類で表す（`PropertyLoader`は`conf`ディレクトリ・設定ファイル・キーが
      見つからない場合に、エントリーポイントは値の検証で`IllegalArgumentException`となった場合にこの例外へ変換する）ため、
      エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
+3. 設定の読み込みに成功した後、`MyBatisSqlSessionFactory` に接続情報を設定してDBへ接続し、接続先のDB種別を判定する。
+   Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、`ExportTableDefinitionController` を取得する。
 4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
-   `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、例外を捕捉して `ResultDto`（成功/失敗）等に変換する。
+   `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、結果を `ResultDto`（`--check`時は差分の有無を持つ
+   `DiffCheckResultDto`）に変換する。例外は捕捉せず、`FailureHandler`まで伝える。
 5. 通常実行のユースケース（`ExportTableDefinitionUsecaseImpl`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
    - `--rm-dist`指定時は、削除してよい出力先か（ルート・ホームディレクトリ等でないか）をDBへの問い合わせより前に判定する
@@ -64,11 +67,34 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
      - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
 
+## 例外の扱いと終了コード
+
+失敗は次の3種類に分けて扱う。
+
+| 種類 | 例 | 表し方 | 利用者への報告 |
+|---|---|---|---|
+| 利用者が直せる誤り | 設定ファイルの誤り、サイドカーYAMLの構文誤り、`--rm-dist`の出力先が危険、DBに接続できない、非対応のDB | `domain.UserCorrectableException`（設定ファイルの誤りは派生の`config.InvalidConfigurationException`）。検知した箇所で、何を直せばよいかをメッセージに書いて投げる | `[result]:FAIL`＋メッセージ。ログにスタックトレースは残さない |
+| 想定外の失敗 | I/Oの失敗、SQLの失敗、不具合（NPE等）、JVMのエラー | 非検査例外のまま伝える（検査例外は非検査例外で包む） | `[result]:FAIL`＋メッセージ＋ログの場所。ログにスタックトレースを残す |
+| 業務上の結果 | `--check`の差分あり、孤児付帯情報、除外した関連 | 例外にせず値で返す（`DiffResult`・`ConsistencyFinding`） | 差分の報告・警告ログ |
+
+- 捕捉するのは`presentation.FailureHandler`の1箇所だけ。エントリーポイントが、設定の読み込み・DBへの接続・DIコンテナの
+  組み立てを含む処理全体をこのクラス経由で実行するため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない
+- 途中の層でcatchしてよいのは、(a) 検査例外を非検査例外で包む、(b) 下位の例外を利用者が直せる誤りへ置き換える、
+  (c) フォールバックする（`conf/mybatis.properties`が無い場合に、CLI引数・環境変数の接続情報だけで続ける等）場合のみ。
+  包むときは原因（`cause`）を必ず渡し、tryの範囲は置き換えたい呼び出しだけに絞る
+  （例: `AbstractTableDefinitionRepository`はSQLの呼び出しだけを包み、DTO→エンティティの変換の失敗は包まない）。
+  catchしてログを出してから再スローすることはしない（ログの出力も`FailureHandler`が行う）
+- `FailureHandler`は例外の連鎖（原因）をたどり、表示に含まれていない情報を持つ原因を`[cause]`として併記する
+  （包んだ箇所で、DBが返したエラー等の原因が失われないようにするため。原因のメッセージを繰り返しているだけのMyBatisの例外等は省く）
+- ドメイン層に検査例外は使わない。呼び出し側に判断を委ねたい結果は、値（`Optional`・`ConsistencyFinding`・真偽値等）で返す
+- 終了コード（`presentation.type.ExitStatus`）は、0＝成功（`--check`で差分なしを含む）、1＝`--check`で差分あり、2＝失敗。
+  JVMのエラー（`Error`）も`FailureHandler`で捕捉するのは、捕捉しないとJVMが終了コード1で終わり、差分ありと区別できなくなるため
+
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
 `infrastructure.db.type.DatabaseType` （enum）がDB種別名と対応する
 `infrastructure.db.repository.*TableDefinitionRepository` 実装クラスを紐づけている。
-`ExportTableDefinition.main()` が `MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
+エントリーポイントが（設定の読み込みに成功した後に）`MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
 `ExportTableDefinitionModule` のコンストラクタへ渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
 `TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
 [src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
@@ -204,8 +230,8 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 （他のファイル操作と同様に）`FileRepository.createTempDirectory()`/`deleteDirectory()`を介して行い、
 `try-finally`で必ず削除される。
 
-差分が1件でもある場合、または比較処理自体が例外で失敗した場合は`System.exit(1)`、差分なしの場合は
-`System.exit(0)`で終了するため、CI上でジョブの成否として扱える。
+終了コードは、差分なしの場合は0、差分が1件でもある場合は1、比較処理自体が失敗した場合（設定の誤り・DBに接続できない等）は
+2となる（`presentation.type.ExitStatus`）。CI上でジョブの成否として扱えるほか、「差分あり」と「比較自体の失敗」を区別できる。
 
 ## サイドカーYAML（手動付帯情報・論理リレーション）
 

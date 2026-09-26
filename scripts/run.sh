@@ -17,7 +17,10 @@ if [ -z "$JAR_FILE" ]; then
     exit 1
 fi
 
-"$JAVA_EXE" -jar "$JAR_FILE"
+# 失敗時（終了コード2等）もset -eで中断せず、結果のメッセージを読めるよう終了前に一時停止する
+status=0
+"$JAVA_EXE" -jar "$JAR_FILE" || status=$?
 
 echo
 read -r -p "Enterキーで終了します..." _
+exit "$status"

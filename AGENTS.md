@@ -44,6 +44,13 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   `String.format`等により直接組み立てず、`domain.service.path.DocumentLocations`の規則を使う
   （スナップショットの配置は`domain.service.path.SnapshotLocations`）。既存の抽象化を素通りする実装が増えるとテストが実ディスクI/Oに依存し始め、
   レイヤーの意図も崩れるため、新規ロジックを追加する前にまずこの2つのIFで足りないか確認すること。
+- 例外の扱いは [overview.md の「例外の扱いと終了コード」](./docs/architecture/overview.md#例外の扱いと終了コード) に従う。
+  - 利用者が設定・入力・実行環境を見直せば解消する失敗は`domain.UserCorrectableException`（設定ファイルの誤りは派生の
+    `config.InvalidConfigurationException`）で表し、何を直せばよいかをメッセージに書いて投げる。それ以外（I/O・SQL・不具合）は
+    非検査例外のまま伝える。ドメイン層に検査例外は使わず、呼び出し側に判断を委ねたい結果は値で返す。
+  - 捕捉は`presentation.FailureHandler`の1箇所だけ。コントローラー・ユースケース等の途中の層でcatchしてよいのは、検査例外を包む・
+    利用者が直せる誤りへ置き換える・フォールバックする場合だけ。包むときは`cause`を渡し、tryの範囲は置き換えたい呼び出しだけに絞る
+    （`catch (Exception e)`で広く包むと、別の失敗まで同じ文言になり原因も表示から消える）。catchしてログを出してから再スローしない。
 - `tableDefinitionMapper.xml` やドメイン層（エンティティ・テンプレート・ER図生成ロジック等）を変更した後は、
   `verify` スキル（`.claude/skills/verify/SKILL.md`）に従って実際に出力結果を確認すること。
 - 新規ロジックを書く前・既存クラスに数行足す前に、以下のような「小さな責務の混在」が

@@ -2,6 +2,7 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
@@ -81,13 +82,13 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * ルート・ホームディレクトリ・カレントディレクトリ自体など、設定誤りによる被害が甚大なパスを解決した場合は削除を拒否する
    *
    * @param outputBaseDir 出力先ベースディレクトリ
-   * @throws IllegalStateException 削除してはならないディレクトリの場合
+   * @throws UserCorrectableException 削除してはならないディレクトリの場合（{@code outputPath}の設定を見直せば解消する）
    */
   private void requireRemovableOutputBaseDir(Path outputBaseDir) {
     if (!outputPathResolver.isRemovableOutputDir(outputBaseDir)) {
-      throw new IllegalStateException(
+      throw new UserCorrectableException(
           "Refusing to run --rm-dist because outputPath resolves to an unsafe directory. "
-              + "[outputBaseDir="
+              + "Specify a dedicated output directory in outputPath. [outputBaseDir="
               + outputBaseDir.toAbsolutePath().normalize()
               + "]");
     }

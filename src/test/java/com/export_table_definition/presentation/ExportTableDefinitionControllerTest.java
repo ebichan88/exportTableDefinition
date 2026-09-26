@@ -11,12 +11,12 @@ import com.export_table_definition.domain.model.snapshot.ContentDiff;
 import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
-import com.export_table_definition.presentation.type.ProcessResult;
+import com.export_table_definition.presentation.type.ExitStatus;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ExportTableDefinitionController の成功/例外時の処理結果組み立てに関するテスト */
+/** ExportTableDefinitionController の処理結果の組み立てと、例外を捕捉せずに伝えることに関するテスト */
 public class ExportTableDefinitionControllerTest {
 
   /** 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ */
@@ -93,8 +93,8 @@ public class ExportTableDefinitionControllerTest {
                 "conf/annotations.yml",
                 false));
 
-    assertEquals(ProcessResult.SUCCESS, result.result());
     assertEquals("Table definition output is complete.", result.message());
+    assertTrue(result.getResultMessage().startsWith("[result]:SUCCESS"));
   }
 
   @Test
@@ -120,34 +120,24 @@ public class ExportTableDefinitionControllerTest {
   }
 
   @Test
-  @DisplayName("execute: ユースケースが例外を投げた場合はFAILの結果を返し、例外メッセージを含む")
-  void testExecuteExceptionReturnsFailResult() {
-    var usecase = new RecordingUsecase();
-    usecase.toThrow = new RuntimeException("boom");
-    var controller = new ExportTableDefinitionController(usecase, usecase);
-
-    ResultDto result =
-        controller.execute(exportRequest(List.of(), List.of(), null, 0, 0, List.of(), null, false));
-
-    assertEquals(ProcessResult.FAIL, result.result());
-    assertTrue(result.message().contains("boom"));
-  }
-
-  @Test
-  @DisplayName("execute: 例外発生時もexecute自体は例外を伝播させない")
-  void testExecuteExceptionDoesNotPropagate() {
+  @DisplayName("execute: ユースケースの例外は捕捉せず、そのまま呼び出し元へ伝える（捕捉はエントリーポイントの境界で行う）")
+  void testExecutePropagatesUsecaseException() {
     var usecase = new RecordingUsecase();
     usecase.toThrow = new IllegalStateException("unexpected");
     var controller = new ExportTableDefinitionController(usecase, usecase);
 
-    assertDoesNotThrow(
-        () ->
-            controller.execute(
-                exportRequest(List.of(), List.of(), null, 0, 0, List.of(), null, false)));
+    var thrown =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                controller.execute(
+                    exportRequest(List.of(), List.of(), null, 0, 0, List.of(), null, false)));
+
+    assertSame(usecase.toThrow, thrown);
   }
 
   @Test
-  @DisplayName("checkDiff: 差分が見つからない場合はSUCCESSかつhasDifference=falseを返す")
+  @DisplayName("checkDiff: 差分が見つからない場合はhasDifference=falseを返し、終了状態はSUCCESSとなる")
   void testCheckDiffNoDifferenceReturnsSuccessWithoutDifference() {
     var usecase = new RecordingUsecase();
     usecase.diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
@@ -157,12 +147,14 @@ public class ExportTableDefinitionControllerTest {
         controller.checkDiff(
             checkDiffRequest(List.of("public"), List.of(), "output", 100, List.of(), null));
 
-    assertEquals(ProcessResult.SUCCESS, result.result());
     assertFalse(result.hasDifference());
+    assertEquals(ExitStatus.SUCCESS, result.exitStatus());
+    assertTrue(result.getResultMessage().startsWith("[result]:SUCCESS"));
   }
 
   @Test
-  @DisplayName("checkDiff: 差分が見つかった場合はSUCCESSかつhasDifference=trueを返し、差分対象とunified diffをメッセージに含める")
+  @DisplayName(
+      "checkDiff: 差分が見つかった場合はhasDifference=trueを返し（終了状態はDIFFERENCE_FOUND）、差分対象とunified diffをメッセージに含める")
   void testCheckDiffWithDifferenceReturnsSuccessWithDifference() {
     var usecase = new RecordingUsecase();
     usecase.diffResultToReturn =
@@ -184,8 +176,8 @@ public class ExportTableDefinitionControllerTest {
         controller.checkDiff(
             checkDiffRequest(List.of(), List.of(), "output", 100, List.of(), null));
 
-    assertEquals(ProcessResult.SUCCESS, result.result());
     assertTrue(result.hasDifference());
+    assertEquals(ExitStatus.DIFFERENCE_FOUND, result.exitStatus());
     assertTrue(result.message().contains("new.md"));
     assertTrue(result.message().contains("stale.md"));
     assertTrue(result.message().contains("table public.changed"));
@@ -217,19 +209,19 @@ public class ExportTableDefinitionControllerTest {
   }
 
   @Test
-  @DisplayName("checkDiff: ユースケースが例外を投げた場合はFAILの結果を返し、例外を伝播させない")
-  void testCheckDiffExceptionReturnsFailResultWithoutPropagating() {
+  @DisplayName("checkDiff: ユースケースの例外は捕捉せず、そのまま呼び出し元へ伝える（捕捉はエントリーポイントの境界で行う）")
+  void testCheckDiffPropagatesUsecaseException() {
     var usecase = new RecordingUsecase();
     usecase.toThrow = new RuntimeException("boom");
     var controller = new ExportTableDefinitionController(usecase, usecase);
 
-    DiffCheckResultDto result =
-        assertDoesNotThrow(
+    var thrown =
+        assertThrows(
+            RuntimeException.class,
             () ->
                 controller.checkDiff(
                     checkDiffRequest(List.of(), List.of(), null, 0, List.of(), null)));
 
-    assertEquals(ProcessResult.FAIL, result.result());
-    assertTrue(result.message().contains("boom"));
+    assertSame(usecase.toThrow, thrown);
   }
 }

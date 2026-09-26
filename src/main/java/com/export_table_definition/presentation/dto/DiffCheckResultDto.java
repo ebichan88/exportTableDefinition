@@ -1,25 +1,36 @@
 package com.export_table_definition.presentation.dto;
 
+import com.export_table_definition.presentation.type.ExitStatus;
 import com.export_table_definition.presentation.type.ProcessResult;
 
 /**
- * ドキュメント差分検知（{@code --check}モード）の処理結果に関するrecordクラス
+ * ドキュメント差分検知（{@code --check}モード）の処理結果に関するrecordクラス<br>
+ * 比較処理自体が失敗した場合の報告は{@link com.export_table_definition.presentation.FailureHandler}が組み立てるため、
+ * 比較を終えた場合の結果（差分の有無を含む）のみを表す
  *
- * @param result 処理結果（比較処理自体の成否。差分の有無は{@link #hasDifference()}で判定する）
- * @param message 処理結果のメッセージ
+ * @param message 処理結果のメッセージ（差分の報告）
  * @param hasDifference 生成ドキュメントとコミット済みドキュメントに差分が見つかったか
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
  */
-public record DiffCheckResultDto(ProcessResult result, String message, boolean hasDifference) {
+public record DiffCheckResultDto(String message, boolean hasDifference) {
 
   /**
    * 処理結果のメッセージを返却する
    *
-   * @return 処理結果のメッセージ
+   * @return 処理結果の種別（成功）を先頭に付けた処理結果のメッセージ
    */
   public String getResultMessage() {
-    return result.formatMessage(message);
+    return ProcessResult.SUCCESS.formatMessage(message);
+  }
+
+  /**
+   * 差分の有無に応じた終了状態を返却する
+   *
+   * @return 差分がある場合は{@link ExitStatus#DIFFERENCE_FOUND}、ない場合は{@link ExitStatus#SUCCESS}
+   */
+  public ExitStatus exitStatus() {
+    return hasDifference ? ExitStatus.DIFFERENCE_FOUND : ExitStatus.SUCCESS;
   }
 }
