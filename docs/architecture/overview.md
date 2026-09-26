@@ -27,6 +27,11 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | domain | `domain.model.*`, `domain.repository`, `domain.service.*` | エンティティ・値オブジェクト・リポジトリIF・書き込み処理（ドメインサービス）を持つ、DB種別に依存しない中核 |
 | infrastructure | `infrastructure.db`, `infrastructure.file`, `infrastructure.path`, `infrastructure.snapshot` | MyBatisによるDBアクセス、ファイル入出力、出力パス解決、JSON変換などドメインIFの実装を提供する |
 | config | `config`, `config.module` | プロパティ読み込み、Guiceによる依存関係の束縛（DI設定） |
+| shared | `shared.exception` | 層をまたいで失敗の分類を伝える例外（`UserCorrectableException`） |
+
+`config`と`shared`は4層の外に置く。`shared.exception`は、どの層からも依存してよい唯一のパッケージで、自身はJDK以外に依存しない。
+置くのは失敗の分類を伝える例外だけとし、`shared`の直下や、例外以外の共通部品の置き場所にはしない
+（範囲を広げると、層に属さない何でも置き場になり、依存の向きのルールが形骸化するため）。
 
 `domain.model` は概念ごとのサブパッケージ（`table`・`relation`・`sidecar`・`target` 等）に分かれている。
 ドメインの概念・用語・主なルールの置き場所は [domain-model.md](./domain-model.md)、
@@ -77,10 +82,15 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 | 種類 | 例 | 表し方 | 利用者への報告 |
 |---|---|---|---|
-| 利用者が直せる誤り | 設定ファイルの誤り、サイドカーYAMLの構文誤り、`--rm-dist`の出力先が危険、DBに接続できない、非対応のDB | `domain.UserCorrectableException`（設定ファイルの誤りは派生の`config.InvalidConfigurationException`）。検知した箇所で、何を直せばよいかをメッセージに書いて投げる | `[result]:FAIL`＋メッセージ。ログにスタックトレースは残さない |
+| 利用者が直せる誤り | 設定ファイルの誤り、サイドカーYAMLの構文誤り、`--rm-dist`の出力先が危険、DBに接続できない、非対応のDB | `shared.exception.UserCorrectableException`（設定ファイルの誤りは派生の`config.InvalidConfigurationException`）。検知した箇所で、何を直せばよいかをメッセージに書いて投げる | `[result]:FAIL`＋メッセージ。ログにスタックトレースは残さない |
 | 想定外の失敗 | I/Oの失敗、SQLの失敗、不具合（NPE等）、JVMのエラー | 非検査例外のまま伝える（検査例外は非検査例外で包む） | `[result]:FAIL`＋メッセージ＋ログの場所。ログにスタックトレースを残す |
 | 業務上の結果 | `--check`の差分あり、孤児付帯情報、除外した関連 | 例外にせず値で返す（`DiffResult`・`ConsistencyFinding`） | 差分の報告・警告ログ |
 
+- 利用者が直せる誤りを投げるのは、入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ
+  （DBへの接続、サイドカーYAMLの読み込み）だけで、ドメイン層・アプリケーション層では投げない。HTTPの400系のように、
+  「利用者が直せる」という分類は入口側の関心であり、ドメインの概念ではないため。入力の誤りはユースケースを呼ぶ前に入口で検証し、
+  インフラは外部に触れて初めて分かる誤り（DBに接続できない、YAMLとして読めない等）だけを投げる。
+  入口とインフラの双方から投げるため、例外はどの層からも依存できるレイヤーの外（`shared.exception`）に置く
 - 捕捉するのはエントリーポイント（`ExportTableDefinition.main()`）の1箇所だけ。設定の読み込み・DBへの接続・DIコンテナの
   組み立てを含む処理全体を1つのtry-catchで囲むため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない。
   捕捉した例外は`presentation.FailureReporter`へ渡し、種類に応じた報告（画面・ログ）を任せる

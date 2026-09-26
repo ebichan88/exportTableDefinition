@@ -1,7 +1,7 @@
 package com.export_table_definition.presentation;
 
-import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.presentation.type.ProcessResult;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;

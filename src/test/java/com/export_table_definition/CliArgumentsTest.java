@@ -2,7 +2,7 @@ package com.export_table_definition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.UserCorrectableException;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.util.Properties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

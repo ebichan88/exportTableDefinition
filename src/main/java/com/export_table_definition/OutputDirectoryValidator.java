@@ -2,9 +2,9 @@ package com.export_table_definition;
 
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
-import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 

@@ -3,7 +3,7 @@ package com.export_table_definition.presentation;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.config.InvalidConfigurationException;
-import com.export_table_definition.domain.UserCorrectableException;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ConnectException;

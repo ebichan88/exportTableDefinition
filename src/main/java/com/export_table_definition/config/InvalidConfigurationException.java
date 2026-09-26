@@ -1,6 +1,6 @@
 package com.export_table_definition.config;
 
-import com.export_table_definition.domain.UserCorrectableException;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 
 /**
  * 設定ファイルの誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外クラス<br>

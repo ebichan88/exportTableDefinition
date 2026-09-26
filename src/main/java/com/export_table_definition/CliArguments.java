@@ -1,6 +1,6 @@
 package com.export_table_definition;
 
-import com.export_table_definition.domain.UserCorrectableException;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;

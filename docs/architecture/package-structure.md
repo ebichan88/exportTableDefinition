@@ -38,12 +38,6 @@
 
 ## domain層
 
-### domain（直下）
-
-| クラス | 役割 |
-|---|---|
-| `UserCorrectableException` | 利用者が設定・入力・実行環境を見直せば解消する誤り（設定の誤り・サイドカーYAMLの構文誤り・DBに接続できない等）を表す例外。設定・アプリケーション・インフラのいずれの層からも投げられるよう、最も内側のドメイン層に置く。`FailureReporter`はこの例外かそれ以外かで報告を切り替える |
-
 ### domain.model
 
 概念ごとにサブパッケージへ分けている（依存関係は [domain-model.md](./domain-model.md#概念のまとまりパッケージ) を参照）。
@@ -129,6 +123,14 @@
 | | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`PropertyLoader`・`ExportTableDefinitionProperties`・`MyBatisSqlSessionFactory`が投げる |
 | `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）のうち、DB種別に依存しないもの。DBへ接続する前に組み立て、入力の検証にも使う。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
 | | `DatabaseDependentModule` | DB種別が決まってから、`ExportTableDefinitionModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。それに依存するユースケースも束縛する |
+
+## shared（レイヤーの外）
+
+レイヤーの外に置き、どの層からも依存してよい。自身はJDK以外に依存せず、失敗の分類を伝える例外だけを置く。
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `shared.exception` | `UserCorrectableException` | 利用者が設定・入力・実行環境を見直せば解消する誤り（設定の誤り・サイドカーYAMLの構文誤り・DBに接続できない等）を表す例外。投げるのは入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ（DBへの接続、サイドカーYAMLの読み込み）だけで、ドメイン層・アプリケーション層では投げない。`FailureReporter`はこの例外かそれ以外かで報告を切り替える |
 
 ## リソース（Java外）
 

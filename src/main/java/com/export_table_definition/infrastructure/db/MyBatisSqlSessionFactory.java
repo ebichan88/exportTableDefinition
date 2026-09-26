@@ -2,8 +2,8 @@ package com.export_table_definition.infrastructure.db;
 
 import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.config.PropertyLoader;
-import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;

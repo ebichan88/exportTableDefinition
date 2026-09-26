@@ -17,7 +17,7 @@ public interface SidecarRepository {
    *
    * @param sidecarPath サイドカーファイルのパス（未指定可）
    * @return 読み込んだサイドカーの内容。未指定の場合は空のSidecar
-   * @throws com.export_table_definition.domain.UserCorrectableException ファイルが存在しない場合や、
+   * @throws com.export_table_definition.shared.exception.UserCorrectableException ファイルが存在しない場合や、
    *     ファイルを解釈できない場合（YAMLの構文誤り等）
    */
   Sidecar load(String sidecarPath);

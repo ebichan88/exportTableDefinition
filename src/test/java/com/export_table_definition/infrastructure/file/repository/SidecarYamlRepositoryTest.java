@@ -2,7 +2,6 @@ package com.export_table_definition.infrastructure.file.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.RelationType;
@@ -11,6 +10,7 @@ import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
