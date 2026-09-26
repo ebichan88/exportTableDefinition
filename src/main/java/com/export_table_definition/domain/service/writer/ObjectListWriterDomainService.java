@@ -20,6 +20,7 @@ import java.util.function.BiFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/** トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義を書き込むクラス */
 public class ObjectListWriterDomainService {
 
   private static final Logger logger = LogManager.getLogger(ObjectListWriterDomainService.class);

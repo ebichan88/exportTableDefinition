@@ -201,7 +201,9 @@ loadScripts(document, 'script');</script>
  表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="com/export_table_definition/domain/service/writer/template/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ErDiagramWriterDomainService</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">スキーマ別ER図（全体ER図）とその索引を書き込むクラス</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/presentation/type/ExitStatus.html" title="enum class in com.export_table_definition.presentation.type">ExitStatus</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
 <div class="block">処理の終了状態と、プロセスの終了コードを対応付ける列挙型<br>
@@ -260,7 +262,9 @@ loadScripts(document, 'script');</script>
  リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう指摘（<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyFinding</code></a>）として返す。指摘をどこへ出力するか（ログ等）は呼び出し側が決める</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">&nbsp;</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="block">外部キーの突き合わせ結果</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/target/ExportTargets.html" title="class in com.export_table_definition.domain.model.target">ExportTargets</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">出力対象のうち、一括取得する軽量な情報の組<br>
@@ -393,7 +397,9 @@ loadScripts(document, 'script');</script>
  表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="com/export_table_definition/domain/service/writer/template/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ObjectListWriterDomainService</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">&nbsp;</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義を書き込むクラス</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/db/repository/OracleTableDefinitionRepository.html" title="class in com.export_table_definition.infrastructure.db.repository">OracleTableDefinitionRepository</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">[oracle]テーブル定義出力に関するリポジトリクラス</div>
@@ -548,7 +554,9 @@ loadScripts(document, 'script');</script>
 <div class="block">テーブル定義一覧書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/domain/repository/TableDefinitionRepository.html" title="interface in com.export_table_definition.domain.repository">TableDefinitionRepository</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">&nbsp;</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="block">テーブル定義出力に関するリポジトリインターフェース</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">TableDefinitionTemplates</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
@@ -586,17 +594,25 @@ loadScripts(document, 'script');</script>
  被参照側の外部キーは、参照元テーブルの<code>foreignKeys</code>から導出できるため保持しない</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Column.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Column</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="block">カラム情報</div>
+</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Constraint.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Constraint</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">&nbsp;</div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="block">制約情報</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Index.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Index</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="block">インデックス情報</div>
+</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Relation.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Relation</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">外部キー・論理リレーション情報（自テーブル → 参照先）</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Trigger.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Trigger</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="block">トリガー情報</div>
+</div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/table/TableTargetFilter.html" title="class in com.export_table_definition.domain.model.table">TableTargetFilter</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">テーブル名パターン（<code>table=</code>の記法）のリストを判定する値オブジェクト<br>

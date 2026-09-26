@@ -10,6 +10,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import java.util.List;
 
+/** テーブル定義出力に関するリポジトリインターフェース */
 public interface TableDefinitionRepository {
 
   /** ドキュメントの生成日はDBではなく実行時に決まるため含まない */

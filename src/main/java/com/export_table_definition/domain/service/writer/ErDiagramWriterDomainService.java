@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/** スキーマ別ER図（全体ER図）とその索引を書き込むクラス */
 public class ErDiagramWriterDomainService {
 
   /** ER図の分割ページから本体ページへ戻るリンクの表示名 */

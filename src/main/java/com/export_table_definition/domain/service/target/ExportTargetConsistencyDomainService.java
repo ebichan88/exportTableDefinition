@@ -25,6 +25,8 @@ import java.util.stream.Stream;
 public class ExportTargetConsistencyDomainService {
 
   /**
+   * 外部キーの突き合わせ結果
+   *
    * @param foreignKeys 出力対象のテーブル同士の外部キーの集合（物理外部キー、論理リレーションの順）
    */
   public record ResolvedForeignKeys(ForeignKeys foreignKeys, List<ConsistencyFinding> findings) {
