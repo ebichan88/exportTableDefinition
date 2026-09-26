@@ -14,7 +14,7 @@
 
 	<Appenders>
 		<!-- 利用者が確認すべき警告（WARN）をコンソール（標準エラー出力）へ出す設定。
-			処理結果・失敗の報告はFailureHandler等が標準出力へ直接出すため、ERROR以上は出さない -->
+			処理結果・失敗の報告はFailureReporter等が標準出力へ直接出すため、ERROR以上は出さない -->
 		<Console name="warning" target="SYSTEM_ERR">
 			<LevelRangeFilter minLevel="WARN" maxLevel="WARN" onMatch="ACCEPT" onMismatch="DENY" />
 			<PatternLayout pattern="[warn]:%m%n" />

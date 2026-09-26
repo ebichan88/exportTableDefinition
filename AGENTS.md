@@ -48,7 +48,8 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 利用者が設定・入力・実行環境を見直せば解消する失敗は`domain.UserCorrectableException`（設定ファイルの誤りは派生の
     `config.InvalidConfigurationException`）で表し、何を直せばよいかをメッセージに書いて投げる。それ以外（I/O・SQL・不具合）は
     非検査例外のまま伝える。ドメイン層に検査例外は使わず、呼び出し側に判断を委ねたい結果は値で返す。
-  - 捕捉は`presentation.FailureHandler`の1箇所だけ。コントローラー・ユースケース等の途中の層でcatchしてよいのは、検査例外を包む・
+  - 捕捉はエントリーポイント（`ExportTableDefinition.main()`）の1箇所だけで、捕捉した例外の報告は`presentation.FailureReporter`が行う。
+    コントローラー・ユースケース等の途中の層でcatchしてよいのは、検査例外を包む・
     利用者が直せる誤りへ置き換える・フォールバックする場合だけ。包むときは`cause`を渡し、tryの範囲は置き換えたい呼び出しだけに絞る
     （`catch (Exception e)`で広く包むと、別の失敗まで同じ文言になり原因も表示から消える）。catchしてログを出してから再スローしない。
 - 入力（設定ファイル・CLI引数・DB接続情報・サイドカーYAML）の検証は [overview.md の「入力の検証」](./docs/architecture/overview.md#入力の検証) に従い、

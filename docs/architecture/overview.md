@@ -35,8 +35,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 ## 実行フロー
 
 1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・環境変数からのDB接続情報の
-   上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を
-   `presentation.FailureHandler`経由で実行する。例外の捕捉と終了コードへの変換は、ここで1箇所にまとめて行う
+   上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を1つのtry-catchで囲んで実行する。
+   例外の捕捉と終了コードへの変換はここで1箇所にまとめて行い、捕捉した例外は`presentation.FailureReporter`が報告する
    （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
 2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
    - `CliArguments.requireKnownArguments()`が、解釈できない引数（書き誤り等）が無いことを確かめる
@@ -52,7 +52,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、`ExportTableDefinitionController` を取得する。
 4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
    `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、結果を `ResultDto`（`--check`時は差分の有無を持つ
-   `DiffCheckResultDto`）に変換する。例外は捕捉せず、`FailureHandler`まで伝える。
+   `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
 5. 通常実行のユースケース（`ExportTableDefinitionUsecaseImpl`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
    - `--rm-dist`指定時は、削除してよい出力先か（ルート・ホームディレクトリ等でないか）をDBへの問い合わせより前に判定する
@@ -77,21 +77,22 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | 想定外の失敗 | I/Oの失敗、SQLの失敗、不具合（NPE等）、JVMのエラー | 非検査例外のまま伝える（検査例外は非検査例外で包む） | `[result]:FAIL`＋メッセージ＋ログの場所。ログにスタックトレースを残す |
 | 業務上の結果 | `--check`の差分あり、孤児付帯情報、除外した関連 | 例外にせず値で返す（`DiffResult`・`ConsistencyFinding`） | 差分の報告・警告ログ |
 
-- 捕捉するのは`presentation.FailureHandler`の1箇所だけ。エントリーポイントが、設定の読み込み・DBへの接続・DIコンテナの
-  組み立てを含む処理全体をこのクラス経由で実行するため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない
+- 捕捉するのはエントリーポイント（`ExportTableDefinition.main()`）の1箇所だけ。設定の読み込み・DBへの接続・DIコンテナの
+  組み立てを含む処理全体を1つのtry-catchで囲むため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない。
+  捕捉した例外は`presentation.FailureReporter`へ渡し、種類に応じた報告（画面・ログ）を任せる
 - 途中の層でcatchしてよいのは、(a) 検査例外を非検査例外で包む、(b) 下位の例外を利用者が直せる誤りへ置き換える、
   (c) フォールバックする（`conf/mybatis.properties`が無い場合に、CLI引数・環境変数の接続情報だけで続ける等）場合のみ。
   包むときは原因（`cause`）を必ず渡し、tryの範囲は置き換えたい呼び出しだけに絞る
   （例: `AbstractTableDefinitionRepository`はSQLの呼び出しだけを包み、DTO→エンティティの変換の失敗は包まない）。
-  catchしてログを出してから再スローすることはしない（ログの出力も`FailureHandler`が行う）
-- `FailureHandler`は例外の連鎖（原因）をたどり、表示に含まれていない情報を持つ原因を`[cause]`として併記する
+  catchしてログを出してから再スローすることはしない（ログの出力も`FailureReporter`が行う）
+- `FailureReporter`は例外の連鎖（原因）をたどり、表示に含まれていない情報を持つ原因を`[cause]`として併記する
   （包んだ箇所で、DBが返したエラー等の原因が失われないようにするため。原因のメッセージを繰り返しているだけのMyBatisの例外等は省く）
 - ドメイン層に検査例外は使わない。呼び出し側に判断を委ねたい結果は、値（`Optional`・`ConsistencyFinding`・真偽値等）で返す
 - 警告（処理は続けられるが利用者が確認すべき事柄。孤児付帯情報、サイドカーYAMLの記述の誤り等）は、WARNレベルのログとして出す。
   `log4j2.xml`が、このツールのWARNログをログファイルに加えてコンソール（標準エラー出力）へも`[warn]:`付きで出す
   （ログファイルにしか出ないと、「警告して続行」が実際には「黙って続行」になるため）。警告は終了コードに影響しない
 - 終了コード（`presentation.type.ExitStatus`）は、0＝成功（`--check`で差分なしを含む）、1＝`--check`で差分あり、2＝失敗。
-  JVMのエラー（`Error`）も`FailureHandler`で捕捉するのは、捕捉しないとJVMが終了コード1で終わり、差分ありと区別できなくなるため
+  JVMのエラー（`Error`）も`main()`で捕捉するのは、捕捉しないとJVMが終了コード1で終わり、差分ありと区別できなくなるため
 
 ## 入力の検証
 

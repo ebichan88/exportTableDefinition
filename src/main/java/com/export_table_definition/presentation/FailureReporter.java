@@ -1,7 +1,6 @@
 package com.export_table_definition.presentation;
 
 import com.export_table_definition.domain.UserCorrectableException;
-import com.export_table_definition.presentation.type.ExitStatus;
 import com.export_table_definition.presentation.type.ProcessResult;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,14 +8,13 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * 処理の失敗（例外）を1箇所で捕捉し、利用者への報告と終了状態へ変換する共通クラス<br>
- * エントリーポイントが、設定の読み込み・DBへの接続・DIコンテナの組み立てを含む処理全体をこのクラス経由で実行する。
- * コントローラー・ユースケース等の途中の層では例外を捕捉せず、ここまで伝える。失敗は次の2つに分けて報告する。
+ * 処理の失敗を利用者へ報告するクラス<br>
+ * エントリーポイント（{@code ExportTableDefinition.main()}）が処理全体の例外を1箇所で捕捉し、このクラスへ渡す。
+ * コントローラー・ユースケース等の途中の層では例外を捕捉しない。失敗は次の2つに分けて報告する。
  *
  * <ul>
  *   <li>利用者が直せる誤り（{@link UserCorrectableException}）: 何を直せばよいかをメッセージで伝える。
@@ -31,9 +29,9 @@ import org.apache.logging.log4j.Logger;
  * @version 1.0
  * @author takashi.ebina
  */
-public final class FailureHandler {
+public final class FailureReporter {
 
-  private static final Logger logger = LogManager.getLogger(FailureHandler.class);
+  private static final Logger logger = LogManager.getLogger(FailureReporter.class);
 
   /** ログファイルの場所（log4j2.xmlのlogfileと揃える）。想定外の失敗の報告で、詳細の確認先として案内する */
   private static final String LOG_FILE = "./var/log/exportTableDefinition.log";
@@ -44,48 +42,41 @@ public final class FailureHandler {
   /**
    * コンストラクタ
    *
-   * @param failureSummary 失敗した場合に報告の先頭に示す要旨（どの処理が失敗したか）
+   * @param failureSummary 報告の先頭に示す要旨（どの処理が失敗したか）
    * @param console 報告の出力先（通常は標準出力）
    */
-  public FailureHandler(String failureSummary, Consumer<String> console) {
+  public FailureReporter(String failureSummary, Consumer<String> console) {
     this.failureSummary = failureSummary;
     this.console = console;
   }
 
   /**
-   * 処理を実行し、失敗した場合は報告して{@link ExitStatus#FAILURE}へ変換するメソッド<br>
-   * JVMのエラー（{@link Error}）も含めてすべて捕捉する。捕捉しないとJVMが終了コード1で終了し、 {@code --check}の「差分あり」と区別できなくなるため
+   * 失敗を報告するメソッド<br>
+   * 利用者が直せる誤りはメッセージのみをログへ記録し、想定外の失敗はスタックトレース付きでログへ記録したうえで、 画面にログの場所を案内する
    *
-   * @param command 実行する処理（成功した場合の終了状態を返す）
-   * @return 処理が返した終了状態。失敗した場合は{@link ExitStatus#FAILURE}
+   * @param failure エントリーポイントが捕捉した例外
    */
-  public ExitStatus run(Supplier<ExitStatus> command) {
-    try {
-      return command.get();
-    } catch (UserCorrectableException e) {
-      final List<String> report = report(e);
-      logger.error("{}", String.join(System.lineSeparator(), report));
-      console.accept(ProcessResult.FAIL.formatMessage(String.join(System.lineSeparator(), report)));
-      return ExitStatus.FAILURE;
-    } catch (Throwable e) {
-      final List<String> report = report(e);
-      logger.error(String.join(System.lineSeparator(), report), e);
-      report.add(
+  public void report(Throwable failure) {
+    final List<String> lines = lines(failure);
+    if (failure instanceof UserCorrectableException) {
+      logger.error("{}", String.join(System.lineSeparator(), lines));
+    } else {
+      logger.error(String.join(System.lineSeparator(), lines), failure);
+      lines.add(
           " An unexpected error occurred. See the log file for details. [logFile="
               + LOG_FILE
               + "]");
-      console.accept(ProcessResult.FAIL.formatMessage(String.join(System.lineSeparator(), report)));
-      return ExitStatus.FAILURE;
     }
+    console.accept(ProcessResult.FAIL.formatMessage(String.join(System.lineSeparator(), lines)));
   }
 
   /**
-   * 失敗の報告（要旨・例外のメッセージ・原因）を行単位で組み立てるメソッド
+   * 報告（要旨・例外のメッセージ・原因）を行単位で組み立てるメソッド
    *
-   * @param failure 発生した例外
+   * @param failure 報告する例外
    * @return 報告の行のリスト（呼び出し側で行を追加できるよう変更可能なリストで返す）
    */
-  private List<String> report(Throwable failure) {
+  private List<String> lines(Throwable failure) {
     final List<String> lines = new ArrayList<>();
     lines.add(failureSummary);
     final String message = describe(failure);

@@ -5,7 +5,7 @@ import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
-import com.export_table_definition.presentation.FailureHandler;
+import com.export_table_definition.presentation.FailureReporter;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ExitStatus;
@@ -13,8 +13,8 @@ import com.google.inject.Guice;
 
 /**
  * テーブル定義出力処理を呼び出すクラス<br>
- * 処理全体（設定の読み込み・DBへの接続・DIコンテナの組み立てを含む）を{@link FailureHandler}経由で実行し、
- * 例外の捕捉と、終了状態からプロセスの終了コードへの変換をここで1箇所にまとめて行う
+ * 処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）で起きた例外を{@link #main}の1箇所で捕捉し、 {@link
+ * FailureReporter}で報告したうえで、終了状態をプロセスの終了コードへ変換する
  *
  * @since 1.0
  * @version 1.0
@@ -41,8 +41,18 @@ public class ExportTableDefinition {
    */
   public static void main(String[] args) {
     final CliArguments cliArguments = CliArguments.parse(args);
-    final ExitStatus exitStatus =
-        cliArguments.isCheck() ? runCheck(cliArguments) : run(cliArguments);
+    ExitStatus exitStatus;
+    try {
+      exitStatus = cliArguments.isCheck() ? runCheck(cliArguments) : run(cliArguments);
+    } catch (Throwable e) {
+      // 例外はここで1箇所にまとめて捕捉する（途中の層では捕捉しない）。JVMのエラー（Error）も捕捉するのは、
+      // 捕捉しないとJVMが終了コード1で終了し、--checkの「差分あり」と区別できなくなるため
+      new FailureReporter(
+              cliArguments.isCheck() ? CHECK_FAILURE_SUMMARY : EXPORT_FAILURE_SUMMARY,
+              System.out::println)
+          .report(e);
+      exitStatus = ExitStatus.FAILURE;
+    }
     System.exit(exitStatus.code());
   }
 
@@ -59,19 +69,15 @@ public class ExportTableDefinition {
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
-    return new FailureHandler(EXPORT_FAILURE_SUMMARY, System.out::println)
-        .run(
-            () -> {
-              // CLI引数・設定ファイルの検証（DBへの接続・問い合わせや出力先の削除より前に行う）
-              cliArguments.requireKnownArguments();
-              final ExportRequest request =
-                  ExportTableDefinitionProperties.load().toExportRequest(cliArguments.isRmDist());
-              // テーブル定義出力処理実行
-              final ResultDto resultDto = createController(cliArguments).execute(request);
-              // 処理終了メッセージ出力
-              System.out.println(resultDto.getResultMessage());
-              return ExitStatus.SUCCESS;
-            });
+    // CLI引数・設定ファイルの検証（DBへの接続・問い合わせや出力先の削除より前に行う）
+    cliArguments.requireKnownArguments();
+    final ExportRequest request =
+        ExportTableDefinitionProperties.load().toExportRequest(cliArguments.isRmDist());
+    // テーブル定義出力処理実行
+    final ResultDto resultDto = createController(cliArguments).execute(request);
+    // 処理終了メッセージ出力
+    System.out.println(resultDto.getResultMessage());
+    return ExitStatus.SUCCESS;
   }
 
   /**
@@ -90,20 +96,14 @@ public class ExportTableDefinition {
                 Starting check of table definition document diff.
                 Please wait a moment ...
                 """);
-    return new FailureHandler(CHECK_FAILURE_SUMMARY, System.out::println)
-        .run(
-            () -> {
-              // CLI引数・設定ファイルの検証（DBへの接続・問い合わせより前に行う）
-              cliArguments.requireKnownArguments();
-              final CheckDiffRequest request =
-                  ExportTableDefinitionProperties.load().toCheckDiffRequest();
-              // DB vs ドキュメントの差分検知処理実行
-              final DiffCheckResultDto diffCheckResultDto =
-                  createController(cliArguments).checkDiff(request);
-              // 処理終了メッセージ出力
-              System.out.println(diffCheckResultDto.getResultMessage());
-              return diffCheckResultDto.exitStatus();
-            });
+    // CLI引数・設定ファイルの検証（DBへの接続・問い合わせより前に行う）
+    cliArguments.requireKnownArguments();
+    final CheckDiffRequest request = ExportTableDefinitionProperties.load().toCheckDiffRequest();
+    // DB vs ドキュメントの差分検知処理実行
+    final DiffCheckResultDto diffCheckResultDto = createController(cliArguments).checkDiff(request);
+    // 処理終了メッセージ出力
+    System.out.println(diffCheckResultDto.getResultMessage());
+    return diffCheckResultDto.exitStatus();
   }
 
   /**

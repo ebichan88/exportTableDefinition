@@ -121,7 +121,7 @@ docker rm -f exporttabledefinition-verify-db
 まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectAllColumnInfo`等）と
 `[cause]`（DBが返したエラー。PSQLExceptionのメッセージ等）を見る。スタックトレースは実行したディレクトリの
 `var/log/exportTableDefinition.log`（`build/libs`で実行した場合は`build/libs/var/log/`）に記録される
-（`FailureHandler`が想定外の失敗をスタックトレース付きでログへ出す）。
+（`FailureReporter`が想定外の失敗をスタックトレース付きでログへ出す）。
 実際に組み立てられたSQL文と合わせて調べたい場合は、該当のMyBatisステートメントを直接叩く
 使い捨てJavaプログラムを書くのが早い。
 

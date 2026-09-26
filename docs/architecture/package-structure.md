@@ -7,7 +7,7 @@
 
 | クラス | 役割 |
 |---|---|
-| `ExportTableDefinition` | `main()`。処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）を`FailureHandler`経由で実行し、終了状態を終了コードへ変換する |
+| `ExportTableDefinition` | `main()`。処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）を1つのtry-catchで囲んで例外を1箇所で捕捉し、`FailureReporter`で報告したうえで、終了状態を終了コードへ変換する |
 | `CliArguments`（パッケージプライベート） | CLI引数の解析（`--check`・`--rm-dist`、DB接続情報の上書き値）。解釈できない引数（書き誤り等）は`requireKnownArguments()`で誤りとする |
 | `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
 
@@ -15,10 +15,10 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースを実行して結果を`ResultDto`/`DiffCheckResultDto`へ変換する。例外は捕捉せず`FailureHandler`まで伝える |
-| | `FailureHandler` | 処理全体の失敗（例外）を1箇所で捕捉する共通クラス。利用者が直せる誤り（`UserCorrectableException`）か想定外の失敗かに応じて報告し（表示に含まれない原因の併記、想定外の失敗はスタックトレースをログへ）、終了状態`ExitStatus.FAILURE`へ変換する |
+| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースを実行して結果を`ResultDto`/`DiffCheckResultDto`へ変換する。例外は捕捉せずエントリーポイントまで伝える |
+| | `FailureReporter` | エントリーポイントが捕捉した例外を受け取り、利用者が直せる誤り（`UserCorrectableException`）か想定外の失敗かに応じて報告する（表示に含まれない原因の併記、想定外の失敗はスタックトレースをログへ） |
 | | `DiffReportFormatter`（パッケージプライベート） | `checkDiff`の差分メッセージ組み立て。`ContentDiff`のunified diffを1オブジェクトあたり・全体それぞれ行数の上限付きで含める |
-| `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成功時のメッセージ）を表すrecord。失敗時の報告は`FailureHandler`が組み立てる |
+| `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成功時のメッセージ）を表すrecord。失敗時の報告は`FailureReporter`が組み立てる |
 | | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（差分の報告・差分の有無）を表すrecord。差分の有無から終了状態を返す |
 | `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum。コンソールに出す`[result]:`の行を組み立てる |
 | | `ExitStatus` | 終了状態と終了コード（0＝成功・差分なし／1＝`--check`で差分あり／2＝失敗）のenum |
@@ -41,7 +41,7 @@
 
 | クラス | 役割 |
 |---|---|
-| `UserCorrectableException` | 利用者が設定・入力・実行環境を見直せば解消する誤り（設定の誤り・サイドカーYAMLの構文誤り・DBに接続できない等）を表す例外。設定・アプリケーション・インフラのいずれの層からも投げられるよう、最も内側のドメイン層に置く。`FailureHandler`はこの例外かそれ以外かで報告を切り替える |
+| `UserCorrectableException` | 利用者が設定・入力・実行環境を見直せば解消する誤り（設定の誤り・サイドカーYAMLの構文誤り・DBに接続できない等）を表す例外。設定・アプリケーション・インフラのいずれの層からも投げられるよう、最も内側のドメイン層に置く。`FailureReporter`はこの例外かそれ以外かで報告を切り替える |
 
 ### domain.model
 

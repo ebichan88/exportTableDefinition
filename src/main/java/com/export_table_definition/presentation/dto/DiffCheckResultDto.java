@@ -5,7 +5,7 @@ import com.export_table_definition.presentation.type.ProcessResult;
 
 /**
  * ドキュメント差分検知（{@code --check}モード）の処理結果に関するrecordクラス<br>
- * 比較処理自体が失敗した場合の報告は{@link com.export_table_definition.presentation.FailureHandler}が組み立てるため、
+ * 比較処理自体が失敗した場合の報告は{@link com.export_table_definition.presentation.FailureReporter}が組み立てるため、
  * 比較を終えた場合の結果（差分の有無を含む）のみを表す
  *
  * @param message 処理結果のメッセージ（差分の報告）
