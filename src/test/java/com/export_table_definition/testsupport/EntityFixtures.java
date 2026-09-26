@@ -4,6 +4,7 @@ import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
+import java.util.List;
 
 /**
  * テストで用いるカラム・インデックス・制約・トリガーの生成ヘルパー<br>
@@ -64,6 +65,6 @@ public final class EntityFixtures {
    * @return トリガー
    */
   public static TriggerEntity trigger(String schema, String table) {
-    return new TriggerEntity(schema, table, "", "", "", "", "", "");
+    return new TriggerEntity(schema, table, "", "", List.of(), "", "", "");
   }
 }

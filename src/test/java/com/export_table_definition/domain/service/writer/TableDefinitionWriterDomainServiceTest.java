@@ -158,7 +158,14 @@ public class TableDefinitionWriterDomainServiceTest {
         ForeignKeyFixtures.physical("public", "items", "fk_items_orders", "public", "orders");
     var trigger =
         new TriggerEntity(
-            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "public.f_orders", "...");
+            "public",
+            "orders",
+            "trg_orders",
+            "BEFORE",
+            List.of("INSERT"),
+            "ROW",
+            "public.f_orders",
+            "...");
 
     var annotation = new TableAnnotation("受注を管理するテーブル", "個人情報を含む", Map.of("order_id", "受注の主キー"));
     var content =

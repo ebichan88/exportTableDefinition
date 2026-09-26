@@ -32,9 +32,9 @@ public record FunctionDto(
         functionName,
         fileName,
         functionKind,
-        functionArguments,
-        functionResult,
-        languageName,
-        definition);
+        DtoValues.text(functionArguments),
+        DtoValues.text(functionResult),
+        DtoValues.text(languageName),
+        DtoValues.text(definition));
   }
 }

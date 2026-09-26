@@ -106,7 +106,7 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
 
 - モデルは`domain.model.snapshot`配下のrecord（`TableSnapshot`等）。エンティティから変換する際に、
-  連結文字列（カンマ・スラッシュ区切り）や空白1文字等の値をリスト・nullへ正規化する。
+  値が無いこと（エンティティでは空文字）をnullで表す（JSONでは項目ごと省略される）。
   実行のたびに変わる生成日は含めない
 - JSONへの変換はドメイン層のIF（`SnapshotSerializer`）を介し、実装（`JacksonSnapshotSerializer`）はインフラ層に置く。
   Jacksonへの依存をドメイン層へ持ち込まないため
@@ -118,6 +118,10 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
 
 なお、SQLは構造化した値のみを返し、Markdown向けの表示用の組み立て・エスケープ（`|`→`\|`等）は
 `domain.service.writer.template`配下で行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
+SQLの取得結果（DTO）からエンティティへの変換時（`infrastructure.db.repository.dto`）に、値の形をドメインの表現へ揃える。
+値が無いことは空文字で表し（Oracleでは空文字がNULLとして返るため、DBによらず揃える）、SQLが区切り文字で連結して返す
+外部キーの列名（カンマ区切り）・トリガーの対象イベント（スラッシュ区切り）は`List<String>`へ分解する。
+表示用の連結・空欄の描画はテンプレートが行う。
 主キー・NOT NULL・一意性・循環などの真偽値もSQLは真偽値で返し（PostgreSQLは`boolean`、`boolean`型を持たない
 Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセルの「○」は`MarkdownTemplateSupport.marker()`で描画する。
 

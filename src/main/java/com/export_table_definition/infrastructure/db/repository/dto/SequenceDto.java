@@ -31,12 +31,12 @@ public record SequenceDto(
         dbName,
         schemaName,
         sequenceName,
-        incrementBy,
-        minValue,
-        maxValue,
-        cacheSize,
-        startValue,
+        DtoValues.text(incrementBy),
+        DtoValues.text(minValue),
+        DtoValues.text(maxValue),
+        DtoValues.text(cacheSize),
+        DtoValues.text(startValue),
         cycle,
-        ownedBy);
+        DtoValues.text(ownedBy));
   }
 }

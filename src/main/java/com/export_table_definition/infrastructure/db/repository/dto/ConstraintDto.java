@@ -24,6 +24,11 @@ public record ConstraintDto(
    */
   public ConstraintEntity toEntity() {
     return new ConstraintEntity(
-        schemaName, tableName, constraintName, constraintType, constraintDefinition, remarks);
+        schemaName,
+        tableName,
+        constraintName,
+        DtoValues.text(constraintType),
+        DtoValues.text(constraintDefinition),
+        DtoValues.text(remarks));
   }
 }

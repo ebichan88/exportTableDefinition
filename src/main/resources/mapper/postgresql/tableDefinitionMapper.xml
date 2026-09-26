@@ -106,7 +106,7 @@
                     END AS precision_scale,
                     EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
                     t3.attnotnull AS not_null,
-                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), '') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_tables t1
                 LEFT OUTER JOIN pg_catalog.pg_namespace tn ON tn.nspname = t1.schemaname
@@ -146,7 +146,7 @@
                     END AS precision_scale,
                     EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
                     t3.attnotnull AS not_null,
-                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), '') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_views t1
                 LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.viewname = t2.relname
@@ -185,7 +185,7 @@
                     END AS precision_scale,
                     EXISTS ( SELECT 1 FROM pg_catalog.pg_constraint c WHERE c.conrelid = t2.oid AND t3.attnum = ANY (c.conkey) AND c.contype = 'p' ) AS primary_key,
                     t3.attnotnull AS not_null,
-                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), ' ') AS default_value,
+                    coalesce(( SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid) FROM pg_catalog.pg_attrdef d WHERE d.adrelid = t3.attrelid AND d.adnum = t3.attnum ), '') AS default_value,
                     '' AS remarks
                 FROM pg_catalog.pg_matviews t1
                 LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.matviewname = t2.relname

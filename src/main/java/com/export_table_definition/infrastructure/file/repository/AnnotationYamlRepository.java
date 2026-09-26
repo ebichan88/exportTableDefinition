@@ -187,10 +187,10 @@ public class AnnotationYamlRepository implements AnnotationRepository {
         child.table(),
         ForeignKeyEntity.resolveLogicalRelationName(
             asString(relationMap.get(KEY_NAME)), child.table(), childColumns),
-        String.join(",", childColumns),
+        childColumns,
         parent.schema(),
         parent.table(),
-        String.join(",", parentColumns),
+        parentColumns,
         resolveCardinality(asString(relationMap.get(KEY_CARDINALITY)), child, path));
   }
 

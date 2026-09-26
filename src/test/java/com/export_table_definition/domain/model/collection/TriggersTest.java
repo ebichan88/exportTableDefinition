@@ -21,12 +21,14 @@ public class TriggersTest {
   @DisplayName("of: 自テーブルに属するトリガーのみを、登録順を保って返す")
   void testOfReturnsOwnTriggersInOrder() {
     var t1 =
-        new TriggerEntity("public", "orders", "trg_orders_1", "BEFORE", "INSERT", "ROW", "", "");
+        new TriggerEntity(
+            "public", "orders", "trg_orders_1", "BEFORE", List.of("INSERT"), "ROW", "", "");
     var t2 =
-        new TriggerEntity("public", "orders", "trg_orders_2", "AFTER", "UPDATE", "ROW", "", "");
+        new TriggerEntity(
+            "public", "orders", "trg_orders_2", "AFTER", List.of("UPDATE"), "ROW", "", "");
     var other =
         new TriggerEntity(
-            "public", "customers", "trg_customers_1", "BEFORE", "INSERT", "ROW", "", "");
+            "public", "customers", "trg_customers_1", "BEFORE", List.of("INSERT"), "ROW", "", "");
     var triggers = Triggers.of(List.of(t1, t2, other));
 
     assertEquals(List.of(t1, t2), triggers.of(newTable("public", "orders")));

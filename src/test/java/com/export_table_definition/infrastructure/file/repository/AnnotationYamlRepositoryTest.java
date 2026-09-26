@@ -141,9 +141,9 @@ public class AnnotationYamlRepositoryTest {
     assertEquals("public", relation.schemaName());
     assertEquals("logs", relation.tableName());
     assertEquals("rel_logs_users", relation.foreignkeyName());
-    assertEquals("user_id", relation.columnNames());
+    assertEquals(List.of("user_id"), relation.columnNames());
     assertEquals("public.users", relation.getReferenceSchemaTableName());
-    assertEquals("id", relation.referenceColumnNames());
+    assertEquals(List.of("id"), relation.referenceColumnNames());
     assertEquals(Cardinality.OPTIONAL_ONE_TO_MANY, relation.cardinality());
     assertEquals(RelationType.LOGICAL, relation.relationType());
     assertTrue(relation.isLogical());
@@ -165,8 +165,8 @@ public class AnnotationYamlRepositoryTest {
 
     ForeignKeyEntity relation = repository.load(file.toString()).logicalRelations().get(0);
 
-    assertEquals("warehouse_code,zone_code", relation.columnNames());
-    assertEquals("warehouse_code,zone_code", relation.referenceColumnNames());
+    assertEquals(List.of("warehouse_code", "zone_code"), relation.columnNames());
+    assertEquals(List.of("warehouse_code", "zone_code"), relation.referenceColumnNames());
   }
 
   @Test
@@ -185,8 +185,8 @@ public class AnnotationYamlRepositoryTest {
 
     ForeignKeyEntity relation = repository.load(file.toString()).logicalRelations().get(0);
 
-    assertEquals("user_id", relation.columnNames());
-    assertEquals("id", relation.referenceColumnNames());
+    assertEquals(List.of("user_id"), relation.columnNames());
+    assertEquals(List.of("id"), relation.referenceColumnNames());
   }
 
   @Test

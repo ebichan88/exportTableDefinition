@@ -20,7 +20,8 @@ public record TriggerDto(
     String triggerDefinition) {
 
   /**
-   * DTOからEntityへの変換メソッド
+   * DTOからEntityへの変換メソッド<br>
+   * SQLがスラッシュ区切りで連結して返す対象イベントは、ここでリストへ分解する
    *
    * @return TriggerEntityのインスタンス
    */
@@ -29,10 +30,10 @@ public record TriggerDto(
         schemaName,
         tableName,
         triggerName,
-        timing,
-        events,
-        orientation,
-        functionName,
-        triggerDefinition);
+        DtoValues.text(timing),
+        DtoValues.split(events, "/"),
+        DtoValues.text(orientation),
+        DtoValues.text(functionName),
+        DtoValues.text(triggerDefinition));
   }
 }

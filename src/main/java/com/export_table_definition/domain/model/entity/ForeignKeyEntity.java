@@ -13,10 +13,10 @@ import java.util.List;
  * @param schemaName 参照元（子）スキーマ名
  * @param tableName 参照元（子）テーブル名
  * @param foreignkeyName 外部キー名（論理リレーションの場合は関連名）
- * @param columnNames 参照元（子）の列名をカンマ区切りで連結した文字列
+ * @param columnNames 参照元（子）の列名のリスト（外部キーの定義順）
  * @param referenceSchemaName 参照先（親）スキーマ名
  * @param referenceTableName 参照先（親）テーブル名
- * @param referenceColumnNames 参照先（親）の列名をカンマ区切りで連結した文字列
+ * @param referenceColumnNames 参照先（親）の列名のリスト（{@code columnNames}と同じ順）
  * @param cardinality 多重度
  * @param relationType 関連の由来（物理／論理）
  * @since 1.0
@@ -27,16 +27,22 @@ public record ForeignKeyEntity(
     String schemaName,
     String tableName,
     String foreignkeyName,
-    String columnNames,
+    List<String> columnNames,
     String referenceSchemaName,
     String referenceTableName,
-    String referenceColumnNames,
+    List<String> referenceColumnNames,
     Cardinality cardinality,
     RelationType relationType)
     implements SchemaTableKeyed {
 
   /** サイドカーYAMLで関連名が省略された場合に自動生成する名称の接尾辞（実在する外部キー制約名と紛れないようにする） */
   private static final String LOGICAL_RELATION_NAME_SUFFIX = "_lrel";
+
+  /** コンパクトコンストラクタ（列名のリストは変更不可な複製として保持する） */
+  public ForeignKeyEntity {
+    columnNames = List.copyOf(columnNames);
+    referenceColumnNames = List.copyOf(referenceColumnNames);
+  }
 
   /**
    * サイドカーYAML由来の論理リレーションを生成する静的ファクトリメソッド<br>
@@ -45,10 +51,10 @@ public record ForeignKeyEntity(
    * @param schemaName 参照元（子）スキーマ名
    * @param tableName 参照元（子）テーブル名
    * @param relationName 関連名
-   * @param columnNames 参照元（子）の列名をカンマ区切りで連結した文字列
+   * @param columnNames 参照元（子）の列名のリスト
    * @param referenceSchemaName 参照先（親）スキーマ名
    * @param referenceTableName 参照先（親）テーブル名
-   * @param referenceColumnNames 参照先（親）の列名をカンマ区切りで連結した文字列
+   * @param referenceColumnNames 参照先（親）の列名のリスト
    * @param cardinality 多重度
    * @return 論理リレーションを表すForeignKeyEntity
    */
@@ -56,10 +62,10 @@ public record ForeignKeyEntity(
       String schemaName,
       String tableName,
       String relationName,
-      String columnNames,
+      List<String> columnNames,
       String referenceSchemaName,
       String referenceTableName,
-      String referenceColumnNames,
+      List<String> referenceColumnNames,
       Cardinality cardinality) {
     return new ForeignKeyEntity(
         schemaName,

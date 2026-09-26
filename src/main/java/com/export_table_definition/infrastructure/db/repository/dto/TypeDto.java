@@ -18,6 +18,7 @@ public record TypeDto(
    * @return TypeEntityのインスタンス
    */
   public TypeEntity toEntity() {
-    return new TypeEntity(dbName, schemaName, typeName, typeCategory, definition);
+    return new TypeEntity(
+        dbName, schemaName, typeName, DtoValues.text(typeCategory), DtoValues.text(definition));
   }
 }

@@ -3,6 +3,7 @@ package com.export_table_definition.testsupport;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.RelationType;
+import java.util.List;
 
 /**
  * テストで用いる{@link ForeignKeyEntity}の生成ヘルパー<br>
@@ -11,8 +12,8 @@ import com.export_table_definition.domain.model.type.RelationType;
  */
 public final class ForeignKeyFixtures {
 
-  /** テストが値を参照しないことを示すプレースホルダ */
-  private static final String UNUSED = "unused";
+  /** テストが値を参照しないことを示すプレースホルダ（カラムリスト） */
+  private static final List<String> UNUSED = List.of("unused");
 
   private ForeignKeyFixtures() {}
 
@@ -94,10 +95,10 @@ public final class ForeignKeyFixtures {
       String schema,
       String table,
       String name,
-      String columns,
+      List<String> columns,
       String refSchema,
       String refTable,
-      String refColumns,
+      List<String> refColumns,
       Cardinality cardinality) {
     return ForeignKeyEntity.logical(
         schema, table, name, columns, refSchema, refTable, refColumns, cardinality);

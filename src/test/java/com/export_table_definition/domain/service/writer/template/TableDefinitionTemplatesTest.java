@@ -197,7 +197,7 @@ public class TableDefinitionTemplatesTest {
             "orders",
             "trg_orders",
             "BEFORE",
-            "INSERT",
+            List.of("INSERT"),
             "ROW",
             "public.f_orders",
             "CREATE TRIGGER trg_orders ...");
@@ -207,7 +207,7 @@ public class TableDefinitionTemplatesTest {
             "orders",
             "trg_orders_audit",
             "AFTER",
-            "UPDATE",
+            List.of("UPDATE"),
             "ROW",
             "public.f_audit",
             "CREATE TRIGGER trg_orders_audit ...");
@@ -239,7 +239,7 @@ public class TableDefinitionTemplatesTest {
             "orders",
             "trg_orders",
             "BEFORE",
-            "INSERT",
+            List.of("INSERT"),
             "ROW",
             "public.f_orders",
             "CREATE TRIGGER trg_orders WHEN ((new.a || new.b) IS NOT NULL)");
@@ -366,20 +366,20 @@ public class TableDefinitionTemplatesTest {
             "public",
             "orders",
             "rel_orders_staff",
-            "staff_id",
+            List.of("staff_id"),
             "public",
             "staff",
-            "id",
+            List.of("id"),
             Cardinality.ONE_TO_MANY);
     var rel2 =
         ForeignKeyFixtures.logical(
             "public",
             "orders",
             "rel_orders_coupon",
-            "coupon_code",
+            List.of("coupon_code"),
             "public",
             "coupons",
-            "code",
+            List.of("code"),
             Cardinality.OPTIONAL_ONE_TO_ONE);
     String section = TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2));
 

@@ -7,6 +7,7 @@ import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +68,14 @@ public class ObjectListTemplatesTest {
   void testTriggerListLine() {
     var trigger =
         new TriggerEntity(
-            "public", "orders", "trg_orders", "BEFORE", "INSERT", "ROW", "public.f_orders", "");
+            "public",
+            "orders",
+            "trg_orders",
+            "BEFORE",
+            List.of("INSERT"),
+            "ROW",
+            "public.f_orders",
+            "");
     assertEquals(
         "|1|public|orders|trg_orders|BEFORE|INSERT|public.f_orders|" + System.lineSeparator(),
         ObjectListTemplates.triggerListLine(1, trigger));

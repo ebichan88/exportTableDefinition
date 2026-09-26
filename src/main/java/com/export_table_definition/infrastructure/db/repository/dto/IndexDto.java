@@ -29,10 +29,10 @@ public record IndexDto(
         schemaName,
         tableName,
         indexName,
-        indexMethod,
+        DtoValues.text(indexMethod),
         isUnique,
         isPrimary,
-        indexDefinition,
-        remarks);
+        DtoValues.text(indexDefinition),
+        DtoValues.text(remarks));
   }
 }

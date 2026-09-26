@@ -1,5 +1,7 @@
 package com.export_table_definition.domain.model.entity;
 
+import java.util.List;
+
 /**
  * トリガー情報に関するrecordクラス
  *
@@ -7,7 +9,7 @@ package com.export_table_definition.domain.model.entity;
  * @param tableName テーブル名
  * @param triggerName トリガー名
  * @param timing 実行タイミング（BEFORE/AFTER/INSTEAD OF）
- * @param events 対象イベント（INSERT/UPDATE/DELETE/TRUNCATEを"/"区切りで連結した文字列）
+ * @param events 対象イベント（INSERT/UPDATE/DELETE/TRUNCATE）のリスト
  * @param orientation 実行単位（ROW/STATEMENT）
  * @param functionName 実行される関数名（スキーマ修飾）
  * @param triggerDefinition トリガー定義
@@ -20,8 +22,14 @@ public record TriggerEntity(
     String tableName,
     String triggerName,
     String timing,
-    String events,
+    List<String> events,
     String orientation,
     String functionName,
     String triggerDefinition)
-    implements SchemaTableKeyed {}
+    implements SchemaTableKeyed {
+
+  /** コンパクトコンストラクタ（対象イベントのリストは変更不可な複製として保持する） */
+  public TriggerEntity {
+    events = List.copyOf(events);
+  }
+}

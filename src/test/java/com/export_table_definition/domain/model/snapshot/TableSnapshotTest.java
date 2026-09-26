@@ -99,10 +99,10 @@ public class TableSnapshotTest {
             "public",
             "orders",
             "fk_orders_item",
-            "item_id,item_seq",
+            List.of("item_id", "item_seq"),
             "master",
             "items",
-            "id,seq",
+            List.of("id", "seq"),
             Cardinality.OPTIONAL_ONE_TO_MANY,
             RelationType.PHYSICAL);
     var logicalRelation =
@@ -110,10 +110,10 @@ public class TableSnapshotTest {
             "public",
             "orders",
             "orders_user_id_lrel",
-            "user_id",
+            List.of("user_id"),
             "public",
             "users",
-            "id",
+            List.of("id"),
             Cardinality.ONE_TO_MANY);
     var trigger =
         new TriggerEntity(
@@ -121,7 +121,7 @@ public class TableSnapshotTest {
             "orders",
             "trg_orders",
             "BEFORE",
-            "INSERT/UPDATE",
+            List.of("INSERT", "UPDATE"),
             "ROW",
             "public.f_orders",
             "CREATE TRIGGER trg_orders ...");

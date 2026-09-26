@@ -29,9 +29,9 @@ public record TableDto(
     return new TableEntity(
         dbName,
         schemaName,
-        logicalTableName,
+        DtoValues.text(logicalTableName),
         physicalTableName,
         TableType.findByName(tableType),
-        definition);
+        DtoValues.text(definition));
   }
 }

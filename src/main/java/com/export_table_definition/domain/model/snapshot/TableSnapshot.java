@@ -1,6 +1,5 @@
 package com.export_table_definition.domain.model.snapshot;
 
-import static com.export_table_definition.domain.model.snapshot.SnapshotValues.split;
 import static com.export_table_definition.domain.model.snapshot.SnapshotValues.text;
 
 import com.export_table_definition.domain.model.TableDefinitionContent;
@@ -180,10 +179,10 @@ public record TableSnapshot(
     static Relation of(ForeignKeyEntity foreignKey) {
       return new Relation(
           foreignKey.foreignkeyName(),
-          split(foreignKey.columnNames(), ","),
+          foreignKey.columnNames(),
           foreignKey.referenceSchemaName(),
           foreignKey.referenceTableName(),
-          split(foreignKey.referenceColumnNames(), ","),
+          foreignKey.referenceColumnNames(),
           foreignKey.cardinality());
     }
   }
@@ -210,7 +209,7 @@ public record TableSnapshot(
       return new Trigger(
           trigger.triggerName(),
           text(trigger.timing()),
-          split(trigger.events(), "/"),
+          trigger.events(),
           text(trigger.orientation()),
           text(trigger.functionName()),
           text(trigger.triggerDefinition()));

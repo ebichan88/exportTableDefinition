@@ -281,7 +281,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "t2"));
     repository.columns.add(EntityFixtures.column("public", "t1", "id", "int", true));
     repository.triggers.add(
-        new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
+        new TriggerEntity("public", "t1", "trg_list", "", List.of(), "", "", "trg_info"));
     repository.functions.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", ""));
     repository.functionDefs.add(
@@ -341,7 +341,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "t1"));
     repository.columns.add(EntityFixtures.column("public", "t1", "id", "int", true));
     repository.triggers.add(
-        new TriggerEntity("public", "t1", "trg_list", "", "", "", "", "trg_info"));
+        new TriggerEntity("public", "t1", "trg_list", "", List.of(), "", "", "trg_info"));
     repository.functions.add(
         new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", ""));
     repository.functionDefs.add(
@@ -716,10 +716,10 @@ public class ExportTableDefinitionUsecaseImplTest {
                 "public",
                 "audit_log",
                 "rel_audit_employee",
-                "record_id",
+                List.of("record_id"),
                 "public",
                 "employee",
-                "employee_id",
+                List.of("employee_id"),
                 Cardinality.OPTIONAL_ONE_TO_MANY));
 
     usecase.exportTableDefinition(

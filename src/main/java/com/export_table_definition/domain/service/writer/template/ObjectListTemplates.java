@@ -105,7 +105,7 @@ public class ObjectListTemplates {
             trigger.tableName(),
             trigger.triggerName(),
             trigger.timing(),
-            trigger.events(),
+            String.join("/", trigger.events()),
             trigger.functionName())
         + LINE_SEPARATOR;
   }

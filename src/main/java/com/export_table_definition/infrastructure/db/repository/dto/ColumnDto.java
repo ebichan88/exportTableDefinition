@@ -29,12 +29,12 @@ public record ColumnDto(
     return new ColumnEntity(
         schemaName,
         tableName,
-        logicalColumnName,
+        DtoValues.text(logicalColumnName),
         physicalColumnName,
         columnType,
-        precisionScale,
+        DtoValues.text(precisionScale),
         primaryKey,
         notNull,
-        defaultValue);
+        DtoValues.text(defaultValue));
   }
 }

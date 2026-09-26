@@ -262,9 +262,9 @@ public class TableDefinitionTemplates {
     return row(
         no,
         fk.foreignkeyName(),
-        fk.columnNames(),
+        String.join(",", fk.columnNames()),
         fk.getReferenceSchemaTableName(),
-        fk.referenceColumnNames(),
+        String.join(",", fk.referenceColumnNames()),
         fk.cardinality().getLabel());
   }
 
@@ -290,7 +290,7 @@ public class TableDefinitionTemplates {
                 no,
                 t.triggerName(),
                 t.timing(),
-                t.events(),
+                String.join("/", t.events()),
                 t.orientation(),
                 MarkdownTemplateSupport.escapePipe(t.triggerDefinition())));
   }
