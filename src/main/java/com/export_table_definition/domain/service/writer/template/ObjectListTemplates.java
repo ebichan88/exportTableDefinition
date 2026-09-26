@@ -131,7 +131,7 @@ public class ObjectListTemplates {
                 function.dbName(),
                 function.schemaName(),
                 ListDocumentType.FUNCTION,
-                function.fileName()))
+                DocumentLocations.functionDefinitionName(function)))
         + LINE_SEPARATOR;
   }
 

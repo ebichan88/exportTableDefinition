@@ -86,7 +86,7 @@ public class ObjectListTemplatesTest {
   void testFunctionListLine() {
     var function =
         new FunctionEntity(
-            "TEST_DB", "public", "concat", "concat_2", "FUNCTION", "a text|b", "text", "sql", "");
+            "TEST_DB", "public", "concat", 2, 2, "FUNCTION", "a text|b", "text", "sql", "");
     assertEquals(
         "|2|public|FUNCTION|concat|a text\\|b|text|sql|[■](./TEST_DB/public/function/concat_2.md)|"
             + System.lineSeparator(),

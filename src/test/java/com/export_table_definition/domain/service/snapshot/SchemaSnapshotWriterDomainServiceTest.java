@@ -184,14 +184,15 @@ public class SchemaSnapshotWriterDomainServiceTest {
                 "testdb",
                 "public",
                 "calc",
-                "calc_1",
+                1,
+                1,
                 "FUNCTION",
                 "x integer",
                 "integer",
                 "sql",
                 "CREATE FUNCTION public.calc(x integer)\n RETURNS integer ..."),
             new FunctionEntity(
-                "testdb", "public", "calc", "calc_2", "PROCEDURE", "", "", "plpgsql", "BODY")),
+                "testdb", "public", "calc", 2, 2, "PROCEDURE", "", "", "plpgsql", "BODY")),
         ROOT);
 
     List<String> lines =

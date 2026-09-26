@@ -123,7 +123,7 @@ public class ObjectListWriterDomainServiceTest {
   void testWriteFunctionListWritesFile() {
     var function =
         new FunctionEntity(
-            "testdb", "public", "calc_total", "calc_total", "FUNCTION", "()", "int", "plpgsql", "");
+            "testdb", "public", "calc_total", 1, 1, "FUNCTION", "()", "int", "plpgsql", "");
     writer.writeFunctionList(List.of(function), outputRoot());
 
     Path file = OUT.resolve("functionList_testdb.md");
@@ -139,7 +139,8 @@ public class ObjectListWriterDomainServiceTest {
             "testdb",
             "public",
             "concat_code",
-            "concat_code",
+            1,
+            1,
             "FUNCTION",
             "sep text DEFAULT '|'::text",
             "TABLE(code text, label text)",
@@ -162,8 +163,7 @@ public class ObjectListWriterDomainServiceTest {
   @DisplayName("writeFunctionDefinition: スキーマ配下のfunctionディレクトリに個別ファイルを出力する")
   void testWriteFunctionDefinitionWritesIndividualFile() {
     var function =
-        new FunctionEntity(
-            "testdb", "public", "calc_total", "calc_total", "", "", "", "", "SELECT 1;");
+        new FunctionEntity("testdb", "public", "calc_total", 1, 1, "", "", "", "", "SELECT 1;");
     writer.writeFunctionDefinition(function, outputRoot());
 
     Path expectedDir = OUT.resolve("testdb").resolve("public").resolve("function");

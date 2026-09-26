@@ -6,7 +6,8 @@ package com.export_table_definition.domain.model.entity;
  * @param dbName データベース名
  * @param schemaName スキーマ名
  * @param functionName 関数・プロシージャ名
- * @param fileName 個別定義ファイル名（同名関数が複数存在する場合は連番を付与したもの）
+ * @param overloadIndex 同じスキーマ内の同名の関数・プロシージャ（オーバーロード）のうち何番目か（1始まり。作成順）
+ * @param overloadCount 同じスキーマ内の同名の関数・プロシージャの数（オーバーロードが無い場合は1）
  * @param functionKind 種別（FUNCTION/PROCEDURE）
  * @param functionArguments 引数
  * @param functionResult 戻り値の型（プロシージャの場合は空文字）
@@ -20,7 +21,8 @@ public record FunctionEntity(
     String dbName,
     String schemaName,
     String functionName,
-    String fileName,
+    int overloadIndex,
+    int overloadCount,
     String functionKind,
     String functionArguments,
     String functionResult,
@@ -28,11 +30,20 @@ public record FunctionEntity(
     String definition) {
 
   /**
-   * 論理名を持たない関数・プロシージャのヘッダー表示名を取得するメソッド
+   * 同じスキーマに同名の関数・プロシージャが複数存在する（オーバーロードされている）か判定するメソッド
    *
-   * @return ヘッダー表示名
+   * @return 同名の関数・プロシージャが複数存在する場合はtrue
+   */
+  public boolean isOverloaded() {
+    return overloadCount > 1;
+  }
+
+  /**
+   * 関数・プロシージャのヘッダー表示名を取得するメソッド
+   *
+   * @return ヘッダー表示名（関数・プロシージャ名）
    */
   public String getHeaderName() {
-    return (functionName == null || functionName.isBlank()) ? fileName : functionName;
+    return functionName;
   }
 }

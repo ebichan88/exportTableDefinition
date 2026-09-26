@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.model.type.TableType;
@@ -55,6 +56,26 @@ public class DocumentLocationsTest {
     assertEquals(
         "testdb/public/type/status.md",
         DocumentLocations.schemaObjectFile("testdb", "public", ListDocumentType.TYPE, "status"));
+  }
+
+  @Test
+  @DisplayName("functionDefinitionName: オーバーロードが無い関数は関数名をそのまま用いる")
+  void testFunctionDefinitionNameWithoutOverload() {
+    var function =
+        new FunctionEntity("testdb", "public", "calc", 1, 1, "FUNCTION", "", "int", "sql", "");
+    assertEquals("calc", DocumentLocations.functionDefinitionName(function));
+  }
+
+  @Test
+  @DisplayName("functionDefinitionName: オーバーロードされた関数は作成順の番号を付ける")
+  void testFunctionDefinitionNameWithOverload() {
+    var first =
+        new FunctionEntity("testdb", "public", "calc", 1, 2, "FUNCTION", "a int", "int", "sql", "");
+    var second =
+        new FunctionEntity(
+            "testdb", "public", "calc", 2, 2, "FUNCTION", "a text", "int", "sql", "");
+    assertEquals("calc_1", DocumentLocations.functionDefinitionName(first));
+    assertEquals("calc_2", DocumentLocations.functionDefinitionName(second));
   }
 
   @Test

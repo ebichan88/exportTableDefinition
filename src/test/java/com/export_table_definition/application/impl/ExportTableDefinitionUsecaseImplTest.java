@@ -283,9 +283,9 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.triggers.add(
         new TriggerEntity("public", "t1", "trg_list", "", List.of(), "", "", "trg_info"));
     repository.functions.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", ""));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "", "", "", "", ""));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", "BODY"));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "", "", "", "", "BODY"));
     repository.sequences.add(
         new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", false, ""));
     repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "def"));
@@ -343,9 +343,9 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.triggers.add(
         new TriggerEntity("public", "t1", "trg_list", "", List.of(), "", "", "trg_info"));
     repository.functions.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", ""));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "", "", "", "", ""));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "", "", "", "", "BODY"));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "", "", "", "", "BODY"));
     repository.sequences.add(
         new SequenceEntity("testdb", "public", "seq1", "", "", "", "", "", false, ""));
     repository.types.add(new TypeEntity("testdb", "public", "type1", "enum", "def"));
@@ -462,15 +462,15 @@ public class ExportTableDefinitionUsecaseImplTest {
   void testFunctionDefinitionsFetchedPerSchemaNotPerFunction() {
     setUp();
     repository.tables.add(table("public", "t1"));
-    repository.functions.add(new FunctionEntity("testdb", "s1", "f1", "f1", "", "", "", "", ""));
-    repository.functions.add(new FunctionEntity("testdb", "s1", "f2", "f2", "", "", "", "", ""));
-    repository.functions.add(new FunctionEntity("testdb", "s2", "f3", "f3", "", "", "", "", ""));
+    repository.functions.add(new FunctionEntity("testdb", "s1", "f1", 1, 1, "", "", "", "", ""));
+    repository.functions.add(new FunctionEntity("testdb", "s1", "f2", 1, 1, "", "", "", "", ""));
+    repository.functions.add(new FunctionEntity("testdb", "s2", "f3", 1, 1, "", "", "", "", ""));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "s1", "f1", "f1", "", "", "", "", "BODY1"));
+        new FunctionEntity("testdb", "s1", "f1", 1, 1, "", "", "", "", "BODY1"));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "s1", "f2", "f2", "", "", "", "", "BODY2"));
+        new FunctionEntity("testdb", "s1", "f2", 1, 1, "", "", "", "", "BODY2"));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "s2", "f3", "f3", "", "", "", "", "BODY3"));
+        new FunctionEntity("testdb", "s2", "f3", 1, 1, "", "", "", "", "BODY3"));
 
     usecase.exportTableDefinition(
         new ExportRequest(
@@ -917,9 +917,9 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "t1"));
     repository.columns.add(EntityFixtures.column("public", "t1", "id", "int", true));
     repository.functions.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", ""));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "FUNCTION", "", "int", "sql", ""));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", "BODY"));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "FUNCTION", "", "int", "sql", "BODY"));
     repository.sequences.add(
         new SequenceEntity("testdb", "public", "seq1", "1", "", "", "", "", false, ""));
     repository.types.add(new TypeEntity("testdb", "public", "type1", "ENUM", "a, b"));
@@ -1002,9 +1002,9 @@ public class ExportTableDefinitionUsecaseImplTest {
     repository.tables.add(table("public", "t1"));
     repository.foreignKeys.add(ForeignKeyFixtures.physical("public", "t1", "fk", "public", "t1"));
     repository.functions.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", ""));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "FUNCTION", "", "int", "sql", ""));
     repository.functionDefs.add(
-        new FunctionEntity("testdb", "public", "f1", "f1", "FUNCTION", "", "int", "sql", "BODY"));
+        new FunctionEntity("testdb", "public", "f1", 1, 1, "FUNCTION", "", "int", "sql", "BODY"));
 
     final DiffResult result = checkSnapshotDiff();
 

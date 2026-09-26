@@ -6,6 +6,7 @@ import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.ListDocumentType;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
@@ -162,7 +163,7 @@ public class ObjectListWriterDomainService {
     writeSchemaObjectDefinition(
         ListDocumentType.FUNCTION,
         function.schemaName(),
-        function.fileName(),
+        DocumentLocations.functionDefinitionName(function),
         ObjectDefinitionTemplates.functionFile(function, outputRoot.baseInfo()),
         outputRoot);
   }

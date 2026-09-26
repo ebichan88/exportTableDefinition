@@ -481,7 +481,10 @@
                 pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments,
                 CASE WHEN t1.prokind = 'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS function_result,
                 t3.lanname AS language_name,
-                t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name
+                /* 同じスキーマ内の同名の関数・プロシージャ（オーバーロード）のうち何番目か（作成順）と、その数。
+                   個別定義のファイル名の規則はアプリケーション側（DocumentLocations）が持つため、ここでは事実のみを返す */
+                row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) AS overload_index,
+                count(*) OVER (PARTITION BY t2.nspname, t1.proname) AS overload_count
             FROM pg_catalog.pg_proc t1
             LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid
             LEFT OUTER JOIN pg_catalog.pg_language t3 ON t1.prolang = t3.oid
@@ -497,14 +500,15 @@
             db_name AS "dbName",
             schema_name AS "schemaName",
             function_name AS "functionName",
-            file_name AS "fileName",
+            overload_index AS "overloadIndex",
+            overload_count AS "overloadCount",
             function_kind AS "functionKind",
             function_arguments AS "functionArguments",
             function_result AS "functionResult",
             language_name AS "languageName",
             '' AS definition
         FROM all_functions
-        ORDER BY schema_name, function_name, file_name;
+        ORDER BY schema_name, function_name, overload_index;
     </select>
 
     <select id="selectAllFunctionDefInfo" resultMap="FunctionDtoMap">
@@ -517,7 +521,10 @@
                 pg_catalog.pg_get_function_arguments(t1.oid) AS function_arguments,
                 CASE WHEN t1.prokind = 'p' THEN '' ELSE coalesce(pg_catalog.pg_get_function_result(t1.oid), '') END AS function_result,
                 t3.lanname AS language_name,
-                t1.proname || CASE WHEN count(*) OVER (PARTITION BY t2.nspname, t1.proname) > 1 THEN '_' || row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) ELSE '' END AS file_name,
+                /* 同じスキーマ内の同名の関数・プロシージャ（オーバーロード）のうち何番目か（作成順）と、その数。
+                   個別定義のファイル名の規則はアプリケーション側（DocumentLocations）が持つため、ここでは事実のみを返す */
+                row_number() OVER (PARTITION BY t2.nspname, t1.proname ORDER BY t1.oid) AS overload_index,
+                count(*) OVER (PARTITION BY t2.nspname, t1.proname) AS overload_count,
                 pg_catalog.pg_get_functiondef(t1.oid) AS definition
             FROM pg_catalog.pg_proc t1
             LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.pronamespace = t2.oid
@@ -534,14 +541,15 @@
             db_name AS "dbName",
             schema_name AS "schemaName",
             function_name AS "functionName",
-            file_name AS "fileName",
+            overload_index AS "overloadIndex",
+            overload_count AS "overloadCount",
             function_kind AS "functionKind",
             function_arguments AS "functionArguments",
             function_result AS "functionResult",
             language_name AS "languageName",
             definition AS definition
         FROM all_functions
-        ORDER BY schema_name, function_name, file_name;
+        ORDER BY schema_name, function_name, overload_index;
     </select>
 
     <resultMap id="FunctionDtoMap" type="FunctionDto">
@@ -549,7 +557,8 @@
             <arg column="dbName" javaType="String" />
             <arg column="schemaName" javaType="String" />
             <arg column="functionName" javaType="String" />
-            <arg column="fileName" javaType="String" />
+            <arg column="overloadIndex" javaType="_int" />
+            <arg column="overloadCount" javaType="_int" />
             <arg column="functionKind" javaType="String" />
             <arg column="functionArguments" javaType="String" />
             <arg column="functionResult" javaType="String" />
