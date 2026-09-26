@@ -320,10 +320,6 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --output-path=./docs/db/prod --
 * `table`の除外（`!`）・ワイルドカード（`*`）は、シェルに解釈されないよう引用符で囲んでください（bashでは`'...'`）。
 * 複数のユーザーが使うマシンでは、コマンドラインの引数が他のユーザーからプロセスの一覧で見える場合があります。その場合、パスワードはCLI引数ではなく`conf/mybatis.properties`に記載してください。
 
-> [!NOTE]
-> 以前のバージョンでは、DB接続情報を環境変数（`DB_DRIVER`・`DB_URL`・`DB_USERNAME`・`DB_PASSWORD`）でも指定できました。
-> 現在はCLI引数と設定ファイルのみです。環境変数で渡していた場合は、`--db-url="$DB_URL"`のようにCLI引数へ展開して渡してください。
-
 ### 出力先ディレクトリの事前クリーンアップ（`--rm-dist`オプション）
 
 テーブル定義書は、生成対象のファイルのみを新規作成・上書きする方式のため、DBからテーブルやスキーマを削除した後に再実行しても、削除されたテーブルに対応する`.md`ファイルは`outputPath`配下に残り続けます。`--rm-dist`を付けて実行すると、書き込みを開始する前に`outputPath`のベースディレクトリを再帰的に削除してから生成するため、常に現在のDBの状態のみが出力先に反映されます。
@@ -383,12 +379,6 @@ Content differs:
 
 * 1オブジェクトあたり200行、全体で2000行を上限に表示します。超えた分は省略した旨のみ表示しますが、対象自体（`table sample.employee`等）はサマリに全件掲載されるため、見落としにはなりません。
 * diffは外部ライブラリを使わず自前で計算しています（Myers法）。
-
-> [!NOTE]
-> 以前のバージョンでは`outputSnapshot=false`（既定値）の場合、Markdownのドキュメント一式をファイル単位で比較していました。
-> 現在は常にスナップショットを出力し、`--check`も常にスナップショット同士の比較になります。既にMarkdownを比較する運用で
-> `--check`を使っていた場合は、一度通常実行して`outputPath`配下の`snapshot/`をコミットしてから`--check`を実行してください
-> （コミットするまでは、全オブジェクトが「生成側にのみ存在するもの」として差分ありと判定されます）。
 
 GitHub Actionsでの利用例（マイグレーション後にドキュメント再生成を忘れていないかをCIで検知する）:
 
@@ -576,7 +566,7 @@ exportTableDefinition
     └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQLを使う）
 ```
 
-### build
+### ビルド
 
 以下のコマンドを実行することで、`exportTableDefinition/build/libs`フォルダ配下に`exportTableDefinition-1.0-SNAPSHOT.jar`が作成される
 
