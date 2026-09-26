@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.ContentDiff;
 import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
@@ -52,13 +53,10 @@ public class ExportTableDefinitionControllerTest {
       String annotationPath,
       boolean rmDist) {
     return new ExportRequest(
-        schemaList,
-        tableList,
+        new TargetSelection(schemaList, tableList, outputObjectList, annotationPath),
         outputPath,
         chunkSize,
         erDiagramMaxNodes,
-        outputObjectList,
-        annotationPath,
         rmDist);
   }
 
@@ -70,7 +68,9 @@ public class ExportTableDefinitionControllerTest {
       List<String> outputObjectList,
       String annotationPath) {
     return new CheckDiffRequest(
-        schemaList, tableList, outputPath, chunkSize, outputObjectList, annotationPath);
+        new TargetSelection(schemaList, tableList, outputObjectList, annotationPath),
+        outputPath,
+        chunkSize);
   }
 
   @Test
