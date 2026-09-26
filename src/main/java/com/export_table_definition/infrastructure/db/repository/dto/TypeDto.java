@@ -1,6 +1,6 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 
 /**
  * ユーザー定義型（ENUM等）情報に関してORMのデータの受け渡しに利用するDTOクラス

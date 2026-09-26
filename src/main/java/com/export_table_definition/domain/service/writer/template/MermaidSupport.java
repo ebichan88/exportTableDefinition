@@ -2,7 +2,7 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
 
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 
 /**
  * Mermaid記法の出力に必要な文字列変換を扱う共通ユーティリティクラス<br>

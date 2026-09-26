@@ -2,9 +2,9 @@ package com.export_table_definition.application;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.OutputObjectType;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.target.OutputObjectType;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;

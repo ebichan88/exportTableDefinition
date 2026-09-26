@@ -1,9 +1,9 @@
 package com.export_table_definition.testsupport;
 
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import java.util.List;
 
 /**

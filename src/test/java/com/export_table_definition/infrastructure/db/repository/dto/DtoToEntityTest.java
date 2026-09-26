@@ -2,11 +2,11 @@ package com.export_table_definition.infrastructure.db.repository.dto;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
-import com.export_table_definition.domain.model.type.RelationType;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.TableType;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

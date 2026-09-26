@@ -1,13 +1,13 @@
 package com.export_table_definition.domain.service.writer;
 
-import com.export_table_definition.domain.model.collection.ForeignKeyGroup;
-import com.export_table_definition.domain.model.collection.ForeignKeyGroups;
-import com.export_table_definition.domain.model.collection.ForeignKeyGroups.PageComposition;
-import com.export_table_definition.domain.model.collection.ForeignKeys;
-import com.export_table_definition.domain.model.collection.Tables;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
+import com.export_table_definition.domain.model.relation.ForeignKeyGroups;
+import com.export_table_definition.domain.model.relation.ForeignKeyGroups.PageComposition;
+import com.export_table_definition.domain.model.relation.ForeignKeys;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;

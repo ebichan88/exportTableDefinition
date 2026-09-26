@@ -2,8 +2,8 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.CheckDocumentDiffUsecase;
-import com.export_table_definition.domain.model.DiffResult;
-import com.export_table_definition.domain.model.ExportTargets;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
+import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
 import com.export_table_definition.domain.service.path.OutputPathResolver;

@@ -4,15 +4,15 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.row;
 
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -252,7 +252,7 @@ public class TableDefinitionTemplates {
 
   /**
    * 外部キー・論理リレーションの1行分を生成するメソッド<br>
-   * 多重度のラベル表記は{@link com.export_table_definition.domain.model.type.Cardinality}に集約している
+   * 多重度のラベル表記は{@link com.export_table_definition.domain.model.relation.Cardinality}に集約している
    *
    * @param no 行番号
    * @param fk 外部キーまたは論理リレーション
@@ -358,7 +358,7 @@ public class TableDefinitionTemplates {
   /**
    * テーブルごとのセクションを生成する共通メソッド<br>
    * 行番号はリスト内での位置（1始まり）から採番する。当該テーブルへの絞り込みは{@link
-   * com.export_table_definition.domain.model.TableDefinitionContent#assemble}で済んでいる前提とする
+   * com.export_table_definition.domain.model.target.TableDefinitionContent#assemble}で済んでいる前提とする
    *
    * @param <T> エンティティの型
    * @param list 当該テーブルのエンティティのリスト

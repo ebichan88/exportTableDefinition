@@ -1,6 +1,6 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 
 /**
  * 関数・プロシージャ情報に関してORMのデータの受け渡しに利用するDTOクラス

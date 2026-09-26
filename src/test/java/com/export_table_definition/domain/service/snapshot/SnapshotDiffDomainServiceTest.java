@@ -2,8 +2,8 @@ package com.export_table_definition.domain.service.snapshot;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.ContentDiff;
-import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.snapshot.ContentDiff;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.infrastructure.file.repository.LocalFileRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;

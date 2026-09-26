@@ -1,6 +1,6 @@
 package com.export_table_definition.domain.service.writer.template;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import java.time.format.DateTimeFormatter;
 
 /**

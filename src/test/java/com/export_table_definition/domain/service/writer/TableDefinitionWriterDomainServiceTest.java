@@ -2,16 +2,16 @@ package com.export_table_definition.domain.service.writer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ConstraintEntity;
-import com.export_table_definition.domain.model.entity.IndexEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.ConstraintEntity;
+import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;

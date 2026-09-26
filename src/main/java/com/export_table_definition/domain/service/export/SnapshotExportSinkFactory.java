@@ -1,9 +1,9 @@
 package com.export_table_definition.domain.service.export;
 
-import com.export_table_definition.domain.model.ExportTargets;
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.target.ExportTargets;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import jakarta.inject.Inject;

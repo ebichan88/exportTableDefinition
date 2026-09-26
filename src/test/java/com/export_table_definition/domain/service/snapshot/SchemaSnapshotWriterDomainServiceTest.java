@@ -2,14 +2,14 @@ package com.export_table_definition.domain.service.snapshot;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.TableDefinitionContent;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;

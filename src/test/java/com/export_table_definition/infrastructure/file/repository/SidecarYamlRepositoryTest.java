@@ -2,13 +2,13 @@ package com.export_table_definition.infrastructure.file.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.annotation.Annotations;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
-import com.export_table_definition.domain.model.type.RelationType;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
+import com.export_table_definition.domain.model.sidecar.Annotations;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

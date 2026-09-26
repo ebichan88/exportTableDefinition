@@ -1,14 +1,14 @@
 package com.export_table_definition.domain.service.target;
 
-import com.export_table_definition.domain.model.TableDetail;
-import com.export_table_definition.domain.model.annotation.Annotations;
-import com.export_table_definition.domain.model.collection.ForeignKeys;
-import com.export_table_definition.domain.model.collection.Tables;
-import com.export_table_definition.domain.model.entity.ColumnEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.value.ConsistencyFinding;
-import com.export_table_definition.domain.model.value.ConsistencyFinding.Kind;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeys;
+import com.export_table_definition.domain.model.sidecar.Annotations;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.TableDetail;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.Tables;
+import com.export_table_definition.domain.model.target.ConsistencyFinding;
+import com.export_table_definition.domain.model.target.ConsistencyFinding.Kind;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

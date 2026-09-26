@@ -2,10 +2,10 @@ package com.export_table_definition.domain.service.path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

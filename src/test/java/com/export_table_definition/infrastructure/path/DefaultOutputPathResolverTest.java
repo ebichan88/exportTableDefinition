@@ -2,11 +2,11 @@ package com.export_table_definition.infrastructure.path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
-import com.export_table_definition.domain.model.type.ListDocumentType;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import java.nio.file.Path;
 import java.time.LocalDate;

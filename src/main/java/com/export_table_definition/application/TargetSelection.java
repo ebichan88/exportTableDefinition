@@ -1,7 +1,7 @@
 package com.export_table_definition.application;
 
-import com.export_table_definition.domain.model.type.OutputObjectType;
-import com.export_table_definition.domain.model.value.TableTargetScope;
+import com.export_table_definition.domain.model.target.OutputObjectType;
+import com.export_table_definition.domain.model.target.TableTargetScope;
 import java.util.List;
 import java.util.Set;
 

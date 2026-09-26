@@ -2,11 +2,11 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

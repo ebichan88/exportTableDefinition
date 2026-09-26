@@ -1,8 +1,8 @@
 package com.export_table_definition.domain.service.path;
 
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
 
 /**
  * 出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>

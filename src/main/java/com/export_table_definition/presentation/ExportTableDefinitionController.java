@@ -4,7 +4,7 @@ import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.CheckDocumentDiffUsecase;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
-import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ProcessResult;

@@ -1,8 +1,8 @@
 package com.export_table_definition.infrastructure.path;
 
-import com.export_table_definition.domain.model.entity.TableEntity;
+import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.snapshot.SnapshotKind;
-import com.export_table_definition.domain.model.type.ListDocumentType;
+import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;

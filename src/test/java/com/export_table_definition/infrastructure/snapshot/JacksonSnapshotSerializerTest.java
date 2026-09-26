@@ -2,10 +2,10 @@ package com.export_table_definition.infrastructure.snapshot;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.snapshot.SequenceSnapshot;
 import com.export_table_definition.domain.model.snapshot.TableSnapshot;
 import com.export_table_definition.domain.model.snapshot.TypeSnapshot;
-import com.export_table_definition.domain.model.type.Cardinality;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;

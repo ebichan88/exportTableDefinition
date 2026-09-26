@@ -1,7 +1,7 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.type.TableType;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableType;
 
 /**
  * テーブル情報に関してORMのデータの受け渡しに利用するDTOクラス

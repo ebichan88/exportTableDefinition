@@ -2,7 +2,7 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
-import com.export_table_definition.domain.model.ExportTargets;
+import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
 import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;

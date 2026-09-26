@@ -1,13 +1,13 @@
 package com.export_table_definition.domain.repository;
 
-import com.export_table_definition.domain.model.TableDetail;
-import com.export_table_definition.domain.model.entity.DatabaseEntity;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.entity.FunctionEntity;
-import com.export_table_definition.domain.model.entity.SequenceEntity;
-import com.export_table_definition.domain.model.entity.TableEntity;
-import com.export_table_definition.domain.model.entity.TriggerEntity;
-import com.export_table_definition.domain.model.entity.TypeEntity;
+import com.export_table_definition.domain.model.database.DatabaseEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.TableDetail;
+import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import java.util.List;
 
 /**
@@ -30,7 +30,7 @@ public interface TableDefinitionRepository {
   /**
    * データベースのテーブル情報を取得するメソッド<br>
    * テーブル単位の絞り込みは呼び出し側（{@link
-   * com.export_table_definition.domain.model.value.TableTargetScope}）がJava側で行うため、 スキーマ単位でのみ絞り込む
+   * com.export_table_definition.domain.model.target.TableTargetScope}）がJava側で行うため、 スキーマ単位でのみ絞り込む
    *
    * @param schemaList テーブル定義出力対象のスキーマのリスト
    * @return データベースのテーブル情報

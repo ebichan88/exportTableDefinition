@@ -1,11 +1,11 @@
 package com.export_table_definition.infrastructure.file.repository;
 
-import com.export_table_definition.domain.model.annotation.Annotations;
-import com.export_table_definition.domain.model.annotation.Sidecar;
-import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
-import com.export_table_definition.domain.model.value.TableKey;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.sidecar.Annotations;
+import com.export_table_definition.domain.model.sidecar.Sidecar;
+import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.repository.SidecarRepository;
 import java.io.IOException;
 import java.io.Reader;

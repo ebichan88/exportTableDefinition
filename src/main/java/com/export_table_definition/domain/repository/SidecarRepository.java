@@ -1,6 +1,6 @@
 package com.export_table_definition.domain.repository;
 
-import com.export_table_definition.domain.model.annotation.Sidecar;
+import com.export_table_definition.domain.model.sidecar.Sidecar;
 
 /**
  * サイドカーYAML（手動付帯情報・論理リレーション）の読み込みに関するリポジトリインターフェース

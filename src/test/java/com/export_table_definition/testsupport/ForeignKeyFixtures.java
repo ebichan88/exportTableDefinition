@@ -1,8 +1,8 @@
 package com.export_table_definition.testsupport;
 
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
-import com.export_table_definition.domain.model.type.RelationType;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
 import java.util.List;
 
 /**

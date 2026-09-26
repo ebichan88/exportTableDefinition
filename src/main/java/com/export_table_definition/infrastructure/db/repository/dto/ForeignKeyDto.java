@@ -1,8 +1,8 @@
 package com.export_table_definition.infrastructure.db.repository.dto;
 
-import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
-import com.export_table_definition.domain.model.type.Cardinality;
-import com.export_table_definition.domain.model.type.RelationType;
+import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
 
 /**
  * 外部キー情報に関してORMのデータの受け渡しに利用するDTOクラス

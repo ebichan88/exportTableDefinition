@@ -1,6 +1,6 @@
 package com.export_table_definition.application;
 
-import com.export_table_definition.domain.model.DiffResult;
+import com.export_table_definition.domain.model.snapshot.DiffResult;
 
 /**
  * DB vs ドキュメントの差分検知（{@code --check}モード）のユースケースを扱うインターフェース
