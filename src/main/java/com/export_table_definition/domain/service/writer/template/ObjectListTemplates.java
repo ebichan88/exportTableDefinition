@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.service.writer.template;
 
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.row;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
@@ -98,21 +99,14 @@ public class ObjectListTemplates {
    * @return 一覧1行分の文字列（末尾の改行を含む）
    */
   public static String triggerListLine(int no, TriggerEntity trigger) {
-    return "|"
-        + no
-        + "|"
-        + trigger.schemaName()
-        + "|"
-        + trigger.tableName()
-        + "|"
-        + trigger.triggerName()
-        + "|"
-        + trigger.timing()
-        + "|"
-        + trigger.events()
-        + "|"
-        + trigger.functionName()
-        + "|"
+    return row(
+            no,
+            trigger.schemaName(),
+            trigger.tableName(),
+            trigger.triggerName(),
+            trigger.timing(),
+            trigger.events(),
+            trigger.functionName())
         + LINE_SEPARATOR;
   }
 
@@ -125,27 +119,19 @@ public class ObjectListTemplates {
    * @return 一覧1行分の文字列（末尾の改行を含む）
    */
   public static String functionListLine(int no, FunctionEntity function) {
-    return "|"
-        + no
-        + "|"
-        + function.schemaName()
-        + "|"
-        + function.functionKind()
-        + "|"
-        + function.functionName()
-        + "|"
-        + MarkdownTemplateSupport.escapePipe(function.functionArguments())
-        + "|"
-        + MarkdownTemplateSupport.escapePipe(function.functionResult())
-        + "|"
-        + function.languageName()
-        + "|"
-        + objectLink(
-            function.dbName(),
+    return row(
+            no,
             function.schemaName(),
-            ListDocumentType.FUNCTION,
-            function.fileName())
-        + "|"
+            function.functionKind(),
+            function.functionName(),
+            MarkdownTemplateSupport.escapePipe(function.functionArguments()),
+            MarkdownTemplateSupport.escapePipe(function.functionResult()),
+            function.languageName(),
+            objectLink(
+                function.dbName(),
+                function.schemaName(),
+                ListDocumentType.FUNCTION,
+                function.fileName()))
         + LINE_SEPARATOR;
   }
 
@@ -157,33 +143,22 @@ public class ObjectListTemplates {
    * @return 一覧1行分の文字列（末尾の改行を含む）
    */
   public static String sequenceListLine(int no, SequenceEntity sequence) {
-    return "|"
-        + no
-        + "|"
-        + sequence.schemaName()
-        + "|"
-        + sequence.sequenceName()
-        + "|"
-        + sequence.incrementBy()
-        + "|"
-        + sequence.minValue()
-        + "|"
-        + sequence.maxValue()
-        + "|"
-        + sequence.cacheSize()
-        + "|"
-        + sequence.startValue()
-        + "|"
-        + MarkdownTemplateSupport.marker(sequence.cycle())
-        + "|"
-        + sequence.ownedBy()
-        + "|"
-        + objectLink(
-            sequence.dbName(),
+    return row(
+            no,
             sequence.schemaName(),
-            ListDocumentType.SEQUENCE,
-            sequence.sequenceName())
-        + "|"
+            sequence.sequenceName(),
+            sequence.incrementBy(),
+            sequence.minValue(),
+            sequence.maxValue(),
+            sequence.cacheSize(),
+            sequence.startValue(),
+            MarkdownTemplateSupport.marker(sequence.cycle()),
+            sequence.ownedBy(),
+            objectLink(
+                sequence.dbName(),
+                sequence.schemaName(),
+                ListDocumentType.SEQUENCE,
+                sequence.sequenceName()))
         + LINE_SEPARATOR;
   }
 
@@ -196,19 +171,13 @@ public class ObjectListTemplates {
    * @return 一覧1行分の文字列（末尾の改行を含む）
    */
   public static String typeListLine(int no, TypeEntity type) {
-    return "|"
-        + no
-        + "|"
-        + type.schemaName()
-        + "|"
-        + type.typeName()
-        + "|"
-        + type.typeCategory()
-        + "|"
-        + MarkdownTemplateSupport.escapePipe(type.definition())
-        + "|"
-        + objectLink(type.dbName(), type.schemaName(), ListDocumentType.TYPE, type.typeName())
-        + "|"
+    return row(
+            no,
+            type.schemaName(),
+            type.typeName(),
+            type.typeCategory(),
+            MarkdownTemplateSupport.escapePipe(type.definition()),
+            objectLink(type.dbName(), type.schemaName(), ListDocumentType.TYPE, type.typeName()))
         + LINE_SEPARATOR;
   }
 
@@ -224,10 +193,9 @@ public class ObjectListTemplates {
    */
   private static String objectLink(
       String dbName, String schemaName, ListDocumentType kind, String fileName) {
-    return "[■]("
-        + DocumentLocations.linkFromBase(
-            DocumentLocations.schemaObjectFile(dbName, schemaName, kind, fileName))
-        + ")";
+    return MarkdownTemplateSupport.linkCell(
+        DocumentLocations.linkFromBase(
+            DocumentLocations.schemaObjectFile(dbName, schemaName, kind, fileName)));
   }
 
   /**
@@ -238,9 +206,7 @@ public class ObjectListTemplates {
    * @return フッター文字列
    */
   public static String footer(BaseInfoEntity baseInfo) {
-    return PagedSectionTemplates.pageFooter(
-        null,
-        null,
+    return PagedSectionTemplates.backOnlyFooter(
         DocumentLocations.linkFromBase(
             DocumentLocations.listFile(ListDocumentType.TABLE, baseInfo.dbName())),
         ListDocumentType.TABLE.getBackLinkLabel());

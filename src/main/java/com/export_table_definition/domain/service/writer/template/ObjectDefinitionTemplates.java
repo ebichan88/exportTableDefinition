@@ -37,9 +37,7 @@ public class ObjectDefinitionTemplates {
    * @return フッター文字列
    */
   private static String footer(ListDocumentType listType, BaseInfoEntity baseInfo) {
-    return PagedSectionTemplates.pageFooter(
-        null,
-        null,
+    return PagedSectionTemplates.backOnlyFooter(
         DocumentLocations.linkFromDefinition(
             DocumentLocations.listFile(listType, baseInfo.dbName())),
         listType.getBackLinkLabel());

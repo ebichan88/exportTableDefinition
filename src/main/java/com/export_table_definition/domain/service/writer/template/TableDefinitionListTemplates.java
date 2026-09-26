@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR_DOUBLE;
+import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.row;
 
 import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.TableEntity;
@@ -87,19 +88,13 @@ public class TableDefinitionListTemplates {
    * @return テーブル一覧セクション文字列
    */
   public static String tableListLine(int no, TableEntity table) {
-    return "|"
-        + no
-        + "|"
-        + table.schemaName()
-        + "|"
-        + MarkdownTemplateSupport.escapeTableCell(table.logicalTableName())
-        + "|"
-        + table.physicalTableName()
-        + "|"
-        + table.tableType()
-        + "|"
-        + tableDefinitionLink(table)
-        + "|"
+    return row(
+            no,
+            table.schemaName(),
+            MarkdownTemplateSupport.escapeTableCell(table.logicalTableName()),
+            table.physicalTableName(),
+            table.tableType(),
+            tableDefinitionLink(table))
         + LINE_SEPARATOR;
   }
 
@@ -111,9 +106,8 @@ public class TableDefinitionListTemplates {
    * @return テーブル定義書へのリンク文字列
    */
   private static String tableDefinitionLink(TableEntity table) {
-    return "[■]("
-        + DocumentLocations.linkFromBase(
-            DocumentLocations.tableDefinitionFile(table.dbName(), table))
-        + ")";
+    return MarkdownTemplateSupport.linkCell(
+        DocumentLocations.linkFromBase(
+            DocumentLocations.tableDefinitionFile(table.dbName(), table)));
   }
 }

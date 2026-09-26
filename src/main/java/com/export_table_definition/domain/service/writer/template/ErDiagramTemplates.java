@@ -100,12 +100,13 @@ public class ErDiagramTemplates {
         (schemaName, tables) ->
             sb.append(
                     String.format(
-                        "| %d | %s | %d | [■](%s) |",
+                        "| %d | %s | %d | %s |",
                         ++no[0],
                         schemaName,
                         tables.size(),
-                        DocumentLocations.linkFromBase(
-                            DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName))))
+                        MarkdownTemplateSupport.linkCell(
+                            DocumentLocations.linkFromBase(
+                                DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName)))))
                 .append(LINE_SEPARATOR));
     return sb.append(LINE_SEPARATOR).toString();
   }
@@ -202,8 +203,12 @@ public class ErDiagramTemplates {
   public static String groupIndexLine(
       int no, int tableCount, int fkCount, TableKey mainTable, String href) {
     return String.format(
-            "| %d | %d | %d | %s | [■](%s) |",
-            no, tableCount, fkCount, mainTable == null ? "" : mainTable.qualifiedName(), href)
+            "| %d | %d | %d | %s | %s |",
+            no,
+            tableCount,
+            fkCount,
+            mainTable == null ? "" : mainTable.qualifiedName(),
+            MarkdownTemplateSupport.linkCell(href))
         + LINE_SEPARATOR;
   }
 
@@ -263,14 +268,15 @@ public class ErDiagramTemplates {
           + LINE_SEPARATOR;
     }
     return String.format(
-            "| %d | %s | %s | %s | %s | [■](%s) |",
+            "| %d | %s | %s | %s | %s | %s |",
             no,
             table.schemaName(),
             table.physicalTableName(),
             Objects.toString(table.logicalTableName(), ""),
             table.tableType(),
-            DocumentLocations.linkFromBase(
-                DocumentLocations.tableDefinitionFile(table.dbName(), table)))
+            MarkdownTemplateSupport.linkCell(
+                DocumentLocations.linkFromBase(
+                    DocumentLocations.tableDefinitionFile(table.dbName(), table))))
         + LINE_SEPARATOR;
   }
 
@@ -336,11 +342,8 @@ public class ErDiagramTemplates {
    * @return フッター文字列
    */
   public static String indexFooter(BaseInfoEntity baseInfo) {
-    return PagedSectionTemplates.pageFooter(
-        null,
-        null,
-        listLink(ListDocumentType.TABLE, baseInfo),
-        ListDocumentType.TABLE.getBackLinkLabel());
+    return PagedSectionTemplates.backOnlyFooter(
+        listLink(ListDocumentType.TABLE, baseInfo), ListDocumentType.TABLE.getBackLinkLabel());
   }
 
   /**

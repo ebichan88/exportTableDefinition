@@ -66,4 +66,16 @@ public class PagedSectionTemplates {
         .append(LINE_SEPARATOR)
         .toString();
   }
+
+  /**
+   * ページ送りを持たない、一覧へ戻る導線のみのフッター<br>
+   * 分割されない一覧・定義書ページ（テーブル定義書・個別定義書・各種一覧・ER図索引）で共通して用いる
+   *
+   * @param backHref 一覧ページへの相対パス
+   * @param backLabel 一覧ページへのリンク表示名
+   * @return フッター文字列
+   */
+  public static String backOnlyFooter(String backHref, String backLabel) {
+    return pageFooter(null, null, backHref, backLabel);
+  }
 }

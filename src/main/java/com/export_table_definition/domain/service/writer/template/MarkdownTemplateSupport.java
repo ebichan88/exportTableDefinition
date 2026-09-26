@@ -35,14 +35,34 @@ public final class MarkdownTemplateSupport {
                 | RDBMS | データベース名 | 作成日 |
                 |:---|:---|:---|
                 """
-        + "|"
-        + baseInfo.dbmsName()
-        + "|"
-        + baseInfo.dbName()
-        + "|"
-        + baseInfo.generatedDate()
-        + "|"
+        + row(baseInfo.dbmsName(), baseInfo.dbName(), baseInfo.generatedDate())
         + LINE_SEPARATOR_DOUBLE;
+  }
+
+  /**
+   * Markdownの表の1行を組み立てるメソッド<br>
+   * 各引数を{@code |}区切りで連結し、先頭・末尾にも{@code |}を付与する（末尾の改行は含まない）。 セルの値は{@link
+   * String#valueOf}相当で文字列化するため、エスケープが必要な自由記述文字列は 呼び出し側で{@link #escapeTableCell}等を適用した上で渡すこと
+   *
+   * @param cells セルの値（先頭から順に列として並ぶ）
+   * @return {@code |cell1|cell2|...|} 形式の1行分の文字列
+   */
+  public static String row(Object... cells) {
+    final StringBuilder sb = new StringBuilder();
+    for (Object cell : cells) {
+      sb.append('|').append(cell);
+    }
+    return sb.append('|').toString();
+  }
+
+  /**
+   * テーブル定義書・個別定義ファイルなどへのリンクを表す表セルを組み立てるメソッド
+   *
+   * @param href リンク先への相対パス
+   * @return {@code [■](href)} 形式のリンクセル文字列
+   */
+  public static String linkCell(String href) {
+    return "[■](" + href + ")";
   }
 
   /**
