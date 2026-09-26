@@ -13,11 +13,13 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,21 +73,36 @@ public class SidecarYamlRepository implements SidecarRepository {
   private static final String KEY_NAME = "name";
   private static final String KEY_CARDINALITY = "cardinality";
 
+  /** トップレベルに書けるキー */
+  private static final Set<String> ROOT_KEYS = Set.of(KEY_TABLES, KEY_RELATIONS);
+
+  /** {@code tables}の1テーブル分に書けるキー */
+  private static final Set<String> TABLE_KEYS = Set.of(KEY_DESCRIPTION, KEY_REMARKS, KEY_COLUMNS);
+
+  /** {@code relations}の1件分に書けるキー */
+  private static final Set<String> RELATION_KEYS =
+      Set.of(
+          KEY_TABLE, KEY_COLUMNS, KEY_PARENT_TABLE, KEY_PARENT_COLUMNS, KEY_NAME, KEY_CARDINALITY);
+
   /** {@inheritDoc} */
   @Override
   public Sidecar load(String sidecarPath) {
     if (sidecarPath == null || sidecarPath.isBlank()) {
       return Sidecar.empty();
     }
-    final Path path = Path.of(sidecarPath.trim());
-    if (!Files.exists(path)) {
-      logger.warn(
-          "Annotation file not found. Skipping merge of manual annotations. [annotationPath={}]",
-          path);
-      return Sidecar.empty();
-    }
+    final Path path = requireFile(sidecarPath.trim());
     try (final Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
       final Object root = parseYaml(reader, path);
+      if (root != null && !(root instanceof Map)) {
+        logger.warn(
+            "Ignoring the annotation file because its top level is not a mapping of '{}' and '{}'. "
+                + "[annotationPath={}]",
+            KEY_TABLES,
+            KEY_RELATIONS,
+            path);
+        return Sidecar.empty();
+      }
+      warnUnknownKeys(asMap(root), ROOT_KEYS, "the annotation file", path);
       final Annotations annotations = parseAnnotations(root, path);
       final List<ForeignKeyEntity> logicalRelations = parseRelations(root, path);
       logger.info(
@@ -98,6 +115,38 @@ public class SidecarYamlRepository implements SidecarRepository {
       throw new UncheckedIOException(
           "Failed to read the annotation file. [annotationPath=" + path + "]", e);
     }
+  }
+
+  /**
+   * 指定されたサイドカーYAMLのパスが、実在するファイルを指しているか確かめるメソッド<br>
+   * 指定したのにファイルが無い場合に付帯情報なしで続行すると、付帯情報の消えた定義書が気付かれずに出力されるため、 利用者が直せる誤りとして報告する
+   *
+   * @param sidecarPath サイドカーYAMLのパス（前後の空白を除去済み）
+   * @return サイドカーYAMLのパス
+   * @throws UserCorrectableException パスとして解釈できない場合や、ファイルが存在しない・ファイルでない場合
+   */
+  private Path requireFile(String sidecarPath) {
+    final Path path;
+    try {
+      path = Path.of(sidecarPath);
+    } catch (InvalidPathException e) {
+      throw new UserCorrectableException(
+          "annotationPath is not a valid path. [annotationPath=" + sidecarPath + "]", e);
+    }
+    if (!Files.exists(path)) {
+      throw new UserCorrectableException(
+          "Annotation file not found. Check annotationPath in ExportTableDefinition.properties. "
+              + "[annotationPath="
+              + path.toAbsolutePath().normalize()
+              + "]");
+    }
+    if (!Files.isRegularFile(path)) {
+      throw new UserCorrectableException(
+          "annotationPath does not point to a file. [annotationPath="
+              + path.toAbsolutePath().normalize()
+              + "]");
+    }
+    return path;
   }
 
   /**
@@ -132,7 +181,13 @@ public class SidecarYamlRepository implements SidecarRepository {
    * @return 変換した付帯情報
    */
   private Annotations parseAnnotations(Object root, Path path) {
-    final Map<String, Object> tables = asMap(mapValue(root, KEY_TABLES));
+    final Object tablesValue = mapValue(root, KEY_TABLES);
+    if (tablesValue != null && !(tablesValue instanceof Map)) {
+      logger.warn(
+          "Ignoring '{}' because it is not a mapping. [annotationPath={}]", KEY_TABLES, path);
+      return Annotations.empty();
+    }
+    final Map<String, Object> tables = asMap(tablesValue);
     if (tables.isEmpty()) {
       // 論理リレーションのみを記述したサイドカーも有効なため、tablesが無いことは異常ではない
       logger.debug("Annotation file has no 'tables' entries. [annotationPath={}]", path);
@@ -145,7 +200,15 @@ public class SidecarYamlRepository implements SidecarRepository {
           if (tableKey == null) {
             return;
           }
-          byKey.put(tableKey, toTableAnnotation(asMap(value)));
+          if (value != null && !(value instanceof Map)) {
+            logger.warn(
+                "Ignoring '{}' entry because it is not a mapping. [table={}, annotationPath={}]",
+                KEY_TABLES,
+                tableKey.qualifiedName(),
+                path);
+            return;
+          }
+          byKey.put(tableKey, toTableAnnotation(asMap(value), tableKey, path));
         });
     return Annotations.of(byKey);
   }
@@ -186,6 +249,11 @@ public class SidecarYamlRepository implements SidecarRepository {
    * @return 変換した論理リレーション。必須項目が欠けている場合はnull
    */
   private ForeignKeyEntity toLogicalRelation(Map<String, Object> relationMap, Path path) {
+    warnUnknownKeys(
+        relationMap,
+        RELATION_KEYS,
+        "'" + KEY_RELATIONS + "' entry of " + asString(relationMap.get(KEY_TABLE)),
+        path);
     final TableKey child = toTableKey(asString(relationMap.get(KEY_TABLE)), KEY_RELATIONS, path);
     final TableKey parent =
         toTableKey(asString(relationMap.get(KEY_PARENT_TABLE)), KEY_RELATIONS, path);
@@ -273,12 +341,26 @@ public class SidecarYamlRepository implements SidecarRepository {
    * 1テーブル分の付帯情報マップを{@link TableAnnotation}へ変換するメソッド
    *
    * @param tableMap 1テーブル分の付帯情報マップ
+   * @param tableKey テーブルキー（ログ用）
+   * @param path 読み込み元のパス（ログ用）
    * @return 変換した付帯情報
    */
-  private TableAnnotation toTableAnnotation(Map<String, Object> tableMap) {
+  private TableAnnotation toTableAnnotation(
+      Map<String, Object> tableMap, TableKey tableKey, Path path) {
+    warnUnknownKeys(
+        tableMap, TABLE_KEYS, "'" + KEY_TABLES + "' entry of " + tableKey.qualifiedName(), path);
     final String description = asString(tableMap.get(KEY_DESCRIPTION));
     final String remarks = asString(tableMap.get(KEY_REMARKS));
-    final Map<String, Object> columns = asMap(tableMap.get(KEY_COLUMNS));
+    final Object columnsValue = tableMap.get(KEY_COLUMNS);
+    if (columnsValue != null && !(columnsValue instanceof Map)) {
+      logger.warn(
+          "Ignoring '{}' because it is not a mapping of column names to remarks. "
+              + "[table={}, annotationPath={}]",
+          KEY_COLUMNS,
+          tableKey.qualifiedName(),
+          path);
+    }
+    final Map<String, Object> columns = asMap(columnsValue);
     final Map<String, String> columnRemarks = new LinkedHashMap<>();
     columns.forEach(
         (columnName, remark) -> {
@@ -287,6 +369,28 @@ public class SidecarYamlRepository implements SidecarRepository {
           }
         });
     return new TableAnnotation(description, remarks, columnRemarks);
+  }
+
+  /**
+   * 書けるキー以外のキーを警告するメソッド<br>
+   * 未知のキーは読み飛ばすが、キー名の書き誤り（{@code descripton}等）で付帯情報が黙って消えないよう警告する
+   *
+   * @param map 対象のマップ
+   * @param knownKeys 書けるキー
+   * @param location キーの場所（ログ用）
+   * @param path 読み込み元のパス（ログ用）
+   */
+  private void warnUnknownKeys(
+      Map<String, Object> map, Set<String> knownKeys, String location, Path path) {
+    map.keySet().stream()
+        .filter(key -> !knownKeys.contains(key))
+        .forEach(
+            key ->
+                logger.warn(
+                    "Ignoring unknown key in {}. [key={}, annotationPath={}]",
+                    location,
+                    key,
+                    path));
   }
 
   /**

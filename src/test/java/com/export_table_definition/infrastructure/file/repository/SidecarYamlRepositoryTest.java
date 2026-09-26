@@ -9,12 +9,14 @@ import com.export_table_definition.domain.model.relation.RelationType;
 import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -71,9 +73,19 @@ public class SidecarYamlRepositoryTest {
   }
 
   @Test
-  @DisplayName("load: ファイルが存在しない場合は空のAnnotationsを返す")
+  @DisplayName("load: 指定したファイルが存在しない場合は、付帯情報なしで続行せず、利用者が直せる誤りを投げる")
   void testLoadMissingFile(@TempDir Path dir) {
-    assertTrue(repository.load(dir.resolve("not_exist.yml").toString()).annotations().isEmpty());
+    UserCorrectableException e =
+        assertThrows(
+            UserCorrectableException.class,
+            () -> repository.load(dir.resolve("not_exist.yml").toString()));
+    assertTrue(e.getMessage().contains("not_exist.yml"));
+  }
+
+  @Test
+  @DisplayName("load: 指定したパスがファイルでない（ディレクトリ等）場合は、利用者が直せる誤りを投げる")
+  void testLoadDirectory(@TempDir Path dir) {
+    assertThrows(UserCorrectableException.class, () -> repository.load(dir.toString()));
   }
 
   @Test
@@ -339,5 +351,68 @@ public class SidecarYamlRepositoryTest {
     Files.write(file, "tables:\n  public.users:\n    description: 説明\n".getBytes("Shift_JIS"));
 
     assertThrows(UserCorrectableException.class, () -> repository.load(file.toString()));
+  }
+
+  @Test
+  @DisplayName("load: 未知のキー（キー名の書き誤り等）は読み飛ばし、書けるキーの内容は読み込む")
+  void testLoadIgnoresUnknownKeys(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+            tabels: {}
+            tables:
+              public.users:
+                descripton: 書き誤り
+                remarks: テーブル備考
+            relations:
+              - table: public.logs
+                columns: [user_id]
+                parentTable: public.users
+                parentColumns: [id]
+                nmae: rel_logs_users
+            """);
+
+    var sidecar = repository.load(file.toString());
+
+    TableAnnotation users = sidecar.annotations().of(table("public", "users"));
+    assertEquals("", users.description());
+    assertEquals("テーブル備考", users.remarks());
+    assertEquals(1, sidecar.logicalRelations().size());
+    // 書き誤った関連名（nmae）は読み飛ばし、関連名は自動生成される
+    assertEquals("logs_user_id_lrel", sidecar.logicalRelations().get(0).foreignkeyName());
+  }
+
+  @Test
+  @DisplayName("load: トップレベルがマップでない場合は、内容を読み飛ばして空のSidecarを返す")
+  void testLoadIgnoresNonMappingRoot(@TempDir Path dir) throws IOException {
+    Path file = writeYaml(dir, "- public.users\n");
+
+    var sidecar = repository.load(file.toString());
+
+    assertTrue(sidecar.annotations().isEmpty());
+    assertTrue(sidecar.logicalRelations().isEmpty());
+  }
+
+  @Test
+  @DisplayName("load: マップでないテーブルの記述は読み飛ばし、マップでないcolumnsはカラム備考のみ読み飛ばす")
+  void testLoadIgnoresNonMappingEntries(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+            tables:
+              public.logs: 説明のつもり
+              public.users:
+                remarks: テーブル備考
+                columns: [email]
+            """);
+
+    var sidecar = repository.load(file.toString());
+
+    assertEquals(Set.of(TableKey.of("public", "users")), sidecar.annotations().tableKeys());
+    TableAnnotation users = sidecar.annotations().of(table("public", "users"));
+    assertEquals("テーブル備考", users.remarks());
+    assertEquals("", users.columnRemark("email"));
   }
 }
