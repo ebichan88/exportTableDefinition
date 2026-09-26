@@ -587,6 +587,20 @@ gradlew integrationTest
 （`docs/sample/postgres/output`）と一致することを確かめる（基本情報の作成日は比較しない）。出力仕様を意図して変えた場合は、
 ベースラインを出力し直してコミットする。PRではGitHub Actions（`.github/workflows/ci.yml`）で両方のテストが実行される。
 
+#### カバレッジ
+
+`gradlew build`（`gradlew test`）を実行すると、単体テストのカバレッジ計測（JaCoCo）も行われる。
+
+```
+gradlew jacocoTestReport
+```
+
+でHTMLレポート（`build/reports/jacoco/test/html/index.html`）を生成できる。
+また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、ドメイン層
+（`com.export_table_definition.domain`配下）の単体テストカバレッジがline 95%・branch 85%を下回ると
+ビルドが失敗する（結合テストは対象外。基準は`build.gradle`の`jacocoTestCoverageVerification`で定義）。
+PRではGitHub ActionsがカバレッジレポートをArtifactとしてアップロードし、PRへの概要コメントも投稿する。
+
 ### Javadoc
 
 以下のコマンドを実行することで、`exportTableDefinition/docs/javadoc`フォルダ配下にjavadocが作成される
