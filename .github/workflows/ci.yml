@@ -1,0 +1,38 @@
+name: CI
+
+# PRごとに、単体テスト・フォーマットの検査（build）と、Docker上の実DBに対する結合テスト（integrationTest）を行う。
+# docs/sample/postgres配下（DDL・ベースライン）は結合テストの入力のため、docsの変更でも実行する
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # 結合テストはDockerを使うため、Dockerが使えるLinuxのランナーで実行する
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Build and run tests
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build integrationTest --console=plain
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/

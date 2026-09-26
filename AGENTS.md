@@ -65,7 +65,10 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 未指定（キーの省略・空）は既定値。未知のキー・引数や解釈できない値は、既定値へ黙って置き換えずに失敗にする。
   - サイドカーYAMLの個々の記述の誤りは、読み飛ばして警告する（WARNログはコンソールにも出る）。
 - `tableDefinitionMapper.xml` やドメイン層（エンティティ・テンプレート・ER図生成ロジック等）を変更した後は、
-  `verify` スキル（`.claude/skills/verify/SKILL.md`）に従って実際に出力結果を確認すること。
+  `./gradlew integrationTest`（Docker上のPostgreSQLに対する結合テスト。`src/integrationTest`）を実行すること。
+  mapperのSQLを変えた場合は`PostgresTableDefinitionRepositoryIT`に、変えた取得結果を確かめるテストを足す。
+  出力がベースライン（`docs/sample/postgres/output`）と変わる場合は、`verify` スキル（`.claude/skills/verify/SKILL.md`）に従って
+  出力結果を確認し、意図した変更であればベースラインを出力し直す。Oracle用mapperは結合テストの対象外のため、変更した場合は差分を目視で確認する。
 - 新規ロジックを書く前・既存クラスに数行足す前に、以下のような「小さな責務の混在」が
   再発していないか確認する（過去に実際に見つかった逸脱パターン）。
   - 同じ値をループのたびに再構築していないか。`TableTargetFilter.of(...)`のような値オブジェクトを
