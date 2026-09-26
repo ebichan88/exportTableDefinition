@@ -168,6 +168,7 @@ public class ExportTableDefinition {
         PropertyLoader.getList(PROPERTY_FILE_NAME, "schema"),
         PropertyLoader.getList(PROPERTY_FILE_NAME, "table"),
         PropertyLoader.getList(PROPERTY_FILE_NAME, "outputObjects"),
+        // サイドカーYAMLのパスは、既存の設定ファイルとの互換のためプロパティキーannotationPathで指定する
         PropertyLoader.getString(PROPERTY_FILE_NAME, "annotationPath"));
   }
 }

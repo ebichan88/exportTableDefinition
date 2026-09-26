@@ -56,6 +56,6 @@ public class TargetSelectionTest {
     assertTrue(selection.targetScope().matches(table("sample", "employee")));
     assertFalse(selection.targetScope().matches(table("sample", "tmp_work")));
     assertFalse(selection.targetScope().matches(table("public", "employee")));
-    assertEquals("sidecar.yml", selection.annotationPath());
+    assertEquals("sidecar.yml", selection.sidecarPath());
   }
 }

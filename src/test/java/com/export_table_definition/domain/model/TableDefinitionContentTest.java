@@ -77,7 +77,7 @@ public class TableDefinitionContentTest {
     assertEquals(List.of(ownIndex), content.indexes());
     assertEquals(List.of(ownConstraint), content.constraints());
     assertEquals(List.of(outgoingFk), content.foreignKeys());
-    assertEquals(List.of(incomingFk), content.incomingForeignKeys());
+    assertEquals(List.of(incomingFk), content.incomingRelations());
     assertEquals(List.of(ownTrigger), content.triggers());
 
     // otherテーブルの情報が紛れ込んでいないことの確認
@@ -104,7 +104,7 @@ public class TableDefinitionContentTest {
     assertEquals(List.of(), content.indexes());
     assertEquals(List.of(), content.constraints());
     assertEquals(List.of(), content.foreignKeys());
-    assertEquals(List.of(), content.incomingForeignKeys());
+    assertEquals(List.of(), content.incomingRelations());
     assertEquals(List.of(), content.triggers());
   }
 

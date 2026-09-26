@@ -30,7 +30,7 @@ public class TableAnnotationTest {
   }
 
   @Test
-  @DisplayName("orphanColumnNames: 実在カラムに含まれない注釈側カラム名のみ抽出する")
+  @DisplayName("orphanColumnNames: 実在カラムに含まれない付帯情報側カラム名のみ抽出する")
   void testOrphanColumnNames() {
     var columnRemarks = new LinkedHashMap<String, String>();
     columnRemarks.put("id", "主キー");

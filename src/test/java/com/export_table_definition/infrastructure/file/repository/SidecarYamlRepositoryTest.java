@@ -18,10 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** AnnotationYamlRepository のサイドカーYAML読み込みに関するテスト */
-public class AnnotationYamlRepositoryTest {
+/** SidecarYamlRepository のサイドカーYAML読み込みに関するテスト */
+public class SidecarYamlRepositoryTest {
 
-  private final AnnotationYamlRepository repository = new AnnotationYamlRepository();
+  private final SidecarYamlRepository repository = new SidecarYamlRepository();
 
   private TableEntity table(String schema, String physical) {
     return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");

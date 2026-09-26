@@ -24,8 +24,8 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.model.value.TableKey;
-import com.export_table_definition.domain.repository.AnnotationRepository;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
@@ -218,7 +218,7 @@ public class ExportTableDefinitionUsecaseImplTest {
   private List<ForeignKeyEntity> logicalRelations = List.of();
 
   /** annotationRepositoryへ渡されたパスを記録する */
-  private String receivedAnnotationPath;
+  private String receivedSidecarPath;
 
   /** サイドカーの読み込み時に投げる例外（読み込み失敗の再現用。nullの場合は投げない） */
   private RuntimeException sidecarFailure;
@@ -235,9 +235,9 @@ public class ExportTableDefinitionUsecaseImplTest {
         new ErDiagramWriterDomainService(fileRepository, pathResolver, pagedSectionWriter);
     final ObjectListWriterDomainService objectListWriter =
         new ObjectListWriterDomainService(fileRepository, pathResolver, pagedSectionWriter);
-    final AnnotationRepository annotationRepository =
+    final SidecarRepository sidecarRepository =
         path -> {
-          receivedAnnotationPath = path;
+          receivedSidecarPath = path;
           if (sidecarFailure != null) {
             throw sidecarFailure;
           }
@@ -255,7 +255,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         generatedDate ->
             new SchemaExporter(
                 repository,
-                annotationRepository,
+                sidecarRepository,
                 new ExportTargetConsistencyDomainService(),
                 Clock.fixed(
                     generatedDate.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
@@ -689,7 +689,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             false));
 
     // annotationRepositoryにはプロパティで指定したパスがそのまま渡される
-    assertEquals("conf/annotations.yml", receivedAnnotationPath);
+    assertEquals("conf/annotations.yml", receivedSidecarPath);
     final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
     assertTrue(t1Content.contains("t1の説明文"));
     assertTrue(t1Content.contains("t1の備考"));

@@ -43,10 +43,10 @@ public record TableAnnotation(
   }
 
   /**
-   * この注釈に含まれる物理カラム名のうち、実在するカラムに該当しないもの（＝孤児注釈）を抽出するメソッド
+   * この付帯情報に含まれる物理カラム名のうち、実在するカラムに該当しないもの（＝孤児付帯情報）を抽出するメソッド
    *
    * @param actualColumnNames テーブルに実在する物理カラム名の集合
-   * @return 実在カラムに該当しない、注釈側の物理カラム名の集合
+   * @return 実在カラムに該当しない、付帯情報側の物理カラム名の集合
    */
   public Set<String> orphanColumnNames(Set<String> actualColumnNames) {
     final Map<String, String> orphans = new LinkedHashMap<>(columnRemarks);

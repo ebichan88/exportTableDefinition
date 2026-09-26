@@ -18,7 +18,7 @@ import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.model.type.OutputObjectType;
 import com.export_table_definition.domain.model.value.ConsistencyFinding;
 import com.export_table_definition.domain.model.value.TableTargetScope;
-import com.export_table_definition.domain.repository.AnnotationRepository;
+import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.export.ExportSink;
 import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
@@ -46,7 +46,7 @@ final class SchemaExporter {
 
   private static final Logger logger = LogManager.getLogger(SchemaExporter.class);
   private final TableDefinitionRepository repository;
-  private final AnnotationRepository annotationRepository;
+  private final SidecarRepository sidecarRepository;
   private final ExportTargetConsistencyDomainService consistencyDomainService;
   private final Clock clock;
 
@@ -54,18 +54,18 @@ final class SchemaExporter {
    * コンストラクタ
    *
    * @param repository テーブル定義出力に関するリポジトリクラス
-   * @param annotationRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
+   * @param sidecarRepository 手動付帯情報（サイドカーYAML）の読み込みを行うリポジトリクラス
    * @param consistencyDomainService 出力対象のテーブルと外部キー・サイドカーの突き合わせを行うドメインサービス
    * @param clock ドキュメントの生成日を決める時計
    */
   @Inject
   SchemaExporter(
       TableDefinitionRepository repository,
-      AnnotationRepository annotationRepository,
+      SidecarRepository sidecarRepository,
       ExportTargetConsistencyDomainService consistencyDomainService,
       Clock clock) {
     this.repository = repository;
-    this.annotationRepository = annotationRepository;
+    this.sidecarRepository = sidecarRepository;
     this.consistencyDomainService = consistencyDomainService;
     this.clock = clock;
   }
@@ -74,7 +74,7 @@ final class SchemaExporter {
    * 出力対象のうち、一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・ 手動付帯情報）を取得するメソッド<br>
    * テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は、 出力時（{@link #export}）にスキーマ・チャンク単位で取得する
    *
-   * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・annotationPath）
+   * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）
    * @return 一括取得した出力対象の情報
    */
   ExportTargets fetchTargets(TargetSelection targetSelection) {
@@ -85,7 +85,7 @@ final class SchemaExporter {
     // 出力対象とするPostgreSQL固有オブジェクト種別（トリガー/関数/シーケンス/型）
     final Set<OutputObjectType> outputObjectTypes = targetSelection.outputObjectTypes();
     // サイドカーYAML（手動付帯情報・論理リレーション）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
-    final Sidecar sidecar = annotationRepository.load(targetSelection.annotationPath());
+    final Sidecar sidecar = sidecarRepository.load(targetSelection.sidecarPath());
     final Annotations annotations = sidecar.annotations();
 
     // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する。

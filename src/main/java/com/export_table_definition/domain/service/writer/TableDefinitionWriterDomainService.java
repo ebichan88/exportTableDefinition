@@ -110,7 +110,7 @@ public class TableDefinitionWriterDomainService {
                 content.table(),
                 content.columns(),
                 content.outgoingRelations(),
-                content.incomingForeignKeys()), // ER図
+                content.incomingRelations()), // ER図
             TableDefinitionTemplates.footer(content.baseInfo()) // フッター
             );
     fileRepository.createDirectory(directoryPath);

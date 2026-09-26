@@ -18,6 +18,16 @@ import java.util.stream.Stream;
  * テーブル定義出力に必要な情報をまとめたレコード<br>
  * 1テーブル分の「何を出力するか」のみを持ち、出力先（ディレクトリ）は出力形式ごとの書き込み側が持つ
  *
+ * @param baseInfo データベースの基本情報
+ * @param table テーブル情報
+ * @param columns カラム情報のリスト
+ * @param indexes インデックス情報のリスト
+ * @param constraints 制約情報のリスト
+ * @param foreignKeys 自テーブルが参照する関連のうち、DBに実在する外部キー制約（物理）のリスト
+ * @param logicalRelations 自テーブルが参照する関連のうち、サイドカーYAMLで宣言された論理リレーションのリスト
+ * @param incomingRelations 自テーブルを参照する関連（物理外部キー・論理リレーションの双方）のリスト
+ * @param triggers トリガー情報のリスト
+ * @param annotation 手動付帯情報
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
@@ -30,7 +40,7 @@ public record TableDefinitionContent(
     List<ConstraintEntity> constraints,
     List<ForeignKeyEntity> foreignKeys,
     List<ForeignKeyEntity> logicalRelations,
-    List<ForeignKeyEntity> incomingForeignKeys,
+    List<ForeignKeyEntity> incomingRelations,
     List<TriggerEntity> triggers,
     TableAnnotation annotation) {
 
@@ -38,7 +48,7 @@ public record TableDefinitionContent(
    * テーブル定義出力に必要な情報をまとめたレコードを組み立てる<br>
    * 参照側（自テーブル → 参照先）の関連は、DBに実在する外部キー制約（{@code foreignKeys}）と サイドカーYAML由来の論理リレーション（{@code
    * logicalRelations}）に分けて保持する。 テーブル定義書では別々のセクションへ掲載し、ER図では両者を1つの図にまとめて描画するため。 被参照側（{@code
-   * incomingForeignKeys}）はER図でしか用いないため由来を分けない
+   * incomingRelations}）はER図でしか用いないため由来を分けない（物理外部キーと論理リレーションの双方を含む）
    *
    * @param baseInfo データベースの基本情報
    * @param detail 当該テーブルの詳細情報（カラム・インデックス・制約）

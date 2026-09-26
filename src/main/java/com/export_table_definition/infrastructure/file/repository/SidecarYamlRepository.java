@@ -6,7 +6,7 @@ import com.export_table_definition.domain.model.annotation.TableAnnotation;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.value.TableKey;
-import com.export_table_definition.domain.repository.AnnotationRepository;
+import com.export_table_definition.domain.repository.SidecarRepository;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
@@ -49,9 +49,9 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
  * @version 1.0
  * @author takashi.ebina
  */
-public class AnnotationYamlRepository implements AnnotationRepository {
+public class SidecarYamlRepository implements SidecarRepository {
 
-  private static final Logger logger = LogManager.getLogger(AnnotationYamlRepository.class);
+  private static final Logger logger = LogManager.getLogger(SidecarYamlRepository.class);
 
   /** YAMLのトップレベルキー（テーブルごとの付帯情報を束ねる） */
   private static final String KEY_TABLES = "tables";
@@ -71,11 +71,11 @@ public class AnnotationYamlRepository implements AnnotationRepository {
 
   /** {@inheritDoc} */
   @Override
-  public Sidecar load(String annotationPath) {
-    if (annotationPath == null || annotationPath.isBlank()) {
+  public Sidecar load(String sidecarPath) {
+    if (sidecarPath == null || sidecarPath.isBlank()) {
       return Sidecar.empty();
     }
-    final Path path = Path.of(annotationPath.trim());
+    final Path path = Path.of(sidecarPath.trim());
     if (!Files.exists(path)) {
       logger.warn(
           "Annotation file not found. Skipping merge of manual annotations. [annotationPath={}]",

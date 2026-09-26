@@ -45,7 +45,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 5. ユースケース実装が以下を順に行う（詳細は
    [ExportTableDefinitionUsecaseImpl.java](../../src/main/java/com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.java) 参照）。
    - `TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得
-   - `AnnotationRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込み、
+   - `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込み、
      `ExportTargetConsistencyDomainService`（`domain.service.target` 配下）が出力対象のテーブルと突き合わせる
    - 取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export` 配下）へ渡して書き出す
      - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` /
@@ -166,7 +166,7 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 ## サイドカーYAML（手動付帯情報・論理リレーション）
 
 DBのメタ情報だけでは表現できない情報を、サイドカーYAML（`annotationPath` で指定）としてマージできる。
-読み込みは `AnnotationRepository`（実装: `infrastructure.file.repository.AnnotationYamlRepository`）が一括で行い、
+読み込みは `SidecarRepository`（実装: `infrastructure.file.repository.SidecarYamlRepository`）が一括で行い、
 `domain.model.annotation.Sidecar` として返す。`Sidecar` は性質の異なる2種類の情報を束ねる。
 
 | 種別 | YAMLキー | モデル | 反映先 |
@@ -176,7 +176,7 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 実在しないテーブル・カラムに対する付帯情報（リネーム・削除の見落とし）は警告ログで検知する。
 
-`AnnotationYamlRepository`はYAMLの読み込みと型変換に専念し、以下のドメインルールはドメイン層へ委ねる。
+`SidecarYamlRepository`はYAMLの読み込みと型変換に専念し、以下のドメインルールはドメイン層へ委ねる。
 
 - 「スキーマ.テーブル」形式のキー文字列の解析: `domain.model.value.TableKey#parse`
 - 論理リレーションの関連名が省略された場合の自動生成（「テーブル名_列名..._lrel」形式）:
@@ -184,7 +184,7 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 - 論理リレーションの多重度の既定値（1対多）: `domain.model.type.Cardinality#DEFAULT_FOR_LOGICAL_RELATION`
 
 読み込み元のパス等、ログ出力に必要なコンテキストを持つ警告（未知の形式・未知の多重度ラベル等）のみ
-`AnnotationYamlRepository`側に残す。
+`SidecarYamlRepository`側に残す。
 
 ### 論理リレーションの合流
 
