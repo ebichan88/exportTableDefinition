@@ -3,6 +3,7 @@ package com.export_table_definition;
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.TargetSelection;
+import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.config.PropertyLoader;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
@@ -11,7 +12,7 @@ import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ProcessResult;
 import com.google.inject.Guice;
-import java.util.MissingResourceException;
+import java.util.List;
 
 /**
  * テーブル定義出力処理を呼び出すクラス
@@ -76,7 +77,7 @@ public class ExportTableDefinition {
     final ExportRequest request;
     try {
       request = loadExportRequest(rmDist);
-    } catch (IllegalArgumentException | MissingResourceException e) {
+    } catch (InvalidConfigurationException e) {
       System.out.println(invalidConfigurationMessage(e));
       return;
     }
@@ -98,7 +99,7 @@ public class ExportTableDefinition {
     final CheckDiffRequest request;
     try {
       request = loadCheckDiffRequest();
-    } catch (IllegalArgumentException | MissingResourceException e) {
+    } catch (InvalidConfigurationException e) {
       System.out.println(invalidConfigurationMessage(e));
       System.exit(1);
       return;
@@ -116,10 +117,10 @@ public class ExportTableDefinition {
   /**
    * 設定ファイルの読み込み・検証に失敗した場合の処理結果メッセージを組み立てるメソッド
    *
-   * @param e 読み込み・検証時に発生した例外（未知の出力対象オブジェクト種別・キーの記載漏れ等）
+   * @param e 読み込み・検証時に発生した設定誤り（未知の出力対象オブジェクト種別・キーの記載漏れ等）
    * @return 処理結果メッセージ
    */
-  private static String invalidConfigurationMessage(RuntimeException e) {
+  private static String invalidConfigurationMessage(InvalidConfigurationException e) {
     return ProcessResult.FAIL.formatMessage(
         String.format(
             "Invalid configuration in conf/%s.properties. %s [errmsg]:%s",
@@ -161,14 +162,19 @@ public class ExportTableDefinition {
    * 通常実行・{@code --check}実行の双方で共通の読み込み処理。生の文字列のまま後続へ渡さず、ここで型へ変換・検証する
    *
    * @return 読み込んだ出力対象の絞り込み条件
-   * @throws IllegalArgumentException 未知の出力対象オブジェクト種別名が指定されている場合
+   * @throws InvalidConfigurationException キーの記載漏れや、未知の出力対象オブジェクト種別名が指定されている場合
    */
   private static TargetSelection loadTargetSelection() {
-    return TargetSelection.of(
-        PropertyLoader.getList(PROPERTY_FILE_NAME, "schema"),
-        PropertyLoader.getList(PROPERTY_FILE_NAME, "table"),
-        PropertyLoader.getList(PROPERTY_FILE_NAME, "outputObjects"),
-        // サイドカーYAMLのパスは、既存の設定ファイルとの互換のためプロパティキーannotationPathで指定する
-        PropertyLoader.getString(PROPERTY_FILE_NAME, "annotationPath"));
+    final List<String> schemas = PropertyLoader.getList(PROPERTY_FILE_NAME, "schema");
+    final List<String> tables = PropertyLoader.getList(PROPERTY_FILE_NAME, "table");
+    final List<String> outputObjects = PropertyLoader.getList(PROPERTY_FILE_NAME, "outputObjects");
+    // サイドカーYAMLのパスは、既存の設定ファイルとの互換のためプロパティキーannotationPathで指定する
+    final String sidecarPath = PropertyLoader.getString(PROPERTY_FILE_NAME, "annotationPath");
+    try {
+      return TargetSelection.of(schemas, tables, outputObjects, sidecarPath);
+    } catch (IllegalArgumentException e) {
+      // 値の検証（TargetSelection.ofの契約）で見つかった誤りを、設定誤りとして呼び出し元へ伝える
+      throw new InvalidConfigurationException(e.getMessage(), e);
+    }
   }
 }

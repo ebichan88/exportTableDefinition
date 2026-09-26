@@ -79,7 +79,7 @@ annotationPath={手動付帯情報・論理リレーションを記述したサ�
 ```
 
 カンマ区切りで複数指定する項目（`schema`・`table`・`outputObjects`）は、各値の前後の空白を無視します（`schema=public, sample`のように記述できます）。
-`outputObjects`に未知の種別名を指定した場合など、設定値が不正な場合はDBへ問い合わせる前に`[result]:FAIL`で終了します。
+`conf`ディレクトリ・設定ファイル・必須のキーが見つからない場合や、`outputObjects`に未知の種別名を指定した場合など、設定に誤りがある場合はDBへ問い合わせる前に`[result]:FAIL`で終了します。
 
 Markdownのドキュメントに加えて、同じ取得結果から構造化したスキーマのスナップショット（JSON Lines）を、常に
 `outputPath`配下の`snapshot/`へ出力します。jq等での機械処理や、プルリクエストでのスキーマ変更のレビュー（git diff）、

@@ -43,7 +43,10 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ読み込む。
    - 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
      `TargetSelection.of()`がここで型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する。
-     未知の`outputObjects`などの設定誤りは、DBへの問い合わせや`--rm-dist`による削除より前に`[result]:FAIL`として報告される
+     未知の`outputObjects`などの設定誤りは、DBへの問い合わせや`--rm-dist`による削除より前に`[result]:FAIL`として報告される。
+     設定誤りは`config.InvalidConfigurationException`1種類で表す（`PropertyLoader`は`conf`ディレクトリ・設定ファイル・キーが
+     見つからない場合に、エントリーポイントは値の検証で`IllegalArgumentException`となった場合にこの例外へ変換する）ため、
+     エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
 4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
    `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、例外を捕捉して `ResultDto`（成功/失敗）等に変換する。

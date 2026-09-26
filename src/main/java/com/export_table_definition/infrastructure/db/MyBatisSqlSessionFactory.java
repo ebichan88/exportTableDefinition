@@ -1,12 +1,11 @@
 package com.export_table_definition.infrastructure.db;
 
+import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.config.PropertyLoader;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.sql.SQLException;
-import java.util.MissingResourceException;
 import java.util.Properties;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
@@ -85,7 +84,7 @@ public final class MyBatisSqlSessionFactory {
   private static Properties loadBaseProperties() {
     try {
       return PropertyLoader.getProperties(PROPERTY_BUNDLE_NAME);
-    } catch (MissingResourceException | UncheckedIOException e) {
+    } catch (InvalidConfigurationException e) {
       logger.info(
           "conf/mybatis.properties not found. Relying on CLI/env connection overrides only.");
       return new Properties();

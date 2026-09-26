@@ -3,7 +3,6 @@ package com.export_table_definition.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +25,32 @@ public class PropertyLoaderTest {
   }
 
   @Test
-  @DisplayName("getString: 存在しないキーの場合はMissingResourceExceptionをスローする")
+  @DisplayName("getString: 存在しないキーの場合は、ファイル名・キー名を含むInvalidConfigurationExceptionをスローする")
   void testGetStringMissingKeyThrows() {
+    final InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () -> PropertyLoader.getString(FIXTURE, "doesNotExist"));
+    assertTrue(e.getMessage().contains(FIXTURE + ".properties"));
+    assertTrue(e.getMessage().contains("key=doesNotExist"));
+  }
+
+  @Test
+  @DisplayName("getString: 設定ファイル自体が存在しない場合はInvalidConfigurationExceptionをスローする")
+  void testGetStringMissingFileThrows() {
+    final InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () -> PropertyLoader.getString("DoesNotExistFixture", "stringValue"));
+    assertTrue(e.getMessage().contains("DoesNotExistFixture.properties"));
+  }
+
+  @Test
+  @DisplayName("getInt: 設定ファイル自体が存在しない場合はデフォルト値を返さず、InvalidConfigurationExceptionをスローする")
+  void testGetIntMissingFileThrows() {
     assertThrows(
-        MissingResourceException.class, () -> PropertyLoader.getString(FIXTURE, "doesNotExist"));
+        InvalidConfigurationException.class,
+        () -> PropertyLoader.getInt("DoesNotExistFixture", "intValid", 999));
   }
 
   @Test

@@ -108,7 +108,8 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `config` | `PropertyLoader` | `conf/*.properties`読み込みユーティリティ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く） |
+| `config` | `PropertyLoader` | `conf/*.properties`読み込みユーティリティ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）。`conf`ディレクトリ・設定ファイル・キーが見つからない場合は`InvalidConfigurationException`をスローする |
+| | `InvalidConfigurationException` | 設定の誤り（設定ファイル・キーが見つからない、値が不正等）を表す例外。エントリーポイントはこの例外だけを捕捉して`[result]:FAIL`とする |
 | `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
 
 ## リソース（Java外）
