@@ -2,6 +2,7 @@ package com.export_table_definition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.ExportTableDefinitionProperties.SettingOverride;
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.config.InvalidConfigurationException;
@@ -177,10 +178,60 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("load: 配布する設定ファイル（全項目が未指定）は、誤りなく既定値で読み込める")
   void testLoadDistributedTemplate() {
-    ExportRequest request = ExportTableDefinitionProperties.load().toExportRequest(false);
+    ExportRequest request = ExportTableDefinitionProperties.load(Map.of()).toExportRequest(false);
 
     assertEquals(3000, request.chunkSize());
     assertEquals(80, request.erDiagramMaxNodes());
     assertFalse(request.targetSelection().targetScope().isFiltered());
+  }
+
+  @Test
+  @DisplayName("of: CLI引数・環境変数による上書き値は設定ファイルの値より優先し、上書きしないキーは設定ファイルの値を用いる")
+  void testOfAppliesOverrides() {
+    ExportRequest request =
+        ExportTableDefinitionProperties.of(
+                Map.of("schema", "sample", "outputPath", "./docs/db", "chunkSize", "100"),
+                Map.of(
+                    "outputPath", new SettingOverride("./docs/prod", "--output-path"),
+                    "table", new SettingOverride("!tmp_*", "ETD_TABLE")))
+            .toExportRequest(false);
+
+    assertEquals(List.of("sample"), request.targetSelection().targetScope().schemaNames());
+    assertFalse(request.targetSelection().targetScope().matches(table("sample", "tmp_work")));
+    assertEquals("./docs/prod", request.outputPath());
+    assertEquals(100, request.chunkSize());
+  }
+
+  @Test
+  @DisplayName("of: 上書き値も設定ファイルの値と同じ仕様で検証し、誤りの報告に上書きの指定元を添える")
+  void testOfValidatesOverriddenValues() {
+    InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () ->
+                ExportTableDefinitionProperties.of(
+                    Map.of("chunkSize", "100"),
+                    Map.of(
+                        "chunkSize", new SettingOverride("abc", "--chunk-size"),
+                        "outputObjects", new SettingOverride("trigers", "ETD_OUTPUT_OBJECTS"))));
+
+    assertTrue(e.getMessage().contains("chunkSize must be an integer: abc"));
+    assertTrue(e.getMessage().contains("trigers"));
+    assertTrue(e.getMessage().contains("overridden by "));
+    assertTrue(e.getMessage().contains("--chunk-size"));
+    assertTrue(e.getMessage().contains("ETD_OUTPUT_OBJECTS"));
+  }
+
+  @Test
+  @DisplayName("of: 上書きしていない場合は、誤りの報告に上書きの指定元を添えない")
+  void testOfDoesNotMentionOverridesWhenNothingOverridden() {
+    InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () -> ExportTableDefinitionProperties.of(Map.of("chunkSize", "abc"), Map.of()));
+
+    assertTrue(
+        e.getMessage().startsWith("Invalid configuration in ExportTableDefinition.properties."));
+    assertFalse(e.getMessage().contains("overridden by"));
   }
 }

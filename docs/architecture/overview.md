@@ -39,14 +39,15 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## 実行フロー
 
-1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・環境変数からのDB接続情報の
+1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・CLI引数と環境変数からのDB接続情報・実行時設定の
    上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を1つのtry-catchで囲んで実行する。
    例外の捕捉と終了コードへの変換はここで1箇所にまとめて行い、捕捉した例外は`presentation.FailureReporter`が報告する
    （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
 2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
-   - `CliArguments.requireKnownArguments()`が、解釈できない引数（書き誤り等）が無いことを確かめる
+   - `CliArguments.requireKnownArguments()`が、解釈できない引数・`ETD_`で始まる環境変数（書き誤り等）が無いことを確かめる
    - `ExportTableDefinitionProperties.load()`が `conf/ExportTableDefinition.properties` の設定値（出力対象スキーマ／テーブル、
-     出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み・検証し、
+     出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、CLI引数・環境変数による上書き値
+     （`CliArguments.settingOverrides()`）で上書きしてから検証し、
      `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ変換する。
      出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
      `TargetSelection.of()`が型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する
@@ -135,8 +136,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 | 入力 | 検証する場所 | 検証のタイミング |
 |---|---|---|
-| CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
-| 設定ファイルの形式（キー・整数） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
+| CLI引数・`ETD_`で始まる環境変数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
+| 設定ファイルの形式（キー・整数。CLI引数・環境変数で上書きした値を含む） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
 | 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
 | 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |

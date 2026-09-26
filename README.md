@@ -108,6 +108,7 @@ annotationPath=./conf/annotations.yml
 | `annotationPath` | 手動付帯情報・論理リレーションを記述したサイドカーYAMLのパス（後述） | マージしない | 存在しないファイル、YAMLとして読めないファイル |
 
 * すべての項目は省略できます。キーを書かない場合と値を空白にした場合は、同じ「未指定」として扱います。
+* すべての項目は、CLI引数・環境変数で上書きできます（[CLI引数・環境変数による上書き](#cli引数環境変数による上書き)を参照）。
 * 上記以外のキー（キー名の書き誤り等）を書いた場合は誤りとして扱います。
 * カンマ区切りで複数指定する項目（`schema`・`table`・`outputObjects`）は、各値の前後の空白を無視します（`schema=public, sample`のように記述できます）。
 * 誤りがある場合は、見つかった誤りをまとめて表示し、`[result]:FAIL`（終了コード`2`）で終了します。設定ファイルの誤り（`conf`ディレクトリ・設定ファイル自体が見つからない場合を含む）と`outputPath`の誤りはDBへ接続する前に、`annotationPath`のファイルの誤りはDBからの取得・出力先の削除（`--rm-dist`）より前に検知します。
@@ -234,14 +235,21 @@ password=パスワード
 | `--check` | DB vs ドキュメントの差分検知モードで実行する（[後述](#db-vs-ドキュメントの差分検知--checkモード)） |
 | `--rm-dist` | 書き込み前に出力先ディレクトリを削除する（[後述](#出力先ディレクトリの事前クリーンアップ--rm-distオプション)） |
 | `--db-driver=値`・`--db-url=値`・`--db-username=値`・`--db-password=値` | DB接続情報を上書きする（次項） |
+| `--schema=値`・`--table=値`・`--output-path=値`・`--chunk-size=値`・`--er-diagram-max-nodes=値`・`--output-objects=値`・`--annotation-path=値` | `conf/ExportTableDefinition.properties`の設定を上書きする（次項） |
 
 上記以外の引数（`--chek`のような書き誤り等）を指定した場合は、何も処理せずに`[result]:FAIL`（終了コード`2`）で終了します。書き誤りによって、意図しないモードで実行されないようにするためです。
 
-### DB接続情報のCLI引数・環境変数による上書き
+同梱の`run.sh`・`run.bat`に付けた引数は、そのままツールへ渡されます（例: `./run.sh --check`）。
 
-`conf/mybatis.properties`を配置せず（あるいは一部項目のみ）、CLI引数や環境変数からDB接続情報を渡すこともできます。CI等、接続情報をファイルに残したくない場合に利用してください。
+### CLI引数・環境変数による上書き
 
-優先順位は `CLI引数 > 環境変数 > conf/mybatis.propertiesの値` です。
+設定ファイル（`conf/mybatis.properties`・`conf/ExportTableDefinition.properties`）の各項目は、CLI引数や環境変数で上書きできます。
+CI等で接続情報をファイルに残したくない場合や、出力先・出力対象をジョブごとに切り替えたい場合に利用してください。
+
+優先順位は `CLI引数 > 環境変数 > 設定ファイルの値` です。CLI引数・環境変数の値を空にした場合は、指定しなかったものとして扱います
+（CLI引数を空にした場合は環境変数の値、環境変数も空の場合は設定ファイルの値を使います）。
+
+DB接続情報（`conf/mybatis.properties`）:
 
 | 項目 | CLI引数 | 環境変数 |
 |---|---|---|
@@ -254,7 +262,29 @@ password=パスワード
 java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://localhost:5432/testdb --db-username=user --db-password=pass
 ```
 
-CLI引数・環境変数で `driver`/`url`/`username`/`password` の4項目すべてを指定する場合、`conf/mybatis.properties`自体が存在しなくても起動できます。CLI引数・環境変数の値を空にした場合は、指定しなかったものとして扱います。
+CLI引数・環境変数で `driver`/`url`/`username`/`password` の4項目すべてを指定する場合、`conf/mybatis.properties`自体が存在しなくても起動できます。
+
+実行時設定（`conf/ExportTableDefinition.properties`）:
+
+| 項目 | CLI引数 | 環境変数 |
+|---|---|---|
+| schema | `--schema=値` | `ETD_SCHEMA` |
+| table | `--table=値` | `ETD_TABLE` |
+| outputPath | `--output-path=値` | `ETD_OUTPUT_PATH` |
+| chunkSize | `--chunk-size=値` | `ETD_CHUNK_SIZE` |
+| erDiagramMaxNodes | `--er-diagram-max-nodes=値` | `ETD_ER_DIAGRAM_MAX_NODES` |
+| outputObjects | `--output-objects=値` | `ETD_OUTPUT_OBJECTS` |
+| annotationPath | `--annotation-path=値` | `ETD_ANNOTATION_PATH` |
+
+```
+java -jar exportTableDefinition-1.0-SNAPSHOT.jar --output-path=./docs/db/prod --schema=sample --table='!flyway_schema_history,*_bk'
+```
+
+* 値の形式・未指定の場合・誤りとして扱う値は、設定ファイルに書いた場合と同じです（[ExportTableDefinition.propertiesの記載内容](#exporttabledefinitionproperties-の記載内容)を参照）。誤りがある場合は、どの項目をCLI引数・環境変数で上書きしたかを添えて表示します。
+* `--output-path`で指定した出力先にも、`--rm-dist`で削除してよいディレクトリかの検証（[後述](#出力先ディレクトリの事前クリーンアップ--rm-distオプション)）が同じく適用されます。
+* 環境変数は、CI等の環境に別の用途で設定された`SCHEMA`・`TABLE`のような汎用的な名前の変数を拾わないよう、`ETD_`で始まる名前にしています。`ETD_`で始まるものの上表にない環境変数（`ETD_OUTPUTPATH`のような書き誤り等）が設定されている場合は、何も処理せずに`[result]:FAIL`（終了コード`2`）で終了します。
+* すべての項目を上書きする場合でも、`conf/ExportTableDefinition.properties`自体は必要です（実行するディレクトリを誤った場合に、既定の出力先へ黙って出力しないようにするため）。配布物に同梱の、全項目が未指定の設定ファイルをそのまま使えます。
+* `table`の除外（`!`）・ワイルドカード（`*`）は、シェルに解釈されないよう引用符で囲んでください（bashでは`'...'`）。GitHub ActionsのワークフローのようにYAMLへ書く場合も、`!`・`*`がYAMLの記号として解釈されないよう引用符で囲んでください。
 
 ### 出力先ディレクトリの事前クリーンアップ（`--rm-dist`オプション）
 
@@ -331,6 +361,9 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
     DB_URL: ${{ secrets.DB_URL }}
     DB_USERNAME: ${{ secrets.DB_USERNAME }}
     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    # 出力先・出力対象はジョブごとに切り替えられる（CLI引数・環境変数による上書き）
+    ETD_OUTPUT_PATH: ./docs/db/prod
+    ETD_TABLE: "!flyway_schema_history"
 ```
 
 ## 出力される内容の詳細

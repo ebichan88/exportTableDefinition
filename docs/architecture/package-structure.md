@@ -8,9 +8,9 @@
 | クラス | 役割 |
 |---|---|
 | `ExportTableDefinition` | `main()`。処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）を1つのtry-catchで囲んで例外を1箇所で捕捉し、`FailureReporter`で報告したうえで、終了状態を終了コードへ変換する |
-| `CliArguments`（パッケージプライベート） | CLI引数の解析（`--check`・`--rm-dist`、DB接続情報の上書き値）。解釈できない引数（書き誤り等）は`requireKnownArguments()`で誤りとする |
+| `CliArguments`（パッケージプライベート） | CLI引数・環境変数の解析（`--check`・`--rm-dist`、DB接続情報・実行時設定の上書き値）。実行時設定のCLI引数名・環境変数名は設定ファイルのキーから導く。解釈できない引数・`ETD_`で始まる未知の環境変数（書き誤り等）は`requireKnownArguments()`で誤りとする |
 | `OutputDirectoryValidator`（パッケージプライベート） | 出力先（`outputPath`）をDBへ接続する前に検証する。既存のファイル（ディレクトリではないもの）を指す場合と、`--rm-dist`指定時に削除してはならないディレクトリ（`OutputPathResolver.isRemovableOutputDir`）を指す場合は`UserCorrectableException`を投げる。DB種別に依存しない部品のDIコンテナから取得する |
-| `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
+| `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。CLI引数・環境変数による上書き値で上書きしてから検証する。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
 
 ## presentation層
 

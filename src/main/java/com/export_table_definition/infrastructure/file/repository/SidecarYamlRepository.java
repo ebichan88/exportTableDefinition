@@ -135,7 +135,8 @@ public class SidecarYamlRepository implements SidecarRepository {
     }
     if (!Files.exists(path)) {
       throw new UserCorrectableException(
-          "Annotation file not found. Check annotationPath in ExportTableDefinition.properties. "
+          "Annotation file not found. Check annotationPath (ExportTableDefinition.properties, "
+              + "or the --annotation-path argument or the ETD_ANNOTATION_PATH environment variable). "
               + "[annotationPath="
               + path.toAbsolutePath().normalize()
               + "]");
