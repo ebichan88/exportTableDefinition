@@ -3,15 +3,26 @@
 `com.export_table_definition` 配下の全パッケージと主要クラスの一覧。
 役割の全体像は先に [overview.md](./overview.md)、ドメインの概念同士の関係・用語は [domain-model.md](./domain-model.md) を参照。
 
+## エントリーポイント（`com.export_table_definition`直下）
+
+| クラス | 役割 |
+|---|---|
+| `ExportTableDefinition` | `main()`。処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）を1つのtry-catchで囲んで例外を1箇所で捕捉し、`FailureReporter`で報告したうえで、終了状態を終了コードへ変換する |
+| `CliArguments`（パッケージプライベート） | CLI引数の解析（`--check`・`--rm-dist`、DB接続情報の上書き値）。解釈できない引数（書き誤り等）は`requireKnownArguments()`で誤りとする |
+| `OutputDirectoryValidator`（パッケージプライベート） | 出力先（`outputPath`）をDBへ接続する前に検証する。既存のファイル（ディレクトリではないもの）を指す場合と、`--rm-dist`指定時に削除してはならないディレクトリ（`OutputPathResolver.isRemovableOutputDir`）を指す場合は`UserCorrectableException`を投げる。DB種別に依存しない部品のDIコンテナから取得する |
+| `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
+
 ## presentation層
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースの実行と例外の`ResultDto`/`DiffCheckResultDto`変換を行う |
+| `presentation` | `ExportTableDefinitionController` | エントリーポイントから呼ばれ、ユースケースを実行して結果を`ResultDto`/`DiffCheckResultDto`へ変換する。例外は捕捉せずエントリーポイントまで伝える |
+| | `FailureReporter` | エントリーポイントが捕捉した例外を受け取り、利用者が直せる誤り（`UserCorrectableException`）か想定外の失敗かに応じて報告する（表示に含まれない原因の併記、想定外の失敗はスタックトレースをログへ） |
 | | `DiffReportFormatter`（パッケージプライベート） | `checkDiff`の差分メッセージ組み立て。`ContentDiff`のunified diffを1オブジェクトあたり・全体それぞれ行数の上限付きで含める |
-| `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成否・メッセージ）を表すrecord |
-| | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（成否・メッセージ・差分有無）を表すrecord |
-| `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum |
+| `presentation.dto` | `ResultDto` | 通常実行（`execute`）の処理結果（成功時のメッセージ）を表すrecord。失敗時の報告は`FailureReporter`が組み立てる |
+| | `DiffCheckResultDto` | `--check`モード（`checkDiff`）の処理結果（差分の報告・差分の有無）を表すrecord。差分の有無から終了状態を返す |
+| `presentation.type` | `ProcessResult` | 処理結果種別（成功/失敗）のenum。コンソールに出す`[result]:`の行を組み立てる |
+| | `ExitStatus` | 終了状態と終了コード（0＝成功・差分なし／1＝`--check`で差分あり／2＝失敗）のenum |
 
 ## application層
 
@@ -20,8 +31,8 @@
 | `application` | `ExportTableDefinitionUsecase` | テーブル定義出力（通常実行）のユースケースのインターフェース（`exportTableDefinition`） |
 | | `CheckDocumentDiffUsecase` | DB vs ドキュメントの差分検知（`--check`モード）のユースケースのインターフェース（`checkDocumentDiff`） |
 | | `ExportRequest`, `CheckDiffRequest` | 各ユースケースメソッドへの入力をまとめたrecord。エントリーポイント→コントローラー→ユースケースを分解・再構築せず通過する。`CheckDiffRequest`はMarkdownの描画・ER図の生成を行わないため`erDiagramMaxNodes`・`rmDist`を持たない |
-| | `TargetSelection` | 両requestが持つ出力対象の絞り込み条件（`TableTargetScope`・`OutputObjectType`の集合・サイドカーYAMLのパス）のrecord。`of()`で設定値の文字列を入口で型へ変換・検証する |
-| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 通常実行のユースケース実装。MarkdownとスナップショットのExportSinkを渡して`SchemaExporter`に取得・書き出しさせる。`--rm-dist`は削除してよい出力先かを取得前に判定し、削除は取得の成功後に行う |
+| | `TargetSelection` | 両requestが持つ出力対象の絞り込み条件（`TableTargetScope`・`OutputObjectType`の集合・サイドカーYAMLのパス）のrecord。`of()`で設定値の文字列を入口で型へ変換・検証する（テーブル名パターンと出力対象オブジェクト種別の誤りはまとめて報告する） |
+| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 通常実行のユースケース実装。MarkdownとスナップショットのExportSinkを渡して`SchemaExporter`に取得・書き出しさせる。`--rm-dist`の削除は取得の成功後に行う（削除してよい出力先かは、入口の`OutputDirectoryValidator`が検証済み） |
 | | `CheckDocumentDiffUsecaseImpl` | 差分検知のユースケース実装。スナップショットの`ExportSink`のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 | | `SchemaExporter`（パッケージプライベート） | 両ユースケースが共有する、DBからの取得（一括取得・スキーマ単位・チャンク単位）と書き出しの段取り。取得（`fetchTargets`）と出力（`export`）を分け、書き出しは出力形式ごとの`ExportSink`に、取得した情報同士の突き合わせは`ExportTargetConsistencyDomainService`に委ね、返された指摘（`ConsistencyFinding`）を重要度に応じてログへ出力する。ドキュメントの生成日は`Clock`から与える |
 
@@ -48,7 +59,7 @@
 | | `BaseInfoEntity` | 各ドキュメントに掲載する基本情報（`DatabaseEntity`の情報＋生成日）のrecord |
 | `domain.model.sidecar` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション）を束ねるrecord |
 | | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブルキーごとの集合とその1件分） |
-| `domain.model.target` | `TableTargetScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は、パッケージプライベートの`TableTargetFilter`が行う） |
+| `domain.model.target` | `TableTargetScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は、パッケージプライベートの`TableTargetFilter`が行う。テーブル名・スキーマ名の部分が空のパターンは誤り） |
 | | `OutputObjectType` | PostgreSQL固有の出力対象オブジェクト種別のenum。`parse()`で設定値を解釈する（未指定なら全種別、未知の種別名は例外） |
 | | `ExportTargets` | 一括取得する軽量な出力対象の情報（基本情報・テーブル一覧・関連・トリガー・関数/シーケンス/型の一覧・手動付帯情報）の組 |
 | | `TableDefinitionContent` | 1テーブル分の出力内容を束ねるrecord（`assemble()`で`TableDetail`と一括取得分から組み立て）。出力先は持たない |
@@ -65,7 +76,7 @@
 |---|---|
 | `TableDefinitionRepository` | データベースの情報（`selectDatabase`）・テーブル一覧・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる）。カラム・インデックス・制約は、指定したテーブル分をテーブルごとの`TableDetail`に組み立てて返す（`selectTableDetails`） |
 | `SidecarRepository` | サイドカーYAML（手動付帯情報・論理リレーション）読み込みIF |
-| `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
+| `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`、パスの状態の問い合わせ用の`exists`/`isDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
 ### domain.service
 
@@ -93,14 +104,14 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `infrastructure.db` | `MyBatisSqlSessionFactory` | MyBatisの`SqlSessionFactory`生成・DB接続情報の上書き管理 |
+| `infrastructure.db` | `MyBatisSqlSessionFactory` | MyBatisの`SqlSessionFactory`生成・DB接続情報の上書き管理。接続前にDB接続情報を検証し（`driver`・`url`は必須、未知のキーは誤り）、接続先のDB種別の判定で、DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
-| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス |
+| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
 | | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
 | `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
-| | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する |
+| | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）と`relations`（論理リレーション）の双方を解釈する。ファイルが無い・YAMLとして解釈できない場合は`UserCorrectableException`を投げ、個々の記述の誤り（未知のキー等）は読み飛ばして警告する |
 | `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
 | `infrastructure.snapshot` | `JacksonSnapshotSerializer` | `SnapshotSerializer`のJackson実装 |
 
@@ -108,9 +119,18 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `config` | `PropertyLoader` | `conf/*.properties`読み込みユーティリティ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）。`conf`ディレクトリ・設定ファイル・キーが見つからない場合は`InvalidConfigurationException`をスローする |
-| | `InvalidConfigurationException` | 設定の誤り（設定ファイル・キーが見つからない、値が不正等）を表す例外。エントリーポイントはこの例外だけを捕捉して`[result]:FAIL`とする |
-| `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
+| `config` | `PropertyLoader` | `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担い、設定項目の仕様と検証は読み込む側が持つ）。`conf`ディレクトリ・設定ファイルが見つからない場合は`InvalidConfigurationException`をスローする |
+| | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`PropertyLoader`・`ExportTableDefinitionProperties`・`MyBatisSqlSessionFactory`が投げる |
+| `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）のうち、DB種別に依存しないもの。DBへ接続する前に組み立て、入力の検証にも使う。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
+| | `DatabaseDependentModule` | DB種別が決まってから、`ExportTableDefinitionModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。それに依存するユースケースも束縛する |
+
+## shared（レイヤーの外）
+
+レイヤーの外に置き、どの層からも依存してよい。自身はJDK以外に依存せず、失敗の分類を伝える例外だけを置く。
+
+| パッケージ | 主要クラス | 役割 |
+|---|---|---|
+| `shared.exception` | `UserCorrectableException` | 利用者が設定・入力・実行環境を見直せば解消する誤り（設定の誤り・サイドカーYAMLの構文誤り・DBに接続できない等）を表す例外。投げるのは入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ（DBへの接続、サイドカーYAMLの読み込み）だけで、ドメイン層・アプリケーション層では投げない。`FailureReporter`はこの例外かそれ以外かで報告を切り替える |
 
 ## リソース（Java外）
 
@@ -121,7 +141,7 @@
 | `src/main/resources/mybatis-config.xml` | MyBatisのメイン設定（DB種別ごとのmapper読み込み等） |
 | `src/main/resources/mapper/oracle/tableDefinitionMapper.xml` | Oracle向けSQL定義 |
 | `src/main/resources/mapper/postgresql/tableDefinitionMapper.xml` | PostgreSQL向けSQL定義 |
-| `src/main/resources/log4j2.xml` | ログ設定 |
+| `src/main/resources/log4j2.xml` | ログ設定（ログファイルへの出力に加え、このツールのWARNログを`[warn]:`付きで標準エラー出力へ出す） |
 
 ## テスト
 

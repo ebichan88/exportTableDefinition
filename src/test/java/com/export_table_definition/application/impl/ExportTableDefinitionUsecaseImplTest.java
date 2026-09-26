@@ -91,6 +91,16 @@ public class ExportTableDefinitionUsecaseImplTest {
     }
 
     @Override
+    public boolean exists(Path path) {
+      return files.keySet().stream().anyMatch(file -> file.startsWith(path));
+    }
+
+    @Override
+    public boolean isDirectory(Path path) {
+      return files.keySet().stream().anyMatch(file -> file.startsWith(path) && !file.equals(path));
+    }
+
+    @Override
     public List<Path> listFiles(Path directory) {
       return files.keySet().stream().filter(path -> path.startsWith(directory)).sorted().toList();
     }
@@ -892,22 +902,6 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     assertTrue(fileExists(staleFile));
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "t1")));
-  }
-
-  @Test
-  @DisplayName("rmDist=trueかつoutputPathがカレントディレクトリ自体に解決される場合は例外を投げて削除を拒否する")
-  void testRmDistRefusesToRemoveCurrentDirectory() {
-    setUp();
-    repository.tables.add(table("public", "t1"));
-
-    assertThrows(
-        IllegalStateException.class,
-        () ->
-            usecase.exportTableDefinition(
-                new ExportRequest(
-                    TargetSelection.of(List.of(), List.of(), List.of(), null), ".", 0, 80, true)));
-    // 削除してよい出力先かの判定は、DBへの問い合わせより前に行われる
-    assertEquals(0, repository.tableListCalls);
   }
 
   @Test

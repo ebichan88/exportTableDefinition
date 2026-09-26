@@ -7,13 +7,14 @@ import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
-import com.export_table_definition.presentation.type.ProcessResult;
 import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * テーブル定義出力処理のコントローラークラス
+ * テーブル定義出力処理のコントローラークラス<br>
+ * ユースケースを実行し、結果を表示用のDTOへ変換する。ユースケースの例外は捕捉せずに呼び出し元へ伝える （捕捉はエントリーポイントが1箇所にまとめて行い、報告は{@link
+ * FailureReporter}が行う）
  *
  * @since 1.0
  * @version 1.0
@@ -47,42 +48,22 @@ public class ExportTableDefinitionController {
    */
   public ResultDto execute(ExportRequest request) {
     logger.info("[START] exportTableDefinition");
-    try {
-      exportTableDefinitionUsecase.exportTableDefinition(request);
-    } catch (Exception e) {
-      logger.error(e);
-      return new ResultDto(
-          ProcessResult.FAIL,
-          String.format(
-              "Failed to output table definition document. %s [errmsg]:%s",
-              System.getProperty("line.separator"), e.getMessage()));
-    }
+    exportTableDefinitionUsecase.exportTableDefinition(request);
     logger.info("[ END ] exportTableDefinition");
-    return new ResultDto(ProcessResult.SUCCESS, "Table definition output is complete.");
+    return new ResultDto("Table definition output is complete.");
   }
 
   /**
    * DBの現状から生成したドキュメントと、{@code outputPath}配下に既にコミット済みのドキュメントの差分を検知するメソッド
    *
    * @param request DB vs ドキュメントの差分検知の入力
-   * @return 処理結果（比較処理自体の成否と、差分の有無）
+   * @return 処理結果（差分の報告と、差分の有無）
    */
   public DiffCheckResultDto checkDiff(CheckDiffRequest request) {
     logger.info("[START] checkDocumentDiff");
-    final DiffResult diffResult;
-    try {
-      diffResult = checkDocumentDiffUsecase.checkDocumentDiff(request);
-    } catch (Exception e) {
-      logger.error(e);
-      return new DiffCheckResultDto(
-          ProcessResult.FAIL,
-          String.format(
-              "Failed to check table definition document diff. %s [errmsg]:%s",
-              System.getProperty("line.separator"), e.getMessage()),
-          false);
-    }
+    final DiffResult diffResult = checkDocumentDiffUsecase.checkDocumentDiff(request);
     logger.info("[ END ] checkDocumentDiff");
     return new DiffCheckResultDto(
-        ProcessResult.SUCCESS, DiffReportFormatter.format(diffResult), diffResult.hasDifference());
+        DiffReportFormatter.format(diffResult), diffResult.hasDifference());
   }
 }

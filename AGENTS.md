@@ -25,6 +25,8 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
 
 - レイヤーの依存方向は `presentation → application → domain ← infrastructure` を厳守する。
   `domain` パッケージから `infrastructure`／`presentation` への依存を追加しない。
+  レイヤーの外にある`shared.exception`（層をまたいで失敗の分類を伝える例外）は、どの層からも依存してよい。
+  `shared.exception`自身はJDK以外に依存させず、失敗の分類を伝える例外以外は置かない（`shared`の直下や、例外以外の共通部品を置く場所にしない）。
   `domain.model` 配下の概念ごとのパッケージ（`table`・`relation`・`sidecar`・`target` 等）の間も、
   [domain-model.md](./docs/architecture/domain-model.md) の依存の向きに従い循環させない。
 - ドメインの概念（`domain.model` のクラス）を追加・改名・削除した場合や、ルールを持つ場所を移した場合は、
@@ -34,7 +36,9 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   `src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` に分離されている。
   両DBで挙動を揃える変更は両方のmapperを確認・修正すること。
 - 新しいリポジトリ実装やドメインサービスを追加した場合は、
-  `config/module/ExportTableDefinitionModule.java` にGuiceの束縛を追加する。
+  `config/module/ExportTableDefinitionModule.java` にGuiceの束縛を追加する
+  （DB種別で実装が変わる`TableDefinitionRepository`と、それに依存するユースケースだけは、DB接続後に組み立てる子のコンテナ用の
+  `config/module/DatabaseDependentModule.java`に置く）。
   コンストラクタには`com.google.inject.Inject`ではなく`jakarta.inject.Inject`を付ける（ドメイン層をGuiceに依存させない）。
   束縛漏れは`ExportTableDefinitionModuleTest`（実際にDIコンテナを組み立てるテスト）で検知できる。
 - ファイルI/O（読み書き・一覧取得・一時ディレクトリ作成／削除等）は必ず`domain.repository.FileRepository`経由で行い、
@@ -44,6 +48,22 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   `String.format`等により直接組み立てず、`domain.service.path.DocumentLocations`の規則を使う
   （スナップショットの配置は`domain.service.path.SnapshotLocations`）。既存の抽象化を素通りする実装が増えるとテストが実ディスクI/Oに依存し始め、
   レイヤーの意図も崩れるため、新規ロジックを追加する前にまずこの2つのIFで足りないか確認すること。
+- 例外の扱いは [overview.md の「例外の扱いと終了コード」](./docs/architecture/overview.md#例外の扱いと終了コード) に従う。
+  - 利用者が設定・入力・実行環境を見直せば解消する失敗は`shared.exception.UserCorrectableException`（設定ファイルの誤りは派生の
+    `config.InvalidConfigurationException`）で表し、何を直せばよいかをメッセージに書いて投げる。それ以外（I/O・SQL・不具合）は
+    非検査例外のまま伝える。ドメイン層に検査例外は使わず、呼び出し側に判断を委ねたい結果は値で返す。
+  - `UserCorrectableException`を投げるのは、入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ
+    （DBへの接続、サイドカーYAMLの読み込み）だけ。ドメイン層・アプリケーション層では投げない。利用者が直せる入力の誤りは、
+    ユースケースを呼ぶ前に入口で検証する（ユースケースの中で見つかる設定の誤りがあれば、その検証を入口へ移す）。
+  - 捕捉はエントリーポイント（`ExportTableDefinition.main()`）の1箇所だけで、捕捉した例外の報告は`presentation.FailureReporter`が行う。
+    コントローラー・ユースケース等の途中の層でcatchしてよいのは、検査例外を包む・
+    利用者が直せる誤りへ置き換える・フォールバックする場合だけ。包むときは`cause`を渡し、tryの範囲は置き換えたい呼び出しだけに絞る
+    （`catch (Exception e)`で広く包むと、別の失敗まで同じ文言になり原因も表示から消える）。catchしてログを出してから再スローしない。
+- 入力（設定ファイル・CLI引数・DB接続情報・サイドカーYAML）の検証は [overview.md の「入力の検証」](./docs/architecture/overview.md#入力の検証) に従い、
+  仕様はREADMEの各節に記載する。設定項目・引数を追加・変更した場合は、READMEの仕様の表と、検証する場所
+  （`ExportTableDefinitionProperties`・`CliArguments`等）を同じ変更で更新する。
+  - 未指定（キーの省略・空）は既定値。未知のキー・引数や解釈できない値は、既定値へ黙って置き換えずに失敗にする。
+  - サイドカーYAMLの個々の記述の誤りは、読み飛ばして警告する（WARNログはコンソールにも出る）。
 - `tableDefinitionMapper.xml` やドメイン層（エンティティ・テンプレート・ER図生成ロジック等）を変更した後は、
   `verify` スキル（`.claude/skills/verify/SKILL.md`）に従って実際に出力結果を確認すること。
 - 新規ロジックを書く前・既存クラスに数行足す前に、以下のような「小さな責務の混在」が
@@ -55,7 +75,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
     分解・再構築されながら渡っていないか。渡す先で使われない引数が混ざっていないかも見る。
     該当する場合はrequestレコードにまとめる（例: `application.ExportRequest`/`CheckDiffRequest`）。
   - 設定値（プロパティの文字列）を生のまま深い層へ渡していないか。空白の除去・型への変換・検証は入口で1回だけ行い、
-    設定誤りはDBへの問い合わせや出力先の削除より前に検知する（例: `application.TargetSelection#of`）。
+    設定誤りはDBへの問い合わせや出力先の削除より前に検知する（例: `ExportTableDefinitionProperties`・`application.TargetSelection#of`）。
   - インフラ層（Repository実装）が、デフォルト値の決定・名前の自動生成・識別子の解析といった
     業務ルールを直接持っていないか。インフラは読み込みと型変換に専念し、ルールはドメイン層
     （エンティティ・値オブジェクト・enum）のメソッドに持たせる

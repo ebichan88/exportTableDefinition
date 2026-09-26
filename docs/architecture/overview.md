@@ -27,6 +27,11 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | domain | `domain.model.*`, `domain.repository`, `domain.service.*` | エンティティ・値オブジェクト・リポジトリIF・書き込み処理（ドメインサービス）を持つ、DB種別に依存しない中核 |
 | infrastructure | `infrastructure.db`, `infrastructure.file`, `infrastructure.path`, `infrastructure.snapshot` | MyBatisによるDBアクセス、ファイル入出力、出力パス解決、JSON変換などドメインIFの実装を提供する |
 | config | `config`, `config.module` | プロパティ読み込み、Guiceによる依存関係の束縛（DI設定） |
+| shared | `shared.exception` | 層をまたいで失敗の分類を伝える例外（`UserCorrectableException`） |
+
+`config`と`shared`は4層の外に置く。`shared.exception`は、どの層からも依存してよい唯一のパッケージで、自身はJDK以外に依存しない。
+置くのは失敗の分類を伝える例外だけとし、`shared`の直下や、例外以外の共通部品の置き場所にはしない
+（範囲を広げると、層に属さない何でも置き場になり、依存の向きのルールが形骸化するため）。
 
 `domain.model` は概念ごとのサブパッケージ（`table`・`relation`・`sidecar`・`target` 等）に分かれている。
 ドメインの概念・用語・主なルールの置き場所は [domain-model.md](./domain-model.md)、
@@ -35,41 +40,114 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 ## 実行フロー
 
 1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・環境変数からのDB接続情報の
-   上書き値の解決・`--check`/`--rm-dist`フラグの判定）を介して `MyBatisSqlSessionFactory` に接続情報を設定する。
-2. Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、
-   `ExportTableDefinitionController` を取得する。
-3. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が `conf/ExportTableDefinition.properties` の設定値
-   （出力対象スキーマ／テーブル、出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を
-   `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ読み込む。
-   - 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
-     `TargetSelection.of()`がここで型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する。
-     未知の`outputObjects`などの設定誤りは、DBへの問い合わせや`--rm-dist`による削除より前に`[result]:FAIL`として報告される。
-     設定誤りは`config.InvalidConfigurationException`1種類で表す（`PropertyLoader`は`conf`ディレクトリ・設定ファイル・キーが
-     見つからない場合に、エントリーポイントは値の検証で`IllegalArgumentException`となった場合にこの例外へ変換する）ため、
-     エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
+   上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を1つのtry-catchで囲んで実行する。
+   例外の捕捉と終了コードへの変換はここで1箇所にまとめて行い、捕捉した例外は`presentation.FailureReporter`が報告する
+   （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
+2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
+   - `CliArguments.requireKnownArguments()`が、解釈できない引数（書き誤り等）が無いことを確かめる
+   - `ExportTableDefinitionProperties.load()`が `conf/ExportTableDefinition.properties` の設定値（出力対象スキーマ／テーブル、
+     出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み・検証し、
+     `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ変換する。
+     出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
+     `TargetSelection.of()`が型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する
+   - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
+     削除より前に`[result]:FAIL`として報告されるため、エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
+   - DB種別に依存しない部品のDIコンテナ（`ExportTableDefinitionModule`）を組み立て、`OutputDirectoryValidator`が出力先
+     （`outputPath`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
+     ディレクトリ・カレントディレクトリ自体）を指す場合は、DBへ接続する前に`[result]:FAIL`として報告する
+3. 入力の検証に成功した後、`MyBatisSqlSessionFactory` に接続情報を設定してDBへ接続し、接続先のDB種別を判定する。
+   2.のDIコンテナの子として、DB種別に依存する部品（`DatabaseDependentModule`）を束縛したコンテナを組み立て、
+   `ExportTableDefinitionController` を取得する（[設定・DI](#設定di)を参照）。
 4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
-   `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、例外を捕捉して `ResultDto`（成功/失敗）等に変換する。
+   `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、結果を `ResultDto`（`--check`時は差分の有無を持つ
+   `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
 5. 通常実行のユースケース（`ExportTableDefinitionUsecaseImpl`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
-   - `--rm-dist`指定時は、削除してよい出力先か（ルート・ホームディレクトリ等でないか）をDBへの問い合わせより前に判定する
    - `SchemaExporter.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込む。
      `ExportTargetConsistencyDomainService`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
      一括取得分を `ExportTargets` にまとめる
-   - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）
+   - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）。
+     削除してよい出力先かは、ユースケースを呼ぶ前に入口（2.）で検証済みである
    - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
      - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` /
        `ObjectListWriterDomainService`（いずれも `domain.service.writer`）がMarkdownを組み立てて `FileRepository` 経由で出力
      - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
 
+## 例外の扱いと終了コード
+
+失敗は次の3種類に分けて扱う。
+
+| 種類 | 例 | 表し方 | 利用者への報告 |
+|---|---|---|---|
+| 利用者が直せる誤り | 設定ファイルの誤り、サイドカーYAMLの構文誤り、`--rm-dist`の出力先が危険、DBに接続できない、非対応のDB | `shared.exception.UserCorrectableException`（設定ファイルの誤りは派生の`config.InvalidConfigurationException`）。検知した箇所で、何を直せばよいかをメッセージに書いて投げる | `[result]:FAIL`＋メッセージ。ログにスタックトレースは残さない |
+| 想定外の失敗 | I/Oの失敗、SQLの失敗、不具合（NPE等）、JVMのエラー | 非検査例外のまま伝える（検査例外は非検査例外で包む） | `[result]:FAIL`＋メッセージ＋ログの場所。ログにスタックトレースを残す |
+| 業務上の結果 | `--check`の差分あり、孤児付帯情報、除外した関連 | 例外にせず値で返す（`DiffResult`・`ConsistencyFinding`） | 差分の報告・警告ログ |
+
+- 利用者が直せる誤りを投げるのは、入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ
+  （DBへの接続、サイドカーYAMLの読み込み）だけで、ドメイン層・アプリケーション層では投げない。HTTPの400系のように、
+  「利用者が直せる」という分類は入口側の関心であり、ドメインの概念ではないため。入力の誤りはユースケースを呼ぶ前に入口で検証し、
+  インフラは外部に触れて初めて分かる誤り（DBに接続できない、YAMLとして読めない等）だけを投げる。
+  入口とインフラの双方から投げるため、例外はどの層からも依存できるレイヤーの外（`shared.exception`）に置く
+- 捕捉するのはエントリーポイント（`ExportTableDefinition.main()`）の1箇所だけ。設定の読み込み・DBへの接続・DIコンテナの
+  組み立てを含む処理全体を1つのtry-catchで囲むため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない。
+  捕捉した例外は`presentation.FailureReporter`へ渡し、種類に応じた報告（画面・ログ）を任せる
+- 途中の層でcatchしてよいのは、(a) 検査例外を非検査例外で包む、(b) 下位の例外を利用者が直せる誤りへ置き換える、
+  (c) フォールバックする（`conf/mybatis.properties`が無い場合に、CLI引数・環境変数の接続情報だけで続ける等）場合のみ。
+  包むときは原因（`cause`）を必ず渡し、tryの範囲は置き換えたい呼び出しだけに絞る
+  （例: `AbstractTableDefinitionRepository`はSQLの呼び出しだけを包み、DTO→エンティティの変換の失敗は包まない）。
+  catchしてログを出してから再スローすることはしない（ログの出力も`FailureReporter`が行う）
+- `FailureReporter`は例外の連鎖（原因）をたどり、表示に含まれていない情報を持つ原因を`[cause]`として併記する
+  （包んだ箇所で、DBが返したエラー等の原因が失われないようにするため。原因のメッセージを繰り返しているだけのMyBatisの例外等は省く）
+- ドメイン層に検査例外は使わない。呼び出し側に判断を委ねたい結果は、値（`Optional`・`ConsistencyFinding`・真偽値等）で返す
+- 警告（処理は続けられるが利用者が確認すべき事柄。孤児付帯情報、サイドカーYAMLの記述の誤り等）は、WARNレベルのログとして出す。
+  `log4j2.xml`が、このツールのWARNログをログファイルに加えてコンソール（標準エラー出力）へも`[warn]:`付きで出す
+  （ログファイルにしか出ないと、「警告して続行」が実際には「黙って続行」になるため）。警告は終了コードに影響しない
+- 終了コード（`presentation.type.ExitStatus`）は、0＝成功（`--check`で差分なしを含む）、1＝`--check`で差分あり、2以上＝失敗
+  （現在は`FAILURE`＝2のみ）。失敗は1つの値ではなく「2以上」という範囲で定め（POSIXの`diff`・`cmp`が失敗を「>1」と定めるのと同じ）、
+  利用者には2以上かで判定してもらう。失敗の種類を分ける場合は3以上の値を足せばよく、既存の判定を壊さない。
+  「検査して見つかった」という結果は、将来ほかのモードで増えても1を共通で使う
+- JVMのエラー（`Error`）も`main()`で捕捉するのは、捕捉しないとJVMが終了コード1で終わり、差分ありと区別できなくなるため。
+  ただし、JVMが起動できない場合（jarが見つからない・Javaのバージョンが古い・JVMオプションの誤り等）や`main()`に入る前の失敗は、
+  このツールが捕捉する前にJavaの仕様で1になる（READMEに注記している）。同梱の`run.sh`・`run.bat`自体のエラーは2で返す
+
+## 入力の検証
+
+入力ごとの仕様（必須・値の形式・未指定の場合・誤りとして扱う値）はREADMEの各節に記載し、以下の方針で扱う。
+
+- 「必須」は値で決める。キーの省略と値が空は同じ「未指定」として扱い、既定値がある項目は未指定を許す。
+  既定値が無いもの（DB接続情報の`driver`・`url`）だけを必須とする
+- 実行のしかたを決める入力（設定ファイル・CLI引数・DB接続情報）は、未知のキー・引数、値の形式の違反、指定した参照先
+  （`annotationPath`のファイル）が無いことを、すべて失敗にする。既定値へ黙って置き換えたり、警告で続行したりしない
+  （書き誤りに気付けないまま、意図しない出力やモードで実行されるのを防ぐため）。なお、指定したスキーマがDBに存在するかは検証しない
+- ドキュメントに載せる内容の入力（サイドカーYAML）は、ファイルとして読めない場合だけ失敗にし、個々の記述の誤り
+  （キーの形式の誤り、必須項目の欠け、未知の多重度、未知のキー、マップであるべき箇所がマップでない等）は該当箇所を
+  読み飛ばして警告する（付帯情報の一部の書き誤りで、定義書全体の再生成を止めないため）
+- 検証は入口でまとめて行い、見つかった誤りを一度に報告する（1つ直して再実行するたびに次の誤りが見つかる、を繰り返させない）
+- 実行のしかたを決める入力（CLI引数・設定ファイル・出力先）の誤りは、DBへ接続する前に報告する。接続した後に検証すると、
+  DBに接続できない環境（接続情報の誤り・DBの停止中）では接続エラーだけが報告され、それを直して再実行するまで入力の誤りに気付けないため。
+  出力先の検証のようにDIコンテナの部品を使う検証もこの時点で行えるよう、DIコンテナを2段階で組み立てている（[設定・DI](#設定di)を参照）
+
+| 入力 | 検証する場所 | 検証のタイミング |
+|---|---|---|
+| CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
+| 設定ファイルの形式（キー・整数） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
+| 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
+| 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
+| DB接続情報 | `MyBatisSqlSessionFactory.requireValidConnectionSettings` | DBへの接続の直前 |
+| サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
+
+値の意味に関するルール（出力対象オブジェクト種別の値・テーブル名パターンの書式）はドメインの型に、設定ファイルという形式に
+関するルール（キーの有無・未知のキー・整数として読めるか）は入口側に持たせ、重複させない。
+
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
 `infrastructure.db.type.DatabaseType` （enum）がDB種別名と対応する
 `infrastructure.db.repository.*TableDefinitionRepository` 実装クラスを紐づけている。
-`ExportTableDefinition.main()` が `MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
-`ExportTableDefinitionModule` のコンストラクタへ渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
+エントリーポイントが（入力の検証に成功した後に）`MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
+`DatabaseDependentModule` のコンストラクタへ渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
 `TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
 [src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
 [src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
@@ -204,14 +282,16 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 （他のファイル操作と同様に）`FileRepository.createTempDirectory()`/`deleteDirectory()`を介して行い、
 `try-finally`で必ず削除される。
 
-差分が1件でもある場合、または比較処理自体が例外で失敗した場合は`System.exit(1)`、差分なしの場合は
-`System.exit(0)`で終了するため、CI上でジョブの成否として扱える。
+終了コードは、差分なしの場合は0、差分が1件でもある場合は1、比較処理自体が失敗した場合（設定の誤り・DBに接続できない等）は
+2以上（現在は2）となる（`presentation.type.ExitStatus`、[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。CI上でジョブの成否として扱えるほか、「差分あり」と「比較自体の失敗」を区別できる。
 
 ## サイドカーYAML（手動付帯情報・論理リレーション）
 
 DBのメタ情報だけでは表現できない情報を、サイドカーYAML（プロパティ`annotationPath`で指定。コード上は`sidecarPath`と呼ぶ）として
 マージできる。読み込みは `SidecarRepository`（実装: `infrastructure.file.repository.SidecarYamlRepository`）が一括で行い、
 `domain.model.sidecar.Sidecar` として返す。`Sidecar` は性質の異なる2種類の情報を束ねる。
+指定したファイルが無い・YAMLとして読めない場合は`UserCorrectableException`とし、個々の記述の誤りは読み飛ばして警告する
+（[入力の検証](#入力の検証)を参照）。
 
 | 種別 | YAMLキー | モデル | 反映先 |
 |---|---|---|---|
@@ -248,12 +328,18 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 ## 設定・DI
 
-- `config.PropertyLoader`: `conf/ExportTableDefinition.properties` 等のプロパティ読み込みユーティリティ
-  （カンマ区切りの値は各要素の前後の空白を除去し、空要素を除いて返す）
-- `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）
+- `config.PropertyLoader`: `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担う）
+- `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: 読み込みは`PropertyLoader`に委ね、`conf/ExportTableDefinition.properties`の
+  設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）
+- `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）のうち、DB種別に依存しないもの
+- `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`TableDefinitionRepository`と、それに依存するユースケース）
 
-新しいリポジトリ実装やドメインサービスを追加する場合は、ここに束縛を追加する。
+DIコンテナは2段階で組み立てる。出力先の検証等の入力の検証はDBへ接続する前に行う（理由は[入力の検証](#入力の検証)を参照）が、
+DB種別は接続して初めて分かるため、まず`ExportTableDefinitionModule`だけでコンテナを組み立てて入力の検証に使い、DBへ接続した後に`DatabaseDependentModule`を束縛した
+子のコンテナ（`Injector#createChildInjector`）を足して、コントローラーを取得する。
+新しいリポジトリ実装やドメインサービスを追加する場合は、`ExportTableDefinitionModule`に束縛を追加する
+（`TableDefinitionRepository`に依存するものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
 各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。
-`application.impl.SchemaExporter`はパッケージプライベートのためモジュールでは束縛せず、Guiceのジャストインタイム束縛
-（`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、実際にDIコンテナを組み立てる
+`application.impl.SchemaExporter`・`OutputDirectoryValidator`はパッケージプライベートのためモジュールでは束縛せず、Guiceのジャストインタイム束縛
+（`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、エントリーポイントと同じ手順で実際にDIコンテナを組み立てる
 `ExportTableDefinitionModuleTest`で検知する。

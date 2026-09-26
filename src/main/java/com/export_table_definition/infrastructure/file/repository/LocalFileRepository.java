@@ -68,6 +68,18 @@ public class LocalFileRepository implements FileRepository {
 
   /** {@inheritDoc} */
   @Override
+  public boolean exists(Path path) {
+    return Files.exists(path);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isDirectory(Path path) {
+    return Files.isDirectory(path);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public List<Path> listFiles(Path directory) {
     if (!Files.isDirectory(directory)) {
       return List.of();

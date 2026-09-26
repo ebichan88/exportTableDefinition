@@ -2,6 +2,7 @@ package com.export_table_definition.domain.model.target;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -16,6 +17,8 @@ import java.util.regex.Pattern;
  * </ul>
  *
  * 除外パターンは包含パターンより常に優先される。包含パターンが1件も指定されていない場合は、 除外パターンに一致しない限りすべてのテーブルが対象となる。
+ * テーブル名の部分が空のパターン（{@code !}のみ、{@code sample.}等）と、スキーマ名の部分が空のパターン（{@code .employee}等）は、
+ * どのテーブルにも一致しない書き誤りのため、黙って受け入れずに誤りとする
  *
  * @since 1.0
  * @version 1.0
@@ -41,6 +44,7 @@ final class TableTargetFilter {
    *
    * @param rawPatterns {@code table=}に指定されたパターン文字列のリスト
    * @return 生成したフィルター
+   * @throws IllegalArgumentException テーブル名またはスキーマ名の部分が空のパターンが含まれる場合（該当するパターンをすべて示す）
    */
   public static TableTargetFilter of(List<String> rawPatterns) {
     if (rawPatterns == null || rawPatterns.isEmpty()) {
@@ -48,6 +52,7 @@ final class TableTargetFilter {
     }
     final List<Entry> includes = new ArrayList<>();
     final List<Entry> excludes = new ArrayList<>();
+    final List<String> invalidPatterns = new ArrayList<>();
     for (final String rawPattern : rawPatterns) {
       if (rawPattern == null || rawPattern.isBlank()) {
         continue;
@@ -55,7 +60,16 @@ final class TableTargetFilter {
       final String stripped = rawPattern.strip();
       final boolean negate = stripped.startsWith(EXCLUDE_PREFIX);
       final String pattern = negate ? stripped.substring(EXCLUDE_PREFIX.length()) : stripped;
-      (negate ? excludes : includes).add(Entry.parse(pattern));
+      Entry.parse(pattern)
+          .ifPresentOrElse(
+              entry -> (negate ? excludes : includes).add(entry),
+              () -> invalidPatterns.add(stripped));
+    }
+    if (!invalidPatterns.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Invalid table pattern: "
+              + String.join(", ", invalidPatterns)
+              + " (the table name and the schema name must not be empty)");
     }
     return new TableTargetFilter(List.copyOf(includes), List.copyOf(excludes));
   }
@@ -99,15 +113,18 @@ final class TableTargetFilter {
      * パターン文字列を解析するメソッド
      *
      * @param pattern {@code !}を除いたパターン文字列
-     * @return 解析結果
+     * @return 解析結果。テーブル名またはスキーマ名の部分が空の場合は空
      */
-    static Entry parse(String pattern) {
+    static Optional<Entry> parse(String pattern) {
       final int separatorIndex = pattern.indexOf(SCHEMA_TABLE_SEPARATOR);
       final String schema =
           separatorIndex >= 0 ? pattern.substring(0, separatorIndex).trim() : null;
       final String tablePart =
           (separatorIndex >= 0 ? pattern.substring(separatorIndex + 1) : pattern).trim();
-      return new Entry(schema, toPattern(tablePart));
+      if (tablePart.isEmpty() || (schema != null && schema.isEmpty())) {
+        return Optional.empty();
+      }
+      return Optional.of(new Entry(schema, toPattern(tablePart)));
     }
 
     /**

@@ -1,15 +1,17 @@
 package com.export_table_definition.config;
 
+import com.export_table_definition.shared.exception.UserCorrectableException;
+
 /**
- * 設定ファイルの誤り（設定ファイル・キーが見つからない、値が不正等）を表す例外クラス<br>
- * 利用者が設定を見直せば解消する誤りだけを表す。呼び出し側は、設定の読み込みで起きる個々の例外（{@code
- * ResourceBundle}の例外等）を知らなくても、この例外だけで設定誤りを判別できる
+ * 設定ファイルの誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外クラス<br>
+ * 利用者が設定を見直せば解消する誤り（{@link UserCorrectableException}）のうち、設定ファイルに関するもの。
+ * 呼び出し側は、設定の読み込みで起きる個々の例外（{@code ResourceBundle}の例外等）を知らなくても、 この例外だけで設定誤りを判別できる
  *
  * @since 1.0
  * @version 1.0
  * @author takashi.ebina
  */
-public class InvalidConfigurationException extends RuntimeException {
+public class InvalidConfigurationException extends UserCorrectableException {
 
   private static final long serialVersionUID = 1L;
 

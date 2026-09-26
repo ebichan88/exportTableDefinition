@@ -6,18 +6,20 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * プロパティファイルに関するユーティリティクラス
+ * {@code conf}ディレクトリのプロパティファイルを読み込むクラス<br>
+ * ファイルの探索（{@code conf}、無ければ{@code src/main/resources/conf}）と読み込みだけを担い、中身をキーと値の組として返す。
+ * どのキーを書けるか・既定値・値の形式といった設定項目の仕様と検証は、ファイルごとに読み込む側が持つ （{@code
+ * ExportTableDefinition.properties}は{@code ExportTableDefinitionProperties}、{@code
+ * mybatis.properties}は{@code MyBatisSqlSessionFactory}）
  *
  * @since 1.0
  * @version 1.0
@@ -25,98 +27,24 @@ import java.util.stream.Stream;
  */
 public class PropertyLoader {
 
-  private static final Map<String, ResourceBundle> CACHE = new ConcurrentHashMap<>();
-
   /** コンストラクタ（インスタンス化不可） */
   private PropertyLoader() {}
 
   /**
-   * プロパティファイルの読み込みを行うメソッド
+   * プロパティファイルを読み込むメソッド
    *
-   * @param fileName プロパティファイルのファイル名
-   * @param key 取得するキー
-   * @return キーに対応する値
-   * @throws InvalidConfigurationException 設定ファイル、またはキーが存在しない場合
+   * @param fileName プロパティファイル名（{@code conf}配下。拡張子を除く）
+   * @return プロパティファイルのキーと値の組（変更不可）
+   * @throws InvalidConfigurationException {@code conf}ディレクトリ、またはプロパティファイルが存在しない場合
    */
-  public static String getString(String fileName, String key) {
-    final ResourceBundle bundle = getResourceBundle(fileName);
-    if (!bundle.containsKey(key)) {
-      throw new InvalidConfigurationException(
-          "Required property is not set. [file=" + fileName + ".properties, key=" + key + "]");
-    }
-    return bundle.getString(key);
+  public static Map<String, String> load(String fileName) {
+    final ResourceBundle bundle = loadResourceBundle(fileName);
+    return bundle.keySet().stream()
+        .collect(Collectors.toUnmodifiableMap(Function.identity(), bundle::getString));
   }
 
   /**
-   * プロパティファイルの読み込みを行うメソッド（カンマ区切りの値をリストで取得）<br>
-   * 各要素の前後の空白は除去する。{@code schema=public, sample}のようにカンマの後に空白を入れた場合に、 {@code "
-   * sample"}が別の名前として扱われ、対象から黙って外れてしまうことを防ぐため
-   *
-   * @param fileName プロパティファイルのファイル名
-   * @param key 取得するキー
-   * @return キーに対応するカンマ区切りの値を分割し、前後の空白を除去したリスト（空要素は含めない）
-   * @throws InvalidConfigurationException 設定ファイル、またはキーが存在しない場合
-   */
-  public static List<String> getList(String fileName, String key) {
-    return Arrays.stream(getString(fileName, key).split(","))
-        .map(String::strip)
-        .filter(s -> !s.isEmpty())
-        .toList();
-  }
-
-  /**
-   * プロパティファイルの読み込みを行うメソッド（数値で取得）<br>
-   * キーが存在しない・空・数値以外の場合はデフォルト値を返す
-   *
-   * @param fileName プロパティファイルのファイル名
-   * @param key 取得するキー
-   * @param defaultValue キーに対応する値が取得できない場合のデフォルト値
-   * @return キーに対応する数値。取得できない場合はデフォルト値
-   * @throws InvalidConfigurationException 設定ファイルが存在しない場合
-   */
-  public static int getInt(String fileName, String key, int defaultValue) {
-    final ResourceBundle bundle = getResourceBundle(fileName);
-    if (!bundle.containsKey(key)) {
-      return defaultValue;
-    }
-    final String value = bundle.getString(key);
-    if (value.isBlank()) {
-      return defaultValue;
-    }
-    try {
-      return Integer.parseInt(value.trim());
-    } catch (NumberFormatException e) {
-      return defaultValue;
-    }
-  }
-
-  /**
-   * プロパティファイルの読み込みを行うメソッド（キャッシュを利用）
-   *
-   * @param fileName プロパティファイルのファイル名
-   * @return プロパティファイルを読み込んだResourceBundleオブジェクト
-   * @throws InvalidConfigurationException {@code conf}ディレクトリ、または設定ファイルが存在しない場合
-   */
-  public static ResourceBundle getResourceBundle(String fileName) {
-    return CACHE.computeIfAbsent(fileName, PropertyLoader::loadResourceBundle);
-  }
-
-  /**
-   * プロパティファイルの読み込みを行うメソッド（Propertiesオブジェクトで取得）
-   *
-   * @param fileName プロパティファイルのファイル名
-   * @return プロパティファイルを読み込んだPropertiesオブジェクト
-   * @throws InvalidConfigurationException {@code conf}ディレクトリ、または設定ファイルが存在しない場合
-   */
-  public static Properties getProperties(String fileName) {
-    final Properties props = new Properties();
-    final ResourceBundle res = getResourceBundle(fileName);
-    res.keySet().stream().forEach(key -> props.setProperty(key, res.getString(key)));
-    return props;
-  }
-
-  /**
-   * プロパティファイルを読み込むメソッド（キャッシュに無い場合のみ呼ばれる）
+   * プロパティファイルを{@link ResourceBundle}として読み込むメソッド
    *
    * @param fileName プロパティファイルのファイル名
    * @return プロパティファイルを読み込んだResourceBundleオブジェクト

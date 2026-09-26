@@ -118,10 +118,12 @@ docker rm -f exporttabledefinition-verify-db
 
 ## 原因調査（`[result]:FAIL` になったら）
 
-`ExportTableDefinitionController` は `logger.error(e)` で例外を1行しかログに出さない
-（`var/log/exportTableDefinition.log` を見ても原因のSQLExceptionまで辿れないことが多い）。
-本当の原因（PSQLExceptionのメッセージ・SQL文・スタックトレース）を見るには、該当のMyBatis
-ステートメントを直接叩く使い捨てJavaプログラムを書くのが早い。
+まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectAllColumnInfo`等）と
+`[cause]`（DBが返したエラー。PSQLExceptionのメッセージ等）を見る。スタックトレースは実行したディレクトリの
+`var/log/exportTableDefinition.log`（`build/libs`で実行した場合は`build/libs/var/log/`）に記録される
+（`FailureReporter`が想定外の失敗をスタックトレース付きでログへ出す）。
+実際に組み立てられたSQL文と合わせて調べたい場合は、該当のMyBatisステートメントを直接叩く
+使い捨てJavaプログラムを書くのが早い。
 
 ```java
 // /tmp/repro/Repro.java など、build/libs の jar をクラスパスに使う
@@ -136,7 +138,7 @@ try (SqlSession session = MyBatisSqlSessionFactory.openSession()) {
         "com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository.<問題のid>",
         Map.of("schemaList", List.of("sample"), "tableList", List.of()));
 } catch (Exception e) {
-    e.printStackTrace(); // ここで初めてCaused by: PSQLException ... が見える
+    e.printStackTrace(); // Caused by: PSQLException ... と、MyBatisが添えるSQL文を合わせて確認できる
 }
 ```
 

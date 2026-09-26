@@ -30,6 +30,8 @@ public final class TableTargetScope {
    * @param targetSchemaList テーブル定義出力対象のスキーマのリスト（未指定の場合は空リストまたはnull）
    * @param targetTableList テーブル定義出力対象のテーブルのリスト（ワイルドカード・除外・スキーマ修飾を指定可。 未指定の場合は空リストまたはnull）
    * @return 生成したTableTargetScope
+   * @throws IllegalArgumentException テーブル名またはスキーマ名の部分が空のテーブル名パターンが含まれる場合（{@link
+   *     TableTargetFilter#of}）
    */
   public static TableTargetScope of(List<String> targetSchemaList, List<String> targetTableList) {
     return new TableTargetScope(
