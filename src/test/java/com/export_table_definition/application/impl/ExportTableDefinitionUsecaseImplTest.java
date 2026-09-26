@@ -10,9 +10,9 @@ import com.export_table_definition.domain.model.DiffResult;
 import com.export_table_definition.domain.model.annotation.Annotations;
 import com.export_table_definition.domain.model.annotation.Sidecar;
 import com.export_table_definition.domain.model.annotation.TableAnnotation;
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
+import com.export_table_definition.domain.model.entity.DatabaseEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
@@ -42,11 +42,15 @@ import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -108,7 +112,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
   /** リポジトリ呼び出し回数・引数を記録するスタブ */
   private static class RecordingRepository implements TableDefinitionRepository {
-    private BaseInfoEntity baseInfo;
+    private final DatabaseEntity database;
     List<TableEntity> tables = new ArrayList<>();
     List<ColumnEntity> columns = new ArrayList<>();
     List<IndexEntity> indexes = new ArrayList<>();
@@ -130,13 +134,13 @@ public class ExportTableDefinitionUsecaseImplTest {
     /** テーブル一覧の取得時に投げる例外（DBからの取得失敗の再現用。nullの場合は投げない） */
     RuntimeException tableListFailure;
 
-    RecordingRepository(BaseInfoEntity baseInfo) {
-      this.baseInfo = baseInfo;
+    RecordingRepository(DatabaseEntity database) {
+      this.database = database;
     }
 
     @Override
-    public BaseInfoEntity selectBaseInfo() {
-      return baseInfo;
+    public DatabaseEntity selectDatabase() {
+      return database;
     }
 
     @Override
@@ -204,6 +208,12 @@ public class ExportTableDefinitionUsecaseImplTest {
   private RecordingRepository repository;
   private ExportTableDefinitionUsecaseImpl usecase;
 
+  /** 既定の生成日（テストの実行日によらず出力を固定するため、時計を固定する） */
+  private static final LocalDate GENERATED_DATE = LocalDate.of(2026, 9, 24);
+
+  /** 生成日を指定してユースケースを組み立てる（同じスタブ・出力先を共有したまま実行日だけを変えるため） */
+  private Function<LocalDate, ExportTableDefinitionUsecaseImpl> usecaseAt;
+
   /** annotationRepositoryスタブが返す付帯情報（テストごとに差し替え可能） */
   private Annotations annotations = Annotations.empty();
 
@@ -217,7 +227,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
   private void setUp() {
     fileRepository = new InMemoryFileRepository();
-    repository = new RecordingRepository(new BaseInfoEntity("testdb", "pg", "2026-09-24"));
+    repository = new RecordingRepository(new DatabaseEntity("testdb", "pg"));
     final DefaultOutputPathResolver pathResolver = new DefaultOutputPathResolver();
     final PagedSectionWriter pagedSectionWriter =
         new PagedSectionWriter(fileRepository, pathResolver);
@@ -241,16 +251,20 @@ public class ExportTableDefinitionUsecaseImplTest {
     final SnapshotDiffDomainService snapshotDiffDomainService =
         new SnapshotDiffDomainService(
             fileRepository, pathResolver, serializer, new UnifiedDiffGenerator());
-    usecase =
-        new ExportTableDefinitionUsecaseImpl(
-            repository,
-            annotationRepository,
-            new ExportTargetConsistencyDomainService(),
-            new MarkdownExportSinkFactory(writer, erDiagramWriter, objectListWriter),
-            new SnapshotExportSinkFactory(snapshotWriter),
-            snapshotDiffDomainService,
-            fileRepository,
-            pathResolver);
+    usecaseAt =
+        generatedDate ->
+            new ExportTableDefinitionUsecaseImpl(
+                repository,
+                annotationRepository,
+                new ExportTargetConsistencyDomainService(),
+                new MarkdownExportSinkFactory(writer, erDiagramWriter, objectListWriter),
+                new SnapshotExportSinkFactory(snapshotWriter),
+                snapshotDiffDomainService,
+                fileRepository,
+                pathResolver,
+                Clock.fixed(
+                    generatedDate.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
+    usecase = usecaseAt.apply(GENERATED_DATE);
   }
 
   private TableEntity table(String schema, String physical) {
@@ -868,6 +882,23 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   @Test
+  @DisplayName("基本情報の作成日は、DBではなく実行時の時計の日付を用いる")
+  void testGeneratedDateComesFromClock() {
+    setUp();
+    repository.tables.add(table("public", "t1"));
+    usecase = usecaseAt.apply(LocalDate.of(2031, 12, 31));
+
+    usecase.exportTableDefinition(
+        new ExportRequest(
+            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+
+    assertTrue(
+        contentOf(DEFAULT_OUT.resolve("tableList_testdb.md")).contains("|pg|testdb|2031/12/31|"));
+    assertTrue(
+        contentOf(tableDefFile(DEFAULT_OUT, "public", "t1")).contains("|pg|testdb|2031/12/31|"));
+  }
+
+  @Test
   @DisplayName("rmDist=trueでも、サイドカーの読み込みに失敗した場合は既存の出力を削除しない")
   void testRmDistKeepsExistingOutputWhenSidecarLoadFails() {
     setUp();
@@ -1028,7 +1059,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     exportCommitted();
 
     // 実行日（作成日）が変わった状態で比較する
-    repository.baseInfo = new BaseInfoEntity("testdb", "pg", "2027-01-01");
+    usecase = usecaseAt.apply(LocalDate.of(2027, 1, 1));
     final DiffResult result = checkSnapshotDiff();
 
     assertFalse(result.hasDifference());

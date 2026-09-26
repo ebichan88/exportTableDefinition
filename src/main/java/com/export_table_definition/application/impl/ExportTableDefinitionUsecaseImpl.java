@@ -33,6 +33,8 @@ import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainSer
 import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +64,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   private final SnapshotDiffDomainService snapshotDiffDomainService;
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
+  private final Clock clock;
 
   /**
    * コンストラクタ
@@ -74,6 +77,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
    * @param snapshotDiffDomainService 生成したスナップショットとコミット済みスナップショットの比較を行うドメインサービス
    * @param fileRepository 出力先ディレクトリ・差分比較用の一時ディレクトリの作成・削除に用いるファイルリポジトリ
    * @param outputPathResolver 出力先パス解決クラス
+   * @param clock ドキュメントの生成日を決める時計
    */
   @Inject
   public ExportTableDefinitionUsecaseImpl(
@@ -84,7 +88,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
       SnapshotExportSinkFactory snapshotSinkFactory,
       SnapshotDiffDomainService snapshotDiffDomainService,
       FileRepository fileRepository,
-      OutputPathResolver outputPathResolver) {
+      OutputPathResolver outputPathResolver,
+      Clock clock) {
     this.repository = repository;
     this.annotationRepository = annotationRepository;
     this.consistencyDomainService = consistencyDomainService;
@@ -93,6 +98,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     this.snapshotDiffDomainService = snapshotDiffDomainService;
     this.fileRepository = fileRepository;
     this.outputPathResolver = outputPathResolver;
+    this.clock = clock;
   }
 
   /** {@inheritDoc} */
@@ -159,7 +165,9 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     // SQLの完全一致IN句では絞り込めない。スキーマのみSQLで絞り込み、テーブル単位の絞り込みは
     // TableTargetScopeによりJava側で行う。
     // ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
-    final BaseInfoEntity baseInfoEntity = repository.selectBaseInfo();
+    // 基本情報のうち生成日はDBではなく実行時に決まるため、アプリケーションの時計から与える
+    final BaseInfoEntity baseInfoEntity =
+        BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
     final List<TableEntity> tableEntityList =
         repository.selectTableList(targetSchemaList).stream().filter(targetScope::matches).toList();
     // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する

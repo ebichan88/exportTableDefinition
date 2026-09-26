@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -37,9 +38,9 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("baseInfo: baseInfo の内容を含む")
   void testBaseInfo() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
+    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
     String txt = TableDefinitionTemplates.baseInfo(base);
-    assertTrue(txt.contains("|pg|TEST_DB|2025-01-01|"));
+    assertTrue(txt.contains("|pg|TEST_DB|2025/01/01|"));
   }
 
   @Test
@@ -352,7 +353,7 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("footer: 一覧へのリンクが含まれる")
   void testFooter() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
+    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
     String footer = TableDefinitionTemplates.footer(base);
     assertTrue(footer.contains("[テーブル一覧へ](../../../tableList_TEST_DB.md)"));
     assertTrue(footer.startsWith("___"));

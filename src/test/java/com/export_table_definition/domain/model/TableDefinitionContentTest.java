@@ -17,6 +17,7 @@ import com.export_table_definition.domain.model.type.TableType;
 import com.export_table_definition.domain.model.value.TableKey;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ public class TableDefinitionContentTest {
   @Test
   @DisplayName("assemble: 対象テーブルに属する情報のみを抽出し、他テーブルの情報は含まれない")
   void testAssembleExtractsOnlyTargetTableInformation() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
+    var baseInfo = new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH);
     var target = newTable("public", "orders");
 
     var ownColumn = EntityFixtures.column("public", "orders", "id", "int", true);
@@ -88,7 +89,7 @@ public class TableDefinitionContentTest {
   @Test
   @DisplayName("assemble: 関連する情報が存在しない場合は空リストになる")
   void testAssembleWithNoRelatedInformationReturnsEmptyLists() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused", "unused");
+    var baseInfo = new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH);
     var target = newTable("public", "empty_table");
 
     TableDefinitionContent content =
@@ -125,7 +126,7 @@ public class TableDefinitionContentTest {
 
     var content =
         TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused", "unused"),
+            new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH),
             table,
             Columns.of(List.of()),
             Indexes.of(List.of()),
@@ -151,7 +152,7 @@ public class TableDefinitionContentTest {
 
     var content =
         TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused", "unused"),
+            new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH),
             table,
             Columns.of(List.of()),
             Indexes.of(List.of()),

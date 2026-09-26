@@ -17,6 +17,7 @@ import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,7 +77,7 @@ public class TableDefinitionWriterDomainServiceTest {
   private TableDefinitionWriterDomainService writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "pg", "2026-09-24");
+    return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 24));
   }
 
   private OutputRoot outputRoot() {
@@ -107,7 +108,7 @@ public class TableDefinitionWriterDomainServiceTest {
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# テーブル一覧（DB名：testdb）"));
-    assertTrue(content.contains("|pg|testdb|2026-09-24|"));
+    assertTrue(content.contains("|pg|testdb|2026/09/24|"));
     assertTrue(content.contains("## 関連ドキュメント"));
     assertTrue(content.contains("[ER図一覧](./erDiagramList_testdb.md)"));
     assertTrue(content.contains("|public|受注|orders|table|"));

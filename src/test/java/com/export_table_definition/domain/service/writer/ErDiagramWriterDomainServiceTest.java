@@ -12,6 +12,7 @@ import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -83,7 +84,7 @@ public class ErDiagramWriterDomainServiceTest {
   }
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "pg", "2026-09-23");
+    return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 23));
   }
 
   private OutputRoot outputRoot() {

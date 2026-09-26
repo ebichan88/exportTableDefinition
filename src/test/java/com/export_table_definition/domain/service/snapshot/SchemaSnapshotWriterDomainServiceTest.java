@@ -16,6 +16,7 @@ import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
 import com.export_table_definition.testsupport.EntityFixtures;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,7 +31,7 @@ public class SchemaSnapshotWriterDomainServiceTest {
   private static final Path OUT = Path.of("output");
   private static final Path SNAPSHOT_DIR = OUT.resolve("snapshot").resolve("testdb");
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity("testdb", "PostgreSQL", "2026/09/25");
+      new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2026, 9, 25));
   private static final OutputRoot ROOT = new OutputRoot(OUT, BASE_INFO);
 
   /** 書き込み内容・ディレクトリ作成呼び出しをメモリ上に収集するFileRepositoryのスタブ */

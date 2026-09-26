@@ -23,6 +23,7 @@ import com.export_table_definition.infrastructure.file.repository.LocalFileRepos
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
 import com.google.inject.AbstractModule;
+import java.time.Clock;
 
 /**
  * 依存関係を管理するクラス
@@ -53,6 +54,8 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(AnnotationRepository.class).to(AnnotationYamlRepository.class);
     bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);
     bind(SnapshotSerializer.class).to(JacksonSnapshotSerializer.class);
+    // ドキュメントの生成日は実行環境のタイムゾーンでの日付とする
+    bind(Clock.class).toInstance(Clock.systemDefaultZone());
     bind(PagedSectionWriter.class);
     bind(TableDefinitionWriterDomainService.class);
     bind(ErDiagramWriterDomainService.class);

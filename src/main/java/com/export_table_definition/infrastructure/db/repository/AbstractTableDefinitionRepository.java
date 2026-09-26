@@ -1,8 +1,8 @@
 package com.export_table_definition.infrastructure.db.repository;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
+import com.export_table_definition.domain.model.entity.DatabaseEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
@@ -12,9 +12,9 @@ import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
-import com.export_table_definition.infrastructure.db.repository.dto.BaseInfoDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ColumnDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ConstraintDto;
+import com.export_table_definition.infrastructure.db.repository.dto.DatabaseDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ForeignKeyDto;
 import com.export_table_definition.infrastructure.db.repository.dto.FunctionDto;
 import com.export_table_definition.infrastructure.db.repository.dto.IndexDto;
@@ -53,9 +53,9 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
 
   /** {@inheritDoc} */
   @Override
-  public BaseInfoEntity selectBaseInfo() {
+  public DatabaseEntity selectDatabase() {
     try (SqlSession session = MyBatisSqlSessionFactory.openSession()) {
-      final BaseInfoDto dto = session.selectOne(baseSqlPath + "selectBaseInfo");
+      final DatabaseDto dto = session.selectOne(baseSqlPath + "selectDatabaseInfo");
       return dto.toEntity();
     }
   }

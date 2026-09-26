@@ -1,8 +1,8 @@
 package com.export_table_definition.domain.repository;
 
-import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.ColumnEntity;
 import com.export_table_definition.domain.model.entity.ConstraintEntity;
+import com.export_table_definition.domain.model.entity.DatabaseEntity;
 import com.export_table_definition.domain.model.entity.ForeignKeyEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.IndexEntity;
@@ -22,11 +22,12 @@ import java.util.List;
 public interface TableDefinitionRepository {
 
   /**
-   * データベースの基本情報を取得するメソッド
+   * データベースの情報（データベース名・DBMS種別）を取得するメソッド<br>
+   * ドキュメントの生成日はDBではなく実行時に決まるため含まない
    *
-   * @return データベースの基本情報
+   * @return データベースの情報
    */
-  BaseInfoEntity selectBaseInfo();
+  DatabaseEntity selectDatabase();
 
   /**
    * データベースのテーブル情報を取得するメソッド<br>

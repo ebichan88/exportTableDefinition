@@ -2,20 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.export_table_definition.domain.repository.oracle.TableDefinitionRepository">
 
-    <select id="selectBaseInfo" resultMap="BaseInfoDtoMap">
+    <select id="selectDatabaseInfo" resultMap="DatabaseDtoMap">
         SELECT
             SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
-            'Oracle' AS "dbmsName",
-            to_char(current_timestamp, 'yyyy/MM/dd') AS "generatedDate"
+            'Oracle' AS "dbmsName"
         FROM dual
         fetch first 1 rows only
     </select>
 
-    <resultMap id="BaseInfoDtoMap" type="BaseInfoDto">
+    <resultMap id="DatabaseDtoMap" type="DatabaseDto">
         <constructor>
             <arg column="dbName" javaType="String" />
             <arg column="dbmsName" javaType="String" />
-            <arg column="generatedDate" javaType="String" />
         </constructor>
     </resultMap>
 

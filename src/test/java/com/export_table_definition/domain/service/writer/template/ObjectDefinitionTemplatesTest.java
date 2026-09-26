@@ -6,13 +6,14 @@ import com.export_table_definition.domain.model.entity.BaseInfoEntity;
 import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** ObjectDefinitionTemplates の個別ファイル生成テスト */
 public class ObjectDefinitionTemplatesTest {
 
-  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
+  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
 
   @Test
   @DisplayName("functionFile: 見出し・SQLコードブロック・一覧リンクを含む")

@@ -7,6 +7,7 @@ import com.export_table_definition.domain.model.entity.FunctionEntity;
 import com.export_table_definition.domain.model.entity.SequenceEntity;
 import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.entity.TypeEntity;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 /** ObjectListTemplates のセクション生成テスト */
 public class ObjectListTemplatesTest {
 
-  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", "2025-01-01");
+  private final BaseInfoEntity base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
 
   @Test
   @DisplayName("fileHeader: タイトルとDB名を含む")
@@ -28,7 +29,7 @@ public class ObjectListTemplatesTest {
   void testBaseInfo() {
     String section = ObjectListTemplates.baseInfo(base);
     assertTrue(section.startsWith("## 基本情報"));
-    assertTrue(section.contains("|pg|TEST_DB|2025-01-01|"));
+    assertTrue(section.contains("|pg|TEST_DB|2025/01/01|"));
   }
 
   @Test

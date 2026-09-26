@@ -14,6 +14,7 @@ import com.export_table_definition.domain.model.entity.TriggerEntity;
 import com.export_table_definition.domain.model.type.Cardinality;
 import com.export_table_definition.domain.model.type.RelationType;
 import com.export_table_definition.domain.model.type.TableType;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +24,7 @@ import org.junit.jupiter.api.Test;
 public class TableSnapshotTest {
 
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity("testdb", "PostgreSQL", "2026/09/25");
+      new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2026, 9, 25));
 
   private TableDefinitionContent content(
       TableEntity table,
