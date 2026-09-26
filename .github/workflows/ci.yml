@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   test:
@@ -36,3 +36,17 @@ jobs:
         with:
           name: test-reports
           path: build/reports/tests/
+
+      - name: Generate Javadoc
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          chmod +x ./gradlew
+          ./gradlew javadoc
+
+      - name: Commit and push Javadoc
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/javadoc/
+          git diff --cached --quiet || (git commit -m "docs: update javadoc" && git push)
