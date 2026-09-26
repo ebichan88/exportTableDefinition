@@ -3,6 +3,7 @@ package com.export_table_definition.domain.model.entity;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.value.TableKey;
+import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,7 @@ public class ForeignKeyEntityTest {
   @DisplayName("referenceTableKey: 参照先のスキーマ名・テーブル名からTableKeyを組み立てる")
   void testReferenceTableKey() {
     ForeignKeyEntity fk =
-        new ForeignKeyEntity("public", "orders", "fk1", "customer_id", "public", "customers", "id");
+        ForeignKeyFixtures.physical("public", "orders", "fk1", "public", "customers");
     assertEquals(TableKey.of("public", "customers"), fk.referenceTableKey());
   }
 }
