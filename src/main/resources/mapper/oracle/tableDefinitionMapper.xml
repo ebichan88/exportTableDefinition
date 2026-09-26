@@ -189,6 +189,9 @@
                 '' AS remarks
             FROM all_indexes idx
             LEFT JOIN all_ind_columns col ON idx.index_name = col.index_name AND idx.owner = col.index_owner
+            <!-- column_expressionはLONG型。SUBSTRでVARCHAR2化しても、オプティマイザがビューマージで
+                 外側のGROUP BY/LISTAGGと同じクエリブロックに展開するとORA-00932になる。
+                 NO_MERGEでマージを止め、変換を先に確定させる -->
             LEFT JOIN (
                 SELECT /*+ NO_MERGE */ index_name, index_owner, column_position, SUBSTR(column_expression, 1, 1000) AS column_expression
                 FROM all_ind_expressions
