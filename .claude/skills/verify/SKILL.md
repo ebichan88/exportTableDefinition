@@ -127,13 +127,15 @@ docker rm -f exporttabledefinition-verify-db
 
 ```java
 // /tmp/repro/Repro.java など、build/libs の jar をクラスパスに使う
-Properties overrides = new Properties();
-overrides.setProperty("driver", "org.postgresql.Driver");
-overrides.setProperty("url", "jdbc:postgresql://localhost:15432/testdb");
-overrides.setProperty("username", "postgres");
-overrides.setProperty("password", "postgres");
-MyBatisSqlSessionFactory.setConnectionOverrides(overrides);
-try (SqlSession session = MyBatisSqlSessionFactory.openSession()) {
+SqlSessionFactory factory =
+    MyBatisSqlSessionFactories.create(
+        ConnectionSettings.of(
+            Map.of(
+                "driver", "org.postgresql.Driver",
+                "url", "jdbc:postgresql://localhost:15432/testdb",
+                "username", "postgres",
+                "password", "postgres")));
+try (SqlSession session = factory.openSession()) {
     session.selectList(
         "com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository.<問題のid>",
         Map.of("schemaList", List.of("sample"), "tableList", List.of()));

@@ -56,7 +56,10 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - DB種別に依存しない部品のDIコンテナ（`ExportTableDefinitionModule`）を組み立て、`OutputDirectoryValidator`が出力先
      （`outputPath`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
      ディレクトリ・カレントディレクトリ自体）を指す場合は、DBへ接続する前に`[result]:FAIL`として報告する
-3. 入力の検証に成功した後、`MyBatisSqlSessionFactory` に接続情報を設定してDBへ接続し、接続先のDB種別を判定する。
+   - `ConnectionSettings.load()`（`infrastructure.db`）が`conf/mybatis.properties`をCLI引数・環境変数の値で上書きし、
+     DB接続情報を検証する
+3. 入力の検証に成功した後、`MyBatisSqlSessionFactories.create()`で`SqlSessionFactory`を1回だけ生成し、
+   `DatabaseTypeDetector.detect()`がDBへ接続して接続先のDB種別を判定する。
    2.のDIコンテナの子として、DB種別に依存する部品（`DatabaseDependentModule`）を束縛したコンテナを組み立て、
    `ExportTableDefinitionController` を取得する（[設定・DI](#設定di)を参照）。
 4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
@@ -136,7 +139,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | 設定ファイルの形式（キー・整数） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
 | 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
 | 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
-| DB接続情報 | `MyBatisSqlSessionFactory.requireValidConnectionSettings` | DBへの接続の直前 |
+| DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |
 | サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
 
 値の意味に関するルール（出力対象オブジェクト種別の値・テーブル名パターンの書式）はドメインの型に、設定ファイルという形式に
@@ -146,8 +149,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 `infrastructure.db.type.DatabaseType` （enum）がDB種別名と対応する
 `infrastructure.db.repository.*TableDefinitionRepository` 実装クラスを紐づけている。
-エントリーポイントが（入力の検証に成功した後に）`MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
-`DatabaseDependentModule` のコンストラクタへ渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
+エントリーポイントが（入力の検証に成功した後に）`DatabaseTypeDetector.detect()` で接続先のDB種別を判定して
+`DatabaseDependentModule` のコンストラクタへ（`SqlSessionFactory`とともに）渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
 `TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
 [src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
 [src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
@@ -332,11 +335,14 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 - `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: 読み込みは`PropertyLoader`に委ね、`conf/ExportTableDefinition.properties`の
   設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）
 - `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）のうち、DB種別に依存しないもの
-- `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`TableDefinitionRepository`と、それに依存するユースケース）
+- `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`SqlSessionFactory`・`TableDefinitionRepository`と、それに依存するユースケース）
 
 DIコンテナは2段階で組み立てる。出力先の検証等の入力の検証はDBへ接続する前に行う（理由は[入力の検証](#入力の検証)を参照）が、
 DB種別は接続して初めて分かるため、まず`ExportTableDefinitionModule`だけでコンテナを組み立てて入力の検証に使い、DBへ接続した後に`DatabaseDependentModule`を束縛した
 子のコンテナ（`Injector#createChildInjector`）を足して、コントローラーを取得する。
+`SqlSessionFactory`（設定XMLとmapperの解析を伴い生成が重い。DB接続はこれが持つコネクションプールが使い回す）は、エントリーポイントで
+1回だけ生成して子のコンテナへインスタンスとして束縛し、リポジトリはコンストラクタで受け取る。静的なシングルトンから取得しないため、
+テストでは任意の接続先（テスト用のDB等）の`SqlSessionFactory`を渡してリポジトリを組み立てられる。
 新しいリポジトリ実装やドメインサービスを追加する場合は、`ExportTableDefinitionModule`に束縛を追加する
 （`TableDefinitionRepository`に依存するものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
 各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。

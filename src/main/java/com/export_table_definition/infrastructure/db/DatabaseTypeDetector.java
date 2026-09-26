@@ -1,0 +1,75 @@
+package com.export_table_definition.infrastructure.db;
+
+import com.export_table_definition.infrastructure.db.type.DatabaseType;
+import com.export_table_definition.shared.exception.UserCorrectableException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Locale;
+import org.apache.ibatis.exceptions.PersistenceException;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+
+/**
+ * DBへ接続し、接続先のDB種別を判定するクラス
+ *
+ * @since 1.0
+ * @version 1.0
+ * @author takashi.ebina
+ */
+public final class DatabaseTypeDetector {
+
+  /** コンストラクタ（インスタンス化不可） */
+  private DatabaseTypeDetector() {}
+
+  /**
+   * 接続先のDB種別を判定するメソッド
+   *
+   * @param sqlSessionFactory 接続先のSqlSessionFactory
+   * @return 接続先のDB種別
+   * @throws UserCorrectableException DBに接続できない場合や、接続先が対応していないDBの場合
+   */
+  public static DatabaseType detect(SqlSessionFactory sqlSessionFactory) {
+    try (final SqlSession session = sqlSessionFactory.openSession()) {
+      return toDatabaseType(connect(session).getMetaData().getDatabaseProductName());
+    } catch (SQLException e) {
+      throw new IllegalStateException("Failed to get the database name.", e);
+    }
+  }
+
+  /**
+   * DBへ接続するメソッド<br>
+   * 接続できないのは接続情報の誤りかDBが起動していない場合で、いずれも利用者が見直せば解消するため {@link
+   * UserCorrectableException}として伝える（接続できなかった理由は原因の例外のメッセージが示す）
+   *
+   * @param session SqlSession
+   * @return DBとの接続
+   * @throws UserCorrectableException DBに接続できない場合
+   */
+  private static Connection connect(SqlSession session) {
+    try {
+      return session.getConnection();
+    } catch (PersistenceException e) {
+      throw new UserCorrectableException(
+          "Could not connect to the database. Check the connection settings "
+              + "(conf/mybatis.properties, --db-* arguments or DB_* environment variables) "
+              + "and that the database is running.",
+          e);
+    }
+  }
+
+  /**
+   * DBの製品名を、対応するDB種別へ変換するメソッド
+   *
+   * @param productName JDBCドライバが返すDBの製品名
+   * @return DB種別
+   * @throws UserCorrectableException 対応していないDBの場合（接続先の設定を見直せば解消する）
+   */
+  static DatabaseType toDatabaseType(String productName) {
+    try {
+      return DatabaseType.findByName(productName.toLowerCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      throw new UserCorrectableException(
+          e.getMessage() + ". Connect to a supported database (PostgreSQL or Oracle).", e);
+    }
+  }
+}
