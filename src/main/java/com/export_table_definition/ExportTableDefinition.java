@@ -4,7 +4,9 @@ import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.config.module.DatabaseDependentModule;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
-import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
+import com.export_table_definition.infrastructure.db.ConnectionSettings;
+import com.export_table_definition.infrastructure.db.DatabaseTypeDetector;
+import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactories;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
 import com.export_table_definition.presentation.FailureReporter;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
@@ -12,6 +14,7 @@ import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ExitStatus;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.ibatis.session.SqlSessionFactory;
 
 /**
  * テーブル定義出力処理を呼び出すクラス<br>
@@ -71,14 +74,16 @@ public class ExportTableDefinition {
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル・出力先の検証（DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
+    // CLI引数・設定ファイル・出力先・DB接続情報の検証（DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
     cliArguments.requireKnownArguments();
     final ExportRequest request =
         ExportTableDefinitionProperties.load().toExportRequest(cliArguments.isRmDist());
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
+    final ConnectionSettings connectionSettings =
+        ConnectionSettings.load(cliArguments.connectionOverrides());
     // テーブル定義出力処理実行
-    final ResultDto resultDto = createController(injector, cliArguments).execute(request);
+    final ResultDto resultDto = createController(injector, connectionSettings).execute(request);
     // 処理終了メッセージ出力
     System.out.println(resultDto.getResultMessage());
     return ExitStatus.SUCCESS;
@@ -100,14 +105,16 @@ public class ExportTableDefinition {
                 Starting check of table definition document diff.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル・出力先の検証（DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
+    // CLI引数・設定ファイル・出力先・DB接続情報の検証（DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
     cliArguments.requireKnownArguments();
     final CheckDiffRequest request = ExportTableDefinitionProperties.load().toCheckDiffRequest();
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
+    final ConnectionSettings connectionSettings =
+        ConnectionSettings.load(cliArguments.connectionOverrides());
     // DB vs ドキュメントの差分検知処理実行
     final DiffCheckResultDto diffCheckResultDto =
-        createController(injector, cliArguments).checkDiff(request);
+        createController(injector, connectionSettings).checkDiff(request);
     // 処理終了メッセージ出力
     System.out.println(diffCheckResultDto.getResultMessage());
     return diffCheckResultDto.exitStatus();
@@ -129,18 +136,21 @@ public class ExportTableDefinition {
   }
 
   /**
-   * DBへ接続して接続先のDB種別を判定し、DB種別に依存する部品を束縛した子のDIコンテナからコントローラーを取得するメソッド
+   * DBへ接続して接続先のDB種別を判定し、DB種別に依存する部品を束縛した子のDIコンテナからコントローラーを取得するメソッド<br>
+   * {@link SqlSessionFactory}はここで1回だけ生成し、子のDIコンテナを通じてリポジトリで使い回す
    *
    * @param injector DB種別に依存しない部品のDIコンテナ（{@link #createInjector()}）
-   * @param cliArguments コマンドライン引数の解析結果（DB接続情報の上書き値を含む）
+   * @param connectionSettings 検証済みのDB接続情報
    * @return コントローラー
    */
   private static ExportTableDefinitionController createController(
-      Injector injector, CliArguments cliArguments) {
-    MyBatisSqlSessionFactory.setConnectionOverrides(cliArguments.connectionOverrides());
+      Injector injector, ConnectionSettings connectionSettings) {
+    final SqlSessionFactory sqlSessionFactory =
+        MyBatisSqlSessionFactories.create(connectionSettings);
     return injector
         .createChildInjector(
-            new DatabaseDependentModule(MyBatisSqlSessionFactory.getConnectionDbName()))
+            new DatabaseDependentModule(
+                DatabaseTypeDetector.detect(sqlSessionFactory), sqlSessionFactory))
         .getInstance(ExportTableDefinitionController.class);
   }
 }

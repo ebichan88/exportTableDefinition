@@ -5,7 +5,9 @@ import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
+import jakarta.inject.Inject;
 import java.util.List;
+import org.apache.ibatis.session.SqlSessionFactory;
 
 /**
  * [oracle]テーブル定義出力に関するリポジトリクラス
@@ -21,9 +23,14 @@ import java.util.List;
  */
 public final class OracleTableDefinitionRepository extends AbstractTableDefinitionRepository {
 
-  /** コンストラクタ */
-  public OracleTableDefinitionRepository() {
-    super(DatabaseType.ORACLE);
+  /**
+   * コンストラクタ
+   *
+   * @param sqlSessionFactory 接続先DBのSqlSessionFactory
+   */
+  @Inject
+  public OracleTableDefinitionRepository(SqlSessionFactory sqlSessionFactory) {
+    super(DatabaseType.ORACLE, sqlSessionFactory);
   }
 
   /**

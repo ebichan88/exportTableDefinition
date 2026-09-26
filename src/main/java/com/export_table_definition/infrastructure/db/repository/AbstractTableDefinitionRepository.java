@@ -12,7 +12,6 @@ import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
-import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.infrastructure.db.repository.dto.ColumnDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ConstraintDto;
 import com.export_table_definition.infrastructure.db.repository.dto.DatabaseDto;
@@ -30,6 +29,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 
 /**
  * テーブル定義出力に関するリポジトリの基底クラス
@@ -41,17 +41,21 @@ import org.apache.ibatis.session.SqlSession;
 public abstract class AbstractTableDefinitionRepository implements TableDefinitionRepository {
 
   private final String baseSqlPath;
+  private final SqlSessionFactory sqlSessionFactory;
 
   /**
    * コンストラクタ
    *
    * @param databaseType データベースの種類
+   * @param sqlSessionFactory 接続先DBのSqlSessionFactory
    */
-  protected AbstractTableDefinitionRepository(DatabaseType databaseType) {
+  protected AbstractTableDefinitionRepository(
+      DatabaseType databaseType, SqlSessionFactory sqlSessionFactory) {
     this.baseSqlPath =
         "com.export_table_definition.domain.repository."
             + databaseType.getName()
             + ".TableDefinitionRepository.";
+    this.sqlSessionFactory = sqlSessionFactory;
   }
 
   /** {@inheritDoc} */
@@ -153,7 +157,7 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
    */
   private <T> T select(String sqlId, BiFunction<SqlSession, String, T> query) {
     final String sqlPath = baseSqlPath + sqlId;
-    try (SqlSession session = MyBatisSqlSessionFactory.openSession()) {
+    try (SqlSession session = sqlSessionFactory.openSession()) {
       return query.apply(session, sqlPath);
     } catch (PersistenceException e) {
       throw new RuntimeException("Failed to select: " + sqlPath, e);

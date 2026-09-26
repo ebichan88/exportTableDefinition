@@ -7,11 +7,13 @@ import com.export_table_definition.application.impl.ExportTableDefinitionUsecase
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import com.google.inject.AbstractModule;
+import org.apache.ibatis.session.SqlSessionFactory;
 
 /**
  * DB種別が決まってから束縛する依存関係のモジュール<br>
- * DBへ接続して接続先のDB種別を判定した後、{@link ExportTableDefinitionModule}で組み立てたDIコンテナの子として組み立てる。
- * DB種別で実装が変わる{@link TableDefinitionRepository}と、それに依存するユースケースを束縛する （親のコンテナでは、DB種別が未定のためこれらを解決できない）
+ * DBへ接続して接続先のDB種別を判定した後、{@link ExportTableDefinitionModule}で組み立てたDIコンテナの子として組み立てる。 接続先の{@link
+ * SqlSessionFactory}と、DB種別で実装が変わる{@link TableDefinitionRepository}、それに依存するユースケースを束縛する
+ * （親のコンテナでは、接続先・DB種別が未定のためこれらを解決できない）
  *
  * @since 1.0
  * @version 1.0
@@ -20,6 +22,7 @@ import com.google.inject.AbstractModule;
 public class DatabaseDependentModule extends AbstractModule {
 
   private final DatabaseType databaseType;
+  private final SqlSessionFactory sqlSessionFactory;
 
   /**
    * コンストラクタ<br>
@@ -28,13 +31,16 @@ public class DatabaseDependentModule extends AbstractModule {
    * エントリーポイントが「DBに接続できない」を利用者が直せる誤りとして報告できなくなるため
    *
    * @param databaseType 接続先DBの種別（{@link TableDefinitionRepository}の実装クラスの選択に用いる）
+   * @param sqlSessionFactory 接続先DBのSqlSessionFactory（エントリーポイントで1回だけ生成したものを、リポジトリで使い回す）
    */
-  public DatabaseDependentModule(DatabaseType databaseType) {
+  public DatabaseDependentModule(DatabaseType databaseType, SqlSessionFactory sqlSessionFactory) {
     this.databaseType = databaseType;
+    this.sqlSessionFactory = sqlSessionFactory;
   }
 
   @Override
   protected void configure() {
+    bind(SqlSessionFactory.class).toInstance(sqlSessionFactory);
     bind(TableDefinitionRepository.class).to(databaseType.getRepositoryClass());
     bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
     bind(CheckDocumentDiffUsecase.class).to(CheckDocumentDiffUsecaseImpl.class);

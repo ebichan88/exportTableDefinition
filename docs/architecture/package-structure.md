@@ -104,9 +104,11 @@
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `infrastructure.db` | `MyBatisSqlSessionFactory` | MyBatisの`SqlSessionFactory`生成・DB接続情報の上書き管理。接続前にDB接続情報を検証し（`driver`・`url`は必須、未知のキーは誤り）、接続先のDB種別の判定で、DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
+| `infrastructure.db` | `ConnectionSettings` | 検証済みのDB接続情報。`conf/mybatis.properties`の値をCLI引数・環境変数の値で上書きし、組み立てる時に検証する（`driver`・`url`は必須、未知のキーは誤り） |
+| | `MyBatisSqlSessionFactories` | `ConnectionSettings`からMyBatisの`SqlSessionFactory`を生成する（状態を持たない。生成したものはDIコンテナで使い回す） |
+| | `DatabaseTypeDetector` | DBへ接続して接続先のDB種別を判定する。DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
-| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
+| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。`SqlSessionFactory`をコンストラクタで受け取る。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
 | | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
 | `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
@@ -120,9 +122,9 @@
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `config` | `PropertyLoader` | `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担い、設定項目の仕様と検証は読み込む側が持つ）。`conf`ディレクトリ・設定ファイルが見つからない場合は`InvalidConfigurationException`をスローする |
-| | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`PropertyLoader`・`ExportTableDefinitionProperties`・`MyBatisSqlSessionFactory`が投げる |
+| | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`PropertyLoader`・`ExportTableDefinitionProperties`・`ConnectionSettings`が投げる |
 | `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）のうち、DB種別に依存しないもの。DBへ接続する前に組み立て、入力の検証にも使う。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
-| | `DatabaseDependentModule` | DB種別が決まってから、`ExportTableDefinitionModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。それに依存するユースケースも束縛する |
+| | `DatabaseDependentModule` | DB種別が決まってから、`ExportTableDefinitionModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`と`SqlSessionFactory`をコンストラクタで受け取り、`SqlSessionFactory`を束縛して`TableDefinitionRepository`の実装を選ぶ。それに依存するユースケースも束縛する |
 
 ## shared（レイヤーの外）
 

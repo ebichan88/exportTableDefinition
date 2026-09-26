@@ -1,6 +1,8 @@
 package com.export_table_definition.infrastructure.db.repository;
 
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
+import jakarta.inject.Inject;
+import org.apache.ibatis.session.SqlSessionFactory;
 
 /**
  * [Postgres]テーブル定義出力に関するリポジトリクラス
@@ -11,8 +13,13 @@ import com.export_table_definition.infrastructure.db.type.DatabaseType;
  */
 public final class PostgresTableDefinitionRepository extends AbstractTableDefinitionRepository {
 
-  /** コンストラクタ */
-  public PostgresTableDefinitionRepository() {
-    super(DatabaseType.POSTGRESQL);
+  /**
+   * コンストラクタ
+   *
+   * @param sqlSessionFactory 接続先DBのSqlSessionFactory
+   */
+  @Inject
+  public PostgresTableDefinitionRepository(SqlSessionFactory sqlSessionFactory) {
+    super(DatabaseType.POSTGRESQL, sqlSessionFactory);
   }
 }
