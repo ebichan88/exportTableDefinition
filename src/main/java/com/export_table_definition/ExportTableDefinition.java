@@ -71,7 +71,7 @@ public class ExportTableDefinition {
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル・出力先の検証（DBへの接続・問い合わせや出力先の削除より前に行う）
+    // CLI引数・設定ファイル・出力先の検証（DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
     cliArguments.requireKnownArguments();
     final ExportRequest request =
         ExportTableDefinitionProperties.load().toExportRequest(cliArguments.isRmDist());
@@ -100,7 +100,7 @@ public class ExportTableDefinition {
                 Starting check of table definition document diff.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル・出力先の検証（DBへの接続・問い合わせより前に行う）
+    // CLI引数・設定ファイル・出力先の検証（DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
     cliArguments.requireKnownArguments();
     final CheckDiffRequest request = ExportTableDefinitionProperties.load().toCheckDiffRequest();
     final Injector injector = createInjector();
@@ -115,7 +115,12 @@ public class ExportTableDefinition {
 
   /**
    * DB種別に依存しない部品のDIコンテナを組み立てるメソッド<br>
-   * DBへ接続する前に組み立て、入力の検証（出力先の検証等）にも用いる
+   * 入力の検証は、DBへ接続する前に行う。接続した後に検証すると、DBに接続できない環境（接続情報の誤り・DBの停止中）では
+   * 接続エラーだけが報告され、それを直して再実行するまで入力の誤りに気付けないため。<br>
+   * ただし、出力先の検証に使う部品（出力先パスの解決・パスの状態の問い合わせ）はDIコンテナから取得する一方で、
+   * DB種別で実装が変わる部品（TableDefinitionRepositoryと、それに依存するユースケース）は、DB種別が接続して初めて分かるため、
+   * 接続した後にしか束縛できない。そこでDIコンテナを2段階に分け、DB種別に依存しない部品だけのコンテナをここで先に組み立てて
+   * 検証に使い、DB種別に依存する部品は、接続した後に子のコンテナとして足す（{@link #createController}）
    *
    * @return DB種別に依存しない部品のDIコンテナ
    */

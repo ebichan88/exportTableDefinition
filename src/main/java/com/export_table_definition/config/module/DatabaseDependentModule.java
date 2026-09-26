@@ -23,7 +23,9 @@ public class DatabaseDependentModule extends AbstractModule {
 
   /**
    * コンストラクタ<br>
-   * 束縛の定義（{@link #configure()}）の中でDBへ接続しないよう、接続先DBの種別は呼び出し元で判定して受け取る
+   * 束縛の定義（{@link #configure()}）の中でDBへ接続しないよう、接続先DBの種別は呼び出し元で判定して受け取る。<br>
+   * DIコンテナの中（束縛の定義やProvider）で接続すると、接続の失敗がGuiceの例外（CreationException・ProvisionException）に包まれて届き、
+   * エントリーポイントが「DBに接続できない」を利用者が直せる誤りとして報告できなくなるため
    *
    * @param databaseType 接続先DBの種別（{@link TableDefinitionRepository}の実装クラスの選択に用いる）
    */
