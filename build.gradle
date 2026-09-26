@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'jacoco'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'com.diffplug.spotless' version '8.8.0'
 }
@@ -63,7 +64,45 @@ test {
         showStackTraces = true
         events 'failed'
     }
+    finalizedBy jacocoTestReport
 }
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+// 単体テスト（DB不要）のカバレッジのみを対象とする。結合テストはmapperのSQLと出力全体の
+// 突き合わせが目的で、Dockerが無い環境では実行できないため、カバレッジ基準には含めない
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// ドメイン層（ルールを持つ中心的なロジック）のみ、単体テストのカバレッジに最低基準を設ける。
+// domain以外の層（インフラのDB/ファイルI/O等）は結合テストや手動確認で担保するため対象外。
+// 現状の実績（line 99%・branch 95%超）を下回ったら気づけるよう、実績より少し低い値を基準にする
+jacocoTestCoverageVerification {
+    dependsOn test
+    violationRules {
+        rule {
+            element = 'BUNDLE'
+            includes = ['com.export_table_definition.domain.*']
+            limit {
+                counter = 'LINE'
+                minimum = 0.95
+            }
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.85
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
 
 tasks.register('integrationTest', Test) {
     description = 'Runs integration tests against a disposable PostgreSQL on Docker (requires Docker).'
