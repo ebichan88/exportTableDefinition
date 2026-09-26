@@ -26,7 +26,9 @@ import com.export_table_definition.infrastructure.db.repository.dto.TypeDto;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 
 /**
@@ -55,10 +57,8 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
   /** {@inheritDoc} */
   @Override
   public DatabaseEntity selectDatabase() {
-    try (SqlSession session = MyBatisSqlSessionFactory.openSession()) {
-      final DatabaseDto dto = session.selectOne(baseSqlPath + "selectDatabaseInfo");
-      return dto.toEntity();
-    }
+    final DatabaseDto dto = select("selectDatabaseInfo", SqlSession::selectOne);
+    return dto.toEntity();
   }
 
   /** {@inheritDoc} */
@@ -130,15 +130,32 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
 
   private <D, E> List<E> selectTableDefinition(
       List<String> schemaList, List<String> tableList, String sqlId, Function<D, E> mapper) {
+    final List<D> dtoList =
+        select(
+            sqlId,
+            (session, sqlPath) ->
+                session.selectList(
+                    sqlPath,
+                    Map.ofEntries(
+                        Map.entry("schemaList", schemaList), Map.entry("tableList", tableList))));
+    // DTO→エンティティの変換の失敗（未知の区分等）は、SQLの失敗と取り違えないよう包まずに伝える
+    return dtoList.stream().map(mapper).toList();
+  }
+
+  /**
+   * SQLを実行するメソッド<br>
+   * SQLの失敗は、どのSQLで失敗したかを添えて包む。DBが返したエラー（原因）は包んだ例外の原因として残り、 エントリーポイントの境界が表示・ログ出力する
+   *
+   * @param <T> 取得結果の型
+   * @param sqlId 実行するSQLのID（DB種別ごとの名前空間を除く）
+   * @param query SqlSessionとSQLの完全修飾IDを受け取り、SQLを実行する処理
+   * @return 取得結果
+   */
+  private <T> T select(String sqlId, BiFunction<SqlSession, String, T> query) {
     final String sqlPath = baseSqlPath + sqlId;
     try (SqlSession session = MyBatisSqlSessionFactory.openSession()) {
-      final List<D> dtoList =
-          session.selectList(
-              sqlPath,
-              Map.ofEntries(
-                  Map.entry("schemaList", schemaList), Map.entry("tableList", tableList)));
-      return dtoList.stream().map(mapper).toList();
-    } catch (Exception e) {
+      return query.apply(session, sqlPath);
+    } catch (PersistenceException e) {
       throw new RuntimeException("Failed to select: " + sqlPath, e);
     }
   }
