@@ -1,12 +1,7 @@
 package com.export_table_definition.config.module;
 
-import com.export_table_definition.application.CheckDocumentDiffUsecase;
-import com.export_table_definition.application.ExportTableDefinitionUsecase;
-import com.export_table_definition.application.impl.CheckDocumentDiffUsecaseImpl;
-import com.export_table_definition.application.impl.ExportTableDefinitionUsecaseImpl;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.SidecarRepository;
-import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
 import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
@@ -19,7 +14,6 @@ import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainSe
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
-import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import com.export_table_definition.infrastructure.file.repository.LocalFileRepository;
 import com.export_table_definition.infrastructure.file.repository.SidecarYamlRepository;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
@@ -28,7 +22,11 @@ import com.google.inject.AbstractModule;
 import java.time.Clock;
 
 /**
- * 依存関係を管理するクラス
+ * DB種別に依存しない依存関係を束縛するモジュール<br>
+ * DBへ接続する前（入力の検証の時点）に組み立てるDIコンテナの束縛を定義する。ファイル入出力・出力先パスの解決・ドメインサービス等、
+ * 接続先のDB種別で実装が変わらないものはここに束縛する。DB種別が決まってから束縛するもの（{@link
+ * com.export_table_definition.domain.repository.TableDefinitionRepository}と、それに依存するユースケース）は、
+ * このモジュールで組み立てたコンテナの子として{@link DatabaseDependentModule}で束縛する
  *
  * @since 1.0
  * @version 1.0
@@ -36,23 +34,8 @@ import java.time.Clock;
  */
 public class ExportTableDefinitionModule extends AbstractModule {
 
-  private final DatabaseType databaseType;
-
-  /**
-   * コンストラクタ<br>
-   * 束縛の定義（{@link #configure()}）の中でDBへ接続しないよう、接続先DBの種別は呼び出し元で判定して受け取る
-   *
-   * @param databaseType 接続先DBの種別（{@link TableDefinitionRepository}の実装クラスの選択に用いる）
-   */
-  public ExportTableDefinitionModule(DatabaseType databaseType) {
-    this.databaseType = databaseType;
-  }
-
   @Override
   protected void configure() {
-    bind(TableDefinitionRepository.class).to(databaseType.getRepositoryClass());
-    bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
-    bind(CheckDocumentDiffUsecase.class).to(CheckDocumentDiffUsecaseImpl.class);
     bind(FileRepository.class).to(LocalFileRepository.class);
     bind(SidecarRepository.class).to(SidecarYamlRepository.class);
     bind(OutputPathResolver.class).to(DefaultOutputPathResolver.class);

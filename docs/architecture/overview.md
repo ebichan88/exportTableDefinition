@@ -48,19 +48,23 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
      削除より前に`[result]:FAIL`として報告されるため、エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
-3. 設定の読み込みに成功した後、`MyBatisSqlSessionFactory` に接続情報を設定してDBへ接続し、接続先のDB種別を判定する。
-   Guiceが `ExportTableDefinitionModule` の束縛定義に従いDIコンテナを構築し、`ExportTableDefinitionController` を取得する。
+   - DB種別に依存しない部品のDIコンテナ（`ExportTableDefinitionModule`）を組み立て、`OutputDirectoryValidator`が出力先
+     （`outputPath`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
+     ディレクトリ・カレントディレクトリ自体）を指す場合は、DBへ接続する前に`[result]:FAIL`として報告する
+3. 入力の検証に成功した後、`MyBatisSqlSessionFactory` に接続情報を設定してDBへ接続し、接続先のDB種別を判定する。
+   2.のDIコンテナの子として、DB種別に依存する部品（`DatabaseDependentModule`）を束縛したコンテナを組み立て、
+   `ExportTableDefinitionController` を取得する（[設定・DI](#設定di)を参照）。
 4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
    `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、結果を `ResultDto`（`--check`時は差分の有無を持つ
    `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
 5. 通常実行のユースケース（`ExportTableDefinitionUsecaseImpl`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
-   - `--rm-dist`指定時は、削除してよい出力先か（ルート・ホームディレクトリ等でないか）をDBへの問い合わせより前に判定する
    - `SchemaExporter.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション）を読み込む。
      `ExportTargetConsistencyDomainService`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
      一括取得分を `ExportTargets` にまとめる
-   - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）
+   - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）。
+     削除してよい出力先かは、ユースケースを呼ぶ前に入口（2.）で検証済みである
    - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
      - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` /
        `ObjectListWriterDomainService`（いずれも `domain.service.writer`）がMarkdownを組み立てて `FileRepository` 経由で出力
@@ -118,6 +122,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
 | 設定ファイルの形式（キー・整数） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
 | 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
+| 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `MyBatisSqlSessionFactory.requireValidConnectionSettings` | DBへの接続の直前 |
 | サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
 
@@ -128,8 +133,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 `infrastructure.db.type.DatabaseType` （enum）がDB種別名と対応する
 `infrastructure.db.repository.*TableDefinitionRepository` 実装クラスを紐づけている。
-エントリーポイントが（設定の読み込みに成功した後に）`MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
-`ExportTableDefinitionModule` のコンストラクタへ渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
+エントリーポイントが（入力の検証に成功した後に）`MyBatisSqlSessionFactory.getConnectionDbName()` で接続先のDB種別を判定して
+`DatabaseDependentModule` のコンストラクタへ渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
 `TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
 [src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
 [src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
@@ -313,10 +318,15 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 - `config.PropertyLoader`: `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担う）
 - `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: 読み込みは`PropertyLoader`に委ね、`conf/ExportTableDefinition.properties`の
   設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）
-- `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）
+- `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）のうち、DB種別に依存しないもの
+- `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`TableDefinitionRepository`と、それに依存するユースケース）
 
-新しいリポジトリ実装やドメインサービスを追加する場合は、ここに束縛を追加する。
+DIコンテナは2段階で組み立てる。DB種別は接続して初めて分かるが、出力先の検証等の入力の検証はDBへ接続する前に行いたいため、
+まず`ExportTableDefinitionModule`だけでコンテナを組み立てて入力の検証に使い、DBへ接続した後に`DatabaseDependentModule`を束縛した
+子のコンテナ（`Injector#createChildInjector`）を足して、コントローラーを取得する。
+新しいリポジトリ実装やドメインサービスを追加する場合は、`ExportTableDefinitionModule`に束縛を追加する
+（`TableDefinitionRepository`に依存するものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
 各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。
-`application.impl.SchemaExporter`はパッケージプライベートのためモジュールでは束縛せず、Guiceのジャストインタイム束縛
-（`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、実際にDIコンテナを組み立てる
+`application.impl.SchemaExporter`・`OutputDirectoryValidator`はパッケージプライベートのためモジュールでは束縛せず、Guiceのジャストインタイム束縛
+（`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、エントリーポイントと同じ手順で実際にDIコンテナを組み立てる
 `ExportTableDefinitionModuleTest`で検知する。

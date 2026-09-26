@@ -36,6 +36,22 @@ public interface FileRepository {
   public void createDirectory(Path filePath);
 
   /**
+   * パスにファイルまたはディレクトリが存在するか判定するメソッド
+   *
+   * @param path 判定対象のパス
+   * @return 存在する場合はtrue
+   */
+  public boolean exists(Path path);
+
+  /**
+   * パスがディレクトリか判定するメソッド
+   *
+   * @param path 判定対象のパス
+   * @return ディレクトリの場合はtrue（存在しない場合はfalse）
+   */
+  public boolean isDirectory(Path path);
+
+  /**
    * ディレクトリ配下のファイルを再帰的に列挙するメソッド
    *
    * @param directory 列挙対象のディレクトリのパス

@@ -2,7 +2,6 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
-import com.export_table_definition.domain.UserCorrectableException;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
@@ -59,10 +58,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   public void exportTableDefinition(ExportRequest request) {
     // ベースディレクトリパス取得
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
-    if (request.rmDist()) {
-      // 削除してよい出力先かは、DBへの問い合わせより前に判定する（設定誤りに早く気付けるようにするため）
-      requireRemovableOutputBaseDir(outputBaseDir);
-    }
     final ExportTargets targets = schemaExporter.fetchTargets(request.targetSelection());
     if (request.rmDist()) {
       // 削除は一括取得（サイドカーの読み込みを含む）に成功してから行う。
@@ -78,26 +73,9 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   }
 
   /**
-   * {@code --rm-dist}で削除してよい出力先ベースディレクトリか判定し、削除してはならない場合は例外をスローするメソッド<br>
-   * ルート・ホームディレクトリ・カレントディレクトリ自体など、設定誤りによる被害が甚大なパスを解決した場合は削除を拒否する
-   *
-   * @param outputBaseDir 出力先ベースディレクトリ
-   * @throws UserCorrectableException 削除してはならないディレクトリの場合（{@code outputPath}の設定を見直せば解消する）
-   */
-  private void requireRemovableOutputBaseDir(Path outputBaseDir) {
-    if (!outputPathResolver.isRemovableOutputDir(outputBaseDir)) {
-      throw new UserCorrectableException(
-          "Refusing to run --rm-dist because outputPath resolves to an unsafe directory. "
-              + "Specify a dedicated output directory in outputPath. [outputBaseDir="
-              + outputBaseDir.toAbsolutePath().normalize()
-              + "]");
-    }
-  }
-
-  /**
    * {@code --rm-dist}指定時に、出力先ベースディレクトリを書き込み前に削除するメソッド<br>
-   * 削除されたテーブル等の残骸ファイルを残さないため、書き込み前にディレクトリごと削除する。 削除してよいディレクトリかは{@link
-   * #requireRemovableOutputBaseDir}で判定済みであること
+   * 削除されたテーブル等の残骸ファイルを残さないため、書き込み前にディレクトリごと削除する。
+   * 削除してよいディレクトリか（既存のファイルを指していないか、ルート・ホームディレクトリ等でないか）は、 ユースケースを呼ぶ前に入口で検証済みであること
    *
    * @param outputBaseDir 出力先ベースディレクトリ
    */

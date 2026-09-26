@@ -55,6 +55,16 @@ public class SchemaSnapshotWriterDomainServiceTest {
     }
 
     @Override
+    public boolean exists(Path path) {
+      return false;
+    }
+
+    @Override
+    public boolean isDirectory(Path path) {
+      return false;
+    }
+
+    @Override
     public List<Path> listFiles(Path directory) {
       return List.of();
     }

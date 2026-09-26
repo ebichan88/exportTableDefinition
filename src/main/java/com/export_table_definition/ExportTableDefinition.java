@@ -2,6 +2,7 @@ package com.export_table_definition;
 
 import com.export_table_definition.application.CheckDiffRequest;
 import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.config.module.DatabaseDependentModule;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.MyBatisSqlSessionFactory;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
@@ -10,6 +11,7 @@ import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ExitStatus;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
  * テーブル定義出力処理を呼び出すクラス<br>
@@ -35,7 +37,7 @@ public class ExportTableDefinition {
 
   /**
    * テーブル定義出力処理のエントリーポイントメソッド<br>
-   * 終了コードは、成功（{@code --check}で差分なしを含む）は0、{@code --check}で差分ありは1、失敗は2
+   * 終了コードは、成功（{@code --check}で差分なしを含む）は0、{@code --check}で差分ありは1、失敗は2以上（現在は2のみ）
    *
    * @param args コマンドライン引数（CLI引数・フラグの解析は{@link CliArguments}を参照）
    */
@@ -69,12 +71,14 @@ public class ExportTableDefinition {
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイルの検証（DBへの接続・問い合わせや出力先の削除より前に行う）
+    // CLI引数・設定ファイル・出力先の検証（DBへの接続・問い合わせや出力先の削除より前に行う）
     cliArguments.requireKnownArguments();
     final ExportRequest request =
         ExportTableDefinitionProperties.load().toExportRequest(cliArguments.isRmDist());
+    final Injector injector = createInjector();
+    injector.getInstance(OutputDirectoryValidator.class).validate(request);
     // テーブル定義出力処理実行
-    final ResultDto resultDto = createController(cliArguments).execute(request);
+    final ResultDto resultDto = createController(injector, cliArguments).execute(request);
     // 処理終了メッセージ出力
     System.out.println(resultDto.getResultMessage());
     return ExitStatus.SUCCESS;
@@ -96,26 +100,42 @@ public class ExportTableDefinition {
                 Starting check of table definition document diff.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイルの検証（DBへの接続・問い合わせより前に行う）
+    // CLI引数・設定ファイル・出力先の検証（DBへの接続・問い合わせより前に行う）
     cliArguments.requireKnownArguments();
     final CheckDiffRequest request = ExportTableDefinitionProperties.load().toCheckDiffRequest();
+    final Injector injector = createInjector();
+    injector.getInstance(OutputDirectoryValidator.class).validate(request);
     // DB vs ドキュメントの差分検知処理実行
-    final DiffCheckResultDto diffCheckResultDto = createController(cliArguments).checkDiff(request);
+    final DiffCheckResultDto diffCheckResultDto =
+        createController(injector, cliArguments).checkDiff(request);
     // 処理終了メッセージ出力
     System.out.println(diffCheckResultDto.getResultMessage());
     return diffCheckResultDto.exitStatus();
   }
 
   /**
-   * DBへ接続して接続先のDB種別を判定し、DIコンテナからコントローラーを取得するメソッド
+   * DB種別に依存しない部品のDIコンテナを組み立てるメソッド<br>
+   * DBへ接続する前に組み立て、入力の検証（出力先の検証等）にも用いる
    *
+   * @return DB種別に依存しない部品のDIコンテナ
+   */
+  private static Injector createInjector() {
+    return Guice.createInjector(new ExportTableDefinitionModule());
+  }
+
+  /**
+   * DBへ接続して接続先のDB種別を判定し、DB種別に依存する部品を束縛した子のDIコンテナからコントローラーを取得するメソッド
+   *
+   * @param injector DB種別に依存しない部品のDIコンテナ（{@link #createInjector()}）
    * @param cliArguments コマンドライン引数の解析結果（DB接続情報の上書き値を含む）
    * @return コントローラー
    */
-  private static ExportTableDefinitionController createController(CliArguments cliArguments) {
+  private static ExportTableDefinitionController createController(
+      Injector injector, CliArguments cliArguments) {
     MyBatisSqlSessionFactory.setConnectionOverrides(cliArguments.connectionOverrides());
-    return Guice.createInjector(
-            new ExportTableDefinitionModule(MyBatisSqlSessionFactory.getConnectionDbName()))
+    return injector
+        .createChildInjector(
+            new DatabaseDependentModule(MyBatisSqlSessionFactory.getConnectionDbName()))
         .getInstance(ExportTableDefinitionController.class);
   }
 }

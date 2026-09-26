@@ -9,6 +9,7 @@
 |---|---|
 | `ExportTableDefinition` | `main()`。処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）を1つのtry-catchで囲んで例外を1箇所で捕捉し、`FailureReporter`で報告したうえで、終了状態を終了コードへ変換する |
 | `CliArguments`（パッケージプライベート） | CLI引数の解析（`--check`・`--rm-dist`、DB接続情報の上書き値）。解釈できない引数（書き誤り等）は`requireKnownArguments()`で誤りとする |
+| `OutputDirectoryValidator`（パッケージプライベート） | 出力先（`outputPath`）をDBへ接続する前に検証する。既存のファイル（ディレクトリではないもの）を指す場合と、`--rm-dist`指定時に削除してはならないディレクトリ（`OutputPathResolver.isRemovableOutputDir`）を指す場合は`UserCorrectableException`を投げる。DB種別に依存しない部品のDIコンテナから取得する |
 | `ExportTableDefinitionProperties`（パッケージプライベート） | `conf/ExportTableDefinition.properties`の設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（ファイルの読み込みは`PropertyLoader`に委ねる）。キーの省略＝未指定、未知のキー・整数として読めない値・出力対象の条件の誤りは、まとめて`InvalidConfigurationException`で報告する |
 
 ## presentation層
@@ -31,7 +32,7 @@
 | | `CheckDocumentDiffUsecase` | DB vs ドキュメントの差分検知（`--check`モード）のユースケースのインターフェース（`checkDocumentDiff`） |
 | | `ExportRequest`, `CheckDiffRequest` | 各ユースケースメソッドへの入力をまとめたrecord。エントリーポイント→コントローラー→ユースケースを分解・再構築せず通過する。`CheckDiffRequest`はMarkdownの描画・ER図の生成を行わないため`erDiagramMaxNodes`・`rmDist`を持たない |
 | | `TargetSelection` | 両requestが持つ出力対象の絞り込み条件（`TableTargetScope`・`OutputObjectType`の集合・サイドカーYAMLのパス）のrecord。`of()`で設定値の文字列を入口で型へ変換・検証する（テーブル名パターンと出力対象オブジェクト種別の誤りはまとめて報告する） |
-| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 通常実行のユースケース実装。MarkdownとスナップショットのExportSinkを渡して`SchemaExporter`に取得・書き出しさせる。`--rm-dist`は削除してよい出力先かを取得前に判定し、削除は取得の成功後に行う |
+| `application.impl` | `ExportTableDefinitionUsecaseImpl` | 通常実行のユースケース実装。MarkdownとスナップショットのExportSinkを渡して`SchemaExporter`に取得・書き出しさせる。`--rm-dist`の削除は取得の成功後に行う（削除してよい出力先かは、入口の`OutputDirectoryValidator`が検証済み） |
 | | `CheckDocumentDiffUsecaseImpl` | 差分検知のユースケース実装。スナップショットの`ExportSink`のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 | | `SchemaExporter`（パッケージプライベート） | 両ユースケースが共有する、DBからの取得（一括取得・スキーマ単位・チャンク単位）と書き出しの段取り。取得（`fetchTargets`）と出力（`export`）を分け、書き出しは出力形式ごとの`ExportSink`に、取得した情報同士の突き合わせは`ExportTargetConsistencyDomainService`に委ね、返された指摘（`ConsistencyFinding`）を重要度に応じてログへ出力する。ドキュメントの生成日は`Clock`から与える |
 
@@ -81,7 +82,7 @@
 |---|---|
 | `TableDefinitionRepository` | データベースの情報（`selectDatabase`）・テーブル一覧・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる）。カラム・インデックス・制約は、指定したテーブル分をテーブルごとの`TableDetail`に組み立てて返す（`selectTableDetails`） |
 | `SidecarRepository` | サイドカーYAML（手動付帯情報・論理リレーション）読み込みIF |
-| `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
+| `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`、パスの状態の問い合わせ用の`exists`/`isDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
 ### domain.service
 
@@ -126,7 +127,8 @@
 |---|---|---|
 | `config` | `PropertyLoader` | `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担い、設定項目の仕様と検証は読み込む側が持つ）。`conf`ディレクトリ・設定ファイルが見つからない場合は`InvalidConfigurationException`をスローする |
 | | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`PropertyLoader`・`ExportTableDefinitionProperties`・`MyBatisSqlSessionFactory`が投げる |
-| `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
+| `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）のうち、DB種別に依存しないもの。DBへ接続する前に組み立て、入力の検証にも使う。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
+| | `DatabaseDependentModule` | DB種別が決まってから、`ExportTableDefinitionModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`をコンストラクタで受け取り、`TableDefinitionRepository`の実装を選ぶ。それに依存するユースケースも束縛する |
 
 ## リソース（Java外）
 

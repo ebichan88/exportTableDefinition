@@ -34,7 +34,9 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   `src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` に分離されている。
   両DBで挙動を揃える変更は両方のmapperを確認・修正すること。
 - 新しいリポジトリ実装やドメインサービスを追加した場合は、
-  `config/module/ExportTableDefinitionModule.java` にGuiceの束縛を追加する。
+  `config/module/ExportTableDefinitionModule.java` にGuiceの束縛を追加する
+  （DB種別で実装が変わる`TableDefinitionRepository`と、それに依存するユースケースだけは、DB接続後に組み立てる子のコンテナ用の
+  `config/module/DatabaseDependentModule.java`に置く）。
   コンストラクタには`com.google.inject.Inject`ではなく`jakarta.inject.Inject`を付ける（ドメイン層をGuiceに依存させない）。
   束縛漏れは`ExportTableDefinitionModuleTest`（実際にDIコンテナを組み立てるテスト）で検知できる。
 - ファイルI/O（読み書き・一覧取得・一時ディレクトリ作成／削除等）は必ず`domain.repository.FileRepository`経由で行い、
