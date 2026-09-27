@@ -58,15 +58,12 @@ public class ExportTableDefinition {
 
   /** テーブル定義出力処理実行メソッド */
   private static ExitStatus run(CliArguments cliArguments) {
-    // 処理開始メッセージ出力
     System.out.println(
         """
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル（CLI引数で上書きした値を含む）・出力先・DB接続情報の検証
-    // （DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
-    cliArguments.requireKnownArguments();
+    requireValidCliArguments(cliArguments);
     final ExportRequest request =
         ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
             .toExportRequest(cliArguments.isRmDist());
@@ -74,9 +71,7 @@ public class ExportTableDefinition {
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
     final ConnectionSettings connectionSettings =
         ConnectionSettings.load(cliArguments.connectionOverrides());
-    // テーブル定義出力処理実行
     final ResultDto resultDto = createController(injector, connectionSettings).execute(request);
-    // 処理終了メッセージ出力
     System.out.println(resultDto.getResultMessage());
     return ExitStatus.SUCCESS;
   }
@@ -90,27 +85,30 @@ public class ExportTableDefinition {
     if (cliArguments.isRmDist()) {
       System.out.println("Note: --rm-dist is ignored in --check mode.");
     }
-    // 処理開始メッセージ出力
     System.out.println(
         """
                 Starting check of table definition document diff.
                 Please wait a moment ...
                 """);
-    // CLI引数・設定ファイル（CLI引数で上書きした値を含む）・出力先・DB接続情報の検証
-    // （DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に行う）
-    cliArguments.requireKnownArguments();
+    requireValidCliArguments(cliArguments);
     final CheckDiffRequest request =
         ExportTableDefinitionProperties.load(cliArguments.settingOverrides()).toCheckDiffRequest();
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
     final ConnectionSettings connectionSettings =
         ConnectionSettings.load(cliArguments.connectionOverrides());
-    // DB vs ドキュメントの差分検知処理実行
     final DiffCheckResultDto diffCheckResultDto =
         createController(injector, connectionSettings).checkDiff(request);
-    // 処理終了メッセージ出力
     System.out.println(diffCheckResultDto.getResultMessage());
     return diffCheckResultDto.exitStatus();
+  }
+
+  /**
+   * CLI引数を検証するメソッド<br>
+   * DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に呼び出す
+   */
+  private static void requireValidCliArguments(CliArguments cliArguments) {
+    cliArguments.requireKnownArguments();
   }
 
   /**
