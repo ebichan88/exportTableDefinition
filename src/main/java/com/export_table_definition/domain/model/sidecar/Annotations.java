@@ -15,11 +15,6 @@ public final class Annotations {
 
   private final Map<TableKey, TableAnnotation> byKey;
 
-  /**
-   * コンストラクタ
-   *
-   * @param byKey テーブルキーをキー、付帯情報を値とするマップ
-   */
   private Annotations(Map<TableKey, TableAnnotation> byKey) {
     this.byKey = Collections.unmodifiableMap(byKey);
   }
@@ -47,7 +42,6 @@ public final class Annotations {
   /**
    * 指定したテーブルに対応する付帯情報を取得するメソッド
    *
-   * @param table テーブルエンティティ
    * @return 対応する付帯情報。存在しない場合は{@link TableAnnotation#EMPTY}
    */
   public TableAnnotation of(TableEntity table) {
@@ -57,8 +51,6 @@ public final class Annotations {
   /**
    * 付帯情報が定義されているテーブルキーの集合を取得するメソッド<br>
    * 実在しないテーブルに対する付帯情報（孤児付帯情報）の検出に利用する
-   *
-   * @return テーブルキーの集合
    */
   public Set<TableKey> tableKeys() {
     return byKey.keySet();

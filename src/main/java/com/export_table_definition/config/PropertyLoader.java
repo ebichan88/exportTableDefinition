@@ -23,7 +23,6 @@ import java.util.stream.Stream;
  */
 public class PropertyLoader {
 
-  /** コンストラクタ（インスタンス化不可） */
   private PropertyLoader() {}
 
   /**

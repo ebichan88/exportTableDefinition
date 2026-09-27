@@ -183,8 +183,6 @@ loadScripts(document, 'script');</script>
 <dd><code>name</code> - 表示名（未指定可）</dd>
 <dd><code>description</code> - 説明（未指定可）</dd>
 <dd><code>tablePatterns</code> - 所属テーブルのテーブル名パターンのリスト（ワイルドカード・除外・スキーマ修飾を指定可）</dd>
-<dt>Returns:</dt>
-<dd>観点</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - 識別子が空・使えない文字を含む場合、テーブル名パターンの書き誤り（テーブル名・スキーマ名の部分が空）がある場合、
      包含パターン（先頭に<code>!</code>の無いパターン）が1件も無い場合</dd>
@@ -230,8 +228,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">contains</span><wbr><span class="parameters">(<a href="../table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</span></div>
 <div class="block">指定されたテーブルがこの観点に所属するか判定するメソッド</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>table</code> - テーブル</dd>
 <dt>Returns:</dt>
 <dd>所属する場合はtrue</dd>
 </dl>
@@ -244,8 +240,6 @@ loadScripts(document, 'script');</script>
 <div class="block">どのテーブルにも一致しない包含パターンを求めるメソッド<br>
  テーブルのリネーム・削除によって、観点の宣言がDBと乖離していないかの気付きに用いる</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>tables</code> - 出力対象のテーブル</dd>
 <dt>Returns:</dt>
 <dd>どのテーブルにも一致しない包含パターン（指定された文字列のまま、指定順）</dd>
 </dl>
@@ -260,10 +254,7 @@ loadScripts(document, 'script');</script>
  関連は、両端がこの観点に所属するもの（観点のER図に描く）と、片端だけが所属するもの（観点外のテーブルとの関連）に分ける</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>tables</code> - 出力対象のテーブル</dd>
 <dd><code>foreignKeys</code> - 出力対象のテーブル同士の関連（外部キー・論理リレーション）</dd>
-<dt>Returns:</dt>
-<dd>この観点の出力内容</dd>
 </dl>
 </section>
 </li>

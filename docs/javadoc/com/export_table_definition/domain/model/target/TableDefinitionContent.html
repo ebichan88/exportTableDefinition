@@ -92,15 +92,9 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Record Components:</dt>
-<dd><code><span id="param-baseInfo">baseInfo</span></code> - データベースの基本情報</dd>
-<dd><code><span id="param-table">table</span></code> - テーブル情報</dd>
-<dd><code><span id="param-columns">columns</span></code> - カラム情報のリスト</dd>
-<dd><code><span id="param-indexes">indexes</span></code> - インデックス情報のリスト</dd>
-<dd><code><span id="param-constraints">constraints</span></code> - 制約情報のリスト</dd>
 <dd><code><span id="param-foreignKeys">foreignKeys</span></code> - 自テーブルが参照する関連のうち、DBに実在する外部キー制約（物理）のリスト</dd>
 <dd><code><span id="param-logicalRelations">logicalRelations</span></code> - 自テーブルが参照する関連のうち、サイドカーYAMLで宣言された論理リレーションのリスト</dd>
 <dd><code><span id="param-incomingRelations">incomingRelations</span></code> - 自テーブルを参照する関連（物理外部キー・論理リレーションの双方）のリスト</dd>
-<dd><code><span id="param-triggers">triggers</span></code> - トリガー情報のリスト</dd>
 <dd><code><span id="param-annotation">annotation</span></code> - 手動付帯情報</dd>
 <dd><code><span id="param-viewpoints">viewpoints</span></code> - 当該テーブルが所属する観点のリスト（宣言順。所属する観点が無い場合は空）</dd>
 </dl>
@@ -169,17 +163,17 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#baseInfo()" class="member-name-link">baseInfo</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-baseInfo"><code>baseInfo</code></a> record component.</div>
+<div class="block">Returns the value of the <code>baseInfo</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../table/ColumnEntity.html" title="class in com.export_table_definition.domain.model.table">ColumnEntity</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#columns()" class="member-name-link">columns</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-columns"><code>columns</code></a> record component.</div>
+<div class="block">Returns the value of the <code>columns</code> record component.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../table/ConstraintEntity.html" title="class in com.export_table_definition.domain.model.table">ConstraintEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#constraints()" class="member-name-link">constraints</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-constraints"><code>constraints</code></a> record component.</div>
+<div class="block">Returns the value of the <code>constraints</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
@@ -204,7 +198,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../table/IndexEntity.html" title="class in com.export_table_definition.domain.model.table">IndexEntity</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#indexes()" class="member-name-link">indexes</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-indexes"><code>indexes</code></a> record component.</div>
+<div class="block">Returns the value of the <code>indexes</code> record component.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logicalRelations()" class="member-name-link">logicalRelations</a>()</code></div>
@@ -220,7 +214,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#table()" class="member-name-link">table</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-table"><code>table</code></a> record component.</div>
+<div class="block">Returns the value of the <code>table</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
@@ -230,7 +224,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggers()" class="member-name-link">triggers</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-triggers"><code>triggers</code></a> record component.</div>
+<div class="block">Returns the value of the <code>triggers</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoint</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#viewpoints()" class="member-name-link">viewpoints</a>()</code></div>
@@ -271,15 +265,15 @@ loadScripts(document, 'script');</script>
 <div class="block">Creates an instance of a <code>TableDefinitionContent</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>baseInfo</code> - the value for the <a href="#param-baseInfo"><code>baseInfo</code></a> record component</dd>
-<dd><code>table</code> - the value for the <a href="#param-table"><code>table</code></a> record component</dd>
-<dd><code>columns</code> - the value for the <a href="#param-columns"><code>columns</code></a> record component</dd>
-<dd><code>indexes</code> - the value for the <a href="#param-indexes"><code>indexes</code></a> record component</dd>
-<dd><code>constraints</code> - the value for the <a href="#param-constraints"><code>constraints</code></a> record component</dd>
+<dd><code>baseInfo</code> - the value for the <code>baseInfo</code> record component</dd>
+<dd><code>table</code> - the value for the <code>table</code> record component</dd>
+<dd><code>columns</code> - the value for the <code>columns</code> record component</dd>
+<dd><code>indexes</code> - the value for the <code>indexes</code> record component</dd>
+<dd><code>constraints</code> - the value for the <code>constraints</code> record component</dd>
 <dd><code>foreignKeys</code> - the value for the <a href="#param-foreignKeys"><code>foreignKeys</code></a> record component</dd>
 <dd><code>logicalRelations</code> - the value for the <a href="#param-logicalRelations"><code>logicalRelations</code></a> record component</dd>
 <dd><code>incomingRelations</code> - the value for the <a href="#param-incomingRelations"><code>incomingRelations</code></a> record component</dd>
-<dd><code>triggers</code> - the value for the <a href="#param-triggers"><code>triggers</code></a> record component</dd>
+<dd><code>triggers</code> - the value for the <code>triggers</code> record component</dd>
 <dd><code>annotation</code> - the value for the <a href="#param-annotation"><code>annotation</code></a> record component</dd>
 <dd><code>viewpoints</code> - the value for the <a href="#param-viewpoints"><code>viewpoints</code></a> record component</dd>
 </dl>
@@ -308,7 +302,6 @@ loadScripts(document, 'script');</script>
  incomingRelations</code>）はER図でしか用いないため由来を分けない（物理外部キーと論理リレーションの双方を含む）</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>baseInfo</code> - データベースの基本情報</dd>
 <dd><code>detail</code> - 当該テーブルの詳細情報（カラム・インデックス・制約）</dd>
 <dd><code>foreignkeys</code> - 対象範囲全体の外部キー（論理リレーションを含む。当該テーブル分を抽出して保持する）</dd>
 <dd><code>triggers</code> - 対象範囲全体のトリガー情報（当該テーブル分を抽出して保持する）</dd>
@@ -376,10 +369,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="baseInfo()">
 <h3>baseInfo</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a></span>&nbsp;<span class="element-name">baseInfo</span>()</div>
-<div class="block">Returns the value of the <a href="#param-baseInfo"><code>baseInfo</code></a> record component.</div>
+<div class="block">Returns the value of the <code>baseInfo</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-baseInfo"><code>baseInfo</code></a> record component</dd>
+<dd>the value of the <code>baseInfo</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -387,10 +380,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="table()">
 <h3>table</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a></span>&nbsp;<span class="element-name">table</span>()</div>
-<div class="block">Returns the value of the <a href="#param-table"><code>table</code></a> record component.</div>
+<div class="block">Returns the value of the <code>table</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-table"><code>table</code></a> record component</dd>
+<dd>the value of the <code>table</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -398,10 +391,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="columns()">
 <h3>columns</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/ColumnEntity.html" title="class in com.export_table_definition.domain.model.table">ColumnEntity</a>&gt;</span>&nbsp;<span class="element-name">columns</span>()</div>
-<div class="block">Returns the value of the <a href="#param-columns"><code>columns</code></a> record component.</div>
+<div class="block">Returns the value of the <code>columns</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-columns"><code>columns</code></a> record component</dd>
+<dd>the value of the <code>columns</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -409,10 +402,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="indexes()">
 <h3>indexes</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/IndexEntity.html" title="class in com.export_table_definition.domain.model.table">IndexEntity</a>&gt;</span>&nbsp;<span class="element-name">indexes</span>()</div>
-<div class="block">Returns the value of the <a href="#param-indexes"><code>indexes</code></a> record component.</div>
+<div class="block">Returns the value of the <code>indexes</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-indexes"><code>indexes</code></a> record component</dd>
+<dd>the value of the <code>indexes</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -420,10 +413,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="constraints()">
 <h3>constraints</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/ConstraintEntity.html" title="class in com.export_table_definition.domain.model.table">ConstraintEntity</a>&gt;</span>&nbsp;<span class="element-name">constraints</span>()</div>
-<div class="block">Returns the value of the <a href="#param-constraints"><code>constraints</code></a> record component.</div>
+<div class="block">Returns the value of the <code>constraints</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-constraints"><code>constraints</code></a> record component</dd>
+<dd>the value of the <code>constraints</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -464,10 +457,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="triggers()">
 <h3>triggers</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;</span>&nbsp;<span class="element-name">triggers</span>()</div>
-<div class="block">Returns the value of the <a href="#param-triggers"><code>triggers</code></a> record component.</div>
+<div class="block">Returns the value of the <code>triggers</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-triggers"><code>triggers</code></a> record component</dd>
+<dd>the value of the <code>triggers</code> record component</dd>
 </dl>
 </section>
 </li>

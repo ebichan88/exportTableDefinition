@@ -29,12 +29,6 @@ public enum SnapshotKind {
   /** 差分の報告等に用いる種別名 */
   private final String label;
 
-  /**
-   * コンストラクタ
-   *
-   * @param fileName 出力ファイル名（拡張子を除く）
-   * @param label 差分の報告等に用いる種別名
-   */
   SnapshotKind(String fileName, String label) {
     this.fileName = fileName;
     this.label = label;
@@ -49,11 +43,7 @@ public enum SnapshotKind {
     return fileName;
   }
 
-  /**
-   * 差分の報告等に用いる種別名を返却するメソッド
-   *
-   * @return 種別名
-   */
+  /** 差分の報告等に用いる種別名を返却するメソッド */
   public String getLabel() {
     return label;
   }

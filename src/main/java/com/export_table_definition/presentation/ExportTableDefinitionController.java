@@ -22,12 +22,6 @@ public class ExportTableDefinitionController {
   private final ExportTableDefinitionUsecase exportTableDefinitionUsecase;
   private final CheckDocumentDiffUsecase checkDocumentDiffUsecase;
 
-  /**
-   * コンストラクタ
-   *
-   * @param exportTableDefinitionUsecase テーブル定義出力（通常実行）のユースケースクラス
-   * @param checkDocumentDiffUsecase DB vs ドキュメントの差分検知（{@code --check}モード）のユースケースクラス
-   */
   @Inject
   public ExportTableDefinitionController(
       ExportTableDefinitionUsecase exportTableDefinitionUsecase,
@@ -36,12 +30,7 @@ public class ExportTableDefinitionController {
     this.checkDocumentDiffUsecase = checkDocumentDiffUsecase;
   }
 
-  /**
-   * コントローラーメソッド
-   *
-   * @param request テーブル定義出力の入力
-   * @return 処理結果
-   */
+  /** コントローラーメソッド */
   public ResultDto execute(ExportRequest request) {
     logger.info("[START] exportTableDefinition");
     exportTableDefinitionUsecase.exportTableDefinition(request);

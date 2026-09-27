@@ -12,12 +12,7 @@ import java.util.List;
  */
 public class PagedSectionTemplates {
 
-  /**
-   * セクションの見出し行
-   *
-   * @param heading 見出し文字列
-   * @return 見出しセクション文字列
-   */
+  /** セクションの見出し行 */
   public static String heading(String heading) {
     return "## " + heading + LINE_SEPARATOR_DOUBLE;
   }
@@ -26,10 +21,8 @@ public class PagedSectionTemplates {
    * 分割した詳細ページへのリンク一覧セクション<br>
    * 行数が上限を超える場合、本体ページには表を載せず分割したページへのリンクのみを掲載する
    *
-   * @param heading セクションの見出し
    * @param label 各ページのリンク表示名
    * @param pageHrefs 各ページへの相対パスのリスト（1ページ目から順に並ぶこと）
-   * @return リンク一覧セクション文字列
    */
   public static String pagedSectionLinks(String heading, String label, List<String> pageHrefs) {
     StringBuilder sb = new StringBuilder(heading(heading));
@@ -47,7 +40,6 @@ public class PagedSectionTemplates {
    * @param nextHref 次ページへの相対パス。存在しない場合はnull
    * @param backHref 本体ページへの相対パス
    * @param backLabel 本体ページへのリンク表示名
-   * @return フッター文字列
    */
   public static String pageFooter(
       String prevHref, String nextHref, String backHref, String backLabel) {
@@ -69,7 +61,6 @@ public class PagedSectionTemplates {
    *
    * @param backHref 一覧ページへの相対パス
    * @param backLabel 一覧ページへのリンク表示名
-   * @return フッター文字列
    */
   public static String backOnlyFooter(String backHref, String backLabel) {
     return pageFooter(null, null, backHref, backLabel);

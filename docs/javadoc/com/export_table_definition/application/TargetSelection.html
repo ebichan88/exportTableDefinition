@@ -231,8 +231,6 @@ loadScripts(document, 'script');</script>
 <dd><code>outputObjectList</code> - 出力対象とするPostgreSQL固有オブジェクト種別名（<a href="../domain/model/target/OutputObjectType.html#getName()"><code>OutputObjectType.getName()</code></a>）のリスト。
      空の場合は全種別を出力対象とする</dd>
 <dd><code>sidecarPath</code> - サイドカーYAMLのパス（未指定可）</dd>
-<dt>Returns:</dt>
-<dd>出力対象の絞り込み条件</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - テーブル名パターンの書き誤りや、未知の出力対象オブジェクト種別名が含まれる場合。
      両方に誤りがある場合は、1件ずつではなくまとめて（1行に1件）示す</dd>

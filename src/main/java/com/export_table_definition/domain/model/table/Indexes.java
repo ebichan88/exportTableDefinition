@@ -9,6 +9,7 @@ final class Indexes extends AbstractEntities<IndexEntity> {
     super(byKey);
   }
 
+  /** インデックス情報のリストを、所属テーブルのテーブルキーで引けるようにする */
   public static Indexes of(List<IndexEntity> list) {
     return new Indexes(index(list));
   }

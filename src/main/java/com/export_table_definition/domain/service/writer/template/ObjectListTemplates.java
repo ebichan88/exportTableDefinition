@@ -61,6 +61,8 @@ public class ObjectListTemplates {
   }
 
   /**
+   * トリガー一覧の1行
+   *
    * @return 一覧1行分の文字列（末尾の改行を含む）
    */
   public static String triggerListLine(int no, TriggerEntity trigger) {
@@ -98,6 +100,8 @@ public class ObjectListTemplates {
   }
 
   /**
+   * シーケンス一覧の1行
+   *
    * @return 一覧1行分の文字列（末尾の改行を含む）
    */
   public static String sequenceListLine(int no, SequenceEntity sequence) {

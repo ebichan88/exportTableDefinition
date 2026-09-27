@@ -49,7 +49,6 @@ public final class ConnectionSettings {
   /**
    * DB接続情報を組み立てるメソッド
    *
-   * @param values DB接続情報のキーと値の組
    * @return 検証済みのDB接続情報
    * @throws InvalidConfigurationException 未知のキーがある場合や、必須の項目が未指定の場合（見つかった誤りをすべて示す）
    */
@@ -62,7 +61,6 @@ public final class ConnectionSettings {
    * {@code conf/mybatis.properties}の値を、上書きする値で上書きしてDB接続情報を組み立てるメソッド
    *
    * @param baseValues {@code conf/mybatis.properties}の値
-   * @param overrides 上書きする接続情報
    * @return 検証済みのDB接続情報
    * @throws InvalidConfigurationException 未知のキーがある場合や、必須の項目が未指定の場合
    */
@@ -72,11 +70,7 @@ public final class ConnectionSettings {
     return of(values);
   }
 
-  /**
-   * mybatis-config.xmlのプレースホルダ（{@code ${driver}}等）へ渡す形に変換するメソッド
-   *
-   * @return DB接続情報のキーと値の組
-   */
+  /** mybatis-config.xmlのプレースホルダ（{@code ${driver}}等）へ渡す形に変換するメソッド */
   Properties toProperties() {
     final Properties properties = new Properties();
     properties.putAll(values);
@@ -87,7 +81,6 @@ public final class ConnectionSettings {
    * DB接続情報を検証するメソッド<br>
    * 必須の項目が未指定のまま接続すると、置換されないプレースホルダ（{@code ${driver}}等）で接続を試みて 原因の分かりにくい失敗になるため、接続する前に報告する
    *
-   * @param values DB接続情報のキーと値の組
    * @throws InvalidConfigurationException 未知のキーがある場合や、必須の項目が未指定の場合（見つかった誤りをすべて示す）
    */
   private static void requireValid(Map<String, String> values) {

@@ -27,7 +27,6 @@ final class DtoValues {
    * 区切り文字で連結された値をリストへ分解するメソッド
    *
    * @param value 区切り文字で連結された値
-   * @param separator 区切り文字
    * @return 分解した値のリスト（前後の空白は除去し、空要素は含めない）。値が無い場合は空リスト
    */
   static List<String> split(String value, String separator) {

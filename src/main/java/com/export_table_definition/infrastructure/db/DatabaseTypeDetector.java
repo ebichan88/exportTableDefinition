@@ -12,14 +12,12 @@ import org.apache.ibatis.session.SqlSessionFactory;
 /** DBへ接続し、接続先のDB種別を判定するクラス */
 public final class DatabaseTypeDetector {
 
-  /** コンストラクタ（インスタンス化不可） */
   private DatabaseTypeDetector() {}
 
   /**
    * 接続先のDB種別を判定するメソッド
    *
    * @param sqlSessionFactory 接続先のSqlSessionFactory
-   * @return 接続先のDB種別
    * @throws UserCorrectableException DBに接続できない場合や、接続先が対応していないDBの場合
    */
   public static DatabaseType detect(SqlSessionFactory sqlSessionFactory) {
@@ -35,8 +33,6 @@ public final class DatabaseTypeDetector {
    * 接続できないのは接続情報の誤りかDBが起動していない場合で、いずれも利用者が見直せば解消するため {@link
    * UserCorrectableException}として伝える（接続できなかった理由は原因の例外のメッセージが示す）
    *
-   * @param session SqlSession
-   * @return DBとの接続
    * @throws UserCorrectableException DBに接続できない場合
    */
   private static Connection connect(SqlSession session) {
@@ -55,7 +51,6 @@ public final class DatabaseTypeDetector {
    * DBの製品名を、対応するDB種別へ変換するメソッド
    *
    * @param productName JDBCドライバが返すDBの製品名
-   * @return DB種別
    * @throws UserCorrectableException 対応していないDBの場合（接続先の設定を見直せば解消する）
    */
   static DatabaseType toDatabaseType(String productName) {

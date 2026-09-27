@@ -25,9 +25,6 @@ public final class MarkdownTemplateSupport {
   /**
    * 基本情報セクション<br>
    * テーブル定義書・各種一覧・ER図など、ほぼ全てのファイルの先頭に共通で掲載する
-   *
-   * @param baseInfo データベース基本情報
-   * @return 基本情報セクション文字列
    */
   public static String baseInfoSection(BaseInfoEntity baseInfo) {
     return """
@@ -72,10 +69,6 @@ public final class MarkdownTemplateSupport {
   /**
    * タイトル付きファイルヘッダー（「# タイトル（DB名：xxx）」の形式）<br>
    * ER図一覧・オブジェクト一覧など、タイトルとDB名のみで組み立てられるヘッダーで共通利用する
-   *
-   * @param title ページのタイトル
-   * @param baseInfo データベース基本情報
-   * @return ヘッダー文字列
    */
   public static String titledFileHeader(String title, BaseInfoEntity baseInfo) {
     return "# " + String.format("%s（DB名：%s）", title, baseInfo.dbName()) + LINE_SEPARATOR_DOUBLE;
@@ -113,7 +106,6 @@ public final class MarkdownTemplateSupport {
   /**
    * 真偽値を表のセルに表示するマーカー文字列へ変換するメソッド
    *
-   * @param value 真偽値
    * @return 真の場合は{@code ○}、偽の場合は空文字
    */
   public static String marker(boolean value) {

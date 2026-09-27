@@ -15,11 +15,6 @@ public enum RelationType {
   /** Mermaidの関連線の線種（実線／破線） */
   private final String lineNotation;
 
-  /**
-   * コンストラクタ
-   *
-   * @param lineNotation Mermaidの関連線の線種
-   */
   RelationType(String lineNotation) {
     this.lineNotation = lineNotation;
   }

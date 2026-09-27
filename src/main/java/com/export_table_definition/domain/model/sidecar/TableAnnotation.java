@@ -19,10 +19,7 @@ public record TableAnnotation(
   /** 付帯情報が存在しない場合に利用する空インスタンス */
   public static final TableAnnotation EMPTY = new TableAnnotation("", "", Map.of());
 
-  /**
-   * コンパクトコンストラクタ<br>
-   * null安全のため、各値がnullの場合は空文字・空マップに正規化する
-   */
+  /** null安全のため、各値がnullの場合は空文字・空マップに正規化する */
   public TableAnnotation {
     description = description == null ? "" : description;
     remarks = remarks == null ? "" : remarks;
@@ -32,7 +29,6 @@ public record TableAnnotation(
   /**
    * 指定した物理カラム名に対応するカラム備考を取得するメソッド
    *
-   * @param physicalColumnName 物理カラム名
    * @return 対応するカラム備考。存在しない場合は空文字
    */
   public String columnRemark(String physicalColumnName) {

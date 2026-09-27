@@ -12,7 +12,6 @@ public interface CheckDocumentDiffUsecase {
    * 一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない
    *
    * @param request DB vs ドキュメントの差分検知の入力
-   * @return 比較結果
    */
   public DiffResult checkDocumentDiff(CheckDiffRequest request);
 }

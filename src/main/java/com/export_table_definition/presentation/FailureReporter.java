@@ -36,8 +36,6 @@ public final class FailureReporter {
   private final Consumer<String> console;
 
   /**
-   * コンストラクタ
-   *
    * @param failureSummary 報告の先頭に示す要旨（どの処理が失敗したか）
    * @param console 報告の出力先（通常は標準出力）
    */
@@ -114,7 +112,6 @@ public final class FailureReporter {
    * 複数の誤りをまとめたメッセージを、包む側が箇条書き等に整形し直していても、同じ内容と判定できるよう行単位で比べる
    *
    * @param text 含んでいるか調べる文章
-   * @param message メッセージ
    * @return メッセージの空でない各行（前後の空白を除く）がすべて{@code text}に含まれる場合はtrue
    */
   private static boolean containsAllLines(String text, String message) {

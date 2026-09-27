@@ -33,6 +33,8 @@ public final class DocumentLocations {
   private DocumentLocations() {}
 
   /**
+   * 一覧のファイル名
+   *
    * @return {@code {接頭辞}List_{DB名}.md}
    */
   public static String listFile(ListDocumentType type, String dbName) {
@@ -40,6 +42,8 @@ public final class DocumentLocations {
   }
 
   /**
+   * スキーマ別ER図のファイル名
+   *
    * @return {@code erDiagram_{DB名}_{スキーマ名}.md}
    */
   public static String erDiagramFile(String dbName, String schemaName) {
@@ -47,6 +51,8 @@ public final class DocumentLocations {
   }
 
   /**
+   * ノード数の上限を超えたため分割したスキーマ別ER図の、1グループ分のファイル名
+   *
    * @param groupNo グループ番号（1始まり）
    * @return {@code erDiagram_{DB名}_{スキーマ名}_group{グループ番号}.md}
    */
@@ -81,6 +87,8 @@ public final class DocumentLocations {
   }
 
   /**
+   * テーブル定義書の、出力ベースディレクトリからの相対パス
+   *
    * @return {@code {DB名}/{スキーマ名}/{テーブル区分}/{物理テーブル名}.md}
    */
   public static String tableDefinitionFile(String dbName, TableEntity table) {
@@ -104,6 +112,8 @@ public final class DocumentLocations {
   }
 
   /**
+   * 関数・シーケンス・型の個別定義を置くディレクトリの、出力ベースディレクトリからの相対パス
+   *
    * @param kind オブジェクトの区分（{@link ListDocumentType#FUNCTION}／{@link
    *     ListDocumentType#SEQUENCE}／{@link ListDocumentType#TYPE}）
    * @return {@code {DB名}/{スキーマ名}/{区分}}
@@ -114,6 +124,8 @@ public final class DocumentLocations {
   }
 
   /**
+   * 関数・シーケンス・型の個別定義ファイルの、出力ベースディレクトリからの相対パス
+   *
    * @param kind オブジェクトの区分（{@link ListDocumentType#FUNCTION}／{@link
    *     ListDocumentType#SEQUENCE}／{@link ListDocumentType#TYPE}）
    * @param name 個別定義ファイル名（拡張子を除く）
@@ -128,6 +140,8 @@ public final class DocumentLocations {
   }
 
   /**
+   * 出力ベースディレクトリ直下のドキュメントから、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク
+   *
    * @return 相対リンク（例: {@code ./tableList_testdb.md}）
    */
   public static String linkFromBase(String relativePath) {
@@ -135,6 +149,8 @@ public final class DocumentLocations {
   }
 
   /**
+   * 個別定義書から、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク
+   *
    * @return 相対リンク（例: {@code ../../../tableList_testdb.md}）
    */
   public static String linkFromDefinition(String relativePath) {

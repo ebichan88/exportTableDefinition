@@ -92,13 +92,10 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Record Components:</dt>
-<dd><code><span id="param-baseInfo">baseInfo</span></code> - データベースの基本情報</dd>
 <dd><code><span id="param-tables">tables</span></code> - 出力対象のテーブル情報のリスト（テーブルの絞り込み済み）</dd>
 <dd><code><span id="param-foreignKeys">foreignKeys</span></code> - 出力対象のテーブル同士の外部キー（論理リレーションを含む）</dd>
 <dd><code><span id="param-triggers">triggers</span></code> - 対象範囲全体のトリガー情報のリスト</dd>
 <dd><code><span id="param-functions">functions</span></code> - 関数・プロシージャの一覧情報（定義本体を含まない）のリスト</dd>
-<dd><code><span id="param-sequences">sequences</span></code> - シーケンス情報のリスト</dd>
-<dd><code><span id="param-types">types</span></code> - ユーザー定義型情報のリスト</dd>
 <dd><code><span id="param-annotations">annotations</span></code> - 対象範囲全体の手動付帯情報</dd>
 <dd><code><span id="param-viewpoints">viewpoints</span></code> - サイドカーYAMLで宣言された観点</dd>
 </dl>
@@ -152,7 +149,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#baseInfo()" class="member-name-link">baseInfo</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-baseInfo"><code>baseInfo</code></a> record component.</div>
+<div class="block">Returns the value of the <code>baseInfo</code> record component.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
@@ -177,7 +174,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sequences()" class="member-name-link">sequences</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-sequences"><code>sequences</code></a> record component.</div>
+<div class="block">Returns the value of the <code>sequences</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tables()" class="member-name-link">tables</a>()</code></div>
@@ -197,7 +194,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#types()" class="member-name-link">types</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-types"><code>types</code></a> record component.</div>
+<div class="block">Returns the value of the <code>types</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#viewpoints()" class="member-name-link">viewpoints</a>()</code></div>
@@ -236,13 +233,13 @@ loadScripts(document, 'script');</script>
 <div class="block">Creates an instance of a <code>ExportTargets</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>baseInfo</code> - the value for the <a href="#param-baseInfo"><code>baseInfo</code></a> record component</dd>
+<dd><code>baseInfo</code> - the value for the <code>baseInfo</code> record component</dd>
 <dd><code>tables</code> - the value for the <a href="#param-tables"><code>tables</code></a> record component</dd>
 <dd><code>foreignKeys</code> - the value for the <a href="#param-foreignKeys"><code>foreignKeys</code></a> record component</dd>
 <dd><code>triggers</code> - the value for the <a href="#param-triggers"><code>triggers</code></a> record component</dd>
 <dd><code>functions</code> - the value for the <a href="#param-functions"><code>functions</code></a> record component</dd>
-<dd><code>sequences</code> - the value for the <a href="#param-sequences"><code>sequences</code></a> record component</dd>
-<dd><code>types</code> - the value for the <a href="#param-types"><code>types</code></a> record component</dd>
+<dd><code>sequences</code> - the value for the <code>sequences</code> record component</dd>
+<dd><code>types</code> - the value for the <code>types</code> record component</dd>
 <dd><code>annotations</code> - the value for the <a href="#param-annotations"><code>annotations</code></a> record component</dd>
 <dd><code>viewpoints</code> - the value for the <a href="#param-viewpoints"><code>viewpoints</code></a> record component</dd>
 </dl>
@@ -301,10 +298,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="baseInfo()">
 <h3>baseInfo</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a></span>&nbsp;<span class="element-name">baseInfo</span>()</div>
-<div class="block">Returns the value of the <a href="#param-baseInfo"><code>baseInfo</code></a> record component.</div>
+<div class="block">Returns the value of the <code>baseInfo</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-baseInfo"><code>baseInfo</code></a> record component</dd>
+<dd>the value of the <code>baseInfo</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -356,10 +353,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="sequences()">
 <h3>sequences</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</span>&nbsp;<span class="element-name">sequences</span>()</div>
-<div class="block">Returns the value of the <a href="#param-sequences"><code>sequences</code></a> record component.</div>
+<div class="block">Returns the value of the <code>sequences</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-sequences"><code>sequences</code></a> record component</dd>
+<dd>the value of the <code>sequences</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -367,10 +364,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="types()">
 <h3>types</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</span>&nbsp;<span class="element-name">types</span>()</div>
-<div class="block">Returns the value of the <a href="#param-types"><code>types</code></a> record component.</div>
+<div class="block">Returns the value of the <code>types</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-types"><code>types</code></a> record component</dd>
+<dd>the value of the <code>types</code> record component</dd>
 </dl>
 </section>
 </li>

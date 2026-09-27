@@ -31,7 +31,6 @@ public class ExportTableDefinition {
   private static final String CHECK_FAILURE_SUMMARY =
       "Failed to check table definition document diff.";
 
-  /** コンストラクタ（インスタンス化不可） */
   private ExportTableDefinition() {}
 
   /**
@@ -57,12 +56,7 @@ public class ExportTableDefinition {
     System.exit(exitStatus.code());
   }
 
-  /**
-   * テーブル定義出力処理実行メソッド
-   *
-   * @param cliArguments コマンドライン引数の解析結果
-   * @return 終了状態
-   */
+  /** テーブル定義出力処理実行メソッド */
   private static ExitStatus run(CliArguments cliArguments) {
     // 処理開始メッセージ出力
     System.out.println(
@@ -90,7 +84,6 @@ public class ExportTableDefinition {
   /**
    * DB vs ドキュメントの差分検知処理実行メソッド（{@code --check}モード）
    *
-   * @param cliArguments コマンドライン引数の解析結果
    * @return 終了状態（差分が見つかった場合は{@link ExitStatus#DIFFERENCE_FOUND}）
    */
   private static ExitStatus runCheck(CliArguments cliArguments) {
@@ -141,7 +134,6 @@ public class ExportTableDefinition {
    *
    * @param injector DB種別に依存しない部品のDIコンテナ（{@link #createInjector()}）
    * @param connectionSettings 検証済みのDB接続情報
-   * @return コントローラー
    */
   private static ExportTableDefinitionController createController(
       Injector injector, ConnectionSettings connectionSettings) {

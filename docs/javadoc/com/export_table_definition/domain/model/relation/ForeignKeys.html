@@ -152,7 +152,9 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(java.util.List)" class="member-name-link">of</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;list)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">物理外部キー・論理リレーションのリストから、参照元・被参照側の両方のテーブルキーで引けるコレクションを生成する</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#physicalOf(com.export_table_definition.domain.model.table.TableEntity)" class="member-name-link">physicalOf</a><wbr>(<a href="../table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -189,6 +191,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="of(java.util.List)">
 <h3>of</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;list)</span></div>
+<div class="block">物理外部キー・論理リレーションのリストから、参照元・被参照側の両方のテーブルキーで引けるコレクションを生成する</div>
 </section>
 </li>
 <li>
@@ -197,8 +200,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;</span>&nbsp;<span class="element-name">incomingOf</span><wbr><span class="parameters">(<a href="../table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</span></div>
 <div class="block">指定されたテーブルを参照している外部キー（被参照側）のリストを取得するメソッド</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>table</code> - テーブルエンティティ</dd>
 <dt>Returns:</dt>
 <dd>当該テーブルを参照している外部キーのリスト。存在しない場合は空のリストを返す</dd>
 </dl>
@@ -211,8 +212,6 @@ loadScripts(document, 'script');</script>
 <div class="block">指定されたテーブルが持つ、DBに実在する外部キー制約のリストを取得するメソッド<br>
  テーブル定義書の「外部キー情報」セクションには制約として実在するものだけを掲載する</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>table</code> - テーブルエンティティ</dd>
 <dt>Returns:</dt>
 <dd>当該テーブルの物理外部キーのリスト。存在しない場合は空のリストを返す</dd>
 </dl>
@@ -225,8 +224,6 @@ loadScripts(document, 'script');</script>
 <div class="block">指定されたテーブルが持つ、サイドカーYAML由来の論理リレーションのリストを取得するメソッド<br>
  テーブル定義書では「論理リレーション情報」セクションとして物理外部キーとは別に掲載する</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>table</code> - テーブルエンティティ</dd>
 <dt>Returns:</dt>
 <dd>当該テーブルの論理リレーションのリスト。存在しない場合は空のリストを返す</dd>
 </dl>
@@ -265,8 +262,6 @@ loadScripts(document, 'script');</script>
 <div class="block">参照元・参照先の両方が指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
  観点のように、テーブルの集合の中だけで閉じた関連（1枚のER図に描く関連）を求めるために用いる</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>tableKeys</code> - テーブルの集合</dd>
 <dt>Returns:</dt>
 <dd>両端が集合に含まれる関連のリスト</dd>
 </dl>
@@ -279,8 +274,6 @@ loadScripts(document, 'script');</script>
 <div class="block">参照元・参照先の一方だけが指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
  観点のように、テーブルの集合とその外側のテーブルとの関連を求めるために用いる</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>tableKeys</code> - テーブルの集合</dd>
 <dt>Returns:</dt>
 <dd>片端だけが集合に含まれる関連のリスト</dd>
 </dl>

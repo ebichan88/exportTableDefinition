@@ -41,7 +41,9 @@ public interface TableDefinitionRepository {
   /** {@link #selectFunctionList}と同じ項目（種別・引数・戻り値・言語）に加え、定義本体を含む */
   List<FunctionEntity> selectFunctionDefList(List<String> schemaList);
 
+  /** 指定したスキーマに属するシーケンスの一覧を取得する */
   List<SequenceEntity> selectSequenceList(List<String> schemaList);
 
+  /** 指定したスキーマに属するユーザー定義型の一覧を取得する */
   List<TypeEntity> selectTypeList(List<String> schemaList);
 }

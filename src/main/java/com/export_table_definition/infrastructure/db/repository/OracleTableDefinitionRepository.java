@@ -19,11 +19,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
  */
 public final class OracleTableDefinitionRepository extends AbstractTableDefinitionRepository {
 
-  /**
-   * コンストラクタ
-   *
-   * @param sqlSessionFactory 接続先DBのSqlSessionFactory
-   */
   @Inject
   public OracleTableDefinitionRepository(SqlSessionFactory sqlSessionFactory) {
     super(DatabaseType.ORACLE, sqlSessionFactory);

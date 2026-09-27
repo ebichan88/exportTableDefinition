@@ -101,6 +101,7 @@ public class TableDefinitionTemplates {
                     annotation.columnRemark(c.physicalColumnName()))));
   }
 
+  /** ソース（view・materialized viewの定義）セクション。viewでないテーブルでは空文字 */
   public static String view(TableEntity table) {
     if (!table.isView()) {
       return "";
@@ -170,6 +171,7 @@ public class TableDefinitionTemplates {
                 MarkdownTemplateSupport.escapeTableCell(c.remarks())));
   }
 
+  /** 外部キー情報セクション（DBに実在する外部キー制約のみ） */
   public static String foreignKeys(List<ForeignKeyEntity> foreignkeys) {
     String header =
         """
@@ -220,6 +222,7 @@ public class TableDefinitionTemplates {
         fk.cardinality().getLabel());
   }
 
+  /** トリガー情報セクション */
   public static String triggers(List<TriggerEntity> triggers) {
     String header =
         """
@@ -310,6 +313,7 @@ public class TableDefinitionTemplates {
     return sb.append(LINE_SEPARATOR).toString();
   }
 
+  /** テーブル一覧へ戻るリンクのフッター */
   public static String footer(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.backOnlyFooter(
         DocumentLocations.linkFromDefinition(

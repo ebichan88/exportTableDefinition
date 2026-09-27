@@ -82,15 +82,19 @@ final class CliArguments {
         argList.stream().filter(arg -> !isKnown(arg)).toList());
   }
 
+  /** {@code --check}（差分検知モード）が指定されたか */
   boolean isCheck() {
     return check;
   }
 
+  /** {@code --rm-dist}（書き込み前の出力先の削除）が指定されたか */
   boolean isRmDist() {
     return rmDist;
   }
 
   /**
+   * CLI引数で指定されたDB接続情報の上書き値
+   *
    * @return 上書きするDB接続情報（未指定のキーは含まれない）
    */
   Properties connectionOverrides() {
@@ -98,6 +102,8 @@ final class CliArguments {
   }
 
   /**
+   * CLI引数で指定された実行時設定の上書き値
+   *
    * @return 設定ファイルのキーをキー、上書きする値とその指定元を値とするマップ（未指定のキーは含まれない。READMEの記載順）
    */
   Map<String, SettingOverride> settingOverrides() {
@@ -175,6 +181,7 @@ final class CliArguments {
     return result;
   }
 
+  /** 上書きに対応するプロパティキーとCLI引数名の組 */
   private record OverrideArg(String key, String cliName) {
 
     /**

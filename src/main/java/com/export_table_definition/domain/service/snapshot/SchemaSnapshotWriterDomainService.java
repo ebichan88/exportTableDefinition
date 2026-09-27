@@ -48,6 +48,7 @@ public class SchemaSnapshotWriterDomainService {
     this.serializer = serializer;
   }
 
+  /** DB全体の情報（DB名等）のスナップショットを書き込む */
   public void writeDatabase(OutputRoot outputRoot) {
     write(
         outputPathResolver.resolveSnapshotDatabaseFile(outputRoot),

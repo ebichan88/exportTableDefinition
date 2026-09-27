@@ -16,7 +16,6 @@ import java.util.List;
  * @param referenceSchemaName 参照先（親）スキーマ名
  * @param referenceTableName 参照先（親）テーブル名
  * @param referenceColumnNames 参照先（親）の列名のリスト（{@code columnNames}と同じ順）
- * @param cardinality 多重度
  * @param relationType 関連の由来（物理／論理）
  */
 public record ForeignKeyEntity(
@@ -34,7 +33,7 @@ public record ForeignKeyEntity(
   /** サイドカーYAMLで関連名が省略された場合に自動生成する名称の接尾辞（実在する外部キー制約名と紛れないようにする） */
   private static final String LOGICAL_RELATION_NAME_SUFFIX = "_lrel";
 
-  /** コンパクトコンストラクタ（列名のリストは変更不可な複製として保持する） */
+  /** 列名のリストは変更不可な複製として保持する */
   public ForeignKeyEntity {
     columnNames = List.copyOf(columnNames);
     referenceColumnNames = List.copyOf(referenceColumnNames);
@@ -46,12 +45,10 @@ public record ForeignKeyEntity(
    *
    * @param schemaName 参照元（子）スキーマ名
    * @param tableName 参照元（子）テーブル名
-   * @param relationName 関連名
    * @param columnNames 参照元（子）の列名のリスト
    * @param referenceSchemaName 参照先（親）スキーマ名
    * @param referenceTableName 参照先（親）テーブル名
    * @param referenceColumnNames 参照先（親）の列名のリスト
-   * @param cardinality 多重度
    * @return 論理リレーションを表すForeignKeyEntity
    */
   public static ForeignKeyEntity logical(
@@ -83,7 +80,6 @@ public record ForeignKeyEntity(
    * @param rawName YAMLで指定された関連名（未指定の場合はnull・空白可）
    * @param childTableName 参照元（子）テーブル名
    * @param childColumnNames 参照元（子）の列名のリスト
-   * @return 解決した関連名
    */
   public static String resolveLogicalRelationName(
       String rawName, String childTableName, List<String> childColumnNames) {
@@ -102,11 +98,7 @@ public record ForeignKeyEntity(
     return referenceTableKey().qualifiedName();
   }
 
-  /**
-   * 参照先（親）テーブルのテーブルキーを取得するメソッド
-   *
-   * @return 参照先のテーブルキー
-   */
+  /** 参照先（親）テーブルのテーブルキーを取得するメソッド */
   public TableKey referenceTableKey() {
     return TableKey.of(referenceSchemaName, referenceTableName);
   }

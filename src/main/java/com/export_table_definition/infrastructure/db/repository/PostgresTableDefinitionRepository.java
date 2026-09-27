@@ -7,11 +7,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
 /** [Postgres]テーブル定義出力に関するリポジトリクラス */
 public final class PostgresTableDefinitionRepository extends AbstractTableDefinitionRepository {
 
-  /**
-   * コンストラクタ
-   *
-   * @param sqlSessionFactory 接続先DBのSqlSessionFactory
-   */
   @Inject
   public PostgresTableDefinitionRepository(SqlSessionFactory sqlSessionFactory) {
     super(DatabaseType.POSTGRESQL, sqlSessionFactory);

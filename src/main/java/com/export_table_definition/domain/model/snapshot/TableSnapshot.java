@@ -40,6 +40,7 @@ public record TableSnapshot(
     List<Relation> logicalRelations,
     List<Trigger> triggers) {
 
+  /** テーブル定義書1ファイル分の内容からスナップショットを生成する */
   public static TableSnapshot of(TableDefinitionContent content) {
     final TableEntity table = content.table();
     final TableAnnotation annotation = content.annotation();
@@ -74,6 +75,7 @@ public record TableSnapshot(
       String defaultValue,
       String remarks) {
 
+    /** カラム情報に、サイドカー由来のカラム備考を合わせて生成する */
     static Column of(ColumnEntity column, TableAnnotation annotation) {
       return new Column(
           column.physicalColumnName(),
@@ -96,6 +98,7 @@ public record TableSnapshot(
       String definition,
       String remarks) {
 
+    /** インデックス情報から生成する */
     static Index of(IndexEntity index) {
       return new Index(
           index.indexName(),
@@ -114,6 +117,7 @@ public record TableSnapshot(
    */
   public record Constraint(String name, String type, String definition, String remarks) {
 
+    /** 制約情報から生成する */
     static Constraint of(ConstraintEntity constraint) {
       return new Constraint(
           constraint.constraintName(),
@@ -136,6 +140,7 @@ public record TableSnapshot(
       List<String> referenceColumns,
       Cardinality cardinality) {
 
+    /** 外部キー・論理リレーションから生成する */
     static Relation of(ForeignKeyEntity foreignKey) {
       return new Relation(
           foreignKey.foreignkeyName(),
@@ -163,6 +168,7 @@ public record TableSnapshot(
       String function,
       String definition) {
 
+    /** トリガー情報から生成する */
     static Trigger of(TriggerEntity trigger) {
       return new Trigger(
           trigger.triggerName(),

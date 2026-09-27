@@ -46,6 +46,7 @@ public class SnapshotDiffDomainService {
     this.diffGenerator = diffGenerator;
   }
 
+  /** 生成したスナップショットのディレクトリと、コミット済みのスナップショットのディレクトリを比較する */
   public DiffResult compare(Path generatedDir, Path committedDir) {
     final Map<Target, List<String>> generated = index(generatedDir);
     final Map<Target, List<String>> committed = index(committedDir);

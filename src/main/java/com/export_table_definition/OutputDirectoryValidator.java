@@ -26,12 +26,6 @@ class OutputDirectoryValidator {
   private final OutputPathResolver outputPathResolver;
   private final FileRepository fileRepository;
 
-  /**
-   * コンストラクタ
-   *
-   * @param outputPathResolver 出力先パス解決クラス
-   * @param fileRepository パスの状態の問い合わせに用いるファイルリポジトリ
-   */
   @Inject
   OutputDirectoryValidator(OutputPathResolver outputPathResolver, FileRepository fileRepository) {
     this.outputPathResolver = outputPathResolver;
@@ -41,7 +35,6 @@ class OutputDirectoryValidator {
   /**
    * テーブル定義出力（通常実行）の出力先を検証するメソッド
    *
-   * @param request テーブル定義出力の入力
    * @throws UserCorrectableException 出力先が既存のファイルを指す場合や、{@code --rm-dist}で削除してはならないディレクトリの場合
    */
   void validate(ExportRequest request) {
@@ -58,7 +51,6 @@ class OutputDirectoryValidator {
   /**
    * 差分検知（{@code --check}モード）の比較対象の出力先を検証するメソッド
    *
-   * @param request 差分検知の入力
    * @throws UserCorrectableException 出力先が既存のファイルを指す場合
    */
   void validate(CheckDiffRequest request) {

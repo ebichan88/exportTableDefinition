@@ -9,6 +9,7 @@ final class Columns extends AbstractEntities<ColumnEntity> {
     super(byKey);
   }
 
+  /** カラム情報のリストを、所属テーブルのテーブルキーで引けるようにする */
   public static Columns of(List<ColumnEntity> list) {
     return new Columns(index(list));
   }

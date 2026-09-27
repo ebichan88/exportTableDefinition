@@ -21,12 +21,6 @@ public class PagedSectionWriter {
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
 
-  /**
-   * コンストラクタ
-   *
-   * @param fileRepository ファイルリポジトリ
-   * @param outputPathResolver 出力パス解決クラス（分割ページのファイルパスの解決に用いる）
-   */
   @Inject
   public PagedSectionWriter(FileRepository fileRepository, OutputPathResolver outputPathResolver) {
     this.fileRepository = fileRepository;
@@ -36,10 +30,6 @@ public class PagedSectionWriter {
   /**
    * ページ分割対象となる表のセクション
    *
-   * @param <T> 行の元になる要素の型
-   * @param heading セクションの見出し
-   * @param tableHeader 表のヘッダー行
-   * @param rows 行の元になる要素のリスト
    * @param lineMapper 行番号と要素から1行分の文字列を生成する関数
    */
   public record PagedSection<T>(
@@ -63,9 +53,6 @@ public class PagedSectionWriter {
    * 行数がMarkdownの表に表示できる最大件数以下の場合は本体ページに直接埋め込み、 超える場合は別ファイルへ分割して、本体ページにはリンクのみを掲載する。
    * 行の文字列生成はページ単位で行い、全行分を同時にメモリ保持しない
    *
-   * @param <T> 行の元になる要素の型
-   * @param section 書き込む表のセクション
-   * @param layout 分割ページの配置
    * @return 本体ページに掲載するセクション文字列
    */
   public <T> String writePagedSection(PagedSection<T> section, PageLayout layout) {
@@ -117,7 +104,6 @@ public class PagedSectionWriter {
    * 本体ページ・分割ページ同士の相対リンクを取得するメソッド<br>
    * 分割ページは本体ページと同じディレクトリに置かれるため、ファイル名のみで参照できる
    *
-   * @param file 参照先のファイルパス
    * @return 相対リンク（例: {@code ./tableList_testdb_2.md}）
    */
   private static String siblingHref(Path file) {
@@ -127,11 +113,8 @@ public class PagedSectionWriter {
   /**
    * 表の行を指定範囲分だけ組み立てるメソッド
    *
-   * @param <T> 行の元になる要素の型
-   * @param section 対象の表のセクション
    * @param from 開始インデックス（含む）
    * @param to 終了インデックス（含まない）
-   * @return 行を連結した文字列
    */
   private <T> String buildRows(PagedSection<T> section, int from, int to) {
     final StringBuilder sb = new StringBuilder();

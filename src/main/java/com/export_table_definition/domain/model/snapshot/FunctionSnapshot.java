@@ -8,13 +8,8 @@ import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
  * スキーマのスナップショットのうち、1関数・プロシージャ分の情報を表すrecordクラス<br>
  * 同名の関数（オーバーロード）は引数で区別する。個別定義ファイル名（連番付き）は Markdownの出力都合で付与しているものなので保持しない
  *
- * @param schema スキーマ名
- * @param name 関数・プロシージャ名
  * @param kind 種別（FUNCTION/PROCEDURE）
- * @param arguments 引数
  * @param result 戻り値の型（プロシージャの場合はnull）
- * @param language 実装言語
- * @param definition 定義本体
  */
 public record FunctionSnapshot(
     String schema,

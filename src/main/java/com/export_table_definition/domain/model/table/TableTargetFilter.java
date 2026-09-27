@@ -70,6 +70,7 @@ public final class TableTargetFilter {
     return new TableTargetFilter(List.copyOf(includes), List.copyOf(excludes));
   }
 
+  /** 包含・除外のいずれのパターンも指定されていないか */
   public boolean isEmpty() {
     return includes.isEmpty() && excludes.isEmpty();
   }

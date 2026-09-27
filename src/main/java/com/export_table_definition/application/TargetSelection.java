@@ -31,7 +31,6 @@ public record TargetSelection(
    * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名（{@link OutputObjectType#getName()}）のリスト。
    *     空の場合は全種別を出力対象とする
    * @param sidecarPath サイドカーYAMLのパス（未指定可）
-   * @return 出力対象の絞り込み条件
    * @throws IllegalArgumentException テーブル名パターンの書き誤りや、未知の出力対象オブジェクト種別名が含まれる場合。
    *     両方に誤りがある場合は、1件ずつではなくまとめて（1行に1件）示す
    */
@@ -55,7 +54,6 @@ public record TargetSelection(
    * 設定値を解釈するメソッド<br>
    * 解釈できない場合は、他の設定値の誤りとまとめて報告できるよう、例外を投げずに誤りを記録する
    *
-   * @param <T> 解釈結果の型
    * @param parser 設定値を解釈する処理（解釈できない場合は{@link IllegalArgumentException}を投げる）
    * @param errors 誤りの記録先
    * @return 解釈結果。解釈できない場合はnull（誤りを記録した呼び出し元が例外を投げるため、外へは渡らない）

@@ -116,9 +116,7 @@ implements <a href="../../../domain/repository/TableDefinitionRepository.html" t
 <div class="col-first even-row-color"><code>protected </code></div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.infrastructure.db.type.DatabaseType,org.apache.ibatis.session.SqlSessionFactory)" class="member-name-link">AbstractTableDefinitionRepository</a><wbr>(<a href="../type/DatabaseType.html" title="enum class in com.export_table_definition.infrastructure.db.type">DatabaseType</a>&nbsp;databaseType,
  org.apache.ibatis.session.SqlSessionFactory&nbsp;sqlSessionFactory)</code></div>
-<div class="col-last even-row-color">
-<div class="block">コンストラクタ</div>
-</div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -155,7 +153,9 @@ implements <a href="../../../domain/repository/TableDefinitionRepository.html" t
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../domain/model/schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectSequenceList(java.util.List)" class="member-name-link">selectSequenceList</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">指定したスキーマに属するシーケンスの一覧を取得する</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../domain/model/table/TableDetail.html" title="class in com.export_table_definition.domain.model.table">TableDetail</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectTableDetails(java.util.List)" class="member-name-link">selectTableDetails</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../domain/model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&gt;&nbsp;tables)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -173,7 +173,9 @@ implements <a href="../../../domain/repository/TableDefinitionRepository.html" t
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../domain/model/schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectTypeList(java.util.List)" class="member-name-link">selectTypeList</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">指定したスキーマに属するユーザー定義型の一覧を取得する</div>
+</div>
 </div>
 </div>
 </div>
@@ -196,12 +198,6 @@ implements <a href="../../../domain/repository/TableDefinitionRepository.html" t
 <h3>AbstractTableDefinitionRepository</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractTableDefinitionRepository</span><wbr><span class="parameters">(<a href="../type/DatabaseType.html" title="enum class in com.export_table_definition.infrastructure.db.type">DatabaseType</a>&nbsp;databaseType,
  org.apache.ibatis.session.SqlSessionFactory&nbsp;sqlSessionFactory)</span></div>
-<div class="block">コンストラクタ</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>databaseType</code> - データベースの種類</dd>
-<dd><code>sqlSessionFactory</code> - 接続先DBのSqlSessionFactory</dd>
-</dl>
 </section>
 </li>
 </ul>
@@ -296,6 +292,7 @@ implements <a href="../../../domain/repository/TableDefinitionRepository.html" t
 <section class="detail" id="selectSequenceList(java.util.List)">
 <h3>selectSequenceList</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../domain/model/schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</span>&nbsp;<span class="element-name">selectSequenceList</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</span></div>
+<div class="block">指定したスキーマに属するシーケンスの一覧を取得する</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../../../domain/repository/TableDefinitionRepository.html#selectSequenceList(java.util.List)">selectSequenceList</a></code>&nbsp;in interface&nbsp;<code><a href="../../../domain/repository/TableDefinitionRepository.html" title="interface in com.export_table_definition.domain.repository">TableDefinitionRepository</a></code></dd>
@@ -306,6 +303,7 @@ implements <a href="../../../domain/repository/TableDefinitionRepository.html" t
 <section class="detail" id="selectTypeList(java.util.List)">
 <h3>selectTypeList</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../domain/model/schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</span>&nbsp;<span class="element-name">selectTypeList</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaList)</span></div>
+<div class="block">指定したスキーマに属するユーザー定義型の一覧を取得する</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../../../domain/repository/TableDefinitionRepository.html#selectTypeList(java.util.List)">selectTypeList</a></code>&nbsp;in interface&nbsp;<code><a href="../../../domain/repository/TableDefinitionRepository.html" title="interface in com.export_table_definition.domain.repository">TableDefinitionRepository</a></code></dd>

@@ -24,14 +24,6 @@ public class MarkdownExportSinkFactory {
   private final ObjectListWriterDomainService objectListWriter;
   private final ViewpointWriterDomainService viewpointWriter;
 
-  /**
-   * コンストラクタ
-   *
-   * @param tableDefinitionWriter テーブル一覧・テーブル定義書を書き込むクラス
-   * @param erDiagramWriter ER図を書き込むクラス
-   * @param objectListWriter トリガー・関数・シーケンス・型の一覧および個別定義を書き込むクラス
-   * @param viewpointWriter 観点ページ・観点一覧を書き込むクラス
-   */
   @Inject
   public MarkdownExportSinkFactory(
       TableDefinitionWriterDomainService tableDefinitionWriter,
@@ -102,12 +94,6 @@ public class MarkdownExportSinkFactory {
     private final Path outputBaseDir;
     private final int erDiagramMaxNodes;
 
-    /**
-     * コンストラクタ
-     *
-     * @param outputBaseDir 出力先のベースディレクトリパス
-     * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限
-     */
     private MarkdownExportSink(Path outputBaseDir, int erDiagramMaxNodes) {
       this.outputBaseDir = outputBaseDir;
       this.erDiagramMaxNodes = erDiagramMaxNodes;

@@ -35,6 +35,8 @@ public class ViewpointTemplates {
   }
 
   /**
+   * 説明セクション
+   *
    * @return 説明が未指定の場合は空文字（セクションごと省く）
    */
   public static String description(Viewpoint viewpoint) {
@@ -78,6 +80,7 @@ public class ViewpointTemplates {
     return ErDiagramTemplates.diagramTableLine(no, TableKey.of(table), table);
   }
 
+  /** 所属するテーブルが出力対象に1つも無い場合に、テーブル一覧の代わりに出すセクション */
   public static String noTables() {
     return PagedSectionTemplates.heading(tableHeading())
         + "出力対象のテーブルのうち、この観点に所属するものはありません。"

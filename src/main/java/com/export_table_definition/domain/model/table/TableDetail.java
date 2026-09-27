@@ -6,7 +6,6 @@ import java.util.List;
  * 1テーブル分の詳細情報（カラム・インデックス・制約）をまとめたrecord<br>
  * テーブル一覧・外部キー等の一括取得する情報と異なり、テーブル数に比例して重くなるため、 スキーマ・チャンク単位で取得し、出力後に破棄する
  *
- * @param table テーブル情報
  * @param columns 当該テーブルのカラム情報のリスト
  * @param indexes 当該テーブルのインデックス情報のリスト
  * @param constraints 当該テーブルの制約情報のリスト
@@ -17,7 +16,7 @@ public record TableDetail(
     List<IndexEntity> indexes,
     List<ConstraintEntity> constraints) {
 
-  /** コンパクトコンストラクタ（各リストは変更不可な複製として保持する） */
+  /** 各リストは変更不可な複製として保持する */
   public TableDetail {
     columns = List.copyOf(columns);
     indexes = List.copyOf(indexes);

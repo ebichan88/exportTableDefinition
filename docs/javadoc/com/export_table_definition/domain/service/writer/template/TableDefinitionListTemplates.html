@@ -186,12 +186,6 @@ loadScripts(document, 'script');</script>
 <h3>fileHeader</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">fileHeader</span><wbr><span class="parameters">(<a href="../../../model/database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo)</span></div>
 <div class="block">テーブル定義一覧ヘッダー</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>baseInfo</code> - データベース基本情報</dd>
-<dt>Returns:</dt>
-<dd>ヘッダー文字列</dd>
-</dl>
 </section>
 </li>
 <li>
@@ -199,12 +193,6 @@ loadScripts(document, 'script');</script>
 <h3>baseInfo</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">baseInfo</span><wbr><span class="parameters">(<a href="../../../model/database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo)</span></div>
 <div class="block">基本情報セクション</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>baseInfo</code> - データベース基本情報</dd>
-<dt>Returns:</dt>
-<dd>基本情報セクション文字列</dd>
-</dl>
 </section>
 </li>
 <li>
@@ -216,7 +204,6 @@ loadScripts(document, 'script');</script>
  トリガー・関数/プロシージャ・シーケンス・ユーザー定義型など、 存在するオブジェクト一覧へのリンクを列挙する</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>baseInfo</code> - データベース基本情報</dd>
 <dd><code>types</code> - リンクを掲載する一覧の種別（掲載順）</dd>
 <dt>Returns:</dt>
 <dd>関連ドキュメントセクション文字列。typesが空の場合は空文字列</dd>
@@ -230,10 +217,6 @@ loadScripts(document, 'script');</script>
 <div class="block">テーブル一覧セクションの表ヘッダー<br>
  見出しは<a href="PagedSectionTemplates.html#heading(java.lang.String)"><code>PagedSectionTemplates.heading(String)</code></a>で付与するため含まない。
  行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 トリガー・関数/プロシージャなどの一覧（<a href="ObjectListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template"><code>ObjectListTemplates</code></a>）と同じ方針である</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>表ヘッダー文字列</dd>
-</dl>
 </section>
 </li>
 <li>
@@ -246,9 +229,6 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>no</code> - 行番号（1始まり）</dd>
-<dd><code>table</code> - テーブル情報</dd>
-<dt>Returns:</dt>
-<dd>テーブル一覧セクション文字列</dd>
 </dl>
 </section>
 </li>

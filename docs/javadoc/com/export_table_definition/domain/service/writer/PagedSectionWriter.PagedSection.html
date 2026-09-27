@@ -91,12 +91,7 @@ loadScripts(document, 'script');</script>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>T</code> - 行の元になる要素の型</dd>
 <dt>Record Components:</dt>
-<dd><code><span id="param-heading">heading</span></code> - セクションの見出し</dd>
-<dd><code><span id="param-tableHeader">tableHeader</span></code> - 表のヘッダー行</dd>
-<dd><code><span id="param-rows">rows</span></code> - 行の元になる要素のリスト</dd>
 <dd><code><span id="param-lineMapper">lineMapper</span></code> - 行番号と要素から1行分の文字列を生成する関数</dd>
 </dl>
 <dl class="notes">
@@ -152,7 +147,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#heading()" class="member-name-link">heading</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-heading"><code>heading</code></a> record component.</div>
+<div class="block">Returns the value of the <code>heading</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>,<wbr><a href="PagedSectionWriter.PagedSection.html" title="type parameter in PagedSectionWriter.PagedSection">T</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#lineMapper()" class="member-name-link">lineMapper</a>()</code></div>
@@ -162,12 +157,12 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="PagedSectionWriter.PagedSection.html" title="type parameter in PagedSectionWriter.PagedSection">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rows()" class="member-name-link">rows</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-rows"><code>rows</code></a> record component.</div>
+<div class="block">Returns the value of the <code>rows</code> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tableHeader()" class="member-name-link">tableHeader</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-tableHeader"><code>tableHeader</code></a> record component.</div>
+<div class="block">Returns the value of the <code>tableHeader</code> record component.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
@@ -201,9 +196,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Creates an instance of a <code>PagedSection</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>heading</code> - the value for the <a href="#param-heading"><code>heading</code></a> record component</dd>
-<dd><code>tableHeader</code> - the value for the <a href="#param-tableHeader"><code>tableHeader</code></a> record component</dd>
-<dd><code>rows</code> - the value for the <a href="#param-rows"><code>rows</code></a> record component</dd>
+<dd><code>heading</code> - the value for the <code>heading</code> record component</dd>
+<dd><code>tableHeader</code> - the value for the <code>tableHeader</code> record component</dd>
+<dd><code>rows</code> - the value for the <code>rows</code> record component</dd>
 <dd><code>lineMapper</code> - the value for the <a href="#param-lineMapper"><code>lineMapper</code></a> record component</dd>
 </dl>
 </section>
@@ -261,10 +256,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="heading()">
 <h3>heading</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">heading</span>()</div>
-<div class="block">Returns the value of the <a href="#param-heading"><code>heading</code></a> record component.</div>
+<div class="block">Returns the value of the <code>heading</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-heading"><code>heading</code></a> record component</dd>
+<dd>the value of the <code>heading</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -272,10 +267,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="tableHeader()">
 <h3>tableHeader</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">tableHeader</span>()</div>
-<div class="block">Returns the value of the <a href="#param-tableHeader"><code>tableHeader</code></a> record component.</div>
+<div class="block">Returns the value of the <code>tableHeader</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-tableHeader"><code>tableHeader</code></a> record component</dd>
+<dd>the value of the <code>tableHeader</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -283,10 +278,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="rows()">
 <h3>rows</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="PagedSectionWriter.PagedSection.html" title="type parameter in PagedSectionWriter.PagedSection">T</a>&gt;</span>&nbsp;<span class="element-name">rows</span>()</div>
-<div class="block">Returns the value of the <a href="#param-rows"><code>rows</code></a> record component.</div>
+<div class="block">Returns the value of the <code>rows</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-rows"><code>rows</code></a> record component</dd>
+<dd>the value of the <code>rows</code> record component</dd>
 </dl>
 </section>
 </li>
