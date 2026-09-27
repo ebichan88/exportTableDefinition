@@ -27,6 +27,14 @@ public interface OutputPathResolver {
   boolean isRemovableOutputDir(Path baseOutputDir);
 
   /**
+   * データベース単位ディレクトリを返す。<br>
+   * 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、1つのデータベースに関する
+   * Markdownドキュメント（テーブル定義書・一覧・ER図・観点ページ・README）はすべてこの配下にまとめる。<br>
+   * 例: {base}/{DB名}/
+   */
+  Path resolveDatabaseDirectory(OutputRoot root);
+
+  /**
    * テーブル定義書の出力ディレクトリを返す。<br>
    * 例: {base}/{DB名}/{スキーマ名}/{テーブル種別}/
    */
@@ -40,19 +48,19 @@ public interface OutputPathResolver {
 
   /**
    * 一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）のパス。<br>
-   * 例: {base}/{接頭辞}List_{DB名}.md
+   * 例: {base}/{DB名}/{接頭辞}List_{DB名}.md
    */
   Path resolveListFile(OutputRoot root, ListDocumentType type);
 
   /**
    * スキーマ別ER図のパス。<br>
-   * 例: {base}/erDiagram_{DB名}_{スキーマ名}.md
+   * 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}.md
    */
   Path resolveErDiagramFile(OutputRoot root, String schemaName);
 
   /**
    * スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。<br>
-   * 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md
+   * 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md
    *
    * @param groupNo グループ番号（1始まり）
    */
@@ -60,13 +68,19 @@ public interface OutputPathResolver {
 
   /**
    * 観点ページのパス。<br>
-   * 例: {base}/viewpoint_{DB名}_{観点の識別子}.md
+   * 例: {base}/{DB名}/viewpoint_{DB名}_{観点の識別子}.md
    */
   Path resolveViewpointFile(OutputRoot root, Viewpoint viewpoint);
 
   /**
+   * データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのパスを返す。<br>
+   * 例: {base}/{DB名}/README.md
+   */
+  Path resolveReadmeFile(OutputRoot root);
+
+  /**
    * 行数の多い表を分割した場合の、分割ページのパス。<br>
-   * 本体ページと同じディレクトリに置く。例: {base}/tableList_{DB名}.md の2ページ目は {base}/tableList_{DB名}_2.md
+   * 本体ページと同じディレクトリに置く。例: {base}/{DB名}/tableList_{DB名}.md の2ページ目は {base}/{DB名}/tableList_{DB名}_2.md
    *
    * @param pageIndex ページインデックス（1始まり）
    */

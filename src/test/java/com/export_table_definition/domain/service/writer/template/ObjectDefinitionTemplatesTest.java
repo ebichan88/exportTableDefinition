@@ -34,7 +34,7 @@ public class ObjectDefinitionTemplatesTest {
     assertTrue(file.startsWith("# f_add"));
     assertTrue(file.contains("```sql"));
     assertTrue(file.contains("CREATE OR REPLACE FUNCTION public.f_add"));
-    assertTrue(file.contains("[関数・プロシージャ一覧へ](../../../functionList_TEST_DB.md)"));
+    assertTrue(file.contains("[関数・プロシージャ一覧へ](../../functionList_TEST_DB.md)"));
   }
 
   @Test
@@ -56,7 +56,7 @@ public class ObjectDefinitionTemplatesTest {
     assertTrue(file.startsWith("# seq_orders"));
     assertTrue(file.contains("## シーケンス情報"));
     assertTrue(file.contains("orders.id"));
-    assertTrue(file.contains("[シーケンス一覧へ](../../../sequenceList_TEST_DB.md)"));
+    assertTrue(file.contains("[シーケンス一覧へ](../../sequenceList_TEST_DB.md)"));
   }
 
   @Test
@@ -67,7 +67,7 @@ public class ObjectDefinitionTemplatesTest {
     assertTrue(file.startsWith("# mood"));
     assertTrue(file.contains("## 定義"));
     assertTrue(file.contains("|ENUM|sad, ok, happy|"));
-    assertTrue(file.contains("[ユーザー定義型一覧へ](../../../typeList_TEST_DB.md)"));
+    assertTrue(file.contains("[ユーザー定義型一覧へ](../../typeList_TEST_DB.md)"));
   }
 
   @Test

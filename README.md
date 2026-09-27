@@ -8,6 +8,7 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 
 | 出力物 | 内容 |
 |---|---|
+| README（`{DB名}/README.md`） | 生成された全ドキュメントへのリンクをまとめた索引。データベースごとに1つ生成される |
 | テーブル一覧（`tableList_{DB名}.md`） | 対象スキーマ・テーブルの一覧と、各テーブル定義書・関連ドキュメントへのリンク |
 | 各テーブル定義書 | カラム・インデックス・制約・外部キー情報など（PostgreSQLの場合はトリガー情報も） |
 | ER図 | テーブル間の外部キー関係を表すMermaid記法の図（テーブル単位・スキーマ単位の2種類） |
@@ -15,7 +16,7 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 | PostgreSQL固有オブジェクトの一覧・個別ページ | 関数・プロシージャ、シーケンス、ユーザー定義型（ENUM等） |
 | スキーマのスナップショット | 上記と同じ情報を機械可読なJSON Lines形式で構造化したもの。[詳細](#スキーマのスナップショットjson-lines) |
 
-出力サンプル: [テーブル一覧](./docs/sample/postgres/output/tableList_testdb.md)
+出力サンプル: [README](./docs/sample/postgres/output/testdb/README.md) / [テーブル一覧](./docs/sample/postgres/output/testdb/tableList_testdb.md)
 
 ### 対象DBMS
 
@@ -398,6 +399,34 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
 
 ## 出力される内容の詳細
 
+### 出力先ディレクトリの構成
+
+生成されるすべてのドキュメントは、出力先（`outputPath`）の直下に作成される`{DB名}/`ディレクトリにまとめて出力されます。
+同じ出力先へ複数のデータベースを出力しても、データベースごとに`{DB名}/`ディレクトリが分かれるため、ドキュメントが混ざりません。
+
+```
+{outputPath}/
+└─{DB名}/
+   ├─README.md                       ・・・ このデータベースの全ドキュメントへのリンクをまとめた索引（自動生成）
+   ├─tableList_{DB名}.md
+   ├─erDiagram_{DB名}_{スキーマ名}.md
+   ├─erDiagramList_{DB名}.md
+   ├─viewpointList_{DB名}.md         ・・・ 観点を宣言した場合のみ
+   ├─viewpoint_{DB名}_{識別子}.md
+   ├─triggerList_{DB名}.md           ・・・ PostgreSQLのみ
+   ├─functionList_{DB名}.md          ・・・ PostgreSQLのみ
+   ├─sequenceList_{DB名}.md          ・・・ PostgreSQLのみ
+   ├─typeList_{DB名}.md              ・・・ PostgreSQLのみ
+   └─{スキーマ名}/
+      ├─{テーブル区分}/{物理テーブル名}.md ・・・ テーブル定義書
+      ├─function/{関数名}.md          ・・・ PostgreSQLのみ
+      ├─sequence/{シーケンス名}.md     ・・・ PostgreSQLのみ
+      └─type/{型名}.md                ・・・ PostgreSQLのみ
+```
+
+以降の節に記載するファイル名は、この`{DB名}/`ディレクトリからの相対的なファイル名です
+（スキーマ配下の個別定義書のみ`{DB名}/`から続く`{スキーマ名}/...`のパスで示します）。
+
 ### ER図
 
 テーブル間の外部キー関係をMermaid記法のER図として出力します。テーブル単位とスキーマ単位の2つの粒度で出力し、
@@ -482,9 +511,9 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 | 対象 | 取得元カタログ | 出力 |
 |---|---|---|
 | トリガー | `pg_trigger` + `pg_get_triggerdef` | 各テーブル定義書内の「トリガー情報」セクション + `triggerList_{DB名}.md` |
-| 関数・プロシージャ | `pg_proc` + `pg_get_functiondef`（plpgsql/sql/C 等） | `functionList_{DB名}.md` + `{DB名}/{スキーマ名}/function/{関数名}.md` |
-| シーケンス | `pg_sequences`（増分・最小値・最大値・キャッシュ・開始値・循環・所有カラム） | `sequenceList_{DB名}.md` + `{DB名}/{スキーマ名}/sequence/{シーケンス名}.md` |
-| ユーザー定義型（ENUM等） | `pg_type` + `pg_enum` | `typeList_{DB名}.md` + `{DB名}/{スキーマ名}/type/{型名}.md` |
+| 関数・プロシージャ | `pg_proc` + `pg_get_functiondef`（plpgsql/sql/C 等） | `functionList_{DB名}.md` + `{DB名}/{スキーマ名}/function/{関数名}.md`（後者のみ`{DB名}/`から続くパス） |
+| シーケンス | `pg_sequences`（増分・最小値・最大値・キャッシュ・開始値・循環・所有カラム） | `sequenceList_{DB名}.md` + `{DB名}/{スキーマ名}/sequence/{シーケンス名}.md`（後者のみ`{DB名}/`から続くパス） |
+| ユーザー定義型（ENUM等） | `pg_type` + `pg_enum` | `typeList_{DB名}.md` + `{DB名}/{スキーマ名}/type/{型名}.md`（後者のみ`{DB名}/`から続くパス） |
 
 各一覧（`functionList`／`sequenceList`／`typeList`／`triggerList`）への導線は、`tableList_{DB名}.md` の
 「関連ドキュメント」セクションに集約しています（対象が存在するカテゴリのみリンクを表示します）。

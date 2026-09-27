@@ -114,7 +114,7 @@ public class TableDefinitionWriterDomainServiceTest {
     writer.writeTableDefinitionList(
         List.of(table("orders")), outputRoot(), List.of(ListDocumentType.ER_DIAGRAM));
 
-    Path file = OUT.resolve("tableList_testdb.md");
+    Path file = OUT.resolve("testdb").resolve("tableList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# テーブル一覧（DB名：testdb）"));
@@ -122,7 +122,7 @@ public class TableDefinitionWriterDomainServiceTest {
     assertTrue(content.contains("## 関連ドキュメント"));
     assertTrue(content.contains("[ER図一覧](./erDiagramList_testdb.md)"));
     assertTrue(content.contains("|public|受注|orders|table|"));
-    assertTrue(fileRepository.createdDirectories.contains(OUT));
+    assertTrue(fileRepository.createdDirectories.contains(OUT.resolve("testdb")));
   }
 
   @Test
@@ -130,7 +130,7 @@ public class TableDefinitionWriterDomainServiceTest {
   void testWriteTableDefinitionListOmitsRelatedDocumentsWhenEmpty() {
     writer.writeTableDefinitionList(List.of(table("orders")), outputRoot(), List.of());
 
-    String content = fileRepository.files.get(OUT.resolve("tableList_testdb.md"));
+    String content = fileRepository.files.get(OUT.resolve("testdb").resolve("tableList_testdb.md"));
     assertFalse(content.contains("## 関連ドキュメント"));
   }
 
@@ -142,9 +142,10 @@ public class TableDefinitionWriterDomainServiceTest {
 
     writer.writeTableDefinitionList(tables, outputRoot(), List.of());
 
-    assertTrue(fileRepository.files.containsKey(OUT.resolve("tableList_testdb_1.md")));
-    assertTrue(fileRepository.files.containsKey(OUT.resolve("tableList_testdb_2.md")));
-    String main = fileRepository.files.get(OUT.resolve("tableList_testdb.md"));
+    Path dbDir = OUT.resolve("testdb");
+    assertTrue(fileRepository.files.containsKey(dbDir.resolve("tableList_testdb_1.md")));
+    assertTrue(fileRepository.files.containsKey(dbDir.resolve("tableList_testdb_2.md")));
+    String main = fileRepository.files.get(dbDir.resolve("tableList_testdb.md"));
     assertFalse(main.contains("|t1|"), "本体ページには行そのものは含まれない");
     assertTrue(main.contains("./tableList_testdb_1.md"));
     assertTrue(main.contains("./tableList_testdb_2.md"));
@@ -219,7 +220,7 @@ public class TableDefinitionWriterDomainServiceTest {
     assertTrue(
         fileContent.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
     assertTrue(fileContent.contains("public_orders ||--o{ public_items : \"fk_items_orders\""));
-    assertTrue(fileContent.contains("[テーブル一覧へ](../../../tableList_testdb.md)"));
+    assertTrue(fileContent.contains("[テーブル一覧へ](../../tableList_testdb.md)"));
     // サイドカー由来の付帯情報（テーブル説明・テーブル備考・カラム備考）がマージされる
     assertTrue(fileContent.contains("受注を管理するテーブル"));
     assertTrue(fileContent.contains("|public|受注|orders|table|個人情報を含む|"));

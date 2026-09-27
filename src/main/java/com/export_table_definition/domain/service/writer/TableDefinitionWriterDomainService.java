@@ -44,7 +44,7 @@ public class TableDefinitionWriterDomainService {
    */
   public void writeTableDefinitionList(
       List<TableEntity> tables, OutputRoot outputRoot, List<ListDocumentType> relatedDocuments) {
-    fileRepository.createDirectory(outputRoot.baseDir());
+    fileRepository.createDirectory(outputPathResolver.resolveDatabaseDirectory(outputRoot));
     final PagedSection<TableEntity> section =
         new PagedSection<>(
             "テーブル情報",

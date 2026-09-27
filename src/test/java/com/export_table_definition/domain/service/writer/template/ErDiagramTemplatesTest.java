@@ -169,7 +169,7 @@ public class ErDiagramTemplatesTest {
   void testDiagramTableLine() {
     var table = newTable("public", "orders", "受注");
     assertMarkdownEquals(
-        "| 1 | public | orders | 受注 | table | [■](./TEST_DB/public/table/orders.md) |\n",
+        "| 1 | public | orders | 受注 | table | [■](./public/table/orders.md) |\n",
         ErDiagramTemplates.diagramTableLine(1, TableKey.of(table), table));
   }
 

@@ -47,17 +47,16 @@ public class DocumentLocationsTest {
   }
 
   @Test
-  @DisplayName("tableDefinitionFile/schemaObjectFile: {DB名}/{スキーマ名}/{区分}/{名前}.md")
+  @DisplayName("tableDefinitionFile/schemaObjectFile: {スキーマ名}/{区分}/{名前}.md")
   void testDefinitionFiles() {
     var table = new TableEntity("testdb", "public", "", "orders", TableType.VIEW, "");
+    assertEquals("public/view/orders.md", DocumentLocations.tableDefinitionFile(table));
     assertEquals(
-        "testdb/public/view/orders.md", DocumentLocations.tableDefinitionFile("testdb", table));
+        "public/function",
+        DocumentLocations.schemaObjectDirectory("public", ListDocumentType.FUNCTION));
     assertEquals(
-        "testdb/public/function",
-        DocumentLocations.schemaObjectDirectory("testdb", "public", ListDocumentType.FUNCTION));
-    assertEquals(
-        "testdb/public/type/status.md",
-        DocumentLocations.schemaObjectFile("testdb", "public", ListDocumentType.TYPE, "status"));
+        "public/type/status.md",
+        DocumentLocations.schemaObjectFile("public", ListDocumentType.TYPE, "status"));
   }
 
   @Test
@@ -81,12 +80,18 @@ public class DocumentLocationsTest {
   }
 
   @Test
-  @DisplayName("linkFromBase/linkFromDefinition: 参照元の配置に応じた相対リンク")
+  @DisplayName("linkFromDatabaseRoot/linkFromDefinition: 参照元の配置に応じた相対リンク")
   void testLinks() {
-    assertEquals("./tableList_testdb.md", DocumentLocations.linkFromBase("tableList_testdb.md"));
     assertEquals(
-        "../../../tableList_testdb.md",
-        DocumentLocations.linkFromDefinition("tableList_testdb.md"));
+        "./tableList_testdb.md", DocumentLocations.linkFromDatabaseRoot("tableList_testdb.md"));
+    assertEquals(
+        "../../tableList_testdb.md", DocumentLocations.linkFromDefinition("tableList_testdb.md"));
+  }
+
+  @Test
+  @DisplayName("readmeFile: README.md")
+  void testReadmeFile() {
+    assertEquals("README.md", DocumentLocations.readmeFile());
   }
 
   @Test

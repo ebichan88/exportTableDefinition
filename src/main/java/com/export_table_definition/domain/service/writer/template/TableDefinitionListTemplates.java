@@ -41,7 +41,7 @@ public class TableDefinitionListTemplates {
                     String.format(
                         "* [%s](%s)  ",
                         type.getTitle(),
-                        DocumentLocations.linkFromBase(
+                        DocumentLocations.linkFromDatabaseRoot(
                             DocumentLocations.listFile(type, baseInfo.dbName()))))
                 .append(LINE_SEPARATOR));
     return sb.append(LINE_SEPARATOR).toString();
@@ -79,13 +79,12 @@ public class TableDefinitionListTemplates {
 
   /**
    * テーブル定義書への相対パスをMarkdownのリンク記法で表す文字列を生成するメソッド<br>
-   * テーブル一覧は出力ベースディレクトリ直下に配置されるため、出力ベースディレクトリからの相対パスで参照する
+   * テーブル一覧はデータベース単位ディレクトリ直下に配置されるため、同ディレクトリからの相対パスで参照する
    *
    * @return テーブル定義書へのリンク文字列
    */
   private static String tableDefinitionLink(TableEntity table) {
     return MarkdownTemplateSupport.linkCell(
-        DocumentLocations.linkFromBase(
-            DocumentLocations.tableDefinitionFile(table.dbName(), table)));
+        DocumentLocations.linkFromDatabaseRoot(DocumentLocations.tableDefinitionFile(table)));
   }
 }

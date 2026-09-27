@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## 定義
 
@@ -27,4 +27,4 @@ $function$
 
 ___
 
-[関数・プロシージャ一覧へ](../../../functionList_testdb.md)
+[関数・プロシージャ一覧へ](../../functionList_testdb.md)

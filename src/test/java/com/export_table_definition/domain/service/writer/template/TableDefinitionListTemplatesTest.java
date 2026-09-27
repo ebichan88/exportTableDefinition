@@ -68,7 +68,7 @@ public class TableDefinitionListTemplatesTest {
   @DisplayName("tableListLine: 行番号・リンクを含む1行＋末尾改行")
   void tableListLine_single() {
     TableEntity e = newEntity("public", "orders", "受注");
-    String expected = "|1|public|受注|orders|table|[■](./TEST_DB/public/table/orders.md)|" + NL;
+    String expected = "|1|public|受注|orders|table|[■](./public/table/orders.md)|" + NL;
     MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.tableListLine(1, e));
   }
 
@@ -77,7 +77,7 @@ public class TableDefinitionListTemplatesTest {
   void tableListLine_escapesLogicalTableName() {
     TableEntity e = newEntity("public", "orders", "受注|管理\n(旧:注文)");
     String expected =
-        "|1|public|受注\\|管理<br>(旧:注文)|orders|table|[■](./TEST_DB/public/table/orders.md)|" + NL;
+        "|1|public|受注\\|管理<br>(旧:注文)|orders|table|[■](./public/table/orders.md)|" + NL;
     MarkdownAssert.assertMarkdownEquals(expected, TableDefinitionListTemplates.tableListLine(1, e));
   }
 

@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## テーブル説明
 
@@ -19,7 +19,7 @@
 
 ## 所属する観点
 
-* [人事管理](../../../viewpoint_testdb_personnel.md)  
+* [人事管理](../../viewpoint_testdb_personnel.md)  
 
 ## カラム情報
 
@@ -69,4 +69,4 @@ erDiagram
 
 ___
 
-[テーブル一覧へ](../../../tableList_testdb.md)
+[テーブル一覧へ](../../tableList_testdb.md)

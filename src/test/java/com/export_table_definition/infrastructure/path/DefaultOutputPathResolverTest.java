@@ -64,6 +64,13 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
+  @DisplayName("resolveDatabaseDirectory: {base}/{DB名}")
+  void testResolveDatabaseDirectory() {
+    Path result = resolver.resolveDatabaseDirectory(root);
+    assertEquals(Path.of("output", "testdb"), result);
+  }
+
+  @Test
   @DisplayName("resolveTableDefinitionDirectory: {base}/{DB名}/{スキーマ名}/{テーブル種別}")
   void testResolveTableDefinitionDirectory() {
     Path result =
@@ -79,59 +86,66 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
-  @DisplayName("resolveListFile: テーブル一覧は{base}/tableList_{DB名}.md")
+  @DisplayName("resolveListFile: テーブル一覧は{base}/{DB名}/tableList_{DB名}.md")
   void testResolveListFileForTable() {
     Path result = resolver.resolveListFile(root, ListDocumentType.TABLE);
-    assertEquals(Path.of("output", "tableList_testdb.md"), result);
+    assertEquals(Path.of("output", "testdb", "tableList_testdb.md"), result);
   }
 
   @Test
-  @DisplayName("resolveListFile: オブジェクト一覧・ER図一覧は{base}/{接頭辞}List_{DB名}.md")
+  @DisplayName("resolveListFile: オブジェクト一覧・ER図一覧は{base}/{DB名}/{接頭辞}List_{DB名}.md")
   void testResolveListFileForObjects() {
     assertEquals(
-        Path.of("output", "triggerList_testdb.md"),
+        Path.of("output", "testdb", "triggerList_testdb.md"),
         resolver.resolveListFile(root, ListDocumentType.TRIGGER));
     assertEquals(
-        Path.of("output", "erDiagramList_testdb.md"),
+        Path.of("output", "testdb", "erDiagramList_testdb.md"),
         resolver.resolveListFile(root, ListDocumentType.ER_DIAGRAM));
   }
 
   @Test
-  @DisplayName("resolveErDiagramFile: {base}/erDiagram_{DB名}_{スキーマ名}.md")
+  @DisplayName("resolveErDiagramFile: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}.md")
   void testResolveErDiagramFile() {
     Path result = resolver.resolveErDiagramFile(root, "public");
-    assertEquals(Path.of("output", "erDiagram_testdb_public.md"), result);
+    assertEquals(Path.of("output", "testdb", "erDiagram_testdb_public.md"), result);
   }
 
   @Test
-  @DisplayName("resolveViewpointFile: {base}/viewpoint_{DB名}_{観点の識別子}.md")
+  @DisplayName("resolveViewpointFile: {base}/{DB名}/viewpoint_{DB名}_{観点の識別子}.md")
   void testResolveViewpointFile() {
     Path result =
         resolver.resolveViewpointFile(root, Viewpoint.of("order", "受注管理", "", List.of("orders")));
-    assertEquals(Path.of("output", "viewpoint_testdb_order.md"), result);
+    assertEquals(Path.of("output", "testdb", "viewpoint_testdb_order.md"), result);
   }
 
   @Test
-  @DisplayName("resolveErDiagramGroupFile: {base}/erDiagram_{DB名}_{スキーマ名}_group{グループ番号}.md")
+  @DisplayName("resolveErDiagramGroupFile: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}_group{グループ番号}.md")
   void testResolveErDiagramGroupFile() {
     Path result = resolver.resolveErDiagramGroupFile(root, "public", 1);
-    assertEquals(Path.of("output", "erDiagram_testdb_public_group1.md"), result);
+    assertEquals(Path.of("output", "testdb", "erDiagram_testdb_public_group1.md"), result);
+  }
+
+  @Test
+  @DisplayName("resolveReadmeFile: {base}/{DB名}/README.md")
+  void testResolveReadmeFile() {
+    Path result = resolver.resolveReadmeFile(root);
+    assertEquals(Path.of("output", "testdb", "README.md"), result);
   }
 
   @Test
   @DisplayName("resolvePageFile: 本体ページと同じディレクトリに、拡張子の前へ_{ページ番号}を付けたファイル")
   void testResolvePageFile() {
     assertEquals(
-        Path.of("output", "tableList_testdb_2.md"),
-        resolver.resolvePageFile(Path.of("output", "tableList_testdb.md"), 2));
+        Path.of("output", "testdb", "tableList_testdb_2.md"),
+        resolver.resolvePageFile(Path.of("output", "testdb", "tableList_testdb.md"), 2));
     assertEquals(
-        Path.of("output", "functionList_testdb_3.md"),
+        Path.of("output", "testdb", "functionList_testdb_3.md"),
         resolver.resolvePageFile(resolver.resolveListFile(root, ListDocumentType.FUNCTION), 3));
     assertEquals(
-        Path.of("output", "erDiagram_testdb_public_4.md"),
+        Path.of("output", "testdb", "erDiagram_testdb_public_4.md"),
         resolver.resolvePageFile(resolver.resolveErDiagramFile(root, "public"), 4));
     assertEquals(
-        Path.of("output", "erDiagram_testdb_public_group1_2.md"),
+        Path.of("output", "testdb", "erDiagram_testdb_public_group1_2.md"),
         resolver.resolvePageFile(resolver.resolveErDiagramGroupFile(root, "public", 1), 2));
   }
 

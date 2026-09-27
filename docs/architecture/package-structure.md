@@ -89,8 +89,8 @@
 | `domain.service.export` | `ExportSink` | 取得したスキーマ情報を1つの出力形式で書き出すIF（一括取得分・関数定義・テーブル定義の書き出し） |
 | | `MarkdownExportSinkFactory`, `SnapshotExportSinkFactory` | 出力先（とER図のノード上限）を受け取り、Markdown／スナップショットの`ExportSink`を生成する |
 | `domain.service.target` | `ExportTargetConsistencyDomainService` | 出力対象のテーブルと、外部キー・サイドカー（論理リレーション／付帯情報／観点）を突き合わせる。片側が出力対象外の外部キー・論理リレーションの除外と、実在しないテーブル・カラムへの付帯情報（孤児付帯情報）・どのテーブルにも一致しない観点のパターンの検出を行う。結果は指摘（`ConsistencyFinding`）として返し、ログへの出力は呼び出し側が行う |
-| `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF。分割ページのパスは本体ページのパスから`resolvePageFile`で求める。`--rm-dist`で削除してよい出力先かの判定（`isRemovableOutputDir`）も持つ |
-| | `DocumentLocations` | Markdownドキュメントのファイル名と出力ベースディレクトリからの相対パス、ドキュメント間の相対リンクの規則を一元的に定める（関数・プロシージャのオーバーロードのファイル名を含む）。`OutputPathResolver`の実装とテンプレートの双方がこの規則を参照する |
+| `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF。データベース単位ディレクトリ（`{base}/{DB名}/`）の解決（`resolveDatabaseDirectory`）を起点に、分割ページのパスは本体ページのパスから`resolvePageFile`で求める。`--rm-dist`で削除してよい出力先かの判定（`isRemovableOutputDir`）も持つ |
+| | `DocumentLocations` | Markdownドキュメントのファイル名とデータベース単位ディレクトリからの相対パス、ドキュメント間の相対リンクの規則を一元的に定める（関数・プロシージャのオーバーロードのファイル名、READMEのファイル名を含む）。`OutputPathResolver`の実装とテンプレートの双方がこの規則を参照する |
 | | `SnapshotLocations` | スナップショットのディレクトリ名・ファイル名と相対パスの規則を一元的に定める。`OutputPathResolver`の実装と、比較時のファイル種別の判定の双方がこの規則を参照する |
 | | `OutputRoot` | 出力先ベースディレクトリと基本情報の組を表す値オブジェクト（Writer・`OutputPathResolver`へそのまま渡す） |
 | `domain.service.snapshot` | `SchemaSnapshotWriterDomainService` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
@@ -100,8 +100,9 @@
 | | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
 | | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |
 | | `ViewpointWriterDomainService` | 観点ページ（所属テーブル同士のER図・所属テーブル・観点外のテーブルとの関連）と観点一覧の書き込み |
+| | `ReadmeWriterDomainService` | データベース単位ディレクトリ（`{DB名}/`）のREADMEの書き込み。出力される一覧ドキュメントへのリンクをまとめる |
 | | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理。分割ページは本体ページと同じディレクトリに置き、ページ間のリンクはファイル名から導く |
-| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ViewpointTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群。表の行を含むMarkdownの描画はすべてここで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない |
+| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ViewpointTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `ReadmeTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群。表の行を含むMarkdownの描画はすべてここで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない |
 | | `MarkdownTemplateSupport`, `MermaidSupport` | テンプレート共通部品、Mermaid記法変換ユーティリティ |
 
 ## infrastructure層

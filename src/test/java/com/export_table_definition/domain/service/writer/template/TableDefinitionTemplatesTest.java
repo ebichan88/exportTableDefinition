@@ -446,7 +446,7 @@ public class TableDefinitionTemplatesTest {
         """
         ___
 
-        [テーブル一覧へ](../../../tableList_TEST_DB.md)
+        [テーブル一覧へ](../../tableList_TEST_DB.md)
         """,
         TableDefinitionTemplates.footer(base));
   }
@@ -542,8 +542,8 @@ public class TableDefinitionTemplatesTest {
         """
         ## 所属する観点
 
-        * [受注管理](../../../viewpoint_TEST_DB_order.md) \s
-        * [master](../../../viewpoint_TEST_DB_master.md) \s
+        * [受注管理](../../viewpoint_TEST_DB_order.md) \s
+        * [master](../../viewpoint_TEST_DB_master.md) \s
 
         """,
         TableDefinitionTemplates.viewpoints(

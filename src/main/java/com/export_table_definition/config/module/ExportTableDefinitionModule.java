@@ -13,6 +13,7 @@ import com.export_table_definition.domain.service.target.ExportTargetConsistency
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
+import com.export_table_definition.domain.service.writer.ReadmeWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.export_table_definition.domain.service.writer.ViewpointWriterDomainService;
 import com.export_table_definition.infrastructure.file.repository.LocalFileRepository;
@@ -45,6 +46,7 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(ErDiagramWriterDomainService.class);
     bind(ObjectListWriterDomainService.class);
     bind(ViewpointWriterDomainService.class);
+    bind(ReadmeWriterDomainService.class);
     bind(SchemaSnapshotWriterDomainService.class);
     bind(SnapshotDiffDomainService.class);
     bind(UnifiedDiffGenerator.class);

@@ -150,7 +150,7 @@ public class ViewpointTemplates {
                 viewpoint.description().lines().findFirst().orElse("")),
             content.tables().size(),
             MarkdownTemplateSupport.linkCell(
-                DocumentLocations.linkFromBase(
+                DocumentLocations.linkFromDatabaseRoot(
                     DocumentLocations.viewpointFile(baseInfo.dbName(), viewpoint))))
         + LINE_SEPARATOR;
   }
@@ -179,9 +179,10 @@ public class ViewpointTemplates {
 
   /**
    * 一覧への相対リンクを生成するメソッド<br>
-   * 観点ページ・観点一覧は出力ベースディレクトリ直下に配置される
+   * 観点ページ・観点一覧はデータベース単位ディレクトリ直下に配置される
    */
   private static String listLink(ListDocumentType type, BaseInfoEntity baseInfo) {
-    return DocumentLocations.linkFromBase(DocumentLocations.listFile(type, baseInfo.dbName()));
+    return DocumentLocations.linkFromDatabaseRoot(
+        DocumentLocations.listFile(type, baseInfo.dbName()));
   }
 }

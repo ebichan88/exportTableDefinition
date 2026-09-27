@@ -111,10 +111,12 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>
+<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、データベース単位ディレクトリからの相対パス）を一元的に定めるクラス<br>
  出力先の絶対パス（<a href="OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>）と、ドキュメント間の相対リンク（テンプレート）の双方が
  このクラスの規則を参照することで、ファイル名を変更した場合にパスとリンクが食い違わないようにする。<br>
- 配置は次のとおり。一覧・ER図は出力ベースディレクトリ直下に、テーブル定義書・関数等の個別定義書は <code>{DB名}/{スキーマ名}/{区分}/</code>配下に置く</div>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、DB1つ分のドキュメントはすべて <code>
+ {DB名}/</code>ディレクトリ配下にまとめる（このクラスが返す相対パスはこのディレクトリからの相対パスとし、 <code>{DB名}/</code>自体の付与は<a href="OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>が行う）。配置は次のとおり。一覧・ER図・観点ページ・READMEは <code>{DB名}/</code>直下に、テーブル定義書・関数等の個別定義書は<code>
+ {スキーマ名}/{区分}/</code>配下に置く</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab1"><a href="OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">

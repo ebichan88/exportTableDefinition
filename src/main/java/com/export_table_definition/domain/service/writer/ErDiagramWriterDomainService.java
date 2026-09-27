@@ -192,7 +192,7 @@ public class ErDiagramWriterDomainService {
                       group.nodeCount(),
                       group.foreignKeys().size(),
                       group.mainTable(),
-                      DocumentLocations.linkFromBase(
+                      DocumentLocations.linkFromDatabaseRoot(
                           DocumentLocations.erDiagramGroupFile(
                               outputRoot.baseInfo().dbName(), schemaName, groupNo))));
             });

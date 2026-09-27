@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## テーブル説明
 
@@ -16,7 +16,7 @@
 
 ## 所属する観点
 
-* [プロジェクト管理](../../../viewpoint_testdb_project.md)  
+* [プロジェクト管理](../../viewpoint_testdb_project.md)  
 
 ## カラム情報
 
@@ -69,4 +69,4 @@
 
 ___
 
-[テーブル一覧へ](../../../tableList_testdb.md)
+[テーブル一覧へ](../../tableList_testdb.md)

@@ -106,7 +106,7 @@ public class ObjectListWriterDomainServiceTest {
             "public", "orders", "trg_orders", "BEFORE", List.of("INSERT"), "ROW", "f_orders", "");
     writer.writeTriggerList(List.of(trigger), outputRoot());
 
-    Path file = OUT.resolve("triggerList_testdb.md");
+    Path file = OUT.resolve("testdb").resolve("triggerList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# トリガー一覧（DB名：testdb）"));
@@ -123,7 +123,7 @@ public class ObjectListWriterDomainServiceTest {
             "testdb", "public", "calc_total", 1, 1, "FUNCTION", "()", "int", "plpgsql", "");
     writer.writeFunctionList(List.of(function), outputRoot());
 
-    Path file = OUT.resolve("functionList_testdb.md");
+    Path file = OUT.resolve("testdb").resolve("functionList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
     assertTrue(fileRepository.files.get(file).contains("calc_total"));
   }
@@ -147,13 +147,14 @@ public class ObjectListWriterDomainServiceTest {
     writer.writeFunctionList(List.of(function), outputRoot());
     writer.writeTypeList(List.of(type), outputRoot());
 
+    Path dbDir = OUT.resolve("testdb");
     assertTrue(
         fileRepository
             .files
-            .get(OUT.resolve("functionList_testdb.md"))
+            .get(dbDir.resolve("functionList_testdb.md"))
             .contains("|sep text DEFAULT '\\|'::text|TABLE(code text, label text)|"));
     assertTrue(
-        fileRepository.files.get(OUT.resolve("typeList_testdb.md")).contains("|ENUM|\\|, ,, ;|"));
+        fileRepository.files.get(dbDir.resolve("typeList_testdb.md")).contains("|ENUM|\\|, ,, ;|"));
   }
 
   @Test
@@ -170,7 +171,7 @@ public class ObjectListWriterDomainServiceTest {
     String content = fileRepository.files.get(expectedFile);
     assertTrue(content.contains("# calc_total"));
     assertTrue(content.contains("SELECT 1;"));
-    assertTrue(content.contains("[関数・プロシージャ一覧へ](../../../functionList_testdb.md)"));
+    assertTrue(content.contains("[関数・プロシージャ一覧へ](../../functionList_testdb.md)"));
   }
 
   @Test
@@ -187,7 +188,7 @@ public class ObjectListWriterDomainServiceTest {
     String content = fileRepository.files.get(expectedFile);
     assertTrue(content.contains("# seq_orders"));
     assertTrue(content.contains("|10|1|999999999|20|1|○|orders.id|"));
-    assertTrue(content.contains("[シーケンス一覧へ](../../../sequenceList_testdb.md)"));
+    assertTrue(content.contains("[シーケンス一覧へ](../../sequenceList_testdb.md)"));
   }
 
   @Test
@@ -202,7 +203,7 @@ public class ObjectListWriterDomainServiceTest {
     String content = fileRepository.files.get(expectedFile);
     assertTrue(content.contains("# order_status"));
     assertTrue(content.contains("|enum|PENDING,SHIPPED,DONE|"));
-    assertTrue(content.contains("[ユーザー定義型一覧へ](../../../typeList_testdb.md)"));
+    assertTrue(content.contains("[ユーザー定義型一覧へ](../../typeList_testdb.md)"));
   }
 
   @Test
@@ -215,9 +216,10 @@ public class ObjectListWriterDomainServiceTest {
             .toList();
     writer.writeTriggerList(triggers, outputRoot());
 
-    assertTrue(fileRepository.files.containsKey(OUT.resolve("triggerList_testdb_1.md")));
-    assertTrue(fileRepository.files.containsKey(OUT.resolve("triggerList_testdb_2.md")));
-    String main = fileRepository.files.get(OUT.resolve("triggerList_testdb.md"));
+    Path dbDir = OUT.resolve("testdb");
+    assertTrue(fileRepository.files.containsKey(dbDir.resolve("triggerList_testdb_1.md")));
+    assertTrue(fileRepository.files.containsKey(dbDir.resolve("triggerList_testdb_2.md")));
+    String main = fileRepository.files.get(dbDir.resolve("triggerList_testdb.md"));
     assertFalse(main.contains("trg1|"), "本体ページには行そのものは含まれない");
     assertTrue(main.contains("./triggerList_testdb_1.md"));
     assertTrue(main.contains("./triggerList_testdb_2.md"));

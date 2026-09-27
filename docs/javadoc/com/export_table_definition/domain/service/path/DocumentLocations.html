@@ -91,10 +91,12 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">DocumentLocations</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
-<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>
+<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、データベース単位ディレクトリからの相対パス）を一元的に定めるクラス<br>
  出力先の絶対パス（<a href="OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>）と、ドキュメント間の相対リンク（テンプレート）の双方が
  このクラスの規則を参照することで、ファイル名を変更した場合にパスとリンクが食い違わないようにする。<br>
- 配置は次のとおり。一覧・ER図は出力ベースディレクトリ直下に、テーブル定義書・関数等の個別定義書は <code>{DB名}/{スキーマ名}/{区分}/</code>配下に置く</div>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、DB1つ分のドキュメントはすべて <code>
+ {DB名}/</code>ディレクトリ配下にまとめる（このクラスが返す相対パスはこのディレクトリからの相対パスとし、 <code>{DB名}/</code>自体の付与は<a href="OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>が行う）。配置は次のとおり。一覧・ER図・観点ページ・READMEは <code>{DB名}/</code>直下に、テーブル定義書・関数等の個別定義書は<code>
+ {スキーマ名}/{区分}/</code>配下に置く</div>
 </section>
 <section class="summary">
 <ul class="summary-list">
@@ -129,14 +131,14 @@ loadScripts(document, 'script');</script>
  calc_2</code>）。存在しない場合は関数・プロシージャ名をそのまま用いる</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#linkFromBase(java.lang.String)" class="member-name-link">linkFromBase</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relativePath)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#linkFromDatabaseRoot(java.lang.String)" class="member-name-link">linkFromDatabaseRoot</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relativePath)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">出力ベースディレクトリ直下のドキュメントから、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク</div>
+<div class="block">データベース単位ディレクトリ直下のドキュメントから、指定したドキュメント（同ディレクトリからの相対パス）へのリンク</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#linkFromDefinition(java.lang.String)" class="member-name-link">linkFromDefinition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relativePath)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">個別定義書から、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク</div>
+<div class="block">個別定義書から、指定したドキュメント（データベース単位ディレクトリからの相対パス）へのリンク</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#listFile(com.export_table_definition.domain.model.document.ListDocumentType,java.lang.String)" class="member-name-link">listFile</a><wbr>(<a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;type,
@@ -151,30 +153,32 @@ loadScripts(document, 'script');</script>
 <div class="block">分割ページは本体ページと同じディレクトリに置く</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#schemaObjectDirectory(java.lang.String,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">schemaObjectDirectory</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
- <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;kind)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#readmeFile()" class="member-name-link">readmeFile</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">関数・シーケンス・型の個別定義を置くディレクトリの、出力ベースディレクトリからの相対パス</div>
+<div class="block">データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのファイル名</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#schemaObjectFile(java.lang.String,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType,java.lang.String)" class="member-name-link">schemaObjectFile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
- <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;kind,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#schemaObjectDirectory(java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">schemaObjectDirectory</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
+ <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;kind)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">関数・シーケンス・型の個別定義ファイルの、出力ベースディレクトリからの相対パス</div>
+<div class="block">関数・シーケンス・型の個別定義を置くディレクトリの、データベース単位ディレクトリからの相対パス</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#tableDefinitionFile(java.lang.String,com.export_table_definition.domain.model.table.TableEntity)" class="member-name-link">tableDefinitionFile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
- <a href="../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#schemaObjectFile(java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType,java.lang.String)" class="member-name-link">schemaObjectFile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
+ <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;kind,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">テーブル定義書の、出力ベースディレクトリからの相対パス</div>
+<div class="block">関数・シーケンス・型の個別定義ファイルの、データベース単位ディレクトリからの相対パス</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#viewpointFile(java.lang.String,com.export_table_definition.domain.model.viewpoint.Viewpoint)" class="member-name-link">viewpointFile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
- <a href="../../model/viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoint</a>&nbsp;viewpoint)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#tableDefinitionFile(com.export_table_definition.domain.model.table.TableEntity)" class="member-name-link">tableDefinitionFile</a><wbr>(<a href="../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">テーブル定義書の、データベース単位ディレクトリからの相対パス</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#viewpointFile(java.lang.String,com.export_table_definition.domain.model.viewpoint.Viewpoint)" class="member-name-link">viewpointFile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
+ <a href="../../model/viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoint</a>&nbsp;viewpoint)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">表示名は日本語・空白を含みうるためファイル名に用いず、ファイル名に使える文字に限った識別子を用いる</div>
 </div>
 </div>
@@ -262,14 +266,13 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="tableDefinitionFile(java.lang.String,com.export_table_definition.domain.model.table.TableEntity)">
+<section class="detail" id="tableDefinitionFile(com.export_table_definition.domain.model.table.TableEntity)">
 <h3>tableDefinitionFile</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">tableDefinitionFile</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
- <a href="../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</span></div>
-<div class="block">テーブル定義書の、出力ベースディレクトリからの相対パス</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">tableDefinitionFile</span><wbr><span class="parameters">(<a href="../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</span></div>
+<div class="block">テーブル定義書の、データベース単位ディレクトリからの相対パス</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd><code>{DB名}/{スキーマ名}/{テーブル区分}/{物理テーブル名}.md</code></dd>
+<dd><code>{スキーマ名}/{テーブル区分}/{物理テーブル名}.md</code></dd>
 </dl>
 </section>
 </li>
@@ -282,42 +285,51 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="schemaObjectDirectory(java.lang.String,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)">
+<section class="detail" id="schemaObjectDirectory(java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)">
 <h3>schemaObjectDirectory</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">schemaObjectDirectory</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">schemaObjectDirectory</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
  <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;kind)</span></div>
-<div class="block">関数・シーケンス・型の個別定義を置くディレクトリの、出力ベースディレクトリからの相対パス</div>
+<div class="block">関数・シーケンス・型の個別定義を置くディレクトリの、データベース単位ディレクトリからの相対パス</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>kind</code> - オブジェクトの区分（<a href="../../model/document/ListDocumentType.html#FUNCTION"><code>ListDocumentType.FUNCTION</code></a>／<a href="../../model/document/ListDocumentType.html#SEQUENCE"><code>ListDocumentType.SEQUENCE</code></a>／<a href="../../model/document/ListDocumentType.html#TYPE"><code>ListDocumentType.TYPE</code></a>）</dd>
 <dt>Returns:</dt>
-<dd><code>{DB名}/{スキーマ名}/{区分}</code></dd>
+<dd><code>{スキーマ名}/{区分}</code></dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="schemaObjectFile(java.lang.String,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType,java.lang.String)">
+<section class="detail" id="schemaObjectFile(java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType,java.lang.String)">
 <h3>schemaObjectFile</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">schemaObjectFile</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dbName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">schemaObjectFile</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
  <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;kind,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
-<div class="block">関数・シーケンス・型の個別定義ファイルの、出力ベースディレクトリからの相対パス</div>
+<div class="block">関数・シーケンス・型の個別定義ファイルの、データベース単位ディレクトリからの相対パス</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>kind</code> - オブジェクトの区分（<a href="../../model/document/ListDocumentType.html#FUNCTION"><code>ListDocumentType.FUNCTION</code></a>／<a href="../../model/document/ListDocumentType.html#SEQUENCE"><code>ListDocumentType.SEQUENCE</code></a>／<a href="../../model/document/ListDocumentType.html#TYPE"><code>ListDocumentType.TYPE</code></a>）</dd>
 <dd><code>name</code> - 個別定義ファイル名（拡張子を除く）</dd>
 <dt>Returns:</dt>
-<dd><code>{DB名}/{スキーマ名}/{区分}/{名前}.md</code></dd>
+<dd><code>{スキーマ名}/{区分}/{名前}.md</code></dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="linkFromBase(java.lang.String)">
-<h3>linkFromBase</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">linkFromBase</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relativePath)</span></div>
-<div class="block">出力ベースディレクトリ直下のドキュメントから、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク</div>
+<section class="detail" id="readmeFile()">
+<h3>readmeFile</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">readmeFile</span>()</div>
+<div class="block">データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのファイル名</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd><code>README.md</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="linkFromDatabaseRoot(java.lang.String)">
+<h3>linkFromDatabaseRoot</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">linkFromDatabaseRoot</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relativePath)</span></div>
+<div class="block">データベース単位ディレクトリ直下のドキュメントから、指定したドキュメント（同ディレクトリからの相対パス）へのリンク</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>相対リンク（例: <code>./tableList_testdb.md</code>）</dd>
@@ -328,10 +340,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="linkFromDefinition(java.lang.String)">
 <h3>linkFromDefinition</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">linkFromDefinition</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relativePath)</span></div>
-<div class="block">個別定義書から、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク</div>
+<div class="block">個別定義書から、指定したドキュメント（データベース単位ディレクトリからの相対パス）へのリンク</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>相対リンク（例: <code>../../../tableList_testdb.md</code>）</dd>
+<dd>相対リンク（例: <code>../../tableList_testdb.md</code>）</dd>
 </dl>
 </section>
 </li>

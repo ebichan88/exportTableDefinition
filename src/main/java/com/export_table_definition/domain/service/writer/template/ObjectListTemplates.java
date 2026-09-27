@@ -92,7 +92,6 @@ public class ObjectListTemplates {
             MarkdownTemplateSupport.escapePipe(function.functionResult()),
             function.languageName(),
             objectLink(
-                function.dbName(),
                 function.schemaName(),
                 ListDocumentType.FUNCTION,
                 DocumentLocations.functionDefinitionName(function)))
@@ -116,11 +115,7 @@ public class ObjectListTemplates {
             sequence.startValue(),
             MarkdownTemplateSupport.marker(sequence.cycle()),
             sequence.ownedBy(),
-            objectLink(
-                sequence.dbName(),
-                sequence.schemaName(),
-                ListDocumentType.SEQUENCE,
-                sequence.sequenceName()))
+            objectLink(sequence.schemaName(), ListDocumentType.SEQUENCE, sequence.sequenceName()))
         + LINE_SEPARATOR;
   }
 
@@ -136,26 +131,25 @@ public class ObjectListTemplates {
             type.typeName(),
             type.typeCategory(),
             MarkdownTemplateSupport.escapePipe(type.definition()),
-            objectLink(type.dbName(), type.schemaName(), ListDocumentType.TYPE, type.typeName()))
+            objectLink(type.schemaName(), ListDocumentType.TYPE, type.typeName()))
         + LINE_SEPARATOR;
   }
 
   /**
-   * 一覧は出力ベースディレクトリ直下に配置されるため、出力ベースディレクトリからの相対パスで参照する
+   * 一覧はデータベース単位ディレクトリ直下に配置されるため、同ディレクトリからの相対パスで参照する
    *
    * @param kind オブジェクトの区分（関数・プロシージャ／シーケンス／ユーザー定義型）
    */
-  private static String objectLink(
-      String dbName, String schemaName, ListDocumentType kind, String fileName) {
+  private static String objectLink(String schemaName, ListDocumentType kind, String fileName) {
     return MarkdownTemplateSupport.linkCell(
-        DocumentLocations.linkFromBase(
-            DocumentLocations.schemaObjectFile(dbName, schemaName, kind, fileName)));
+        DocumentLocations.linkFromDatabaseRoot(
+            DocumentLocations.schemaObjectFile(schemaName, kind, fileName)));
   }
 
   /** 個別定義書から一覧へ戻る導線（{@link ObjectDefinitionTemplates}）と対になるよう、 一覧からテーブル一覧へ戻る導線を設ける */
   public static String footer(BaseInfoEntity baseInfo) {
     return PagedSectionTemplates.backOnlyFooter(
-        DocumentLocations.linkFromBase(
+        DocumentLocations.linkFromDatabaseRoot(
             DocumentLocations.listFile(ListDocumentType.TABLE, baseInfo.dbName())),
         ListDocumentType.TABLE.getBackLinkLabel());
   }

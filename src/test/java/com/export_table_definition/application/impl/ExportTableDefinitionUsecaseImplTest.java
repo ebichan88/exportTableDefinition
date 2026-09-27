@@ -38,6 +38,7 @@ import com.export_table_definition.domain.service.target.ExportTargetConsistency
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
+import com.export_table_definition.domain.service.writer.ReadmeWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.export_table_definition.domain.service.writer.ViewpointWriterDomainService;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
@@ -280,7 +281,8 @@ public class ExportTableDefinitionUsecaseImplTest {
                     erDiagramWriter,
                     objectListWriter,
                     new ViewpointWriterDomainService(
-                        fileRepository, pathResolver, pagedSectionWriter)),
+                        fileRepository, pathResolver, pagedSectionWriter),
+                    new ReadmeWriterDomainService(fileRepository, pathResolver)),
                 snapshotSinkFactory,
                 fileRepository,
                 pathResolver);
@@ -316,6 +318,11 @@ public class ExportTableDefinitionUsecaseImplTest {
     return baseDir.resolve("testdb").resolve(schema).resolve("table").resolve(physical + ".md");
   }
 
+  /** テーブル一覧・ER図・観点等、データベース単位ディレクトリ直下のドキュメントのパス */
+  private Path dbFile(Path baseDir, String fileName) {
+    return baseDir.resolve("testdb").resolve(fileName);
+  }
+
   @Test
   @DisplayName("全種別のオブジェクトが存在する場合、一覧・個別定義・ER図がすべて出力される")
   void testFullExportGeneratesAllExpectedFiles() {
@@ -338,7 +345,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
 
     // テーブル一覧: 全カテゴリへの関連ドキュメントリンクを含む
-    final Path tableListFile = DEFAULT_OUT.resolve("tableList_testdb.md");
+    final Path tableListFile = dbFile(DEFAULT_OUT, "tableList_testdb.md");
     assertTrue(fileExists(tableListFile));
     final String tableListContent = contentOf(tableListFile);
     assertTrue(tableListContent.contains("ER図一覧"));
@@ -352,14 +359,14 @@ public class ExportTableDefinitionUsecaseImplTest {
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "t2")));
 
     // ER図（スキーマページ・索引）が出力される
-    assertTrue(fileExists(DEFAULT_OUT.resolve("erDiagram_testdb_public.md")));
-    assertTrue(fileExists(DEFAULT_OUT.resolve("erDiagramList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "erDiagram_testdb_public.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "erDiagramList_testdb.md")));
 
     // 一覧ファイル
-    assertTrue(fileExists(DEFAULT_OUT.resolve("triggerList_testdb.md")));
-    assertTrue(fileExists(DEFAULT_OUT.resolve("functionList_testdb.md")));
-    assertTrue(fileExists(DEFAULT_OUT.resolve("sequenceList_testdb.md")));
-    assertTrue(fileExists(DEFAULT_OUT.resolve("typeList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "triggerList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "functionList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "sequenceList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "typeList_testdb.md")));
 
     // 個別定義ファイル
     assertTrue(
@@ -402,15 +409,15 @@ public class ExportTableDefinitionUsecaseImplTest {
             false));
 
     // 指定したfunctionのみ出力される
-    assertTrue(fileExists(DEFAULT_OUT.resolve("functionList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "functionList_testdb.md")));
     assertTrue(
         fileExists(
             DEFAULT_OUT.resolve("testdb").resolve("public").resolve("function").resolve("f1.md")));
 
     // 指定外の種別は一覧・個別定義とも出力されない
-    assertFalse(fileExists(DEFAULT_OUT.resolve("triggerList_testdb.md")));
-    assertFalse(fileExists(DEFAULT_OUT.resolve("sequenceList_testdb.md")));
-    assertFalse(fileExists(DEFAULT_OUT.resolve("typeList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "triggerList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "sequenceList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "typeList_testdb.md")));
     assertFalse(
         fileExists(
             DEFAULT_OUT
@@ -423,7 +430,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             DEFAULT_OUT.resolve("testdb").resolve("public").resolve("type").resolve("type1.md")));
 
     // テーブル一覧の関連ドキュメントも指定外の種別は含まれない
-    final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
+    final String tableListContent = contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"));
     assertTrue(tableListContent.contains("関数・プロシージャ一覧"));
     assertFalse(tableListContent.contains("シーケンス一覧"));
     assertFalse(tableListContent.contains("ユーザー定義型一覧"));
@@ -445,7 +452,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         new ExportRequest(
             TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
 
-    final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
+    final String tableListContent = contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"));
     assertTrue(tableListContent.contains("ER図一覧"));
     assertFalse(tableListContent.contains("関数・プロシージャ一覧"));
     assertFalse(tableListContent.contains("シーケンス一覧"));
@@ -453,10 +460,10 @@ public class ExportTableDefinitionUsecaseImplTest {
     assertFalse(tableListContent.contains("トリガー一覧"));
 
     // 対象が空のオブジェクト一覧はファイル自体が出力されない
-    assertFalse(fileExists(DEFAULT_OUT.resolve("triggerList_testdb.md")));
-    assertFalse(fileExists(DEFAULT_OUT.resolve("functionList_testdb.md")));
-    assertFalse(fileExists(DEFAULT_OUT.resolve("sequenceList_testdb.md")));
-    assertFalse(fileExists(DEFAULT_OUT.resolve("typeList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "triggerList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "functionList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "sequenceList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "typeList_testdb.md")));
   }
 
   @Test
@@ -470,11 +477,11 @@ public class ExportTableDefinitionUsecaseImplTest {
         new ExportRequest(
             TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
 
-    final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
+    final String tableListContent = contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"));
     assertFalse(tableListContent.contains("ER図一覧"));
     assertTrue(tableListContent.contains("シーケンス一覧"));
-    assertFalse(fileExists(DEFAULT_OUT.resolve("erDiagramList_testdb.md")));
-    assertTrue(fileExists(DEFAULT_OUT.resolve("sequenceList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "erDiagramList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "sequenceList_testdb.md")));
   }
 
   @Test
@@ -566,7 +573,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "keep")));
     assertFalse(fileExists(tableDefFile(DEFAULT_OUT, "public", "skip")));
 
-    final String tableListContent = contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"));
+    final String tableListContent = contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"));
     assertTrue(tableListContent.contains("|keep|"));
     assertFalse(tableListContent.contains("|skip|"));
   }
@@ -615,7 +622,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         new ExportRequest(
             TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
 
-    assertTrue(fileExists(DEFAULT_OUT.resolve("tableList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "tableList_testdb.md")));
   }
 
   @Test
@@ -628,7 +635,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         new ExportRequest(
             TargetSelection.of(List.of(), List.of(), List.of(), null), "   ", 0, 80, false));
 
-    assertTrue(fileExists(DEFAULT_OUT.resolve("tableList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "tableList_testdb.md")));
   }
 
   @Test
@@ -642,8 +649,8 @@ public class ExportTableDefinitionUsecaseImplTest {
             TargetSelection.of(List.of(), List.of(), List.of(), null), "custom_out", 0, 80, false));
 
     final Path customOut = Paths.get("custom_out");
-    assertTrue(fileExists(customOut.resolve("tableList_testdb.md")));
-    assertFalse(fileExists(DEFAULT_OUT.resolve("tableList_testdb.md")));
+    assertTrue(fileExists(dbFile(customOut, "tableList_testdb.md")));
+    assertFalse(fileExists(dbFile(DEFAULT_OUT, "tableList_testdb.md")));
   }
 
   @Test
@@ -679,7 +686,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             TargetSelection.of(List.of(), List.of("keep"), List.of(), null), null, 0, 80, false));
 
     // skipは出力対象外のため、そのテーブルへの外部キーはスキーマ別ER図に箱としても線としても現れない
-    final String erContent = contentOf(DEFAULT_OUT.resolve("erDiagram_testdb_public.md"));
+    final String erContent = contentOf(dbFile(DEFAULT_OUT, "erDiagram_testdb_public.md"));
     assertFalse(erContent.contains("skip"));
     assertFalse(erContent.contains("fk_keep_skip"));
   }
@@ -863,7 +870,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             80,
             false));
 
-    final String erContent = contentOf(DEFAULT_OUT.resolve("erDiagram_testdb_public.md"));
+    final String erContent = contentOf(dbFile(DEFAULT_OUT, "erDiagram_testdb_public.md"));
     assertTrue(erContent.contains("||..o{"));
     assertTrue(erContent.contains("rel_audit_employee"));
   }
@@ -923,7 +930,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
 
     assertTrue(
-        contentOf(DEFAULT_OUT.resolve("tableList_testdb.md")).contains("|pg|testdb|2031/12/31|"));
+        contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md")).contains("|pg|testdb|2031/12/31|"));
     assertTrue(
         contentOf(tableDefFile(DEFAULT_OUT, "public", "t1")).contains("|pg|testdb|2031/12/31|"));
   }
@@ -1149,14 +1156,14 @@ public class ExportTableDefinitionUsecaseImplTest {
             80,
             false));
 
-    assertTrue(fileExists(DEFAULT_OUT.resolve("viewpoint_testdb_order.md")));
-    assertTrue(fileExists(DEFAULT_OUT.resolve("viewpointList_testdb.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "viewpoint_testdb_order.md")));
+    assertTrue(fileExists(dbFile(DEFAULT_OUT, "viewpointList_testdb.md")));
     assertTrue(
-        contentOf(DEFAULT_OUT.resolve("tableList_testdb.md"))
+        contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"))
             .contains("* [観点一覧](./viewpointList_testdb.md)"));
     assertTrue(
         contentOf(tableDefFile(DEFAULT_OUT, "public", "orders"))
-            .contains("* [受注管理](../../../viewpoint_testdb_order.md)"));
+            .contains("* [受注管理](../../viewpoint_testdb_order.md)"));
     // 所属しないテーブルの定義書には、所属する観点のセクションを出力しない
     assertFalse(contentOf(tableDefFile(DEFAULT_OUT, "public", "stock")).contains("## 所属する観点"));
   }
@@ -1174,7 +1181,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     assertTrue(
         fileRepository.files.keySet().stream()
             .noneMatch(path -> path.getFileName().toString().startsWith("viewpoint")));
-    assertFalse(contentOf(DEFAULT_OUT.resolve("tableList_testdb.md")).contains("観点一覧"));
+    assertFalse(contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md")).contains("観点一覧"));
     assertFalse(contentOf(tableDefFile(DEFAULT_OUT, "public", "orders")).contains("## 所属する観点"));
   }
 }

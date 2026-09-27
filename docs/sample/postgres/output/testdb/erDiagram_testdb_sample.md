@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## ER図
 
@@ -24,15 +24,15 @@ erDiagram
 
 | No. | スキーマ名 | 物理テーブル名 | 論理テーブル名 | 区分 | Link |
 |:---|:---|:---|:---|:---|:---|
-| 1 | sample | audit_log |  | table | [■](./testdb/sample/table/audit_log.md) |
-| 2 | sample | department |  | table | [■](./testdb/sample/table/department.md) |
-| 3 | sample | employee | 従業員 | table | [■](./testdb/sample/table/employee.md) |
-| 4 | sample | employee_profile |  | table | [■](./testdb/sample/table/employee_profile.md) |
-| 5 | sample | parking_spot |  | table | [■](./testdb/sample/table/parking_spot.md) |
-| 6 | sample | project | プロジェクト | table | [■](./testdb/sample/table/project.md) |
-| 7 | sample | project_assignment |  | table | [■](./testdb/sample/table/project_assignment.md) |
-| 8 | sample | shipment |  | table | [■](./testdb/sample/table/shipment.md) |
-| 9 | sample | warehouse_zone |  | table | [■](./testdb/sample/table/warehouse_zone.md) |
+| 1 | sample | audit_log |  | table | [■](./sample/table/audit_log.md) |
+| 2 | sample | department |  | table | [■](./sample/table/department.md) |
+| 3 | sample | employee | 従業員 | table | [■](./sample/table/employee.md) |
+| 4 | sample | employee_profile |  | table | [■](./sample/table/employee_profile.md) |
+| 5 | sample | parking_spot |  | table | [■](./sample/table/parking_spot.md) |
+| 6 | sample | project | プロジェクト | table | [■](./sample/table/project.md) |
+| 7 | sample | project_assignment |  | table | [■](./sample/table/project_assignment.md) |
+| 8 | sample | shipment |  | table | [■](./sample/table/shipment.md) |
+| 9 | sample | warehouse_zone |  | table | [■](./sample/table/warehouse_zone.md) |
 
 ___
 

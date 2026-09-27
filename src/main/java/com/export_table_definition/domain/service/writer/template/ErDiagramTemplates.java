@@ -75,7 +75,7 @@ public class ErDiagramTemplates {
                         schemaName,
                         tables.size(),
                         MarkdownTemplateSupport.linkCell(
-                            DocumentLocations.linkFromBase(
+                            DocumentLocations.linkFromDatabaseRoot(
                                 DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName)))))
                 .append(LINE_SEPARATOR));
     return sb.append(LINE_SEPARATOR).toString();
@@ -170,7 +170,7 @@ public class ErDiagramTemplates {
         + LINE_SEPARATOR_DOUBLE
         + String.format(
             "[スキーマのER図へ](%s) ",
-            DocumentLocations.linkFromBase(
+            DocumentLocations.linkFromDatabaseRoot(
                 DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName)))
         + listLinks(baseInfo)
         + LINE_SEPARATOR;
@@ -209,8 +209,8 @@ public class ErDiagramTemplates {
             Objects.toString(table.logicalTableName(), ""),
             table.tableType().getName(),
             MarkdownTemplateSupport.linkCell(
-                DocumentLocations.linkFromBase(
-                    DocumentLocations.tableDefinitionFile(table.dbName(), table))))
+                DocumentLocations.linkFromDatabaseRoot(
+                    DocumentLocations.tableDefinitionFile(table))))
         + LINE_SEPARATOR;
   }
 
@@ -266,10 +266,11 @@ public class ErDiagramTemplates {
 
   /**
    * 一覧への相対リンクを生成するメソッド<br>
-   * ER図は出力ベースディレクトリ直下に配置される
+   * ER図はデータベース単位ディレクトリ直下に配置される
    */
   private static String listLink(ListDocumentType type, BaseInfoEntity baseInfo) {
-    return DocumentLocations.linkFromBase(DocumentLocations.listFile(type, baseInfo.dbName()));
+    return DocumentLocations.linkFromDatabaseRoot(
+        DocumentLocations.listFile(type, baseInfo.dbName()));
   }
 
   /**
