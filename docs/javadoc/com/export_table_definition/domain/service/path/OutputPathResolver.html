@@ -120,33 +120,47 @@ loadScripts(document, 'script');</script>
  設定された出力先パスが未指定・空白の場合は、デフォルトの出力先にフォールバックする</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveErDiagramFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String)" class="member-name-link">resolveErDiagramFile</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveDatabaseDirectory(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">resolveDatabaseDirectory</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">スキーマ別ER図のパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}.md</div>
+<div class="block">データベース単位ディレクトリを返す。<br>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、1つのデータベースに関する
+ Markdownドキュメント（テーブル定義書・一覧・ER図・観点ページ・README）はすべてこの配下にまとめる。<br>
+ 例: {base}/{DB名}/</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveErDiagramGroupFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String,int)" class="member-name-link">resolveErDiagramGroupFile</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
- int&nbsp;groupNo)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveErDiagramFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String)" class="member-name-link">resolveErDiagramFile</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
+<div class="block">スキーマ別ER図のパス。<br>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}.md</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveListFile(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">resolveListFile</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
- <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;type)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveErDiagramGroupFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String,int)" class="member-name-link">resolveErDiagramGroupFile</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
+ int&nbsp;groupNo)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）のパス。<br>
- 例: {base}/{接頭辞}List_{DB名}.md</div>
+<div class="block">スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。<br>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolvePageFile(java.nio.file.Path,int)" class="member-name-link">resolvePageFile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;file,
- int&nbsp;pageIndex)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveListFile(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">resolveListFile</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
+ <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）のパス。<br>
+ 例: {base}/{DB名}/{接頭辞}List_{DB名}.md</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolvePageFile(java.nio.file.Path,int)" class="member-name-link">resolvePageFile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;file,
+ int&nbsp;pageIndex)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">行数の多い表を分割した場合の、分割ページのパス。<br>
- 本体ページと同じディレクトリに置く。例: {base}/tableList_{DB名}.md の2ページ目は {base}/tableList_{DB名}_2.md</div>
+ 本体ページと同じディレクトリに置く。例: {base}/{DB名}/tableList_{DB名}.md の2ページ目は {base}/{DB名}/tableList_{DB名}_2.md</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveReadmeFile(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">resolveReadmeFile</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのパスを返す。<br>
+ 例: {base}/{DB名}/README.md</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveSchemaObjectDirectory(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">resolveSchemaObjectDirectory</a><wbr>(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
@@ -210,7 +224,7 @@ loadScripts(document, 'script');</script>
  <a href="../../model/viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoint</a>&nbsp;viewpoint)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">観点ページのパス。<br>
- 例: {base}/viewpoint_{DB名}_{観点の識別子}.md</div>
+ 例: {base}/{DB名}/viewpoint_{DB名}_{観点の識別子}.md</div>
 </div>
 </div>
 </div>
@@ -243,6 +257,16 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="resolveDatabaseDirectory(com.export_table_definition.domain.service.path.OutputRoot)">
+<h3>resolveDatabaseDirectory</h3>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">resolveDatabaseDirectory</span><wbr><span class="parameters">(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root)</span></div>
+<div class="block">データベース単位ディレクトリを返す。<br>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、1つのデータベースに関する
+ Markdownドキュメント（テーブル定義書・一覧・ER図・観点ページ・README）はすべてこの配下にまとめる。<br>
+ 例: {base}/{DB名}/</div>
+</section>
+</li>
+<li>
 <section class="detail" id="resolveTableDefinitionDirectory(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.table.TableEntity)">
 <h3>resolveTableDefinitionDirectory</h3>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">resolveTableDefinitionDirectory</span><wbr><span class="parameters">(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
@@ -266,7 +290,7 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">resolveListFile</span><wbr><span class="parameters">(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
  <a href="../../model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a>&nbsp;type)</span></div>
 <div class="block">一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）のパス。<br>
- 例: {base}/{接頭辞}List_{DB名}.md</div>
+ 例: {base}/{DB名}/{接頭辞}List_{DB名}.md</div>
 </section>
 </li>
 <li>
@@ -275,7 +299,7 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">resolveErDiagramFile</span><wbr><span class="parameters">(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName)</span></div>
 <div class="block">スキーマ別ER図のパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}.md</div>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}.md</div>
 </section>
 </li>
 <li>
@@ -285,7 +309,7 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
  int&nbsp;groupNo)</span></div>
 <div class="block">スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>groupNo</code> - グループ番号（1始まり）</dd>
@@ -298,7 +322,15 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">resolveViewpointFile</span><wbr><span class="parameters">(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root,
  <a href="../../model/viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoint</a>&nbsp;viewpoint)</span></div>
 <div class="block">観点ページのパス。<br>
- 例: {base}/viewpoint_{DB名}_{観点の識別子}.md</div>
+ 例: {base}/{DB名}/viewpoint_{DB名}_{観点の識別子}.md</div>
+</section>
+</li>
+<li>
+<section class="detail" id="resolveReadmeFile(com.export_table_definition.domain.service.path.OutputRoot)">
+<h3>resolveReadmeFile</h3>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">resolveReadmeFile</span><wbr><span class="parameters">(<a href="OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;root)</span></div>
+<div class="block">データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのパスを返す。<br>
+ 例: {base}/{DB名}/README.md</div>
 </section>
 </li>
 <li>
@@ -307,7 +339,7 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name">resolvePageFile</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;file,
  int&nbsp;pageIndex)</span></div>
 <div class="block">行数の多い表を分割した場合の、分割ページのパス。<br>
- 本体ページと同じディレクトリに置く。例: {base}/tableList_{DB名}.md の2ページ目は {base}/tableList_{DB名}_2.md</div>
+ 本体ページと同じディレクトリに置く。例: {base}/{DB名}/tableList_{DB名}.md の2ページ目は {base}/{DB名}/tableList_{DB名}_2.md</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>pageIndex</code> - ページインデックス（1始まり）</dd>

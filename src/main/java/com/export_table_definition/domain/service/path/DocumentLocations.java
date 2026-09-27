@@ -6,10 +6,13 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 
 /**
- * 出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>
+ * 出力するMarkdownドキュメントの配置（ファイル名と、データベース単位ディレクトリからの相対パス）を一元的に定めるクラス<br>
  * 出力先の絶対パス（{@link OutputPathResolver}）と、ドキュメント間の相対リンク（テンプレート）の双方が
  * このクラスの規則を参照することで、ファイル名を変更した場合にパスとリンクが食い違わないようにする。<br>
- * 配置は次のとおり。一覧・ER図は出力ベースディレクトリ直下に、テーブル定義書・関数等の個別定義書は {@code {DB名}/{スキーマ名}/{区分}/}配下に置く
+ * 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、DB1つ分のドキュメントはすべて {@code
+ * {DB名}/}ディレクトリ配下にまとめる（このクラスが返す相対パスはこのディレクトリからの相対パスとし、 {@code {DB名}/}自体の付与は{@link
+ * OutputPathResolver}が行う）。配置は次のとおり。一覧・ER図・観点ページ・READMEは {@code {DB名}/}直下に、テーブル定義書・関数等の個別定義書は{@code
+ * {スキーマ名}/{区分}/}配下に置く
  */
 public final class DocumentLocations {
 
@@ -19,16 +22,17 @@ public final class DocumentLocations {
   private static final String ER_DIAGRAM_GROUP_FILENAME_PATTERN =
       "erDiagram_%s_%s_group%d" + MARKDOWN_EXTENSION;
   private static final String VIEWPOINT_FILENAME_PATTERN = "viewpoint_%s_%s" + MARKDOWN_EXTENSION;
+  private static final String README_FILENAME = "README" + MARKDOWN_EXTENSION;
   private static final String PATH_SEPARATOR = "/";
 
   /** オーバーロードされた関数・プロシージャの個別定義ファイル名で、名前と番号を区切る文字 */
   private static final String OVERLOAD_SEPARATOR = "_";
 
-  /** 出力ベースディレクトリ直下のドキュメントから、出力ベースディレクトリを指す相対パス */
-  private static final String FROM_BASE = "./";
+  /** データベース単位ディレクトリ直下のドキュメントから、そのディレクトリを指す相対パス */
+  private static final String FROM_DATABASE_ROOT = "./";
 
-  /** 個別定義書（{@code {DB名}/{スキーマ名}/{区分}/}配下）から、出力ベースディレクトリを指す相対パス */
-  private static final String FROM_DEFINITION = "../../../";
+  /** 個別定義書（{@code {スキーマ名}/{区分}/}配下）から、データベース単位ディレクトリを指す相対パス */
+  private static final String FROM_DEFINITION = "../../";
 
   private DocumentLocations() {}
 
@@ -87,14 +91,13 @@ public final class DocumentLocations {
   }
 
   /**
-   * テーブル定義書の、出力ベースディレクトリからの相対パス
+   * テーブル定義書の、データベース単位ディレクトリからの相対パス
    *
-   * @return {@code {DB名}/{スキーマ名}/{テーブル区分}/{物理テーブル名}.md}
+   * @return {@code {スキーマ名}/{テーブル区分}/{物理テーブル名}.md}
    */
-  public static String tableDefinitionFile(String dbName, TableEntity table) {
+  public static String tableDefinitionFile(TableEntity table) {
     return String.join(
         PATH_SEPARATOR,
-        dbName,
         table.schemaName(),
         table.tableType().getName(),
         table.physicalTableName() + MARKDOWN_EXTENSION);
@@ -112,46 +115,50 @@ public final class DocumentLocations {
   }
 
   /**
-   * 関数・シーケンス・型の個別定義を置くディレクトリの、出力ベースディレクトリからの相対パス
+   * 関数・シーケンス・型の個別定義を置くディレクトリの、データベース単位ディレクトリからの相対パス
    *
    * @param kind オブジェクトの区分（{@link ListDocumentType#FUNCTION}／{@link
    *     ListDocumentType#SEQUENCE}／{@link ListDocumentType#TYPE}）
-   * @return {@code {DB名}/{スキーマ名}/{区分}}
+   * @return {@code {スキーマ名}/{区分}}
    */
-  public static String schemaObjectDirectory(
-      String dbName, String schemaName, ListDocumentType kind) {
-    return String.join(PATH_SEPARATOR, dbName, schemaName, kind.getPrefix());
+  public static String schemaObjectDirectory(String schemaName, ListDocumentType kind) {
+    return String.join(PATH_SEPARATOR, schemaName, kind.getPrefix());
   }
 
   /**
-   * 関数・シーケンス・型の個別定義ファイルの、出力ベースディレクトリからの相対パス
+   * 関数・シーケンス・型の個別定義ファイルの、データベース単位ディレクトリからの相対パス
    *
    * @param kind オブジェクトの区分（{@link ListDocumentType#FUNCTION}／{@link
    *     ListDocumentType#SEQUENCE}／{@link ListDocumentType#TYPE}）
    * @param name 個別定義ファイル名（拡張子を除く）
-   * @return {@code {DB名}/{スキーマ名}/{区分}/{名前}.md}
+   * @return {@code {スキーマ名}/{区分}/{名前}.md}
    */
-  public static String schemaObjectFile(
-      String dbName, String schemaName, ListDocumentType kind, String name) {
-    return schemaObjectDirectory(dbName, schemaName, kind)
-        + PATH_SEPARATOR
-        + name
-        + MARKDOWN_EXTENSION;
+  public static String schemaObjectFile(String schemaName, ListDocumentType kind, String name) {
+    return schemaObjectDirectory(schemaName, kind) + PATH_SEPARATOR + name + MARKDOWN_EXTENSION;
   }
 
   /**
-   * 出力ベースディレクトリ直下のドキュメントから、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク
+   * データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのファイル名
+   *
+   * @return {@code README.md}
+   */
+  public static String readmeFile() {
+    return README_FILENAME;
+  }
+
+  /**
+   * データベース単位ディレクトリ直下のドキュメントから、指定したドキュメント（同ディレクトリからの相対パス）へのリンク
    *
    * @return 相対リンク（例: {@code ./tableList_testdb.md}）
    */
-  public static String linkFromBase(String relativePath) {
-    return FROM_BASE + relativePath;
+  public static String linkFromDatabaseRoot(String relativePath) {
+    return FROM_DATABASE_ROOT + relativePath;
   }
 
   /**
-   * 個別定義書から、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク
+   * 個別定義書から、指定したドキュメント（データベース単位ディレクトリからの相対パス）へのリンク
    *
-   * @return 相対リンク（例: {@code ../../../tableList_testdb.md}）
+   * @return 相対リンク（例: {@code ../../tableList_testdb.md}）
    */
   public static String linkFromDefinition(String relativePath) {
     return FROM_DEFINITION + relativePath;

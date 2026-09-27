@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## 説明
 
@@ -25,10 +25,10 @@ erDiagram
 
 | No. | スキーマ名 | 物理テーブル名 | 論理テーブル名 | 区分 | Link |
 |:---|:---|:---|:---|:---|:---|
-| 1 | sample | department |  | table | [■](./testdb/sample/table/department.md) |
-| 2 | sample | employee | 従業員 | table | [■](./testdb/sample/table/employee.md) |
-| 3 | sample | employee_profile |  | table | [■](./testdb/sample/table/employee_profile.md) |
-| 4 | sample | parking_spot |  | table | [■](./testdb/sample/table/parking_spot.md) |
+| 1 | sample | department |  | table | [■](./sample/table/department.md) |
+| 2 | sample | employee | 従業員 | table | [■](./sample/table/employee.md) |
+| 3 | sample | employee_profile |  | table | [■](./sample/table/employee_profile.md) |
+| 4 | sample | parking_spot |  | table | [■](./sample/table/parking_spot.md) |
 
 ## 観点外のテーブルとの関連
 

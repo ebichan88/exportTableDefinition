@@ -76,7 +76,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
      削除してよい出力先かは、ユースケースを呼ぶ前に入口（2.）で検証済みである
    - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
      - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ViewpointWriterDomainService` /
-       `ObjectListWriterDomainService`（いずれも `domain.service.writer`）がMarkdownを組み立てて `FileRepository` 経由で出力
+       `ObjectListWriterDomainService` / `ReadmeWriterDomainService`（いずれも `domain.service.writer`）がMarkdownを組み立てて `FileRepository` 経由で出力
      - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
 
@@ -207,13 +207,18 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 
 ## 出力ファイルの命名規則と相対リンク
 
-Markdownドキュメントのファイル名・配置（一覧・ER図・観点ページは出力ベースディレクトリ直下、テーブル定義書・関数等の個別定義書は
-`{DB名}/{スキーマ名}/{区分}/`配下）は`domain.service.path.DocumentLocations`に一元化している。
+複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、1つのデータベースに関するMarkdownドキュメントは
+すべて出力ベースディレクトリ配下の`{DB名}/`ディレクトリ（`OutputPathResolver.resolveDatabaseDirectory`）にまとめる。
+Markdownドキュメントのファイル名・配置（一覧・ER図・観点ページ・READMEは`{DB名}/`直下、テーブル定義書・関数等の個別定義書は
+`{DB名}/{スキーマ名}/{区分}/`配下）は`domain.service.path.DocumentLocations`に一元化している
+（このクラスが返す相対パスは`{DB名}/`ディレクトリからの相対パスで、`{DB名}/`自体の付与は`OutputPathResolver`が行う）。
 出力先の絶対パス（`OutputPathResolver`の実装）と、ドキュメント間の相対リンク（`domain.service.writer.template`）の
 双方がこの規則を参照するため、ファイル名を変更してもパスとリンクが食い違わない。一覧の種別ごとの接頭辞・タイトルは
 `domain.model.document.ListDocumentType`が持つ。関数・プロシージャの個別定義は関数名をファイル名とし、同じスキーマに
 同名のもの（オーバーロード）がある場合のみ`{関数名}_{番号}`とする（番号はSQLが関数名ごとに振る）。
 観点ページは、日本語・空白を含みうる表示名ではなく、ファイル名に使える文字に限った識別子から`viewpoint_{DB名}_{識別子}.md`とする。
+`{DB名}/`ディレクトリには、GitHub等でそのディレクトリを開いた際の入り口となるよう、生成される一覧ドキュメントへのリンクを
+まとめた`README.md`も`ReadmeWriterDomainService`が出力する。
 
 どの一覧ドキュメントを出力するか（テーブル一覧は常に、それ以外は対象が1件以上ある場合のみ）は
 `MarkdownExportSinkFactory`の`listDocuments()`が1箇所で決め、一覧の書き出しと、テーブル一覧に掲載する関連ドキュメントへの

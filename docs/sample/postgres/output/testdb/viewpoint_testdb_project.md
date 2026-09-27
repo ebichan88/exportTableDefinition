@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## 説明
 
@@ -23,10 +23,10 @@ erDiagram
 
 | No. | スキーマ名 | 物理テーブル名 | 論理テーブル名 | 区分 | Link |
 |:---|:---|:---|:---|:---|:---|
-| 1 | sample | employee | 従業員 | table | [■](./testdb/sample/table/employee.md) |
-| 2 | sample | project | プロジェクト | table | [■](./testdb/sample/table/project.md) |
-| 3 | sample | project_assignment |  | table | [■](./testdb/sample/table/project_assignment.md) |
-| 4 | sample | project_summary_mv | プロジェクト別要員数集計 | materialized_view | [■](./testdb/sample/materialized_view/project_summary_mv.md) |
+| 1 | sample | employee | 従業員 | table | [■](./sample/table/employee.md) |
+| 2 | sample | project | プロジェクト | table | [■](./sample/table/project.md) |
+| 3 | sample | project_assignment |  | table | [■](./sample/table/project_assignment.md) |
+| 4 | sample | project_summary_mv | プロジェクト別要員数集計 | materialized_view | [■](./sample/materialized_view/project_summary_mv.md) |
 
 ## 観点外のテーブルとの関連
 

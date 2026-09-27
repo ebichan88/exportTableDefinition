@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## シーケンス情報
 
@@ -14,4 +14,4 @@
 
 ___
 
-[シーケンス一覧へ](../../../sequenceList_testdb.md)
+[シーケンス一覧へ](../../sequenceList_testdb.md)

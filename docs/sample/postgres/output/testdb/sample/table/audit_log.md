@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## テーブル説明
 
@@ -77,4 +77,4 @@ erDiagram
 
 ___
 
-[テーブル一覧へ](../../../tableList_testdb.md)
+[テーブル一覧へ](../../tableList_testdb.md)

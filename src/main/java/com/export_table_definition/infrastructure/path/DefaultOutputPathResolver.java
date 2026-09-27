@@ -42,6 +42,12 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
 
   /** {@inheritDoc} */
   @Override
+  public Path resolveDatabaseDirectory(OutputRoot root) {
+    return root.baseDir().resolve(root.baseInfo().dbName());
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public Path resolveTableDefinitionDirectory(OutputRoot root, TableEntity table) {
     return resolveTableDefinitionFile(root, table).getParent();
   }
@@ -49,27 +55,27 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   /** {@inheritDoc} */
   @Override
   public Path resolveTableDefinitionFile(OutputRoot root, TableEntity table) {
-    return root.baseDir()
-        .resolve(DocumentLocations.tableDefinitionFile(root.baseInfo().dbName(), table));
+    return resolveDatabaseDirectory(root).resolve(DocumentLocations.tableDefinitionFile(table));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveListFile(OutputRoot root, ListDocumentType type) {
-    return root.baseDir().resolve(DocumentLocations.listFile(type, root.baseInfo().dbName()));
+    return resolveDatabaseDirectory(root)
+        .resolve(DocumentLocations.listFile(type, root.baseInfo().dbName()));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveErDiagramFile(OutputRoot root, String schemaName) {
-    return root.baseDir()
+    return resolveDatabaseDirectory(root)
         .resolve(DocumentLocations.erDiagramFile(root.baseInfo().dbName(), schemaName));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveErDiagramGroupFile(OutputRoot root, String schemaName, int groupNo) {
-    return root.baseDir()
+    return resolveDatabaseDirectory(root)
         .resolve(
             DocumentLocations.erDiagramGroupFile(root.baseInfo().dbName(), schemaName, groupNo));
   }
@@ -77,8 +83,14 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   /** {@inheritDoc} */
   @Override
   public Path resolveViewpointFile(OutputRoot root, Viewpoint viewpoint) {
-    return root.baseDir()
+    return resolveDatabaseDirectory(root)
         .resolve(DocumentLocations.viewpointFile(root.baseInfo().dbName(), viewpoint));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Path resolveReadmeFile(OutputRoot root) {
+    return resolveDatabaseDirectory(root).resolve(DocumentLocations.readmeFile());
   }
 
   /** {@inheritDoc} */
@@ -92,18 +104,16 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   @Override
   public Path resolveSchemaObjectDirectory(
       OutputRoot root, String schemaName, ListDocumentType kind) {
-    return root.baseDir()
-        .resolve(
-            DocumentLocations.schemaObjectDirectory(root.baseInfo().dbName(), schemaName, kind));
+    return resolveDatabaseDirectory(root)
+        .resolve(DocumentLocations.schemaObjectDirectory(schemaName, kind));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveSchemaObjectFile(
       OutputRoot root, String schemaName, ListDocumentType kind, String name) {
-    return root.baseDir()
-        .resolve(
-            DocumentLocations.schemaObjectFile(root.baseInfo().dbName(), schemaName, kind, name));
+    return resolveDatabaseDirectory(root)
+        .resolve(DocumentLocations.schemaObjectFile(schemaName, kind, name));
   }
 
   /** {@inheritDoc} */

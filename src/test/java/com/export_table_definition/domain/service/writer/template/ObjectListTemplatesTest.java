@@ -89,7 +89,7 @@ public class ObjectListTemplatesTest {
         new FunctionEntity(
             "TEST_DB", "public", "concat", 2, 2, "FUNCTION", "a text|b", "text", "sql", "");
     assertEquals(
-        "|2|public|FUNCTION|concat|a text\\|b|text|sql|[■](./TEST_DB/public/function/concat_2.md)|"
+        "|2|public|FUNCTION|concat|a text\\|b|text|sql|[■](./public/function/concat_2.md)|"
             + System.lineSeparator(),
         ObjectListTemplates.functionListLine(2, function));
   }
@@ -101,7 +101,7 @@ public class ObjectListTemplatesTest {
         new SequenceEntity(
             "TEST_DB", "public", "seq_orders", "10", "1", "999", "20", "1", true, "orders.id");
     assertEquals(
-        "|1|public|seq_orders|10|1|999|20|1|○|orders.id|[■](./TEST_DB/public/sequence/seq_orders.md)|"
+        "|1|public|seq_orders|10|1|999|20|1|○|orders.id|[■](./public/sequence/seq_orders.md)|"
             + System.lineSeparator(),
         ObjectListTemplates.sequenceListLine(1, sequence));
   }
@@ -111,8 +111,7 @@ public class ObjectListTemplatesTest {
   void testTypeListLine() {
     var type = new TypeEntity("TEST_DB", "public", "delimiter", "ENUM", "|, ,");
     assertEquals(
-        "|1|public|delimiter|ENUM|\\|, ,|[■](./TEST_DB/public/type/delimiter.md)|"
-            + System.lineSeparator(),
+        "|1|public|delimiter|ENUM|\\|, ,|[■](./public/type/delimiter.md)|" + System.lineSeparator(),
         ObjectListTemplates.typeListLine(1, type));
   }
 

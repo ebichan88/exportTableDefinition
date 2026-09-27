@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
 import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
+import com.export_table_definition.domain.service.writer.ReadmeWriterDomainService;
 import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
 import com.export_table_definition.domain.service.writer.ViewpointWriterDomainService;
 import jakarta.inject.Inject;
@@ -16,24 +17,27 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/** Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点）を書き出す{@link ExportSink}を生成するクラス */
+/** Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点・README）を書き出す{@link ExportSink}を生成するクラス */
 public class MarkdownExportSinkFactory {
 
   private final TableDefinitionWriterDomainService tableDefinitionWriter;
   private final ErDiagramWriterDomainService erDiagramWriter;
   private final ObjectListWriterDomainService objectListWriter;
   private final ViewpointWriterDomainService viewpointWriter;
+  private final ReadmeWriterDomainService readmeWriter;
 
   @Inject
   public MarkdownExportSinkFactory(
       TableDefinitionWriterDomainService tableDefinitionWriter,
       ErDiagramWriterDomainService erDiagramWriter,
       ObjectListWriterDomainService objectListWriter,
-      ViewpointWriterDomainService viewpointWriter) {
+      ViewpointWriterDomainService viewpointWriter,
+      ReadmeWriterDomainService readmeWriter) {
     this.tableDefinitionWriter = tableDefinitionWriter;
     this.erDiagramWriter = erDiagramWriter;
     this.objectListWriter = objectListWriter;
     this.viewpointWriter = viewpointWriter;
+    this.readmeWriter = readmeWriter;
   }
 
   /**
@@ -101,7 +105,7 @@ public class MarkdownExportSinkFactory {
 
     /**
      * {@inheritDoc}<br>
-     * テーブル一覧・ER図・各種一覧・観点・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧と外部キー一覧のみで
+     * テーブル一覧・README・ER図・各種一覧・観点・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧と外部キー一覧のみで
      * 生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる
      */
     @Override
@@ -110,6 +114,7 @@ public class MarkdownExportSinkFactory {
       final Set<ListDocumentType> documents = listDocuments(targets);
       tableDefinitionWriter.writeTableDefinitionList(
           targets.tables().asList(), outputRoot, relatedDocuments(documents));
+      readmeWriter.writeReadme(documents, outputRoot);
       if (documents.contains(ListDocumentType.ER_DIAGRAM)) {
         erDiagramWriter.writeErDiagram(
             targets.tables(), targets.foreignKeys(), outputRoot, erDiagramMaxNodes);

@@ -155,6 +155,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">基本情報セクション</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html#baseInfo(com.export_table_definition.domain.model.database.BaseInfoEntity)" class="member-name-link">baseInfo(BaseInfoEntity)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ReadmeTemplates</a></dt>
+<dd>
+<div class="block">基本情報セクション</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/TableDefinitionListTemplates.html#baseInfo(com.export_table_definition.domain.model.database.BaseInfoEntity)" class="member-name-link">baseInfo(BaseInfoEntity)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">TableDefinitionListTemplates</a></dt>
 <dd>
 <div class="block">基本情報セクション</div>
@@ -925,12 +929,20 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>DiffResult</code> record class.</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html#documentLinks(com.export_table_definition.domain.model.database.BaseInfoEntity,java.util.Set)" class="member-name-link">documentLinks(BaseInfoEntity, Set&lt;ListDocumentType&gt;)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ReadmeTemplates</a></dt>
+<dd>
+<div class="block">ドキュメント一覧セクション<br>
+ 出力される一覧ドキュメント（テーブル一覧・ER図一覧・観点一覧・トリガー/関数/シーケンス/型の一覧のうち、 対象が存在するもの）へのリンクを列挙する。個別のテーブル定義書・個別定義書へは、
+ それぞれの一覧ドキュメントを経由してたどれるため、ここには一覧のみを掲載する</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html" class="type-name-link" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a> - Class in <a href="com/export_table_definition/domain/service/path/package-summary.html">com.export_table_definition.domain.service.path</a></dt>
 <dd>
-<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>
+<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、データベース単位ディレクトリからの相対パス）を一元的に定めるクラス<br>
  出力先の絶対パス（<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>）と、ドキュメント間の相対リンク（テンプレート）の双方が
  このクラスの規則を参照することで、ファイル名を変更した場合にパスとリンクが食い違わないようにする。<br>
- 配置は次のとおり。一覧・ER図は出力ベースディレクトリ直下に、テーブル定義書・関数等の個別定義書は <code>{DB名}/{スキーマ名}/{区分}/</code>配下に置く</div>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、DB1つ分のドキュメントはすべて <code>
+ {DB名}/</code>ディレクトリ配下にまとめる（このクラスが返す相対パスはこのディレクトリからの相対パスとし、 <code>{DB名}/</code>自体の付与は<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>が行う）。配置は次のとおり。一覧・ER図・観点ページ・READMEは <code>{DB名}/</code>直下に、テーブル定義書・関数等の個別定義書は<code>
+ {スキーマ名}/{区分}/</code>配下に置く</div>
 </dd>
 </dl>
 <h2 class="title" id="I:E">E</h2>
@@ -1379,6 +1391,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.PageLayout.html#fileHeader()" class="member-name-link">fileHeader()</a> - Method in record class com.export_table_definition.domain.service.writer.<a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.PageLayout.html" title="class in com.export_table_definition.domain.service.writer">PagedSectionWriter.PageLayout</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/domain/service/writer/PagedSectionWriter.PageLayout.html#param-fileHeader"><code>fileHeader</code></a> record component.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html#fileHeader(com.export_table_definition.domain.model.database.BaseInfoEntity)" class="member-name-link">fileHeader(BaseInfoEntity)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ReadmeTemplates</a></dt>
+<dd>
+<div class="block">READMEのファイルヘッダー</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/TableDefinitionListTemplates.html#fileHeader(com.export_table_definition.domain.model.database.BaseInfoEntity)" class="member-name-link">fileHeader(BaseInfoEntity)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">TableDefinitionListTemplates</a></dt>
 <dd>
@@ -2324,13 +2340,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">テーブル定義書・個別定義ファイルなどへのリンクを表す表セルを組み立てるメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#linkFromBase(java.lang.String)" class="member-name-link">linkFromBase(String)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
+<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#linkFromDatabaseRoot(java.lang.String)" class="member-name-link">linkFromDatabaseRoot(String)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
 <dd>
-<div class="block">出力ベースディレクトリ直下のドキュメントから、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク</div>
+<div class="block">データベース単位ディレクトリ直下のドキュメントから、指定したドキュメント（同ディレクトリからの相対パス）へのリンク</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#linkFromDefinition(java.lang.String)" class="member-name-link">linkFromDefinition(String)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
 <dd>
-<div class="block">個別定義書から、指定したドキュメント（出力ベースディレクトリからの相対パス）へのリンク</div>
+<div class="block">個別定義書から、指定したドキュメント（データベース単位ディレクトリからの相対パス）へのリンク</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/document/ListDocumentType.html" class="type-name-link" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a> - Enum Class in <a href="com/export_table_definition/domain/model/document/package-summary.html">com.export_table_definition.domain.model.document</a></dt>
 <dd>
@@ -2449,9 +2465,9 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" class="type-name-link" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a> - Class in <a href="com/export_table_definition/domain/service/export/package-summary.html">com.export_table_definition.domain.service.export</a></dt>
 <dd>
-<div class="block">Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点）を書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するクラス</div>
+<div class="block">Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点・README）を書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するクラス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html#%3Cinit%3E(com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService,com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService,com.export_table_definition.domain.service.writer.ObjectListWriterDomainService,com.export_table_definition.domain.service.writer.ViewpointWriterDomainService)" class="member-name-link">MarkdownExportSinkFactory(TableDefinitionWriterDomainService, ErDiagramWriterDomainService, ObjectListWriterDomainService, ViewpointWriterDomainService)</a> - Constructor for class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></dt>
+<dt><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html#%3Cinit%3E(com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService,com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService,com.export_table_definition.domain.service.writer.ObjectListWriterDomainService,com.export_table_definition.domain.service.writer.ViewpointWriterDomainService,com.export_table_definition.domain.service.writer.ReadmeWriterDomainService)" class="member-name-link">MarkdownExportSinkFactory(TableDefinitionWriterDomainService, ErDiagramWriterDomainService, ObjectListWriterDomainService, ViewpointWriterDomainService, ReadmeWriterDomainService)</a> - Constructor for class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a> - Class in <a href="com/export_table_definition/domain/service/writer/template/package-summary.html">com.export_table_definition.domain.service.writer.template</a></dt>
 <dd>
@@ -3014,6 +3030,23 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">ファイルを行リストとして読み込むメソッド（<a href="com/export_table_definition/domain/repository/FileRepository.html#writeFile(java.nio.file.Path,java.util.List)"><code>FileRepository.writeFile(Path, List)</code></a>の逆）</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#readmeFile()" class="member-name-link">readmeFile()</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
+<dd>
+<div class="block">データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのファイル名</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.template">ReadmeTemplates</a> - Class in <a href="com/export_table_definition/domain/service/writer/template/package-summary.html">com.export_table_definition.domain.service.writer.template</a></dt>
+<dd>
+<div class="block">データベース単位ディレクトリのREADME書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html#%3Cinit%3E()" class="member-name-link">ReadmeTemplates()</a> - Constructor for class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ReadmeTemplates</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="com/export_table_definition/domain/service/writer/ReadmeWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer">ReadmeWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/writer/package-summary.html">com.export_table_definition.domain.service.writer</a></dt>
+<dd>
+<div class="block">データベース単位ディレクトリのREADMEを書き込むクラス<br>
+ 複数のデータベースを同じ出力先へ出力した場合に、GitHub等でそのディレクトリを開いた際の入り口となるよう、 出力される一覧ドキュメントへのリンクをまとめる</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/writer/ReadmeWriterDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">ReadmeWriterDomainService(FileRepository, OutputPathResolver)</a> - Constructor for class com.export_table_definition.domain.service.writer.<a href="com/export_table_definition/domain/service/writer/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ReadmeWriterDomainService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#referenceColumnNames()" class="member-name-link">referenceColumnNames()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#param-referenceColumnNames"><code>referenceColumnNames</code></a> record component.</div>
@@ -3138,6 +3171,20 @@ loadScripts(document, 'script');</script>
 <div class="block">基本出力ディレクトリを解決する。<br>
  設定された出力先パスが未指定・空白の場合は、デフォルトの出力先にフォールバックする</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveDatabaseDirectory(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">resolveDatabaseDirectory(OutputRoot)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
+<dd>
+<div class="block">データベース単位ディレクトリを返す。<br>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、1つのデータベースに関する
+ Markdownドキュメント（テーブル定義書・一覧・ER図・観点ページ・README）はすべてこの配下にまとめる。<br>
+ 例: {base}/{DB名}/</div>
+</dd>
+<dt><a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html#resolveDatabaseDirectory(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">resolveDatabaseDirectory(OutputRoot)</a> - Method in class com.export_table_definition.infrastructure.path.<a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html" title="class in com.export_table_definition.infrastructure.path">DefaultOutputPathResolver</a></dt>
+<dd>
+<div class="block">データベース単位ディレクトリを返す。<br>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、1つのデータベースに関する
+ Markdownドキュメント（テーブル定義書・一覧・ER図・観点ページ・README）はすべてこの配下にまとめる。<br>
+ 例: {base}/{DB名}/</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#%3Cinit%3E(com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List)" class="member-name-link">ResolvedForeignKeys(ForeignKeys, List&lt;ConsistencyFinding&gt;)</a> - Constructor for record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ResolvedForeignKeys</code> record class.</div>
@@ -3145,22 +3192,22 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveErDiagramFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String)" class="member-name-link">resolveErDiagramFile(OutputRoot, String)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
 <dd>
 <div class="block">スキーマ別ER図のパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}.md</div>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html#resolveErDiagramFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String)" class="member-name-link">resolveErDiagramFile(OutputRoot, String)</a> - Method in class com.export_table_definition.infrastructure.path.<a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html" title="class in com.export_table_definition.infrastructure.path">DefaultOutputPathResolver</a></dt>
 <dd>
 <div class="block">スキーマ別ER図のパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}.md</div>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveErDiagramGroupFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String,int)" class="member-name-link">resolveErDiagramGroupFile(OutputRoot, String, int)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
 <dd>
 <div class="block">スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html#resolveErDiagramGroupFile(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String,int)" class="member-name-link">resolveErDiagramGroupFile(OutputRoot, String, int)</a> - Method in class com.export_table_definition.infrastructure.path.<a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html" title="class in com.export_table_definition.infrastructure.path">DefaultOutputPathResolver</a></dt>
 <dd>
 <div class="block">スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。<br>
- 例: {base}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
+ 例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html#resolveForeignKeys(java.util.List,java.util.List,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">resolveForeignKeys(List&lt;ForeignKeyEntity&gt;, List&lt;ForeignKeyEntity&gt;, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a></dt>
 <dd>
@@ -3173,12 +3220,12 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveListFile(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">resolveListFile(OutputRoot, ListDocumentType)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
 <dd>
 <div class="block">一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）のパス。<br>
- 例: {base}/{接頭辞}List_{DB名}.md</div>
+ 例: {base}/{DB名}/{接頭辞}List_{DB名}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html#resolveListFile(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">resolveListFile(OutputRoot, ListDocumentType)</a> - Method in class com.export_table_definition.infrastructure.path.<a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html" title="class in com.export_table_definition.infrastructure.path">DefaultOutputPathResolver</a></dt>
 <dd>
 <div class="block">一覧（テーブル／ER図／関数・プロシージャ／シーケンス／ユーザー定義型／トリガー／観点）のパス。<br>
- 例: {base}/{接頭辞}List_{DB名}.md</div>
+ 例: {base}/{DB名}/{接頭辞}List_{DB名}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#resolveLogicalRelationName(java.lang.String,java.lang.String,java.util.List)" class="member-name-link">resolveLogicalRelationName(String, String, List&lt;String&gt;)</a> - Static method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></dt>
 <dd>
@@ -3189,12 +3236,22 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolvePageFile(java.nio.file.Path,int)" class="member-name-link">resolvePageFile(Path, int)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
 <dd>
 <div class="block">行数の多い表を分割した場合の、分割ページのパス。<br>
- 本体ページと同じディレクトリに置く。例: {base}/tableList_{DB名}.md の2ページ目は {base}/tableList_{DB名}_2.md</div>
+ 本体ページと同じディレクトリに置く。例: {base}/{DB名}/tableList_{DB名}.md の2ページ目は {base}/{DB名}/tableList_{DB名}_2.md</div>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html#resolvePageFile(java.nio.file.Path,int)" class="member-name-link">resolvePageFile(Path, int)</a> - Method in class com.export_table_definition.infrastructure.path.<a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html" title="class in com.export_table_definition.infrastructure.path">DefaultOutputPathResolver</a></dt>
 <dd>
 <div class="block">行数の多い表を分割した場合の、分割ページのパス。<br>
- 本体ページと同じディレクトリに置く。例: {base}/tableList_{DB名}.md の2ページ目は {base}/tableList_{DB名}_2.md</div>
+ 本体ページと同じディレクトリに置く。例: {base}/{DB名}/tableList_{DB名}.md の2ページ目は {base}/{DB名}/tableList_{DB名}_2.md</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveReadmeFile(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">resolveReadmeFile(OutputRoot)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
+<dd>
+<div class="block">データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのパスを返す。<br>
+ 例: {base}/{DB名}/README.md</div>
+</dd>
+<dt><a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html#resolveReadmeFile(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">resolveReadmeFile(OutputRoot)</a> - Method in class com.export_table_definition.infrastructure.path.<a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html" title="class in com.export_table_definition.infrastructure.path">DefaultOutputPathResolver</a></dt>
+<dd>
+<div class="block">データベース単位ディレクトリにまとめたドキュメントへのリンクを集約するREADMEのパスを返す。<br>
+ 例: {base}/{DB名}/README.md</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveSchemaObjectDirectory(com.export_table_definition.domain.service.path.OutputRoot,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">resolveSchemaObjectDirectory(OutputRoot, String, ListDocumentType)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
 <dd>
@@ -3279,12 +3336,12 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveViewpointFile(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.viewpoint.Viewpoint)" class="member-name-link">resolveViewpointFile(OutputRoot, Viewpoint)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
 <dd>
 <div class="block">観点ページのパス。<br>
- 例: {base}/viewpoint_{DB名}_{観点の識別子}.md</div>
+ 例: {base}/{DB名}/viewpoint_{DB名}_{観点の識別子}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html#resolveViewpointFile(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.viewpoint.Viewpoint)" class="member-name-link">resolveViewpointFile(OutputRoot, Viewpoint)</a> - Method in class com.export_table_definition.infrastructure.path.<a href="com/export_table_definition/infrastructure/path/DefaultOutputPathResolver.html" title="class in com.export_table_definition.infrastructure.path">DefaultOutputPathResolver</a></dt>
 <dd>
 <div class="block">観点ページのパス。<br>
- 例: {base}/viewpoint_{DB名}_{観点の識別子}.md</div>
+ 例: {base}/{DB名}/viewpoint_{DB名}_{観点の識別子}.md</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html#result()" class="member-name-link">result()</a> - Method in record class com.export_table_definition.domain.model.snapshot.<a href="com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">FunctionSnapshot</a></dt>
 <dd>
@@ -3428,13 +3485,13 @@ loadScripts(document, 'script');</script>
 <div class="block">出力対象として指定されたスキーマ名のリストを取得するメソッド<br>
  DBからの取得をスキーマ単位でSQL側で絞り込むために用いる（テーブル単位の絞り込みは<a href="com/export_table_definition/domain/model/target/TableTargetScope.html#matches(com.export_table_definition.domain.model.table.TableEntity)"><code>TableTargetScope.matches(com.export_table_definition.domain.model.table.TableEntity)</code></a>で行う）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#schemaObjectDirectory(java.lang.String,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">schemaObjectDirectory(String, String, ListDocumentType)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
+<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#schemaObjectDirectory(java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">schemaObjectDirectory(String, ListDocumentType)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
 <dd>
-<div class="block">関数・シーケンス・型の個別定義を置くディレクトリの、出力ベースディレクトリからの相対パス</div>
+<div class="block">関数・シーケンス・型の個別定義を置くディレクトリの、データベース単位ディレクトリからの相対パス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#schemaObjectFile(java.lang.String,java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType,java.lang.String)" class="member-name-link">schemaObjectFile(String, String, ListDocumentType, String)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
+<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#schemaObjectFile(java.lang.String,com.export_table_definition.domain.model.document.ListDocumentType,java.lang.String)" class="member-name-link">schemaObjectFile(String, ListDocumentType, String)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
 <dd>
-<div class="block">関数・シーケンス・型の個別定義ファイルの、出力ベースディレクトリからの相対パス</div>
+<div class="block">関数・シーケンス・型の個別定義ファイルの、データベース単位ディレクトリからの相対パス</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/snapshot/package-summary.html">com.export_table_definition.domain.service.snapshot</a></dt>
 <dd>
@@ -3751,9 +3808,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>TableDefinitionContent</code> record class.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#tableDefinitionFile(java.lang.String,com.export_table_definition.domain.model.table.TableEntity)" class="member-name-link">tableDefinitionFile(String, TableEntity)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
+<dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#tableDefinitionFile(com.export_table_definition.domain.model.table.TableEntity)" class="member-name-link">tableDefinitionFile(TableEntity)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
 <dd>
-<div class="block">テーブル定義書の、出力ベースディレクトリからの相対パス</div>
+<div class="block">テーブル定義書の、データベース単位ディレクトリからの相対パス</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/TableDefinitionListTemplates.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.template">TableDefinitionListTemplates</a> - Class in <a href="com/export_table_definition/domain/service/writer/template/package-summary.html">com.export_table_definition.domain.service.writer.template</a></dt>
 <dd>
@@ -4715,6 +4772,10 @@ the order they are declared.</div>
 <div class="block">表のセクションを書き込むメソッド<br>
  行数がMarkdownの表に表示できる最大件数以下の場合は本体ページに直接埋め込み、 超える場合は別ファイルへ分割して、本体ページにはリンクのみを掲載する。
  行の文字列生成はページ単位で行い、全行分を同時にメモリ保持しない</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/writer/ReadmeWriterDomainService.html#writeReadme(java.util.Set,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeReadme(Set&lt;ListDocumentType&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.<a href="com/export_table_definition/domain/service/writer/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ReadmeWriterDomainService</a></dt>
+<dd>
+<div class="block">READMEの書き込み処理を行うメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/ObjectListWriterDomainService.html#writeSequenceDefinition(com.export_table_definition.domain.model.schemaobject.SequenceEntity,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequenceDefinition(SequenceEntity, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.<a href="com/export_table_definition/domain/service/writer/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ObjectListWriterDomainService</a></dt>
 <dd>

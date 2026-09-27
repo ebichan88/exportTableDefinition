@@ -126,11 +126,12 @@ public class ViewpointWriterDomainServiceTest {
             Viewpoint.of("master", "", "", List.of("sales.product"))),
         80);
 
+    Path dbDir = OUT.resolve("testdb");
     assertEquals(
         List.of(
-            OUT.resolve("viewpoint_testdb_order.md"),
-            OUT.resolve("viewpoint_testdb_master.md"),
-            OUT.resolve("viewpointList_testdb.md")),
+            dbDir.resolve("viewpoint_testdb_order.md"),
+            dbDir.resolve("viewpoint_testdb_master.md"),
+            dbDir.resolve("viewpointList_testdb.md")),
         List.copyOf(fileRepository.files.keySet()));
   }
 
@@ -166,8 +167,8 @@ public class ViewpointWriterDomainServiceTest {
 
         | No. | スキーマ名 | 物理テーブル名 | 論理テーブル名 | 区分 | Link |
         |:---|:---|:---|:---|:---|:---|
-        | 1 | sales | customer | 顧客 | table | [■](./testdb/sales/table/customer.md) |
-        | 2 | sales | orders | 受注 | table | [■](./testdb/sales/table/orders.md) |
+        | 1 | sales | customer | 顧客 | table | [■](./sales/table/customer.md) |
+        | 2 | sales | orders | 受注 | table | [■](./sales/table/orders.md) |
 
         ## 観点外のテーブルとの関連
 
@@ -179,7 +180,7 @@ public class ViewpointWriterDomainServiceTest {
 
         [観点一覧へ](./viewpointList_testdb.md) [テーブル一覧へ](./tableList_testdb.md)
         """,
-        fileRepository.files.get(OUT.resolve("viewpoint_testdb_order.md")));
+        fileRepository.files.get(OUT.resolve("testdb").resolve("viewpoint_testdb_order.md")));
   }
 
   @Test
@@ -187,7 +188,8 @@ public class ViewpointWriterDomainServiceTest {
   void testViewpointPageExceedingMaxNodes() {
     write(List.of(Viewpoint.of("order", "", "", List.of("sales.orders", "sales.customer"))), 1);
 
-    String page = fileRepository.files.get(OUT.resolve("viewpoint_testdb_order.md"));
+    String page =
+        fileRepository.files.get(OUT.resolve("testdb").resolve("viewpoint_testdb_order.md"));
     assertFalse(page.contains("```mermaid"));
     assertTrue(page.contains("上限（erDiagramMaxNodes = 1件）を超えるため描画を省略しました。"));
     assertTrue(page.contains("## 外部キー一覧"));
@@ -199,7 +201,8 @@ public class ViewpointWriterDomainServiceTest {
   void testViewpointPageWithoutTables() {
     write(List.of(Viewpoint.of("stock", "在庫管理", "", List.of("inventory.*"))), 80);
 
-    String page = fileRepository.files.get(OUT.resolve("viewpoint_testdb_stock.md"));
+    String page =
+        fileRepository.files.get(OUT.resolve("testdb").resolve("viewpoint_testdb_stock.md"));
     assertTrue(page.contains("所属テーブル同士の関連（外部キー・論理リレーション）はありません。"));
     assertTrue(page.contains("出力対象のテーブルのうち、この観点に所属するものはありません。"));
     assertFalse(page.contains("## 観点外のテーブルとの関連"));
@@ -235,6 +238,6 @@ public class ViewpointWriterDomainServiceTest {
 
         [テーブル一覧へ](./tableList_testdb.md)
         """,
-        fileRepository.files.get(OUT.resolve("viewpointList_testdb.md")));
+        fileRepository.files.get(OUT.resolve("testdb").resolve("viewpointList_testdb.md")));
   }
 }

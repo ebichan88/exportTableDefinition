@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## 定義
 
@@ -14,4 +14,4 @@
 
 ___
 
-[ユーザー定義型一覧へ](../../../typeList_testdb.md)
+[ユーザー定義型一覧へ](../../typeList_testdb.md)

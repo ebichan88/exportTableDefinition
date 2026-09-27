@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/26|
+|PostgreSQL|testdb|2026/09/27|
 
 ## ER図
 
@@ -17,8 +17,8 @@ erDiagram
 
 | No. | スキーマ名 | 物理テーブル名 | 論理テーブル名 | 区分 | Link |
 |:---|:---|:---|:---|:---|:---|
-| 1 | sample | shipment |  | table | [■](./testdb/sample/table/shipment.md) |
-| 2 | sample | warehouse_zone |  | table | [■](./testdb/sample/table/warehouse_zone.md) |
+| 1 | sample | shipment |  | table | [■](./sample/table/shipment.md) |
+| 2 | sample | warehouse_zone |  | table | [■](./sample/table/warehouse_zone.md) |
 
 ___
 

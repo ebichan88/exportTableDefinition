@@ -188,10 +188,12 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、出力ベースディレクトリからの相対パス）を一元的に定めるクラス<br>
+<div class="block">出力するMarkdownドキュメントの配置（ファイル名と、データベース単位ディレクトリからの相対パス）を一元的に定めるクラス<br>
  出力先の絶対パス（<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>）と、ドキュメント間の相対リンク（テンプレート）の双方が
  このクラスの規則を参照することで、ファイル名を変更した場合にパスとリンクが食い違わないようにする。<br>
- 配置は次のとおり。一覧・ER図は出力ベースディレクトリ直下に、テーブル定義書・関数等の個別定義書は <code>{DB名}/{スキーマ名}/{区分}/</code>配下に置く</div>
+ 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、DB1つ分のドキュメントはすべて <code>
+ {DB名}/</code>ディレクトリ配下にまとめる（このクラスが返す相対パスはこのディレクトリからの相対パスとし、 <code>{DB名}/</code>自体の付与は<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>が行う）。配置は次のとおり。一覧・ER図・観点ページ・READMEは <code>{DB名}/</code>直下に、テーブル定義書・関数等の個別定義書は<code>
+ {スキーマ名}/{区分}/</code>配下に置く</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ErDiagramTemplates</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -374,7 +376,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点）を書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するクラス</div>
+<div class="block">Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点・README）を書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するクラス</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -454,6 +456,15 @@ loadScripts(document, 'script');</script>
  どのキーを書けるか・既定値・値の形式といった設定項目の仕様と検証は、ファイルごとに読み込む側が持つ （<code>
  ExportTableDefinition.properties</code>は<code>ExportTableDefinitionProperties</code>、<code>
  mybatis.properties</code>は<code>MyBatisSqlSessionFactory</code>）</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ReadmeTemplates</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">データベース単位ディレクトリのREADME書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ReadmeWriterDomainService</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">データベース単位ディレクトリのREADMEを書き込むクラス<br>
+ 複数のデータベースを同じ出力先へ出力した場合に、GitHub等でそのディレクトリを開いた際の入り口となるよう、 出力される一覧ドキュメントへのリンクをまとめる</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/domain/model/relation/RelationType.html" title="enum class in com.export_table_definition.domain.model.relation">RelationType</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab3">
