@@ -63,7 +63,7 @@ public class ExportTableDefinition {
                 Starting output of table definition document.
                 Please wait a moment ...
                 """);
-    requireValidCliArguments(cliArguments);
+    cliArguments.requireKnownArguments();
     final ExportRequest request =
         ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
             .toExportRequest(cliArguments.isRmDist());
@@ -90,7 +90,7 @@ public class ExportTableDefinition {
                 Starting check of table definition document diff.
                 Please wait a moment ...
                 """);
-    requireValidCliArguments(cliArguments);
+    cliArguments.requireKnownArguments();
     final CheckDiffRequest request =
         ExportTableDefinitionProperties.load(cliArguments.settingOverrides()).toCheckDiffRequest();
     final Injector injector = createInjector();
@@ -101,14 +101,6 @@ public class ExportTableDefinition {
         createController(injector, connectionSettings).checkDiff(request);
     System.out.println(diffCheckResultDto.getResultMessage());
     return diffCheckResultDto.exitStatus();
-  }
-
-  /**
-   * CLI引数を検証するメソッド<br>
-   * DBに接続できない環境でも入力の誤りを報告できるよう、DBへの接続より前に呼び出す
-   */
-  private static void requireValidCliArguments(CliArguments cliArguments) {
-    cliArguments.requireKnownArguments();
   }
 
   /**
