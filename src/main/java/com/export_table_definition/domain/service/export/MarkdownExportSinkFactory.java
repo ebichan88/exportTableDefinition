@@ -108,15 +108,12 @@ public class MarkdownExportSinkFactory {
     public void writeOverview(ExportTargets targets) {
       final OutputRoot outputRoot = new OutputRoot(outputBaseDir, targets.baseInfo());
       final Set<ListDocumentType> documents = listDocuments(targets);
-      // テーブル一覧出力 -> {outputBaseDir}/tableList_{DB名}.md
       tableDefinitionWriter.writeTableDefinitionList(
           targets.tables().asList(), outputRoot, relatedDocuments(documents));
-      // スキーマ別ER図と、その索引の出力
       if (documents.contains(ListDocumentType.ER_DIAGRAM)) {
         erDiagramWriter.writeErDiagram(
             targets.tables(), targets.foreignKeys(), outputRoot, erDiagramMaxNodes);
       }
-      // トリガー・関数・シーケンス・型の一覧出力（対象が存在しない一覧は出力しない）
       if (documents.contains(ListDocumentType.TRIGGER)) {
         objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
       }
@@ -129,7 +126,6 @@ public class MarkdownExportSinkFactory {
       if (documents.contains(ListDocumentType.TYPE)) {
         objectListWriter.writeTypeList(targets.types(), outputRoot);
       }
-      // 観点ページと観点一覧の出力（観点を宣言していない場合は出力しない）
       if (documents.contains(ListDocumentType.VIEWPOINT)) {
         viewpointWriter.writeViewpoints(
             targets.viewpoints(),
@@ -156,7 +152,6 @@ public class MarkdownExportSinkFactory {
     /** {@inheritDoc} */
     @Override
     public void writeTableDefinition(TableDefinitionContent content) {
-      // テーブル定義出力 -> {outputBaseDir}/{DB名}/{スキーマ名}/{TBL分類}/{物理テーブル名}.md
       tableDefinitionWriter.writeTableDefinition(content, outputBaseDir);
     }
   }

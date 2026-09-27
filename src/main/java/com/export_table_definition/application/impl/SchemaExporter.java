@@ -2,6 +2,7 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
@@ -75,71 +76,103 @@ final class SchemaExporter {
     final Sidecar sidecar = sidecarRepository.load(targetSelection.sidecarPath());
     final Annotations annotations = sidecar.annotations();
 
-    // 基本情報・テーブル一覧（1テーブル1行の軽量情報）のみ先に取得する。
-    // targetTableListにはワイルドカード（*）・除外（!）・スキーマ修飾（schema.table）を指定できるため、
-    // SQLの完全一致IN句では絞り込めない。スキーマのみSQLで絞り込み、テーブル単位の絞り込みは
-    // TableTargetScopeによりJava側で行う。
-    // ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
     final BaseInfoEntity baseInfoEntity =
         BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
-    final Tables tables =
-        Tables.of(
-            repository.selectTableList(targetSchemaList).stream()
-                .filter(targetScope::matches)
-                .toList());
-    // 実在しないテーブルに対する付帯情報（リネーム・削除の可能性）を検出して警告する
+    final Tables tables = fetchTables(targetSchemaList, targetScope);
     report(consistencyDomainService.findOrphanTableAnnotations(annotations, tables, isFiltered));
-    // どのテーブルにも一致しない観点の所属テーブルのパターン（リネーム・削除の可能性）を検出して警告する
     report(
         consistencyDomainService.findUnmatchedViewpointPatterns(
             sidecar.viewpoints(), tables, isFiltered));
-    // 外部キーはテーブル数ではなく制約数に比例する軽量な情報のため、チャンク化せず対象範囲全体を一括取得する。
-    // ER図で「他チャンク・他スキーマのテーブルから自テーブルが参照されている」関係も正しく解決するために、
-    // 特定のチャンクに限定せず全件を保持しておく必要がある。selectForeignKeyListはスキーマ単位でのみ絞り込み、
-    // テーブル単位の絞り込みは行わないため、参照元・参照先の一方でもtargetTableListの絞り込みで除外された関係は、
-    // テーブル一覧・ER図の双方から一貫して除外されるよう、出力対象のテーブルに含まれるものだけへ絞り込む。
-    // サイドカー由来の論理リレーションも、出力対象に含まれるテーブル同士のものだけを同じ集合へ合流させる
-    final ResolvedForeignKeys resolvedForeignKeys =
-        consistencyDomainService.resolveForeignKeys(
-            repository.selectForeignKeyList(targetSchemaList),
-            sidecar.logicalRelations(),
-            tables,
-            isFiltered);
-    report(resolvedForeignKeys.findings());
-    final ForeignKeys foreignKeys = resolvedForeignKeys.foreignKeys();
-    // トリガーはテーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、
-    // テーブル定義書内のセクションとトリガー一覧の両方で利用する。
-    // outputObjectListでトリガーが対象外とされた場合は、取得自体を行わず一覧・テーブル定義書双方から除外する
+    final ForeignKeys foreignKeys =
+        fetchForeignKeys(targetSchemaList, sidecar.logicalRelations(), tables, isFiltered);
     final List<TriggerEntity> triggerEntityList =
-        outputObjectTypes.contains(OutputObjectType.TRIGGER)
-            ? repository.selectTriggerList(targetSchemaList)
-            : List.of();
-    // スキーマレベルのオブジェクト（関数/シーケンス/型）はテーブルフィルタの対象外。スキーマフィルタのみ適用する。
-    // 関数一覧は定義本体を含まない軽量情報のみ先に取得する（定義本体はスキーマ単位で別途取得する）。
-    // outputObjectListで対象外とされた種別は取得自体を行わない（一覧・個別定義とも出力されなくなる）
-    final List<FunctionEntity> functionList =
-        outputObjectTypes.contains(OutputObjectType.FUNCTION)
-            ? repository.selectFunctionList(targetSchemaList)
-            : List.of();
-    final List<SequenceEntity> sequenceList =
-        outputObjectTypes.contains(OutputObjectType.SEQUENCE)
-            ? repository.selectSequenceList(targetSchemaList)
-            : List.of();
-    final List<TypeEntity> typeList =
-        outputObjectTypes.contains(OutputObjectType.TYPE)
-            ? repository.selectTypeList(targetSchemaList)
-            : List.of();
+        fetchTriggers(targetSchemaList, outputObjectTypes);
+    final SchemaObjects schemaObjects = fetchSchemaObjects(targetSchemaList, outputObjectTypes);
+
     return new ExportTargets(
         baseInfoEntity,
         tables,
         foreignKeys,
         triggerEntityList,
-        functionList,
-        sequenceList,
-        typeList,
+        schemaObjects.functions(),
+        schemaObjects.sequences(),
+        schemaObjects.types(),
         annotations,
         sidecar.viewpoints());
   }
+
+  /**
+   * 基本情報・テーブル一覧（1テーブル1行の軽量情報）を取得するメソッド<br>
+   * スキーマの絞り込みのみSQLで行い、テーブル単位の絞り込みは{@link TableTargetScope#matches}でJava側で行う
+   * （テーブル名パターンはワイルドカード・除外・スキーマ修飾に対応しており、SQLの完全一致IN句では表現できないため）。
+   * ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
+   */
+  private Tables fetchTables(List<String> targetSchemaList, TableTargetScope targetScope) {
+    return Tables.of(
+        repository.selectTableList(targetSchemaList).stream()
+            .filter(targetScope::matches)
+            .toList());
+  }
+
+  /**
+   * 物理外部キーとサイドカー由来の論理リレーションを取得し、出力対象のテーブル同士のものへ絞り込むメソッド<br>
+   * 外部キーは制約数に比例する軽量な情報のため、テーブルと異なりチャンク化せず対象範囲全体を一括取得する。
+   * ER図で他チャンク・他スキーマのテーブルから自テーブルが参照されている関係も正しく解決するには、 特定のチャンクに限定せず全件を保持しておく必要があるため。絞り込みの基準は{@link
+   * ExportTargetConsistencyDomainService#resolveForeignKeys}を参照
+   */
+  private ForeignKeys fetchForeignKeys(
+      List<String> targetSchemaList,
+      List<ForeignKeyEntity> logicalRelations,
+      Tables tables,
+      boolean isFiltered) {
+    final ResolvedForeignKeys resolvedForeignKeys =
+        consistencyDomainService.resolveForeignKeys(
+            repository.selectForeignKeyList(targetSchemaList),
+            logicalRelations,
+            tables,
+            isFiltered);
+    report(resolvedForeignKeys.findings());
+    return resolvedForeignKeys.foreignKeys();
+  }
+
+  /**
+   * トリガーを取得するメソッド<br>
+   * テーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、 テーブル定義書内のセクションとトリガー一覧の両方で利用する。{@code
+   * outputObjectList}で対象外とされた場合は 取得自体を行わず、一覧・テーブル定義書双方から除外する
+   */
+  private List<TriggerEntity> fetchTriggers(
+      List<String> targetSchemaList, Set<OutputObjectType> outputObjectTypes) {
+    return outputObjectTypes.contains(OutputObjectType.TRIGGER)
+        ? repository.selectTriggerList(targetSchemaList)
+        : List.of();
+  }
+
+  /**
+   * スキーマレベルのオブジェクト（関数/シーケンス/型）を取得するメソッド<br>
+   * テーブルフィルタの対象外で、スキーマフィルタのみ適用する。関数一覧は定義本体を含まない軽量情報のみ取得する （定義本体はスキーマ単位で{@link
+   * #exportSchemaFunctionDefinitions}が別途取得する）。{@link #fetchTriggers}と同様、 {@code
+   * outputObjectList}で対象外とされた種別は取得自体を行わない（一覧・個別定義とも出力されなくなる）
+   */
+  private SchemaObjects fetchSchemaObjects(
+      List<String> targetSchemaList, Set<OutputObjectType> outputObjectTypes) {
+    final List<FunctionEntity> functions =
+        outputObjectTypes.contains(OutputObjectType.FUNCTION)
+            ? repository.selectFunctionList(targetSchemaList)
+            : List.of();
+    final List<SequenceEntity> sequences =
+        outputObjectTypes.contains(OutputObjectType.SEQUENCE)
+            ? repository.selectSequenceList(targetSchemaList)
+            : List.of();
+    final List<TypeEntity> types =
+        outputObjectTypes.contains(OutputObjectType.TYPE)
+            ? repository.selectTypeList(targetSchemaList)
+            : List.of();
+    return new SchemaObjects(functions, sequences, types);
+  }
+
+  /** {@link #fetchSchemaObjects}の取得結果 */
+  private record SchemaObjects(
+      List<FunctionEntity> functions, List<SequenceEntity> sequences, List<TypeEntity> types) {}
 
   /**
    * 一括取得した情報をもとに、指定された出力形式で書き出すメソッド<br>

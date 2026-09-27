@@ -43,7 +43,6 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   /** {@inheritDoc} */
   @Override
   public void exportTableDefinition(ExportRequest request) {
-    // ベースディレクトリパス取得
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final ExportTargets targets = schemaExporter.fetchTargets(request.targetSelection());
     if (request.rmDist()) {
