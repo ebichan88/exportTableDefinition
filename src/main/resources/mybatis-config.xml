@@ -5,6 +5,8 @@
 <configuration>
 	<settings>
 		<setting name="cacheEnabled" value="false"/>
+		<!-- コンストラクタ引数をSQLの列別名で対応付ける。resultMapの<arg>列挙（並び順依存）を無くすため -->
+		<setting name="argNameBasedConstructorAutoMapping" value="true"/>
 	</settings>
 	<typeAliases>
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.DatabaseDto" alias="DatabaseDto"/>
