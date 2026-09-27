@@ -5,6 +5,7 @@
 <configuration>
 	<settings>
 		<setting name="cacheEnabled" value="false"/>
+		<setting name="argNameBasedConstructorAutoMapping" value="true"/>
 	</settings>
 	<typeAliases>
 		<typeAlias type="com.export_table_definition.infrastructure.db.repository.dto.DatabaseDto" alias="DatabaseDto"/>

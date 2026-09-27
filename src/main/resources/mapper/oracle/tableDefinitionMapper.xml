@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.export_table_definition.domain.repository.oracle.TableDefinitionRepository">
 
-    <select id="selectDatabaseInfo" resultMap="DatabaseDtoMap">
+    <select id="selectDatabaseInfo" resultType="DatabaseDto">
         SELECT
             SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
             'Oracle' AS "dbmsName"
@@ -10,14 +10,7 @@
         fetch first 1 rows only
     </select>
 
-    <resultMap id="DatabaseDtoMap" type="DatabaseDto">
-        <constructor>
-            <arg column="dbName" javaType="String" />
-            <arg column="dbmsName" javaType="String" />
-        </constructor>
-    </resultMap>
-
-    <select id="selectAllTableInfo" resultMap="TableDtoMap">
+    <select id="selectAllTableInfo" resultType="TableDto">
         WITH ora_all_tables AS (
             SELECT
                 COALESCE(t1.OWNER, '') AS schema_name,
@@ -80,18 +73,7 @@
         ORDER BY schema_name, physical_table_name
     </select>
 
-    <resultMap id="TableDtoMap" type="TableDto">
-        <constructor>
-            <arg column="dbName" javaType="String" />
-            <arg column="schemaName" javaType="String" />
-            <arg column="logicalTableName" javaType="String" />
-            <arg column="physicalTableName" javaType="String" />
-            <arg column="tableType" javaType="String" />
-            <arg column="definition" javaType="String" />
-        </constructor>
-    </resultMap>
-
-    <select id="selectAllColumnInfo" resultMap="ColumnDtoMap">
+    <select id="selectAllColumnInfo" resultType="ColumnDto">
         WITH ora_all_columns AS (
             SELECT
                 c.OWNER AS schema_name,
@@ -153,21 +135,7 @@
         ORDER BY schema_name, table_name, column_num
     </select>
 
-    <resultMap id="ColumnDtoMap" type="ColumnDto">
-        <constructor>
-            <arg column="schemaName" javaType="String" />
-            <arg column="tableName" javaType="String" />
-            <arg column="logicalColumnName" javaType="String" />
-            <arg column="physicalColumnName" javaType="String" />
-            <arg column="columnType" javaType="String" />
-            <arg column="precisionScale" javaType="String" />
-            <arg column="primaryKey" javaType="_boolean" />
-            <arg column="notNull" javaType="_boolean" />
-            <arg column="defaultValue" javaType="String" />
-        </constructor>
-    </resultMap>
-
-    <select id="selectAllIndexInfo" resultMap="IndexDtoMap">
+    <select id="selectAllIndexInfo" resultType="IndexDto">
         WITH ora_all_indexes AS (
             SELECT
                 idx.owner AS schema_name,
@@ -225,20 +193,7 @@
         ORDER BY schema_name, table_name, index_name
     </select>
 
-    <resultMap id="IndexDtoMap" type="IndexDto">
-        <constructor>
-            <arg column="schemaName" javaType="String" />
-            <arg column="tableName" javaType="String" />
-            <arg column="indexName" javaType="String" />
-            <arg column="indexMethod" javaType="String" />
-            <arg column="isUnique" javaType="_boolean" />
-            <arg column="isPrimary" javaType="_boolean" />
-            <arg column="indexDefinition" javaType="String" />
-            <arg column="remarks" javaType="String" />
-        </constructor>
-    </resultMap>
-
-    <select id="selectAllConstraintInfo" resultMap="ConstraintDtoMap">
+    <select id="selectAllConstraintInfo" resultType="ConstraintDto">
         WITH ora_all_constraints AS (
             SELECT
                 ac.owner AS schema_name,
@@ -319,18 +274,7 @@
         ORDER BY schema_name, table_name, constraints_type, constraints_name
     </select>
 
-    <resultMap id="ConstraintDtoMap" type="ConstraintDto">
-        <constructor>
-            <arg column="schemaName" javaType="String" />
-            <arg column="tableName" javaType="String" />
-            <arg column="constraintName" javaType="String" />
-            <arg column="constraintType" javaType="String" />
-            <arg column="constraintDefinition" javaType="String" />
-            <arg column="remarks" javaType="String" />
-        </constructor>
-    </resultMap>
-
-    <select id="selectAllForeignKeyInfo" resultMap="ForeignKeyDtoMap">
+    <select id="selectAllForeignKeyInfo" resultType="ForeignKeyDto">
         WITH ora_fk_columns AS (
             /* 外部キーを構成する列。多重度の判定に用いる。
                参照元テーブルが出力対象であれば判定できればよいため、ora_all_foreignkeys
@@ -448,19 +392,5 @@
         WHERE column_names IS NOT NULL
         ORDER BY schema_name, table_name, foreignkey_name
     </select>
-
-    <resultMap id="ForeignKeyDtoMap" type="ForeignKeyDto">
-        <constructor>
-            <arg column="schemaName" javaType="String" />
-            <arg column="tableName" javaType="String" />
-            <arg column="foreignkeyName" javaType="String" />
-            <arg column="columnNames" javaType="String" />
-            <arg column="referenceSchemaName" javaType="String" />
-            <arg column="referenceTableName" javaType="String" />
-            <arg column="referenceColumnNames" javaType="String" />
-            <arg column="childKeyUnique" javaType="_boolean" />
-            <arg column="childKeyMandatory" javaType="_boolean" />
-        </constructor>
-    </resultMap>
 
 </mapper>
