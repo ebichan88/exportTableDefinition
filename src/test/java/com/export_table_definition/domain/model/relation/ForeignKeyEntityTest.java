@@ -18,10 +18,10 @@ public class ForeignKeyEntityTest {
   }
 
   @Test
-  @DisplayName("resolveLogicalRelationName: 複合キーの場合は列名をアンダースコアで連結する")
+  @DisplayName("resolveLogicalRelationName: 複合キーの場合は列名をカンマで連結する")
   void testResolveLogicalRelationNameJoinsCompositeColumns() {
     assertEquals(
-        "order_id_item_no",
+        "order_id,item_no",
         ForeignKeyEntity.resolveLogicalRelationName(List.of("order_id", "item_no")));
   }
 

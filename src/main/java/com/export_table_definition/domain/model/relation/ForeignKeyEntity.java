@@ -71,12 +71,12 @@ public record ForeignKeyEntity(
 
   /**
    * サイドカーYAMLで宣言された論理リレーションの関連名を生成する静的メソッド<br>
-   * 参照元（子）の列名をアンダースコアで連結した名称とする。ER図では線種（破線）で物理外部キーと区別できるため、 名称自体に由来を示す接尾辞は付けない
+   * 参照元（子）の列名をカンマで連結した名称とする（テーブル定義書のカラムリスト表示と同じ区切り方に揃えている）
    *
    * @param childColumnNames 参照元（子）の列名のリスト
    */
   public static String resolveLogicalRelationName(List<String> childColumnNames) {
-    return String.join("_", childColumnNames);
+    return String.join(",", childColumnNames);
   }
 
   /**
