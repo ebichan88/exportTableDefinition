@@ -30,9 +30,6 @@ public record ForeignKeyEntity(
     RelationType relationType)
     implements SchemaTableKeyed {
 
-  /** サイドカーYAMLで関連名が省略された場合に自動生成する名称の接尾辞（実在する外部キー制約名と紛れないようにする） */
-  private static final String LOGICAL_RELATION_NAME_SUFFIX = "_lrel";
-
   /** 列名のリストは変更不可な複製として保持する */
   public ForeignKeyEntity {
     columnNames = List.copyOf(columnNames);
@@ -73,20 +70,13 @@ public record ForeignKeyEntity(
   }
 
   /**
-   * サイドカーYAMLで宣言された論理リレーションの関連名を解決する静的メソッド<br>
-   * 名称が明示指定されている場合はそれをそのまま用いる。省略された場合は「参照元（子）テーブル名_列名..._lrel」形式で
-   * 自動生成する。実在する外部キー制約名（DBの慣例："_fkey"等）とは異なる接尾辞を用いることで、由来の異なる名前が紛れないようにする
+   * サイドカーYAMLで宣言された論理リレーションの関連名を生成する静的メソッド<br>
+   * 参照元（子）の列名をアンダースコアで連結した名称とする。ER図では線種（破線）で物理外部キーと区別できるため、 名称自体に由来を示す接尾辞は付けない
    *
-   * @param rawName YAMLで指定された関連名（未指定の場合はnull・空白可）
-   * @param childTableName 参照元（子）テーブル名
    * @param childColumnNames 参照元（子）の列名のリスト
    */
-  public static String resolveLogicalRelationName(
-      String rawName, String childTableName, List<String> childColumnNames) {
-    if (rawName != null && !rawName.isBlank()) {
-      return rawName.trim();
-    }
-    return childTableName + "_" + String.join("_", childColumnNames) + LOGICAL_RELATION_NAME_SUFFIX;
+  public static String resolveLogicalRelationName(List<String> childColumnNames) {
+    return String.join("_", childColumnNames);
   }
 
   /**

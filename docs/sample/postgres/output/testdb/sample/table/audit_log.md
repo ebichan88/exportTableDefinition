@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/27|
+|PostgreSQL|testdb|2026/09/28|
 
 ## テーブル説明
 
@@ -52,7 +52,7 @@ employeeテーブルの変更を記録する監査ログ。トリガー経由で
 
 | No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
 |:---|:---|:---|:---|:---|:---|
-|1|rel_audit_log_employee|record_id|sample.employee|employee_id|0..1対多|
+|1|record_id|record_id|sample.employee|employee_id|0..1対多|
 
 ## トリガー情報
 
@@ -64,7 +64,7 @@ employeeテーブルの変更を記録する監査ログ。トリガー経由で
 
 ```mermaid
 erDiagram
-    sample_employee |o..o{ sample_audit_log : "rel_audit_log_employee"
+    sample_employee |o..o{ sample_audit_log : "record_id"
     sample_audit_log {
         bigint log_id PK
         character_varying table_name

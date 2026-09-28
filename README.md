@@ -193,7 +193,6 @@ relations:
     columns: [user_id]           # 参照元のカラム（単一の場合は user_id のようにスカラーでも可）
     parentTable: public.users    # 参照先（親）
     parentColumns: [id]          # 参照先のカラム
-    name: rel_logs_users         # 関連名（省略可）
     cardinality: 0..1対多         # 多重度（省略可）
 ```
 
@@ -207,7 +206,7 @@ relations:
 補足事項:
 
 * 読み手が「DBに制約がある」と誤読しないよう、**「外部キー情報」セクションとは別のセクション**に掲載し、注意書きを添えます。ER図でも線種で区別します。
-* `name`を省略した場合は`{テーブル名}_{カラム名}_lrel`形式（例: `logs_user_id_lrel`）で自動生成します。実在する制約名と紛れないよう、DBの慣例（`_fkey`等）とは異なる接尾辞を用いています。
+* 関連名は参照元（子）のカラム名を`_`で連結した形式（例: `user_id`）で自動生成します。物理外部キーとの区別はER図の線種・掲載セクションで行うため、名前自体に由来を示す接尾辞は付きません。
 * `cardinality`はDBに制約が無く機械的に判定できないため、明示指定できます。指定できる値は`1対多` / `0..1対多` / `1対1` / `0..1対1`です。省略時は`1対多`とみなします。未知の値の場合は警告を表示して`1対多`とみなします（[多重度の判定](#多重度の判定)も参照）。
 * 論理リレーションは物理外部キーと同じ関連としてER図に合流するため、**スキーマ別ER図のグループ分割（連結成分）やスキーマ跨ぎ関連の一覧にも反映されます**。関連を持たないとして図から除外されていたテーブルも、論理リレーションを宣言すれば描画対象になります。
 * 参照元・参照先のいずれかが出力対象のテーブルに存在しない場合（出力対象の絞り込み、リネーム、削除など）は、警告を表示してその関連を除外します。
@@ -556,7 +555,7 @@ jq等で機械的に扱えます。
   ],
   "indexes": [{"name": "audit_log_pkey", "method": "btree", "unique": true, "primary": true, "definition": "CREATE UNIQUE INDEX …"}],
   "constraints": [{"name": "audit_log_pkey", "type": "PRIMARY KEY", "definition": "PRIMARY KEY (log_id)"}],
-  "logicalRelations": [{"name": "rel_audit_log_employee", "columns": ["record_id"], "referenceSchema": "sample", "referenceTable": "employee", "referenceColumns": ["employee_id"], "cardinality": "OPTIONAL_ONE_TO_MANY"}]
+  "logicalRelations": [{"name": "record_id", "columns": ["record_id"], "referenceSchema": "sample", "referenceTable": "employee", "referenceColumns": ["employee_id"], "cardinality": "OPTIONAL_ONE_TO_MANY"}]
 }
 ```
 
