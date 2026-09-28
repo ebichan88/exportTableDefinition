@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/27|
+|PostgreSQL|testdb|2026/09/28|
 
 ## 説明
 
@@ -35,7 +35,7 @@ erDiagram
 | 1 | sample.employee | employee_department_id_fkey | sample.department |
 | 2 | sample.employee | employee_parking_spot_id_fkey | sample.parking_spot |
 | 3 | sample.employee_profile | employee_profile_employee_id_fkey | sample.employee |
-| 4 | sample.audit_log | rel_audit_log_employee | sample.employee |
+| 4 | sample.audit_log | record_id | sample.employee |
 
 ___
 

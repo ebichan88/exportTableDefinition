@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/27|
+|PostgreSQL|testdb|2026/09/28|
 
 ## ER図
 
@@ -17,7 +17,7 @@ erDiagram
     sample_employee ||--o{ sample_project_assignment : "project_assignment_employee_id_fkey"
     sample_project ||--o{ sample_project_assignment : "project_assignment_project_id_fkey"
     sample_warehouse_zone ||--o{ sample_shipment : "shipment_warehouse_code_zone_code_fkey"
-    sample_employee |o..o{ sample_audit_log : "rel_audit_log_employee"
+    sample_employee |o..o{ sample_audit_log : "record_id"
 ```
 
 ## ER図に掲載しているテーブル
