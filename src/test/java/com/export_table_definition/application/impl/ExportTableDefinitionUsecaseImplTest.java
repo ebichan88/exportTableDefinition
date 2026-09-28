@@ -800,9 +800,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     final String auditContent = contentOf(tableDefFile(DEFAULT_OUT, "public", "audit_log"));
     // 参照元は専用セクションに掲載され、外部キー情報セクションには現れない
     assertTrue(auditContent.contains("## 論理リレーション情報"));
-    assertTrue(
-        auditContent.contains(
-            "|1|rel_audit_employee|record_id|public.employee|employee_id|0..1対多|"));
+    assertTrue(auditContent.contains("|1|record_id|public.employee|employee_id|0..1対多|"));
     assertTrue(
         auditContent.contains("public_employee |o..o{ public_audit_log : \"rel_audit_employee\""));
 

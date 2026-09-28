@@ -180,13 +180,13 @@ public class TableDefinitionTemplates {
                 | No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
                 |:---|:---|:---|:---|:---|:---|
                 """;
-    return tableSection(foreignkeys, header, TableDefinitionTemplates::relationTableLine);
+    return tableSection(foreignkeys, header, TableDefinitionTemplates::physicalRelationTableLine);
   }
 
   /**
    * 論理リレーション情報セクション<br>
    * DBに外部キー制約が存在せず、サイドカーYAMLで宣言された関連のみを掲載する。 読み手が「DBに制約がある」と誤読しないよう外部キー情報とは別セクションとし、注意書きを添える。
-   * 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）
+   * 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）。 関連名は現状カラムリストと同じ内容のため列を設けず、カラムリストのみ掲載する
    *
    * @return 対象が存在しない場合は空文字
    */
@@ -200,11 +200,12 @@ public class TableDefinitionTemplates {
             + "※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。"
             + LINE_SEPARATOR_DOUBLE
             + """
-                | No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
-                |:---|:---|:---|:---|:---|:---|
+                | No. | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+                |:---|:---|:---|:---|:---|
                 """;
     // 物理外部キーの行番号とは独立に、当セクション内で1から採番する
-    return tableSection(logicalRelations, header, TableDefinitionTemplates::relationTableLine);
+    return tableSection(
+        logicalRelations, header, TableDefinitionTemplates::logicalRelationTableLine);
   }
 
   /**
@@ -212,10 +213,22 @@ public class TableDefinitionTemplates {
    *
    * @return 1行分の文字列（改行を含まない）
    */
-  private static String relationTableLine(int no, ForeignKeyEntity fk) {
+  private static String physicalRelationTableLine(int no, ForeignKeyEntity fk) {
     return row(
         no,
         fk.foreignkeyName(),
+        String.join(",", fk.columnNames()),
+        fk.getReferenceSchemaTableName(),
+        String.join(",", fk.referenceColumnNames()),
+        fk.cardinality().getLabel());
+  }
+
+  /**
+   * @return 1行分の文字列（改行を含まない）
+   */
+  private static String logicalRelationTableLine(int no, ForeignKeyEntity fk) {
+    return row(
+        no,
         String.join(",", fk.columnNames()),
         fk.getReferenceSchemaTableName(),
         String.join(",", fk.referenceColumnNames()),

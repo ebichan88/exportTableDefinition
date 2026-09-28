@@ -481,10 +481,10 @@ public class TableDefinitionTemplatesTest {
 
         ※DBに外部キー制約は存在せず、サイドカーYAMLで宣言された関連です。
 
-        | No. | 関連名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
-        |:---|:---|:---|:---|:---|:---|
-        |1|rel_orders_staff|staff_id|public.staff|id|1対多|
-        |2|rel_orders_coupon|coupon_code|public.coupons|code|0..1対1|
+        | No. | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
+        |:---|:---|:---|:---|:---|
+        |1|staff_id|public.staff|id|1対多|
+        |2|coupon_code|public.coupons|code|0..1対1|
 
         """,
         TableDefinitionTemplates.logicalRelations(List.of(rel1, rel2)));
