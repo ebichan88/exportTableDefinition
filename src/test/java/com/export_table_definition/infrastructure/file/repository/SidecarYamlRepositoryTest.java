@@ -146,7 +146,6 @@ public class SidecarYamlRepositoryTest {
                     columns: [user_id]
                     parentTable: public.users
                     parentColumns: [id]
-                    name: rel_logs_users
                     cardinality: 0..1対多
                 """);
 
@@ -156,7 +155,7 @@ public class SidecarYamlRepositoryTest {
     ForeignKeyEntity relation = relations.get(0);
     assertEquals("public", relation.schemaName());
     assertEquals("logs", relation.tableName());
-    assertEquals("rel_logs_users", relation.foreignkeyName());
+    assertEquals("user_id", relation.foreignkeyName());
     assertEquals(List.of("user_id"), relation.columnNames());
     assertEquals("public.users", relation.getReferenceSchemaTableName());
     assertEquals(List.of("id"), relation.referenceColumnNames());
@@ -206,7 +205,7 @@ public class SidecarYamlRepositoryTest {
   }
 
   @Test
-  @DisplayName("load: name 省略時は「テーブル名_カラム名_lrel」形式で関連名を自動生成する")
+  @DisplayName("load: 関連名はカラム名から自動生成する")
   void testLoadRelationGeneratesName(@TempDir Path dir) throws IOException {
     Path file =
         writeYaml(
@@ -220,8 +219,26 @@ public class SidecarYamlRepositoryTest {
                 """);
 
     assertEquals(
-        "logs_user_id_lrel",
-        repository.load(file.toString()).logicalRelations().get(0).foreignkeyName());
+        "user_id", repository.load(file.toString()).logicalRelations().get(0).foreignkeyName());
+  }
+
+  @Test
+  @DisplayName("load: name キーを指定しても未知のキーとして読み飛ばし、関連名はカラム名から自動生成する")
+  void testLoadRelationIgnoresNameKey(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+                relations:
+                  - table: public.logs
+                    columns: [user_id]
+                    parentTable: public.users
+                    parentColumns: [id]
+                    name: rel_logs_users
+                """);
+
+    assertEquals(
+        "user_id", repository.load(file.toString()).logicalRelations().get(0).foreignkeyName());
   }
 
   @Test
@@ -382,7 +399,7 @@ public class SidecarYamlRepositoryTest {
     assertEquals("テーブル備考", users.remarks());
     assertEquals(1, sidecar.logicalRelations().size());
     // 書き誤った関連名（nmae）は読み飛ばし、関連名は自動生成される
-    assertEquals("logs_user_id_lrel", sidecar.logicalRelations().get(0).foreignkeyName());
+    assertEquals("user_id", sidecar.logicalRelations().get(0).foreignkeyName());
   }
 
   @Test

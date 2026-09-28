@@ -47,8 +47,6 @@ relations:
     columns: [record_id]               # 参照元のカラム（単一の場合は record_id のようにスカラーでも可）
     parentTable: sample.employee       # 参照先（親）
     parentColumns: [employee_id]       # 参照先のカラム
-    # 関連名。省略時は「テーブル名_カラム名_lrel」（この例では audit_log_record_id_lrel）を自動生成します。
-    name: rel_audit_log_employee
     # 多重度。DBに制約が無く機械的に判定できないため、ここで明示できます。
     # 指定できる値: 1対多 / 0..1対多 / 1対1 / 0..1対1 ※省略時・未知の値は 1対多 とみなします。
     cardinality: 0..1対多

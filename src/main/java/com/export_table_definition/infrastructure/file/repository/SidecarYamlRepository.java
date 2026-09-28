@@ -47,7 +47,6 @@ import org.yaml.snakeyaml.error.YAMLException;
  *     columns: [user_id]
  *     parentTable: public.users
  *     parentColumns: [id]
- *     name: rel_logs_users
  *     cardinality: 1対多
  * viewpoints:
  *   - id: order
@@ -78,8 +77,7 @@ public class SidecarYamlRepository implements SidecarRepository {
   private static final Set<String> ROOT_KEYS = Set.of(KEY_TABLES, KEY_RELATIONS, KEY_VIEWPOINTS);
   private static final Set<String> TABLE_KEYS = Set.of(KEY_DESCRIPTION, KEY_REMARKS, KEY_COLUMNS);
   private static final Set<String> RELATION_KEYS =
-      Set.of(
-          KEY_TABLE, KEY_COLUMNS, KEY_PARENT_TABLE, KEY_PARENT_COLUMNS, KEY_NAME, KEY_CARDINALITY);
+      Set.of(KEY_TABLE, KEY_COLUMNS, KEY_PARENT_TABLE, KEY_PARENT_COLUMNS, KEY_CARDINALITY);
   private static final Set<String> VIEWPOINT_KEYS =
       Set.of(KEY_ID, KEY_NAME, KEY_DESCRIPTION, KEY_TABLES);
 
@@ -310,8 +308,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     return ForeignKeyEntity.logical(
         child.schema(),
         child.table(),
-        ForeignKeyEntity.resolveLogicalRelationName(
-            asString(relationMap.get(KEY_NAME)), child.table(), childColumns),
+        ForeignKeyEntity.resolveLogicalRelationName(childColumns),
         childColumns,
         parent.schema(),
         parent.table(),
