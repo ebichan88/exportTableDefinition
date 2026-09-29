@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/28|
+|PostgreSQL|testdb|2026/09/29|
 
 ## テーブル説明
 
@@ -56,6 +56,8 @@
 
 ```mermaid
 erDiagram
+    sample_shipment["shipment"]
+    sample_warehouse_zone["warehouse_zone"]
     sample_warehouse_zone ||--o{ sample_shipment : "shipment_warehouse_code_zone_code_fkey"
     sample_shipment {
         integer shipment_id PK

@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/28|
+|PostgreSQL|testdb|2026/09/29|
 
 ## 説明
 
@@ -14,6 +14,9 @@
 
 ```mermaid
 erDiagram
+    sample_employee["employee"]
+    sample_project["project"]
+    sample_project_assignment["project_assignment"]
     sample_employee |o--o{ sample_employee : "employee_manager_id_fkey"
     sample_employee ||--o{ sample_project_assignment : "project_assignment_employee_id_fkey"
     sample_project ||--o{ sample_project_assignment : "project_assignment_project_id_fkey"

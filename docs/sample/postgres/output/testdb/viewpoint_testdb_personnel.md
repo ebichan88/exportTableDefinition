@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/28|
+|PostgreSQL|testdb|2026/09/29|
 
 ## 説明
 
@@ -15,6 +15,10 @@
 
 ```mermaid
 erDiagram
+    sample_department["department"]
+    sample_employee["employee"]
+    sample_employee_profile["employee_profile"]
+    sample_parking_spot["parking_spot"]
     sample_department ||--o{ sample_employee : "employee_department_id_fkey"
     sample_employee |o--o{ sample_employee : "employee_manager_id_fkey"
     sample_parking_spot |o--o| sample_employee : "employee_parking_spot_id_fkey"

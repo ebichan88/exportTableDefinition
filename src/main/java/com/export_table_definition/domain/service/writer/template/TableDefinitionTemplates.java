@@ -12,10 +12,14 @@ import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.service.path.DocumentLocations;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 /** テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス */
@@ -275,7 +279,17 @@ public class TableDefinitionTemplates {
       return sb.append("関連するテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
     }
     final String selfId = MermaidSupport.mermaidId(table.schemaName(), table.physicalTableName());
+    final Set<TableKey> nodeKeys = new LinkedHashSet<>();
+    nodeKeys.add(TableKey.of(table));
+    outgoingFks.forEach(fk -> nodeKeys.add(fk.referenceTableKey()));
+    incomingFks.forEach(fk -> nodeKeys.add(fk.tableKey()));
+    final Map<TableKey, String> labels = MermaidSupport.assignLabels(nodeKeys);
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
+    nodeKeys.forEach(
+        key ->
+            sb.append(
+                MermaidSupport.aliasLine(
+                    MermaidSupport.mermaidId(key.schema(), key.table()), labels.get(key))));
     outgoingFks.forEach(
         fk ->
             sb.append(

@@ -3,6 +3,11 @@ package com.export_table_definition.domain.service.writer.template;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
 
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.table.TableKey;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Mermaid記法の出力に必要な文字列変換を扱う共通ユーティリティクラス<br>
@@ -20,6 +25,33 @@ final class MermaidSupport {
    */
   static String mermaidId(String schemaName, String physicalTableName) {
     return sanitizeIdentifier(schemaName + "_" + physicalTableName);
+  }
+
+  /**
+   * 図に描画するノードの表示ラベルを決めるメソッド<br>
+   * 識別子（スキーマ名込み）とは別に、Mermaidのエンティティ別名構文で表示名を差し替える。 通常はテーブル名のみを表示するが、同じ図内に同名テーブルが複数スキーマにまたがって存在する
+   * 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする
+   *
+   * @param nodes 図に描画するノードのテーブルキー（重複無し）
+   * @return テーブルキーごとの表示ラベル
+   */
+  static Map<TableKey, String> assignLabels(Collection<TableKey> nodes) {
+    final Map<String, Long> tableNameCounts =
+        nodes.stream().collect(Collectors.groupingBy(TableKey::table, Collectors.counting()));
+    final Map<TableKey, String> labels = new LinkedHashMap<>();
+    nodes.forEach(
+        key ->
+            labels.put(
+                key, tableNameCounts.get(key.table()) > 1 ? key.qualifiedName() : key.table()));
+    return labels;
+  }
+
+  /**
+   * エンティティ別名の宣言1行分を生成するメソッド<br>
+   * 識別子ごとに図内で1回宣言すれば、以降その識別子が登場する箇所（属性ブロック・関係線の両方）に別名が適用される
+   */
+  static String aliasLine(String id, String label) {
+    return "    " + id + "[\"" + label + "\"]" + LINE_SEPARATOR;
   }
 
   /**

@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/28|
+|PostgreSQL|testdb|2026/09/29|
 
 ## テーブル説明
 
@@ -59,6 +59,8 @@
 
 ```mermaid
 erDiagram
+    sample_department["department"]
+    sample_employee["employee"]
     sample_department ||--o{ sample_employee : "employee_department_id_fkey"
     sample_department {
         integer department_id PK
