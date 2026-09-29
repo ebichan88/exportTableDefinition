@@ -160,6 +160,8 @@ public class ViewpointWriterDomainServiceTest {
 
         ```mermaid
         erDiagram
+            sales_customer["customer"]
+            sales_orders["orders"]
             sales_customer ||--o{ sales_orders : "fk_orders_customer"
         ```
 

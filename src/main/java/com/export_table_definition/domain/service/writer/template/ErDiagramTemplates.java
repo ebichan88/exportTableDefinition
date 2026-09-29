@@ -105,7 +105,11 @@ public class ErDiagramTemplates {
           .toString();
     }
     final Map<TableKey, String> ids = assignNodeIds(group.nodes());
+    final Map<TableKey, String> labels = MermaidSupport.assignLabels(group.nodes());
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
+    group
+        .nodes()
+        .forEach(key -> sb.append(MermaidSupport.aliasLine(ids.get(key), labels.get(key))));
     // 参照先（親） → 参照元（子） の向きは、テーブル単位のER図の表記と揃える
     group
         .foreignKeys()

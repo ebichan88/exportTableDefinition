@@ -382,6 +382,9 @@ public class TableDefinitionTemplatesTest {
 
         ```mermaid
         erDiagram
+            public_orders["orders"]
+            public_customers["customers"]
+            public_items["items"]
             public_customers ||--o{ public_orders : "fk_orders_customer"
             public_orders ||--o{ public_items : "fk_items_orders"
             public_orders {
@@ -392,6 +395,26 @@ public class TableDefinitionTemplatesTest {
         """,
         TableDefinitionTemplates.erDiagram(
             table, List.of(column), List.of(outgoing), List.of(incoming)));
+  }
+
+  @Test
+  @DisplayName("erDiagram: 参照先・参照元に同名テーブルが複数スキーマにまたがる場合は表示ラベルをスキーマ.テーブルにする")
+  void testErDiagramQualifiesLabelOnCrossSchemaNameCollision() {
+    TableEntity table = newTable("public", "orders", "受注", "table", "");
+    var column =
+        EntityFixtures.column("public", "orders", "order_id", "character varying(20)", true);
+    var outgoing =
+        ForeignKeyFixtures.physical("public", "orders", "fk_orders_customer", "sales", "customers");
+    var incoming =
+        ForeignKeyFixtures.physical(
+            "master", "customers", "fk_customers_orders", "public", "orders");
+    String section =
+        TableDefinitionTemplates.erDiagram(
+            table, List.of(column), List.of(outgoing), List.of(incoming));
+    assertTrue(section.contains("sales_customers[\"sales.customers\"]"));
+    assertTrue(section.contains("master_customers[\"master.customers\"]"));
+    // 衝突していない自テーブルはテーブル名のみのまま
+    assertTrue(section.contains("public_orders[\"orders\"]"));
   }
 
   @Test

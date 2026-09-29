@@ -84,6 +84,8 @@ public class ErDiagramTemplatesTest {
 
         ```mermaid
         erDiagram
+            public_customers["customers"]
+            public_orders["orders"]
             public_customers ||--o{ public_orders : "fk_orders_customer"
         ```
 
@@ -137,6 +139,19 @@ public class ErDiagramTemplatesTest {
     // ノードはスキーマ名・テーブル名順に並ぶため "a"."b_c" が先に採番される
     assertTrue(section.contains("ref_t ||--o{ a_b_c_2 : \"fk1\""));
     assertTrue(section.contains("ref_t ||--o{ a_b_c : \"fk2\""));
+  }
+
+  @Test
+  @DisplayName("erDiagram: 同じ図内に同名テーブルが複数スキーマにまたがる場合は表示ラベルをスキーマ.テーブルにする")
+  void testErDiagramQualifiesLabelOnCrossSchemaNameCollision() {
+    var fk1 = newFk("sales", "orders", "fk1", "sales", "customers");
+    var fk2 = newFk("master", "invoices", "fk2", "master", "customers");
+    String section = erDiagram(List.of(fk1, fk2), 80);
+    assertTrue(section.contains("sales_customers[\"sales.customers\"]"));
+    assertTrue(section.contains("master_customers[\"master.customers\"]"));
+    // 衝突していないテーブルはテーブル名のみのまま
+    assertTrue(section.contains("sales_orders[\"orders\"]"));
+    assertTrue(section.contains("master_invoices[\"invoices\"]"));
   }
 
   @Test

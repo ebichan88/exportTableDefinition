@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/28|
+|PostgreSQL|testdb|2026/09/29|
 
 ## テーブル説明
 
@@ -64,6 +64,8 @@ employeeテーブルの変更を記録する監査ログ。トリガー経由で
 
 ```mermaid
 erDiagram
+    sample_audit_log["audit_log"]
+    sample_employee["employee"]
     sample_employee |o..o{ sample_audit_log : "record_id"
     sample_audit_log {
         bigint log_id PK
