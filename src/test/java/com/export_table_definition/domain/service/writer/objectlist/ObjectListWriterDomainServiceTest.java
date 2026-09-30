@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.objectlist;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,6 +9,7 @@ import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import java.nio.file.Path;
 import java.time.LocalDate;

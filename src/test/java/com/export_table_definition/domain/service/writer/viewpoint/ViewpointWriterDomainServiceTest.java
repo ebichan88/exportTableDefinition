@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.viewpoint;
 
 import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;
@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.Tables;
@@ -13,6 +14,7 @@ import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
@@ -114,7 +116,7 @@ public class ViewpointWriterDomainServiceTest {
         Tables.of(List.of(customer, orders, product)),
         ForeignKeys.of(List.of(ordersToCustomer, ordersToProduct)),
         outputRoot(),
-        maxNodes);
+        NodeLimit.of(maxNodes));
   }
 
   @Test

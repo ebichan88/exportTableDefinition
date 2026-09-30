@@ -70,11 +70,20 @@ public final class ForeignKeyGroup {
   /**
    * ノード数が1枚の図に描画する上限を超えるか判定するメソッド
    *
-   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
    * @return 上限を超える場合はtrue（上限なしの場合は常にfalse）
    */
-  public boolean exceeds(int maxNodes) {
-    return maxNodes > 0 && nodeCount() > maxNodes;
+  public boolean exceeds(NodeLimit limit) {
+    return limit.isExceededBy(nodeCount());
+  }
+
+  /**
+   * 上限のもとで図を描画するか、描画を省略するかを決めるメソッド<br>
+   * 「描くか・省くか」の判断はここに集約し、呼び出し側は結果に従って出力を切り替える
+   */
+  public DiagramRendering renderingUnder(NodeLimit limit) {
+    return exceeds(limit)
+        ? new DiagramRendering.Omit(this, limit)
+        : new DiagramRendering.Draw(this);
   }
 
   /**

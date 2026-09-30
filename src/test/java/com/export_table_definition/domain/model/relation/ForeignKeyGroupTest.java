@@ -38,10 +38,23 @@ public class ForeignKeyGroupTest {
         ForeignKeyGroup.of(
             List.of(
                 fk("public", "a", "fk1", "public", "b"), fk("public", "b", "fk2", "public", "c")));
-    assertTrue(group.exceeds(2));
-    assertFalse(group.exceeds(3));
-    assertFalse(group.exceeds(0));
-    assertFalse(group.exceeds(-1));
+    assertTrue(group.exceeds(NodeLimit.of(2)));
+    assertFalse(group.exceeds(NodeLimit.of(3)));
+    assertFalse(group.exceeds(NodeLimit.of(0)));
+    assertFalse(group.exceeds(NodeLimit.of(-1)));
+  }
+
+  @Test
+  @DisplayName("renderingUnder: 上限以内ならDraw、上限を超える場合は上限を持つOmitを返す")
+  void testRenderingUnder() {
+    var group =
+        ForeignKeyGroup.of(
+            List.of(
+                fk("public", "a", "fk1", "public", "b"), fk("public", "b", "fk2", "public", "c")));
+    assertEquals(new DiagramRendering.Draw(group), group.renderingUnder(NodeLimit.of(3)));
+    assertEquals(new DiagramRendering.Draw(group), group.renderingUnder(NodeLimit.UNLIMITED));
+    assertEquals(
+        new DiagramRendering.Omit(group, NodeLimit.of(2)), group.renderingUnder(NodeLimit.of(2)));
   }
 
   @Test

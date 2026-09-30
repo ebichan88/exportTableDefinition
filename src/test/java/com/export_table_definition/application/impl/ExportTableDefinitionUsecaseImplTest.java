@@ -35,12 +35,12 @@ import com.export_table_definition.domain.service.export.SnapshotExportSinkFacto
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
 import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
-import com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService;
-import com.export_table_definition.domain.service.writer.ObjectListWriterDomainService;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
-import com.export_table_definition.domain.service.writer.ReadmeWriterDomainService;
-import com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService;
-import com.export_table_definition.domain.service.writer.ViewpointWriterDomainService;
+import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramWriterDomainService;
+import com.export_table_definition.domain.service.writer.objectlist.ObjectListWriterDomainService;
+import com.export_table_definition.domain.service.writer.readme.ReadmeWriterDomainService;
+import com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionWriterDomainService;
+import com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriterDomainService;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
 import com.export_table_definition.testsupport.EntityFixtures;

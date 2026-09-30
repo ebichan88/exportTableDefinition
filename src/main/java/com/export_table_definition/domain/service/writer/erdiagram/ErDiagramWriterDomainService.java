@@ -1,20 +1,22 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.erdiagram;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroups;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroups.PageComposition;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
-import com.export_table_definition.domain.service.writer.template.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
 import jakarta.inject.Inject;
 import java.util.List;
@@ -48,10 +50,10 @@ public class ErDiagramWriterDomainService {
    * 1つの図にすべてのテーブルを載せるとMermaidが描画できる規模を超えるため、スキーマ単位に分割して出力し、 それらへのリンクをまとめた索引ファイルを併せて出力する。
    * 利用する情報はテーブル一覧と外部キー一覧のみで、テーブル詳細を必要としない。 テーブルが存在しない場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う
    *
-   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
+   * @param limit 1つの図に描画するノード数の上限
    */
   public void writeErDiagram(
-      Tables tables, ForeignKeys foreignKeys, OutputRoot outputRoot, int maxNodes) {
+      Tables tables, ForeignKeys foreignKeys, OutputRoot outputRoot, NodeLimit limit) {
     final Map<String, List<TableEntity>> tablesBySchema = tables.bySchema();
     // 外部キーのスキーマ単位のグループ化は1度だけ行う。スキーマごとに全件を走査すると
     // 外部キー数×スキーマ数の走査となり、対象範囲が広い場合に処理時間が膨らむ
@@ -64,7 +66,7 @@ public class ErDiagramWriterDomainService {
                 foreignKeysBySchema.getOrDefault(schemaName, List.of()),
                 tables,
                 outputRoot,
-                maxNodes));
+                limit));
     writeErDiagramIndex(tablesBySchema, foreignKeys.crossSchema(), outputRoot);
   }
 
@@ -72,15 +74,15 @@ public class ErDiagramWriterDomainService {
    * ノード数が上限を超える場合は、連結成分を1枚に収まる範囲でまとめ直したグループごとに分割して出力する
    *
    * @param relatedForeignKeys 当該スキーマのテーブルが関与する外部キー（他スキーマとの関連を含む）のリスト
-   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
+   * @param limit 1つの図に描画するノード数の上限
    */
   private void writeSchemaErDiagram(
       String schemaName,
       List<ForeignKeyEntity> relatedForeignKeys,
       Tables tables,
       OutputRoot outputRoot,
-      int maxNodes) {
-    final PageComposition composition = ForeignKeyGroups.compose(relatedForeignKeys, maxNodes);
+      NodeLimit limit) {
+    final PageComposition composition = ForeignKeyGroups.compose(relatedForeignKeys, limit);
     switch (composition) {
       case PageComposition.Single(ForeignKeyGroup group) -> {
         final PageLayout layout =
@@ -93,7 +95,7 @@ public class ErDiagramWriterDomainService {
             group,
             ErDiagramTemplates.schemaFooter(outputRoot.baseInfo()),
             tables,
-            maxNodes,
+            limit,
             outputRoot);
       }
       case PageComposition.Grouped(List<ForeignKeyGroup> groups, int nodeCount) -> {
@@ -101,13 +103,8 @@ public class ErDiagramWriterDomainService {
             .forEach(
                 groupNo ->
                     writeGroupErDiagram(
-                        schemaName,
-                        groupNo,
-                        groups.get(groupNo - 1),
-                        tables,
-                        outputRoot,
-                        maxNodes));
-        writeSchemaGroupIndex(schemaName, groups, nodeCount, outputRoot, maxNodes);
+                        schemaName, groupNo, groups.get(groupNo - 1), tables, outputRoot, limit));
+        writeSchemaGroupIndex(schemaName, groups, nodeCount, outputRoot, limit);
       }
     }
   }
@@ -121,7 +118,7 @@ public class ErDiagramWriterDomainService {
       ForeignKeyGroup group,
       Tables tables,
       OutputRoot outputRoot,
-      int maxNodes) {
+      NodeLimit limit) {
     final PageLayout layout =
         new PageLayout(
             ErDiagramTemplates.groupFileHeader(schemaName, groupNo, outputRoot.baseInfo()),
@@ -132,7 +129,7 @@ public class ErDiagramWriterDomainService {
         group,
         ErDiagramTemplates.groupFooter(schemaName, outputRoot.baseInfo()),
         tables,
-        maxNodes,
+        limit,
         outputRoot);
   }
 
@@ -145,27 +142,31 @@ public class ErDiagramWriterDomainService {
       ForeignKeyGroup group,
       String footer,
       Tables tables,
-      int maxNodes,
+      NodeLimit limit,
       OutputRoot outputRoot) {
+    final DiagramRendering rendering = group.renderingUnder(limit);
     final PagedSection<?> detail =
-        group.exceeds(maxNodes)
-            ? new PagedSection<>(
-                ErDiagramTemplates.foreignKeyHeading(),
-                ErDiagramTemplates.foreignKeyTableHeader(),
-                group.foreignKeys(),
-                ErDiagramTemplates::foreignKeyTableLine)
-            : new PagedSection<>(
-                ErDiagramTemplates.diagramTableHeading(),
-                ErDiagramTemplates.diagramTableHeader(),
-                group.nodes(),
-                (no, key) ->
-                    ErDiagramTemplates.diagramTableLine(no, key, tables.find(key).orElse(null)));
+        switch (rendering) {
+          case DiagramRendering.Omit omit ->
+              new PagedSection<>(
+                  ErDiagramTemplates.foreignKeyHeading(),
+                  ErDiagramTemplates.foreignKeyTableHeader(),
+                  omit.group().foreignKeys(),
+                  ErDiagramTemplates::foreignKeyTableLine);
+          case DiagramRendering.Draw draw ->
+              new PagedSection<>(
+                  ErDiagramTemplates.diagramTableHeading(),
+                  ErDiagramTemplates.diagramTableHeader(),
+                  draw.group().nodes(),
+                  (no, key) ->
+                      ErDiagramTemplates.diagramTableLine(no, key, tables.find(key).orElse(null)));
+        };
     final String detailSection = pagedSectionWriter.writePagedSection(detail, layout);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
             ErDiagramTemplates.baseInfo(outputRoot.baseInfo()), // 基本情報
-            ErDiagramTemplates.erDiagram(group, maxNodes), // ER図（描画結果または省略メッセージ）
+            ErDiagramTemplates.erDiagram(rendering), // ER図（描画結果または省略メッセージ）
             detailSection, // 掲載テーブル または 外部キー一覧
             footer // フッター
             );
@@ -178,7 +179,7 @@ public class ErDiagramWriterDomainService {
       List<ForeignKeyGroup> groups,
       int nodeCount,
       OutputRoot outputRoot,
-      int maxNodes) {
+      NodeLimit limit) {
     final StringBuilder groupIndex =
         new StringBuilder(PagedSectionTemplates.heading(ErDiagramTemplates.groupIndexHeading()))
             .append(ErDiagramTemplates.groupIndexHeader());
@@ -200,7 +201,7 @@ public class ErDiagramWriterDomainService {
         List.of(
             ErDiagramTemplates.schemaFileHeader(schemaName, outputRoot.baseInfo()), // ヘッダー
             ErDiagramTemplates.baseInfo(outputRoot.baseInfo()), // 基本情報
-            ErDiagramTemplates.groupedMessage(nodeCount, maxNodes, groups.size()), // 分割の説明
+            ErDiagramTemplates.groupedMessage(nodeCount, limit, groups.size()), // 分割の説明
             groupIndex.append(System.lineSeparator()).toString(), // グループ一覧
             ErDiagramTemplates.schemaFooter(outputRoot.baseInfo()) // フッター
             );

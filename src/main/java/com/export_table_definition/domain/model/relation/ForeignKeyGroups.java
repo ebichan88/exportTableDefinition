@@ -45,14 +45,14 @@ public final class ForeignKeyGroups {
    * 同じ内容のグループページができるだけのため）は分割しない。それ以外は連結成分を1枚に収まる範囲でグループへ まとめ直し、複数ページへ分割する
    *
    * @param relatedForeignKeys 当該スキーマのテーブルが関与する外部キー（他スキーマとの関連を含む）のリスト
-   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
    */
-  public static PageComposition compose(List<ForeignKeyEntity> relatedForeignKeys, int maxNodes) {
+  public static PageComposition compose(
+      List<ForeignKeyEntity> relatedForeignKeys, NodeLimit limit) {
     final ForeignKeyGroup schemaGroup = ForeignKeyGroup.of(relatedForeignKeys);
-    if (!schemaGroup.exceeds(maxNodes)) {
+    if (!schemaGroup.exceeds(limit)) {
       return new PageComposition.Single(schemaGroup);
     }
-    final List<ForeignKeyGroup> groups = pack(connectedComponents(relatedForeignKeys), maxNodes);
+    final List<ForeignKeyGroup> groups = pack(connectedComponents(relatedForeignKeys), limit);
     if (groups.size() <= 1) {
       return new PageComposition.Single(schemaGroup);
     }
@@ -90,14 +90,14 @@ public final class ForeignKeyGroups {
    *
    * @param components 連結成分ごとのまとまりのリスト（ノード数の降順）
    */
-  static List<ForeignKeyGroup> pack(List<ForeignKeyGroup> components, int maxNodes) {
+  static List<ForeignKeyGroup> pack(List<ForeignKeyGroup> components, NodeLimit limit) {
     final List<List<ForeignKeyEntity>> groups = new ArrayList<>();
     final List<Integer> groupNodeCounts = new ArrayList<>();
     components.forEach(
         component -> {
           final int componentNodes = component.nodeCount();
           for (int i = 0; i < groups.size(); i++) {
-            if (groupNodeCounts.get(i) + componentNodes <= maxNodes) {
+            if (!limit.isExceededBy(groupNodeCounts.get(i) + componentNodes)) {
               groups.get(i).addAll(component.foreignKeys());
               groupNodeCounts.set(i, groupNodeCounts.get(i) + componentNodes);
               return;

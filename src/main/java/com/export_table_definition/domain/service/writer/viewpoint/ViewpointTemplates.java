@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer.template;
+package com.export_table_definition.domain.service.writer.viewpoint;
 
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.HORIZON;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
@@ -6,13 +6,16 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
-import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.ViewpointContent;
 import com.export_table_definition.domain.service.path.DocumentLocations;
+import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramTemplates;
+import com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport;
+import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
 import java.util.List;
 
 /**
@@ -49,17 +52,15 @@ public class ViewpointTemplates {
   /**
    * ER図セクション（Mermaid記法）<br>
    * 所属テーブル同士の関連のみを描画する。描画の内容・上限を超えた場合の扱いはスキーマ別ER図と同じ （{@link ErDiagramTemplates#erDiagram}）
-   *
-   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
    */
-  public static String erDiagram(ForeignKeyGroup relations, int maxNodes) {
-    if (relations.foreignKeys().isEmpty()) {
+  public static String erDiagram(DiagramRendering rendering) {
+    if (rendering.group().foreignKeys().isEmpty()) {
       return "## ER図"
           + LINE_SEPARATOR_DOUBLE
           + "所属テーブル同士の関連（外部キー・論理リレーション）はありません。"
           + LINE_SEPARATOR_DOUBLE;
     }
-    return ErDiagramTemplates.erDiagram(relations, maxNodes);
+    return ErDiagramTemplates.erDiagram(rendering);
   }
 
   /** 所属テーブルセクションの見出し */

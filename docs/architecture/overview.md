@@ -76,7 +76,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
      削除してよい出力先かは、ユースケースを呼ぶ前に入口（2.）で検証済みである
    - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
      - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ViewpointWriterDomainService` /
-       `ObjectListWriterDomainService` / `ReadmeWriterDomainService`（いずれも `domain.service.writer`）がMarkdownを組み立てて `FileRepository` 経由で出力
+       `ObjectListWriterDomainService` / `ReadmeWriterDomainService`（いずれも `domain.service.writer`配下の種別ごとのサブパッケージ。Writerとテンプレートを同居させている）がMarkdownを組み立てて `FileRepository` 経由で出力
      - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
 
@@ -200,9 +200,9 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 ## ER図生成
 
 ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）はREADME
-（[../../README.md](../../README.md) の「ER図」節）に詳しい。実装は
+（[../../README.md](../../README.md) の「ER図」節・「ER図の出し分け」）に詳しい。実装は
 `ErDiagramWriterDomainService`（書き込みの段取り）と `domain.model.relation.ForeignKeyGroup`
-（1枚の図のノード算出・上限超過の判定）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
+（1枚の図のノード算出・上限超過の判定・描画するか省くかの判断`renderingUnder`）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
 まとめ直し。`compose()`がページ構成（`PageComposition`）を1回で決める）、`domain.model.relation.Cardinality`（多重度判定）が中心。
 
 ## 出力ファイルの命名規則と相対リンク
@@ -212,7 +212,7 @@ ER図生成のアルゴリズム（連結成分によるグループ分割、多
 Markdownドキュメントのファイル名・配置（一覧・ER図・観点ページ・READMEは`{DB名}/`直下、テーブル定義書・関数等の個別定義書は
 `{DB名}/{スキーマ名}/{区分}/`配下）は`domain.service.path.DocumentLocations`に一元化している
 （このクラスが返す相対パスは`{DB名}/`ディレクトリからの相対パスで、`{DB名}/`自体の付与は`OutputPathResolver`が行う）。
-出力先の絶対パス（`OutputPathResolver`の実装）と、ドキュメント間の相対リンク（`domain.service.writer.template`）の
+出力先の絶対パス（`OutputPathResolver`の実装）と、ドキュメント間の相対リンク（`domain.service.writer`配下のテンプレート）の
 双方がこの規則を参照するため、ファイル名を変更してもパスとリンクが食い違わない。一覧の種別ごとの接頭辞・タイトルは
 `domain.model.document.ListDocumentType`が持つ。関数・プロシージャの個別定義は関数名をファイル名とし、同じスキーマに
 同名のもの（オーバーロード）がある場合のみ`{関数名}_{番号}`とする（番号はSQLが関数名ごとに振る）。
@@ -249,7 +249,7 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
   関数は定義本体をスキーマ単位で取得した時点で`functions.jsonl`へ出力する
 
 なお、SQLは構造化した値のみを返し、Markdown向けの表示用の組み立て・エスケープ（`|`→`\|`等）は
-`domain.service.writer.template`配下で行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
+`domain.service.writer`配下のテンプレートで行う。SQL側でエスケープするとスナップショットにもMarkdown記法が混入するため。
 SQLの取得結果（DTO）からエンティティへの変換時（`infrastructure.db.repository.dto`）に、値の形をドメインの表現へ揃える。
 値が無いことは空文字で表し（Oracleでは空文字がNULLとして返るため、DBによらず揃える）、SQLが区切り文字で連結して返す
 外部キーの列名（カンマ区切り）・トリガーの対象イベント（スラッシュ区切り）は`List<String>`へ分解する。

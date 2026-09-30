@@ -54,6 +54,7 @@
 | `domain.model.relation` | `ForeignKeyEntity` | 関連（DBの外部キー制約＝物理、サイドカーで宣言した論理リレーション＝論理）のrecord。参照先の`referenceTableKey()`、論理リレーションの関連名の自動生成（`resolveLogicalRelationName`）を持つ |
 | | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalOf`/`logicalOf`で由来ごとに、`incomingOf`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`within`/`crossing`でテーブルの集合の内側・境界の関連を抽出する |
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の関連のまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し。`compose()`がページ構成`PageComposition`を決める） |
+| | `NodeLimit`, `DiagramRendering` | ER図1枚に描画するノード数の上限（0以下は上限なしへ正規化）と、上限との比較で決まる「描く（`Draw`）／描画を省略して一覧にフォールバック（`Omit`）」の判断結果 |
 | | `Cardinality`, `RelationType` | 多重度（1対1／1対多等。判定と、論理リレーションの既定値を持つ）、関連の由来（物理／論理）のenum |
 | `domain.model.schemaobject` | `FunctionEntity`, `SequenceEntity`, `TypeEntity` | テーブルに属さないスキーマ直下のオブジェクト（関数・プロシージャ／シーケンス／ユーザー定義型）のrecord。`FunctionEntity`は同名関数（オーバーロード）内の番号を持つ |
 | `domain.model.database` | `DatabaseEntity` | DBのカタログから取得するデータベースの情報（DB名・DBMS種別）のrecord |
@@ -96,14 +97,19 @@
 | `domain.service.snapshot` | `SchemaSnapshotWriterDomainService` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
 | | `SnapshotDiffDomainService` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`--check`モードで使用）。内容が一致しないものは、`SnapshotSerializer.formatForDiff`で整形した上で`UnifiedDiffGenerator`によりunified diffを付ける |
 | | `SnapshotSerializer` | スナップショットのrecordとJSON文字列の変換IF（実装はインフラ層）。差分表示用に1項目1行へ整形する`formatForDiff`も持つ |
-| `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
-| | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
-| | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |
-| | `ViewpointWriterDomainService` | 観点ページ（所属テーブル同士のER図・所属テーブル・観点外のテーブルとの関連）と観点一覧の書き込み |
-| | `ReadmeWriterDomainService` | データベース単位ディレクトリ（`{DB名}/`）のREADMEの書き込み。出力される一覧ドキュメントへのリンクをまとめる |
-| | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理。分割ページは本体ページと同じディレクトリに置き、ページ間のリンクはファイル名から導く |
-| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ViewpointTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `ReadmeTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群。表の行を含むMarkdownの描画はすべてここで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない |
-| | `MarkdownTemplateSupport`, `MermaidSupport` | テンプレート共通部品、Mermaid記法変換ユーティリティ |
+
+ドキュメントの種別ごとに、Writer（何を・どの順で・どのファイルに書くか）とそのテンプレート（Markdownの組み立て）を同じサブパッケージに置く。
+表の行を含むMarkdownの描画はすべてテンプレートで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない。
+
+| パッケージ | 主なクラス | 役割 |
+|---|---|---|
+| `domain.service.writer.tabledefinition` | `TableDefinitionWriterDomainService`, `TableDefinitionTemplates`, `TableDefinitionListTemplates` | テーブル一覧・テーブル定義書のMarkdown書き込みとテンプレート |
+| `domain.service.writer.erdiagram` | `ErDiagramWriterDomainService`, `ErDiagramTemplates` | スキーマ別ER図（全体ER図）とその索引の書き込みとテンプレート。連結成分ごとのグループ分割・描画するか省くかの結果（`DiagramRendering`）に従った出力を含む |
+| `domain.service.writer.viewpoint` | `ViewpointWriterDomainService`, `ViewpointTemplates` | 観点ページ（所属テーブル同士のER図・所属テーブル・観点外のテーブルとの関連）と観点一覧の書き込みとテンプレート。ER図の描画は`erdiagram`のテンプレートを使う |
+| `domain.service.writer.objectlist` | `ObjectListWriterDomainService`, `ObjectListTemplates`, `ObjectDefinitionTemplates` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込みとテンプレート |
+| `domain.service.writer.readme` | `ReadmeWriterDomainService`, `ReadmeTemplates` | データベース単位ディレクトリ（`{DB名}/`）のREADMEの書き込みとテンプレート。出力される一覧ドキュメントへのリンクをまとめる |
+| `domain.service.writer` | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理。分割ページは本体ページと同じディレクトリに置き、ページ間のリンクはファイル名から導く |
+| `domain.service.writer.template` | `MarkdownTemplateSupport`, `MermaidSupport`, `PagedSectionTemplates` | 複数の種別が共有するテンプレート部品（Markdown共通部品、Mermaid記法変換、ページ分割の見出し・リンク） |
 
 ## infrastructure層
 

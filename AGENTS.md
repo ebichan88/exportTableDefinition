@@ -95,7 +95,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 実行のたびに変わる値（日付等）をDBから取得したり、`LocalDate.now()`等で直接取得したりしていないか。
     DIで受け取る`java.time.Clock`から求める（テストで固定できるようにするため）。
   - Writer（書き込み担当）クラスがMarkdown文字列を自前で組み立てていないか。行・セクションの
-    組み立ては必ず`domain.service.writer.template`配下のテンプレートクラスに委ね、Writerは
+    組み立ては必ず`domain.service.writer`配下のテンプレートクラス（`*Templates`。種別ごとのサブパッケージにWriterと同居する）に委ね、Writerは
     「何を・どの順で・どのファイルに書くか」の段取りに専念する。
 
 ## コメントスタイル
