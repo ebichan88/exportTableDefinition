@@ -7,6 +7,7 @@ import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
@@ -36,7 +37,8 @@ public class ErDiagramTemplatesTest {
 
   /** ER図セクションを、ノード算出込みで生成するテスト用ヘルパー */
   private String erDiagram(List<ForeignKeyEntity> foreignKeys, int maxNodes) {
-    return ErDiagramTemplates.erDiagram(ForeignKeyGroup.of(foreignKeys), maxNodes);
+    return ErDiagramTemplates.erDiagram(
+        ForeignKeyGroup.of(foreignKeys).renderingUnder(NodeLimit.of(maxNodes)));
   }
 
   @Test
@@ -227,7 +229,7 @@ public class ErDiagramTemplatesTest {
         外部キーで繋がったテーブルのまとまりごとに3個のグループへ分割しました。
 
         """,
-        ErDiagramTemplates.groupedMessage(200, 80, 3));
+        ErDiagramTemplates.groupedMessage(200, NodeLimit.of(80), 3));
   }
 
   @Test

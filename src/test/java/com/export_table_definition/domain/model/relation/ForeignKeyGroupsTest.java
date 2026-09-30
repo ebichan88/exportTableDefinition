@@ -109,7 +109,7 @@ public class ForeignKeyGroupsTest {
         ForeignKeyGroups.pack(
             List.of(
                 ForeignKeyGroup.of(large), ForeignKeyGroup.of(small1), ForeignKeyGroup.of(small2)),
-            5);
+            NodeLimit.of(5));
     // 3ノード + 2ノード で上限5に収まるため1つ目にまとまり、残りの2ノードは次のグループになる
     assertEquals(2, groups.size());
     assertEquals(5, groups.get(0).nodeCount());
@@ -126,7 +126,8 @@ public class ForeignKeyGroupsTest {
         List.of(fk("public", "a", "fk1", "public", "b"), fk("public", "b", "fk2", "public", "c"));
     var small = List.of(fk("public", "x", "fk3", "public", "y"));
     var groups =
-        ForeignKeyGroups.pack(List.of(ForeignKeyGroup.of(oversized), ForeignKeyGroup.of(small)), 2);
+        ForeignKeyGroups.pack(
+            List.of(ForeignKeyGroup.of(oversized), ForeignKeyGroup.of(small)), NodeLimit.of(2));
     assertEquals(2, groups.size());
     assertEquals(3, groups.get(0).nodeCount());
     assertEquals(2, groups.get(1).nodeCount());
@@ -135,7 +136,7 @@ public class ForeignKeyGroupsTest {
   @Test
   @DisplayName("compose: 外部キーが無い場合は空のグループ1枚のSingleを返す")
   void testComposeEmptyReturnsSingle() {
-    var composition = ForeignKeyGroups.compose(List.of(), 4);
+    var composition = ForeignKeyGroups.compose(List.of(), NodeLimit.of(4));
     assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
     var single = (ForeignKeyGroups.PageComposition.Single) composition;
     assertEquals(0, single.group().nodeCount());
@@ -146,7 +147,7 @@ public class ForeignKeyGroupsTest {
   void testComposeWithinLimitReturnsSingle() {
     var fk1 = fk("public", "a", "fk1", "public", "hub");
     var fk2 = fk("public", "b", "fk2", "public", "hub");
-    var composition = ForeignKeyGroups.compose(List.of(fk1, fk2), 80);
+    var composition = ForeignKeyGroups.compose(List.of(fk1, fk2), NodeLimit.of(80));
     assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
     var single = (ForeignKeyGroups.PageComposition.Single) composition;
     assertEquals(3, single.group().nodeCount());
@@ -162,7 +163,7 @@ public class ForeignKeyGroupsTest {
             .mapToObj(i -> fk("public", "child" + i, "fk" + i, "public", "parent" + i))
             .toList();
 
-    var composition = ForeignKeyGroups.compose(foreignKeys, 4);
+    var composition = ForeignKeyGroups.compose(foreignKeys, NodeLimit.of(4));
 
     assertInstanceOf(ForeignKeyGroups.PageComposition.Grouped.class, composition);
     var grouped = (ForeignKeyGroups.PageComposition.Grouped) composition;
@@ -181,12 +182,12 @@ public class ForeignKeyGroupsTest {
             .mapToObj(i -> fk("public", "t" + i, "fk" + i, "public", "hub"))
             .toList();
 
-    var composition = ForeignKeyGroups.compose(foreignKeys, 4);
+    var composition = ForeignKeyGroups.compose(foreignKeys, NodeLimit.of(4));
 
     assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
     var single = (ForeignKeyGroups.PageComposition.Single) composition;
     // 上限を超えたままであることが、呼び出し側が外部キー一覧へフォールバックする判断材料になる
-    assertTrue(single.group().exceeds(4));
+    assertTrue(single.group().exceeds(NodeLimit.of(4)));
     assertEquals(11, single.group().nodeCount());
   }
 
@@ -200,7 +201,7 @@ public class ForeignKeyGroupsTest {
     // 巨大なまとまりに繋がっていない小さなまとまり
     foreignKeys.add(fk("public", "x", "fk_xy", "public", "y"));
 
-    var composition = ForeignKeyGroups.compose(foreignKeys, 4);
+    var composition = ForeignKeyGroups.compose(foreignKeys, NodeLimit.of(4));
 
     assertInstanceOf(ForeignKeyGroups.PageComposition.Grouped.class, composition);
     var grouped = (ForeignKeyGroups.PageComposition.Grouped) composition;
@@ -208,10 +209,10 @@ public class ForeignKeyGroupsTest {
     assertEquals(2, grouped.groups().size());
     // 巨大なまとまりは単独グループのまま上限を超え続ける（Writer側で外部キー一覧へフォールバックする対象）
     assertEquals(11, grouped.groups().get(0).nodeCount());
-    assertTrue(grouped.groups().get(0).exceeds(4));
+    assertTrue(grouped.groups().get(0).exceeds(NodeLimit.of(4)));
     // 小さなまとまりは上限内に収まる
     assertEquals(2, grouped.groups().get(1).nodeCount());
-    assertFalse(grouped.groups().get(1).exceeds(4));
+    assertFalse(grouped.groups().get(1).exceeds(NodeLimit.of(4)));
   }
 
   @Test
@@ -222,7 +223,7 @@ public class ForeignKeyGroupsTest {
             .mapToObj(i -> fk("public", "t" + i, "fk" + i, "public", "hub"))
             .toList();
 
-    var composition = ForeignKeyGroups.compose(foreignKeys, 0);
+    var composition = ForeignKeyGroups.compose(foreignKeys, NodeLimit.of(0));
 
     assertInstanceOf(ForeignKeyGroups.PageComposition.Single.class, composition);
   }

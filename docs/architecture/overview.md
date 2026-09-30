@@ -200,9 +200,9 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 ## ER図生成
 
 ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）はREADME
-（[../../README.md](../../README.md) の「ER図」節）に詳しい。実装は
+（[../../README.md](../../README.md) の「ER図」節・「ER図の出し分け」）に詳しい。実装は
 `ErDiagramWriterDomainService`（書き込みの段取り）と `domain.model.relation.ForeignKeyGroup`
-（1枚の図のノード算出・上限超過の判定）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
+（1枚の図のノード算出・上限超過の判定・描画するか省くかの判断`renderingUnder`）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
 まとめ直し。`compose()`がページ構成（`PageComposition`）を1回で決める）、`domain.model.relation.Cardinality`（多重度判定）が中心。
 
 ## 出力ファイルの命名規則と相対リンク

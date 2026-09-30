@@ -6,8 +6,10 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.service.path.DocumentLocations;
@@ -85,20 +87,20 @@ public class ErDiagramTemplates {
    * ER図セクション（Mermaid記法）<br>
    * 外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧{@code
    * tableList_{DB名}.md}側に掲載されている）。<br>
-   * ノード数が上限を超える場合はMermaidの描画を諦め、その旨のメッセージのみを返す （代替として掲載する外部キー一覧は呼び出し側が組み立てる）
-   *
-   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
+   * 描画を省略する判断結果（{@link DiagramRendering.Omit}）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
+   * （代替として掲載する外部キー一覧は呼び出し側が組み立てる）
    */
-  public static String erDiagram(ForeignKeyGroup group, int maxNodes) {
+  public static String erDiagram(DiagramRendering rendering) {
+    final ForeignKeyGroup group = rendering.group();
     StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
     if (group.foreignKeys().isEmpty()) {
       return sb.append("外部キーによる関連を持つテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
     }
-    if (group.exceeds(maxNodes)) {
+    if (rendering instanceof DiagramRendering.Omit(ForeignKeyGroup omitted, NodeLimit limit)) {
       return sb.append(
               String.format(
                   "ER図に描画するテーブル数が%d件となり、上限（erDiagramMaxNodes = %d件）を超えるため描画を省略しました。",
-                  group.nodeCount(), maxNodes))
+                  omitted.nodeCount(), limit.value()))
           .append(LINE_SEPARATOR)
           .append("代わりに外部キーによる関連を一覧で掲載します。")
           .append(LINE_SEPARATOR_DOUBLE)
@@ -122,12 +124,13 @@ public class ErDiagramTemplates {
   }
 
   /** ER図をグループに分割した場合の、スキーマページに掲載する説明セクション */
-  public static String groupedMessage(int nodeCount, int maxNodes, int groupCount) {
+  public static String groupedMessage(int nodeCount, NodeLimit limit, int groupCount) {
     return new StringBuilder("## ER図")
         .append(LINE_SEPARATOR_DOUBLE)
         .append(
             String.format(
-                "ER図に描画するテーブル数が%d件となり、上限（erDiagramMaxNodes = %d件）を超えるため、", nodeCount, maxNodes))
+                "ER図に描画するテーブル数が%d件となり、上限（erDiagramMaxNodes = %d件）を超えるため、",
+                nodeCount, limit.value()))
         .append(LINE_SEPARATOR)
         .append(String.format("外部キーで繋がったテーブルのまとまりごとに%d個のグループへ分割しました。", groupCount))
         .append(LINE_SEPARATOR_DOUBLE)

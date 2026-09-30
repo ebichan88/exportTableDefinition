@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.export;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
@@ -44,11 +45,11 @@ public class MarkdownExportSinkFactory {
    * 指定したディレクトリへMarkdownのドキュメントを書き出す{@link ExportSink}を生成するメソッド
    *
    * @param outputBaseDir 出力先のベースディレクトリパス
-   * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限。0以下の場合は上限なし
+   * @param erDiagramLimit スキーマ別ER図1枚に描画するノード数の上限
    * @return Markdownのドキュメントを書き出す{@link ExportSink}
    */
-  public ExportSink create(Path outputBaseDir, int erDiagramMaxNodes) {
-    return new MarkdownExportSink(outputBaseDir, erDiagramMaxNodes);
+  public ExportSink create(Path outputBaseDir, NodeLimit erDiagramLimit) {
+    return new MarkdownExportSink(outputBaseDir, erDiagramLimit);
   }
 
   /**
@@ -96,11 +97,11 @@ public class MarkdownExportSinkFactory {
   private final class MarkdownExportSink implements ExportSink {
 
     private final Path outputBaseDir;
-    private final int erDiagramMaxNodes;
+    private final NodeLimit erDiagramLimit;
 
-    private MarkdownExportSink(Path outputBaseDir, int erDiagramMaxNodes) {
+    private MarkdownExportSink(Path outputBaseDir, NodeLimit erDiagramLimit) {
       this.outputBaseDir = outputBaseDir;
-      this.erDiagramMaxNodes = erDiagramMaxNodes;
+      this.erDiagramLimit = erDiagramLimit;
     }
 
     /**
@@ -117,7 +118,7 @@ public class MarkdownExportSinkFactory {
       readmeWriter.writeReadme(documents, outputRoot);
       if (documents.contains(ListDocumentType.ER_DIAGRAM)) {
         erDiagramWriter.writeErDiagram(
-            targets.tables(), targets.foreignKeys(), outputRoot, erDiagramMaxNodes);
+            targets.tables(), targets.foreignKeys(), outputRoot, erDiagramLimit);
       }
       if (documents.contains(ListDocumentType.TRIGGER)) {
         objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
@@ -137,7 +138,7 @@ public class MarkdownExportSinkFactory {
             targets.tables(),
             targets.foreignKeys(),
             outputRoot,
-            erDiagramMaxNodes);
+            erDiagramLimit);
       }
       // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
       targets

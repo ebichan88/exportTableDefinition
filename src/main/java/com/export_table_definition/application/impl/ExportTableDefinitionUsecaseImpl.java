@@ -2,6 +2,7 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.ExportRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
@@ -53,7 +54,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     schemaExporter.export(
         targets,
         List.of(
-            markdownSinkFactory.create(outputBaseDir, request.erDiagramMaxNodes()),
+            markdownSinkFactory.create(outputBaseDir, NodeLimit.of(request.erDiagramMaxNodes())),
             snapshotSinkFactory.create(outputBaseDir)),
         request.chunkSize());
   }

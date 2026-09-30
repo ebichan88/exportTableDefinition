@@ -1,8 +1,9 @@
 package com.export_table_definition.domain.service.writer;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
-import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
+import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.viewpoint.ViewpointContent;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
@@ -48,20 +49,20 @@ public class ViewpointWriterDomainService {
    * @param viewpoints サイドカーYAMLで宣言された観点
    * @param foreignKeys 出力対象のテーブル同士の関連（外部キー・論理リレーション）
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
-   * @param maxNodes 1つの図に描画するノード数の上限。0以下の場合は上限なし
+   * @param limit 1つの図に描画するノード数の上限
    */
   public void writeViewpoints(
       Viewpoints viewpoints,
       Tables tables,
       ForeignKeys foreignKeys,
       OutputRoot outputRoot,
-      int maxNodes) {
+      NodeLimit limit) {
     // 観点ページと観点一覧（テーブル数）の双方が同じ出力内容を用いるため、観点ごとに1回だけ求める
     final List<ViewpointContent> contents =
         viewpoints.asList().stream()
             .map(viewpoint -> viewpoint.resolve(tables, foreignKeys))
             .toList();
-    contents.forEach(content -> writeViewpointPage(content, outputRoot, maxNodes));
+    contents.forEach(content -> writeViewpointPage(content, outputRoot, limit));
     writeViewpointIndex(contents, outputRoot);
   }
 
@@ -72,9 +73,10 @@ public class ViewpointWriterDomainService {
    * 関連の一覧は、人が選んだテーブルのまとまりに関わるものに限られ、分割が必要になる規模にはならない想定とする
    *
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
-   * @param maxNodes 1つの図に描画するノード数の上限
+   * @param limit 1つの図に描画するノード数の上限
    */
-  private void writeViewpointPage(ViewpointContent content, OutputRoot outputRoot, int maxNodes) {
+  private void writeViewpointPage(
+      ViewpointContent content, OutputRoot outputRoot, NodeLimit limit) {
     final PageLayout layout =
         new PageLayout(
             ViewpointTemplates.fileHeader(content.viewpoint(), outputRoot.baseInfo()),
@@ -90,15 +92,15 @@ public class ViewpointWriterDomainService {
                     content.tables(),
                     ViewpointTemplates::tableLine),
                 layout);
-    final ForeignKeyGroup relations = content.relations();
+    final DiagramRendering rendering = content.relations().renderingUnder(limit);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
             ViewpointTemplates.baseInfo(outputRoot.baseInfo()), // 基本情報
             ViewpointTemplates.description(content.viewpoint()), // 説明
-            ViewpointTemplates.erDiagram(relations, maxNodes), // ER図（描画結果または省略メッセージ）
-            relations.exceeds(maxNodes)
-                ? ViewpointTemplates.relations(relations.foreignKeys())
+            ViewpointTemplates.erDiagram(rendering), // ER図（描画結果または省略メッセージ）
+            rendering instanceof DiagramRendering.Omit
+                ? ViewpointTemplates.relations(rendering.group().foreignKeys())
                 : "", // ER図の代替の関連一覧
             tableSection, // 所属テーブル
             ViewpointTemplates.outsideRelations(content.outsideRelations()), // 観点外のテーブルとの関連

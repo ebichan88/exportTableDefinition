@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
+import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
@@ -65,7 +66,8 @@ public class ViewpointTemplatesTest {
         所属テーブル同士の関連（外部キー・論理リレーション）はありません。
 
         """,
-        ViewpointTemplates.erDiagram(ForeignKeyGroup.of(List.of()), 80));
+        ViewpointTemplates.erDiagram(
+            ForeignKeyGroup.of(List.of()).renderingUnder(NodeLimit.of(80))));
   }
 
   @Test
@@ -77,7 +79,8 @@ public class ViewpointTemplatesTest {
                 ForeignKeyFixtures.physical(
                     "public", "orders", "fk_orders_customer", "public", "customer")));
 
-    assertEquals(ErDiagramTemplates.erDiagram(group, 80), ViewpointTemplates.erDiagram(group, 80));
+    var rendering = group.renderingUnder(NodeLimit.of(80));
+    assertEquals(ErDiagramTemplates.erDiagram(rendering), ViewpointTemplates.erDiagram(rendering));
   }
 
   @Test
