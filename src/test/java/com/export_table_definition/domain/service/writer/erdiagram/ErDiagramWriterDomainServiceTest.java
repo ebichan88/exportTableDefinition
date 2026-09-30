@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.erdiagram;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;

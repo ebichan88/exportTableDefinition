@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.tabledefinition;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.table.TableEntity;
@@ -6,10 +6,9 @@ import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
-import com.export_table_definition.domain.service.writer.template.TableDefinitionListTemplates;
-import com.export_table_definition.domain.service.writer.template.TableDefinitionTemplates;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;

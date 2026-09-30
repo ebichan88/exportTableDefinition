@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.viewpoint;
 
 import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,6 +14,7 @@ import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;

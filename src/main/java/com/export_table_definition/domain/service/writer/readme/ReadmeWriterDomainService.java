@@ -1,10 +1,9 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.readme;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
-import com.export_table_definition.domain.service.writer.template.ReadmeTemplates;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;

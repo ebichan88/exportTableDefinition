@@ -97,14 +97,19 @@
 | `domain.service.snapshot` | `SchemaSnapshotWriterDomainService` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
 | | `SnapshotDiffDomainService` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`--check`モードで使用）。内容が一致しないものは、`SnapshotSerializer.formatForDiff`で整形した上で`UnifiedDiffGenerator`によりunified diffを付ける |
 | | `SnapshotSerializer` | スナップショットのrecordとJSON文字列の変換IF（実装はインフラ層）。差分表示用に1項目1行へ整形する`formatForDiff`も持つ |
-| `domain.service.writer` | `TableDefinitionWriterDomainService` | テーブル一覧・テーブル定義書のMarkdown書き込み |
-| | `ErDiagramWriterDomainService` | スキーマ別ER図（全体ER図）とその索引の書き込み。連結成分ごとのグループ分割を含む |
-| | `ObjectListWriterDomainService` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込み |
-| | `ViewpointWriterDomainService` | 観点ページ（所属テーブル同士のER図・所属テーブル・観点外のテーブルとの関連）と観点一覧の書き込み |
-| | `ReadmeWriterDomainService` | データベース単位ディレクトリ（`{DB名}/`）のREADMEの書き込み。出力される一覧ドキュメントへのリンクをまとめる |
-| | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理。分割ページは本体ページと同じディレクトリに置き、ページ間のリンクはファイル名から導く |
-| `domain.service.writer.template` | `TableDefinitionTemplates`, `TableDefinitionListTemplates`, `ErDiagramTemplates`, `ViewpointTemplates`, `ObjectListTemplates`, `ObjectDefinitionTemplates`, `ReadmeTemplates`, `PagedSectionTemplates` | 各Writerが使うMarkdownテンプレート（文字列組み立て）クラス群。表の行を含むMarkdownの描画はすべてここで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない |
-| | `MarkdownTemplateSupport`, `MermaidSupport` | テンプレート共通部品、Mermaid記法変換ユーティリティ |
+
+ドキュメントの種別ごとに、Writer（何を・どの順で・どのファイルに書くか）とそのテンプレート（Markdownの組み立て）を同じサブパッケージに置く。
+表の行を含むMarkdownの描画はすべてテンプレートで行い、Writerは描画せず、テンプレートは絞り込み・グラフ計算などのロジックを持たない。
+
+| パッケージ | 主なクラス | 役割 |
+|---|---|---|
+| `domain.service.writer.tabledefinition` | `TableDefinitionWriterDomainService`, `TableDefinitionTemplates`, `TableDefinitionListTemplates` | テーブル一覧・テーブル定義書のMarkdown書き込みとテンプレート |
+| `domain.service.writer.erdiagram` | `ErDiagramWriterDomainService`, `ErDiagramTemplates` | スキーマ別ER図（全体ER図）とその索引の書き込みとテンプレート。連結成分ごとのグループ分割・描画するか省くかの結果（`DiagramRendering`）に従った出力を含む |
+| `domain.service.writer.viewpoint` | `ViewpointWriterDomainService`, `ViewpointTemplates` | 観点ページ（所属テーブル同士のER図・所属テーブル・観点外のテーブルとの関連）と観点一覧の書き込みとテンプレート。ER図の描画は`erdiagram`のテンプレートを使う |
+| `domain.service.writer.objectlist` | `ObjectListWriterDomainService`, `ObjectListTemplates`, `ObjectDefinitionTemplates` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込みとテンプレート |
+| `domain.service.writer.readme` | `ReadmeWriterDomainService`, `ReadmeTemplates` | データベース単位ディレクトリ（`{DB名}/`）のREADMEの書き込みとテンプレート。出力される一覧ドキュメントへのリンクをまとめる |
+| `domain.service.writer` | `PagedSectionWriter` | 行数の多い表をページ分割して出力する共通処理。分割ページは本体ページと同じディレクトリに置き、ページ間のリンクはファイル名から導く |
+| `domain.service.writer.template` | `MarkdownTemplateSupport`, `MermaidSupport`, `PagedSectionTemplates` | 複数の種別が共有するテンプレート部品（Markdown共通部品、Mermaid記法変換、ページ分割の見出し・リンク） |
 
 ## infrastructure層
 

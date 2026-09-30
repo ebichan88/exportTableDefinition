@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer.template;
+package com.export_table_definition.domain.service.writer.erdiagram;
 
 import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;

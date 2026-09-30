@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.erdiagram;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramRendering;
@@ -14,9 +14,9 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
-import com.export_table_definition.domain.service.writer.template.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
 import jakarta.inject.Inject;
 import java.util.List;

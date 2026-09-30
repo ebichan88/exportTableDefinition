@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer.template;
+package com.export_table_definition.domain.service.writer.viewpoint;
 
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.HORIZON;
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
@@ -13,6 +13,9 @@ import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.ViewpointContent;
 import com.export_table_definition.domain.service.path.DocumentLocations;
+import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramTemplates;
+import com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport;
+import com.export_table_definition.domain.service.writer.template.PagedSectionTemplates;
 import java.util.List;
 
 /**

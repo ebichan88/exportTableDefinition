@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer.template;
+package com.export_table_definition.domain.service.writer.viewpoint;
 
 import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,6 +10,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.ViewpointContent;
+import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramTemplates;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.time.LocalDate;
 import java.util.List;

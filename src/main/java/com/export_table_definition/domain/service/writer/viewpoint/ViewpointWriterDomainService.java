@@ -1,4 +1,4 @@
-package com.export_table_definition.domain.service.writer;
+package com.export_table_definition.domain.service.writer.viewpoint;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramRendering;
@@ -10,9 +10,9 @@ import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
+import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PageLayout;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter.PagedSection;
-import com.export_table_definition.domain.service.writer.template.ViewpointTemplates;
 import jakarta.inject.Inject;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
