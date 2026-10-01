@@ -245,7 +245,7 @@ classDiagram
 ```mermaid
 classDiagram
   direction LR
-  class TableTargetScope {
+  class TableScope {
     schemaNames()
     isFiltered()
     matches(table)
@@ -282,7 +282,7 @@ classDiagram
     severity()
   }
 
-  TableTargetScope "1" *-- "1" TableNamePatterns
+  TableScope "1" *-- "1" TableNamePatterns
   ExportTargets "1" *-- "1" BaseInfoEntity
   ExportTargets "1" *-- "1" Tables
   ExportTargets "1" *-- "1" ForeignKeys
@@ -298,7 +298,7 @@ classDiagram
   TableDefinitionContent ..> TableDetail : 組み立て元
 ```
 
-- **出力対象の範囲（`TableTargetScope`）**は設定（`schema`・`table`）から入口で1回だけ組み立て、テーブルごとに`matches`で判定する。
+- **出力対象の範囲（`TableScope`）**は設定（`schema`・`table`）から入口で1回だけ組み立て、テーブルごとに`matches`で判定する。
   テーブル名パターン（`TableNamePatterns`。観点の所属テーブルの指定と共有するため`table`に置く）はワイルドカード・除外（`!`）・スキーマ修飾に対応し、
   除外が包含より優先される。**出力対象オブジェクト種別（`OutputObjectType`）**は、トリガー・関数等のうちどれを取得・出力するかを決める
 - **出力対象（`ExportTargets`）**は対象範囲全体を一括取得した軽量な情報の組。これとチャンク単位で取得した詳細情報
@@ -318,7 +318,7 @@ classDiagram
 | ルール | 場所 |
 |---|---|
 | 「スキーマ.テーブル」形式のキーの解析 | `TableKey.parse` |
-| 出力対象の絞り込み（スキーマ名・テーブル名パターン。除外が包含より優先。テーブル名・スキーマ名の部分が空のパターンは設定誤り） | `TableTargetScope` / `TableNamePatterns` |
+| 出力対象の絞り込み（スキーマ名・テーブル名パターン。除外が包含より優先。テーブル名・スキーマ名の部分が空のパターンは設定誤り） | `TableScope` / `TableNamePatterns` |
 | 出力対象オブジェクト種別の解釈（未指定なら全種別。未知の種別名は設定誤り） | `OutputObjectType.parse` |
 | 多重度の判定・論理リレーションの多重度の既定値 | `Cardinality.of` / `Cardinality.DEFAULT_FOR_LOGICAL_RELATION` |
 | 論理リレーションの関連名の自動生成（`{列名...}`） | `ForeignKeyEntity.resolveLogicalRelationName` |
@@ -355,7 +355,7 @@ classDiagram
 | 手動付帯情報 | 手動付帯情報（`tables`） | `Annotations` / `TableAnnotation` | テーブル説明・テーブル備考・カラム備考 |
 | 孤児付帯情報 | 実在しないテーブル・カラムに対する付帯情報 | `ConsistencyFinding.Kind.ORPHAN_*` | リネーム・削除によりDBと乖離した付帯情報 |
 | 出力対象の絞り込み条件 | `schema`・`table`・`outputObjects` | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲＋出力対象オブジェクト種別。`TargetSelection`は絞り込み条件ではないサイドカーYAMLのパスも合わせて運ぶ |
-| 出力対象の範囲 | `schema`・`table` | `TableTargetScope` | 出力対象の絞り込み条件のうち、テーブルを対象とするもの（スキーマ名＋テーブル名パターン） |
+| 出力対象の範囲 | `schema`・`table` | `TableScope` | 出力対象の絞り込み条件のうち、テーブルを対象とするもの（スキーマ名＋テーブル名パターン） |
 | テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableNamePatterns` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法。クラス名に`Target`を含むが、出力対象の絞り込みに限らない |
 | 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |
 | 所属テーブル | 観点の所属テーブル | `ViewpointContent.tables` / `Viewpoint.contains` | 観点に含まれるテーブル |

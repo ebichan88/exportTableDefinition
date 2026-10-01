@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * テーブル名パターン（{@code table=}の記法）のリストを判定する値オブジェクト<br>
  * 出力対象の範囲（{@code table=}。{@link
- * com.export_table_definition.domain.model.target.TableTargetScope}）と、観点に所属するテーブルの指定（サイドカーYAMLの{@code
+ * com.export_table_definition.domain.model.target.TableScope}）と、観点に所属するテーブルの指定（サイドカーYAMLの{@code
  * viewpoints}）で共通に用いる。以下の記法に対応する。
  *
  * <ul>

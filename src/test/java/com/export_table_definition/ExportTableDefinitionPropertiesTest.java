@@ -28,8 +28,8 @@ public class ExportTableDefinitionPropertiesTest {
   void testOfUsesDefaultsWhenNothingSpecified() {
     ExportRequest request = ExportTableDefinitionProperties.of(Map.of()).toExportRequest(false);
 
-    assertEquals(List.of(), request.targetSelection().targetScope().schemaNames());
-    assertFalse(request.targetSelection().targetScope().isFiltered());
+    assertEquals(List.of(), request.targetSelection().tableScope().schemaNames());
+    assertFalse(request.targetSelection().tableScope().isFiltered());
     assertEquals(
         EnumSet.allOf(OutputObjectType.class), request.targetSelection().outputObjectTypes());
     assertEquals("", request.targetSelection().sidecarPath());
@@ -55,9 +55,9 @@ public class ExportTableDefinitionPropertiesTest {
             .toExportRequest(false);
 
     assertEquals(
-        omitted.targetSelection().targetScope().schemaNames(),
-        blank.targetSelection().targetScope().schemaNames());
-    assertFalse(blank.targetSelection().targetScope().isFiltered());
+        omitted.targetSelection().tableScope().schemaNames(),
+        blank.targetSelection().tableScope().schemaNames());
+    assertFalse(blank.targetSelection().tableScope().isFiltered());
     assertEquals(
         omitted.targetSelection().outputObjectTypes(), blank.targetSelection().outputObjectTypes());
     assertEquals(omitted.targetSelection().sidecarPath(), blank.targetSelection().sidecarPath());
@@ -81,8 +81,8 @@ public class ExportTableDefinitionPropertiesTest {
                     "annotationPath", " conf/annotations.yml "))
             .toExportRequest(true);
 
-    assertEquals(List.of("sample"), request.targetSelection().targetScope().schemaNames());
-    assertFalse(request.targetSelection().targetScope().matches(table("sample", "tmp_work")));
+    assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
+    assertFalse(request.targetSelection().tableScope().matches(table("sample", "tmp_work")));
     assertEquals("./docs/db", request.outputPath());
     assertEquals(100, request.chunkSize());
     assertEquals(0, request.erDiagramMaxNodes());
@@ -102,7 +102,7 @@ public class ExportTableDefinitionPropertiesTest {
 
     assertEquals(
         List.of("alpha", "beta", "gamma", "delta"),
-        request.targetSelection().targetScope().schemaNames());
+        request.targetSelection().tableScope().schemaNames());
   }
 
   @Test
@@ -170,7 +170,7 @@ public class ExportTableDefinitionPropertiesTest {
 
     CheckDiffRequest request = properties.toCheckDiffRequest();
 
-    assertEquals(List.of("sample"), request.targetSelection().targetScope().schemaNames());
+    assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
     assertEquals("./docs/db", request.outputPath());
     assertEquals(50, request.chunkSize());
   }
@@ -182,7 +182,7 @@ public class ExportTableDefinitionPropertiesTest {
 
     assertEquals(3000, request.chunkSize());
     assertEquals(80, request.erDiagramMaxNodes());
-    assertFalse(request.targetSelection().targetScope().isFiltered());
+    assertFalse(request.targetSelection().tableScope().isFiltered());
   }
 
   @Test
@@ -196,8 +196,8 @@ public class ExportTableDefinitionPropertiesTest {
                     "table", new SettingOverride("!tmp_*", "--table")))
             .toExportRequest(false);
 
-    assertEquals(List.of("sample"), request.targetSelection().targetScope().schemaNames());
-    assertFalse(request.targetSelection().targetScope().matches(table("sample", "tmp_work")));
+    assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
+    assertFalse(request.targetSelection().tableScope().matches(table("sample", "tmp_work")));
     assertEquals("./docs/prod", request.outputPath());
     assertEquals(100, request.chunkSize());
   }

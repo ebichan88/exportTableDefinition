@@ -52,10 +52,10 @@ public class TargetSelectionTest {
     TargetSelection selection =
         TargetSelection.of(List.of("sample"), List.of("!tmp_*"), List.of(), "sidecar.yml");
 
-    assertEquals(List.of("sample"), selection.targetScope().schemaNames());
-    assertTrue(selection.targetScope().matches(table("sample", "employee")));
-    assertFalse(selection.targetScope().matches(table("sample", "tmp_work")));
-    assertFalse(selection.targetScope().matches(table("public", "employee")));
+    assertEquals(List.of("sample"), selection.tableScope().schemaNames());
+    assertTrue(selection.tableScope().matches(table("sample", "employee")));
+    assertFalse(selection.tableScope().matches(table("sample", "tmp_work")));
+    assertFalse(selection.tableScope().matches(table("public", "employee")));
     assertEquals("sidecar.yml", selection.sidecarPath());
   }
 

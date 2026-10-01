@@ -10,28 +10,28 @@ import java.util.Objects;
  * 実行設定（{@code schema=}・{@code table=}）から1回だけ生成し、以降は{@link #matches(TableEntity)}で 各テーブルを判定する。{@link
  * TableNamePatterns}はテーブル名パターンのみを扱うため、スキーマ名リストとの 組み合わせ判定（どちらか一方のみ指定・両方指定・両方未指定）はこのクラスが担う
  */
-public final class TableTargetScope {
+public final class TableScope {
 
   private final List<String> targetSchemaList;
   private final TableNamePatterns tableNamePatterns;
 
-  private TableTargetScope(List<String> targetSchemaList, TableNamePatterns tableNamePatterns) {
+  private TableScope(List<String> targetSchemaList, TableNamePatterns tableNamePatterns) {
     this.targetSchemaList = targetSchemaList;
     this.tableNamePatterns = tableNamePatterns;
   }
 
   /**
-   * テーブル定義出力対象のスキーマ・テーブルのリストから{@link TableTargetScope}を生成する静的ファクトリメソッド<br>
+   * テーブル定義出力対象のスキーマ・テーブルのリストから{@link TableScope}を生成する静的ファクトリメソッド<br>
    * スキーマ名は前後の空白を除去し、空要素を除く
    *
    * @param targetSchemaList テーブル定義出力対象のスキーマのリスト（未指定の場合は空リストまたはnull）
    * @param targetTableList テーブル定義出力対象のテーブルのリスト（ワイルドカード・除外・スキーマ修飾を指定可。 未指定の場合は空リストまたはnull）
-   * @return 生成したTableTargetScope
+   * @return 生成したTableScope
    * @throws IllegalArgumentException テーブル名またはスキーマ名の部分が空のテーブル名パターンが含まれる場合（{@link
    *     TableNamePatterns#of}）
    */
-  public static TableTargetScope of(List<String> targetSchemaList, List<String> targetTableList) {
-    return new TableTargetScope(
+  public static TableScope of(List<String> targetSchemaList, List<String> targetTableList) {
+    return new TableScope(
         targetSchemaList == null
             ? List.of()
             : targetSchemaList.stream()

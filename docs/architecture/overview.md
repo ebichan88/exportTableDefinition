@@ -50,7 +50,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
      （`CliArguments.settingOverrides()`）で上書きしてから検証し、
      `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ変換する。
      出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
-     `TargetSelection.of()`が型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する
+     `TargetSelection.of()`が型（`TableScope`・`OutputObjectType`の集合）へ変換・検証する
    - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
      削除より前に`[result]:FAIL`として報告されるため、エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する

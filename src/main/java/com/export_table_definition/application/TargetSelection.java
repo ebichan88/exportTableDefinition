@@ -1,7 +1,7 @@
 package com.export_table_definition.application;
 
 import com.export_table_definition.domain.model.target.OutputObjectType;
-import com.export_table_definition.domain.model.target.TableTargetScope;
+import com.export_table_definition.domain.model.target.TableScope;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -14,13 +14,13 @@ import java.util.function.Supplier;
  * 設定値は生の文字列のままユースケースへ渡さず、{@link #of}で入口（エントリーポイント）において型へ変換する。
  * 未知の出力対象オブジェクト種別などの設定誤りは、DBへの問い合わせや出力先の削除（{@code --rm-dist}）より前に検知される
  *
- * @param targetScope テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）
+ * @param tableScope テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）
  * @param outputObjectTypes 出力対象とするPostgreSQL固有オブジェクト種別の集合（未指定の場合は全種別）
  * @param sidecarPath サイドカーYAML（手動付帯情報・論理リレーション・観点）のパス（プロパティ{@code annotationPath}の値）。
  *     空・未指定の場合はマージを行わない
  */
 public record TargetSelection(
-    TableTargetScope targetScope, Set<OutputObjectType> outputObjectTypes, String sidecarPath) {
+    TableScope tableScope, Set<OutputObjectType> outputObjectTypes, String sidecarPath) {
 
   /**
    * 設定ファイルから読み込んだ値から出力対象の絞り込み条件を生成する静的ファクトリメソッド<br>
@@ -40,14 +40,14 @@ public record TargetSelection(
       List<String> outputObjectList,
       String sidecarPath) {
     final List<String> errors = new ArrayList<>();
-    final TableTargetScope targetScope =
-        parse(() -> TableTargetScope.of(targetSchemaList, targetTableList), errors);
+    final TableScope tableScope =
+        parse(() -> TableScope.of(targetSchemaList, targetTableList), errors);
     final Set<OutputObjectType> outputObjectTypes =
         parse(() -> OutputObjectType.parse(outputObjectList), errors);
     if (!errors.isEmpty()) {
       throw new IllegalArgumentException(String.join(System.lineSeparator(), errors));
     }
-    return new TargetSelection(targetScope, outputObjectTypes, sidecarPath);
+    return new TargetSelection(tableScope, outputObjectTypes, sidecarPath);
   }
 
   /**

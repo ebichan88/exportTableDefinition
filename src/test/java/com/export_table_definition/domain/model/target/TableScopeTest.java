@@ -15,8 +15,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-/** TableTargetScope の絞り込み判定（matches）・isFilteredに関するテスト */
-class TableTargetScopeTest {
+/** TableScope の絞り込み判定（matches）・isFilteredに関するテスト */
+class TableScopeTest {
 
   private static TableEntity table() {
     return new TableEntity("dbName", "test_schema", "テストテーブル", "testTable", TableType.TABLE, "");
@@ -113,7 +113,7 @@ class TableTargetScopeTest {
         List<String> targetSchemaList,
         List<String> targetTableList,
         boolean expected) {
-      TableTargetScope scope = TableTargetScope.of(targetSchemaList, targetTableList);
+      TableScope scope = TableScope.of(targetSchemaList, targetTableList);
       assertEquals(expected, scope.matches(table()));
     }
   }
@@ -124,26 +124,26 @@ class TableTargetScopeTest {
     @Test
     @DisplayName("isFiltered: スキーマ・テーブルのいずれも指定されていない場合はfalse")
     void testIsFilteredFalseWhenBothEmpty() {
-      assertFalse(TableTargetScope.of(List.of(), List.of()).isFiltered());
-      assertFalse(TableTargetScope.of(null, null).isFiltered());
+      assertFalse(TableScope.of(List.of(), List.of()).isFiltered());
+      assertFalse(TableScope.of(null, null).isFiltered());
     }
 
     @Test
     @DisplayName("isFiltered: スキーマのみ指定されている場合はtrue")
     void testIsFilteredTrueWhenOnlySchemaSpecified() {
-      assertTrue(TableTargetScope.of(List.of("test_schema"), List.of()).isFiltered());
+      assertTrue(TableScope.of(List.of("test_schema"), List.of()).isFiltered());
     }
 
     @Test
     @DisplayName("isFiltered: テーブルのみ指定されている場合はtrue")
     void testIsFilteredTrueWhenOnlyTableSpecified() {
-      assertTrue(TableTargetScope.of(List.of(), List.of("testTable")).isFiltered());
+      assertTrue(TableScope.of(List.of(), List.of("testTable")).isFiltered());
     }
 
     @Test
     @DisplayName("isFiltered: 空白のみのスキーマ名は指定されていないものとみなす")
     void testIsFilteredFalseWhenSchemaIsBlank() {
-      assertFalse(TableTargetScope.of(List.of(" "), List.of()).isFiltered());
+      assertFalse(TableScope.of(List.of(" "), List.of()).isFiltered());
     }
   }
 
@@ -154,8 +154,8 @@ class TableTargetScopeTest {
     @DisplayName("schemaNames: 前後の空白を除去し、空要素を除いたスキーマ名を返す")
     void testSchemaNamesAreStripped() {
       // 「schema=public, test_schema」のようにカンマの後へ空白を入れた場合を想定する
-      TableTargetScope scope =
-          TableTargetScope.of(Arrays.asList("public", " test_schema", ""), null);
+      TableScope scope =
+          TableScope.of(Arrays.asList("public", " test_schema", ""), null);
 
       assertEquals(List.of("public", "test_schema"), scope.schemaNames());
       assertTrue(scope.matches(table()));
@@ -164,7 +164,7 @@ class TableTargetScopeTest {
     @Test
     @DisplayName("schemaNames: 未指定の場合は空リストを返す")
     void testSchemaNamesEmptyWhenNotSpecified() {
-      assertEquals(List.of(), TableTargetScope.of(null, List.of("testTable")).schemaNames());
+      assertEquals(List.of(), TableScope.of(null, List.of("testTable")).schemaNames());
     }
   }
 }
