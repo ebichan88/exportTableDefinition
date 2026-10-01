@@ -22,7 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ObjectListWriterDomainService のトリガー・関数/プロシージャ・シーケンス・型 一覧および個別定義書き込みに関するテスト */
+/** ObjectListWriter のトリガー・関数/プロシージャ・シーケンス・型 一覧および個別定義書き込みに関するテスト */
 public class ObjectListWriterDomainServiceTest {
 
   private static final Path OUT = Path.of("output");
@@ -79,7 +79,7 @@ public class ObjectListWriterDomainServiceTest {
   }
 
   private InMemoryFileRepository fileRepository;
-  private ObjectListWriterDomainService writer;
+  private ObjectListWriter writer;
 
   private BaseInfoEntity baseInfo() {
     return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 24));
@@ -93,7 +93,7 @@ public class ObjectListWriterDomainServiceTest {
   void setUp() {
     fileRepository = new InMemoryFileRepository();
     writer =
-        new ObjectListWriterDomainService(
+        new ObjectListWriter(
             fileRepository,
             new DefaultOutputPathResolver(),
             new PagedSectionWriter(fileRepository, new DefaultOutputPathResolver()));

@@ -22,18 +22,18 @@ import org.apache.logging.log4j.Logger;
  * 観点ページ（観点ごとのER図・所属テーブル）と観点一覧を書き込むクラス<br>
  * 利用する情報はテーブル一覧と関連の一覧のみで、テーブル詳細を必要としない（スキーマ別ER図と同じ）
  */
-public class ViewpointWriterDomainService {
+public class ViewpointWriter {
 
   /** 観点ページの分割ページから本体ページへ戻るリンクの表示名 */
   private static final String VIEWPOINT_BACK_LABEL = "観点へ";
 
-  private static final Logger logger = LogManager.getLogger(ViewpointWriterDomainService.class);
+  private static final Logger logger = LogManager.getLogger(ViewpointWriter.class);
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final PagedSectionWriter pagedSectionWriter;
 
   @Inject
-  public ViewpointWriterDomainService(
+  public ViewpointWriter(
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver,
       PagedSectionWriter pagedSectionWriter) {

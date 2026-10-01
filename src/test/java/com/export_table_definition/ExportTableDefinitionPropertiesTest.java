@@ -3,8 +3,8 @@ package com.export_table_definition;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.ExportTableDefinitionProperties.SettingOverride;
-import com.export_table_definition.application.CheckDiffRequest;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
@@ -26,7 +26,7 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("of: すべての項目が未指定の場合は既定値を用いる")
   void testOfUsesDefaultsWhenNothingSpecified() {
-    ExportRequest request = ExportTableDefinitionProperties.of(Map.of()).toExportRequest(false);
+    ExportTableDefinitionRequest request = ExportTableDefinitionProperties.of(Map.of()).toExportRequest(false);
 
     assertEquals(List.of(), request.targetSelection().tableScope().schemaNames());
     assertFalse(request.targetSelection().tableScope().isFiltered());
@@ -41,8 +41,8 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("of: キーを書かない場合と値を空白にした場合は、同じ「未指定」として扱う")
   void testOfTreatsBlankValueAsUnspecified() {
-    ExportRequest omitted = ExportTableDefinitionProperties.of(Map.of()).toExportRequest(false);
-    ExportRequest blank =
+    ExportTableDefinitionRequest omitted = ExportTableDefinitionProperties.of(Map.of()).toExportRequest(false);
+    ExportTableDefinitionRequest blank =
         ExportTableDefinitionProperties.of(
                 Map.of(
                     "schema", "",
@@ -69,7 +69,7 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("of: 指定した値を型へ変換し、前後の空白を除去する")
   void testOfParsesSpecifiedValues() {
-    ExportRequest request =
+    ExportTableDefinitionRequest request =
         ExportTableDefinitionProperties.of(
                 Map.of(
                     "schema", " sample ",
@@ -96,7 +96,7 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("of: カンマ区切りの値は分割し、各要素の前後の空白を除去して空要素を除く")
   void testOfSplitsCommaSeparatedValues() {
-    ExportRequest request =
+    ExportTableDefinitionRequest request =
         ExportTableDefinitionProperties.of(Map.of("schema", "alpha,beta, gamma ,,delta"))
             .toExportRequest(false);
 
@@ -168,7 +168,7 @@ public class ExportTableDefinitionPropertiesTest {
         ExportTableDefinitionProperties.of(
             Map.of("schema", "sample", "outputPath", "./docs/db", "chunkSize", "50"));
 
-    CheckDiffRequest request = properties.toCheckDiffRequest();
+    CheckDocumentDiffRequest request = properties.toCheckDiffRequest();
 
     assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
     assertEquals("./docs/db", request.outputPath());
@@ -178,7 +178,7 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("load: 配布する設定ファイル（全項目が未指定）は、誤りなく既定値で読み込める")
   void testLoadDistributedTemplate() {
-    ExportRequest request = ExportTableDefinitionProperties.load(Map.of()).toExportRequest(false);
+    ExportTableDefinitionRequest request = ExportTableDefinitionProperties.load(Map.of()).toExportRequest(false);
 
     assertEquals(3000, request.chunkSize());
     assertEquals(80, request.erDiagramMaxNodes());
@@ -188,7 +188,7 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("of: CLI引数による上書き値は設定ファイルの値より優先し、上書きしないキーは設定ファイルの値を用いる")
   void testOfAppliesOverrides() {
-    ExportRequest request =
+    ExportTableDefinitionRequest request =
         ExportTableDefinitionProperties.of(
                 Map.of("schema", "sample", "outputPath", "./docs/db", "chunkSize", "100"),
                 Map.of(

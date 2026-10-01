@@ -22,7 +22,7 @@ import java.util.stream.Stream;
  * リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう指摘（{@link
  * ConsistencyFinding}）として返す。指摘をどこへ出力するか（ログ等）は呼び出し側が決める
  */
-public class ExportTargetConsistencyDomainService {
+public class ExportTargetConsistency {
 
   /**
    * 外部キーの突き合わせ結果
@@ -179,7 +179,7 @@ public class ExportTargetConsistencyDomainService {
               Kind.UNRESOLVED_FOREIGN_KEY,
               "Skipping a foreign key because the referenced table was not found "
                   + "(renamed or dropped?). [foreignKey="
-                  + foreignKey.foreignkeyName()
+                  + foreignKey.foreignKeyName()
                   + ", table="
                   + foreignKey.getSchemaTableName()
                   + ", referenceTable="
@@ -205,7 +205,7 @@ public class ExportTargetConsistencyDomainService {
             Kind.UNRESOLVED_LOGICAL_RELATION,
             "Skipping logical relation because the table was not found in the output target "
                 + "(filtered, renamed or dropped?). [relation="
-                + relation.foreignkeyName()
+                + relation.foreignKeyName()
                 + ", table="
                 + relation.getSchemaTableName()
                 + (childExists ? "" : " (not found)")

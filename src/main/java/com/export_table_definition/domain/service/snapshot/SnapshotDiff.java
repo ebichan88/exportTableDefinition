@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  * 内容が一致しないものは、{@link SnapshotSerializer#formatForDiff}で差分表示用に整形した上で {@link
  * UnifiedDiffGenerator}によりunified diff形式の差分を付ける
  */
-public class SnapshotDiffDomainService {
+public class SnapshotDiff {
 
   /** 差分の対象の並び順（表示名順。同名の場合はファイル順） */
   private static final Comparator<Target> TARGET_ORDER =
@@ -35,7 +35,7 @@ public class SnapshotDiffDomainService {
   private final UnifiedDiffGenerator diffGenerator;
 
   @Inject
-  public SnapshotDiffDomainService(
+  public SnapshotDiff(
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver,
       SnapshotSerializer serializer,

@@ -1,13 +1,13 @@
 package com.export_table_definition.application.impl;
 
-import com.export_table_definition.application.CheckDiffRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
 import com.export_table_definition.application.CheckDocumentDiffUsecase;
 import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
-import com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService;
+import com.export_table_definition.domain.service.snapshot.SnapshotDiff;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
@@ -22,7 +22,7 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
   private static final String CHECK_TEMP_DIR_PREFIX = "exportTableDefinition-check-";
   private final SchemaExporter schemaExporter;
   private final SnapshotExportSinkFactory snapshotSinkFactory;
-  private final SnapshotDiffDomainService snapshotDiffDomainService;
+  private final SnapshotDiff snapshotDiffDomainService;
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
 
@@ -30,7 +30,7 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
   public CheckDocumentDiffUsecaseImpl(
       SchemaExporter schemaExporter,
       SnapshotExportSinkFactory snapshotSinkFactory,
-      SnapshotDiffDomainService snapshotDiffDomainService,
+      SnapshotDiff snapshotDiffDomainService,
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver) {
     this.schemaExporter = schemaExporter;
@@ -42,7 +42,7 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
 
   /** {@inheritDoc} */
   @Override
-  public DiffResult checkDocumentDiff(CheckDiffRequest request) {
+  public DiffResult checkDocumentDiff(CheckDocumentDiffRequest request) {
     final Path committedDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
     try {

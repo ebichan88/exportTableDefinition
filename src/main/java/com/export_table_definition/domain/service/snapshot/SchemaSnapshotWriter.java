@@ -27,19 +27,19 @@ import org.apache.logging.log4j.Logger;
  * Markdownのテーブル定義書と同じ取得結果から、機械可読なJSON Lines形式（1行1オブジェクト）で出力する。 テーブルはチャンク単位の取得・破棄（{@code
  * chunkSize}）のメモリプロファイルを変えないよう、 1テーブル書き終えるごとにスキーマ単位のファイルへ追記する
  */
-public class SchemaSnapshotWriterDomainService {
+public class SchemaSnapshotWriter {
 
   /** JSON Linesの仕様に合わせ、OSに依らず行区切りはLFとする */
   private static final String LINE_SEPARATOR = "\n";
 
   private static final Logger logger =
-      LogManager.getLogger(SchemaSnapshotWriterDomainService.class);
+      LogManager.getLogger(SchemaSnapshotWriter.class);
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final SnapshotSerializer serializer;
 
   @Inject
-  public SchemaSnapshotWriterDomainService(
+  public SchemaSnapshotWriter(
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver,
       SnapshotSerializer serializer) {

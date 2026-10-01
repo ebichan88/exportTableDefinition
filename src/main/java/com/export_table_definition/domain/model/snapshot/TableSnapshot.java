@@ -143,7 +143,7 @@ public record TableSnapshot(
     /** 外部キー・論理リレーションから生成する */
     static Relation of(ForeignKeyEntity foreignKey) {
       return new Relation(
-          foreignKey.foreignkeyName(),
+          foreignKey.foreignKeyName(),
           foreignKey.columnNames(),
           foreignKey.referenceSchemaName(),
           foreignKey.referenceTableName(),

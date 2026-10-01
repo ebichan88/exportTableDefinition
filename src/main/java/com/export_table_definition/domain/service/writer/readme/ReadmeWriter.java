@@ -13,13 +13,13 @@ import java.util.Set;
  * データベース単位ディレクトリのREADMEを書き込むクラス<br>
  * 複数のデータベースを同じ出力先へ出力した場合に、GitHub等でそのディレクトリを開いた際の入り口となるよう、 出力される一覧ドキュメントへのリンクをまとめる
  */
-public class ReadmeWriterDomainService {
+public class ReadmeWriter {
 
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
 
   @Inject
-  public ReadmeWriterDomainService(
+  public ReadmeWriter(
       FileRepository fileRepository, OutputPathResolver outputPathResolver) {
     this.fileRepository = fileRepository;
     this.outputPathResolver = outputPathResolver;

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * ErDiagramWriterDomainService のER図出力に関するテスト<br>
+ * ErDiagramWriter のER図出力に関するテスト<br>
  * ノード数の上限超過時にグループ分割されるかどうかを、生成されるファイル構成で検証する
  */
 public class ErDiagramWriterDomainServiceTest {
@@ -84,13 +84,13 @@ public class ErDiagramWriterDomainServiceTest {
   }
 
   private InMemoryFileRepository fileRepository;
-  private ErDiagramWriterDomainService writer;
+  private ErDiagramWriter writer;
 
   @BeforeEach
   void setUp() {
     fileRepository = new InMemoryFileRepository();
     writer =
-        new ErDiagramWriterDomainService(
+        new ErDiagramWriter(
             fileRepository,
             new DefaultOutputPathResolver(),
             new PagedSectionWriter(fileRepository, new DefaultOutputPathResolver()));

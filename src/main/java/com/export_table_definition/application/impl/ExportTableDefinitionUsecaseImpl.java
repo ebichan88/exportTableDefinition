@@ -1,6 +1,6 @@
 package com.export_table_definition.application.impl;
 
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.target.ExportTargets;
@@ -43,7 +43,7 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
 
   /** {@inheritDoc} */
   @Override
-  public void exportTableDefinition(ExportRequest request) {
+  public void exportTableDefinition(ExportTableDefinitionRequest request) {
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final ExportTargets targets =
         schemaExporter.fetchTargets(request.targetSelection(), request.sidecarPath());

@@ -16,16 +16,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** テーブル一覧・テーブル定義書を書き込むクラス */
-public class TableDefinitionWriterDomainService {
+public class TableDefinitionWriter {
 
   private static final Logger logger =
-      LogManager.getLogger(TableDefinitionWriterDomainService.class);
+      LogManager.getLogger(TableDefinitionWriter.class);
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final PagedSectionWriter pagedSectionWriter;
 
   @Inject
-  public TableDefinitionWriterDomainService(
+  public TableDefinitionWriter(
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver,
       PagedSectionWriter pagedSectionWriter) {

@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @param schemaName 参照元（子）スキーマ名
  * @param tableName 参照元（子）テーブル名
- * @param foreignkeyName 外部キー名（論理リレーションの場合は関連名）
+ * @param foreignKeyName 外部キー名（論理リレーションの場合は関連名）
  * @param columnNames 参照元（子）の列名のリスト（外部キーの定義順）
  * @param referenceSchemaName 参照先（親）スキーマ名
  * @param referenceTableName 参照先（親）テーブル名
@@ -21,7 +21,7 @@ import java.util.List;
 public record ForeignKeyEntity(
     String schemaName,
     String tableName,
-    String foreignkeyName,
+    String foreignKeyName,
     List<String> columnNames,
     String referenceSchemaName,
     String referenceTableName,

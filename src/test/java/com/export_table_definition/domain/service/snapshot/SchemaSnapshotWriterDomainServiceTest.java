@@ -25,7 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** SchemaSnapshotWriterDomainService のスナップショット（JSON Lines）書き込みに関するテスト */
+/** SchemaSnapshotWriter のスナップショット（JSON Lines）書き込みに関するテスト */
 public class SchemaSnapshotWriterDomainServiceTest {
 
   private static final Path OUT = Path.of("output");
@@ -86,13 +86,13 @@ public class SchemaSnapshotWriterDomainServiceTest {
   }
 
   private InMemoryFileRepository fileRepository;
-  private SchemaSnapshotWriterDomainService writer;
+  private SchemaSnapshotWriter writer;
 
   @BeforeEach
   void setUp() {
     fileRepository = new InMemoryFileRepository();
     writer =
-        new SchemaSnapshotWriterDomainService(
+        new SchemaSnapshotWriter(
             fileRepository, new DefaultOutputPathResolver(), new JacksonSnapshotSerializer());
   }
 

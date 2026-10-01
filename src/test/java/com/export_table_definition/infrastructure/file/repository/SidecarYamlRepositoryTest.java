@@ -155,7 +155,7 @@ public class SidecarYamlRepositoryTest {
     ForeignKeyEntity relation = relations.get(0);
     assertEquals("public", relation.schemaName());
     assertEquals("logs", relation.tableName());
-    assertEquals("user_id", relation.foreignkeyName());
+    assertEquals("user_id", relation.foreignKeyName());
     assertEquals(List.of("user_id"), relation.columnNames());
     assertEquals("public.users", relation.getReferenceSchemaTableName());
     assertEquals(List.of("id"), relation.referenceColumnNames());
@@ -219,7 +219,7 @@ public class SidecarYamlRepositoryTest {
                 """);
 
     assertEquals(
-        "user_id", repository.load(file.toString()).logicalRelations().get(0).foreignkeyName());
+        "user_id", repository.load(file.toString()).logicalRelations().get(0).foreignKeyName());
   }
 
   @Test
@@ -238,7 +238,7 @@ public class SidecarYamlRepositoryTest {
                 """);
 
     assertEquals(
-        "user_id", repository.load(file.toString()).logicalRelations().get(0).foreignkeyName());
+        "user_id", repository.load(file.toString()).logicalRelations().get(0).foreignKeyName());
   }
 
   @Test
@@ -399,7 +399,7 @@ public class SidecarYamlRepositoryTest {
     assertEquals("テーブル備考", users.remarks());
     assertEquals(1, sidecar.logicalRelations().size());
     // 書き誤った関連名（nmae）は読み飛ばし、関連名は自動生成される
-    assertEquals("user_id", sidecar.logicalRelations().get(0).foreignkeyName());
+    assertEquals("user_id", sidecar.logicalRelations().get(0).foreignKeyName());
   }
 
   @Test

@@ -20,15 +20,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義を書き込むクラス */
-public class ObjectListWriterDomainService {
+public class ObjectListWriter {
 
-  private static final Logger logger = LogManager.getLogger(ObjectListWriterDomainService.class);
+  private static final Logger logger = LogManager.getLogger(ObjectListWriter.class);
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final PagedSectionWriter pagedSectionWriter;
 
   @Inject
-  public ObjectListWriterDomainService(
+  public ObjectListWriter(
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver,
       PagedSectionWriter pagedSectionWriter) {

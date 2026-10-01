@@ -5,8 +5,11 @@ import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.Functions;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.Sequences;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.Types;
 import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.sidecar.Sidecar;
 import com.export_table_definition.domain.model.table.TableDetail;
@@ -22,8 +25,8 @@ import com.export_table_definition.domain.model.target.TableScope;
 import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.export.ExportSink;
-import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService;
-import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService.ResolvedForeignKeys;
+import com.export_table_definition.domain.service.target.ExportTargetConsistency;
+import com.export_table_definition.domain.service.target.ExportTargetConsistency.ResolvedForeignKeys;
 import jakarta.inject.Inject;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -37,14 +40,14 @@ import org.apache.logging.log4j.Logger;
  * テーブル定義出力（通常実行）と差分検知（{@code --check}）の双方で共通の処理で、両者の違いは書き出し先の{@link ExportSink}のみ。
  * 対象範囲全体を一度にメモリへ載せないよう、軽量な情報は一括取得し（{@link #fetchTargets}）、
  * テーブル数に比例して重くなる情報はスキーマ・チャンク単位で取得・書き出し・破棄する（{@link #export}）。 取得した情報同士の突き合わせは{@link
- * ExportTargetConsistencyDomainService}に委ねる
+ * ExportTargetConsistency}に委ねる
  */
 final class SchemaExporter {
 
   private static final Logger logger = LogManager.getLogger(SchemaExporter.class);
   private final TableDefinitionRepository repository;
   private final SidecarRepository sidecarRepository;
-  private final ExportTargetConsistencyDomainService consistencyDomainService;
+  private final ExportTargetConsistency consistencyDomainService;
   private final Clock clock;
 
   /**
@@ -54,7 +57,7 @@ final class SchemaExporter {
   SchemaExporter(
       TableDefinitionRepository repository,
       SidecarRepository sidecarRepository,
-      ExportTargetConsistencyDomainService consistencyDomainService,
+      ExportTargetConsistency consistencyDomainService,
       Clock clock) {
     this.repository = repository;
     this.sidecarRepository = sidecarRepository;
@@ -93,7 +96,7 @@ final class SchemaExporter {
         baseInfoEntity,
         tables,
         foreignKeys,
-        triggerEntityList,
+        Triggers.of(triggerEntityList),
         schemaObjects.functions(),
         schemaObjects.sequences(),
         schemaObjects.types(),
@@ -116,7 +119,7 @@ final class SchemaExporter {
    * 物理外部キーとサイドカー由来の論理リレーションを取得し、出力対象のテーブル同士のものへ絞り込むメソッド<br>
    * 外部キーは制約数に比例する軽量な情報のため、テーブルと異なりチャンク化せず対象範囲全体を一括取得する。
    * ER図で他チャンク・他スキーマのテーブルから自テーブルが参照されている関係も正しく解決するには、 特定のチャンクに限定せず全件を保持しておく必要があるため。絞り込みの基準は{@link
-   * ExportTargetConsistencyDomainService#resolveForeignKeys}を参照
+   * ExportTargetConsistency#resolveForeignKeys}を参照
    */
   private ForeignKeys fetchForeignKeys(
       List<String> targetSchemaList,
@@ -165,12 +168,12 @@ final class SchemaExporter {
         outputObjectTypes.contains(OutputObjectType.TYPE)
             ? repository.selectTypeList(targetSchemaList)
             : List.of();
-    return new SchemaObjects(functions, sequences, types);
+    return new SchemaObjects(Functions.of(functions), Sequences.of(sequences), Types.of(types));
   }
 
   /** {@link #fetchSchemaObjects}の取得結果 */
   private record SchemaObjects(
-      List<FunctionEntity> functions, List<SequenceEntity> sequences, List<TypeEntity> types) {}
+      Functions functions, Sequences sequences, Types types) {}
 
   /**
    * 一括取得した情報をもとに、指定された出力形式で書き出すメソッド<br>
@@ -190,7 +193,7 @@ final class SchemaExporter {
 
     // カラム・インデックス・制約は、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
     // これにより、テーブルが1スキーマに集中していても、同時にメモリ保持する詳細情報を最大chunkSize件分に抑える
-    final Triggers triggers = Triggers.of(targets.triggers());
+    final Triggers triggers = targets.triggers().asList();
     targets
         .tables()
         .bySchema()

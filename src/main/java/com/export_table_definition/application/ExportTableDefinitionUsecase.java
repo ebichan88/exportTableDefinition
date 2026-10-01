@@ -4,5 +4,5 @@ package com.export_table_definition.application;
 public interface ExportTableDefinitionUsecase {
 
   /** DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力するメソッド */
-  public void exportTableDefinition(ExportRequest request);
+  public void exportTableDefinition(ExportTableDefinitionRequest request);
 }

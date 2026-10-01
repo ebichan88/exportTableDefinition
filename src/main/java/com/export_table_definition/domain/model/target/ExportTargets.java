@@ -2,14 +2,13 @@ package com.export_table_definition.domain.model.target;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
-import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
-import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
-import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.Functions;
+import com.export_table_definition.domain.model.schemaobject.Sequences;
+import com.export_table_definition.domain.model.schemaobject.Types;
 import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.table.Tables;
-import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.Triggers;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
-import java.util.List;
 
 /**
  * 出力対象のうち、一括取得する軽量な情報の組<br>
@@ -17,8 +16,8 @@ import java.util.List;
  *
  * @param tables 出力対象のテーブル情報のリスト（テーブルの絞り込み済み）
  * @param foreignKeys 出力対象のテーブル同士の外部キー（論理リレーションを含む）
- * @param triggers 対象範囲全体のトリガー情報のリスト
- * @param functions 関数・プロシージャの一覧情報（定義本体を含まない）のリスト
+ * @param triggers 対象範囲全体のトリガー情報
+ * @param functions 関数・プロシージャの一覧情報（定義本体を含まない）
  * @param annotations 対象範囲全体の手動付帯情報
  * @param viewpoints サイドカーYAMLで宣言された観点
  */
@@ -26,9 +25,9 @@ public record ExportTargets(
     BaseInfoEntity baseInfo,
     Tables tables,
     ForeignKeys foreignKeys,
-    List<TriggerEntity> triggers,
-    List<FunctionEntity> functions,
-    List<SequenceEntity> sequences,
-    List<TypeEntity> types,
+    Triggers triggers,
+    Functions functions,
+    Sequences sequences,
+    Types types,
     Annotations annotations,
     Viewpoints viewpoints) {}

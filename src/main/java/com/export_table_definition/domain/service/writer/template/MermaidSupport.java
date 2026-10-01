@@ -73,7 +73,7 @@ public final class MermaidSupport {
         + ' '
         + childId
         + " : \""
-        + fk.foreignkeyName()
+        + fk.foreignKeyName()
         + '"'
         + LINE_SEPARATOR;
   }

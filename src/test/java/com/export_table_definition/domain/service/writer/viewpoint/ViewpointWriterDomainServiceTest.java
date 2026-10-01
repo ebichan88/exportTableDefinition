@@ -26,7 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ViewpointWriterDomainService の観点ページ・観点一覧の出力に関するテスト */
+/** ViewpointWriter の観点ページ・観点一覧の出力に関するテスト */
 public class ViewpointWriterDomainServiceTest {
 
   private static final Path OUT = Path.of("output");
@@ -82,14 +82,14 @@ public class ViewpointWriterDomainServiceTest {
   }
 
   private InMemoryFileRepository fileRepository;
-  private ViewpointWriterDomainService writer;
+  private ViewpointWriter writer;
 
   @BeforeEach
   void setUp() {
     fileRepository = new InMemoryFileRepository();
     final DefaultOutputPathResolver pathResolver = new DefaultOutputPathResolver();
     writer =
-        new ViewpointWriterDomainService(
+        new ViewpointWriter(
             fileRepository, pathResolver, new PagedSectionWriter(fileRepository, pathResolver));
   }
 

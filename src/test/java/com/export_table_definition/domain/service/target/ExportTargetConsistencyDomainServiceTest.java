@@ -16,7 +16,7 @@ import com.export_table_definition.domain.model.target.ConsistencyFinding.Kind;
 import com.export_table_definition.domain.model.target.ConsistencyFinding.Severity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
-import com.export_table_definition.domain.service.target.ExportTargetConsistencyDomainService.ResolvedForeignKeys;
+import com.export_table_definition.domain.service.target.ExportTargetConsistency.ResolvedForeignKeys;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.util.List;
@@ -24,11 +24,11 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ExportTargetConsistencyDomainService の外部キー・論理リレーション・付帯情報の突き合わせに関するテスト */
+/** ExportTargetConsistency の外部キー・論理リレーション・付帯情報の突き合わせに関するテスト */
 public class ExportTargetConsistencyDomainServiceTest {
 
-  private final ExportTargetConsistencyDomainService service =
-      new ExportTargetConsistencyDomainService();
+  private final ExportTargetConsistency service =
+      new ExportTargetConsistency();
 
   private TableEntity table(String schema, String physical) {
     return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");

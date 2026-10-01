@@ -13,7 +13,7 @@ package com.export_table_definition.application;
  * @param rmDist trueの場合、書き込みを開始する前に{@code outputPath}のベースディレクトリを 再帰的に削除する（{@code
  *     --rm-dist}）。削除されたテーブル等の残骸ファイルを残さずに再生成したい場合に指定する
  */
-public record ExportRequest(
+public record ExportTableDefinitionRequest(
     TargetSelection targetSelection,
     String sidecarPath,
     String outputPath,

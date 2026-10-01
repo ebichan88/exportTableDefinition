@@ -1,7 +1,7 @@
 package com.export_table_definition;
 
-import com.export_table_definition.application.CheckDiffRequest;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.config.module.DatabaseDependentModule;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.ConnectionSettings;
@@ -64,7 +64,7 @@ public class ExportTableDefinition {
                 Please wait a moment ...
                 """);
     cliArguments.requireKnownArguments();
-    final ExportRequest request =
+    final ExportTableDefinitionRequest request =
         ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
             .toExportRequest(cliArguments.isRmDist());
     final Injector injector = createInjector();
@@ -91,7 +91,7 @@ public class ExportTableDefinition {
                 Please wait a moment ...
                 """);
     cliArguments.requireKnownArguments();
-    final CheckDiffRequest request =
+    final CheckDocumentDiffRequest request =
         ExportTableDefinitionProperties.load(cliArguments.settingOverrides()).toCheckDiffRequest();
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);

@@ -26,18 +26,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** スキーマ別ER図（全体ER図）とその索引を書き込むクラス */
-public class ErDiagramWriterDomainService {
+public class ErDiagramWriter {
 
   /** ER図の分割ページから本体ページへ戻るリンクの表示名 */
   private static final String ER_DIAGRAM_BACK_LABEL = "ER図へ";
 
-  private static final Logger logger = LogManager.getLogger(ErDiagramWriterDomainService.class);
+  private static final Logger logger = LogManager.getLogger(ErDiagramWriter.class);
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final PagedSectionWriter pagedSectionWriter;
 
   @Inject
-  public ErDiagramWriterDomainService(
+  public ErDiagramWriter(
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver,
       PagedSectionWriter pagedSectionWriter) {

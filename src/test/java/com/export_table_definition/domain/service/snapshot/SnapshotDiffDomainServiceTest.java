@@ -17,13 +17,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** SnapshotDiffDomainService のスナップショット同士の比較に関するテスト */
+/** SnapshotDiff のスナップショット同士の比較に関するテスト */
 public class SnapshotDiffDomainServiceTest {
 
   private static final String TABLES = "testdb/public/tables.jsonl";
 
-  private final SnapshotDiffDomainService service =
-      new SnapshotDiffDomainService(
+  private final SnapshotDiff service =
+      new SnapshotDiff(
           new LocalFileRepository(),
           new DefaultOutputPathResolver(),
           new JacksonSnapshotSerializer(),

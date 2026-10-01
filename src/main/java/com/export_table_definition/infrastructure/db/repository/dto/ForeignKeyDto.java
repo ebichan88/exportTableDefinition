@@ -8,7 +8,7 @@ import com.export_table_definition.domain.model.relation.RelationType;
 public record ForeignKeyDto(
     String schemaName,
     String tableName,
-    String foreignkeyName,
+    String foreignKeyName,
     String columnNames,
     String referenceSchemaName,
     String referenceTableName,
@@ -26,7 +26,7 @@ public record ForeignKeyDto(
     return new ForeignKeyEntity(
         schemaName,
         tableName,
-        foreignkeyName,
+        foreignKeyName,
         DtoValues.split(columnNames, ","),
         referenceSchemaName,
         referenceTableName,

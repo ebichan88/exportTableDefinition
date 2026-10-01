@@ -28,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** TableDefinitionWriterDomainService のテーブル一覧・テーブル定義書き込みに関するテスト */
+/** TableDefinitionWriter のテーブル一覧・テーブル定義書き込みに関するテスト */
 public class TableDefinitionWriterDomainServiceTest {
 
   private static final Path OUT = Path.of("output");
@@ -85,7 +85,7 @@ public class TableDefinitionWriterDomainServiceTest {
   }
 
   private InMemoryFileRepository fileRepository;
-  private TableDefinitionWriterDomainService writer;
+  private TableDefinitionWriter writer;
 
   private BaseInfoEntity baseInfo() {
     return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 24));
@@ -103,7 +103,7 @@ public class TableDefinitionWriterDomainServiceTest {
   void setUp() {
     fileRepository = new InMemoryFileRepository();
     writer =
-        new TableDefinitionWriterDomainService(
+        new TableDefinitionWriter(
             fileRepository,
             new DefaultOutputPathResolver(),
             new PagedSectionWriter(fileRepository, new DefaultOutputPathResolver()));

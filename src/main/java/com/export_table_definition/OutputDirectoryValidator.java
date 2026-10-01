@@ -1,7 +1,7 @@
 package com.export_table_definition;
 
-import com.export_table_definition.application.CheckDiffRequest;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.shared.exception.UserCorrectableException;
@@ -37,7 +37,7 @@ class OutputDirectoryValidator {
    *
    * @throws UserCorrectableException 出力先が既存のファイルを指す場合や、{@code --rm-dist}で削除してはならないディレクトリの場合
    */
-  void validate(ExportRequest request) {
+  void validate(ExportTableDefinitionRequest request) {
     final Path outputBaseDir = requireDirectoryOrAbsent(request.outputPath());
     if (request.rmDist() && !outputPathResolver.isRemovableOutputDir(outputBaseDir)) {
       throw new UserCorrectableException(
@@ -53,7 +53,7 @@ class OutputDirectoryValidator {
    *
    * @throws UserCorrectableException 出力先が既存のファイルを指す場合
    */
-  void validate(CheckDiffRequest request) {
+  void validate(CheckDocumentDiffRequest request) {
     requireDirectoryOrAbsent(request.outputPath());
   }
 
