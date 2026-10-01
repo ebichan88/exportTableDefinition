@@ -336,6 +336,9 @@ classDiagram
 
 ## 用語集
 
+「出力対象」は取得した出力するもの（データ）を指し、何を出力するかの条件は「出力対象の絞り込み条件」と呼んで区別する。
+コード上の`target`も同じく、データか条件かを名前で区別する。
+
 | 用語 | READMEでの呼び方・設定項目 | コード上の名前 | 説明 |
 |---|---|---|---|
 | テーブル | テーブル | `TableEntity` | テーブル・ビュー・マテリアライズドビュー（区分は`TableType`） |
@@ -351,13 +354,14 @@ classDiagram
 | サイドカー | サイドカーYAML（`annotationPath`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション＋観点）。コード上のパスは`sidecarPath` |
 | 手動付帯情報 | 手動付帯情報（`tables`） | `Annotations` / `TableAnnotation` | テーブル説明・テーブル備考・カラム備考 |
 | 孤児付帯情報 | 実在しないテーブル・カラムに対する付帯情報 | `ConsistencyFinding.Kind.ORPHAN_*` | リネーム・削除によりDBと乖離した付帯情報 |
-| 出力対象の範囲 | `schema`・`table` | `TableTargetScope` / `TableTargetFilter` | 設定から組み立てる絞り込み条件 |
-| テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableTargetFilter` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法 |
+| 出力対象の絞り込み条件 | `schema`・`table`・`outputObjects` | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲＋出力対象オブジェクト種別。`TargetSelection`は絞り込み条件ではないサイドカーYAMLのパスも合わせて運ぶ |
+| 出力対象の範囲 | `schema`・`table` | `TableTargetScope` | 出力対象の絞り込み条件のうち、テーブルを対象とするもの（スキーマ名＋テーブル名パターン） |
+| テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableTargetFilter` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法。クラス名に`Target`を含むが、出力対象の絞り込みに限らない |
 | 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |
 | 所属テーブル | 観点の所属テーブル | `ViewpointContent.tables` / `Viewpoint.contains` | 観点に含まれるテーブル |
 | 観点外のテーブルとの関連 | 観点外のテーブルとの関連 | `ViewpointContent.outsideRelations` / `ForeignKeys.crossing` | 片端だけが所属テーブルの関連 |
-| 出力対象オブジェクト種別 | `outputObjects` | `OutputObjectType` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型 |
-| 出力対象 | － | `ExportTargets` | 対象範囲全体を一括取得する軽量な情報の組 |
+| 出力対象オブジェクト種別 | `outputObjects` | `OutputObjectType` | 出力対象の絞り込み条件のうち、テーブル以外のPostgreSQL固有オブジェクトを対象とするもの。トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（トリガーはテーブルに属するため、スキーマ直下のオブジェクトとは範囲が異なる） |
+| 出力対象 | － | `ExportTargets` | 出力対象の絞り込み条件を適用して取得した、出力するもの（条件ではなくデータ）。コード上は対象範囲全体を一括取得する軽量な情報の組を指す |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |
 | 突き合わせの指摘 | 警告ログ | `ConsistencyFinding` | 出力対象と関連・付帯情報・観点を突き合わせた結果（孤児付帯情報・除外した関連・一致しない観点のパターン等） |
 | 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`）＋生成日 |

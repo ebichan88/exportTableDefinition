@@ -138,7 +138,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 |---|---|---|
 | CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
 | 設定ファイルの形式（キー・整数。CLI引数で上書きした値を含む） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
-| 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
+| 出力対象の絞り込み条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
 | 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |
 | サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
