@@ -19,7 +19,12 @@ com.export_table_definition.domain.service.path
 com.export_table_definition.domain.service.snapshot
 com.export_table_definition.domain.service.target
 com.export_table_definition.domain.service.writer
+com.export_table_definition.domain.service.writer.erdiagram
+com.export_table_definition.domain.service.writer.objectlist
+com.export_table_definition.domain.service.writer.readme
+com.export_table_definition.domain.service.writer.tabledefinition
 com.export_table_definition.domain.service.writer.template
+com.export_table_definition.domain.service.writer.viewpoint
 com.export_table_definition.infrastructure.db
 com.export_table_definition.infrastructure.db.repository
 com.export_table_definition.infrastructure.db.repository.dto

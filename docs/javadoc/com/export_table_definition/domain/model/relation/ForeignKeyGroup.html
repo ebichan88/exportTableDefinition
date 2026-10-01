@@ -109,7 +109,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exceeds(int)" class="member-name-link">exceeds</a><wbr>(int&nbsp;maxNodes)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exceeds(com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">exceeds</a><wbr>(<a href="NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">ノード数が1枚の図に描画する上限を超えるか判定するメソッド</div>
 </div>
@@ -139,6 +139,12 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(java.util.List)" class="member-name-link">of</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;foreignKeys)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">外部キーのリストからまとまりを生成するメソッド</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#renderingUnder(com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">renderingUnder</a><wbr>(<a href="NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">上限のもとで図を描画するか、描画を省略するかを決めるメソッド<br>
+ 「描くか・省くか」の判断はここに集約し、呼び出し側は結果に従って出力を切り替える</div>
 </div>
 </div>
 </div>
@@ -199,16 +205,22 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="exceeds(int)">
+<section class="detail" id="exceeds(com.export_table_definition.domain.model.relation.NodeLimit)">
 <h3>exceeds</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">exceeds</span><wbr><span class="parameters">(int&nbsp;maxNodes)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">exceeds</span><wbr><span class="parameters">(<a href="NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit)</span></div>
 <div class="block">ノード数が1枚の図に描画する上限を超えるか判定するメソッド</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>maxNodes</code> - 1つの図に描画するノード数の上限。0以下の場合は上限なし</dd>
 <dt>Returns:</dt>
 <dd>上限を超える場合はtrue（上限なしの場合は常にfalse）</dd>
 </dl>
+</section>
+</li>
+<li>
+<section class="detail" id="renderingUnder(com.export_table_definition.domain.model.relation.NodeLimit)">
+<h3>renderingUnder</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a></span>&nbsp;<span class="element-name">renderingUnder</span><wbr><span class="parameters">(<a href="NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit)</span></div>
+<div class="block">上限のもとで図を描画するか、描画を省略するかを決めるメソッド<br>
+ 「描くか・省くか」の判断はここに集約し、呼び出し側は結果に従って出力を切り替える</div>
 </section>
 </li>
 <li>

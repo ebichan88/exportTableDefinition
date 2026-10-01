@@ -107,10 +107,10 @@ loadScripts(document, 'script');</script>
 <div class="block">テーブル定義出力に必要な情報をまとめたレコード<br>
  1テーブル分の「何を出力するか」のみを持ち、出力先（ディレクトリ）は出力形式ごとの書き込み側が持つ</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="TableTargetScope.html" title="class in com.export_table_definition.domain.model.target">TableTargetScope</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="TableScope.html" title="class in com.export_table_definition.domain.model.target">TableScope</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト<br>
- 実行設定（<code>schema=</code>・<code>table=</code>）から1回だけ生成し、以降は<a href="TableTargetScope.html#matches(com.export_table_definition.domain.model.table.TableEntity)"><code>TableTargetScope.matches(TableEntity)</code></a>で 各テーブルを判定する。<a href="../table/TableTargetFilter.html" title="class in com.export_table_definition.domain.model.table"><code>TableTargetFilter</code></a>はテーブル名パターンのみを扱うため、スキーマ名リストとの 組み合わせ判定（どちらか一方のみ指定・両方指定・両方未指定）はこのクラスが担う</div>
+ 実行設定（<code>schema=</code>・<code>table=</code>）から1回だけ生成し、以降は<a href="TableScope.html#matches(com.export_table_definition.domain.model.table.TableEntity)"><code>TableScope.matches(TableEntity)</code></a>で 各テーブルを判定する。<a href="../table/TableNamePatterns.html" title="class in com.export_table_definition.domain.model.table"><code>TableNamePatterns</code></a>はテーブル名パターンのみを扱うため、スキーマ名リストとの 組み合わせ判定（どちらか一方のみ指定・両方指定・両方未指定）はこのクラスが担う</div>
 </div>
 </div>
 </div>

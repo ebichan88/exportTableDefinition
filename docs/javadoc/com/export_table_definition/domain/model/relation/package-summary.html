@@ -93,43 +93,60 @@ loadScripts(document, 'script');</script>
  「親1件につき子が1件以上存在すること」はテーブル定義では表現できないため、子側が「1以上」となることはない。<br>
  なお論理リレーション（<a href="RelationType.html#LOGICAL"><code>RelationType.LOGICAL</code></a>）はDBに制約が存在しないため上記の機械的判定ができない。 この場合はサイドカーYAMLでの明示指定（<a href="Cardinality.html#fromLabel(java.lang.String)"><code>Cardinality.fromLabel(String)</code></a>）か、既定値の1対多が用いられる</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">外部キーのまとまりをER図として描画するか、描画を省略して外部キー一覧にフォールバックするかの判断結果<br>
+ 上限との比較は<a href="ForeignKeyGroup.html#renderingUnder(com.export_table_definition.domain.model.relation.NodeLimit)"><code>ForeignKeyGroup.renderingUnder(com.export_table_definition.domain.model.relation.NodeLimit)</code></a>が1回だけ行い、Writer・テンプレートはこの結果に従う</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="DiagramRendering.Draw.html" title="class in com.export_table_definition.domain.model.relation">DiagramRendering.Draw</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="block">ER図として描画する（外部キーが無く、描画するものが無い場合を含む）</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="DiagramRendering.Omit.html" title="class in com.export_table_definition.domain.model.relation">DiagramRendering.Omit</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">ノード数が上限を超えるため描画を省略し、代わりに外部キー一覧を掲載する</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">外部キー情報に関するrecordクラス<br>
  DBに実在する外部キー制約（<a href="RelationType.html#PHYSICAL"><code>RelationType.PHYSICAL</code></a>）と、サイドカーYAMLで宣言された 論理リレーション（<a href="RelationType.html#LOGICAL"><code>RelationType.LOGICAL</code></a>）の双方を表す。 両者はER図では同じグラフ上に描画されるが、掲載セクションと線種によって区別される</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ForeignKeyGroup.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroup</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ForeignKeyGroup.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroup</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">1枚のER図に描画する外部キーのまとまりを扱うクラス<br>
  スキーマ単位のER図全体、または連結成分をまとめ直したグループ（<a href="ForeignKeyGroups.html" title="class in com.export_table_definition.domain.model.relation"><code>ForeignKeyGroups</code></a>参照）を表す。
  図に登場するテーブル（ノード）の算出と、図の規模に関わる判定（ノード数の上限超過・主なテーブル）を提供する</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ForeignKeyGroups.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroups</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ForeignKeyGroups.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroups</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">外部キーの繋がりからテーブルのまとまり（連結成分）を求めるクラス<br>
  スキーマ単位のER図が1枚に収まらない場合に、外部キーで繋がったテーブルのまとまりごとに 図を分割し、1枚に収まる範囲でまとめ直すために利用する。
  入力がコレクション全体ではなくスキーマ単位の部分集合となるため、 <a href="ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation"><code>ForeignKeys</code></a>のメソッドではなく独立したクラスとしている</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="ForeignKeyGroups.PageComposition.html" title="interface in com.export_table_definition.domain.model.relation">ForeignKeyGroups.PageComposition</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ForeignKeyGroups.PageComposition.html" title="interface in com.export_table_definition.domain.model.relation">ForeignKeyGroups.PageComposition</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">1スキーマ分のER図として出力するページ構成<br>
- <a href="ForeignKeyGroups.html#compose(java.util.List,int)"><code>ForeignKeyGroups.compose(java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, int)</code></a>が1回で決定し、呼び出し側（Writer）はこの結果に応じて書き込み先を振り分けるだけでよい</div>
+ <a href="ForeignKeyGroups.html#compose(java.util.List,com.export_table_definition.domain.model.relation.NodeLimit)"><code>ForeignKeyGroups.compose(java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, com.export_table_definition.domain.model.relation.NodeLimit)</code></a>が1回で決定し、呼び出し側（Writer）はこの結果に応じて書き込み先を振り分けるだけでよい</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="ForeignKeyGroups.PageComposition.Grouped.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroups.PageComposition.Grouped</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="ForeignKeyGroups.PageComposition.Grouped.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroups.PageComposition.Grouped</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">連結成分を1枚に収まる範囲でまとめ直した、複数ページへの分割構成</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab4"><a href="ForeignKeyGroups.PageComposition.Single.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroups.PageComposition.Single</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab4">
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="ForeignKeyGroups.PageComposition.Single.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroups.PageComposition.Single</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
 <div class="block">分割せず1枚のページに収める構成<br>
  <code>group</code>のノード数が上限を超える場合もあり得る（連結成分単独で上限を超え、これ以上分割できない場合）。
  その場合、ページ側はER図の描画を省略し外部キー一覧にフォールバックする</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">外部キー情報の集合を扱うクラス<br>
  DBに実在する外部キー制約と、サイドカーYAML由来の論理リレーションを同一の集合として保持する。 ER図はテーブル間の関連をまとめて描く必要があるため両者を区別せず扱い、
  テーブル定義書のセクションは<a href="ForeignKeys.html#physicalOf(com.export_table_definition.domain.model.table.TableEntity)"><code>ForeignKeys.physicalOf(TableEntity)</code></a>／<a href="ForeignKeys.html#logicalOf(com.export_table_definition.domain.model.table.TableEntity)"><code>ForeignKeys.logicalOf(TableEntity)</code></a>で 由来ごとに取り出して掲載する</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">1枚のER図に描画するノード数（テーブル数）の上限を表す値オブジェクト</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab3"><a href="RelationType.html" title="enum class in com.export_table_definition.domain.model.relation">RelationType</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab3">

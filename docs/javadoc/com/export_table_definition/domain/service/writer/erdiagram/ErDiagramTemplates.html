@@ -5,7 +5,7 @@
 <title>ErDiagramTemplates (exportTableDefinition 1.0-SNAPSHOT API)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="description" content="declaration: package: com.export_table_definition.domain.service.writer.template, class: ErDiagramTemplates">
+<meta name="description" content="declaration: package: com.export_table_definition.domain.service.writer.erdiagram, class: ErDiagramTemplates">
 <meta name="generator" content="javadoc/ClassWriterImpl">
 <link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
 <link rel="stylesheet" type="text/css" href="../../../../../../script-dir/jquery-ui.min.css" title="Style">
@@ -81,20 +81,20 @@ loadScripts(document, 'script');</script>
 <main role="main">
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
-<div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">com.export_table_definition.domain.service.writer.template</a></div>
+<div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">com.export_table_definition.domain.service.writer.erdiagram</a></div>
 <h1 title="Class ErDiagramTemplates" class="title">Class ErDiagramTemplates</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">com.export_table_definition.domain.service.writer.template.ErDiagramTemplates</div>
+<div class="inheritance">com.export_table_definition.domain.service.writer.erdiagram.ErDiagramTemplates</div>
 </div>
 <section class="class-description" id="class-description">
 <hr>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">ErDiagramTemplates</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">スキーマ単位のER図（全体ER図）書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
- テーブル単位のER図（<a href="TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)"><code>TableDefinitionTemplates.erDiagram(com.export_table_definition.domain.model.table.TableEntity, java.util.List&lt;com.export_table_definition.domain.model.table.ColumnEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;)</code></a>）とは異なり、
+ テーブル単位のER図（<a href="../tabledefinition/TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)"><code>TableDefinitionTemplates.erDiagram(com.export_table_definition.domain.model.table.TableEntity, java.util.List&lt;com.export_table_definition.domain.model.table.ColumnEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;)</code></a>）とは異なり、
  すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
- 表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
+ 表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="../tabledefinition/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
 </section>
 <section class="summary">
 <ul class="summary-list">
@@ -152,13 +152,13 @@ loadScripts(document, 'script');</script>
  Mermaidの<code>click</code>構文はGitHub上では無効化されるため、図中のノードからの導線をこの一覧で代替する</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#erDiagram(com.export_table_definition.domain.model.relation.ForeignKeyGroup,int)" class="member-name-link">erDiagram</a><wbr>(<a href="../../../model/relation/ForeignKeyGroup.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroup</a>&nbsp;group,
- int&nbsp;maxNodes)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)" class="member-name-link">erDiagram</a><wbr>(<a href="../../../model/relation/DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a>&nbsp;rendering)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">ER図セクション（Mermaid記法）<br>
  外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧<code>
  tableList_{DB名}.md</code>側に掲載されている）。<br>
- ノード数が上限を超える場合はMermaidの描画を諦め、その旨のメッセージのみを返す （代替として掲載する外部キー一覧は呼び出し側が組み立てる）</div>
+ 描画を省略する判断結果（<a href="../../../model/relation/DiagramRendering.Omit.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramRendering.Omit</code></a>）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
+ （代替として掲載する外部キー一覧は呼び出し側が組み立てる）</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#fileHeader(java.lang.String,com.export_table_definition.domain.model.database.BaseInfoEntity)" class="member-name-link">fileHeader</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;title,
@@ -183,8 +183,8 @@ loadScripts(document, 'script');</script>
 <div class="block">外部キー一覧セクションの1行分</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#groupedMessage(int,int,int)" class="member-name-link">groupedMessage</a><wbr>(int&nbsp;nodeCount,
- int&nbsp;maxNodes,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#groupedMessage(int,com.export_table_definition.domain.model.relation.NodeLimit,int)" class="member-name-link">groupedMessage</a><wbr>(int&nbsp;nodeCount,
+ <a href="../../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit,
  int&nbsp;groupCount)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">ER図をグループに分割した場合の、スキーマページに掲載する説明セクション</div>
@@ -320,25 +320,21 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="erDiagram(com.export_table_definition.domain.model.relation.ForeignKeyGroup,int)">
+<section class="detail" id="erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)">
 <h3>erDiagram</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">erDiagram</span><wbr><span class="parameters">(<a href="../../../model/relation/ForeignKeyGroup.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroup</a>&nbsp;group,
- int&nbsp;maxNodes)</span></div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">erDiagram</span><wbr><span class="parameters">(<a href="../../../model/relation/DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a>&nbsp;rendering)</span></div>
 <div class="block">ER図セクション（Mermaid記法）<br>
  外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧<code>
  tableList_{DB名}.md</code>側に掲載されている）。<br>
- ノード数が上限を超える場合はMermaidの描画を諦め、その旨のメッセージのみを返す （代替として掲載する外部キー一覧は呼び出し側が組み立てる）</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>maxNodes</code> - 1つの図に描画するノード数の上限。0以下の場合は上限なし</dd>
-</dl>
+ 描画を省略する判断結果（<a href="../../../model/relation/DiagramRendering.Omit.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramRendering.Omit</code></a>）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
+ （代替として掲載する外部キー一覧は呼び出し側が組み立てる）</div>
 </section>
 </li>
 <li>
-<section class="detail" id="groupedMessage(int,int,int)">
+<section class="detail" id="groupedMessage(int,com.export_table_definition.domain.model.relation.NodeLimit,int)">
 <h3>groupedMessage</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">groupedMessage</span><wbr><span class="parameters">(int&nbsp;nodeCount,
- int&nbsp;maxNodes,
+ <a href="../../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit,
  int&nbsp;groupCount)</span></div>
 <div class="block">ER図をグループに分割した場合の、スキーマページに掲載する説明セクション</div>
 </section>
