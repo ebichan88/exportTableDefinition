@@ -27,7 +27,8 @@ public final class Viewpoint {
   private final String description;
   private final TableNamePatterns tableNamePatterns;
 
-  private Viewpoint(String id, String name, String description, TableNamePatterns tableNamePatterns) {
+  private Viewpoint(
+      String id, String name, String description, TableNamePatterns tableNamePatterns) {
     this.id = id;
     this.name = name;
     this.description = description;

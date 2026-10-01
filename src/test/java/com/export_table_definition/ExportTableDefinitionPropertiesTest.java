@@ -32,7 +32,7 @@ public class ExportTableDefinitionPropertiesTest {
     assertFalse(request.targetSelection().tableScope().isFiltered());
     assertEquals(
         EnumSet.allOf(OutputObjectType.class), request.targetSelection().outputObjectTypes());
-    assertEquals("", request.targetSelection().sidecarPath());
+    assertEquals("", request.sidecarPath());
     assertEquals("", request.outputPath());
     assertEquals(3000, request.chunkSize());
     assertEquals(80, request.erDiagramMaxNodes());
@@ -60,7 +60,7 @@ public class ExportTableDefinitionPropertiesTest {
     assertFalse(blank.targetSelection().tableScope().isFiltered());
     assertEquals(
         omitted.targetSelection().outputObjectTypes(), blank.targetSelection().outputObjectTypes());
-    assertEquals(omitted.targetSelection().sidecarPath(), blank.targetSelection().sidecarPath());
+    assertEquals(omitted.sidecarPath(), blank.sidecarPath());
     assertEquals(omitted.outputPath(), blank.outputPath());
     assertEquals(omitted.chunkSize(), blank.chunkSize());
     assertEquals(omitted.erDiagramMaxNodes(), blank.erDiagramMaxNodes());
@@ -89,7 +89,7 @@ public class ExportTableDefinitionPropertiesTest {
     assertEquals(
         Set.of(OutputObjectType.TRIGGER, OutputObjectType.FUNCTION),
         request.targetSelection().outputObjectTypes());
-    assertEquals("conf/annotations.yml", request.targetSelection().sidecarPath());
+    assertEquals("conf/annotations.yml", request.sidecarPath());
     assertTrue(request.rmDist());
   }
 

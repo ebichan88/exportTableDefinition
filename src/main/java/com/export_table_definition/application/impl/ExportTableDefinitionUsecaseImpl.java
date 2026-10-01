@@ -45,7 +45,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
   @Override
   public void exportTableDefinition(ExportRequest request) {
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
-    final ExportTargets targets = schemaExporter.fetchTargets(request.targetSelection());
+    final ExportTargets targets =
+        schemaExporter.fetchTargets(request.targetSelection(), request.sidecarPath());
     if (request.rmDist()) {
       // 削除は一括取得（サイドカーの読み込みを含む）に成功してから行う。
       // 取得に失敗した場合に、既存の出力だけが削除されて何も残らない状態にしないため

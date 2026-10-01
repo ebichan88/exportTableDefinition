@@ -154,8 +154,7 @@ class TableScopeTest {
     @DisplayName("schemaNames: 前後の空白を除去し、空要素を除いたスキーマ名を返す")
     void testSchemaNamesAreStripped() {
       // 「schema=public, test_schema」のようにカンマの後へ空白を入れた場合を想定する
-      TableScope scope =
-          TableScope.of(Arrays.asList("public", " test_schema", ""), null);
+      TableScope scope = TableScope.of(Arrays.asList("public", " test_schema", ""), null);
 
       assertEquals(List.of("public", "test_schema"), scope.schemaNames());
       assertTrue(scope.matches(table()));

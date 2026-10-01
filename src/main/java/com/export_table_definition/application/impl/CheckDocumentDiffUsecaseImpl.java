@@ -46,7 +46,8 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
     final Path committedDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
     try {
-      final ExportTargets targets = schemaExporter.fetchTargets(request.targetSelection());
+      final ExportTargets targets =
+          schemaExporter.fetchTargets(request.targetSelection(), request.sidecarPath());
       schemaExporter.export(
           targets, List.of(snapshotSinkFactory.create(generatedDir)), request.chunkSize());
       return snapshotDiffDomainService.compare(

@@ -5,8 +5,11 @@ package com.export_table_definition.application;
  * {@link ExportRequest}と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}を持たず、
  * 書き込み前の出力先削除も行わないため{@code rmDist}も持たない
  *
- * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）
+ * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects）
+ * @param sidecarPath サイドカーYAML（手動付帯情報・論理リレーション・観点）のパス（プロパティ{@code annotationPath}の値）。
+ *     空・未指定の場合はマージを行わない
  * @param outputPath 比較対象となる、既にコミット済みのドキュメントが配置されたパス
  * @param chunkSize 詳細情報をまとめて取得するテーブル数の上限。0以下の場合はスキーマ単位で分割せず取得する
  */
-public record CheckDiffRequest(TargetSelection targetSelection, String outputPath, int chunkSize) {}
+public record CheckDiffRequest(
+    TargetSelection targetSelection, String sidecarPath, String outputPath, int chunkSize) {}

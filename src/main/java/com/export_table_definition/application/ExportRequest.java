@@ -4,7 +4,9 @@ package com.export_table_definition.application;
  * テーブル定義出力（通常実行）のユースケースへの入力をまとめたrecord<br>
  * エントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さずそのまま通過する
  *
- * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）
+ * @param targetSelection 出力対象の絞り込み条件（スキーマ・テーブル・outputObjects）
+ * @param sidecarPath サイドカーYAML（手動付帯情報・論理リレーション・観点）のパス（プロパティ{@code annotationPath}の値）。
+ *     空・未指定の場合はマージを行わない
  * @param outputPath テーブル定義出力の出力先のパス
  * @param chunkSize 詳細情報（カラム・インデックス・制約・外部キー）をまとめて取得するテーブル数の上限。 0以下の場合はスキーマ単位で分割せず取得する
  * @param erDiagramMaxNodes スキーマ別ER図1枚に描画するノード数の上限。超過した場合はER図の代わりに 外部キーの一覧表を出力する。0以下の場合は上限なし
@@ -13,6 +15,7 @@ package com.export_table_definition.application;
  */
 public record ExportRequest(
     TargetSelection targetSelection,
+    String sidecarPath,
     String outputPath,
     int chunkSize,
     int erDiagramMaxNodes,

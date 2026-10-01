@@ -22,7 +22,7 @@ public class TargetSelectionTest {
   @DisplayName("of: 出力対象オブジェクト種別名を種別の集合へ変換する")
   void testOfParsesOutputObjectTypes() {
     TargetSelection selection =
-        TargetSelection.of(List.of(), List.of(), List.of("trigger", "function"), null);
+        TargetSelection.of(List.of(), List.of(), List.of("trigger", "function"));
 
     assertEquals(
         Set.of(OutputObjectType.TRIGGER, OutputObjectType.FUNCTION), selection.outputObjectTypes());
@@ -31,7 +31,7 @@ public class TargetSelectionTest {
   @Test
   @DisplayName("of: 出力対象オブジェクト種別が未指定の場合は全種別を対象とする")
   void testOfDefaultsToAllOutputObjectTypes() {
-    TargetSelection selection = TargetSelection.of(List.of(), List.of(), List.of(), null);
+    TargetSelection selection = TargetSelection.of(List.of(), List.of(), List.of());
 
     assertEquals(EnumSet.allOf(OutputObjectType.class), selection.outputObjectTypes());
   }
@@ -42,21 +42,19 @@ public class TargetSelectionTest {
     IllegalArgumentException e =
         assertThrows(
             IllegalArgumentException.class,
-            () -> TargetSelection.of(List.of(), List.of(), List.of("trigers"), null));
+            () -> TargetSelection.of(List.of(), List.of(), List.of("trigers")));
     assertTrue(e.getMessage().contains("trigers"));
   }
 
   @Test
   @DisplayName("of: スキーマ・テーブルの指定から出力対象の範囲を組み立てる")
-  void testOfBuildsTargetScope() {
-    TargetSelection selection =
-        TargetSelection.of(List.of("sample"), List.of("!tmp_*"), List.of(), "sidecar.yml");
+  void testOfBuildsTableScope() {
+    TargetSelection selection = TargetSelection.of(List.of("sample"), List.of("!tmp_*"), List.of());
 
     assertEquals(List.of("sample"), selection.tableScope().schemaNames());
     assertTrue(selection.tableScope().matches(table("sample", "employee")));
     assertFalse(selection.tableScope().matches(table("sample", "tmp_work")));
     assertFalse(selection.tableScope().matches(table("public", "employee")));
-    assertEquals("sidecar.yml", selection.sidecarPath());
   }
 
   @Test
@@ -65,7 +63,7 @@ public class TargetSelectionTest {
     IllegalArgumentException e =
         assertThrows(
             IllegalArgumentException.class,
-            () -> TargetSelection.of(List.of(), List.of("sample."), List.of("trigers"), null));
+            () -> TargetSelection.of(List.of(), List.of("sample."), List.of("trigers")));
 
     List<String> lines = e.getMessage().lines().toList();
     assertEquals(2, lines.size());
