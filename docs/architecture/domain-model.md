@@ -336,8 +336,7 @@ classDiagram
 
 ## 用語集
 
-「出力対象」は取得した出力するもの（データ）を指し、何を出力するかの条件は「出力対象の絞り込み条件」と呼んで区別する。
-コード上の`target`も同じく、データか条件かを名前で区別する。
+「出力対象」は取得した出力するもの（データ。`ExportTargets`）を指し、何を出力するかの条件は「出力対象の絞り込み条件」と呼んで区別する。
 
 | 用語 | READMEでの呼び方・設定項目 | コード上の名前 | 説明 |
 |---|---|---|---|
@@ -354,9 +353,9 @@ classDiagram
 | サイドカー | サイドカーYAML（`annotationPath`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション＋観点）。コード上のパスは`sidecarPath` |
 | 手動付帯情報 | 手動付帯情報（`tables`） | `Annotations` / `TableAnnotation` | テーブル説明・テーブル備考・カラム備考 |
 | 孤児付帯情報 | 実在しないテーブル・カラムに対する付帯情報 | `ConsistencyFinding.Kind.ORPHAN_*` | リネーム・削除によりDBと乖離した付帯情報 |
-| 出力対象の絞り込み条件 | `schema`・`table`・`outputObjects` | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲＋出力対象オブジェクト種別。`TargetSelection`は絞り込み条件ではないサイドカーYAMLのパスも合わせて運ぶ |
+| 出力対象の絞り込み条件 | `schema`・`table`・`outputObjects` | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲（`TableScope`）＋出力対象オブジェクト種別（`OutputObjectType`）。サイドカーYAMLのパスは条件ではなく入力元のため含めず、要求（`ExportRequest`・`CheckDiffRequest`）が別に持つ |
 | 出力対象の範囲 | `schema`・`table` | `TableScope` | 出力対象の絞り込み条件のうち、テーブルを対象とするもの（スキーマ名＋テーブル名パターン） |
-| テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableNamePatterns` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法。クラス名に`Target`を含むが、出力対象の絞り込みに限らない |
+| テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableNamePatterns` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法 |
 | 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |
 | 所属テーブル | 観点の所属テーブル | `ViewpointContent.tables` / `Viewpoint.contains` | 観点に含まれるテーブル |
 | 観点外のテーブルとの関連 | 観点外のテーブルとの関連 | `ViewpointContent.outsideRelations` / `ForeignKeys.crossing` | 片端だけが所属テーブルの関連 |

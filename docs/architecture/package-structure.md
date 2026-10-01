@@ -31,7 +31,7 @@
 | `application` | `ExportTableDefinitionUsecase` | テーブル定義出力（通常実行）のユースケースのインターフェース（`exportTableDefinition`） |
 | | `CheckDocumentDiffUsecase` | DB vs ドキュメントの差分検知（`--check`モード）のユースケースのインターフェース（`checkDocumentDiff`） |
 | | `ExportRequest`, `CheckDiffRequest` | 各ユースケースメソッドへの入力をまとめたrecord。エントリーポイント→コントローラー→ユースケースを分解・再構築せず通過する。`CheckDiffRequest`はMarkdownの描画・ER図の生成を行わないため`erDiagramMaxNodes`・`rmDist`を持たない |
-| | `TargetSelection` | 両requestが持つ出力対象の絞り込み条件（`TableScope`・`OutputObjectType`の集合・サイドカーYAMLのパス）のrecord。`of()`で設定値の文字列を入口で型へ変換・検証する（テーブル名パターンと出力対象オブジェクト種別の誤りはまとめて報告する） |
+| | `TargetSelection` | 両requestが持つ出力対象の絞り込み条件（`TableScope`・`OutputObjectType`の集合）のrecord。`of()`で設定値の文字列を入口で型へ変換・検証する（テーブル名パターンと出力対象オブジェクト種別の誤りはまとめて報告する） |
 | `application.impl` | `ExportTableDefinitionUsecaseImpl` | 通常実行のユースケース実装。MarkdownとスナップショットのExportSinkを渡して`SchemaExporter`に取得・書き出しさせる。`--rm-dist`の削除は取得の成功後に行う（削除してよい出力先かは、入口の`OutputDirectoryValidator`が検証済み） |
 | | `CheckDocumentDiffUsecaseImpl` | 差分検知のユースケース実装。スナップショットの`ExportSink`のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 | | `SchemaExporter`（パッケージプライベート） | 両ユースケースが共有する、DBからの取得（一括取得・スキーマ単位・チャンク単位）と書き出しの段取り。取得（`fetchTargets`）と出力（`export`）を分け、書き出しは出力形式ごとの`ExportSink`に、取得した情報同士の突き合わせは`ExportTargetConsistencyDomainService`に委ね、返された指摘（`ConsistencyFinding`）を重要度に応じてログへ出力する。ドキュメントの生成日は`Clock`から与える |
