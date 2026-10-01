@@ -1,23 +1,23 @@
 package com.export_table_definition.domain.model.target;
 
 import com.export_table_definition.domain.model.table.TableEntity;
-import com.export_table_definition.domain.model.table.TableTargetFilter;
+import com.export_table_definition.domain.model.table.TableNamePatterns;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト<br>
  * 実行設定（{@code schema=}・{@code table=}）から1回だけ生成し、以降は{@link #matches(TableEntity)}で 各テーブルを判定する。{@link
- * TableTargetFilter}はテーブル名パターンのみを扱うため、スキーマ名リストとの 組み合わせ判定（どちらか一方のみ指定・両方指定・両方未指定）はこのクラスが担う
+ * TableNamePatterns}はテーブル名パターンのみを扱うため、スキーマ名リストとの 組み合わせ判定（どちらか一方のみ指定・両方指定・両方未指定）はこのクラスが担う
  */
 public final class TableTargetScope {
 
   private final List<String> targetSchemaList;
-  private final TableTargetFilter tableFilter;
+  private final TableNamePatterns tableNamePatterns;
 
-  private TableTargetScope(List<String> targetSchemaList, TableTargetFilter tableFilter) {
+  private TableTargetScope(List<String> targetSchemaList, TableNamePatterns tableNamePatterns) {
     this.targetSchemaList = targetSchemaList;
-    this.tableFilter = tableFilter;
+    this.tableNamePatterns = tableNamePatterns;
   }
 
   /**
@@ -28,7 +28,7 @@ public final class TableTargetScope {
    * @param targetTableList テーブル定義出力対象のテーブルのリスト（ワイルドカード・除外・スキーマ修飾を指定可。 未指定の場合は空リストまたはnull）
    * @return 生成したTableTargetScope
    * @throws IllegalArgumentException テーブル名またはスキーマ名の部分が空のテーブル名パターンが含まれる場合（{@link
-   *     TableTargetFilter#of}）
+   *     TableNamePatterns#of}）
    */
   public static TableTargetScope of(List<String> targetSchemaList, List<String> targetTableList) {
     return new TableTargetScope(
@@ -39,7 +39,7 @@ public final class TableTargetScope {
                 .map(String::strip)
                 .filter(schemaName -> !schemaName.isEmpty())
                 .toList(),
-        TableTargetFilter.of(targetTableList));
+        TableNamePatterns.of(targetTableList));
   }
 
   /**
@@ -59,7 +59,7 @@ public final class TableTargetScope {
    * @return スキーマ・テーブルのいずれかが1件以上指定されている場合はtrue
    */
   public boolean isFiltered() {
-    return !targetSchemaList.isEmpty() || !tableFilter.isEmpty();
+    return !targetSchemaList.isEmpty() || !tableNamePatterns.isEmpty();
   }
 
   /**
@@ -73,23 +73,23 @@ public final class TableTargetScope {
    * </ul>
    *
    * テーブル名リストはワイルドカード（{@code *}）・除外（先頭に{@code !}）・スキーマ修飾（{@code スキーマ名.テーブル名}）に 対応する。詳細は{@link
-   * TableTargetFilter}を参照
+   * TableNamePatterns}を参照
    *
    * @return 出力対象の範囲に含まれる場合はtrue
    */
   public boolean matches(TableEntity table) {
     final boolean hasSchemaList = !targetSchemaList.isEmpty();
-    final boolean hasTableList = !tableFilter.isEmpty();
+    final boolean hasTableList = !tableNamePatterns.isEmpty();
     if (!hasSchemaList && !hasTableList) {
       return true;
     }
     if (!hasSchemaList) {
-      return tableFilter.matches(table.schemaName(), table.physicalTableName());
+      return tableNamePatterns.matches(table.schemaName(), table.physicalTableName());
     }
     if (!hasTableList) {
       return targetSchemaList.contains(table.schemaName());
     }
     return targetSchemaList.contains(table.schemaName())
-        && tableFilter.matches(table.schemaName(), table.physicalTableName());
+        && tableNamePatterns.matches(table.schemaName(), table.physicalTableName());
   }
 }

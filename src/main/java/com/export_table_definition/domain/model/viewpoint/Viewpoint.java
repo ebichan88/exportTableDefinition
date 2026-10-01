@@ -4,7 +4,7 @@ import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
-import com.export_table_definition.domain.model.table.TableTargetFilter;
+import com.export_table_definition.domain.model.table.TableNamePatterns;
 import com.export_table_definition.domain.model.table.Tables;
 import java.util.List;
 import java.util.Set;
@@ -25,13 +25,13 @@ public final class Viewpoint {
   private final String id;
   private final String name;
   private final String description;
-  private final TableTargetFilter tableFilter;
+  private final TableNamePatterns tableNamePatterns;
 
-  private Viewpoint(String id, String name, String description, TableTargetFilter tableFilter) {
+  private Viewpoint(String id, String name, String description, TableNamePatterns tableNamePatterns) {
     this.id = id;
     this.name = name;
     this.description = description;
-    this.tableFilter = tableFilter;
+    this.tableNamePatterns = tableNamePatterns;
   }
 
   /**
@@ -54,8 +54,8 @@ public final class Viewpoint {
               + strippedId
               + "' (use only letters, digits, '-' and '_', because it is used as a file name)");
     }
-    final TableTargetFilter tableFilter = TableTargetFilter.of(tablePatterns);
-    if (!tableFilter.hasInclusion()) {
+    final TableNamePatterns tableNamePatterns = TableNamePatterns.of(tablePatterns);
+    if (!tableNamePatterns.hasInclusion()) {
       throw new IllegalArgumentException(
           "Viewpoint has no table pattern to include (patterns starting with '!' only exclude). [id="
               + strippedId
@@ -66,7 +66,7 @@ public final class Viewpoint {
         strippedId,
         strippedName.isEmpty() ? strippedId : strippedName,
         description == null ? "" : description.strip(),
-        tableFilter);
+        tableNamePatterns);
   }
 
   /**
@@ -102,7 +102,7 @@ public final class Viewpoint {
    * @return 所属する場合はtrue
    */
   public boolean contains(TableEntity table) {
-    return tableFilter.matches(table.schemaName(), table.physicalTableName());
+    return tableNamePatterns.matches(table.schemaName(), table.physicalTableName());
   }
 
   /**
@@ -112,7 +112,7 @@ public final class Viewpoint {
    * @return どのテーブルにも一致しない包含パターン（指定された文字列のまま、指定順）
    */
   public List<String> unmatchedPatterns(Tables tables) {
-    return tableFilter.unmatchedInclusions(tables.asList());
+    return tableNamePatterns.unmatchedInclusions(tables.asList());
   }
 
   /**

@@ -138,7 +138,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 |---|---|---|
 | CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
 | 設定ファイルの形式（キー・整数。CLI引数で上書きした値を含む） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
-| 出力対象の絞り込み条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
+| 出力対象の絞り込み条件（テーブル名パターン・出力対象オブジェクト種別） | `TableNamePatterns.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
 | 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |
 | サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
@@ -344,8 +344,8 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 スキーマ単位・連結成分単位のER図は機械的なまとまりで、人が読む単位（「受注管理」「在庫管理」等）にはならないため、
 サイドカーで宣言した観点ごとにページを出力する。設計上の要点は「**描画対象のテーブルの集合の決め方だけを差し替える**」こと。
 
-- 所属テーブルの指定は、出力対象の範囲（`table=`）と同じテーブル名パターンの記法で書く（`domain.model.table.TableTargetFilter`を共有する）。
-  観点（`domain.model.viewpoint`）はサイドカーより下の層にあるため、`TableTargetFilter`は`target`ではなく`table`に置いている
+- 所属テーブルの指定は、出力対象の範囲（`table=`）と同じテーブル名パターンの記法で書く（`domain.model.table.TableNamePatterns`を共有する）。
+  観点（`domain.model.viewpoint`）はサイドカーより下の層にあるため、`TableNamePatterns`は`target`ではなく`table`に置いている
 - `Viewpoint.resolve()` が、一括取得済みの出力対象（`Tables`・`ForeignKeys`）から所属テーブルと、所属テーブル同士の関連（`ForeignKeys.within()`）・
   観点外のテーブルとの関連（`ForeignKeys.crossing()`）を求める。ER図の描画は`ErDiagramTemplates.erDiagram()`をそのまま使う。
   人が選んだまとまりのため、スキーマ別ER図のようなグループ分割は行わない（上限を超える場合は関連の一覧表に切り替える点は同じ）
