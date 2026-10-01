@@ -1,5 +1,7 @@
 package com.export_table_definition.domain.model.schemaobject;
 
+import com.export_table_definition.domain.model.table.SchemaTableKeyed;
+
 /**
  * 関数・プロシージャ情報に関するrecordクラス
  *
@@ -19,7 +21,12 @@ public record FunctionEntity(
     String functionArguments,
     String functionResult,
     String languageName,
-    String definition) {
+    String definition) implements SchemaTableKeyed {
+
+  @Override
+  public String tableName() {
+    return functionName;
+  }
 
   /**
    * 同じスキーマに同名の関数・プロシージャが複数存在する（オーバーロードされている）か判定するメソッド
@@ -38,4 +45,3 @@ public record FunctionEntity(
   public String getHeaderName() {
     return functionName;
   }
-}
