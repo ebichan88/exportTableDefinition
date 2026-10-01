@@ -86,7 +86,8 @@ final class SchemaExporter {
         fetchForeignKeys(tableScope.schemaNames(), sidecar.logicalRelations(), tables, isFiltered);
     final List<TriggerEntity> triggerEntityList =
         fetchTriggers(tableScope.schemaNames(), outputObjectTypes);
-    final SchemaObjects schemaObjects = fetchSchemaObjects(tableScope.schemaNames(), outputObjectTypes);
+    final SchemaObjects schemaObjects =
+        fetchSchemaObjects(tableScope.schemaNames(), outputObjectTypes);
 
     return new ExportTargets(
         baseInfoEntity,
