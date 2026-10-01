@@ -69,7 +69,6 @@ final class SchemaExporter {
   ExportTargets fetchTargets(TargetSelection targetSelection, String sidecarPath) {
     // スキーマ・テーブルの絞り込み条件（入口で1回だけ組み立て済み。テーブルごとにワイルドカードパターンを解析し直さない）
     final TableScope tableScope = targetSelection.tableScope();
-    final List<String> targetSchemaList = tableScope.schemaNames();
     final boolean isFiltered = tableScope.isFiltered();
     final Set<OutputObjectType> outputObjectTypes = targetSelection.outputObjectTypes();
     // サイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
@@ -78,16 +77,17 @@ final class SchemaExporter {
 
     final BaseInfoEntity baseInfoEntity =
         BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
-    final Tables tables = fetchTables(targetSchemaList, tableScope);
+    final Tables tables = fetchTables(tableScope.schemaNames(), tableScope);
     report(consistencyDomainService.findOrphanTableAnnotations(annotations, tables, isFiltered));
     report(
         consistencyDomainService.findUnmatchedViewpointPatterns(
             sidecar.viewpoints(), tables, isFiltered));
     final ForeignKeys foreignKeys =
-        fetchForeignKeys(targetSchemaList, sidecar.logicalRelations(), tables, isFiltered);
+        fetchForeignKeys(tableScope.schemaNames(), sidecar.logicalRelations(), tables, isFiltered);
     final List<TriggerEntity> triggerEntityList =
-        fetchTriggers(targetSchemaList, outputObjectTypes);
-    final SchemaObjects schemaObjects = fetchSchemaObjects(targetSchemaList, outputObjectTypes);
+        fetchTriggers(tableScope.schemaNames(), outputObjectTypes);
+    final SchemaObjects schemaObjects =
+        fetchSchemaObjects(tableScope.schemaNames(), outputObjectTypes);
 
     return new ExportTargets(
         baseInfoEntity,
