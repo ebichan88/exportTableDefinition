@@ -302,7 +302,7 @@ class PostgresTableDefinitionRepositoryIT {
   }
 
   private static ForeignKeyEntity foreignKey(String foreignKeyName) {
-    return byName(repository.selectForeignKeyList(SAMPLE_SCHEMA), ForeignKeyEntity::foreignkeyName)
+    return byName(repository.selectForeignKeyList(SAMPLE_SCHEMA), ForeignKeyEntity::foreignKeyName)
         .get(foreignKeyName);
   }
 

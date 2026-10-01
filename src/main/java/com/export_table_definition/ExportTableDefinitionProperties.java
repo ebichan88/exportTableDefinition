@@ -1,7 +1,7 @@
 package com.export_table_definition;
 
-import com.export_table_definition.application.CheckDiffRequest;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.config.PropertyLoader;
@@ -165,14 +165,14 @@ final class ExportTableDefinitionProperties {
    *
    * @param rmDist trueの場合、書き込みを開始する前に出力先ディレクトリを再帰的に削除する（{@code --rm-dist}）
    */
-  ExportRequest toExportRequest(boolean rmDist) {
-    return new ExportRequest(
+  ExportTableDefinitionRequest toExportTableDefinitionRequest(boolean rmDist) {
+    return new ExportTableDefinitionRequest(
         targetSelection, sidecarPath, outputPath, chunkSize, erDiagramMaxNodes, rmDist);
   }
 
   /** 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}は含めない */
-  CheckDiffRequest toCheckDiffRequest() {
-    return new CheckDiffRequest(targetSelection, sidecarPath, outputPath, chunkSize);
+  CheckDocumentDiffRequest toCheckDocumentDiffRequest() {
+    return new CheckDocumentDiffRequest(targetSelection, sidecarPath, outputPath, chunkSize);
   }
 
   /**

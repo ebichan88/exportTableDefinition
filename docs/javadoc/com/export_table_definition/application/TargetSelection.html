@@ -99,8 +99,8 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="modifiers">public record </span><span class="element-name type-name-label">TargetSelection</span>(<a href="../domain/model/target/TableScope.html" title="class in com.export_table_definition.domain.model.target">TableScope</a>&nbsp;tableScope, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../domain/model/target/OutputObjectType.html" title="enum class in com.export_table_definition.domain.model.target">OutputObjectType</a>&gt;&nbsp;outputObjectTypes)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">出力対象の絞り込み条件をまとめたrecord<br>
- <a href="ExportRequest.html" title="class in com.export_table_definition.application"><code>ExportRequest</code></a>・<a href="CheckDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の
- 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を 分解・再構築せずそのまま通過させる。<br>
+ <a href="ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application"><code>ExportTableDefinitionRequest</code></a>・<a href="CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDocumentDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を
+ 分解・再構築せずそのまま通過させる。<br>
  設定値は生の文字列のままユースケースへ渡さず、<a href="#of(java.util.List,java.util.List,java.util.List)"><code>of(java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;)</code></a>で入口（エントリーポイント）において型へ変換する。
  未知の出力対象オブジェクト種別などの設定誤りは、DBへの問い合わせや出力先の削除（<code>--rm-dist</code>）より前に検知される</div>
 </section>

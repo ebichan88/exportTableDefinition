@@ -335,7 +335,7 @@
         SELECT
             schema_name AS "schemaName",
             table_name AS "tableName",
-            foreignkey_name AS "foreignkeyName",
+            foreignkey_name AS "foreignKeyName",
             column_names AS "columnNames",
             reference_schema_name AS "referenceSchemaName",
             reference_table_name AS "referenceTableName",

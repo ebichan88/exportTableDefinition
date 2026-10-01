@@ -78,7 +78,7 @@ classDiagram
   class ConstraintEntity
   class TriggerEntity
   class ForeignKeyEntity {
-    String foreignkeyName
+    String foreignKeyName
     List~String~ columnNames
     List~String~ referenceColumnNames
     resolveLogicalRelationName(childColumnNames)$
@@ -260,6 +260,10 @@ classDiagram
     parse(rawList)$
   }
   class ExportTargets
+  class Triggers
+  class Functions
+  class Sequences
+  class Types
   class TableDefinitionContent {
     List~ForeignKeyEntity~ foreignKeys
     List~ForeignKeyEntity~ logicalRelations
@@ -288,10 +292,14 @@ classDiagram
   ExportTargets "1" *-- "1" ForeignKeys
   ExportTargets "1" *-- "1" Annotations
   ExportTargets "1" *-- "1" Viewpoints
-  ExportTargets "1" *-- "0..*" TriggerEntity
-  ExportTargets "1" *-- "0..*" FunctionEntity
-  ExportTargets "1" *-- "0..*" SequenceEntity
-  ExportTargets "1" *-- "0..*" TypeEntity
+  ExportTargets "1" *-- "1" Triggers
+  ExportTargets "1" *-- "1" Functions
+  ExportTargets "1" *-- "1" Sequences
+  ExportTargets "1" *-- "1" Types
+  Triggers "1" o-- "0..*" TriggerEntity
+  Functions "1" o-- "0..*" FunctionEntity
+  Sequences "1" o-- "0..*" SequenceEntity
+  Types "1" o-- "0..*" TypeEntity
   BaseInfoEntity ..> DatabaseEntity : DB名・DBMS種別
   TableDefinitionContent "1" --> "1" TableEntity
   TableDefinitionContent "1" --> "1" TableAnnotation
@@ -305,12 +313,14 @@ classDiagram
   （`TableDetail`）から、1テーブル分の出力内容（`TableDefinitionContent`）を組み立てる。`TableDefinitionContent`は
   参照側の関連を由来ごと（`foreignKeys`＝物理／`logicalRelations`＝論理）に分けて持ち、被参照側（`incomingRelations`）は由来を分けない
 - **突き合わせの指摘（`ConsistencyFinding`）**は、出力対象のテーブルと関連・付帯情報・観点を突き合わせた結果。
-  ドメインサービス（`ExportTargetConsistencyDomainService`）が値として返し、ログ等への出力は呼び出し側（アプリケーション層）が
+  ドメインサービス（`ExportTargetConsistency`）が値として返し、ログ等への出力は呼び出し側（アプリケーション層）が
   重要度（`Severity`）に応じて行う
 - **基本情報（`BaseInfoEntity`）**は、DBのカタログから取得するデータベースの情報（`DatabaseEntity`）にドキュメントの生成日を
   加えたもの。生成日はDBではなくアプリケーションの時計（`Clock`）で決まる
 
 `FunctionEntity`・`SequenceEntity`・`TypeEntity`（`schemaobject`）はテーブルに属さないため、テーブルキーを持たない。
+そのため、それぞれの集合（`Functions`・`Sequences`・`Types`）はテーブルキーでの索引を持たず、取得順のリストだけを保持する
+（トリガーは所属テーブルで引くため、`Triggers`は`AbstractEntities`を継承してテーブルキーの索引も持つ）。
 スナップショット（`snapshot`）は`TableDefinitionContent`等を機械可読な形へ写したもので、図は省略する。
 
 ## 主なルールと、それを持つ場所
@@ -322,11 +332,11 @@ classDiagram
 | 出力対象オブジェクト種別の解釈（未指定なら全種別。未知の種別名は設定誤り） | `OutputObjectType.parse` |
 | 多重度の判定・論理リレーションの多重度の既定値 | `Cardinality.of` / `Cardinality.DEFAULT_FOR_LOGICAL_RELATION` |
 | 論理リレーションの関連名の自動生成（`{列名...}`） | `ForeignKeyEntity.resolveLogicalRelationName` |
-| 関連は参照元・参照先の双方が出力対象のときだけ合流させる（除外した物理外部キーは絞り込み時は指摘しない。論理リレーションは常に指摘する） | `ExportTargetConsistencyDomainService.resolveForeignKeys` |
-| 実在しないテーブル・カラムに対する付帯情報の検出（絞り込み時はテーブルの検出を行わない） | `ExportTargetConsistencyDomainService.findOrphan*` / `TableAnnotation.orphanColumnNames` |
+| 関連は参照元・参照先の双方が出力対象のときだけ合流させる（除外した物理外部キーは絞り込み時は指摘しない。論理リレーションは常に指摘する） | `ExportTargetConsistency.resolveForeignKeys` |
+| 実在しないテーブル・カラムに対する付帯情報の検出（絞り込み時はテーブルの検出を行わない） | `ExportTargetConsistency.findOrphan*` / `TableAnnotation.orphanColumnNames` |
 | 観点の識別子の形式（英数字・`-`・`_`）・所属テーブルの包含パターンが必須・表示名の既定値（識別子） | `Viewpoint.of` |
 | 観点の所属テーブルと、所属テーブル同士の関連・観点外のテーブルとの関連の求め方 | `Viewpoint.resolve` / `ForeignKeys.within` / `ForeignKeys.crossing` |
-| どのテーブルにも一致しない観点のパターンの検出（絞り込み時は検出を行わない） | `ExportTargetConsistencyDomainService.findUnmatchedViewpointPatterns` / `TableNamePatterns.unmatchedInclusions` |
+| どのテーブルにも一致しない観点のパターンの検出（絞り込み時は検出を行わない） | `ExportTargetConsistency.findUnmatchedViewpointPatterns` / `TableNamePatterns.unmatchedInclusions` |
 | ER図のページ構成（上限に収まらなければ連結成分ごとにまとめ直す） | `ForeignKeyGroups.compose` |
 | ER図を描くか、描画を省略して外部キー一覧にフォールバックするか | `ForeignKeyGroup.renderingUnder` / `NodeLimit.isExceededBy` |
 | 一覧ドキュメント（観点一覧を含む）は対象が1件以上あるときだけ出力し、関連ドキュメントとしてリンクする（テーブル一覧は常に出力） | `MarkdownExportSinkFactory.listDocuments` |
@@ -353,7 +363,7 @@ classDiagram
 | サイドカー | サイドカーYAML（`annotationPath`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション＋観点）。コード上のパスは`sidecarPath` |
 | 手動付帯情報 | 手動付帯情報（`tables`） | `Annotations` / `TableAnnotation` | テーブル説明・テーブル備考・カラム備考 |
 | 孤児付帯情報 | 実在しないテーブル・カラムに対する付帯情報 | `ConsistencyFinding.Kind.ORPHAN_*` | リネーム・削除によりDBと乖離した付帯情報 |
-| 出力対象の絞り込み条件 | `schema`・`table`・`outputObjects` | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲（`TableScope`）＋出力対象オブジェクト種別（`OutputObjectType`）。サイドカーYAMLのパスは条件ではなく入力元のため含めず、要求（`ExportRequest`・`CheckDiffRequest`）が別に持つ |
+| 出力対象の絞り込み条件 | `schema`・`table`・`outputObjects` | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲（`TableScope`）＋出力対象オブジェクト種別（`OutputObjectType`）。サイドカーYAMLのパスは条件ではなく入力元のため含めず、要求（`ExportTableDefinitionRequest`・`CheckDocumentDiffRequest`）が別に持つ |
 | 出力対象の範囲 | `schema`・`table` | `TableScope` | 出力対象の絞り込み条件のうち、テーブルを対象とするもの（スキーマ名＋テーブル名パターン） |
 | テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableNamePatterns` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法 |
 | 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |

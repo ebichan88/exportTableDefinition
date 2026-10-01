@@ -2,9 +2,9 @@ package com.export_table_definition.presentation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.application.CheckDiffRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
 import com.export_table_definition.application.CheckDocumentDiffUsecase;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.snapshot.ContentDiff;
@@ -22,22 +22,22 @@ public class ExportTableDefinitionControllerTest {
   /** 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ */
   private static class RecordingUsecase
       implements ExportTableDefinitionUsecase, CheckDocumentDiffUsecase {
-    ExportRequest capturedExportRequest;
-    CheckDiffRequest capturedCheckDiffRequest;
+    ExportTableDefinitionRequest capturedExportTableDefinitionRequest;
+    CheckDocumentDiffRequest capturedCheckDocumentDiffRequest;
     RuntimeException toThrow;
     DiffResult diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
 
     @Override
-    public void exportTableDefinition(ExportRequest request) {
-      this.capturedExportRequest = request;
+    public void exportTableDefinition(ExportTableDefinitionRequest request) {
+      this.capturedExportTableDefinitionRequest = request;
       if (toThrow != null) {
         throw toThrow;
       }
     }
 
     @Override
-    public DiffResult checkDocumentDiff(CheckDiffRequest request) {
-      this.capturedCheckDiffRequest = request;
+    public DiffResult checkDocumentDiff(CheckDocumentDiffRequest request) {
+      this.capturedCheckDocumentDiffRequest = request;
       if (toThrow != null) {
         throw toThrow;
       }
@@ -45,7 +45,7 @@ public class ExportTableDefinitionControllerTest {
     }
   }
 
-  private ExportRequest exportRequest(
+  private ExportTableDefinitionRequest exportRequest(
       List<String> schemaList,
       List<String> tableList,
       String outputPath,
@@ -54,7 +54,7 @@ public class ExportTableDefinitionControllerTest {
       List<String> outputObjectList,
       String sidecarPath,
       boolean rmDist) {
-    return new ExportRequest(
+    return new ExportTableDefinitionRequest(
         TargetSelection.of(schemaList, tableList, outputObjectList),
         sidecarPath,
         outputPath,
@@ -63,14 +63,14 @@ public class ExportTableDefinitionControllerTest {
         rmDist);
   }
 
-  private CheckDiffRequest checkDiffRequest(
+  private CheckDocumentDiffRequest checkDiffRequest(
       List<String> schemaList,
       List<String> tableList,
       String outputPath,
       int chunkSize,
       List<String> outputObjectList,
       String sidecarPath) {
-    return new CheckDiffRequest(
+    return new CheckDocumentDiffRequest(
         TargetSelection.of(schemaList, tableList, outputObjectList),
         sidecarPath,
         outputPath,
@@ -100,12 +100,12 @@ public class ExportTableDefinitionControllerTest {
   }
 
   @Test
-  @DisplayName("execute: 引数（ExportRequest）をそのままユースケースへ渡す")
+  @DisplayName("execute: 引数（ExportTableDefinitionRequest）をそのままユースケースへ渡す")
   void testExecutePassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
     var controller = new ExportTableDefinitionController(usecase, usecase);
 
-    ExportRequest request =
+    ExportTableDefinitionRequest request =
         exportRequest(
             List.of("public"),
             List.of("orders"),
@@ -118,7 +118,7 @@ public class ExportTableDefinitionControllerTest {
 
     controller.execute(request);
 
-    assertSame(request, usecase.capturedExportRequest);
+    assertSame(request, usecase.capturedExportTableDefinitionRequest);
   }
 
   @Test
@@ -191,12 +191,12 @@ public class ExportTableDefinitionControllerTest {
   }
 
   @Test
-  @DisplayName("checkDiff: 引数（CheckDiffRequest）をそのままユースケースへ渡す")
+  @DisplayName("checkDiff: 引数（CheckDocumentDiffRequest）をそのままユースケースへ渡す")
   void testCheckDiffPassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
     var controller = new ExportTableDefinitionController(usecase, usecase);
 
-    CheckDiffRequest request =
+    CheckDocumentDiffRequest request =
         checkDiffRequest(
             List.of("public"),
             List.of("orders"),
@@ -207,7 +207,7 @@ public class ExportTableDefinitionControllerTest {
 
     controller.checkDiff(request);
 
-    assertSame(request, usecase.capturedCheckDiffRequest);
+    assertSame(request, usecase.capturedCheckDocumentDiffRequest);
   }
 
   @Test

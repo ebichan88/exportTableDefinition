@@ -223,7 +223,7 @@ public class TableDefinitionTemplates {
   private static String physicalRelationTableLine(int no, ForeignKeyEntity fk) {
     return row(
         no,
-        fk.foreignkeyName(),
+        fk.foreignKeyName(),
         String.join(",", fk.columnNames()),
         fk.getReferenceSchemaTableName(),
         String.join(",", fk.referenceColumnNames()),

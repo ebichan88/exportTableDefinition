@@ -86,10 +86,10 @@ loadScripts(document, 'script');</script>
  「親1件につき子が1件以上存在すること」はテーブル定義では表現できないため、子側が「1以上」となることはない。<br>
  なお論理リレーション（<a href="com/export_table_definition/domain/model/relation/RelationType.html#LOGICAL"><code>RelationType.LOGICAL</code></a>）はDBに制約が存在しないため上記の機械的判定ができない。 この場合はサイドカーYAMLでの明示指定（<a href="com/export_table_definition/domain/model/relation/Cardinality.html#fromLabel(java.lang.String)"><code>Cardinality.fromLabel(String)</code></a>）か、既定値の1対多が用いられる</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">DB vs ドキュメントの差分検知（<code>--check</code>モード）のユースケースへの入力をまとめたrecord<br>
- <a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application"><code>ExportRequest</code></a>と異なり、Markdownの描画・ER図の生成を行わないため<code>erDiagramMaxNodes</code>を持たず、
+ <a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application"><code>ExportTableDefinitionRequest</code></a>と異なり、Markdownの描画・ER図の生成を行わないため<code>erDiagramMaxNodes</code>を持たず、
  書き込み前の出力先削除も行わないため<code>rmDist</code>も持たない</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/application/CheckDocumentDiffUsecase.html" title="interface in com.export_table_definition.application">CheckDocumentDiffUsecase</a></div>
@@ -215,7 +215,7 @@ loadScripts(document, 'script');</script>
  すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
  表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriterDomainService</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriter</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">スキーマ別ER図（全体ER図）とその索引を書き込むクラス</div>
 </div>
@@ -233,33 +233,33 @@ loadScripts(document, 'script');</script>
 
  なお、JVMが起動できない場合や<code>main()</code>に入る前の失敗は、このツールが捕捉する前にJavaの仕様で1になる</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
-<div class="block">テーブル定義出力（通常実行）のユースケースへの入力をまとめたrecord<br>
- エントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さずそのまま通過する</div>
-</div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export">ExportSink</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export">ExportSink</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
 <div class="block">DBから取得したスキーマ情報を、1つの出力形式（Markdownのドキュメント／スナップショット）で書き出すインタフェース<br>
  取得処理（一括取得・スキーマ単位・チャンク単位）は出力形式に依らず共通のため、ユースケースは取得した順に各メソッドを呼び出し、
  どの情報をどう書き出すかは実装に委ねる。出力先のディレクトリは実装の生成時に決まる</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/ExportTableDefinition.html" title="class in com.export_table_definition">ExportTableDefinition</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/ExportTableDefinition.html" title="class in com.export_table_definition">ExportTableDefinition</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">テーブル定義出力処理を呼び出すクラス<br>
  処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）で起きた例外を<a href="com/export_table_definition/ExportTableDefinition.html#main(java.lang.String%5B%5D)"><code>ExportTableDefinition.main(java.lang.String[])</code></a>の1箇所で捕捉し、 <a href="com/export_table_definition/presentation/FailureReporter.html" title="class in com.export_table_definition.presentation"><code>FailureReporter</code></a>で報告したうえで、終了状態をプロセスの終了コードへ変換する</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/presentation/ExportTableDefinitionController.html" title="class in com.export_table_definition.presentation">ExportTableDefinitionController</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/presentation/ExportTableDefinitionController.html" title="class in com.export_table_definition.presentation">ExportTableDefinitionController</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">テーブル定義出力処理のコントローラークラス<br>
  ユースケースを実行し、結果を表示用のDTOへ変換する。ユースケースの例外は捕捉せずに呼び出し元へ伝える （捕捉はエントリーポイントが1箇所にまとめて行い、報告は<a href="com/export_table_definition/presentation/FailureReporter.html" title="class in com.export_table_definition.presentation"><code>FailureReporter</code></a>が行う）</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/config/module/ExportTableDefinitionModule.html" title="class in com.export_table_definition.config.module">ExportTableDefinitionModule</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/config/module/ExportTableDefinitionModule.html" title="class in com.export_table_definition.config.module">ExportTableDefinitionModule</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">DB種別に依存しない依存関係を束縛するモジュール<br>
  DBへ接続する前（入力の検証の時点）に組み立てるDIコンテナの束縛を定義する。ファイル入出力・出力先パスの解決・ドメインサービス等、
  接続先のDB種別で実装が変わらないものはここに束縛する。DB種別が決まってから束縛するもの（<a href="com/export_table_definition/domain/repository/TableDefinitionRepository.html" title="interface in com.export_table_definition.domain.repository"><code>TableDefinitionRepository</code></a>と、それに依存するユースケース）は、
  このモジュールで組み立てたコンテナの子として<a href="com/export_table_definition/config/module/DatabaseDependentModule.html" title="class in com.export_table_definition.config.module"><code>DatabaseDependentModule</code></a>で束縛する</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="block">テーブル定義出力（通常実行）のユースケースへの入力をまとめたrecord<br>
+ エントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さずそのまま通過する</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html" title="interface in com.export_table_definition.application">ExportTableDefinitionUsecase</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
@@ -270,13 +270,13 @@ loadScripts(document, 'script');</script>
 <div class="block">テーブル定義出力（通常実行）のユースケースクラス<br>
  DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力先へ書き出す。 取得・書き出しの段取りは<code>SchemaExporter</code>に委ねる</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a></div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報）を突き合わせるドメインサービス<br>
  外部キーはスキーマ全体から、サイドカーは出力対象に関係なく読み込むため、出力対象の絞り込みで除外されたテーブルや、
  リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう指摘（<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyFinding</code></a>）として返す。指摘をどこへ出力するか（ログ等）は呼び出し側が決める</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">外部キーの突き合わせ結果</div>
 </div>
@@ -354,169 +354,177 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">関数・プロシージャ情報に関するrecordクラス</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">FunctionSnapshot</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">関数・プロシージャの一覧情報の集合を扱うクラス</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">FunctionSnapshot</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">スキーマのスナップショットのうち、1関数・プロシージャ分の情報を表すrecordクラス<br>
  同名の関数（オーバーロード）は引数で区別する。個別定義ファイル名（連番付き）は Markdownの出力都合で付与しているものなので保持しない</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/infrastructure/db/repository/dto/IndexDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">IndexDto</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/infrastructure/db/repository/dto/IndexDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">IndexDto</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">インデックス情報に関してORMのデータの受け渡しに利用するDTOクラス</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/table/IndexEntity.html" title="class in com.export_table_definition.domain.model.table">IndexEntity</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/table/IndexEntity.html" title="class in com.export_table_definition.domain.model.table">IndexEntity</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">インデックス情報に関するrecordクラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab5"><a href="com/export_table_definition/config/InvalidConfigurationException.html" title="class in com.export_table_definition.config">InvalidConfigurationException</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab5">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab5"><a href="com/export_table_definition/config/InvalidConfigurationException.html" title="class in com.export_table_definition.config">InvalidConfigurationException</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab5">
 <div class="block">設定ファイルの誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外クラス<br>
  利用者が設定を見直せば解消する誤り（<a href="com/export_table_definition/shared/exception/UserCorrectableException.html" title="class in com.export_table_definition.shared.exception"><code>UserCorrectableException</code></a>）のうち、設定ファイルに関するもの。
  呼び出し側は、設定の読み込みで起きる個々の例外（<code>ResourceBundle</code>の例外等）を知らなくても、 この例外だけで設定誤りを判別できる</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/snapshot/JacksonSnapshotSerializer.html" title="class in com.export_table_definition.infrastructure.snapshot">JacksonSnapshotSerializer</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/snapshot/JacksonSnapshotSerializer.html" title="class in com.export_table_definition.infrastructure.snapshot">JacksonSnapshotSerializer</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Jacksonを用いた<a href="com/export_table_definition/domain/service/snapshot/SnapshotSerializer.html" title="interface in com.export_table_definition.domain.service.snapshot"><code>SnapshotSerializer</code></a>の実装クラス<br>
  recordはコンポーネントの宣言順に出力されるため、同じ内容からは常に同じ文字列が得られる。 日本語等の非ASCII文字はエスケープせずそのまま出力する（git diffでの可読性のため）</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/domain/model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/domain/model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
 <div class="block">一覧ドキュメント（<code>{接頭辞}List_{DB名}.md</code>）の種別をもつ列挙型クラス<br>
  一覧ファイル名の接頭辞と一覧のタイトルを保持する。関数・プロシージャ／シーケンス／ユーザー定義型は、 個別定義ファイルを配置するディレクトリ名にも同じ接頭辞を用いる</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/file/repository/LocalFileRepository.html" title="class in com.export_table_definition.infrastructure.file.repository">LocalFileRepository</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/file/repository/LocalFileRepository.html" title="class in com.export_table_definition.infrastructure.file.repository">LocalFileRepository</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">ローカルファイルシステムに対するファイル操作のリポジトリ実装クラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点・README）を書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するクラス</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">各テンプレートクラスで共通して利用するMarkdownの定数・部品を集約したクラス<br>
  改行コードや水平線、「## 基本情報」セクション、タイトル付きファイルヘッダーなど、 複数のテンプレートクラスで内容が重複していたものをここに集約する</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">Mermaid記法の出力に必要な文字列変換を扱う共通ユーティリティクラス<br>
  テーブル単位のER図（<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionTemplates</code></a>）とスキーマ単位のER図（<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram"><code>ErDiagramTemplates</code></a>）の 両方から利用する</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/db/MyBatisSqlSessionFactories.html" title="class in com.export_table_definition.infrastructure.db">MyBatisSqlSessionFactories</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/db/MyBatisSqlSessionFactories.html" title="class in com.export_table_definition.infrastructure.db">MyBatisSqlSessionFactories</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">MyBatisの<code>SqlSessionFactory</code>を生成するクラス<br>
  生成は設定XMLとmapperの解析を伴い重いため、エントリーポイントで1回だけ生成し、DIコンテナを通じて使い回す。 生成するだけでDBへは接続しない（接続はコネクションプールが<code>
  openSession()</code>の時に行う）</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">1枚のER図に描画するノード数（テーブル数）の上限を表す値オブジェクト</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectDefinitionTemplates</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectDefinitionTemplates</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">関数/プロシージャ・シーケンス・ユーザー定義型の個別定義書き込みに利用する Markdownのテンプレートを扱うクラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListTemplates.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListTemplates</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListTemplates.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListTemplates</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧書き込みに利用する Markdownのテンプレートを扱うクラス<br>
  表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義を書き込むクラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/db/repository/OracleTableDefinitionRepository.html" title="class in com.export_table_definition.infrastructure.db.repository">OracleTableDefinitionRepository</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/db/repository/OracleTableDefinitionRepository.html" title="class in com.export_table_definition.infrastructure.db.repository">OracleTableDefinitionRepository</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">[oracle]テーブル定義出力に関するリポジトリクラス</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/domain/model/target/OutputObjectType.html" title="enum class in com.export_table_definition.domain.model.target">OutputObjectType</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/domain/model/target/OutputObjectType.html" title="enum class in com.export_table_definition.domain.model.target">OutputObjectType</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
 <div class="block">出力対象を絞り込めるPostgreSQL固有オブジェクトの種別を表す列挙型</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
 <div class="block">テーブル定義および一覧出力用のパス生成戦略インタフェース <br>
  物理レイアウト（ディレクトリ構造・ファイル命名規則）を抽象化する。Markdownドキュメントのファイル名・配置の規則自体は、 ドキュメント間の相対リンクと共有するため<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path"><code>DocumentLocations</code></a>に定める</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/path/OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/path/OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">出力先ベースディレクトリとデータベース基本情報の組み合わせを表す値オブジェクト<br>
- <code>ExportSink</code>の実装が書き込みを行うたびに組み立て、<code>*WriterDomainService</code>・<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>へそのまま渡す。両者は常に対で必要とされるにもかかわらず、4層以上にわたって 分解・再構築されながら渡されていたため、1つの値オブジェクトにまとめた</div>
+ <code>ExportSink</code>の実装が書き込みを行うたびに組み立て、<code>*Writer</code>・<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>へそのまま渡す。両者は常に対で必要とされるにもかかわらず、4層以上にわたって 分解・再構築されながら渡されていたため、1つの値オブジェクトにまとめた</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/PagedSectionTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">PagedSectionTemplates</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/template/PagedSectionTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">PagedSectionTemplates</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">行数の多い表を複数ページに分割して出力する際に共通で利用するMarkdownのテンプレートを扱うクラス<br>
  GitHub上で表として表示できる行数には上限があるため、一覧系のドキュメントは行数が多い場合に 別ファイルへ分割して出力する。本体ページに載せるリンク一覧と、分割ページのページ送りを扱う</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.html" title="class in com.export_table_definition.domain.service.writer">PagedSectionWriter</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.html" title="class in com.export_table_definition.domain.service.writer">PagedSectionWriter</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">行数の多い表を複数ページに分割して出力する処理を共通化したクラス<br>
  GitHub上で表として表示できる行数には上限があるため、テーブル一覧・ER図・ オブジェクト一覧（トリガー/関数/シーケンス/型）など、行数が多くなり得る一覧系の
  ドキュメントはすべてこのクラスを介して出力する。 行数が上限以下の場合は本体ページに直接埋め込み、超える場合は別ファイルへ分割して
  本体ページにはリンクのみを掲載する。行の文字列生成はページ単位で行い、 全行分を同時にメモリ保持しない</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.PagedSection.html" title="class in com.export_table_definition.domain.service.writer">PagedSectionWriter.PagedSection&lt;T&gt;</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.PagedSection.html" title="class in com.export_table_definition.domain.service.writer">PagedSectionWriter.PagedSection&lt;T&gt;</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">ページ分割対象となる表のセクション</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.PageLayout.html" title="class in com.export_table_definition.domain.service.writer">PagedSectionWriter.PageLayout</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/service/writer/PagedSectionWriter.PageLayout.html" title="class in com.export_table_definition.domain.service.writer">PagedSectionWriter.PageLayout</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">表のセクションを掲載する本体ページと、分割ページの共通部分<br>
  分割ページのファイルパスは本体ページのファイルパスから<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolvePageFile(java.nio.file.Path,int)"><code>OutputPathResolver.resolvePageFile(java.nio.file.Path, int)</code></a>で解決する</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/db/repository/PostgresTableDefinitionRepository.html" title="class in com.export_table_definition.infrastructure.db.repository">PostgresTableDefinitionRepository</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/infrastructure/db/repository/PostgresTableDefinitionRepository.html" title="class in com.export_table_definition.infrastructure.db.repository">PostgresTableDefinitionRepository</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">[Postgres]テーブル定義出力に関するリポジトリクラス</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/presentation/type/ProcessResult.html" title="enum class in com.export_table_definition.presentation.type">ProcessResult</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/presentation/type/ProcessResult.html" title="enum class in com.export_table_definition.presentation.type">ProcessResult</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
 <div class="block">処理結果の種別をもつ列挙型クラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/config/PropertyLoader.html" title="class in com.export_table_definition.config">PropertyLoader</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/config/PropertyLoader.html" title="class in com.export_table_definition.config">PropertyLoader</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block"><code>conf</code>ディレクトリのプロパティファイルを読み込むクラス<br>
  ファイルの探索（<code>conf</code>、無ければ<code>src/main/resources/conf</code>）と読み込みだけを担い、中身をキーと値の組として返す。
  どのキーを書けるか・既定値・値の形式といった設定項目の仕様と検証は、ファイルごとに読み込む側が持つ （<code>
  ExportTableDefinition.properties</code>は<code>ExportTableDefinitionProperties</code>、<code>
  mybatis.properties</code>は<code>MyBatisSqlSessionFactory</code>）</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/readme/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeTemplates</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/readme/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeTemplates</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">データベース単位ディレクトリのREADME書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriterDomainService</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriter.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriter</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">データベース単位ディレクトリのREADMEを書き込むクラス<br>
  複数のデータベースを同じ出力先へ出力した場合に、GitHub等でそのディレクトリを開いた際の入り口となるよう、 出力される一覧ドキュメントへのリンクをまとめる</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/domain/model/relation/RelationType.html" title="enum class in com.export_table_definition.domain.model.relation">RelationType</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab3">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="com/export_table_definition/domain/model/relation/RelationType.html" title="enum class in com.export_table_definition.domain.model.relation">RelationType</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
 <div class="block">テーブル間の関連の由来を表す列挙型<br>
  DBに実在する外部キー制約による関連（物理）と、DBには制約が存在せずサイドカーYAMLで 宣言された関連（論理）を区別する。<br>
  アプリケーション側で参照整合性を担保している等の理由で外部キー制約を張らないDBでは、 カタログから読み取れる関連だけではER図がほとんど空になるため、論理の関連を補って描画する。
  ただし読み手が「DBに制約がある」と誤読しないよう、掲載セクションとER図の線種の双方で区別する</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/presentation/dto/ResultDto.html" title="class in com.export_table_definition.presentation.dto">ResultDto</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/presentation/dto/ResultDto.html" title="class in com.export_table_definition.presentation.dto">ResultDto</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">通常実行の処理結果に関するrecordクラス<br>
  失敗した場合の報告は<a href="com/export_table_definition/presentation/FailureReporter.html" title="class in com.export_table_definition.presentation"><code>FailureReporter</code></a>が組み立てるため、成功した場合の結果のみを表す</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">スキーマのスナップショット（DBから取得したスキーマ情報を構造化した中間表現）を書き込むクラス<br>
  Markdownのテーブル定義書と同じ取得結果から、機械可読なJSON Lines形式（1行1オブジェクト）で出力する。 テーブルはチャンク単位の取得・破棄（<code>
  chunkSize</code>）のメモリプロファイルを変えないよう、 1テーブル書き終えるごとにスキーマ単位のファイルへ追記する</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/domain/model/table/SchemaTableKeyed.html" title="interface in com.export_table_definition.domain.model.table">SchemaTableKeyed</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab1">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="com/export_table_definition/domain/model/table/SchemaTableKeyed.html" title="interface in com.export_table_definition.domain.model.table">SchemaTableKeyed</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
 <div class="block">スキーマ名・テーブル名を持つエンティティに共通の振る舞いを提供するインタフェース</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/infrastructure/db/repository/dto/SequenceDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">SequenceDto</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/infrastructure/db/repository/dto/SequenceDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">SequenceDto</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">シーケンス情報に関してORMのデータの受け渡しに利用するDTOクラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">シーケンス情報に関するrecordクラス</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">シーケンス情報の集合を扱うクラス</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/SequenceSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">SequenceSnapshot</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
@@ -543,7 +551,7 @@ loadScripts(document, 'script');</script>
 <div class="block">サイドカーYAMLから手動付帯情報・論理リレーション・観点を読み込むリポジトリ実装クラス<br>
  想定するYAMLの構造は以下の通り。</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiffDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiffDomainService</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiff.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiff</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">DBから生成したスキーマのスナップショットと、既にコミット済みのスナップショットを比較するドメインサービス<br>
  スキーマ配下のオブジェクトのファイル（<code>tables.jsonl</code>等）は1行1オブジェクトのため、行をオブジェクト単位で突き合わせ、 追加/削除/内容不一致をオブジェクト単位（例:
@@ -594,7 +602,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriterDomainService</a></div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">テーブル一覧・テーブル定義書を書き込むクラス</div>
 </div>
@@ -675,8 +683,8 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/application/TargetSelection.html" title="class in com.export_table_definition.application">TargetSelection</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">出力対象の絞り込み条件をまとめたrecord<br>
- <a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application"><code>ExportRequest</code></a>・<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の
- 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を 分解・再構築せずそのまま通過させる。<br>
+ <a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application"><code>ExportTableDefinitionRequest</code></a>・<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDocumentDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を
+ 分解・再構築せずそのまま通過させる。<br>
  設定値は生の文字列のままユースケースへ渡さず、<a href="com/export_table_definition/application/TargetSelection.html#of(java.util.List,java.util.List,java.util.List)"><code>TargetSelection.of(java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;)</code></a>で入口（エントリーポイント）において型へ変換する。
  未知の出力対象オブジェクト種別などの設定誤りは、DBへの問い合わせや出力先の削除（<code>--rm-dist</code>）より前に検知される</div>
 </div>
@@ -700,17 +708,21 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">ユーザー定義型（ENUM等）情報に関するrecordクラス</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/TypeSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">TypeSnapshot</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">ユーザー定義型情報の集合を扱うクラス</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/snapshot/TypeSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">TypeSnapshot</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">スキーマのスナップショットのうち、1ユーザー定義型分の情報を表すrecordクラス</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/UnifiedDiffGenerator.html" title="class in com.export_table_definition.domain.service">UnifiedDiffGenerator</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/UnifiedDiffGenerator.html" title="class in com.export_table_definition.domain.service">UnifiedDiffGenerator</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">2つの行リストから、unified diff形式（<code>diff -u</code>やgitと同じ表記）の差分を生成するクラス<br>
  Myers法（最短の編集手順を求めるアルゴリズム）で編集距離を求め、前後3行の文脈を付けたhunkを組み立てる。 外部ライブラリに依存しない</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab5"><a href="com/export_table_definition/shared/exception/UserCorrectableException.html" title="class in com.export_table_definition.shared.exception">UserCorrectableException</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab5">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab5"><a href="com/export_table_definition/shared/exception/UserCorrectableException.html" title="class in com.export_table_definition.shared.exception">UserCorrectableException</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab5">
 <div class="block">利用者が設定・入力・実行環境を見直せば解消する誤りを表す例外クラス<br>
  設定の誤り、サイドカーYAMLの構文誤り、DBに接続できない等、このツールの不具合ではない失敗を表す。
  検知した箇所で、何を直せばよいかが分かるメッセージを付けて投げる（元の例外がある場合は原因として渡す）。<br>
@@ -723,31 +735,31 @@ loadScripts(document, 'script');</script>
 
  入口とインフラの双方から投げるため、どの層からも依存できるレイヤーの外（<code>shared.exception</code>）に置く。 ドメインの概念ではないため、ドメイン層には置かない</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoint</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoint</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">観点（業務ドメイン別にテーブルをまとめる切り口）を表すクラス<br>
  スキーマ単位・連結成分単位の機械的なまとまりとは別に、「受注管理」「在庫管理」のような人が読む単位でテーブルを束ね、
  観点ごとのER図と所属テーブルの一覧を出力するために用いる。サイドカーYAMLの<code>viewpoints</code>で宣言する。<br>
  所属テーブルは、出力対象の範囲（<code>table=</code>）と同じテーブル名パターンの記法（ワイルドカード・除外・スキーマ修飾）で指定する</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/viewpoint/ViewpointContent.html" title="class in com.export_table_definition.domain.model.viewpoint">ViewpointContent</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="com/export_table_definition/domain/model/viewpoint/ViewpointContent.html" title="class in com.export_table_definition.domain.model.viewpoint">ViewpointContent</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
 <div class="block">1観点分の出力内容をまとめたレコード<br>
  観点ページ（所属テーブル同士のER図・所属テーブルの一覧・観点外のテーブルとの関連）と、観点一覧のテーブル数の掲載に用いる。 <a href="com/export_table_definition/domain/model/viewpoint/Viewpoint.html#resolve(com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys)"><code>Viewpoint.resolve(com.export_table_definition.domain.model.table.Tables, com.export_table_definition.domain.model.relation.ForeignKeys)</code></a>で組み立てる</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">観点（<a href="com/export_table_definition/domain/model/viewpoint/Viewpoint.html" title="class in com.export_table_definition.domain.model.viewpoint"><code>Viewpoint</code></a>）の集合を扱うクラス<br>
  サイドカーYAMLで宣言された順に保持する（観点一覧・テーブル定義書の「所属する観点」の掲載順）</div>
 </div>
-<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointTemplates</a></div>
-<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointTemplates</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
 <div class="block">観点ページ・観点一覧の書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
  ER図の描画と、テーブル・関連の表の1行分は、スキーマ別ER図（<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram"><code>ErDiagramTemplates</code></a>）と同じものを用いる。
  観点は人が選んだテーブルのまとまりのため、スキーマ別ER図と異なり連結成分によるグループ分割は行わない</div>
 </div>
-<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriterDomainService</a></div>
-<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriter</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">観点ページ（観点ごとのER図・所属テーブル）と観点一覧を書き込むクラス<br>
  利用する情報はテーブル一覧と関連の一覧のみで、テーブル詳細を必要としない（スキーマ別ER図と同じ）</div>
 </div>

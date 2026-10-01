@@ -7,11 +7,11 @@ import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.service.path.OutputRoot;
-import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramWriterDomainService;
-import com.export_table_definition.domain.service.writer.objectlist.ObjectListWriterDomainService;
-import com.export_table_definition.domain.service.writer.readme.ReadmeWriterDomainService;
-import com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionWriterDomainService;
-import com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriterDomainService;
+import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramWriter;
+import com.export_table_definition.domain.service.writer.objectlist.ObjectListWriter;
+import com.export_table_definition.domain.service.writer.readme.ReadmeWriter;
+import com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionWriter;
+import com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriter;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -21,19 +21,19 @@ import java.util.Set;
 /** Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点・README）を書き出す{@link ExportSink}を生成するクラス */
 public class MarkdownExportSinkFactory {
 
-  private final TableDefinitionWriterDomainService tableDefinitionWriter;
-  private final ErDiagramWriterDomainService erDiagramWriter;
-  private final ObjectListWriterDomainService objectListWriter;
-  private final ViewpointWriterDomainService viewpointWriter;
-  private final ReadmeWriterDomainService readmeWriter;
+  private final TableDefinitionWriter tableDefinitionWriter;
+  private final ErDiagramWriter erDiagramWriter;
+  private final ObjectListWriter objectListWriter;
+  private final ViewpointWriter viewpointWriter;
+  private final ReadmeWriter readmeWriter;
 
   @Inject
   public MarkdownExportSinkFactory(
-      TableDefinitionWriterDomainService tableDefinitionWriter,
-      ErDiagramWriterDomainService erDiagramWriter,
-      ObjectListWriterDomainService objectListWriter,
-      ViewpointWriterDomainService viewpointWriter,
-      ReadmeWriterDomainService readmeWriter) {
+      TableDefinitionWriter tableDefinitionWriter,
+      ErDiagramWriter erDiagramWriter,
+      ObjectListWriter objectListWriter,
+      ViewpointWriter viewpointWriter,
+      ReadmeWriter readmeWriter) {
     this.tableDefinitionWriter = tableDefinitionWriter;
     this.erDiagramWriter = erDiagramWriter;
     this.objectListWriter = objectListWriter;
@@ -121,16 +121,16 @@ public class MarkdownExportSinkFactory {
             targets.tables(), targets.foreignKeys(), outputRoot, erDiagramLimit);
       }
       if (documents.contains(ListDocumentType.TRIGGER)) {
-        objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
+        objectListWriter.writeTriggerList(targets.triggers().asList(), outputRoot);
       }
       if (documents.contains(ListDocumentType.FUNCTION)) {
-        objectListWriter.writeFunctionList(targets.functions(), outputRoot);
+        objectListWriter.writeFunctionList(targets.functions().asList(), outputRoot);
       }
       if (documents.contains(ListDocumentType.SEQUENCE)) {
-        objectListWriter.writeSequenceList(targets.sequences(), outputRoot);
+        objectListWriter.writeSequenceList(targets.sequences().asList(), outputRoot);
       }
       if (documents.contains(ListDocumentType.TYPE)) {
-        objectListWriter.writeTypeList(targets.types(), outputRoot);
+        objectListWriter.writeTypeList(targets.types().asList(), outputRoot);
       }
       if (documents.contains(ListDocumentType.VIEWPOINT)) {
         viewpointWriter.writeViewpoints(

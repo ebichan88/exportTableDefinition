@@ -2,8 +2,8 @@ package com.export_table_definition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.application.CheckDiffRequest;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -75,13 +75,13 @@ public class OutputDirectoryValidatorTest {
   private final OutputDirectoryValidator validator =
       new OutputDirectoryValidator(new DefaultOutputPathResolver(), fileRepository);
 
-  private static ExportRequest exportRequest(String outputPath, boolean rmDist) {
-    return new ExportRequest(
+  private static ExportTableDefinitionRequest exportRequest(String outputPath, boolean rmDist) {
+    return new ExportTableDefinitionRequest(
         TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0, 80, rmDist);
   }
 
-  private static CheckDiffRequest checkDiffRequest(String outputPath) {
-    return new CheckDiffRequest(
+  private static CheckDocumentDiffRequest checkDiffRequest(String outputPath) {
+    return new CheckDocumentDiffRequest(
         TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0);
   }
 

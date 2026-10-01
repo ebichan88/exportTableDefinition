@@ -251,7 +251,7 @@ public class ErDiagramTemplates {
   public static String foreignKeyTableLine(int no, ForeignKeyEntity fk) {
     return String.format(
             "| %d | %s | %s | %s |",
-            no, fk.getSchemaTableName(), fk.foreignkeyName(), fk.getReferenceSchemaTableName())
+            no, fk.getSchemaTableName(), fk.foreignKeyName(), fk.getReferenceSchemaTableName())
         + LINE_SEPARATOR;
   }
 

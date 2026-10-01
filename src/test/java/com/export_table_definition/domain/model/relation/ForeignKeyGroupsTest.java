@@ -94,8 +94,8 @@ public class ForeignKeyGroupsTest {
     var zz = fk("public", "zz1", "fk_zz", "public", "zz2");
     var aa = fk("public", "aa1", "fk_aa", "public", "aa2");
     var components = ForeignKeyGroups.connectedComponents(List.of(zz, aa));
-    assertEquals("fk_aa", components.get(0).foreignKeys().get(0).foreignkeyName());
-    assertEquals("fk_zz", components.get(1).foreignKeys().get(0).foreignkeyName());
+    assertEquals("fk_aa", components.get(0).foreignKeys().get(0).foreignKeyName());
+    assertEquals("fk_zz", components.get(1).foreignKeys().get(0).foreignKeyName());
   }
 
   @Test
@@ -115,7 +115,7 @@ public class ForeignKeyGroupsTest {
     assertEquals(5, groups.get(0).nodeCount());
     assertEquals(
         List.of("fk1", "fk2", "fk3"),
-        groups.get(0).foreignKeys().stream().map(ForeignKeyEntity::foreignkeyName).toList());
+        groups.get(0).foreignKeys().stream().map(ForeignKeyEntity::foreignKeyName).toList());
     assertEquals(2, groups.get(1).nodeCount());
   }
 

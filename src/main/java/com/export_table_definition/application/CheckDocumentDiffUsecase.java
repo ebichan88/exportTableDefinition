@@ -13,5 +13,5 @@ public interface CheckDocumentDiffUsecase {
    *
    * @param request DB vs ドキュメントの差分検知の入力
    */
-  public DiffResult checkDocumentDiff(CheckDiffRequest request);
+  public DiffResult checkDocumentDiff(CheckDocumentDiffRequest request);
 }

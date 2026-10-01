@@ -94,13 +94,13 @@ loadScripts(document, 'script');</script>
 <dt>Record Components:</dt>
 <dd><code><span id="param-tables">tables</span></code> - 出力対象のテーブル情報のリスト（テーブルの絞り込み済み）</dd>
 <dd><code><span id="param-foreignKeys">foreignKeys</span></code> - 出力対象のテーブル同士の外部キー（論理リレーションを含む）</dd>
-<dd><code><span id="param-triggers">triggers</span></code> - 対象範囲全体のトリガー情報のリスト</dd>
-<dd><code><span id="param-functions">functions</span></code> - 関数・プロシージャの一覧情報（定義本体を含まない）のリスト</dd>
+<dd><code><span id="param-triggers">triggers</span></code> - 対象範囲全体のトリガー情報</dd>
+<dd><code><span id="param-functions">functions</span></code> - 関数・プロシージャの一覧情報（定義本体を含まない）</dd>
 <dd><code><span id="param-annotations">annotations</span></code> - 対象範囲全体の手動付帯情報</dd>
 <dd><code><span id="param-viewpoints">viewpoints</span></code> - サイドカーYAMLで宣言された観点</dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public record </span><span class="element-name type-name-label">ExportTargets</span>(<a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo, <a href="../table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables, <a href="../relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;&nbsp;triggers, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/FunctionEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">FunctionEntity</a>&gt;&nbsp;functions, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;&nbsp;sequences, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;&nbsp;types, <a href="../sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations, <a href="../viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints)
+<div class="type-signature"><span class="modifiers">public record </span><span class="element-name type-name-label">ExportTargets</span>(<a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo, <a href="../table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables, <a href="../relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys, <a href="../table/Triggers.html" title="class in com.export_table_definition.domain.model.table">Triggers</a>&nbsp;triggers, <a href="../schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a>&nbsp;functions, <a href="../schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a>&nbsp;sequences, <a href="../schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a>&nbsp;types, <a href="../sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations, <a href="../viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">出力対象のうち、一括取得する軽量な情報の組<br>
  テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は含まない。 それらは出力時にスキーマ・チャンク単位で取得する</div>
@@ -115,13 +115,13 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.domain.model.database.BaseInfoEntity,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.viewpoint.Viewpoints)" class="member-name-link">ExportTargets</a><wbr>(<a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.domain.model.database.BaseInfoEntity,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.model.table.Triggers,com.export_table_definition.domain.model.schemaobject.Functions,com.export_table_definition.domain.model.schemaobject.Sequences,com.export_table_definition.domain.model.schemaobject.Types,com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.viewpoint.Viewpoints)" class="member-name-link">ExportTargets</a><wbr>(<a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo,
  <a href="../table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  <a href="../relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;&nbsp;triggers,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/FunctionEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">FunctionEntity</a>&gt;&nbsp;functions,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;&nbsp;sequences,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;&nbsp;types,
+ <a href="../table/Triggers.html" title="class in com.export_table_definition.domain.model.table">Triggers</a>&nbsp;triggers,
+ <a href="../schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a>&nbsp;functions,
+ <a href="../schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a>&nbsp;sequences,
+ <a href="../schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a>&nbsp;types,
  <a href="../sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations,
  <a href="../viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints)</code></div>
 <div class="col-last even-row-color">
@@ -161,7 +161,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-foreignKeys"><code>foreignKeys</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../schemaobject/FunctionEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">FunctionEntity</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#functions()" class="member-name-link">functions</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-functions"><code>functions</code></a> record component.</div>
@@ -171,7 +171,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sequences()" class="member-name-link">sequences</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>sequences</code> record component.</div>
@@ -186,12 +186,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../table/Triggers.html" title="class in com.export_table_definition.domain.model.table">Triggers</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggers()" class="member-name-link">triggers</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-triggers"><code>triggers</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#types()" class="member-name-link">types</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <code>types</code> record component.</div>
@@ -219,15 +219,15 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(com.export_table_definition.domain.model.database.BaseInfoEntity,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.viewpoint.Viewpoints)">
+<section class="detail" id="&lt;init&gt;(com.export_table_definition.domain.model.database.BaseInfoEntity,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.model.table.Triggers,com.export_table_definition.domain.model.schemaobject.Functions,com.export_table_definition.domain.model.schemaobject.Sequences,com.export_table_definition.domain.model.schemaobject.Types,com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.viewpoint.Viewpoints)">
 <h3>ExportTargets</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ExportTargets</span><wbr><span class="parameters">(<a href="../database/BaseInfoEntity.html" title="class in com.export_table_definition.domain.model.database">BaseInfoEntity</a>&nbsp;baseInfo,
  <a href="../table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  <a href="../relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;&nbsp;triggers,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/FunctionEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">FunctionEntity</a>&gt;&nbsp;functions,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;&nbsp;sequences,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;&nbsp;types,
+ <a href="../table/Triggers.html" title="class in com.export_table_definition.domain.model.table">Triggers</a>&nbsp;triggers,
+ <a href="../schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a>&nbsp;functions,
+ <a href="../schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a>&nbsp;sequences,
+ <a href="../schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a>&nbsp;types,
  <a href="../sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations,
  <a href="../viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints)</span></div>
 <div class="block">Creates an instance of a <code>ExportTargets</code> record class.</div>
@@ -330,7 +330,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="triggers()">
 <h3>triggers</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../table/TriggerEntity.html" title="class in com.export_table_definition.domain.model.table">TriggerEntity</a>&gt;</span>&nbsp;<span class="element-name">triggers</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../table/Triggers.html" title="class in com.export_table_definition.domain.model.table">Triggers</a></span>&nbsp;<span class="element-name">triggers</span>()</div>
 <div class="block">Returns the value of the <a href="#param-triggers"><code>triggers</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -341,7 +341,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="functions()">
 <h3>functions</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/FunctionEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">FunctionEntity</a>&gt;</span>&nbsp;<span class="element-name">functions</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a></span>&nbsp;<span class="element-name">functions</span>()</div>
 <div class="block">Returns the value of the <a href="#param-functions"><code>functions</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -352,7 +352,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="sequences()">
 <h3>sequences</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/SequenceEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">SequenceEntity</a>&gt;</span>&nbsp;<span class="element-name">sequences</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a></span>&nbsp;<span class="element-name">sequences</span>()</div>
 <div class="block">Returns the value of the <code>sequences</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -363,7 +363,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="types()">
 <h3>types</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../schemaobject/TypeEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">TypeEntity</a>&gt;</span>&nbsp;<span class="element-name">types</span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a></span>&nbsp;<span class="element-name">types</span>()</div>
 <div class="block">Returns the value of the <code>types</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>

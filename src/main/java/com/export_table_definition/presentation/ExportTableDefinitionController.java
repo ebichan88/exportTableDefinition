@@ -1,8 +1,8 @@
 package com.export_table_definition.presentation;
 
-import com.export_table_definition.application.CheckDiffRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
 import com.export_table_definition.application.CheckDocumentDiffUsecase;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
 import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
@@ -31,7 +31,7 @@ public class ExportTableDefinitionController {
   }
 
   /** コントローラーメソッド */
-  public ResultDto execute(ExportRequest request) {
+  public ResultDto execute(ExportTableDefinitionRequest request) {
     logger.info("[START] exportTableDefinition");
     exportTableDefinitionUsecase.exportTableDefinition(request);
     logger.info("[ END ] exportTableDefinition");
@@ -44,7 +44,7 @@ public class ExportTableDefinitionController {
    * @param request DB vs ドキュメントの差分検知の入力
    * @return 処理結果（差分の報告と、差分の有無）
    */
-  public DiffCheckResultDto checkDiff(CheckDiffRequest request) {
+  public DiffCheckResultDto checkDiff(CheckDocumentDiffRequest request) {
     logger.info("[START] checkDocumentDiff");
     final DiffResult diffResult = checkDocumentDiffUsecase.checkDocumentDiff(request);
     logger.info("[ END ] checkDocumentDiff");

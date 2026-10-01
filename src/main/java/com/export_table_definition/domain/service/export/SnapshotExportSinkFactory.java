@@ -5,7 +5,7 @@ import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.service.path.OutputRoot;
-import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService;
+import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriter;
 import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
@@ -13,10 +13,10 @@ import java.util.List;
 /** スキーマのスナップショット（JSON Lines）を書き出す{@link ExportSink}を生成するクラス */
 public class SnapshotExportSinkFactory {
 
-  private final SchemaSnapshotWriterDomainService snapshotWriter;
+  private final SchemaSnapshotWriter snapshotWriter;
 
   @Inject
-  public SnapshotExportSinkFactory(SchemaSnapshotWriterDomainService snapshotWriter) {
+  public SnapshotExportSinkFactory(SchemaSnapshotWriter snapshotWriter) {
     this.snapshotWriter = snapshotWriter;
   }
 
@@ -47,8 +47,8 @@ public class SnapshotExportSinkFactory {
     public void writeOverview(ExportTargets targets) {
       final OutputRoot outputRoot = new OutputRoot(outputBaseDir, targets.baseInfo());
       snapshotWriter.writeDatabase(outputRoot);
-      snapshotWriter.writeSequences(targets.sequences(), outputRoot);
-      snapshotWriter.writeTypes(targets.types(), outputRoot);
+      snapshotWriter.writeSequences(targets.sequences().asList(), outputRoot);
+      snapshotWriter.writeTypes(targets.types().asList(), outputRoot);
     }
 
     /** {@inheritDoc} */
