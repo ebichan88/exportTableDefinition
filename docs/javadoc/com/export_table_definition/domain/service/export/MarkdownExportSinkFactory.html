@@ -103,11 +103,11 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService,com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService,com.export_table_definition.domain.service.writer.ObjectListWriterDomainService,com.export_table_definition.domain.service.writer.ViewpointWriterDomainService,com.export_table_definition.domain.service.writer.ReadmeWriterDomainService)" class="member-name-link">MarkdownExportSinkFactory</a><wbr>(<a href="../writer/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">TableDefinitionWriterDomainService</a>&nbsp;tableDefinitionWriter,
- <a href="../writer/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ErDiagramWriterDomainService</a>&nbsp;erDiagramWriter,
- <a href="../writer/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ObjectListWriterDomainService</a>&nbsp;objectListWriter,
- <a href="../writer/ViewpointWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ViewpointWriterDomainService</a>&nbsp;viewpointWriter,
- <a href="../writer/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ReadmeWriterDomainService</a>&nbsp;readmeWriter)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionWriterDomainService,com.export_table_definition.domain.service.writer.erdiagram.ErDiagramWriterDomainService,com.export_table_definition.domain.service.writer.objectlist.ObjectListWriterDomainService,com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriterDomainService,com.export_table_definition.domain.service.writer.readme.ReadmeWriterDomainService)" class="member-name-link">MarkdownExportSinkFactory</a><wbr>(<a href="../writer/tabledefinition/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriterDomainService</a>&nbsp;tableDefinitionWriter,
+ <a href="../writer/erdiagram/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriterDomainService</a>&nbsp;erDiagramWriter,
+ <a href="../writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a>&nbsp;objectListWriter,
+ <a href="../writer/viewpoint/ViewpointWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriterDomainService</a>&nbsp;viewpointWriter,
+ <a href="../writer/readme/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriterDomainService</a>&nbsp;readmeWriter)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -124,8 +124,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export">ExportSink</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#create(java.nio.file.Path,int)" class="member-name-link">create</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputBaseDir,
- int&nbsp;erDiagramMaxNodes)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">create</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputBaseDir,
+ <a href="../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;erDiagramLimit)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">指定したディレクトリへMarkdownのドキュメントを書き出す<a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するメソッド</div>
 </div>
@@ -147,14 +147,14 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(com.export_table_definition.domain.service.writer.TableDefinitionWriterDomainService,com.export_table_definition.domain.service.writer.ErDiagramWriterDomainService,com.export_table_definition.domain.service.writer.ObjectListWriterDomainService,com.export_table_definition.domain.service.writer.ViewpointWriterDomainService,com.export_table_definition.domain.service.writer.ReadmeWriterDomainService)">
+<section class="detail" id="&lt;init&gt;(com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionWriterDomainService,com.export_table_definition.domain.service.writer.erdiagram.ErDiagramWriterDomainService,com.export_table_definition.domain.service.writer.objectlist.ObjectListWriterDomainService,com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriterDomainService,com.export_table_definition.domain.service.writer.readme.ReadmeWriterDomainService)">
 <h3>MarkdownExportSinkFactory</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name">MarkdownExportSinkFactory</span><wbr><span class="parameters">(<a href="../writer/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">TableDefinitionWriterDomainService</a>&nbsp;tableDefinitionWriter,
- <a href="../writer/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ErDiagramWriterDomainService</a>&nbsp;erDiagramWriter,
- <a href="../writer/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ObjectListWriterDomainService</a>&nbsp;objectListWriter,
- <a href="../writer/ViewpointWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ViewpointWriterDomainService</a>&nbsp;viewpointWriter,
- <a href="../writer/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer">ReadmeWriterDomainService</a>&nbsp;readmeWriter)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name">MarkdownExportSinkFactory</span><wbr><span class="parameters">(<a href="../writer/tabledefinition/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriterDomainService</a>&nbsp;tableDefinitionWriter,
+ <a href="../writer/erdiagram/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriterDomainService</a>&nbsp;erDiagramWriter,
+ <a href="../writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a>&nbsp;objectListWriter,
+ <a href="../writer/viewpoint/ViewpointWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriterDomainService</a>&nbsp;viewpointWriter,
+ <a href="../writer/readme/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriterDomainService</a>&nbsp;readmeWriter)</span></div>
 </section>
 </li>
 </ul>
@@ -166,15 +166,15 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="create(java.nio.file.Path,int)">
+<section class="detail" id="create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit)">
 <h3>create</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export">ExportSink</a></span>&nbsp;<span class="element-name">create</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputBaseDir,
- int&nbsp;erDiagramMaxNodes)</span></div>
+ <a href="../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;erDiagramLimit)</span></div>
 <div class="block">指定したディレクトリへMarkdownのドキュメントを書き出す<a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するメソッド</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>outputBaseDir</code> - 出力先のベースディレクトリパス</dd>
-<dd><code>erDiagramMaxNodes</code> - スキーマ別ER図1枚に描画するノード数の上限。0以下の場合は上限なし</dd>
+<dd><code>erDiagramLimit</code> - スキーマ別ER図1枚に描画するノード数の上限</dd>
 <dt>Returns:</dt>
 <dd>Markdownのドキュメントを書き出す<a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a></dd>
 </dl>

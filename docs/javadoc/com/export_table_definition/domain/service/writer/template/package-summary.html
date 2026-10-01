@@ -69,7 +69,7 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="package-signature">package <span class="element-name">com.export_table_definition.domain.service.writer.template</span></div>
 <section class="package-description" id="package-description">
-<div class="block">テーブル定義の書き込み処理のテンプレートに関するパッケージ</div>
+<div class="block">複数のドキュメント種別が共有するMarkdown・Mermaid・ページ分割のテンプレート部品に関するパッケージ</div>
 </section>
 <section class="summary">
 <ul class="summary-list">
@@ -81,7 +81,27 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><a href="../package-summary.html">com.export_table_definition.domain.service.writer</a></div>
 <div class="col-last even-row-color">
-<div class="block">テーブル定義の書き込み処理に関するパッケージ</div>
+<div class="block">複数のドキュメント種別が共有する書き込み処理（ページ分割）に関するパッケージ</div>
+</div>
+<div class="col-first odd-row-color"><a href="../erdiagram/package-summary.html">com.export_table_definition.domain.service.writer.erdiagram</a></div>
+<div class="col-last odd-row-color">
+<div class="block">ER図（スキーマ別・グループ別・索引）の書き込みとテンプレートに関するパッケージ</div>
+</div>
+<div class="col-first even-row-color"><a href="../objectlist/package-summary.html">com.export_table_definition.domain.service.writer.objectlist</a></div>
+<div class="col-last even-row-color">
+<div class="block">トリガー・関数・シーケンス・型の一覧と個別定義の書き込みとテンプレートに関するパッケージ</div>
+</div>
+<div class="col-first odd-row-color"><a href="../readme/package-summary.html">com.export_table_definition.domain.service.writer.readme</a></div>
+<div class="col-last odd-row-color">
+<div class="block">READMEの書き込みとテンプレートに関するパッケージ</div>
+</div>
+<div class="col-first even-row-color"><a href="../tabledefinition/package-summary.html">com.export_table_definition.domain.service.writer.tabledefinition</a></div>
+<div class="col-last even-row-color">
+<div class="block">テーブル定義書・テーブル一覧の書き込みとテンプレートに関するパッケージ</div>
+</div>
+<div class="col-first odd-row-color"><a href="../viewpoint/package-summary.html">com.export_table_definition.domain.service.writer.viewpoint</a></div>
+<div class="col-last odd-row-color">
+<div class="block">観点ページ・観点一覧の書き込みとテンプレートに関するパッケージ</div>
 </div>
 </div>
 </div>
@@ -92,49 +112,20 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ErDiagramTemplates</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="MarkdownTemplateSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">スキーマ単位のER図（全体ER図）書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
- テーブル単位のER図（<a href="TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)"><code>TableDefinitionTemplates.erDiagram(com.export_table_definition.domain.model.table.TableEntity, java.util.List&lt;com.export_table_definition.domain.model.table.ColumnEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;)</code></a>）とは異なり、
- すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
- 表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="MarkdownTemplateSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">各テンプレートクラスで共通して利用するMarkdownの定数・部品を集約したクラス<br>
  改行コードや水平線、「## 基本情報」セクション、タイトル付きファイルヘッダーなど、 複数のテンプレートクラスで内容が重複していたものをここに集約する</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ObjectDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ObjectDefinitionTemplates</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">関数/プロシージャ・シーケンス・ユーザー定義型の個別定義書き込みに利用する Markdownのテンプレートを扱うクラス</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ObjectListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ObjectListTemplates</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧書き込みに利用する Markdownのテンプレートを扱うクラス<br>
- 表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
+<div class="block">Mermaid記法の出力に必要な文字列変換を扱う共通ユーティリティクラス<br>
+ テーブル単位のER図（<a href="../tabledefinition/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionTemplates</code></a>）とスキーマ単位のER図（<a href="../erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram"><code>ErDiagramTemplates</code></a>）の 両方から利用する</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="PagedSectionTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">PagedSectionTemplates</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">行数の多い表を複数ページに分割して出力する際に共通で利用するMarkdownのテンプレートを扱うクラス<br>
  GitHub上で表として表示できる行数には上限があるため、一覧系のドキュメントは行数が多い場合に 別ファイルへ分割して出力する。本体ページに載せるリンク一覧と、分割ページのページ送りを扱う</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ReadmeTemplates</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">データベース単位ディレクトリのREADME書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">TableDefinitionListTemplates</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">テーブル定義一覧書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">TableDefinitionTemplates</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ViewpointTemplates.html" title="class in com.export_table_definition.domain.service.writer.template">ViewpointTemplates</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">観点ページ・観点一覧の書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
- ER図の描画と、テーブル・関連の表の1行分は、スキーマ別ER図（<a href="ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.template"><code>ErDiagramTemplates</code></a>）と同じものを用いる。
- 観点は人が選んだテーブルのまとまりのため、スキーマ別ER図と異なり連結成分によるグループ分割は行わない</div>
 </div>
 </div>
 </div>

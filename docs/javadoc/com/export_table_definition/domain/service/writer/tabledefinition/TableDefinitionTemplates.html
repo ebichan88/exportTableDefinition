@@ -5,7 +5,7 @@
 <title>TableDefinitionTemplates (exportTableDefinition 1.0-SNAPSHOT API)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="description" content="declaration: package: com.export_table_definition.domain.service.writer.template, class: TableDefinitionTemplates">
+<meta name="description" content="declaration: package: com.export_table_definition.domain.service.writer.tabledefinition, class: TableDefinitionTemplates">
 <meta name="generator" content="javadoc/ClassWriterImpl">
 <link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
 <link rel="stylesheet" type="text/css" href="../../../../../../script-dir/jquery-ui.min.css" title="Style">
@@ -81,11 +81,11 @@ loadScripts(document, 'script');</script>
 <main role="main">
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
-<div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">com.export_table_definition.domain.service.writer.template</a></div>
+<div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;<a href="package-summary.html">com.export_table_definition.domain.service.writer.tabledefinition</a></div>
 <h1 title="Class TableDefinitionTemplates" class="title">Class TableDefinitionTemplates</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance">com.export_table_definition.domain.service.writer.template.TableDefinitionTemplates</div>
+<div class="inheritance">com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionTemplates</div>
 </div>
 <section class="class-description" id="class-description">
 <hr>
@@ -174,7 +174,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">論理リレーション情報セクション<br>
  DBに外部キー制約が存在せず、サイドカーYAMLで宣言された関連のみを掲載する。 読み手が「DBに制約がある」と誤読しないよう外部キー情報とは別セクションとし、注意書きを添える。
- 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）</div>
+ 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）。 関連名は現状カラムリストと同じ内容のため列を設けず、カラムリストのみ掲載する</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#tableExplanation(com.export_table_definition.domain.model.sidecar.TableAnnotation)" class="member-name-link">tableExplanation</a><wbr>(<a href="../../../model/sidecar/TableAnnotation.html" title="class in com.export_table_definition.domain.model.sidecar">TableAnnotation</a>&nbsp;annotation)</code></div>
@@ -317,7 +317,7 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">logicalRelations</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;logicalRelations)</span></div>
 <div class="block">論理リレーション情報セクション<br>
  DBに外部キー制約が存在せず、サイドカーYAMLで宣言された関連のみを掲載する。 読み手が「DBに制約がある」と誤読しないよう外部キー情報とは別セクションとし、注意書きを添える。
- 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）</div>
+ 対象が1件も存在しない場合はセクションごと出力しない（制約を張っているDBでは常に不要なため）。 関連名は現状カラムリストと同じ内容のため列を設けず、カラムリストのみ掲載する</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>対象が存在しない場合は空文字</dd>

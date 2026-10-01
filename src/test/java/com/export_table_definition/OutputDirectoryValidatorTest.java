@@ -77,12 +77,12 @@ public class OutputDirectoryValidatorTest {
 
   private static ExportRequest exportRequest(String outputPath, boolean rmDist) {
     return new ExportRequest(
-        TargetSelection.of(List.of(), List.of(), List.of(), null), outputPath, 0, 80, rmDist);
+        TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0, 80, rmDist);
   }
 
   private static CheckDiffRequest checkDiffRequest(String outputPath) {
     return new CheckDiffRequest(
-        TargetSelection.of(List.of(), List.of(), List.of(), null), outputPath, 0);
+        TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0);
   }
 
   @Test

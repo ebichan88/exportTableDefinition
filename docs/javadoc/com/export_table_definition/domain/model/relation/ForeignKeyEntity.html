@@ -222,13 +222,10 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <div class="block">Returns the value of the <a href="#param-relationType"><code>relationType</code></a> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveLogicalRelationName(java.lang.String,java.lang.String,java.util.List)" class="member-name-link">resolveLogicalRelationName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;rawName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;childTableName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;childColumnNames)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveLogicalRelationName(java.util.List)" class="member-name-link">resolveLogicalRelationName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;childColumnNames)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">サイドカーYAMLで宣言された論理リレーションの関連名を解決する静的メソッド<br>
- 名称が明示指定されている場合はそれをそのまま用いる。省略された場合は「参照元（子）テーブル名_列名..._lrel」形式で
- 自動生成する。実在する外部キー制約名（DBの慣例："_fkey"等）とは異なる接尾辞を用いることで、由来の異なる名前が紛れないようにする</div>
+<div class="block">サイドカーYAMLで宣言された論理リレーションの関連名を生成する静的メソッド<br>
+ 参照元（子）の列名をカンマで連結した名称とする（テーブル定義書のカラムリスト表示と同じ区切り方に揃えている）</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#schemaName()" class="member-name-link">schemaName</a>()</code></div>
@@ -315,18 +312,13 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 </section>
 </li>
 <li>
-<section class="detail" id="resolveLogicalRelationName(java.lang.String,java.lang.String,java.util.List)">
+<section class="detail" id="resolveLogicalRelationName(java.util.List)">
 <h3>resolveLogicalRelationName</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">resolveLogicalRelationName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;rawName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;childTableName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;childColumnNames)</span></div>
-<div class="block">サイドカーYAMLで宣言された論理リレーションの関連名を解決する静的メソッド<br>
- 名称が明示指定されている場合はそれをそのまま用いる。省略された場合は「参照元（子）テーブル名_列名..._lrel」形式で
- 自動生成する。実在する外部キー制約名（DBの慣例："_fkey"等）とは異なる接尾辞を用いることで、由来の異なる名前が紛れないようにする</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">resolveLogicalRelationName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;childColumnNames)</span></div>
+<div class="block">サイドカーYAMLで宣言された論理リレーションの関連名を生成する静的メソッド<br>
+ 参照元（子）の列名をカンマで連結した名称とする（テーブル定義書のカラムリスト表示と同じ区切り方に揃えている）</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>rawName</code> - YAMLで指定された関連名（未指定の場合はnull・空白可）</dd>
-<dd><code>childTableName</code> - 参照元（子）テーブル名</dd>
 <dd><code>childColumnNames</code> - 参照元（子）の列名のリスト</dd>
 </dl>
 </section>

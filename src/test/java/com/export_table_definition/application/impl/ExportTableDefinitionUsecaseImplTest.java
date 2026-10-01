@@ -342,7 +342,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     // テーブル一覧: 全カテゴリへの関連ドキュメントリンクを含む
     final Path tableListFile = dbFile(DEFAULT_OUT, "tableList_testdb.md");
@@ -402,7 +402,8 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of("function"), null),
+            TargetSelection.of(List.of(), List.of(), List.of("function")),
+            null,
             null,
             0,
             80,
@@ -450,7 +451,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     final String tableListContent = contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"));
     assertTrue(tableListContent.contains("ER図一覧"));
@@ -475,7 +476,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     final String tableListContent = contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"));
     assertFalse(tableListContent.contains("ER図一覧"));
@@ -492,7 +493,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 2, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 2, 80, false));
 
     // 5件を2件ずつ取得: 3回に分割される
     assertEquals(3, repository.tableDetailCallArgs.size());
@@ -518,7 +519,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertEquals(1, repository.tableDetailCallArgs.size());
     assertEquals(5, repository.tableDetailCallArgs.get(0).size());
@@ -541,7 +542,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     // 関数は3件だが、スキーマは2件のためselectFunctionDefListは2回のみ呼ばれる
     assertEquals(2, repository.functionDefCallArgs.size());
@@ -568,7 +569,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of("keep"), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of("keep"), List.of()), null, null, 0, 80, false));
 
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "keep")));
     assertFalse(fileExists(tableDefFile(DEFAULT_OUT, "public", "skip")));
@@ -587,7 +588,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of("!*_bk"), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of("!*_bk"), List.of()), null, null, 0, 80, false));
 
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "employee")));
     assertFalse(fileExists(tableDefFile(DEFAULT_OUT, "public", "employee_bk")));
@@ -602,7 +603,8 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of("public.employee"), List.of(), null),
+            TargetSelection.of(List.of(), List.of("public.employee"), List.of()),
+            null,
             null,
             0,
             80,
@@ -620,7 +622,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertTrue(fileExists(dbFile(DEFAULT_OUT, "tableList_testdb.md")));
   }
@@ -633,7 +635,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), "   ", 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, "   ", 0, 80, false));
 
     assertTrue(fileExists(dbFile(DEFAULT_OUT, "tableList_testdb.md")));
   }
@@ -646,7 +648,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), "custom_out", 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, "custom_out", 0, 80, false));
 
     final Path customOut = Paths.get("custom_out");
     assertTrue(fileExists(dbFile(customOut, "tableList_testdb.md")));
@@ -664,7 +666,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 2, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 2, 80, false));
 
     final String t1Content = contentOf(tableDefFile(DEFAULT_OUT, "public", "t1"));
     // t1はt4から参照されている（被参照側）関係がER図セクションに反映される
@@ -683,7 +685,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of("keep"), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of("keep"), List.of()), null, null, 0, 80, false));
 
     // skipは出力対象外のため、そのテーブルへの外部キーはスキーマ別ER図に箱としても線としても現れない
     final String erContent = contentOf(dbFile(DEFAULT_OUT, "erDiagram_testdb_public.md"));
@@ -706,7 +708,8 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), "conf/annotations.yml"),
+            TargetSelection.of(List.of(), List.of(), List.of()),
+            "conf/annotations.yml",
             null,
             0,
             80,
@@ -729,7 +732,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     final DiffResult result =
         checkUsecase.checkDocumentDiff(
             new CheckDiffRequest(
-                TargetSelection.of(List.of(), List.of(), List.of(), null), "committed", 0));
+                TargetSelection.of(List.of(), List.of(), List.of()), null, "committed", 0));
 
     // outputPath（committed）側には何も存在しないため、生成された全オブジェクトがonlyInGeneratedとして検出される
     assertTrue(result.hasDifference());
@@ -748,7 +751,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     checkUsecase.checkDocumentDiff(
         new CheckDiffRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), "committed", 0));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, "committed", 0));
 
     final Path committedDir = Paths.get("committed");
     assertTrue(
@@ -765,7 +768,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     final DiffResult result =
         checkUsecase.checkDocumentDiff(
             new CheckDiffRequest(
-                TargetSelection.of(List.of(), List.of("keep"), List.of(), null), "committed", 0));
+                TargetSelection.of(List.of(), List.of("keep"), List.of()), null, "committed", 0));
 
     assertTrue(result.onlyInGenerated().contains("table public.keep"));
     assertFalse(result.onlyInGenerated().contains("table public.skip"));
@@ -791,7 +794,8 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), "conf/annotations.yml"),
+            TargetSelection.of(List.of(), List.of(), List.of()),
+            "conf/annotations.yml",
             null,
             0,
             80,
@@ -820,7 +824,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertFalse(contentOf(tableDefFile(DEFAULT_OUT, "public", "t1")).contains("## 論理リレーション情報"));
   }
@@ -838,7 +842,8 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), "conf/annotations.yml"),
+            TargetSelection.of(List.of(), List.of(), List.of()),
+            "conf/annotations.yml",
             null,
             0,
             80,
@@ -862,7 +867,8 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), "conf/annotations.yml"),
+            TargetSelection.of(List.of(), List.of(), List.of()),
+            "conf/annotations.yml",
             null,
             0,
             80,
@@ -889,7 +895,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, true));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, true));
 
     assertFalse(fileExists(staleFile));
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "t1")));
@@ -910,7 +916,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertTrue(fileExists(staleFile));
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "t1")));
@@ -925,7 +931,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertTrue(
         contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md")).contains("|pg|testdb|2031/12/31|"));
@@ -947,7 +953,8 @@ public class ExportTableDefinitionUsecaseImplTest {
         () ->
             usecase.exportTableDefinition(
                 new ExportRequest(
-                    TargetSelection.of(List.of(), List.of(), List.of(), "broken.yml"),
+                    TargetSelection.of(List.of(), List.of(), List.of()),
+                    "broken.yml",
                     null,
                     0,
                     80,
@@ -968,7 +975,7 @@ public class ExportTableDefinitionUsecaseImplTest {
         () ->
             usecase.exportTableDefinition(
                 new ExportRequest(
-                    TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, true)));
+                    TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, true)));
     assertTrue(fileExists(existingFile));
   }
 
@@ -992,7 +999,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertTrue(fileExists(tableDefFile(DEFAULT_OUT, "public", "t1")));
     assertEquals(
@@ -1016,7 +1023,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 2, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 2, 80, false));
 
     final List<String> publicLines =
         contentOf(snapshotFile("public", "tables.jsonl")).lines().toList();
@@ -1039,10 +1046,10 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertEquals(1, contentOf(snapshotFile("public", "tables.jsonl")).lines().count());
   }
@@ -1051,14 +1058,14 @@ public class ExportTableDefinitionUsecaseImplTest {
   private void exportCommitted() {
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), "committed", 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, "committed", 0, 80, false));
   }
 
   /** "committed"に対してスナップショット同士の比較を行う */
   private DiffResult checkSnapshotDiff() {
     return checkUsecase.checkDocumentDiff(
         new CheckDiffRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), "committed", 0));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, "committed", 0));
   }
 
   @Test
@@ -1148,7 +1155,8 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), "conf/annotations.yml"),
+            TargetSelection.of(List.of(), List.of(), List.of()),
+            "conf/annotations.yml",
             null,
             0,
             80,
@@ -1174,7 +1182,7 @@ public class ExportTableDefinitionUsecaseImplTest {
 
     usecase.exportTableDefinition(
         new ExportRequest(
-            TargetSelection.of(List.of(), List.of(), List.of(), null), null, 0, 80, false));
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
 
     assertTrue(
         fileRepository.files.keySet().stream()

@@ -31,7 +31,7 @@
 | `application` | `ExportTableDefinitionUsecase` | テーブル定義出力（通常実行）のユースケースのインターフェース（`exportTableDefinition`） |
 | | `CheckDocumentDiffUsecase` | DB vs ドキュメントの差分検知（`--check`モード）のユースケースのインターフェース（`checkDocumentDiff`） |
 | | `ExportRequest`, `CheckDiffRequest` | 各ユースケースメソッドへの入力をまとめたrecord。エントリーポイント→コントローラー→ユースケースを分解・再構築せず通過する。`CheckDiffRequest`はMarkdownの描画・ER図の生成を行わないため`erDiagramMaxNodes`・`rmDist`を持たない |
-| | `TargetSelection` | 両requestが持つ出力対象の絞り込み条件（`TableTargetScope`・`OutputObjectType`の集合・サイドカーYAMLのパス）のrecord。`of()`で設定値の文字列を入口で型へ変換・検証する（テーブル名パターンと出力対象オブジェクト種別の誤りはまとめて報告する） |
+| | `TargetSelection` | 両requestが持つ出力対象の絞り込み条件（`TableScope`・`OutputObjectType`の集合）のrecord。`of()`で設定値の文字列を入口で型へ変換・検証する（テーブル名パターンと出力対象オブジェクト種別の誤りはまとめて報告する） |
 | `application.impl` | `ExportTableDefinitionUsecaseImpl` | 通常実行のユースケース実装。MarkdownとスナップショットのExportSinkを渡して`SchemaExporter`に取得・書き出しさせる。`--rm-dist`の削除は取得の成功後に行う（削除してよい出力先かは、入口の`OutputDirectoryValidator`が検証済み） |
 | | `CheckDocumentDiffUsecaseImpl` | 差分検知のユースケース実装。スナップショットの`ExportSink`のみで一時ディレクトリへ出力し、`SnapshotDiffDomainService`で`outputPath`配下の`snapshot/`と比較する |
 | | `SchemaExporter`（パッケージプライベート） | 両ユースケースが共有する、DBからの取得（一括取得・スキーマ単位・チャンク単位）と書き出しの段取り。取得（`fetchTargets`）と出力（`export`）を分け、書き出しは出力形式ごとの`ExportSink`に、取得した情報同士の突き合わせは`ExportTargetConsistencyDomainService`に委ね、返された指摘（`ConsistencyFinding`）を重要度に応じてログへ出力する。ドキュメントの生成日は`Clock`から与える |
@@ -50,7 +50,7 @@
 | | `Tables` | 出力対象のテーブル一覧のファーストクラスコレクション（テーブルキーでの存在判定・検索、スキーマ単位の分割） |
 | | `TableDetail` | 1テーブル分の詳細情報（カラム・インデックス・制約）のrecord。`assembleAll()`で複数テーブル分の取得結果をテーブルごとに振り分ける |
 | | `Triggers`, `AbstractEntities` | エンティティのリストをテーブルキーで引けるようにしたコレクションとその基底クラス（`Columns`・`Indexes`・`Constraints`は`TableDetail`の組み立て専用のためパッケージプライベート） |
-| | `TableTargetFilter` | テーブル名パターン（`table=`の記法。ワイルドカード・除外・スキーマ修飾）のリストを判定する値オブジェクト。出力対象の範囲（`TableTargetScope`）と観点の所属テーブルの指定で共通に使う。テーブル名・スキーマ名の部分が空のパターンは誤り |
+| | `TableNamePatterns` | テーブル名パターン（`table=`の記法。ワイルドカード・除外・スキーマ修飾）のリストを判定する値オブジェクト。出力対象の範囲（`TableScope`）と観点の所属テーブルの指定で共通に使う。テーブル名・スキーマ名の部分が空のパターンは誤り |
 | `domain.model.relation` | `ForeignKeyEntity` | 関連（DBの外部キー制約＝物理、サイドカーで宣言した論理リレーション＝論理）のrecord。参照先の`referenceTableKey()`、論理リレーションの関連名の自動生成（`resolveLogicalRelationName`）を持つ |
 | | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalOf`/`logicalOf`で由来ごとに、`incomingOf`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`within`/`crossing`でテーブルの集合の内側・境界の関連を抽出する |
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の関連のまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し。`compose()`がページ構成`PageComposition`を決める） |
@@ -61,9 +61,9 @@
 | | `BaseInfoEntity` | 各ドキュメントに掲載する基本情報（`DatabaseEntity`の情報＋生成日）のrecord |
 | `domain.model.sidecar` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション＋観点）を束ねるrecord |
 | | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブルキーごとの集合とその1件分） |
-| `domain.model.viewpoint` | `Viewpoint`, `Viewpoints` | 観点（業務ドメイン別にテーブルをまとめる切り口）とその集合。`Viewpoint.of()`が識別子の形式・所属テーブルの指定（`TableTargetFilter`）を検証し、`resolve()`で1観点分の出力内容を求める。`Viewpoints.of(TableEntity)`でテーブルから所属する観点を逆引きする |
+| `domain.model.viewpoint` | `Viewpoint`, `Viewpoints` | 観点（業務ドメイン別にテーブルをまとめる切り口）とその集合。`Viewpoint.of()`が識別子の形式・所属テーブルの指定（`TableNamePatterns`）を検証し、`resolve()`で1観点分の出力内容を求める。`Viewpoints.of(TableEntity)`でテーブルから所属する観点を逆引きする |
 | | `ViewpointContent` | 1観点分の出力内容（所属テーブル・所属テーブル同士の関連・観点外のテーブルとの関連）のrecord |
-| `domain.model.target` | `TableTargetScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は`TableTargetFilter`が行う） |
+| `domain.model.target` | `TableScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は`TableNamePatterns`が行う） |
 | | `OutputObjectType` | PostgreSQL固有の出力対象オブジェクト種別のenum。`parse()`で設定値を解釈する（未指定なら全種別、未知の種別名は例外） |
 | | `ExportTargets` | 一括取得する軽量な出力対象の情報（基本情報・テーブル一覧・関連・トリガー・関数/シーケンス/型の一覧・手動付帯情報・観点）の組 |
 | | `TableDefinitionContent` | 1テーブル分の出力内容を束ねるrecord（`assemble()`で`TableDetail`と一括取得分から組み立て）。出力先は持たない |

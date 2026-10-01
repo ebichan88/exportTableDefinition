@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * テーブル名パターン（{@code table=}の記法）のリストを判定する値オブジェクト<br>
  * 出力対象の範囲（{@code table=}。{@link
- * com.export_table_definition.domain.model.target.TableTargetScope}）と、観点に所属するテーブルの指定（サイドカーYAMLの{@code
+ * com.export_table_definition.domain.model.target.TableScope}）と、観点に所属するテーブルの指定（サイドカーYAMLの{@code
  * viewpoints}）で共通に用いる。以下の記法に対応する。
  *
  * <ul>
@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  * テーブル名の部分が空のパターン（{@code !}のみ、{@code sample.}等）と、スキーマ名の部分が空のパターン（{@code .employee}等）は、
  * どのテーブルにも一致しない書き誤りのため、黙って受け入れずに誤りとする
  */
-public final class TableTargetFilter {
+public final class TableNamePatterns {
 
   private static final String EXCLUDE_PREFIX = "!";
   private static final String SCHEMA_TABLE_SEPARATOR = ".";
@@ -32,7 +32,7 @@ public final class TableTargetFilter {
   private final List<Entry> includes;
   private final List<Entry> excludes;
 
-  private TableTargetFilter(List<Entry> includes, List<Entry> excludes) {
+  private TableNamePatterns(List<Entry> includes, List<Entry> excludes) {
     this.includes = includes;
     this.excludes = excludes;
   }
@@ -42,9 +42,9 @@ public final class TableTargetFilter {
    *
    * @throws IllegalArgumentException テーブル名またはスキーマ名の部分が空のパターンが含まれる場合（該当するパターンをすべて示す）
    */
-  public static TableTargetFilter of(List<String> rawPatterns) {
+  public static TableNamePatterns of(List<String> rawPatterns) {
     if (rawPatterns == null || rawPatterns.isEmpty()) {
-      return new TableTargetFilter(List.of(), List.of());
+      return new TableNamePatterns(List.of(), List.of());
     }
     final List<Entry> includes = new ArrayList<>();
     final List<Entry> excludes = new ArrayList<>();
@@ -67,7 +67,7 @@ public final class TableTargetFilter {
               + String.join(", ", invalidPatterns)
               + " (the table name and the schema name must not be empty)");
     }
-    return new TableTargetFilter(List.copyOf(includes), List.copyOf(excludes));
+    return new TableNamePatterns(List.copyOf(includes), List.copyOf(excludes));
   }
 
   /** 包含・除外のいずれのパターンも指定されていないか */

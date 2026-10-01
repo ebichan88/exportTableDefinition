@@ -66,13 +66,19 @@ final class ExportTableDefinitionProperties {
   private static final String LIST_SEPARATOR = ",";
 
   private final TargetSelection targetSelection;
+  private final String sidecarPath;
   private final String outputPath;
   private final int chunkSize;
   private final int erDiagramMaxNodes;
 
   private ExportTableDefinitionProperties(
-      TargetSelection targetSelection, String outputPath, int chunkSize, int erDiagramMaxNodes) {
+      TargetSelection targetSelection,
+      String sidecarPath,
+      String outputPath,
+      int chunkSize,
+      int erDiagramMaxNodes) {
     this.targetSelection = targetSelection;
+    this.sidecarPath = sidecarPath;
     this.outputPath = outputPath;
     this.chunkSize = chunkSize;
     this.erDiagramMaxNodes = erDiagramMaxNodes;
@@ -128,10 +134,7 @@ final class ExportTableDefinitionProperties {
     try {
       targetSelection =
           TargetSelection.of(
-              list(values, SCHEMA),
-              list(values, TABLE),
-              list(values, OUTPUT_OBJECTS),
-              text(values, ANNOTATION_PATH));
+              list(values, SCHEMA), list(values, TABLE), list(values, OUTPUT_OBJECTS));
     } catch (IllegalArgumentException e) {
       // 出力対象の条件の誤りは、1行に1件ずつ示される
       targetSelectionError = e;
@@ -150,7 +153,11 @@ final class ExportTableDefinitionProperties {
           targetSelectionError);
     }
     return new ExportTableDefinitionProperties(
-        targetSelection, text(values, OUTPUT_PATH), chunkSize, erDiagramMaxNodes);
+        targetSelection,
+        text(values, ANNOTATION_PATH),
+        text(values, OUTPUT_PATH),
+        chunkSize,
+        erDiagramMaxNodes);
   }
 
   /**
@@ -159,12 +166,13 @@ final class ExportTableDefinitionProperties {
    * @param rmDist trueの場合、書き込みを開始する前に出力先ディレクトリを再帰的に削除する（{@code --rm-dist}）
    */
   ExportRequest toExportRequest(boolean rmDist) {
-    return new ExportRequest(targetSelection, outputPath, chunkSize, erDiagramMaxNodes, rmDist);
+    return new ExportRequest(
+        targetSelection, sidecarPath, outputPath, chunkSize, erDiagramMaxNodes, rmDist);
   }
 
   /** 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}は含めない */
   CheckDiffRequest toCheckDiffRequest() {
-    return new CheckDiffRequest(targetSelection, outputPath, chunkSize);
+    return new CheckDiffRequest(targetSelection, sidecarPath, outputPath, chunkSize);
   }
 
   /**

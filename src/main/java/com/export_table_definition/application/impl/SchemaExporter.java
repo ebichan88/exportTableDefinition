@@ -18,7 +18,7 @@ import com.export_table_definition.domain.model.target.ConsistencyFinding;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.model.target.OutputObjectType;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
-import com.export_table_definition.domain.model.target.TableTargetScope;
+import com.export_table_definition.domain.model.target.TableScope;
 import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.export.ExportSink;
@@ -66,19 +66,19 @@ final class SchemaExporter {
    * 出力対象のうち、一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・ 手動付帯情報）を取得するメソッド<br>
    * テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は、 出力時（{@link #export}）にスキーマ・チャンク単位で取得する
    */
-  ExportTargets fetchTargets(TargetSelection targetSelection) {
+  ExportTargets fetchTargets(TargetSelection targetSelection, String sidecarPath) {
     // スキーマ・テーブルの絞り込み条件（入口で1回だけ組み立て済み。テーブルごとにワイルドカードパターンを解析し直さない）
-    final TableTargetScope targetScope = targetSelection.targetScope();
-    final List<String> targetSchemaList = targetScope.schemaNames();
-    final boolean isFiltered = targetScope.isFiltered();
+    final TableScope tableScope = targetSelection.tableScope();
+    final List<String> targetSchemaList = tableScope.schemaNames();
+    final boolean isFiltered = tableScope.isFiltered();
     final Set<OutputObjectType> outputObjectTypes = targetSelection.outputObjectTypes();
     // サイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。未設定・ファイル不存在の場合は空となりマージは行われない
-    final Sidecar sidecar = sidecarRepository.load(targetSelection.sidecarPath());
+    final Sidecar sidecar = sidecarRepository.load(sidecarPath);
     final Annotations annotations = sidecar.annotations();
 
     final BaseInfoEntity baseInfoEntity =
         BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
-    final Tables tables = fetchTables(targetSchemaList, targetScope);
+    final Tables tables = fetchTables(targetSchemaList, tableScope);
     report(consistencyDomainService.findOrphanTableAnnotations(annotations, tables, isFiltered));
     report(
         consistencyDomainService.findUnmatchedViewpointPatterns(
@@ -103,15 +103,13 @@ final class SchemaExporter {
 
   /**
    * 基本情報・テーブル一覧（1テーブル1行の軽量情報）を取得するメソッド<br>
-   * スキーマの絞り込みのみSQLで行い、テーブル単位の絞り込みは{@link TableTargetScope#matches}でJava側で行う
+   * スキーマの絞り込みのみSQLで行い、テーブル単位の絞り込みは{@link TableScope#matches}でJava側で行う
    * （テーブル名パターンはワイルドカード・除外・スキーマ修飾に対応しており、SQLの完全一致IN句では表現できないため）。
    * ここで絞り込んでおくことで、以降のテーブル一覧・ER図・詳細情報取得はすべて対象テーブルのみを扱う
    */
-  private Tables fetchTables(List<String> targetSchemaList, TableTargetScope targetScope) {
+  private Tables fetchTables(List<String> targetSchemaList, TableScope tableScope) {
     return Tables.of(
-        repository.selectTableList(targetSchemaList).stream()
-            .filter(targetScope::matches)
-            .toList());
+        repository.selectTableList(targetSchemaList).stream().filter(tableScope::matches).toList());
   }
 
   /**

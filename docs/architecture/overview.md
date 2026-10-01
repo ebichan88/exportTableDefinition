@@ -49,8 +49,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
      出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、CLI引数による上書き値
      （`CliArguments.settingOverrides()`）で上書きしてから検証し、
      `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ変換する。
-     出力対象の絞り込み条件（スキーマ・テーブル・outputObjects・サイドカーYAMLのパス）は、生の文字列のまま後続へ渡さず、
-     `TargetSelection.of()`が型（`TableTargetScope`・`OutputObjectType`の集合）へ変換・検証する
+     出力対象の絞り込み条件（スキーマ・テーブル・outputObjects）は、生の文字列のまま後続へ渡さず、
+     `TargetSelection.of()`が型（`TableScope`・`OutputObjectType`の集合）へ変換・検証する
    - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
      削除より前に`[result]:FAIL`として報告されるため、エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
@@ -138,7 +138,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 |---|---|---|
 | CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
 | 設定ファイルの形式（キー・整数。CLI引数で上書きした値を含む） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
-| 出力対象の条件（テーブル名パターン・出力対象オブジェクト種別） | `TableTargetFilter.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
+| 出力対象の絞り込み条件（テーブル名パターン・出力対象オブジェクト種別） | `TableNamePatterns.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
 | 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |
 | サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
@@ -344,8 +344,8 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 スキーマ単位・連結成分単位のER図は機械的なまとまりで、人が読む単位（「受注管理」「在庫管理」等）にはならないため、
 サイドカーで宣言した観点ごとにページを出力する。設計上の要点は「**描画対象のテーブルの集合の決め方だけを差し替える**」こと。
 
-- 所属テーブルの指定は、出力対象の範囲（`table=`）と同じテーブル名パターンの記法で書く（`domain.model.table.TableTargetFilter`を共有する）。
-  観点（`domain.model.viewpoint`）はサイドカーより下の層にあるため、`TableTargetFilter`は`target`ではなく`table`に置いている
+- 所属テーブルの指定は、出力対象の範囲（`table=`）と同じテーブル名パターンの記法で書く（`domain.model.table.TableNamePatterns`を共有する）。
+  観点（`domain.model.viewpoint`）はサイドカーより下の層にあるため、`TableNamePatterns`は`target`ではなく`table`に置いている
 - `Viewpoint.resolve()` が、一括取得済みの出力対象（`Tables`・`ForeignKeys`）から所属テーブルと、所属テーブル同士の関連（`ForeignKeys.within()`）・
   観点外のテーブルとの関連（`ForeignKeys.crossing()`）を求める。ER図の描画は`ErDiagramTemplates.erDiagram()`をそのまま使う。
   人が選んだまとまりのため、スキーマ別ER図のようなグループ分割は行わない（上限を超える場合は関連の一覧表に切り替える点は同じ）

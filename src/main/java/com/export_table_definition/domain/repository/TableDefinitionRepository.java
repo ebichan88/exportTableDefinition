@@ -18,7 +18,7 @@ public interface TableDefinitionRepository {
 
   /**
    * テーブル単位の絞り込みは呼び出し側（{@link
-   * com.export_table_definition.domain.model.target.TableTargetScope}）がJava側で行うため、 スキーマ単位でのみ絞り込む
+   * com.export_table_definition.domain.model.target.TableScope}）がJava側で行うため、 スキーマ単位でのみ絞り込む
    */
   List<TableEntity> selectTableList(List<String> schemaList);
 

@@ -113,15 +113,10 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color class-summary class-summary-tab4">
 <div class="block">スキーマ名とテーブル名を組み合わせた値オブジェクト</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="TableNamePatterns.html" title="class in com.export_table_definition.domain.model.table">TableNamePatterns</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">出力対象のテーブル（テーブル一覧）の集合を扱うクラス<br>
- スキーマ単位のまとまり・テーブルキーによる検索・出力対象に含まれるかの判定など、 テーブル一覧に対して複数の箇所で必要になる見方をこのクラスに集約する</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="TableTargetFilter.html" title="class in com.export_table_definition.domain.model.table">TableTargetFilter</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">テーブル名パターン（<code>table=</code>の記法）のリストを判定する値オブジェクト<br>
- 出力対象の範囲（<code>table=</code>。<a href="../target/TableTargetScope.html" title="class in com.export_table_definition.domain.model.target"><code>TableTargetScope</code></a>）と、観点に所属するテーブルの指定（サイドカーYAMLの<code>
+ 出力対象の範囲（<code>table=</code>。<a href="../target/TableScope.html" title="class in com.export_table_definition.domain.model.target"><code>TableScope</code></a>）と、観点に所属するテーブルの指定（サイドカーYAMLの<code>
  viewpoints</code>）で共通に用いる。以下の記法に対応する。
 
  
@@ -134,6 +129,11 @@ loadScripts(document, 'script');</script>
  除外パターンは包含パターンより常に優先される。包含パターンが1件も指定されていない場合は、 除外パターンに一致しない限りすべてのテーブルが対象となる。
  テーブル名の部分が空のパターン（<code>!</code>のみ、<code>sample.</code>等）と、スキーマ名の部分が空のパターン（<code>.employee</code>等）は、
  どのテーブルにも一致しない書き誤りのため、黙って受け入れずに誤りとする</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">出力対象のテーブル（テーブル一覧）の集合を扱うクラス<br>
+ スキーマ単位のまとまり・テーブルキーによる検索・出力対象に含まれるかの判定など、 テーブル一覧に対して複数の箇所で必要になる見方をこのクラスに集約する</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab3"><a href="TableType.html" title="enum class in com.export_table_definition.domain.model.table">TableType</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab3">
