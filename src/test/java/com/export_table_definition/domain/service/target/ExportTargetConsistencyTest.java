@@ -25,17 +25,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** ExportTargetConsistency の外部キー・論理リレーション・付帯情報の突き合わせに関するテスト */
-public class ExportTargetConsistencyDomainServiceTest {
+public class ExportTargetConsistencyTest {
 
-  private final ExportTargetConsistency service =
-      new ExportTargetConsistency();
+  private final ExportTargetConsistency service = new ExportTargetConsistency();
 
   private TableEntity table(String schema, String physical) {
     return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");
   }
 
   private List<String> names(List<ForeignKeyEntity> foreignKeys) {
-    return foreignKeys.stream().map(ForeignKeyEntity::foreignkeyName).toList();
+    return foreignKeys.stream().map(ForeignKeyEntity::foreignKeyName).toList();
   }
 
   private List<Kind> kinds(List<ConsistencyFinding> findings) {

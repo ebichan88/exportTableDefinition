@@ -105,17 +105,17 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color class-summary class-summary-tab4"><a href="CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">DB vs ドキュメントの差分検知（<code>--check</code>モード）のユースケースへの入力をまとめたrecord<br>
- <a href="ExportRequest.html" title="class in com.export_table_definition.application"><code>ExportRequest</code></a>と異なり、Markdownの描画・ER図の生成を行わないため<code>erDiagramMaxNodes</code>を持たず、
+ <a href="ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application"><code>ExportTableDefinitionRequest</code></a>と異なり、Markdownの描画・ER図の生成を行わないため<code>erDiagramMaxNodes</code>を持たず、
  書き込み前の出力先削除も行わないため<code>rmDist</code>も持たない</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab1"><a href="CheckDocumentDiffUsecase.html" title="interface in com.export_table_definition.application">CheckDocumentDiffUsecase</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">DB vs ドキュメントの差分検知（<code>--check</code>モード）のユースケースを扱うインターフェース</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab4"><a href="ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab4"><a href="ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">テーブル定義出力（通常実行）のユースケースへの入力をまとめたrecord<br>
  エントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さずそのまま通過する</div>
@@ -127,8 +127,8 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color class-summary class-summary-tab4"><a href="TargetSelection.html" title="class in com.export_table_definition.application">TargetSelection</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab4">
 <div class="block">出力対象の絞り込み条件をまとめたrecord<br>
- <a href="ExportRequest.html" title="class in com.export_table_definition.application"><code>ExportRequest</code></a>・<a href="CheckDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の
- 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を 分解・再構築せずそのまま通過させる。<br>
+ <a href="ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application"><code>ExportTableDefinitionRequest</code></a>・<a href="CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDocumentDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を
+ 分解・再構築せずそのまま通過させる。<br>
  設定値は生の文字列のままユースケースへ渡さず、<a href="TargetSelection.html#of(java.util.List,java.util.List,java.util.List)"><code>TargetSelection.of(java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;)</code></a>で入口（エントリーポイント）において型へ変換する。
  未知の出力対象オブジェクト種別などの設定誤りは、DBへの問い合わせや出力先の削除（<code>--rm-dist</code>）より前に検知される</div>
 </div>

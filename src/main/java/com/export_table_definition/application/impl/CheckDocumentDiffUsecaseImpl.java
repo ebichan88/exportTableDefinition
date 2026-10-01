@@ -22,7 +22,7 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
   private static final String CHECK_TEMP_DIR_PREFIX = "exportTableDefinition-check-";
   private final SchemaExporter schemaExporter;
   private final SnapshotExportSinkFactory snapshotSinkFactory;
-  private final SnapshotDiff snapshotDiffDomainService;
+  private final SnapshotDiff snapshotDiff;
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
 
@@ -30,12 +30,12 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
   public CheckDocumentDiffUsecaseImpl(
       SchemaExporter schemaExporter,
       SnapshotExportSinkFactory snapshotSinkFactory,
-      SnapshotDiff snapshotDiffDomainService,
+      SnapshotDiff snapshotDiff,
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver) {
     this.schemaExporter = schemaExporter;
     this.snapshotSinkFactory = snapshotSinkFactory;
-    this.snapshotDiffDomainService = snapshotDiffDomainService;
+    this.snapshotDiff = snapshotDiff;
     this.fileRepository = fileRepository;
     this.outputPathResolver = outputPathResolver;
   }
@@ -50,7 +50,7 @@ public class CheckDocumentDiffUsecaseImpl implements CheckDocumentDiffUsecase {
           schemaExporter.fetchTargets(request.targetSelection(), request.sidecarPath());
       schemaExporter.export(
           targets, List.of(snapshotSinkFactory.create(generatedDir)), request.chunkSize());
-      return snapshotDiffDomainService.compare(
+      return snapshotDiff.compare(
           outputPathResolver.resolveSnapshotDirectory(generatedDir),
           outputPathResolver.resolveSnapshotDirectory(committedDir));
     } finally {

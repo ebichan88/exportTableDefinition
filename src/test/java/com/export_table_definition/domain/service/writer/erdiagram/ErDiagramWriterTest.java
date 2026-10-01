@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
  * ErDiagramWriter のER図出力に関するテスト<br>
  * ノード数の上限超過時にグループ分割されるかどうかを、生成されるファイル構成で検証する
  */
-public class ErDiagramWriterDomainServiceTest {
+public class ErDiagramWriterTest {
 
   private static final Path OUT = Path.of("output");
 

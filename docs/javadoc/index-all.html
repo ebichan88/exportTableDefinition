@@ -96,17 +96,33 @@ loadScripts(document, 'script');</script>
 <div class="block">ファイルの末尾へ追記するメソッド<br>
  ファイルが存在しない場合は新規作成する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#appendTable(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)" class="member-name-link">appendTable(TableDefinitionContent, Path)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#appendTable(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)" class="member-name-link">appendTable(TableDefinitionContent, Path)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
-<div class="block">追記先は<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#initTableFile(java.lang.String,com.export_table_definition.domain.service.path.OutputRoot)"><code>SchemaSnapshotWriterDomainService.initTableFile(java.lang.String, com.export_table_definition.domain.service.path.OutputRoot)</code></a>で作成済みであること</div>
+<div class="block">追記先は<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#initTableFile(java.lang.String,com.export_table_definition.domain.service.path.OutputRoot)"><code>SchemaSnapshotWriter.initTableFile(java.lang.String, com.export_table_definition.domain.service.path.OutputRoot)</code></a>で作成済みであること</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html#arguments()" class="member-name-link">arguments()</a> - Method in record class com.export_table_definition.domain.model.snapshot.<a href="com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">FunctionSnapshot</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>arguments</code> record component.</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Functions.html#asList()" class="member-name-link">asList()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a></dt>
+<dd>
+<div class="block">関数・プロシージャ情報のリストを取得するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Sequences.html#asList()" class="member-name-link">asList()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a></dt>
+<dd>
+<div class="block">シーケンス情報のリストを取得するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Types.html#asList()" class="member-name-link">asList()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a></dt>
+<dd>
+<div class="block">ユーザー定義型情報のリストを取得するメソッド</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/model/table/Tables.html#asList()" class="member-name-link">asList()</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></dt>
 <dd>
 <div class="block">テーブル情報のリストを取得するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/table/Triggers.html#asList()" class="member-name-link">asList()</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/Triggers.html" title="class in com.export_table_definition.domain.model.table">Triggers</a></dt>
+<dd>
+<div class="block">トリガー情報のリストを取得するメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html#asList()" class="member-name-link">asList()</a> - Method in class com.export_table_definition.domain.model.viewpoint.<a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a></dt>
 <dd>
@@ -248,33 +264,33 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/snapshot/TypeSnapshot.html#param-category"><code>category</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/presentation/ExportTableDefinitionController.html#checkDiff(com.export_table_definition.application.CheckDiffRequest)" class="member-name-link">checkDiff(CheckDiffRequest)</a> - Method in class com.export_table_definition.presentation.<a href="com/export_table_definition/presentation/ExportTableDefinitionController.html" title="class in com.export_table_definition.presentation">ExportTableDefinitionController</a></dt>
+<dt><a href="com/export_table_definition/presentation/ExportTableDefinitionController.html#checkDiff(com.export_table_definition.application.CheckDocumentDiffRequest)" class="member-name-link">checkDiff(CheckDocumentDiffRequest)</a> - Method in class com.export_table_definition.presentation.<a href="com/export_table_definition/presentation/ExportTableDefinitionController.html" title="class in com.export_table_definition.presentation">ExportTableDefinitionController</a></dt>
 <dd>
 <div class="block">DBの現状から生成したドキュメントと、<code>outputPath</code>配下に既にコミット済みのドキュメントの差分を検知するメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html" class="type-name-link" title="class in com.export_table_definition.application">CheckDiffRequest</a> - Record Class in <a href="com/export_table_definition/application/package-summary.html">com.export_table_definition.application</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffUsecase.html#checkDocumentDiff(com.export_table_definition.application.CheckDocumentDiffRequest)" class="member-name-link">checkDocumentDiff(CheckDocumentDiffRequest)</a> - Method in interface com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffUsecase.html" title="interface in com.export_table_definition.application">CheckDocumentDiffUsecase</a></dt>
+<dd>
+<div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
+ スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
+ DBからの取得は<a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)</code></a>と共通で、スナップショットのみを生成して
+ 一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
+</dd>
+<dt><a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html#checkDocumentDiff(com.export_table_definition.application.CheckDocumentDiffRequest)" class="member-name-link">checkDocumentDiff(CheckDocumentDiffRequest)</a> - Method in class com.export_table_definition.application.impl.<a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html" title="class in com.export_table_definition.application.impl">CheckDocumentDiffUsecaseImpl</a></dt>
+<dd>
+<div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
+ スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
+ DBからの取得は<a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)</code></a>と共通で、スナップショットのみを生成して
+ 一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
+</dd>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" class="type-name-link" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a> - Record Class in <a href="com/export_table_definition/application/package-summary.html">com.export_table_definition.application</a></dt>
 <dd>
 <div class="block">DB vs ドキュメントの差分検知（<code>--check</code>モード）のユースケースへの入力をまとめたrecord<br>
- <a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application"><code>ExportRequest</code></a>と異なり、Markdownの描画・ER図の生成を行わないため<code>erDiagramMaxNodes</code>を持たず、
+ <a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application"><code>ExportTableDefinitionRequest</code></a>と異なり、Markdownの描画・ER図の生成を行わないため<code>erDiagramMaxNodes</code>を持たず、
  書き込み前の出力先削除も行わないため<code>rmDist</code>も持たない</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#%3Cinit%3E(com.export_table_definition.application.TargetSelection,java.lang.String,java.lang.String,int)" class="member-name-link">CheckDiffRequest(TargetSelection, String, String, int)</a> - Constructor for record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#%3Cinit%3E(com.export_table_definition.application.TargetSelection,java.lang.String,java.lang.String,int)" class="member-name-link">CheckDocumentDiffRequest(TargetSelection, String, String, int)</a> - Constructor for record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
-<div class="block">Creates an instance of a <code>CheckDiffRequest</code> record class.</div>
-</dd>
-<dt><a href="com/export_table_definition/application/CheckDocumentDiffUsecase.html#checkDocumentDiff(com.export_table_definition.application.CheckDiffRequest)" class="member-name-link">checkDocumentDiff(CheckDiffRequest)</a> - Method in interface com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffUsecase.html" title="interface in com.export_table_definition.application">CheckDocumentDiffUsecase</a></dt>
-<dd>
-<div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
- スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
- DBからの取得は<a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportRequest)</code></a>と共通で、スナップショットのみを生成して
- 一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
-</dd>
-<dt><a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html#checkDocumentDiff(com.export_table_definition.application.CheckDiffRequest)" class="member-name-link">checkDocumentDiff(CheckDiffRequest)</a> - Method in class com.export_table_definition.application.impl.<a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html" title="class in com.export_table_definition.application.impl">CheckDocumentDiffUsecaseImpl</a></dt>
-<dd>
-<div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
- スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
- DBからの取得は<a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportRequest)</code></a>と共通で、スナップショットのみを生成して
- 一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
+<div class="block">Creates an instance of a <code>CheckDocumentDiffRequest</code> record class.</div>
 </dd>
 <dt><a href="com/export_table_definition/application/CheckDocumentDiffUsecase.html" class="type-name-link" title="interface in com.export_table_definition.application">CheckDocumentDiffUsecase</a> - Interface in <a href="com/export_table_definition/application/package-summary.html">com.export_table_definition.application</a></dt>
 <dd>
@@ -286,7 +302,7 @@ loadScripts(document, 'script');</script>
  DBからの取得は通常実行と同じ<code>SchemaExporter</code>で行い、差分の判定に不要なMarkdownの描画・ER図の生成は行わず、
  スナップショットのみを一時ディレクトリへ生成して、コミット済みのスナップショットとオブジェクト単位で比較する</div>
 </dd>
-<dt><a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html#%3Cinit%3E(com.export_table_definition.application.impl.SchemaExporter,com.export_table_definition.domain.service.export.SnapshotExportSinkFactory,com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService,com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">CheckDocumentDiffUsecaseImpl(SchemaExporter, SnapshotExportSinkFactory, SnapshotDiffDomainService, FileRepository, OutputPathResolver)</a> - Constructor for class com.export_table_definition.application.impl.<a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html" title="class in com.export_table_definition.application.impl">CheckDocumentDiffUsecaseImpl</a></dt>
+<dt><a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html#%3Cinit%3E(com.export_table_definition.application.impl.SchemaExporter,com.export_table_definition.domain.service.export.SnapshotExportSinkFactory,com.export_table_definition.domain.service.snapshot.SnapshotDiff,com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">CheckDocumentDiffUsecaseImpl(SchemaExporter, SnapshotExportSinkFactory, SnapshotDiff, FileRepository, OutputPathResolver)</a> - Constructor for class com.export_table_definition.application.impl.<a href="com/export_table_definition/application/impl/CheckDocumentDiffUsecaseImpl.html" title="class in com.export_table_definition.application.impl">CheckDocumentDiffUsecaseImpl</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/infrastructure/db/repository/dto/ForeignKeyDto.html#childKeyMandatory()" class="member-name-link">childKeyMandatory()</a> - Method in record class com.export_table_definition.infrastructure.db.repository.dto.<a href="com/export_table_definition/infrastructure/db/repository/dto/ForeignKeyDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">ForeignKeyDto</a></dt>
 <dd>
@@ -296,13 +312,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <code>childKeyUnique</code> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#chunkSize()" class="member-name-link">chunkSize()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#chunkSize()" class="member-name-link">chunkSize()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDiffRequest.html#param-chunkSize"><code>chunkSize</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDocumentDiffRequest.html#param-chunkSize"><code>chunkSize</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#chunkSize()" class="member-name-link">chunkSize()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#chunkSize()" class="member-name-link">chunkSize()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportRequest.html#param-chunkSize"><code>chunkSize</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportTableDefinitionRequest.html#param-chunkSize"><code>chunkSize</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/presentation/type/ExitStatus.html#code()" class="member-name-link">code()</a> - Method in enum class com.export_table_definition.presentation.type.<a href="com/export_table_definition/presentation/type/ExitStatus.html" title="enum class in com.export_table_definition.presentation.type">ExitStatus</a></dt>
 <dd>
@@ -528,7 +544,7 @@ loadScripts(document, 'script');</script>
  レイヤー（presentation・application・domain・infrastructure）の外に置き、どの層・パッケージからも依存してよい。
  このパッケージ自身はJDK以外に依存しない。置いてよいのは、失敗の分類を伝える例外だけとする （<code>shared</code>の直下や、例外以外の共通部品は置かない）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiffDomainService.html#compare(java.nio.file.Path,java.nio.file.Path)" class="member-name-link">compare(Path, Path)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SnapshotDiffDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiffDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiff.html#compare(java.nio.file.Path,java.nio.file.Path)" class="member-name-link">compare(Path, Path)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SnapshotDiff.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiff</a></dt>
 <dd>
 <div class="block">生成したスナップショットのディレクトリと、コミット済みのスナップショットのディレクトリを比較する</div>
 </dd>
@@ -1014,11 +1030,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">付帯情報が存在しない場合に利用する空インスタンス</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1174,7 +1190,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1265,9 +1281,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">ノード数の上限を超えたため分割したスキーマ別ER図の、1グループ分のファイル名</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#erDiagramMaxNodes()" class="member-name-link">erDiagramMaxNodes()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#erDiagramMaxNodes()" class="member-name-link">erDiagramMaxNodes()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportRequest.html#param-erDiagramMaxNodes"><code>erDiagramMaxNodes</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportTableDefinitionRequest.html#param-erDiagramMaxNodes"><code>erDiagramMaxNodes</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramTemplates</a> - Class in <a href="com/export_table_definition/domain/service/writer/erdiagram/package-summary.html">com.export_table_definition.domain.service.writer.erdiagram</a></dt>
 <dd>
@@ -1278,11 +1294,11 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html#%3Cinit%3E()" class="member-name-link">ErDiagramTemplates()</a> - Constructor for class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramTemplates</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/writer/erdiagram/package-summary.html">com.export_table_definition.domain.service.writer.erdiagram</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriter</a> - Class in <a href="com/export_table_definition/domain/service/writer/erdiagram/package-summary.html">com.export_table_definition.domain.service.writer.erdiagram</a></dt>
 <dd>
 <div class="block">スキーマ別ER図（全体ER図）とその索引を書き込むクラス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriterDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">ErDiagramWriterDomainService(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">ErDiagramWriter(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html#escapePipe(java.lang.String)" class="member-name-link">escapePipe(String)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a></dt>
 <dd>
@@ -1311,7 +1327,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">ノード数が1枚の図に描画する上限を超えるか判定するメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/presentation/ExportTableDefinitionController.html#execute(com.export_table_definition.application.ExportRequest)" class="member-name-link">execute(ExportRequest)</a> - Method in class com.export_table_definition.presentation.<a href="com/export_table_definition/presentation/ExportTableDefinitionController.html" title="class in com.export_table_definition.presentation">ExportTableDefinitionController</a></dt>
+<dt><a href="com/export_table_definition/presentation/ExportTableDefinitionController.html#execute(com.export_table_definition.application.ExportTableDefinitionRequest)" class="member-name-link">execute(ExportTableDefinitionRequest)</a> - Method in class com.export_table_definition.presentation.<a href="com/export_table_definition/presentation/ExportTableDefinitionController.html" title="class in com.export_table_definition.presentation">ExportTableDefinitionController</a></dt>
 <dd>
 <div class="block">コントローラーメソッド</div>
 </dd>
@@ -1341,26 +1357,17 @@ loadScripts(document, 'script');</script>
 
  なお、JVMが起動できない場合や<code>main()</code>に入る前の失敗は、このツールが捕捉する前にJavaの仕様で1になる</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html" class="type-name-link" title="class in com.export_table_definition.application">ExportRequest</a> - Record Class in <a href="com/export_table_definition/application/package-summary.html">com.export_table_definition.application</a></dt>
-<dd>
-<div class="block">テーブル定義出力（通常実行）のユースケースへの入力をまとめたrecord<br>
- エントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さずそのまま通過する</div>
-</dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#%3Cinit%3E(com.export_table_definition.application.TargetSelection,java.lang.String,java.lang.String,int,int,boolean)" class="member-name-link">ExportRequest(TargetSelection, String, String, int, int, boolean)</a> - Constructor for record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
-<dd>
-<div class="block">Creates an instance of a <code>ExportRequest</code> record class.</div>
-</dd>
 <dt><a href="com/export_table_definition/domain/service/export/ExportSink.html" class="type-name-link" title="interface in com.export_table_definition.domain.service.export">ExportSink</a> - Interface in <a href="com/export_table_definition/domain/service/export/package-summary.html">com.export_table_definition.domain.service.export</a></dt>
 <dd>
 <div class="block">DBから取得したスキーマ情報を、1つの出力形式（Markdownのドキュメント／スナップショット）で書き出すインタフェース<br>
  取得処理（一括取得・スキーマ単位・チャンク単位）は出力形式に依らず共通のため、ユースケースは取得した順に各メソッドを呼び出し、
  どの情報をどう書き出すかは実装に委ねる。出力先のディレクトリは実装の生成時に決まる</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)" class="member-name-link">exportTableDefinition(ExportRequest)</a> - Method in interface com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html" title="interface in com.export_table_definition.application">ExportTableDefinitionUsecase</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)" class="member-name-link">exportTableDefinition(ExportTableDefinitionRequest)</a> - Method in interface com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html" title="interface in com.export_table_definition.application">ExportTableDefinitionUsecase</a></dt>
 <dd>
 <div class="block">DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力するメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)" class="member-name-link">exportTableDefinition(ExportRequest)</a> - Method in class com.export_table_definition.application.impl.<a href="com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.html" title="class in com.export_table_definition.application.impl">ExportTableDefinitionUsecaseImpl</a></dt>
+<dt><a href="com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)" class="member-name-link">exportTableDefinition(ExportTableDefinitionRequest)</a> - Method in class com.export_table_definition.application.impl.<a href="com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.html" title="class in com.export_table_definition.application.impl">ExportTableDefinitionUsecaseImpl</a></dt>
 <dd>
 <div class="block">DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力するメソッド</div>
 </dd>
@@ -1385,6 +1392,15 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/config/module/ExportTableDefinitionModule.html#%3Cinit%3E()" class="member-name-link">ExportTableDefinitionModule()</a> - Constructor for class com.export_table_definition.config.module.<a href="com/export_table_definition/config/module/ExportTableDefinitionModule.html" title="class in com.export_table_definition.config.module">ExportTableDefinitionModule</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" class="type-name-link" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a> - Record Class in <a href="com/export_table_definition/application/package-summary.html">com.export_table_definition.application</a></dt>
+<dd>
+<div class="block">テーブル定義出力（通常実行）のユースケースへの入力をまとめたrecord<br>
+ エントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さずそのまま通過する</div>
+</dd>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#%3Cinit%3E(com.export_table_definition.application.TargetSelection,java.lang.String,java.lang.String,int,int,boolean)" class="member-name-link">ExportTableDefinitionRequest(TargetSelection, String, String, int, int, boolean)</a> - Constructor for record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>ExportTableDefinitionRequest</code> record class.</div>
+</dd>
 <dt><a href="com/export_table_definition/application/ExportTableDefinitionUsecase.html" class="type-name-link" title="interface in com.export_table_definition.application">ExportTableDefinitionUsecase</a> - Interface in <a href="com/export_table_definition/application/package-summary.html">com.export_table_definition.application</a></dt>
 <dd>
 <div class="block">テーブル定義出力（通常実行）のユースケースを扱うインターフェース</div>
@@ -1396,15 +1412,15 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.html#%3Cinit%3E(com.export_table_definition.application.impl.SchemaExporter,com.export_table_definition.domain.service.export.MarkdownExportSinkFactory,com.export_table_definition.domain.service.export.SnapshotExportSinkFactory,com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">ExportTableDefinitionUsecaseImpl(SchemaExporter, MarkdownExportSinkFactory, SnapshotExportSinkFactory, FileRepository, OutputPathResolver)</a> - Constructor for class com.export_table_definition.application.impl.<a href="com/export_table_definition/application/impl/ExportTableDefinitionUsecaseImpl.html" title="class in com.export_table_definition.application.impl">ExportTableDefinitionUsecaseImpl</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a> - Class in <a href="com/export_table_definition/domain/service/target/package-summary.html">com.export_table_definition.domain.service.target</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" class="type-name-link" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a> - Class in <a href="com/export_table_definition/domain/service/target/package-summary.html">com.export_table_definition.domain.service.target</a></dt>
 <dd>
 <div class="block">出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報）を突き合わせるドメインサービス<br>
  外部キーはスキーマ全体から、サイドカーは出力対象に関係なく読み込むため、出力対象の絞り込みで除外されたテーブルや、
  リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう指摘（<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyFinding</code></a>）として返す。指摘をどこへ出力するか（ログ等）は呼び出し側が決める</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html#%3Cinit%3E()" class="member-name-link">ExportTargetConsistencyDomainService()</a> - Constructor for class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#%3Cinit%3E()" class="member-name-link">ExportTargetConsistency()</a> - Constructor for class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" class="type-name-link" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a> - Record Class in <a href="com/export_table_definition/domain/service/target/package-summary.html">com.export_table_definition.domain.service.target</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" class="type-name-link" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a> - Record Class in <a href="com/export_table_definition/domain/service/target/package-summary.html">com.export_table_definition.domain.service.target</a></dt>
 <dd>
 <div class="block">外部キーの突き合わせ結果</div>
 </dd>
@@ -1413,7 +1429,7 @@ loadScripts(document, 'script');</script>
 <div class="block">出力対象のうち、一括取得する軽量な情報の組<br>
  テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は含まない。 それらは出力時にスキーマ・チャンク単位で取得する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ExportTargets.html#%3Cinit%3E(com.export_table_definition.domain.model.database.BaseInfoEntity,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.viewpoint.Viewpoints)" class="member-name-link">ExportTargets(BaseInfoEntity, Tables, ForeignKeys, List&lt;TriggerEntity&gt;, List&lt;FunctionEntity&gt;, List&lt;SequenceEntity&gt;, List&lt;TypeEntity&gt;, Annotations, Viewpoints)</a> - Constructor for record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ExportTargets.html" title="class in com.export_table_definition.domain.model.target">ExportTargets</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ExportTargets.html#%3Cinit%3E(com.export_table_definition.domain.model.database.BaseInfoEntity,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.model.table.Triggers,com.export_table_definition.domain.model.schemaobject.Functions,com.export_table_definition.domain.model.schemaobject.Sequences,com.export_table_definition.domain.model.schemaobject.Types,com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.viewpoint.Viewpoints)" class="member-name-link">ExportTargets(BaseInfoEntity, Tables, ForeignKeys, Triggers, Functions, Sequences, Types, Annotations, Viewpoints)</a> - Constructor for record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ExportTargets.html" title="class in com.export_table_definition.domain.model.target">ExportTargets</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ExportTargets</code> record class.</div>
 </dd>
@@ -1497,22 +1513,22 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Database名に紐づくEnumを返却する。</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#findings()" class="member-name-link">findings()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#findings()" class="member-name-link">findings()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>findings</code> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html#findOrphanColumnAnnotations(com.export_table_definition.domain.model.table.TableDetail,com.export_table_definition.domain.model.sidecar.Annotations)" class="member-name-link">findOrphanColumnAnnotations(TableDetail, Annotations)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#findOrphanColumnAnnotations(com.export_table_definition.domain.model.table.TableDetail,com.export_table_definition.domain.model.sidecar.Annotations)" class="member-name-link">findOrphanColumnAnnotations(TableDetail, Annotations)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>
 <div class="block">実在しないカラムに対するカラム備考（＝孤児付帯情報）を検出するメソッド<br>
  出力対象のテーブルに対してのみ、実在カラムと付帯情報のカラム名を突き合わせて検出する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html#findOrphanTableAnnotations(com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">findOrphanTableAnnotations(Annotations, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#findOrphanTableAnnotations(com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">findOrphanTableAnnotations(Annotations, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>
 <div class="block">実在しないテーブルに対する付帯情報（＝孤児付帯情報）を検出するメソッド<br>
  リネームや削除により、サイドカーの付帯情報が現在のスキーマと乖離した場合の気付きとする。 スキーマ・テーブルの出力対象が絞り込まれている場合は、対象外テーブルの付帯情報を
  誤って孤児と判定しないよう検出を行わない（検出を行わなかったこと自体を指摘として返す）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html#findUnmatchedViewpointPatterns(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">findUnmatchedViewpointPatterns(Viewpoints, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#findUnmatchedViewpointPatterns(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">findUnmatchedViewpointPatterns(Viewpoints, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>
 <div class="block">観点の所属テーブルのパターンのうち、どのテーブルにも一致しないものを検出するメソッド<br>
  リネームや削除により、サイドカーの観点の宣言が現在のスキーマと乖離した場合の気付きとする。
@@ -1579,13 +1595,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">外部キー一覧セクションの見出し（ER図の描画を省略した場合の代替掲載）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#foreignkeyName()" class="member-name-link">foreignkeyName()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></dt>
+<dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#foreignKeyName()" class="member-name-link">foreignKeyName()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#param-foreignkeyName"><code>foreignkeyName</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#param-foreignKeyName"><code>foreignKeyName</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/infrastructure/db/repository/dto/ForeignKeyDto.html#foreignkeyName()" class="member-name-link">foreignkeyName()</a> - Method in record class com.export_table_definition.infrastructure.db.repository.dto.<a href="com/export_table_definition/infrastructure/db/repository/dto/ForeignKeyDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">ForeignKeyDto</a></dt>
+<dt><a href="com/export_table_definition/infrastructure/db/repository/dto/ForeignKeyDto.html#foreignKeyName()" class="member-name-link">foreignKeyName()</a> - Method in record class com.export_table_definition.infrastructure.db.repository.dto.<a href="com/export_table_definition/infrastructure/db/repository/dto/ForeignKeyDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">ForeignKeyDto</a></dt>
 <dd>
-<div class="block">Returns the value of the <code>foreignkeyName</code> record component.</div>
+<div class="block">Returns the value of the <code>foreignKeyName</code> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyGroup.html#foreignKeys()" class="member-name-link">foreignKeys()</a> - Method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyGroup.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyGroup</a></dt>
 <dd>
@@ -1603,9 +1619,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/target/TableDefinitionContent.html#param-foreignKeys"><code>foreignKeys</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#foreignKeys()" class="member-name-link">foreignKeys()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#foreignKeys()" class="member-name-link">foreignKeys()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#param-foreignKeys"><code>foreignKeys</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#param-foreignKeys"><code>foreignKeys</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html#foreignKeys(java.util.List)" class="member-name-link">foreignKeys(List&lt;ForeignKeyEntity&gt;)</a> - Static method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionTemplates</a></dt>
 <dd>
@@ -1744,6 +1760,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/model/target/ExportTargets.html#functions()" class="member-name-link">functions()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ExportTargets.html" title="class in com.export_table_definition.domain.model.target">ExportTargets</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/target/ExportTargets.html#param-functions"><code>functions</code></a> record component.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Functions.html" class="type-name-link" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a> - Class in <a href="com/export_table_definition/domain/model/schemaobject/package-summary.html">com.export_table_definition.domain.model.schemaobject</a></dt>
+<dd>
+<div class="block">関数・プロシージャの一覧情報の集合を扱うクラス</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html" class="type-name-link" title="class in com.export_table_definition.domain.model.snapshot">FunctionSnapshot</a> - Record Class in <a href="com/export_table_definition/domain/model/snapshot/package-summary.html">com.export_table_definition.domain.model.snapshot</a></dt>
 <dd>
@@ -1919,11 +1939,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/presentation/dto/DiffCheckResultDto.html#param-hasDifference"><code>hasDifference</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -2079,7 +2099,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -2283,9 +2303,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">処理内容の報告（対応は不要）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#initTableFile(java.lang.String,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">initTableFile(String, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#initTableFile(java.lang.String,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">initTableFile(String, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
-<div class="block">前回実行時のファイルが残っている場合でも、その内容へ追記してしまわないよう上書きで空にする。 当該スキーマの<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#appendTable(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)"><code>SchemaSnapshotWriterDomainService.appendTable(com.export_table_definition.domain.model.target.TableDefinitionContent, java.nio.file.Path)</code></a>より前に1回だけ呼び出すこと</div>
+<div class="block">前回実行時のファイルが残っている場合でも、その内容へ追記してしまわないよう上書きで空にする。 当該スキーマの<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#appendTable(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)"><code>SchemaSnapshotWriter.appendTable(com.export_table_definition.domain.model.target.TableDefinitionContent, java.nio.file.Path)</code></a>より前に1回だけ呼び出すこと</div>
 </dd>
 <dt><a href="com/export_table_definition/config/InvalidConfigurationException.html" class="type-name-link" title="class in com.export_table_definition.config">InvalidConfigurationException</a> - Exception Class in <a href="com/export_table_definition/config/package-summary.html">com.export_table_definition.config</a></dt>
 <dd>
@@ -2305,6 +2325,18 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">パスがディレクトリか判定するメソッド</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Functions.html#isEmpty()" class="member-name-link">isEmpty()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a></dt>
+<dd>
+<div class="block">関数・プロシージャが1件も存在しないか判定するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Sequences.html#isEmpty()" class="member-name-link">isEmpty()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a></dt>
+<dd>
+<div class="block">シーケンスが1件も存在しないか判定するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Types.html#isEmpty()" class="member-name-link">isEmpty()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a></dt>
+<dd>
+<div class="block">ユーザー定義型が1件も存在しないか判定するメソッド</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/model/sidecar/Annotations.html#isEmpty()" class="member-name-link">isEmpty()</a> - Method in class com.export_table_definition.domain.model.sidecar.<a href="com/export_table_definition/domain/model/sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a></dt>
 <dd>
 <div class="block">付帯情報が1件も存在しないか判定するメソッド</div>
@@ -2320,6 +2352,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/model/table/Tables.html#isEmpty()" class="member-name-link">isEmpty()</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></dt>
 <dd>
 <div class="block">テーブルが1件も存在しないか判定するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/table/Triggers.html#isEmpty()" class="member-name-link">isEmpty()</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/Triggers.html" title="class in com.export_table_definition.domain.model.table">Triggers</a></dt>
+<dd>
+<div class="block">トリガーが1件も存在しないか判定するメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html#isEmpty()" class="member-name-link">isEmpty()</a> - Method in class com.export_table_definition.domain.model.viewpoint.<a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a></dt>
 <dd>
@@ -2560,7 +2596,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Markdownのドキュメント（テーブル一覧・テーブル定義書・ER図・各種一覧と個別定義・観点・README）を書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するクラス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html#%3Cinit%3E(com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionWriterDomainService,com.export_table_definition.domain.service.writer.erdiagram.ErDiagramWriterDomainService,com.export_table_definition.domain.service.writer.objectlist.ObjectListWriterDomainService,com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriterDomainService,com.export_table_definition.domain.service.writer.readme.ReadmeWriterDomainService)" class="member-name-link">MarkdownExportSinkFactory(TableDefinitionWriterDomainService, ErDiagramWriterDomainService, ObjectListWriterDomainService, ViewpointWriterDomainService, ReadmeWriterDomainService)</a> - Constructor for class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></dt>
+<dt><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html#%3Cinit%3E(com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionWriter,com.export_table_definition.domain.service.writer.erdiagram.ErDiagramWriter,com.export_table_definition.domain.service.writer.objectlist.ObjectListWriter,com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriter,com.export_table_definition.domain.service.writer.readme.ReadmeWriter)" class="member-name-link">MarkdownExportSinkFactory(TableDefinitionWriter, ErDiagramWriter, ObjectListWriter, ViewpointWriter, ReadmeWriter)</a> - Constructor for class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a> - Class in <a href="com/export_table_definition/domain/service/writer/template/package-summary.html">com.export_table_definition.domain.service.writer.template</a></dt>
 <dd>
@@ -2752,11 +2788,11 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListTemplates.html#%3Cinit%3E()" class="member-name-link">ObjectListTemplates()</a> - Constructor for class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListTemplates.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListTemplates</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/writer/objectlist/package-summary.html">com.export_table_definition.domain.service.writer.objectlist</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a> - Class in <a href="com/export_table_definition/domain/service/writer/objectlist/package-summary.html">com.export_table_definition.domain.service.writer.objectlist</a></dt>
 <dd>
 <div class="block">トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義を書き込むクラス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">ObjectListWriterDomainService(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">ObjectListWriter(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/model/relation/Cardinality.html#of(boolean,boolean)" class="member-name-link">of(boolean, boolean)</a> - Static method in enum class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/Cardinality.html" title="enum class in com.export_table_definition.domain.model.relation">Cardinality</a></dt>
 <dd>
@@ -2823,6 +2859,18 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/model/relation/ForeignKeys.html#of(java.util.List)" class="member-name-link">of(List&lt;ForeignKeyEntity&gt;)</a> - Static method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></dt>
 <dd>
 <div class="block">物理外部キー・論理リレーションのリストから、参照元・被参照側の両方のテーブルキーで引けるコレクションを生成する</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Functions.html#of(java.util.List)" class="member-name-link">of(List&lt;FunctionEntity&gt;)</a> - Static method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a></dt>
+<dd>
+<div class="block">関数・プロシージャ情報のリストからインスタンスを生成する静的ファクトリメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Sequences.html#of(java.util.List)" class="member-name-link">of(List&lt;SequenceEntity&gt;)</a> - Static method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a></dt>
+<dd>
+<div class="block">シーケンス情報のリストからインスタンスを生成する静的ファクトリメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Types.html#of(java.util.List)" class="member-name-link">of(List&lt;TypeEntity&gt;)</a> - Static method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a></dt>
+<dd>
+<div class="block">ユーザー定義型情報のリストからインスタンスを生成する静的ファクトリメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/table/Tables.html#of(java.util.List)" class="member-name-link">of(List&lt;TableEntity&gt;)</a> - Static method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></dt>
 <dd>
@@ -2937,13 +2985,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/application/TargetSelection.html#param-outputObjectTypes"><code>outputObjectTypes</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#outputPath()" class="member-name-link">outputPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#outputPath()" class="member-name-link">outputPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDiffRequest.html#param-outputPath"><code>outputPath</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDocumentDiffRequest.html#param-outputPath"><code>outputPath</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#outputPath()" class="member-name-link">outputPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#outputPath()" class="member-name-link">outputPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportRequest.html#param-outputPath"><code>outputPath</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportTableDefinitionRequest.html#param-outputPath"><code>outputPath</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" class="type-name-link" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a> - Interface in <a href="com/export_table_definition/domain/service/path/package-summary.html">com.export_table_definition.domain.service.path</a></dt>
 <dd>
@@ -2953,7 +3001,7 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/service/path/OutputRoot.html" class="type-name-link" title="class in com.export_table_definition.domain.service.path">OutputRoot</a> - Record Class in <a href="com/export_table_definition/domain/service/path/package-summary.html">com.export_table_definition.domain.service.path</a></dt>
 <dd>
 <div class="block">出力先ベースディレクトリとデータベース基本情報の組み合わせを表す値オブジェクト<br>
- <code>ExportSink</code>の実装が書き込みを行うたびに組み立て、<code>*WriterDomainService</code>・<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>へそのまま渡す。両者は常に対で必要とされるにもかかわらず、4層以上にわたって 分解・再構築されながら渡されていたため、1つの値オブジェクトにまとめた</div>
+ <code>ExportSink</code>の実装が書き込みを行うたびに組み立て、<code>*Writer</code>・<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path"><code>OutputPathResolver</code></a>へそのまま渡す。両者は常に対で必要とされるにもかかわらず、4層以上にわたって 分解・再構築されながら渡されていたため、1つの値オブジェクトにまとめた</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/path/OutputRoot.html#%3Cinit%3E(java.nio.file.Path,com.export_table_definition.domain.model.database.BaseInfoEntity)" class="member-name-link">OutputRoot(Path, BaseInfoEntity)</a> - Constructor for record class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a></dt>
 <dd>
@@ -3159,12 +3207,12 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/readme/ReadmeTemplates.html#%3Cinit%3E()" class="member-name-link">ReadmeTemplates()</a> - Constructor for class com.export_table_definition.domain.service.writer.readme.<a href="com/export_table_definition/domain/service/writer/readme/ReadmeTemplates.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeTemplates</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/writer/readme/package-summary.html">com.export_table_definition.domain.service.writer.readme</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriter.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriter</a> - Class in <a href="com/export_table_definition/domain/service/writer/readme/package-summary.html">com.export_table_definition.domain.service.writer.readme</a></dt>
 <dd>
 <div class="block">データベース単位ディレクトリのREADMEを書き込むクラス<br>
  複数のデータベースを同じ出力先へ出力した場合に、GitHub等でそのディレクトリを開いた際の入り口となるよう、 出力される一覧ドキュメントへのリンクをまとめる</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriterDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">ReadmeWriterDomainService(FileRepository, OutputPathResolver)</a> - Constructor for class com.export_table_definition.domain.service.writer.readme.<a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriter.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">ReadmeWriter(FileRepository, OutputPathResolver)</a> - Constructor for class com.export_table_definition.domain.service.writer.readme.<a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriter.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#referenceColumnNames()" class="member-name-link">referenceColumnNames()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></dt>
 <dd>
@@ -3314,7 +3362,7 @@ loadScripts(document, 'script');</script>
  Markdownドキュメント（テーブル定義書・一覧・ER図・観点ページ・README）はすべてこの配下にまとめる。<br>
  例: {base}/{DB名}/</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#%3Cinit%3E(com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List)" class="member-name-link">ResolvedForeignKeys(ForeignKeys, List&lt;ConsistencyFinding&gt;)</a> - Constructor for record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#%3Cinit%3E(com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List)" class="member-name-link">ResolvedForeignKeys(ForeignKeys, List&lt;ConsistencyFinding&gt;)</a> - Constructor for record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ResolvedForeignKeys</code> record class.</div>
 </dd>
@@ -3338,7 +3386,7 @@ loadScripts(document, 'script');</script>
 <div class="block">スキーマ別ER図をテーブルのまとまりごとに分割したページのパス。<br>
  例: {base}/{DB名}/erDiagram_{DB名}_{スキーマ名}_group{groupNo}.md</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html#resolveForeignKeys(java.util.List,java.util.List,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">resolveForeignKeys(List&lt;ForeignKeyEntity&gt;, List&lt;ForeignKeyEntity&gt;, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#resolveForeignKeys(java.util.List,java.util.List,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">resolveForeignKeys(List&lt;ForeignKeyEntity&gt;, List&lt;ForeignKeyEntity&gt;, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>
 <div class="block">物理外部キーとサイドカー由来の論理リレーションのうち、参照元・参照先の双方が出力対象のテーブルであるものを 1つの外部キーの集合にまとめるメソッド<br>
  片側だけが出力対象のものを残すと、テーブル一覧・個別の定義書には現れないテーブルがER図にだけ箱として残ってしまうため除外する。
@@ -3484,9 +3532,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>ResultDto</code> record class.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#rmDist()" class="member-name-link">rmDist()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#rmDist()" class="member-name-link">rmDist()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportRequest.html#param-rmDist"><code>rmDist</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportTableDefinitionRequest.html#param-rmDist"><code>rmDist</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html#row(java.lang.Object...)" class="member-name-link">row(Object...)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MarkdownTemplateSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MarkdownTemplateSupport</a></dt>
 <dd>
@@ -3630,13 +3678,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">関数・シーケンス・型の個別定義ファイルの、データベース単位ディレクトリからの相対パス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/snapshot/package-summary.html">com.export_table_definition.domain.service.snapshot</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" class="type-name-link" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a> - Class in <a href="com/export_table_definition/domain/service/snapshot/package-summary.html">com.export_table_definition.domain.service.snapshot</a></dt>
 <dd>
 <div class="block">スキーマのスナップショット（DBから取得したスキーマ情報を構造化した中間表現）を書き込むクラス<br>
  Markdownのテーブル定義書と同じ取得結果から、機械可読なJSON Lines形式（1行1オブジェクト）で出力する。 テーブルはチャンク単位の取得・破棄（<code>
  chunkSize</code>）のメモリプロファイルを変えないよう、 1テーブル書き終えるごとにスキーマ単位のファイルへ追記する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.snapshot.SnapshotSerializer)" class="member-name-link">SchemaSnapshotWriterDomainService(FileRepository, OutputPathResolver, SnapshotSerializer)</a> - Constructor for class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.snapshot.SnapshotSerializer)" class="member-name-link">SchemaSnapshotWriter(FileRepository, OutputPathResolver, SnapshotSerializer)</a> - Constructor for class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/model/table/SchemaTableKeyed.html" class="type-name-link" title="interface in com.export_table_definition.domain.model.table">SchemaTableKeyed</a> - Interface in <a href="com/export_table_definition/domain/model/table/package-summary.html">com.export_table_definition.domain.model.table</a></dt>
 <dd>
@@ -3782,6 +3830,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <code>sequences</code> record component.</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Sequences.html" class="type-name-link" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a> - Class in <a href="com/export_table_definition/domain/model/schemaobject/package-summary.html">com.export_table_definition.domain.model.schemaobject</a></dt>
+<dd>
+<div class="block">シーケンス情報の集合を扱うクラス</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/SequenceSnapshot.html" class="type-name-link" title="class in com.export_table_definition.domain.model.snapshot">SequenceSnapshot</a> - Record Class in <a href="com/export_table_definition/domain/model/snapshot/package-summary.html">com.export_table_definition.domain.model.snapshot</a></dt>
 <dd>
 <div class="block">スキーマのスナップショットのうち、1シーケンス分の情報を表すrecordクラス<br>
@@ -3824,13 +3876,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">null安全のため、各値がnullの場合は空の状態に正規化する</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#sidecarPath()" class="member-name-link">sidecarPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#sidecarPath()" class="member-name-link">sidecarPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDiffRequest.html#param-sidecarPath"><code>sidecarPath</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDocumentDiffRequest.html#param-sidecarPath"><code>sidecarPath</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#sidecarPath()" class="member-name-link">sidecarPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#sidecarPath()" class="member-name-link">sidecarPath()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportRequest.html#param-sidecarPath"><code>sidecarPath</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportTableDefinitionRequest.html#param-sidecarPath"><code>sidecarPath</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/repository/SidecarRepository.html" class="type-name-link" title="interface in com.export_table_definition.domain.repository">SidecarRepository</a> - Interface in <a href="com/export_table_definition/domain/repository/package-summary.html">com.export_table_definition.domain.repository</a></dt>
 <dd>
@@ -3847,14 +3899,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>Single</code> record class.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiffDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiffDomainService</a> - Class in <a href="com/export_table_definition/domain/service/snapshot/package-summary.html">com.export_table_definition.domain.service.snapshot</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiff.html" class="type-name-link" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiff</a> - Class in <a href="com/export_table_definition/domain/service/snapshot/package-summary.html">com.export_table_definition.domain.service.snapshot</a></dt>
 <dd>
 <div class="block">DBから生成したスキーマのスナップショットと、既にコミット済みのスナップショットを比較するドメインサービス<br>
  スキーマ配下のオブジェクトのファイル（<code>tables.jsonl</code>等）は1行1オブジェクトのため、行をオブジェクト単位で突き合わせ、 追加/削除/内容不一致をオブジェクト単位（例:
  <code>table sample.employee</code>）で報告する。 それ以外のファイル（<code>database.json</code>等）はファイル単位で比較する。
  内容が一致しないものは、<a href="com/export_table_definition/domain/service/snapshot/SnapshotSerializer.html#formatForDiff(java.lang.String)"><code>SnapshotSerializer.formatForDiff(java.lang.String)</code></a>で差分表示用に整形した上で <a href="com/export_table_definition/domain/service/UnifiedDiffGenerator.html" title="class in com.export_table_definition.domain.service"><code>UnifiedDiffGenerator</code></a>によりunified diff形式の差分を付ける</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiffDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.snapshot.SnapshotSerializer,com.export_table_definition.domain.service.UnifiedDiffGenerator)" class="member-name-link">SnapshotDiffDomainService(FileRepository, OutputPathResolver, SnapshotSerializer, UnifiedDiffGenerator)</a> - Constructor for class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SnapshotDiffDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiffDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiff.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.snapshot.SnapshotSerializer,com.export_table_definition.domain.service.UnifiedDiffGenerator)" class="member-name-link">SnapshotDiff(FileRepository, OutputPathResolver, SnapshotSerializer, UnifiedDiffGenerator)</a> - Constructor for class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SnapshotDiff.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiff</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/service/path/SnapshotLocations.html#snapshotDirectory()" class="member-name-link">snapshotDirectory()</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/SnapshotLocations.html" title="class in com.export_table_definition.domain.service.path">SnapshotLocations</a></dt>
 <dd>
@@ -3864,7 +3916,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">スキーマのスナップショット（JSON Lines）を書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するクラス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/export/SnapshotExportSinkFactory.html#%3Cinit%3E(com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriterDomainService)" class="member-name-link">SnapshotExportSinkFactory(SchemaSnapshotWriterDomainService)</a> - Constructor for class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/SnapshotExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">SnapshotExportSinkFactory</a></dt>
+<dt><a href="com/export_table_definition/domain/service/export/SnapshotExportSinkFactory.html#%3Cinit%3E(com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriter)" class="member-name-link">SnapshotExportSinkFactory(SchemaSnapshotWriter)</a> - Constructor for class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/SnapshotExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">SnapshotExportSinkFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/SnapshotKind.html" class="type-name-link" title="enum class in com.export_table_definition.domain.model.snapshot">SnapshotKind</a> - Enum Class in <a href="com/export_table_definition/domain/model/snapshot/package-summary.html">com.export_table_definition.domain.model.snapshot</a></dt>
 <dd>
@@ -3894,6 +3946,18 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/infrastructure/db/repository/dto/SequenceDto.html#startValue()" class="member-name-link">startValue()</a> - Method in record class com.export_table_definition.infrastructure.db.repository.dto.<a href="com/export_table_definition/infrastructure/db/repository/dto/SequenceDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">SequenceDto</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>startValue</code> record component.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Functions.html#stream()" class="member-name-link">stream()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Functions.html" title="class in com.export_table_definition.domain.model.schemaobject">Functions</a></dt>
+<dd>
+<div class="block">関数・プロシージャ情報のストリームを取得するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Sequences.html#stream()" class="member-name-link">stream()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Sequences.html" title="class in com.export_table_definition.domain.model.schemaobject">Sequences</a></dt>
+<dd>
+<div class="block">シーケンス情報のストリームを取得するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Types.html#stream()" class="member-name-link">stream()</a> - Method in class com.export_table_definition.domain.model.schemaobject.<a href="com/export_table_definition/domain/model/schemaobject/Types.html" title="class in com.export_table_definition.domain.model.schemaobject">Types</a></dt>
+<dd>
+<div class="block">ユーザー定義型情報のストリームを取得するメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/presentation/type/ExitStatus.html#SUCCESS" class="member-name-link">SUCCESS</a> - Enum constant in enum class com.export_table_definition.presentation.type.<a href="com/export_table_definition/presentation/type/ExitStatus.html" title="enum class in com.export_table_definition.presentation.type">ExitStatus</a></dt>
 <dd>
@@ -3969,11 +4033,11 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html#%3Cinit%3E()" class="member-name-link">TableDefinitionTemplates()</a> - Constructor for class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionTemplates</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/writer/tabledefinition/package-summary.html">com.export_table_definition.domain.service.writer.tabledefinition</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a> - Class in <a href="com/export_table_definition/domain/service/writer/tabledefinition/package-summary.html">com.export_table_definition.domain.service.writer.tabledefinition</a></dt>
 <dd>
 <div class="block">テーブル一覧・テーブル定義書を書き込むクラス</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">TableDefinitionWriterDomainService(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">TableDefinitionWriter(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="com/export_table_definition/domain/model/table/TableDetail.html" class="type-name-link" title="class in com.export_table_definition.domain.model.table">TableDetail</a> - Record Class in <a href="com/export_table_definition/domain/model/table/package-summary.html">com.export_table_definition.domain.model.table</a></dt>
 <dd>
@@ -4185,19 +4249,19 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/snapshot/ContentDiff.html#param-target"><code>target</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#targetSelection()" class="member-name-link">targetSelection()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#targetSelection()" class="member-name-link">targetSelection()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDiffRequest.html#param-targetSelection"><code>targetSelection</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/CheckDocumentDiffRequest.html#param-targetSelection"><code>targetSelection</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#targetSelection()" class="member-name-link">targetSelection()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#targetSelection()" class="member-name-link">targetSelection()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportRequest.html#param-targetSelection"><code>targetSelection</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/application/ExportTableDefinitionRequest.html#param-targetSelection"><code>targetSelection</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/application/TargetSelection.html" class="type-name-link" title="class in com.export_table_definition.application">TargetSelection</a> - Record Class in <a href="com/export_table_definition/application/package-summary.html">com.export_table_definition.application</a></dt>
 <dd>
 <div class="block">出力対象の絞り込み条件をまとめたrecord<br>
- <a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application"><code>ExportRequest</code></a>・<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の
- 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を 分解・再構築せずそのまま通過させる。<br>
+ <a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application"><code>ExportTableDefinitionRequest</code></a>・<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application"><code>CheckDocumentDiffRequest</code></a>の双方が持つスキーマ・テーブル・出力対象オブジェクト種別の 3条件をまとめ、エントリーポイント→コントローラー→ユースケースの3層を
+ 分解・再構築せずそのまま通過させる。<br>
  設定値は生の文字列のままユースケースへ渡さず、<a href="com/export_table_definition/application/TargetSelection.html#of(java.util.List,java.util.List,java.util.List)"><code>TargetSelection.of(java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;, java.util.List&lt;java.lang.String&gt;)</code></a>で入口（エントリーポイント）において型へ変換する。
  未知の出力対象オブジェクト種別などの設定誤りは、DBへの問い合わせや出力先の削除（<code>--rm-dist</code>）より前に検知される</div>
 </dd>
@@ -4265,11 +4329,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">DTOからEntityへの変換メソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/application/CheckDiffRequest.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a></dt>
+<dt><a href="com/export_table_definition/application/CheckDocumentDiffRequest.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
-<dt><a href="com/export_table_definition/application/ExportRequest.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportRequest.html" title="class in com.export_table_definition.application">ExportRequest</a></dt>
+<dt><a href="com/export_table_definition/application/ExportTableDefinitionRequest.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.application.<a href="com/export_table_definition/application/ExportTableDefinitionRequest.html" title="class in com.export_table_definition.application">ExportTableDefinitionRequest</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -4425,7 +4489,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistencyDomainService.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistencyDomainService.ResolvedForeignKeys</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -4624,6 +4688,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/model/target/ExportTargets.html#types()" class="member-name-link">types()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ExportTargets.html" title="class in com.export_table_definition.domain.model.target">ExportTargets</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>types</code> record component.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/schemaobject/Types.html" class="type-name-link" title="class in com.export_table_definition.domain.model.schemaobject">Types</a> - Class in <a href="com/export_table_definition/domain/model/schemaobject/package-summary.html">com.export_table_definition.domain.model.schemaobject</a></dt>
+<dd>
+<div class="block">ユーザー定義型情報の集合を扱うクラス</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/TypeSnapshot.html" class="type-name-link" title="class in com.export_table_definition.domain.model.snapshot">TypeSnapshot</a> - Record Class in <a href="com/export_table_definition/domain/model/snapshot/package-summary.html">com.export_table_definition.domain.model.snapshot</a></dt>
 <dd>
@@ -4871,12 +4939,12 @@ the order they are declared.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html#%3Cinit%3E()" class="member-name-link">ViewpointTemplates()</a> - Constructor for class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointTemplates</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriterDomainService.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriterDomainService</a> - Class in <a href="com/export_table_definition/domain/service/writer/viewpoint/package-summary.html">com.export_table_definition.domain.service.writer.viewpoint</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriter</a> - Class in <a href="com/export_table_definition/domain/service/writer/viewpoint/package-summary.html">com.export_table_definition.domain.service.writer.viewpoint</a></dt>
 <dd>
 <div class="block">観点ページ（観点ごとのER図・所属テーブル）と観点一覧を書き込むクラス<br>
  利用する情報はテーブル一覧と関連の一覧のみで、テーブル詳細を必要としない（スキーマ別ER図と同じ）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriterDomainService.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">ViewpointWriterDomainService(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html#%3Cinit%3E(com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver,com.export_table_definition.domain.service.writer.PagedSectionWriter)" class="member-name-link">ViewpointWriter(FileRepository, OutputPathResolver, PagedSectionWriter)</a> - Constructor for class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriter</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:W">W</h2>
@@ -4890,11 +4958,11 @@ the order they are declared.</div>
 <div class="block">参照元・参照先の両方が指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
  観点のように、テーブルの集合の中だけで閉じた関連（1枚のER図に描く関連）を求めるために用いる</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#writeDatabase(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeDatabase(OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeDatabase(com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeDatabase(OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
 <div class="block">DB全体の情報（DB名等）のスナップショットを書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriterDomainService.html#writeErDiagram(com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeErDiagram(Tables, ForeignKeys, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html#writeErDiagram(com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeErDiagram(Tables, ForeignKeys, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriter</a></dt>
 <dd>
 <div class="block">1つの図にすべてのテーブルを載せるとMermaidが描画できる規模を超えるため、スキーマ単位に分割して出力し、 それらへのリンクをまとめた索引ファイルを併せて出力する。
  利用する情報はテーブル一覧と外部キー一覧のみで、テーブル詳細を必要としない。 テーブルが存在しない場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う</div>
@@ -4907,7 +4975,7 @@ the order they are declared.</div>
 <dd>
 <div class="block">ファイルに書き込むメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#writeFunctionDefinition(com.export_table_definition.domain.model.schemaobject.FunctionEntity,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctionDefinition(FunctionEntity, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeFunctionDefinition(com.export_table_definition.domain.model.schemaobject.FunctionEntity,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctionDefinition(FunctionEntity, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">関数・プロシージャ1件分の個別定義を書き込む</div>
 </dd>
@@ -4915,11 +4983,11 @@ the order they are declared.</div>
 <dd>
 <div class="block">スキーマ単位で取得した関数・プロシージャ（定義本体を含む）を書き出すメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#writeFunctionList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctionList(List&lt;FunctionEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeFunctionList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctionList(List&lt;FunctionEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">関数・プロシージャ一覧を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#writeFunctions(java.lang.String,java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctions(String, List&lt;FunctionEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeFunctions(java.lang.String,java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctions(String, List&lt;FunctionEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
 <div class="block">定義本体が大きくなり得るため、スキーマ単位で取得したものを受け取って1ファイルへ出力する</div>
 </dd>
@@ -4934,19 +5002,19 @@ the order they are declared.</div>
  行数がMarkdownの表に表示できる最大件数以下の場合は本体ページに直接埋め込み、 超える場合は別ファイルへ分割して、本体ページにはリンクのみを掲載する。
  行の文字列生成はページ単位で行い、全行分を同時にメモリ保持しない</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriterDomainService.html#writeReadme(java.util.Set,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeReadme(Set&lt;ListDocumentType&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.readme.<a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriter.html#writeReadme(java.util.Set,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeReadme(Set&lt;ListDocumentType&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.readme.<a href="com/export_table_definition/domain/service/writer/readme/ReadmeWriter.html" title="class in com.export_table_definition.domain.service.writer.readme">ReadmeWriter</a></dt>
 <dd>
 <div class="block">READMEの書き込み処理を行うメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#writeSequenceDefinition(com.export_table_definition.domain.model.schemaobject.SequenceEntity,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequenceDefinition(SequenceEntity, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeSequenceDefinition(com.export_table_definition.domain.model.schemaobject.SequenceEntity,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequenceDefinition(SequenceEntity, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">シーケンス1件分の個別定義を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#writeSequenceList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequenceList(List&lt;SequenceEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeSequenceList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequenceList(List&lt;SequenceEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">シーケンス一覧を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#writeSequences(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequences(List&lt;SequenceEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeSequences(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequences(List&lt;SequenceEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
 <div class="block">スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない</div>
 </dd>
@@ -4954,32 +5022,32 @@ the order they are declared.</div>
 <dd>
 <div class="block">1テーブル分の定義を書き出すメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html#writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)" class="member-name-link">writeTableDefinition(TableDefinitionContent, Path)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html#writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)" class="member-name-link">writeTableDefinition(TableDefinitionContent, Path)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></dt>
 <dd>
 <div class="block">テーブル定義の書き込み処理を行うメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html#writeTableDefinitionList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot,java.util.List)" class="member-name-link">writeTableDefinitionList(List&lt;TableEntity&gt;, OutputRoot, List&lt;ListDocumentType&gt;)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html#writeTableDefinitionList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot,java.util.List)" class="member-name-link">writeTableDefinitionList(List&lt;TableEntity&gt;, OutputRoot, List&lt;ListDocumentType&gt;)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></dt>
 <dd>
 <div class="block">テーブル一覧の書き込み処理を行うメソッド<br>
  行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割し、 本体ページにはリンクのみを掲載する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#writeTriggerList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTriggerList(List&lt;TriggerEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeTriggerList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTriggerList(List&lt;TriggerEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">トリガー一覧を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#writeTypeDefinition(com.export_table_definition.domain.model.schemaobject.TypeEntity,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypeDefinition(TypeEntity, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeTypeDefinition(com.export_table_definition.domain.model.schemaobject.TypeEntity,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypeDefinition(TypeEntity, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">ユーザー定義型1件分の個別定義を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html#writeTypeList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypeList(List&lt;TypeEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeTypeList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypeList(List&lt;TypeEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">ユーザー定義型一覧を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html#writeTypes(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypes(List&lt;TypeEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriterDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeTypes(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypes(List&lt;TypeEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
 <div class="block">スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriterDomainService.html#writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeViewpoints(Viewpoints, Tables, ForeignKeys, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriterDomainService.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriterDomainService</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html#writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeViewpoints(Viewpoints, Tables, ForeignKeys, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriter</a></dt>
 <dd>
 <div class="block">観点ページと観点一覧の書き込み処理を行うメソッド<br>
  観点が1件も無い場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う</div>

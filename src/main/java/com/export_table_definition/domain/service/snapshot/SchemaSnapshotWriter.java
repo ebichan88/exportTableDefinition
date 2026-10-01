@@ -32,8 +32,7 @@ public class SchemaSnapshotWriter {
   /** JSON Linesの仕様に合わせ、OSに依らず行区切りはLFとする */
   private static final String LINE_SEPARATOR = "\n";
 
-  private static final Logger logger =
-      LogManager.getLogger(SchemaSnapshotWriter.class);
+  private static final Logger logger = LogManager.getLogger(SchemaSnapshotWriter.class);
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final SnapshotSerializer serializer;

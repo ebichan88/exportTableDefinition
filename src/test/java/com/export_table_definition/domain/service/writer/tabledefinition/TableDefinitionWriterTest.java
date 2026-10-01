@@ -29,7 +29,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** TableDefinitionWriter のテーブル一覧・テーブル定義書き込みに関するテスト */
-public class TableDefinitionWriterDomainServiceTest {
+public class TableDefinitionWriterTest {
 
   private static final Path OUT = Path.of("output");
 

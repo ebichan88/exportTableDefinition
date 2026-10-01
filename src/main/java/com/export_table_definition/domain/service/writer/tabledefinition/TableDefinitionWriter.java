@@ -18,8 +18,7 @@ import org.apache.logging.log4j.Logger;
 /** テーブル一覧・テーブル定義書を書き込むクラス */
 public class TableDefinitionWriter {
 
-  private static final Logger logger =
-      LogManager.getLogger(TableDefinitionWriter.class);
+  private static final Logger logger = LogManager.getLogger(TableDefinitionWriter.class);
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
   private final PagedSectionWriter pagedSectionWriter;

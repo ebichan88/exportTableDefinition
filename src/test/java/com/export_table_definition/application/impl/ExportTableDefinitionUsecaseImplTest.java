@@ -62,7 +62,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * ExportTableDefinitionUsecaseImpl のオーケストレーションに関するテスト<br>
- * 依存先の各WriterDomainServiceは実オブジェクトを使い、書き込み内容を{@link InMemoryFileRepository}に
+ * 依存先の各Writerは実オブジェクトを使い、書き込み内容を{@link InMemoryFileRepository}に
  * 収集することで、リポジトリ呼び出し・チャンク分割・関連ドキュメント構築を含む一連の流れを検証する
  */
 public class ExportTableDefinitionUsecaseImplTest {
@@ -259,9 +259,8 @@ public class ExportTableDefinitionUsecaseImplTest {
     final JacksonSnapshotSerializer serializer = new JacksonSnapshotSerializer();
     final SchemaSnapshotWriter snapshotWriter =
         new SchemaSnapshotWriter(fileRepository, pathResolver, serializer);
-    final SnapshotDiff snapshotDiffDomainService =
-        new SnapshotDiff(
-            fileRepository, pathResolver, serializer, new UnifiedDiffGenerator());
+    final SnapshotDiff snapshotDiff =
+        new SnapshotDiff(fileRepository, pathResolver, serializer, new UnifiedDiffGenerator());
     final SnapshotExportSinkFactory snapshotSinkFactory =
         new SnapshotExportSinkFactory(snapshotWriter);
     final Function<LocalDate, SchemaExporter> schemaExporterAt =
@@ -280,8 +279,7 @@ public class ExportTableDefinitionUsecaseImplTest {
                     writer,
                     erDiagramWriter,
                     objectListWriter,
-                    new ViewpointWriter(
-                        fileRepository, pathResolver, pagedSectionWriter),
+                    new ViewpointWriter(fileRepository, pathResolver, pagedSectionWriter),
                     new ReadmeWriter(fileRepository, pathResolver)),
                 snapshotSinkFactory,
                 fileRepository,
@@ -291,7 +289,7 @@ public class ExportTableDefinitionUsecaseImplTest {
             new CheckDocumentDiffUsecaseImpl(
                 schemaExporterAt.apply(generatedDate),
                 snapshotSinkFactory,
-                snapshotDiffDomainService,
+                snapshotDiff,
                 fileRepository,
                 pathResolver);
     usecase = usecaseAt.apply(GENERATED_DATE);

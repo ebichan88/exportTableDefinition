@@ -76,7 +76,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
     使い回す値オブジェクトへ切り出す（例: `domain.model.target.TableScope`）。
   - 同じ引数群が3層以上（エントリーポイント→コントローラー→ユースケース等）をそのまま
     分解・再構築されながら渡っていないか。渡す先で使われない引数が混ざっていないかも見る。
-    該当する場合はrequestレコードにまとめる（例: `application.ExportRequest`/`CheckDiffRequest`）。
+    該当する場合はrequestレコードにまとめる（例: `application.ExportTableDefinitionRequest`/`CheckDocumentDiffRequest`）。
   - 設定値（プロパティの文字列）を生のまま深い層へ渡していないか。空白の除去・型への変換・検証は入口で1回だけ行い、
     設定誤りはDBへの問い合わせや出力先の削除より前に検知する（例: `ExportTableDefinitionProperties`・`application.TargetSelection#of`）。
   - インフラ層（Repository実装）が、デフォルト値の決定・名前の自動生成・識別子の解析といった

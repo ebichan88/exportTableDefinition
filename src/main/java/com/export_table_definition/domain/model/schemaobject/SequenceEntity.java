@@ -1,7 +1,5 @@
 package com.export_table_definition.domain.model.schemaobject;
 
-import com.export_table_definition.domain.model.table.SchemaTableKeyed;
-
 /**
  * シーケンス情報に関するrecordクラス
  *
@@ -18,10 +16,4 @@ public record SequenceEntity(
     String cacheSize,
     String startValue,
     boolean cycle,
-    String ownedBy) implements SchemaTableKeyed {
-
-  @Override
-  public String tableName() {
-    return sequenceName;
-  }
-}
+    String ownedBy) {}

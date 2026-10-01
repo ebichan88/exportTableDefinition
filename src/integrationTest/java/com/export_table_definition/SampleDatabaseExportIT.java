@@ -2,8 +2,8 @@ package com.export_table_definition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.application.CheckDiffRequest;
-import com.export_table_definition.application.ExportRequest;
+import com.export_table_definition.application.CheckDocumentDiffRequest;
+import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.config.module.DatabaseDependentModule;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.DatabaseTypeDetector;
@@ -58,8 +58,8 @@ class SampleDatabaseExportIT {
   @ValueSource(strings = {"", "1"})
   @DisplayName("通常実行: 出力がベースラインと一致する（詳細情報の分割取得の単位を変えても出力は変わらない）")
   void testExportMatchesBaseline(String chunkSize, @TempDir Path outputDir) {
-    final ExportRequest request =
-        properties(outputDir, Map.of("chunkSize", chunkSize)).toExportRequest(false);
+    final ExportTableDefinitionRequest request =
+        properties(outputDir, Map.of("chunkSize", chunkSize)).toExportTableDefinitionRequest(false);
 
     controller().execute(request);
 
@@ -72,7 +72,8 @@ class SampleDatabaseExportIT {
   @Test
   @DisplayName("差分検知（--check）: DBとベースラインのスナップショットに差分が無い")
   void testCheckFindsNoDifferenceFromBaseline() {
-    final CheckDiffRequest request = properties(BASELINE, Map.of()).toCheckDiffRequest();
+    final CheckDocumentDiffRequest request =
+        properties(BASELINE, Map.of()).toCheckDocumentDiffRequest();
 
     final DiffCheckResultDto result = controller().checkDiff(request);
 

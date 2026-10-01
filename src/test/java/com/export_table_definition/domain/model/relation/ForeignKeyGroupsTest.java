@@ -115,7 +115,7 @@ public class ForeignKeyGroupsTest {
     assertEquals(5, groups.get(0).nodeCount());
     assertEquals(
         List.of("fk1", "fk2", "fk3"),
-        groups.get(0).foreignKeys().stream().map(ForeignKeyEntity::foreignkeyName).toList());
+        groups.get(0).foreignKeys().stream().map(ForeignKeyEntity::foreignKeyName).toList());
     assertEquals(2, groups.get(1).nodeCount());
   }
 

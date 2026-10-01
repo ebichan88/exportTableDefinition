@@ -48,7 +48,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - `ExportTableDefinitionProperties.load()`が `conf/ExportTableDefinition.properties` の設定値（出力対象スキーマ／テーブル、
      出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、CLI引数による上書き値
      （`CliArguments.settingOverrides()`）で上書きしてから検証し、
-     `ExportRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDiffRequest`）へ変換する。
+     `ExportTableDefinitionRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDocumentDiffRequest`）へ変換する。
      出力対象の絞り込み条件（スキーマ・テーブル・outputObjects）は、生の文字列のまま後続へ渡さず、
      `TargetSelection.of()`が型（`TableScope`・`OutputObjectType`の集合）へ変換・検証する
    - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
@@ -70,14 +70,14 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
    - `SchemaExporter.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。
-     `ExportTargetConsistencyDomainService`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
+     `ExportTargetConsistency`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
      一括取得分を `ExportTargets` にまとめる
    - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）。
      削除してよい出力先かは、ユースケースを呼ぶ前に入口（2.）で検証済みである
    - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
-     - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriterDomainService` / `ErDiagramWriterDomainService` / `ViewpointWriterDomainService` /
-       `ObjectListWriterDomainService` / `ReadmeWriterDomainService`（いずれも `domain.service.writer`配下の種別ごとのサブパッケージ。Writerとテンプレートを同居させている）がMarkdownを組み立てて `FileRepository` 経由で出力
-     - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriterDomainService`（`domain.service.snapshot`）が、
+     - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriter` / `ErDiagramWriter` / `ViewpointWriter` /
+       `ObjectListWriter` / `ReadmeWriter`（いずれも `domain.service.writer`配下の種別ごとのサブパッケージ。Writerとテンプレートを同居させている）がMarkdownを組み立てて `FileRepository` 経由で出力
+     - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriter`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
 
 ## 例外の扱いと終了コード
@@ -185,7 +185,7 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 ## 出力対象の突き合わせ
 
 外部キーはスキーマ全体から、サイドカーYAMLは出力対象に関係なく読み込むため、出力対象の絞り込みで除外したテーブルや、
-リネーム・削除されたテーブル／カラムを参照していることがある。`ExportTargetConsistencyDomainService` がそれらを
+リネーム・削除されたテーブル／カラムを参照していることがある。`ExportTargetConsistency` がそれらを
 出力から除外し、利用者が気付くべき事柄を指摘（`domain.model.target.ConsistencyFinding`）として値で返す。
 ログへの出力は呼び出し側の `SchemaExporter` が指摘の重要度（`INFO`／`WARN`）に応じて行う
 （ドメインサービスはログ出力の手段に依存しない）。
@@ -201,7 +201,7 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 
 ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）はREADME
 （[../../README.md](../../README.md) の「ER図」節・「ER図の出し分け」）に詳しい。実装は
-`ErDiagramWriterDomainService`（書き込みの段取り）と `domain.model.relation.ForeignKeyGroup`
+`ErDiagramWriter`（書き込みの段取り）と `domain.model.relation.ForeignKeyGroup`
 （1枚の図のノード算出・上限超過の判定・描画するか省くかの判断`renderingUnder`）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
 まとめ直し。`compose()`がページ構成（`PageComposition`）を1回で決める）、`domain.model.relation.Cardinality`（多重度判定）が中心。
 
@@ -218,7 +218,7 @@ Markdownドキュメントのファイル名・配置（一覧・ER図・観点�
 同名のもの（オーバーロード）がある場合のみ`{関数名}_{番号}`とする（番号はSQLが関数名ごとに振る）。
 観点ページは、日本語・空白を含みうる表示名ではなく、ファイル名に使える文字に限った識別子から`viewpoint_{DB名}_{識別子}.md`とする。
 `{DB名}/`ディレクトリには、GitHub等でそのディレクトリを開いた際の入り口となるよう、生成される一覧ドキュメントへのリンクを
-まとめた`README.md`も`ReadmeWriterDomainService`が出力する。
+まとめた`README.md`も`ReadmeWriter`が出力する。
 
 どの一覧ドキュメントを出力するか（テーブル一覧は常に、それ以外は対象が1件以上ある場合のみ）は
 `MarkdownExportSinkFactory`の`listDocuments()`が1箇所で決め、一覧の書き出しと、テーブル一覧に掲載する関連ドキュメントへの
@@ -242,7 +242,7 @@ Markdownと同じ取得結果から、常にスキーマ情報を構造化した
   比較時のファイル種別の判定の双方がこの規則を参照する
 - JSONへの変換はドメイン層のIF（`SnapshotSerializer`）を介し、実装（`JacksonSnapshotSerializer`）はインフラ層に置く。
   Jacksonへの依存をドメイン層へ持ち込まないため
-- 書き込みは`SchemaSnapshotWriterDomainService`が`FileRepository`・`OutputPathResolver`経由で行う
+- 書き込みは`SchemaSnapshotWriter`が`FileRepository`・`OutputPathResolver`経由で行う
 - メモリ効率のための分割取得の方針は変えない。テーブルは`exportTableDefinitionChunk`で`TableDefinitionContent`を
   組み立てた時点でMarkdownと並べて1行ずつスキーマ単位の`tables.jsonl`へ追記する（スキーマの処理開始時に
   `ExportSink.beginSchemaTables()`→`initTableFile`で空にしてから追記するため、前回実行時の内容へ追記されることはない）。
@@ -274,7 +274,7 @@ DBからの取得と出力は`SchemaExporter`が以下のように分けて持�
 
 `checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、スナップショットの`ExportSink`のみで一時ディレクトリへ向けて
 `export()`を呼び出した上で（Markdownの描画・ER図の生成は行わない）、生成結果と`outputPath`配下の`snapshot/`を
-`SnapshotDiffDomainService.compare()`で比較する。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`:
+`SnapshotDiff.compare()`で比較する。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`:
 `スキーマ名.名前`、関数は引数を含む）で突き合わせ、追加/削除/内容不一致をオブジェクト単位で報告する。
 `database.json`等それ以外のファイルはファイル単位で比較する。
 
@@ -282,7 +282,7 @@ DBからの取得と出力は`SchemaExporter`が以下のように分けて持�
 Markdownのみに生じた差分（手作業での編集等）は検知しない。
 
 内容が一致しないオブジェクトには、変更箇所を示すunified diffを付ける（`domain.model.snapshot.ContentDiff`）。
-`SnapshotDiffDomainService`が、比較前に生成側・コミット側それぞれの行を`SnapshotSerializer.formatForDiff()`で
+`SnapshotDiff`が、比較前に生成側・コミット側それぞれの行を`SnapshotSerializer.formatForDiff()`で
 1項目1行・配列は1要素1行へ整形し（生の1行のJSONのままだと行単位のdiffが「丸ごと削除+丸ごと追加」にしか
 ならないため）、`UnifiedDiffGenerator`（Myers法による自前実装。外部ライブラリに依存しない）へ渡してdiffを
 生成する。整形後の行番号はファイル上の行番号とは対応しない。`presentation.DiffReportFormatter.format()`
@@ -329,7 +329,7 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 外部キー制約を張らないDBではカタログから読み取れる関連だけではER図がほとんど空になるため、
 サイドカーで宣言した関連を補う。設計上の要点は「**物理外部キーと同じ集合へ合流させる**」こと。
 
-- `ExportTargetConsistencyDomainService.resolveForeignKeys()` が、DBから取得した外部キーとサイドカー由来の
+- `ExportTargetConsistency.resolveForeignKeys()` が、DBから取得した外部キーとサイドカー由来の
   論理リレーションを結合して `ForeignKeys.of()` に渡す。参照元・参照先の一方でも出力対象に
   存在しない関連は、ER図に片側だけのノードが現れるのを避けるため除外し、除外したことを指摘として返す
 - 合流させることで、ER図のグループ分割（`ForeignKeyGroups` の連結成分算出）、スキーマ跨ぎ関連の抽出

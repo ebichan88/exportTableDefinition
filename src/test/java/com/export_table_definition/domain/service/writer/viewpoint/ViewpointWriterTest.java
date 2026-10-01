@@ -27,7 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** ViewpointWriter の観点ページ・観点一覧の出力に関するテスト */
-public class ViewpointWriterDomainServiceTest {
+public class ViewpointWriterTest {
 
   private static final Path OUT = Path.of("output");
 

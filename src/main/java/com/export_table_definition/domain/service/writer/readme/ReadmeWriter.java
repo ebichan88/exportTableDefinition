@@ -19,8 +19,7 @@ public class ReadmeWriter {
   private final OutputPathResolver outputPathResolver;
 
   @Inject
-  public ReadmeWriter(
-      FileRepository fileRepository, OutputPathResolver outputPathResolver) {
+  public ReadmeWriter(FileRepository fileRepository, OutputPathResolver outputPathResolver) {
     this.fileRepository = fileRepository;
     this.outputPathResolver = outputPathResolver;
   }

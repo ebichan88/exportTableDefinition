@@ -26,7 +26,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** SchemaSnapshotWriter のスナップショット（JSON Lines）書き込みに関するテスト */
-public class SchemaSnapshotWriterDomainServiceTest {
+public class SchemaSnapshotWriterTest {
 
   private static final Path OUT = Path.of("output");
   private static final Path SNAPSHOT_DIR = OUT.resolve("snapshot").resolve("testdb");

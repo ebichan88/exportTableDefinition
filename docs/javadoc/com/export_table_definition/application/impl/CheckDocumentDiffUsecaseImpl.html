@@ -110,9 +110,9 @@ implements <a href="../CheckDocumentDiffUsecase.html" title="interface in com.ex
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.application.impl.SchemaExporter,com.export_table_definition.domain.service.export.SnapshotExportSinkFactory,com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService,com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">CheckDocumentDiffUsecaseImpl</a><wbr>(com.export_table_definition.application.impl.SchemaExporter&nbsp;schemaExporter,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.application.impl.SchemaExporter,com.export_table_definition.domain.service.export.SnapshotExportSinkFactory,com.export_table_definition.domain.service.snapshot.SnapshotDiff,com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)" class="member-name-link">CheckDocumentDiffUsecaseImpl</a><wbr>(com.export_table_definition.application.impl.SchemaExporter&nbsp;schemaExporter,
  <a href="../../domain/service/export/SnapshotExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">SnapshotExportSinkFactory</a>&nbsp;snapshotSinkFactory,
- <a href="../../domain/service/snapshot/SnapshotDiffDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiffDomainService</a>&nbsp;snapshotDiffDomainService,
+ <a href="../../domain/service/snapshot/SnapshotDiff.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiff</a>&nbsp;snapshotDiff,
  <a href="../../domain/repository/FileRepository.html" title="interface in com.export_table_definition.domain.repository">FileRepository</a>&nbsp;fileRepository,
  <a href="../../domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a>&nbsp;outputPathResolver)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
@@ -131,11 +131,11 @@ implements <a href="../CheckDocumentDiffUsecase.html" title="interface in com.ex
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../domain/model/snapshot/DiffResult.html" title="class in com.export_table_definition.domain.model.snapshot">DiffResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#checkDocumentDiff(com.export_table_definition.application.CheckDiffRequest)" class="member-name-link">checkDocumentDiff</a><wbr>(<a href="../CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a>&nbsp;request)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#checkDocumentDiff(com.export_table_definition.application.CheckDocumentDiffRequest)" class="member-name-link">checkDocumentDiff</a><wbr>(<a href="../CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a>&nbsp;request)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
  スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
- DBからの取得は<a href="../ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportRequest)</code></a>と共通で、スナップショットのみを生成して
+ DBからの取得は<a href="../ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)</code></a>と共通で、スナップショットのみを生成して
  一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
 </div>
 </div>
@@ -156,12 +156,12 @@ implements <a href="../CheckDocumentDiffUsecase.html" title="interface in com.ex
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(com.export_table_definition.application.impl.SchemaExporter,com.export_table_definition.domain.service.export.SnapshotExportSinkFactory,com.export_table_definition.domain.service.snapshot.SnapshotDiffDomainService,com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)">
+<section class="detail" id="&lt;init&gt;(com.export_table_definition.application.impl.SchemaExporter,com.export_table_definition.domain.service.export.SnapshotExportSinkFactory,com.export_table_definition.domain.service.snapshot.SnapshotDiff,com.export_table_definition.domain.repository.FileRepository,com.export_table_definition.domain.service.path.OutputPathResolver)">
 <h3>CheckDocumentDiffUsecaseImpl</h3>
 <div class="member-signature"><span class="annotations">@Inject
 </span><span class="modifiers">public</span>&nbsp;<span class="element-name">CheckDocumentDiffUsecaseImpl</span><wbr><span class="parameters">(com.export_table_definition.application.impl.SchemaExporter&nbsp;schemaExporter,
  <a href="../../domain/service/export/SnapshotExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">SnapshotExportSinkFactory</a>&nbsp;snapshotSinkFactory,
- <a href="../../domain/service/snapshot/SnapshotDiffDomainService.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiffDomainService</a>&nbsp;snapshotDiffDomainService,
+ <a href="../../domain/service/snapshot/SnapshotDiff.html" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiff</a>&nbsp;snapshotDiff,
  <a href="../../domain/repository/FileRepository.html" title="interface in com.export_table_definition.domain.repository">FileRepository</a>&nbsp;fileRepository,
  <a href="../../domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a>&nbsp;outputPathResolver)</span></div>
 </section>
@@ -175,16 +175,16 @@ implements <a href="../CheckDocumentDiffUsecase.html" title="interface in com.ex
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="checkDocumentDiff(com.export_table_definition.application.CheckDiffRequest)">
+<section class="detail" id="checkDocumentDiff(com.export_table_definition.application.CheckDocumentDiffRequest)">
 <h3>checkDocumentDiff</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../domain/model/snapshot/DiffResult.html" title="class in com.export_table_definition.domain.model.snapshot">DiffResult</a></span>&nbsp;<span class="element-name">checkDocumentDiff</span><wbr><span class="parameters">(<a href="../CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a>&nbsp;request)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../domain/model/snapshot/DiffResult.html" title="class in com.export_table_definition.domain.model.snapshot">DiffResult</a></span>&nbsp;<span class="element-name">checkDocumentDiff</span><wbr><span class="parameters">(<a href="../CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a>&nbsp;request)</span></div>
 <div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
  スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
- DBからの取得は<a href="../ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportRequest)</code></a>と共通で、スナップショットのみを生成して
+ DBからの取得は<a href="../ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)</code></a>と共通で、スナップショットのみを生成して
  一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../CheckDocumentDiffUsecase.html#checkDocumentDiff(com.export_table_definition.application.CheckDiffRequest)">checkDocumentDiff</a></code>&nbsp;in interface&nbsp;<code><a href="../CheckDocumentDiffUsecase.html" title="interface in com.export_table_definition.application">CheckDocumentDiffUsecase</a></code></dd>
+<dd><code><a href="../CheckDocumentDiffUsecase.html#checkDocumentDiff(com.export_table_definition.application.CheckDocumentDiffRequest)">checkDocumentDiff</a></code>&nbsp;in interface&nbsp;<code><a href="../CheckDocumentDiffUsecase.html" title="interface in com.export_table_definition.application">CheckDocumentDiffUsecase</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>request</code> - DB vs ドキュメントの差分検知の入力</dd>
 </dl>

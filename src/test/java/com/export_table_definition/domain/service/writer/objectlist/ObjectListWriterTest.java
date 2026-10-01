@@ -23,7 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** ObjectListWriter のトリガー・関数/プロシージャ・シーケンス・型 一覧および個別定義書き込みに関するテスト */
-public class ObjectListWriterDomainServiceTest {
+public class ObjectListWriterTest {
 
   private static final Path OUT = Path.of("output");
 

@@ -47,7 +47,7 @@ final class SchemaExporter {
   private static final Logger logger = LogManager.getLogger(SchemaExporter.class);
   private final TableDefinitionRepository repository;
   private final SidecarRepository sidecarRepository;
-  private final ExportTargetConsistency consistencyDomainService;
+  private final ExportTargetConsistency consistency;
   private final Clock clock;
 
   /**
@@ -57,11 +57,11 @@ final class SchemaExporter {
   SchemaExporter(
       TableDefinitionRepository repository,
       SidecarRepository sidecarRepository,
-      ExportTargetConsistency consistencyDomainService,
+      ExportTargetConsistency consistency,
       Clock clock) {
     this.repository = repository;
     this.sidecarRepository = sidecarRepository;
-    this.consistencyDomainService = consistencyDomainService;
+    this.consistency = consistency;
     this.clock = clock;
   }
 
@@ -81,10 +81,8 @@ final class SchemaExporter {
     final BaseInfoEntity baseInfoEntity =
         BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
     final Tables tables = fetchTables(tableScope.schemaNames(), tableScope);
-    report(consistencyDomainService.findOrphanTableAnnotations(annotations, tables, isFiltered));
-    report(
-        consistencyDomainService.findUnmatchedViewpointPatterns(
-            sidecar.viewpoints(), tables, isFiltered));
+    report(consistency.findOrphanTableAnnotations(annotations, tables, isFiltered));
+    report(consistency.findUnmatchedViewpointPatterns(sidecar.viewpoints(), tables, isFiltered));
     final ForeignKeys foreignKeys =
         fetchForeignKeys(tableScope.schemaNames(), sidecar.logicalRelations(), tables, isFiltered);
     final List<TriggerEntity> triggerEntityList =
@@ -127,7 +125,7 @@ final class SchemaExporter {
       Tables tables,
       boolean isFiltered) {
     final ResolvedForeignKeys resolvedForeignKeys =
-        consistencyDomainService.resolveForeignKeys(
+        consistency.resolveForeignKeys(
             repository.selectForeignKeyList(targetSchemaList),
             logicalRelations,
             tables,
@@ -172,8 +170,7 @@ final class SchemaExporter {
   }
 
   /** {@link #fetchSchemaObjects}の取得結果 */
-  private record SchemaObjects(
-      Functions functions, Sequences sequences, Types types) {}
+  private record SchemaObjects(Functions functions, Sequences sequences, Types types) {}
 
   /**
    * 一括取得した情報をもとに、指定された出力形式で書き出すメソッド<br>
@@ -193,7 +190,7 @@ final class SchemaExporter {
 
     // カラム・インデックス・制約は、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
     // これにより、テーブルが1スキーマに集中していても、同時にメモリ保持する詳細情報を最大chunkSize件分に抑える
-    final Triggers triggers = targets.triggers().asList();
+    final Triggers triggers = targets.triggers();
     targets
         .tables()
         .bySchema()
@@ -238,7 +235,7 @@ final class SchemaExporter {
   private void exportTableDefinitionChunk(
       List<TableEntity> chunk, ExportTargets targets, Triggers triggers, List<ExportSink> sinks) {
     for (final TableDetail detail : repository.selectTableDetails(chunk)) {
-      report(consistencyDomainService.findOrphanColumnAnnotations(detail, targets.annotations()));
+      report(consistency.findOrphanColumnAnnotations(detail, targets.annotations()));
       final TableDefinitionContent content =
           TableDefinitionContent.assemble(
               targets.baseInfo(),

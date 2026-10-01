@@ -143,8 +143,12 @@ public class MarkdownExportSinkFactory {
       // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
       targets
           .sequences()
+          .asList()
           .forEach(sequence -> objectListWriter.writeSequenceDefinition(sequence, outputRoot));
-      targets.types().asList().forEach(type -> objectListWriter.writeTypeDefinition(type, outputRoot));
+      targets
+          .types()
+          .asList()
+          .forEach(type -> objectListWriter.writeTypeDefinition(type, outputRoot));
     }
 
     /** {@inheritDoc} */

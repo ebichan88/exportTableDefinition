@@ -46,19 +46,4 @@ public abstract class AbstractEntities<T extends SchemaTableKeyed> {
   public List<T> of(TableEntity table) {
     return byKey.getOrDefault(TableKey.of(table), List.of());
   }
-
-  /** すべてのエンティティをリストで取得するメソッド */
-  public List<T> asList() {
-    return byKey.values().stream().flatMap(List::stream).toList();
-  }
-
-  /** エンティティがないかどうかを判定するメソッド */
-  public boolean isEmpty() {
-    return byKey.isEmpty();
-  }
-
-  /** すべてのエンティティのストリームを取得するメソッド */
-  public java.util.stream.Stream<T> stream() {
-    return asList().stream();
-  }
 }

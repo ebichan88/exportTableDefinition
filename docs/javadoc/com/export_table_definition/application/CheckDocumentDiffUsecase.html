@@ -107,11 +107,11 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../domain/model/snapshot/DiffResult.html" title="class in com.export_table_definition.domain.model.snapshot">DiffResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#checkDocumentDiff(com.export_table_definition.application.CheckDiffRequest)" class="member-name-link">checkDocumentDiff</a><wbr>(<a href="CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a>&nbsp;request)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#checkDocumentDiff(com.export_table_definition.application.CheckDocumentDiffRequest)" class="member-name-link">checkDocumentDiff</a><wbr>(<a href="CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a>&nbsp;request)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
  スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
- DBからの取得は<a href="ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportRequest)</code></a>と共通で、スナップショットのみを生成して
+ DBからの取得は<a href="ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)</code></a>と共通で、スナップショットのみを生成して
  一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
 </div>
 </div>
@@ -129,12 +129,12 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="checkDocumentDiff(com.export_table_definition.application.CheckDiffRequest)">
+<section class="detail" id="checkDocumentDiff(com.export_table_definition.application.CheckDocumentDiffRequest)">
 <h3>checkDocumentDiff</h3>
-<div class="member-signature"><span class="return-type"><a href="../domain/model/snapshot/DiffResult.html" title="class in com.export_table_definition.domain.model.snapshot">DiffResult</a></span>&nbsp;<span class="element-name">checkDocumentDiff</span><wbr><span class="parameters">(<a href="CheckDiffRequest.html" title="class in com.export_table_definition.application">CheckDiffRequest</a>&nbsp;request)</span></div>
+<div class="member-signature"><span class="return-type"><a href="../domain/model/snapshot/DiffResult.html" title="class in com.export_table_definition.domain.model.snapshot">DiffResult</a></span>&nbsp;<span class="element-name">checkDocumentDiff</span><wbr><span class="parameters">(<a href="CheckDocumentDiffRequest.html" title="class in com.export_table_definition.application">CheckDocumentDiffRequest</a>&nbsp;request)</span></div>
 <div class="block">DBの現状から生成したスキーマのスナップショットと、<code>outputPath</code>配下の<code>snapshot/</code>に既にコミット済みの
  スナップショットを比較し、差分（＝ドキュメントの再生成・コミット忘れ）を検知するメソッド<br>
- DBからの取得は<a href="ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportRequest)</code></a>と共通で、スナップショットのみを生成して
+ DBからの取得は<a href="ExportTableDefinitionUsecase.html#exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)"><code>ExportTableDefinitionUsecase.exportTableDefinition(com.export_table_definition.application.ExportTableDefinitionRequest)</code></a>と共通で、スナップショットのみを生成して
  一時ディレクトリへ出力し、オブジェクト（テーブル・関数等）単位で比較する。Markdownの描画・ER図の生成は行わない</div>
 <dl class="notes">
 <dt>Parameters:</dt>

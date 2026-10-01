@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /** SnapshotDiff のスナップショット同士の比較に関するテスト */
-public class SnapshotDiffDomainServiceTest {
+public class SnapshotDiffTest {
 
   private static final String TABLES = "testdb/public/tables.jsonl";
 

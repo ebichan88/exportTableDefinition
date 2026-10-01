@@ -22,14 +22,14 @@ public class ExportTableDefinitionControllerTest {
   /** 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ */
   private static class RecordingUsecase
       implements ExportTableDefinitionUsecase, CheckDocumentDiffUsecase {
-    ExportTableDefinitionRequest capturedExportRequest;
-    CheckDocumentDiffRequest capturedCheckDiffRequest;
+    ExportTableDefinitionRequest capturedExportTableDefinitionRequest;
+    CheckDocumentDiffRequest capturedCheckDocumentDiffRequest;
     RuntimeException toThrow;
     DiffResult diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
 
     @Override
     public void exportTableDefinition(ExportTableDefinitionRequest request) {
-      this.capturedExportRequest = request;
+      this.capturedExportTableDefinitionRequest = request;
       if (toThrow != null) {
         throw toThrow;
       }
@@ -37,7 +37,7 @@ public class ExportTableDefinitionControllerTest {
 
     @Override
     public DiffResult checkDocumentDiff(CheckDocumentDiffRequest request) {
-      this.capturedCheckDiffRequest = request;
+      this.capturedCheckDocumentDiffRequest = request;
       if (toThrow != null) {
         throw toThrow;
       }
@@ -118,7 +118,7 @@ public class ExportTableDefinitionControllerTest {
 
     controller.execute(request);
 
-    assertSame(request, usecase.capturedExportRequest);
+    assertSame(request, usecase.capturedExportTableDefinitionRequest);
   }
 
   @Test
@@ -207,7 +207,7 @@ public class ExportTableDefinitionControllerTest {
 
     controller.checkDiff(request);
 
-    assertSame(request, usecase.capturedCheckDiffRequest);
+    assertSame(request, usecase.capturedCheckDocumentDiffRequest);
   }
 
   @Test

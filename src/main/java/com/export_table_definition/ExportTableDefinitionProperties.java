@@ -165,13 +165,13 @@ final class ExportTableDefinitionProperties {
    *
    * @param rmDist trueの場合、書き込みを開始する前に出力先ディレクトリを再帰的に削除する（{@code --rm-dist}）
    */
-  ExportTableDefinitionRequest toExportRequest(boolean rmDist) {
+  ExportTableDefinitionRequest toExportTableDefinitionRequest(boolean rmDist) {
     return new ExportTableDefinitionRequest(
         targetSelection, sidecarPath, outputPath, chunkSize, erDiagramMaxNodes, rmDist);
   }
 
   /** 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}は含めない */
-  CheckDocumentDiffRequest toCheckDiffRequest() {
+  CheckDocumentDiffRequest toCheckDocumentDiffRequest() {
     return new CheckDocumentDiffRequest(targetSelection, sidecarPath, outputPath, chunkSize);
   }
 

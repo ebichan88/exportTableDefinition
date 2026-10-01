@@ -66,7 +66,7 @@ public class ExportTableDefinition {
     cliArguments.requireKnownArguments();
     final ExportTableDefinitionRequest request =
         ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
-            .toExportRequest(cliArguments.isRmDist());
+            .toExportTableDefinitionRequest(cliArguments.isRmDist());
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
     final ConnectionSettings connectionSettings =
@@ -92,7 +92,8 @@ public class ExportTableDefinition {
                 """);
     cliArguments.requireKnownArguments();
     final CheckDocumentDiffRequest request =
-        ExportTableDefinitionProperties.load(cliArguments.settingOverrides()).toCheckDiffRequest();
+        ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
+            .toCheckDocumentDiffRequest();
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
     final ConnectionSettings connectionSettings =
