@@ -1,10 +1,10 @@
 package com.export_table_definition.domain.model.schemaobject;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 
 /** ユーザー定義型情報の集合を扱うクラス */
-public final class Types {
+public final class Types implements Iterable<TypeEntity> {
 
   private final List<TypeEntity> list;
 
@@ -35,8 +35,9 @@ public final class Types {
     return list.isEmpty();
   }
 
-  /** ユーザー定義型情報のストリームを取得するメソッド */
-  public Stream<TypeEntity> stream() {
-    return list.stream();
+  /** {@inheritDoc} */
+  @Override
+  public Iterator<TypeEntity> iterator() {
+    return list.iterator();
   }
 }

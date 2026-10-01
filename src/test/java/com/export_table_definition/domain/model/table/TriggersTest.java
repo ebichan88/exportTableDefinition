@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** Triggers のテーブルキーによるインデックス化に関するテスト */
+/** Triggers のテーブルキーによるインデックス化・取得順の保持・空判定に関するテスト */
 public class TriggersTest {
 
   private TableEntity newTable(String schema, String physical) {
@@ -48,5 +48,22 @@ public class TriggersTest {
 
     assertEquals(List.of(publicTrigger), triggers.of(newTable("public", "orders")));
     assertEquals(List.of(salesTrigger), triggers.of(newTable("sales", "orders")));
+  }
+
+  @Test
+  @DisplayName("asList: テーブルをまたいでも渡した順序のまま返す")
+  void testAsListKeepsFetchOrder() {
+    var a1 = EntityFixtures.trigger("public", "orders");
+    var b = EntityFixtures.trigger("public", "customers");
+    var a2 = EntityFixtures.trigger("public", "orders");
+
+    assertEquals(List.of(a1, b, a2), Triggers.of(List.of(a1, b, a2)).asList());
+  }
+
+  @Test
+  @DisplayName("isEmpty: 1件も無い場合のみtrueを返す")
+  void testIsEmpty() {
+    assertTrue(Triggers.of(List.of()).isEmpty());
+    assertFalse(Triggers.of(List.of(EntityFixtures.trigger("public", "orders"))).isEmpty());
   }
 }

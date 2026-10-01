@@ -121,10 +121,10 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">関数・プロシージャ情報のリストからインスタンスを生成する静的ファクトリメソッド</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a><wbr>&lt;<a href="FunctionEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">FunctionEntity</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stream()" class="member-name-link">stream</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#schemaNames()" class="member-name-link">schemaNames</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">関数・プロシージャ情報のストリームを取得するメソッド</div>
+<div class="block">関数・プロシージャが属するスキーマ名を取得するメソッド</div>
 </div>
 </div>
 </div>
@@ -173,10 +173,14 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="stream()">
-<h3>stream</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a>&lt;<a href="FunctionEntity.html" title="class in com.export_table_definition.domain.model.schemaobject">FunctionEntity</a>&gt;</span>&nbsp;<span class="element-name">stream</span>()</div>
-<div class="block">関数・プロシージャ情報のストリームを取得するメソッド</div>
+<section class="detail" id="schemaNames()">
+<h3>schemaNames</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">schemaNames</span>()</div>
+<div class="block">関数・プロシージャが属するスキーマ名を取得するメソッド</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>重複を除いたスキーマ名（取得順）</dd>
+</dl>
 </section>
 </li>
 </ul>

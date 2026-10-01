@@ -1,7 +1,6 @@
 package com.export_table_definition.domain.model.schemaobject;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 /** 関数・プロシージャの一覧情報の集合を扱うクラス */
 public final class Functions {
@@ -35,8 +34,12 @@ public final class Functions {
     return list.isEmpty();
   }
 
-  /** 関数・プロシージャ情報のストリームを取得するメソッド */
-  public Stream<FunctionEntity> stream() {
-    return list.stream();
+  /**
+   * 関数・プロシージャが属するスキーマ名を取得するメソッド
+   *
+   * @return 重複を除いたスキーマ名（取得順）
+   */
+  public List<String> schemaNames() {
+    return list.stream().map(FunctionEntity::schemaName).distinct().toList();
   }
 }

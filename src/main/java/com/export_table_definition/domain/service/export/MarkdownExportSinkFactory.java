@@ -65,16 +65,16 @@ public class MarkdownExportSinkFactory {
     if (!targets.tables().isEmpty()) {
       documents.add(ListDocumentType.ER_DIAGRAM);
     }
-    if (!targets.functions().asList().isEmpty()) {
+    if (!targets.functions().isEmpty()) {
       documents.add(ListDocumentType.FUNCTION);
     }
-    if (!targets.sequences().asList().isEmpty()) {
+    if (!targets.sequences().isEmpty()) {
       documents.add(ListDocumentType.SEQUENCE);
     }
-    if (!targets.types().asList().isEmpty()) {
+    if (!targets.types().isEmpty()) {
       documents.add(ListDocumentType.TYPE);
     }
-    if (!targets.triggers().asList().isEmpty()) {
+    if (!targets.triggers().isEmpty()) {
       documents.add(ListDocumentType.TRIGGER);
     }
     if (!targets.viewpoints().isEmpty()) {
@@ -143,12 +143,8 @@ public class MarkdownExportSinkFactory {
       // シーケンス・型の個別ファイル出力（情報が小さいため一覧取得結果をそのまま利用する）
       targets
           .sequences()
-          .asList()
           .forEach(sequence -> objectListWriter.writeSequenceDefinition(sequence, outputRoot));
-      targets
-          .types()
-          .asList()
-          .forEach(type -> objectListWriter.writeTypeDefinition(type, outputRoot));
+      targets.types().forEach(type -> objectListWriter.writeTypeDefinition(type, outputRoot));
     }
 
     /** {@inheritDoc} */

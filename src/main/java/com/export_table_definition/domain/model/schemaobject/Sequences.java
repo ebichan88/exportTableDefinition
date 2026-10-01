@@ -1,10 +1,10 @@
 package com.export_table_definition.domain.model.schemaobject;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 
 /** シーケンス情報の集合を扱うクラス */
-public final class Sequences {
+public final class Sequences implements Iterable<SequenceEntity> {
 
   private final List<SequenceEntity> list;
 
@@ -35,8 +35,9 @@ public final class Sequences {
     return list.isEmpty();
   }
 
-  /** シーケンス情報のストリームを取得するメソッド */
-  public Stream<SequenceEntity> stream() {
-    return list.stream();
+  /** {@inheritDoc} */
+  @Override
+  public Iterator<SequenceEntity> iterator() {
+    return list.iterator();
   }
 }

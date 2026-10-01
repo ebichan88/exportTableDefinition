@@ -15,7 +15,6 @@ import com.export_table_definition.domain.model.sidecar.Sidecar;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.Tables;
-import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.model.table.Triggers;
 import com.export_table_definition.domain.model.target.ConsistencyFinding;
 import com.export_table_definition.domain.model.target.ExportTargets;
@@ -85,8 +84,7 @@ final class SchemaExporter {
     report(consistency.findUnmatchedViewpointPatterns(sidecar.viewpoints(), tables, isFiltered));
     final ForeignKeys foreignKeys =
         fetchForeignKeys(tableScope.schemaNames(), sidecar.logicalRelations(), tables, isFiltered);
-    final List<TriggerEntity> triggerEntityList =
-        fetchTriggers(tableScope.schemaNames(), outputObjectTypes);
+    final Triggers triggers = fetchTriggers(tableScope.schemaNames(), outputObjectTypes);
     final SchemaObjects schemaObjects =
         fetchSchemaObjects(tableScope.schemaNames(), outputObjectTypes);
 
@@ -94,7 +92,7 @@ final class SchemaExporter {
         baseInfoEntity,
         tables,
         foreignKeys,
-        Triggers.of(triggerEntityList),
+        triggers,
         schemaObjects.functions(),
         schemaObjects.sequences(),
         schemaObjects.types(),
@@ -139,11 +137,12 @@ final class SchemaExporter {
    * テーブルに属する軽量な情報のため、外部キーと同様にチャンク化せず対象範囲全体を一括取得し、 テーブル定義書内のセクションとトリガー一覧の両方で利用する。{@code
    * outputObjectList}で対象外とされた場合は 取得自体を行わず、一覧・テーブル定義書双方から除外する
    */
-  private List<TriggerEntity> fetchTriggers(
+  private Triggers fetchTriggers(
       List<String> targetSchemaList, Set<OutputObjectType> outputObjectTypes) {
-    return outputObjectTypes.contains(OutputObjectType.TRIGGER)
-        ? repository.selectTriggerList(targetSchemaList)
-        : List.of();
+    return Triggers.of(
+        outputObjectTypes.contains(OutputObjectType.TRIGGER)
+            ? repository.selectTriggerList(targetSchemaList)
+            : List.of());
   }
 
   /**
@@ -183,9 +182,9 @@ final class SchemaExporter {
     sinks.forEach(sink -> sink.writeOverview(targets));
 
     // 関数・プロシージャの個別出力。定義本体が大きくなり得るため、スキーマ単位で本体を取得・出力・破棄する
-    targets.functions().stream()
-        .map(FunctionEntity::schemaName)
-        .distinct()
+    targets
+        .functions()
+        .schemaNames()
         .forEach(schemaName -> exportSchemaFunctionDefinitions(schemaName, targets, sinks));
 
     // カラム・インデックス・制約は、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
