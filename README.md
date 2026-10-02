@@ -601,8 +601,7 @@ exportTableDefinition
 │      │  └─mybatis.properties
 │      ├─output
 │      └─exportTableDefinition-1.0-SNAPSHOT.jar ・・・ 実行可能形式Jarファイル
-├─docs           ・・・ JavaDoc等のドキュメントが格納されているフォルダ
-│  ├─javadoc
+├─docs           ・・・ アーキテクチャ等のドキュメントが格納されているフォルダ
 │  └─sample       ・・・ サンプルDBのDDLと出力のベースライン（結合テストの入力）
 ├─gradle
 │  └─wrapper
@@ -652,7 +651,7 @@ PRではGitHub ActionsがカバレッジレポートをArtifactとしてアッ�
 
 ### Javadoc
 
-以下のコマンドを実行することで、`exportTableDefinition/docs/javadoc`フォルダ配下にjavadocが作成される
+以下のコマンドを実行することで、`exportTableDefinition/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
 
 ```
 gradlew javadoc
