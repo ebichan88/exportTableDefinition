@@ -109,7 +109,7 @@ public class SidecarYamlRepository implements SidecarRepository {
           path,
           annotations.tableKeys().size(),
           logicalRelations.size(),
-          viewpoints.asList().size());
+          viewpoints.size());
       return new Sidecar(annotations, logicalRelations, viewpoints);
     } catch (IOException e) {
       throw new UncheckedIOException(

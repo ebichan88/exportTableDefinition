@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.Functions;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.Types;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.Triggers;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
@@ -105,7 +108,7 @@ public class ObjectListWriterTest {
     var trigger =
         new TriggerEntity(
             "public", "orders", "trg_orders", "BEFORE", List.of("INSERT"), "ROW", "f_orders", "");
-    writer.writeTriggerList(List.of(trigger), outputRoot());
+    writer.writeTriggerList(Triggers.of(List.of(trigger)), outputRoot());
 
     Path file = OUT.resolve("testdb").resolve("triggerList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
@@ -122,7 +125,7 @@ public class ObjectListWriterTest {
     var function =
         new FunctionEntity(
             "testdb", "public", "calc_total", 1, 1, "FUNCTION", "()", "int", "plpgsql", "");
-    writer.writeFunctionList(List.of(function), outputRoot());
+    writer.writeFunctionList(Functions.of(List.of(function)), outputRoot());
 
     Path file = OUT.resolve("testdb").resolve("functionList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
@@ -145,8 +148,8 @@ public class ObjectListWriterTest {
             "sql",
             "");
     var type = new TypeEntity("testdb", "public", "delimiter", "ENUM", "|, ,, ;");
-    writer.writeFunctionList(List.of(function), outputRoot());
-    writer.writeTypeList(List.of(type), outputRoot());
+    writer.writeFunctionList(Functions.of(List.of(function)), outputRoot());
+    writer.writeTypeList(Types.of(List.of(type)), outputRoot());
 
     Path dbDir = OUT.resolve("testdb");
     assertTrue(
@@ -215,7 +218,7 @@ public class ObjectListWriterTest {
             .mapToObj(
                 i -> new TriggerEntity("public", "t" + i, "trg" + i, "", List.of(), "", "", ""))
             .toList();
-    writer.writeTriggerList(triggers, outputRoot());
+    writer.writeTriggerList(Triggers.of(triggers), outputRoot());
 
     Path dbDir = OUT.resolve("testdb");
     assertTrue(fileRepository.files.containsKey(dbDir.resolve("triggerList_testdb_1.md")));

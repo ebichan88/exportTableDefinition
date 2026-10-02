@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * 出力対象のテーブル（テーブル一覧）の集合を扱うクラス<br>
@@ -41,6 +42,11 @@ public final class Tables {
    */
   public List<TableEntity> asList() {
     return list;
+  }
+
+  /** テーブル情報のストリームを取得するメソッド */
+  public Stream<TableEntity> stream() {
+    return list.stream();
   }
 
   /**

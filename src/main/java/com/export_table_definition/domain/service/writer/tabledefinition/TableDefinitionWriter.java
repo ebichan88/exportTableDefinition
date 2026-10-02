@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.writer.tabledefinition;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
@@ -41,13 +42,13 @@ public class TableDefinitionWriter {
    * @param relatedDocuments 「関連ドキュメント」としてリンクを掲載する一覧の種別（掲載順）
    */
   public void writeTableDefinitionList(
-      List<TableEntity> tables, OutputRoot outputRoot, List<ListDocumentType> relatedDocuments) {
+      Tables tables, OutputRoot outputRoot, List<ListDocumentType> relatedDocuments) {
     fileRepository.createDirectory(outputPathResolver.resolveDatabaseDirectory(outputRoot));
     final PagedSection<TableEntity> section =
         new PagedSection<>(
             "テーブル情報",
             TableDefinitionListTemplates.tableListTableHeader(),
-            tables,
+            tables.asList(),
             TableDefinitionListTemplates::tableListLine);
     final PageLayout layout =
         new PageLayout(

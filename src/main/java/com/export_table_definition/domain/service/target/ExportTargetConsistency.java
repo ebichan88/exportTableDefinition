@@ -99,7 +99,7 @@ public class ExportTargetConsistency {
     if (isFiltered) {
       return List.of();
     }
-    return viewpoints.asList().stream()
+    return viewpoints.stream()
         .flatMap(
             viewpoint ->
                 viewpoint.unmatchedPatterns(tables).stream()

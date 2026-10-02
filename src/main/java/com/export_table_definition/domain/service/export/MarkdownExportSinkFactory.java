@@ -114,23 +114,23 @@ public class MarkdownExportSinkFactory {
       final OutputRoot outputRoot = new OutputRoot(outputBaseDir, targets.baseInfo());
       final Set<ListDocumentType> documents = listDocuments(targets);
       tableDefinitionWriter.writeTableDefinitionList(
-          targets.tables().asList(), outputRoot, relatedDocuments(documents));
+          targets.tables(), outputRoot, relatedDocuments(documents));
       readmeWriter.writeReadme(documents, outputRoot);
       if (documents.contains(ListDocumentType.ER_DIAGRAM)) {
         erDiagramWriter.writeErDiagram(
             targets.tables(), targets.foreignKeys(), outputRoot, erDiagramLimit);
       }
       if (documents.contains(ListDocumentType.TRIGGER)) {
-        objectListWriter.writeTriggerList(targets.triggers().asList(), outputRoot);
+        objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
       }
       if (documents.contains(ListDocumentType.FUNCTION)) {
-        objectListWriter.writeFunctionList(targets.functions().asList(), outputRoot);
+        objectListWriter.writeFunctionList(targets.functions(), outputRoot);
       }
       if (documents.contains(ListDocumentType.SEQUENCE)) {
-        objectListWriter.writeSequenceList(targets.sequences().asList(), outputRoot);
+        objectListWriter.writeSequenceList(targets.sequences(), outputRoot);
       }
       if (documents.contains(ListDocumentType.TYPE)) {
-        objectListWriter.writeTypeList(targets.types().asList(), outputRoot);
+        objectListWriter.writeTypeList(targets.types(), outputRoot);
       }
       if (documents.contains(ListDocumentType.VIEWPOINT)) {
         viewpointWriter.writeViewpoints(

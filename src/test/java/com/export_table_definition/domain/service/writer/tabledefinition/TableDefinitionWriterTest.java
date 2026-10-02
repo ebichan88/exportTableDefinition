@@ -10,6 +10,7 @@ import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -113,7 +114,7 @@ public class TableDefinitionWriterTest {
   @DisplayName("writeTableDefinitionList: ヘッダー・基本情報・関連ドキュメント・テーブル一覧行が出力される")
   void testWriteTableDefinitionListWritesAllSections() {
     writer.writeTableDefinitionList(
-        List.of(table("orders")), outputRoot(), List.of(ListDocumentType.ER_DIAGRAM));
+        Tables.of(List.of(table("orders"))), outputRoot(), List.of(ListDocumentType.ER_DIAGRAM));
 
     Path file = OUT.resolve("testdb").resolve("tableList_testdb.md");
     assertTrue(fileRepository.files.containsKey(file));
@@ -129,7 +130,7 @@ public class TableDefinitionWriterTest {
   @Test
   @DisplayName("writeTableDefinitionList: 関連ドキュメントが空の場合はセクション自体が出力されない")
   void testWriteTableDefinitionListOmitsRelatedDocumentsWhenEmpty() {
-    writer.writeTableDefinitionList(List.of(table("orders")), outputRoot(), List.of());
+    writer.writeTableDefinitionList(Tables.of(List.of(table("orders"))), outputRoot(), List.of());
 
     String content = fileRepository.files.get(OUT.resolve("testdb").resolve("tableList_testdb.md"));
     assertFalse(content.contains("## 関連ドキュメント"));
@@ -141,7 +142,7 @@ public class TableDefinitionWriterTest {
     List<TableEntity> tables =
         IntStream.rangeClosed(1, 3001).mapToObj(i -> table("t" + i)).toList();
 
-    writer.writeTableDefinitionList(tables, outputRoot(), List.of());
+    writer.writeTableDefinitionList(Tables.of(tables), outputRoot(), List.of());
 
     Path dbDir = OUT.resolve("testdb");
     assertTrue(fileRepository.files.containsKey(dbDir.resolve("tableList_testdb_1.md")));

@@ -47,8 +47,8 @@ public class SnapshotExportSinkFactory {
     public void writeOverview(ExportTargets targets) {
       final OutputRoot outputRoot = new OutputRoot(outputBaseDir, targets.baseInfo());
       snapshotWriter.writeDatabase(outputRoot);
-      snapshotWriter.writeSequences(targets.sequences().asList(), outputRoot);
-      snapshotWriter.writeTypes(targets.types().asList(), outputRoot);
+      snapshotWriter.writeSequences(targets.sequences(), outputRoot);
+      snapshotWriter.writeTypes(targets.types(), outputRoot);
     }
 
     /** {@inheritDoc} */

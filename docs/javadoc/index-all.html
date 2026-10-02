@@ -3905,6 +3905,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>Single</code> record class.</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html#size()" class="member-name-link">size()</a> - Method in class com.export_table_definition.domain.model.viewpoint.<a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a></dt>
+<dd>
+<div class="block">観点の件数を取得するメソッド</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/service/snapshot/SnapshotDiff.html" class="type-name-link" title="class in com.export_table_definition.domain.service.snapshot">SnapshotDiff</a> - Class in <a href="com/export_table_definition/domain/service/snapshot/package-summary.html">com.export_table_definition.domain.service.snapshot</a></dt>
 <dd>
 <div class="block">DBから生成したスキーマのスナップショットと、既にコミット済みのスナップショットを比較するドメインサービス<br>
@@ -3952,6 +3956,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/infrastructure/db/repository/dto/SequenceDto.html#startValue()" class="member-name-link">startValue()</a> - Method in record class com.export_table_definition.infrastructure.db.repository.dto.<a href="com/export_table_definition/infrastructure/db/repository/dto/SequenceDto.html" title="class in com.export_table_definition.infrastructure.db.repository.dto">SequenceDto</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>startValue</code> record component.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/table/Tables.html#stream()" class="member-name-link">stream()</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></dt>
+<dd>
+<div class="block">テーブル情報のストリームを取得するメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html#stream()" class="member-name-link">stream()</a> - Method in class com.export_table_definition.domain.model.viewpoint.<a href="com/export_table_definition/domain/model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a></dt>
+<dd>
+<div class="block">観点のストリームを取得するメソッド（宣言順）</div>
 </dd>
 <dt><a href="com/export_table_definition/presentation/type/ExitStatus.html#SUCCESS" class="member-name-link">SUCCESS</a> - Enum constant in enum class com.export_table_definition.presentation.type.<a href="com/export_table_definition/presentation/type/ExitStatus.html" title="enum class in com.export_table_definition.presentation.type">ExitStatus</a></dt>
 <dd>
@@ -4725,7 +4737,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">観点の所属テーブルのパターンのうち、どのテーブルにも一致しないもの（リネーム・削除の可能性）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/table/TableNamePatterns.html#unmatchedInclusions(java.util.Collection)" class="member-name-link">unmatchedInclusions(Collection&lt;TableEntity&gt;)</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/TableNamePatterns.html" title="class in com.export_table_definition.domain.model.table">TableNamePatterns</a></dt>
+<dt><a href="com/export_table_definition/domain/model/table/TableNamePatterns.html#unmatchedInclusions(com.export_table_definition.domain.model.table.Tables)" class="member-name-link">unmatchedInclusions(Tables)</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/TableNamePatterns.html" title="class in com.export_table_definition.domain.model.table">TableNamePatterns</a></dt>
 <dd>
 <div class="block">テーブルのリネーム・削除によって、パターンがDBと乖離していないかの気付きに用いる</div>
 </dd>
@@ -4977,7 +4989,7 @@ the order they are declared.</div>
 <dd>
 <div class="block">スキーマ単位で取得した関数・プロシージャ（定義本体を含む）を書き出すメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeFunctionList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctionList(List&lt;FunctionEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeFunctionList(com.export_table_definition.domain.model.schemaobject.Functions,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeFunctionList(Functions, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">関数・プロシージャ一覧を書き込む</div>
 </dd>
@@ -5004,11 +5016,11 @@ the order they are declared.</div>
 <dd>
 <div class="block">シーケンス1件分の個別定義を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeSequenceList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequenceList(List&lt;SequenceEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeSequenceList(com.export_table_definition.domain.model.schemaobject.Sequences,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequenceList(Sequences, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">シーケンス一覧を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeSequences(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequences(List&lt;SequenceEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeSequences(com.export_table_definition.domain.model.schemaobject.Sequences,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeSequences(Sequences, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
 <div class="block">スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない</div>
 </dd>
@@ -5020,12 +5032,12 @@ the order they are declared.</div>
 <dd>
 <div class="block">テーブル定義の書き込み処理を行うメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html#writeTableDefinitionList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot,java.util.List)" class="member-name-link">writeTableDefinitionList(List&lt;TableEntity&gt;, OutputRoot, List&lt;ListDocumentType&gt;)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html#writeTableDefinitionList(com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.service.path.OutputRoot,java.util.List)" class="member-name-link">writeTableDefinitionList(Tables, OutputRoot, List&lt;ListDocumentType&gt;)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></dt>
 <dd>
 <div class="block">テーブル一覧の書き込み処理を行うメソッド<br>
  行数がMarkdownの表に表示できる最大件数を超える場合は、別ファイルへ分割し、 本体ページにはリンクのみを掲載する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeTriggerList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTriggerList(List&lt;TriggerEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeTriggerList(com.export_table_definition.domain.model.table.Triggers,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTriggerList(Triggers, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">トリガー一覧を書き込む</div>
 </dd>
@@ -5033,11 +5045,11 @@ the order they are declared.</div>
 <dd>
 <div class="block">ユーザー定義型1件分の個別定義を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeTypeList(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypeList(List&lt;TypeEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html#writeTypeList(com.export_table_definition.domain.model.schemaobject.Types,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypeList(Types, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.writer.objectlist.<a href="com/export_table_definition/domain/service/writer/objectlist/ObjectListWriter.html" title="class in com.export_table_definition.domain.service.writer.objectlist">ObjectListWriter</a></dt>
 <dd>
 <div class="block">ユーザー定義型一覧を書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeTypes(java.util.List,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypes(List&lt;TypeEntity&gt;, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html#writeTypes(com.export_table_definition.domain.model.schemaobject.Types,com.export_table_definition.domain.service.path.OutputRoot)" class="member-name-link">writeTypes(Types, OutputRoot)</a> - Method in class com.export_table_definition.domain.service.snapshot.<a href="com/export_table_definition/domain/service/snapshot/SchemaSnapshotWriter.html" title="class in com.export_table_definition.domain.service.snapshot">SchemaSnapshotWriter</a></dt>
 <dd>
 <div class="block">スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない</div>
 </dd>

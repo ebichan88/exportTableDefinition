@@ -2,9 +2,12 @@ package com.export_table_definition.domain.service.writer.objectlist;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.Functions;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.Sequences;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
-import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.schemaobject.Types;
+import com.export_table_definition.domain.model.table.Triggers;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
@@ -38,41 +41,41 @@ public class ObjectListWriter {
   }
 
   /** トリガー一覧を書き込む */
-  public void writeTriggerList(List<TriggerEntity> triggers, OutputRoot outputRoot) {
+  public void writeTriggerList(Triggers triggers, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.TRIGGER,
         ObjectListTemplates.triggerTableHeader(),
-        triggers,
+        triggers.asList(),
         ObjectListTemplates::triggerListLine,
         outputRoot);
   }
 
   /** 関数・プロシージャ一覧を書き込む */
-  public void writeFunctionList(List<FunctionEntity> functions, OutputRoot outputRoot) {
+  public void writeFunctionList(Functions functions, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.FUNCTION,
         ObjectListTemplates.functionTableHeader(),
-        functions,
+        functions.asList(),
         ObjectListTemplates::functionListLine,
         outputRoot);
   }
 
   /** シーケンス一覧を書き込む */
-  public void writeSequenceList(List<SequenceEntity> sequences, OutputRoot outputRoot) {
+  public void writeSequenceList(Sequences sequences, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.SEQUENCE,
         ObjectListTemplates.sequenceTableHeader(),
-        sequences,
+        sequences.asList(),
         ObjectListTemplates::sequenceListLine,
         outputRoot);
   }
 
   /** ユーザー定義型一覧を書き込む */
-  public void writeTypeList(List<TypeEntity> types, OutputRoot outputRoot) {
+  public void writeTypeList(Types types, OutputRoot outputRoot) {
     writeObjectList(
         ListDocumentType.TYPE,
         ObjectListTemplates.typeTableHeader(),
-        types,
+        types.asList(),
         ObjectListTemplates::typeListLine,
         outputRoot);
   }

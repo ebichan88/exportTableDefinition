@@ -51,4 +51,14 @@ public class TablesTest {
     assertFalse(tables.isEmpty());
     assertEquals(List.of(a, b), tables.asList());
   }
+
+  @Test
+  @DisplayName("stream: 渡した順序のままテーブルを返す")
+  void testStreamKeepsOrder() {
+    var orders = table("public", "orders");
+    var customers = table("sales", "customers");
+
+    assertEquals(
+        List.of(orders, customers), Tables.of(List.of(orders, customers)).stream().toList());
+  }
 }

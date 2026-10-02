@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.Sequences;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.Types;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
@@ -157,11 +159,15 @@ public class SchemaSnapshotWriterTest {
   @DisplayName("writeSequences/writeTypes: スキーマごとのファイルへ分けて出力し、対象の無いスキーマは出力しない")
   void testWriteSequencesAndTypesBySchema() {
     writer.writeSequences(
-        List.of(
-            new SequenceEntity("testdb", "public", "seq_a", "1", "1", "100", "1", "1", true, ""),
-            new SequenceEntity("testdb", "sales", "seq_b", "1", "1", "100", "1", "1", false, "")),
+        Sequences.of(
+            List.of(
+                new SequenceEntity(
+                    "testdb", "public", "seq_a", "1", "1", "100", "1", "1", true, ""),
+                new SequenceEntity(
+                    "testdb", "sales", "seq_b", "1", "1", "100", "1", "1", false, ""))),
         ROOT);
-    writer.writeTypes(List.of(new TypeEntity("testdb", "public", "mood", "ENUM", "sad, ok")), ROOT);
+    writer.writeTypes(
+        Types.of(List.of(new TypeEntity("testdb", "public", "mood", "ENUM", "sad, ok"))), ROOT);
 
     assertEquals(
         "{\"schema\":\"public\",\"name\":\"seq_a\",\"incrementBy\":\"1\",\"minValue\":\"1\","
@@ -182,7 +188,7 @@ public class SchemaSnapshotWriterTest {
   @Test
   @DisplayName("writeSequences: 対象が0件の場合は何も出力しない")
   void testWriteSequencesEmptyWritesNothing() {
-    writer.writeSequences(List.of(), ROOT);
+    writer.writeSequences(Sequences.of(List.of()), ROOT);
     assertTrue(fileRepository.files.isEmpty());
   }
 

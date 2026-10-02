@@ -113,7 +113,7 @@ public final class Viewpoint {
    * @return どのテーブルにも一致しない包含パターン（指定された文字列のまま、指定順）
    */
   public List<String> unmatchedPatterns(Tables tables) {
-    return tableNamePatterns.unmatchedInclusions(tables.asList());
+    return tableNamePatterns.unmatchedInclusions(tables);
   }
 
   /**
@@ -123,7 +123,7 @@ public final class Viewpoint {
    * @param foreignKeys 出力対象のテーブル同士の関連（外部キー・論理リレーション）
    */
   public ViewpointContent resolve(Tables tables, ForeignKeys foreignKeys) {
-    final List<TableEntity> members = tables.asList().stream().filter(this::contains).toList();
+    final List<TableEntity> members = tables.stream().filter(this::contains).toList();
     final Set<TableKey> memberKeys = members.stream().map(TableKey::of).collect(Collectors.toSet());
     return new ViewpointContent(
         this,
