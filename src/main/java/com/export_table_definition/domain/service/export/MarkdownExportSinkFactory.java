@@ -97,13 +97,13 @@ public class MarkdownExportSinkFactory {
   }
 
   /** 1回の出力先・設定に紐づく、Markdownのドキュメントの{@link ExportSink}実装 */
-  private final class MarkdownExportSink implements ExportSink {
+  final class MarkdownExportSink implements ExportSink {
 
     private final Path outputBaseDir;
     private final NodeLimit erDiagramLimit;
     private final DiagramBoxes diagramBoxes;
 
-    private MarkdownExportSink(
+    MarkdownExportSink(
         Path outputBaseDir, NodeLimit erDiagramLimit, DiagramBoxes diagramBoxes) {
       this.outputBaseDir = outputBaseDir;
       this.erDiagramLimit = erDiagramLimit;
