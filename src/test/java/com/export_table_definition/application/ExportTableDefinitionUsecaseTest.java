@@ -1,10 +1,7 @@
-package com.export_table_definition.application.impl;
+package com.export_table_definition.application;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.export_table_definition.application.CheckDocumentDiffRequest;
-import com.export_table_definition.application.ExportTableDefinitionRequest;
-import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.database.DatabaseEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
@@ -62,11 +59,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * ExportTableDefinitionUsecaseImpl のオーケストレーションに関するテスト<br>
+ * ExportTableDefinitionUsecase のオーケストレーションに関するテスト<br>
  * 依存先の各Writerは実オブジェクトを使い、書き込み内容を{@link InMemoryFileRepository}に
  * 収集することで、リポジトリ呼び出し・チャンク分割・関連ドキュメント構築を含む一連の流れを検証する
  */
-public class ExportTableDefinitionUsecaseImplTest {
+public class ExportTableDefinitionUsecaseTest {
 
   private static final Path DEFAULT_OUT = Paths.get("./output");
 
@@ -222,18 +219,18 @@ public class ExportTableDefinitionUsecaseImplTest {
 
   private InMemoryFileRepository fileRepository;
   private RecordingRepository repository;
-  private ExportTableDefinitionUsecaseImpl usecase;
+  private ExportTableDefinitionUsecase usecase;
 
   /** 既定の生成日（テストの実行日によらず出力を固定するため、時計を固定する） */
   private static final LocalDate GENERATED_DATE = LocalDate.of(2026, 9, 24);
 
   /** 生成日を指定してユースケースを組み立てる（同じスタブ・出力先を共有したまま実行日だけを変えるため） */
-  private Function<LocalDate, ExportTableDefinitionUsecaseImpl> usecaseAt;
+  private Function<LocalDate, ExportTableDefinitionUsecase> usecaseAt;
 
-  private CheckDocumentDiffUsecaseImpl checkUsecase;
+  private CheckDocumentDiffUsecase checkUsecase;
 
   /** 生成日を指定して差分検知のユースケースを組み立てる */
-  private Function<LocalDate, CheckDocumentDiffUsecaseImpl> checkUsecaseAt;
+  private Function<LocalDate, CheckDocumentDiffUsecase> checkUsecaseAt;
 
   /** annotationRepositoryスタブが返す付帯情報（テストごとに差し替え可能） */
   private Annotations annotations = Annotations.empty();
@@ -284,7 +281,7 @@ public class ExportTableDefinitionUsecaseImplTest {
                     generatedDate.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
     usecaseAt =
         generatedDate ->
-            new ExportTableDefinitionUsecaseImpl(
+            new ExportTableDefinitionUsecase(
                 schemaExporterAt.apply(generatedDate),
                 new MarkdownExportSinkFactory(
                     writer,
@@ -297,7 +294,7 @@ public class ExportTableDefinitionUsecaseImplTest {
                 pathResolver);
     checkUsecaseAt =
         generatedDate ->
-            new CheckDocumentDiffUsecaseImpl(
+            new CheckDocumentDiffUsecase(
                 schemaExporterAt.apply(generatedDate),
                 snapshotSinkFactory,
                 snapshotDiff,

@@ -1,6 +1,5 @@
-package com.export_table_definition.application.impl;
+package com.export_table_definition.application;
 
-import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;

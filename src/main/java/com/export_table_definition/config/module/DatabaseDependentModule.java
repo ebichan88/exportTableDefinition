@@ -1,9 +1,5 @@
 package com.export_table_definition.config.module;
 
-import com.export_table_definition.application.CheckDocumentDiffUsecase;
-import com.export_table_definition.application.ExportTableDefinitionUsecase;
-import com.export_table_definition.application.impl.CheckDocumentDiffUsecaseImpl;
-import com.export_table_definition.application.impl.ExportTableDefinitionUsecaseImpl;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import com.google.inject.AbstractModule;
@@ -12,8 +8,8 @@ import org.apache.ibatis.session.SqlSessionFactory;
 /**
  * DB種別が決まってから束縛する依存関係のモジュール<br>
  * DBへ接続して接続先のDB種別を判定した後、{@link ExportTableDefinitionModule}で組み立てたDIコンテナの子として組み立てる。 接続先の{@link
- * SqlSessionFactory}と、DB種別で実装が変わる{@link TableDefinitionRepository}、それに依存するユースケースを束縛する
- * （親のコンテナでは、接続先・DB種別が未定のためこれらを解決できない）
+ * SqlSessionFactory}と、DB種別で実装が変わる{@link TableDefinitionRepository}を束縛する
+ * （親のコンテナでは、接続先・DB種別が未定のためこれらを解決できない）。 これらに依存するユースケースは具象クラスのため束縛せず、このコンテナのジャストインタイム束縛で生成する
  */
 public class DatabaseDependentModule extends AbstractModule {
 
@@ -38,7 +34,5 @@ public class DatabaseDependentModule extends AbstractModule {
   protected void configure() {
     bind(SqlSessionFactory.class).toInstance(sqlSessionFactory);
     bind(TableDefinitionRepository.class).to(databaseType.getRepositoryClass());
-    bind(ExportTableDefinitionUsecase.class).to(ExportTableDefinitionUsecaseImpl.class);
-    bind(CheckDocumentDiffUsecase.class).to(CheckDocumentDiffUsecaseImpl.class);
   }
 }
