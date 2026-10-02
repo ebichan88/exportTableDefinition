@@ -461,7 +461,7 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/target/package-summary.html">com.export_table_definition.domain.model.target</a> - package com.export_table_definition.domain.model.target</dt>
 <dd>
-<div class="block">出力対象（絞り込みの範囲・一括取得した情報・1テーブル分の出力内容・突き合わせの指摘）に関するパッケージ</div>
+<div class="block">出力対象（絞り込みの範囲・一括取得した情報・1テーブル分の出力内容・突き合わせの通知）に関するパッケージ</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/viewpoint/package-summary.html">com.export_table_definition.domain.model.viewpoint</a> - package com.export_table_definition.domain.model.viewpoint</dt>
 <dd>
@@ -582,22 +582,26 @@ loadScripts(document, 'script');</script>
  <code>conf/mybatis.properties</code>の値を、CLI引数の値で上書きしたもの。組み立てる時に検証するため、
  インスタンスがあれば必須の項目がそろい、未知のキーを含まないことが保証される</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" class="type-name-link" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a> - Record Class in <a href="com/export_table_definition/domain/model/target/package-summary.html">com.export_table_definition.domain.model.target</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" class="type-name-link" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a> - Record Class in <a href="com/export_table_definition/domain/model/target/package-summary.html">com.export_table_definition.domain.model.target</a></dt>
 <dd>
-<div class="block">出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報／観点）を突き合わせた結果の 指摘1件分を表す値オブジェクト<br>
- リネーム・削除によるDBとサイドカーの乖離など、利用者が気付くべき事柄を表す。 突き合わせ自体はドメインサービスが行い、指摘をどこへ（ログ等）どう出力するかは呼び出し側が決める</div>
+<div class="block">出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報／観点）を突き合わせた結果の 通知1件分を表す値オブジェクト<br>
+ リネーム・削除によるDBとサイドカーの乖離など、利用者が気付くべき事柄を表す。 突き合わせ自体はドメインサービスが行い、通知をどこへ（ログ等）どう出力するかは呼び出し側が決める</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html#%3Cinit%3E(com.export_table_definition.domain.model.target.ConsistencyFinding.Kind,java.lang.String)" class="member-name-link">ConsistencyFinding(ConsistencyFinding.Kind, String)</a> - Constructor for record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html#%3Cinit%3E(com.export_table_definition.domain.model.target.ConsistencyNotice.Kind,java.lang.String)" class="member-name-link">ConsistencyNotice(ConsistencyNotice.Kind, String)</a> - Constructor for record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a></dt>
 <dd>
-<div class="block">Creates an instance of a <code>ConsistencyFinding</code> record class.</div>
+<div class="block">Creates an instance of a <code>ConsistencyNotice</code> record class.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" class="type-name-link" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a> - Enum Class in <a href="com/export_table_definition/domain/model/target/package-summary.html">com.export_table_definition.domain.model.target</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" class="type-name-link" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a> - Enum Class in <a href="com/export_table_definition/domain/model/target/package-summary.html">com.export_table_definition.domain.model.target</a></dt>
 <dd>
-<div class="block">指摘の種類</div>
+<div class="block">通知の種類</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html" class="type-name-link" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Severity</a> - Enum Class in <a href="com/export_table_definition/domain/model/target/package-summary.html">com.export_table_definition.domain.model.target</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html" class="type-name-link" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Severity</a> - Enum Class in <a href="com/export_table_definition/domain/model/target/package-summary.html">com.export_table_definition.domain.model.target</a></dt>
 <dd>
-<div class="block">指摘の重要度</div>
+<div class="block">通知の重要度</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#consistencyNotices()" class="member-name-link">consistencyNotices()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>consistencyNotices</code> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Constraint.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">Constraint(String, String, String, String)</a> - Constructor for record class com.export_table_definition.domain.model.snapshot.<a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Constraint.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Constraint</a></dt>
 <dd>
@@ -1212,7 +1216,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1459,7 +1463,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報）を突き合わせるドメインサービス<br>
  外部キーはスキーマ全体から、サイドカーは出力対象に関係なく読み込むため、出力対象の絞り込みで除外されたテーブルや、
- リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう指摘（<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyFinding</code></a>）として返す。指摘をどこへ出力するか（ログ等）は呼び出し側が決める</div>
+ リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう通知（<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyNotice</code></a>）として返す。通知をどこへ出力するか（ログ等）は呼び出し側が決める</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#%3Cinit%3E()" class="member-name-link">ExportTargetConsistency()</a> - Constructor for class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>&nbsp;</dd>
@@ -1556,10 +1560,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Database名に紐づくEnumを返却する。</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#findings()" class="member-name-link">findings()</a> - Method in record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
-<dd>
-<div class="block">Returns the value of the <code>findings</code> record component.</div>
-</dd>
 <dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#findOrphanColumnAnnotations(com.export_table_definition.domain.model.table.TableDetail,com.export_table_definition.domain.model.sidecar.Annotations)" class="member-name-link">findOrphanColumnAnnotations(TableDetail, Annotations)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>
 <div class="block">実在しないカラムに対するカラム備考（＝孤児付帯情報）を検出するメソッド<br>
@@ -1569,7 +1569,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">実在しないテーブルに対する付帯情報（＝孤児付帯情報）を検出するメソッド<br>
  リネームや削除により、サイドカーの付帯情報が現在のスキーマと乖離した場合の気付きとする。 スキーマ・テーブルの出力対象が絞り込まれている場合は、対象外テーブルの付帯情報を
- 誤って孤児と判定しないよう検出を行わない（検出を行わなかったこと自体を指摘として返す）</div>
+ 誤って孤児と判定しないよう検出を行わない（検出を行わなかったこと自体を通知として返す）</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html#findUnmatchedViewpointPatterns(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">findUnmatchedViewpointPatterns(Viewpoints, Tables, boolean)</a> - Method in class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></dt>
 <dd>
@@ -1911,9 +1911,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">スキーマ.テーブル 形式の名称を取得するメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#getSeverity()" class="member-name-link">getSeverity()</a> - Method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#getSeverity()" class="member-name-link">getSeverity()</a> - Method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
-<div class="block">指摘の重要度を返却するメソッド</div>
+<div class="block">通知の重要度を返却するメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/document/ListDocumentType.html#getTitle()" class="member-name-link">getTitle()</a> - Method in enum class com.export_table_definition.domain.model.document.<a href="com/export_table_definition/domain/model/document/ListDocumentType.html" title="enum class in com.export_table_definition.domain.model.document">ListDocumentType</a></dt>
 <dd>
@@ -2130,7 +2130,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -2350,7 +2350,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <code>indexName</code> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html#INFO" class="member-name-link">INFO</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Severity</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html#INFO" class="member-name-link">INFO</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Severity</a></dt>
 <dd>
 <div class="block">処理内容の報告（対応は不要）</div>
 </dd>
@@ -2482,7 +2482,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/snapshot/FunctionSnapshot.html#param-kind"><code>kind</code></a> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html#kind()" class="member-name-link">kind()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html#kind()" class="member-name-link">kind()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>kind</code> record component.</div>
 </dd>
@@ -2581,7 +2581,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">サイドカーYAMLで宣言された論理的な関連。Mermaidでは破線（非識別関連）で描画する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#LOGICAL_RELATIONS_MERGED" class="member-name-link">LOGICAL_RELATIONS_MERGED</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#LOGICAL_RELATIONS_MERGED" class="member-name-link">LOGICAL_RELATIONS_MERGED</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">サイドカーで宣言された論理リレーションを外部キーの集合へ合流させたこと</div>
 </dd>
@@ -2707,9 +2707,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Mermaid記法の出力に必要な文字列変換を扱う共通ユーティリティクラス<br>
  テーブル単位のER図（<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionTemplates</code></a>）とスキーマ単位のER図（<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram"><code>ErDiagramTemplates</code></a>）の 両方から利用する</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html#message()" class="member-name-link">message()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html#message()" class="member-name-link">message()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a></dt>
 <dd>
-<div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/target/ConsistencyFinding.html#param-message"><code>message</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/target/ConsistencyNotice.html#param-message"><code>message</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/presentation/dto/DiffCheckResultDto.html#message()" class="member-name-link">message()</a> - Method in record class com.export_table_definition.presentation.dto.<a href="com/export_table_definition/presentation/dto/DiffCheckResultDto.html" title="class in com.export_table_definition.presentation.dto">DiffCheckResultDto</a></dt>
 <dd>
@@ -3017,15 +3017,15 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <code>orientation</code> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#ORPHAN_COLUMN_ANNOTATION" class="member-name-link">ORPHAN_COLUMN_ANNOTATION</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#ORPHAN_COLUMN_ANNOTATION" class="member-name-link">ORPHAN_COLUMN_ANNOTATION</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">実在しないカラムに対するカラム備考（リネーム・削除の可能性）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#ORPHAN_TABLE_ANNOTATION" class="member-name-link">ORPHAN_TABLE_ANNOTATION</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#ORPHAN_TABLE_ANNOTATION" class="member-name-link">ORPHAN_TABLE_ANNOTATION</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">実在しないテーブルに対する付帯情報（リネーム・削除の可能性）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#ORPHAN_TABLE_ANNOTATION_CHECK_SKIPPED" class="member-name-link">ORPHAN_TABLE_ANNOTATION_CHECK_SKIPPED</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#ORPHAN_TABLE_ANNOTATION_CHECK_SKIPPED" class="member-name-link">ORPHAN_TABLE_ANNOTATION_CHECK_SKIPPED</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">出力対象が絞り込まれているため、実在しないテーブルに対する付帯情報の検出を行わなかったこと</div>
 </dd>
@@ -3427,7 +3427,7 @@ loadScripts(document, 'script');</script>
  Markdownドキュメント（テーブル定義書・一覧・ER図・観点ページ・README）はすべてこの配下にまとめる。<br>
  例: {base}/{DB名}/</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#%3Cinit%3E(com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List)" class="member-name-link">ResolvedForeignKeys(ForeignKeys, List&lt;ConsistencyFinding&gt;)</a> - Constructor for record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
+<dt><a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html#%3Cinit%3E(com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List)" class="member-name-link">ResolvedForeignKeys(ForeignKeys, List&lt;ConsistencyNotice&gt;)</a> - Constructor for record class com.export_table_definition.domain.service.target.<a href="com/export_table_definition/domain/service/target/ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ResolvedForeignKeys</code> record class.</div>
 </dd>
@@ -3456,8 +3456,8 @@ loadScripts(document, 'script');</script>
 <div class="block">物理外部キーとサイドカー由来の論理リレーションのうち、参照元・参照先の双方が出力対象のテーブルであるものを 1つの外部キーの集合にまとめるメソッド<br>
  片側だけが出力対象のものを残すと、テーブル一覧・個別の定義書には現れないテーブルがER図にだけ箱として残ってしまうため除外する。
  論理リレーションも物理外部キーと同じ集合へ合流させることで、ER図のグループ分割（連結成分）やスキーマ跨ぎ関連の抽出にも自動的に反映される。 <br>
- 除外したものを指摘とするかは由来ごとに異なる。物理外部キーは、出力対象が絞り込まれている場合は意図した除外のため指摘しない。
- 論理リレーションは、除外の理由が絞り込みによるものかリネーム・削除による乖離かを区別できないため、一律で指摘する</div>
+ 除外したものを通知とするかは由来ごとに異なる。物理外部キーは、出力対象が絞り込まれている場合は意図した除外のため通知しない。
+ 論理リレーションは、除外の理由が絞り込みによるものかリネーム・削除による乖離かを区別できないため、一律で通知する</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/path/OutputPathResolver.html#resolveListFile(com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.document.ListDocumentType)" class="member-name-link">resolveListFile(OutputRoot, ListDocumentType)</a> - Method in interface com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/OutputPathResolver.html" title="interface in com.export_table_definition.domain.service.path">OutputPathResolver</a></dt>
 <dd>
@@ -3934,9 +3934,9 @@ loadScripts(document, 'script');</script>
 <div class="block">スナップショットのrecordを、改行を含まない1行のJSON文字列へ変換する<br>
  値が無い項目（null・空文字・空リスト）は出力しない。 同じ内容からは常に同じ文字列を生成すること（差分検知で比較するため）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html#severity()" class="member-name-link">severity()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html#severity()" class="member-name-link">severity()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a></dt>
 <dd>
-<div class="block">指摘の重要度を返却するメソッド</div>
+<div class="block">通知の重要度を返却するメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/sidecar/Sidecar.html" class="type-name-link" title="class in com.export_table_definition.domain.model.sidecar">Sidecar</a> - Record Class in <a href="com/export_table_definition/domain/model/sidecar/package-summary.html">com.export_table_definition.domain.model.sidecar</a></dt>
 <dd>
@@ -4558,7 +4558,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -4816,7 +4816,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">上限なし（0以下の指定はすべてこの値に揃える）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#UNMATCHED_VIEWPOINT_PATTERN" class="member-name-link">UNMATCHED_VIEWPOINT_PATTERN</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#UNMATCHED_VIEWPOINT_PATTERN" class="member-name-link">UNMATCHED_VIEWPOINT_PATTERN</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">観点の所属テーブルのパターンのうち、どのテーブルにも一致しないもの（リネーム・削除の可能性）</div>
 </dd>
@@ -4829,11 +4829,11 @@ loadScripts(document, 'script');</script>
 <div class="block">どのテーブルにも一致しない包含パターンを求めるメソッド<br>
  テーブルのリネーム・削除によって、観点の宣言がDBと乖離していないかの気付きに用いる</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#UNRESOLVED_FOREIGN_KEY" class="member-name-link">UNRESOLVED_FOREIGN_KEY</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#UNRESOLVED_FOREIGN_KEY" class="member-name-link">UNRESOLVED_FOREIGN_KEY</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">参照先のテーブルが出力対象に存在しないため除外した外部キー</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#UNRESOLVED_LOGICAL_RELATION" class="member-name-link">UNRESOLVED_LOGICAL_RELATION</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#UNRESOLVED_LOGICAL_RELATION" class="member-name-link">UNRESOLVED_LOGICAL_RELATION</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">参照元・参照先のテーブルが出力対象に存在しないため除外した論理リレーション</div>
 </dd>
@@ -4882,11 +4882,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Severity</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Severity</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
@@ -4931,12 +4931,12 @@ the order they are declared.</div>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html#values()" class="member-name-link">values()</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Kind</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html#values()" class="member-name-link">values()</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Kind.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Kind</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html#values()" class="member-name-link">values()</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Severity</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html#values()" class="member-name-link">values()</a> - Static method in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Severity</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
@@ -5038,7 +5038,7 @@ the order they are declared.</div>
 </dl>
 <h2 class="title" id="I:W">W</h2>
 <dl class="index">
-<dt><a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html#WARN" class="member-name-link">WARN</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyFinding.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyFinding.Severity</a></dt>
+<dt><a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html#WARN" class="member-name-link">WARN</a> - Enum constant in enum class com.export_table_definition.domain.model.target.<a href="com/export_table_definition/domain/model/target/ConsistencyNotice.Severity.html" title="enum class in com.export_table_definition.domain.model.target">ConsistencyNotice.Severity</a></dt>
 <dd>
 <div class="block">DBとサイドカーの乖離等、利用者の確認が必要なもの</div>
 </dd>

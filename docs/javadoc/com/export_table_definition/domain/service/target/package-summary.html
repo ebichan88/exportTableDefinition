@@ -113,7 +113,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報）を突き合わせるドメインサービス<br>
  外部キーはスキーマ全体から、サイドカーは出力対象に関係なく読み込むため、出力対象の絞り込みで除外されたテーブルや、
- リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう指摘（<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyFinding</code></a>）として返す。指摘をどこへ出力するか（ログ等）は呼び出し側が決める</div>
+ リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう通知（<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyNotice</code></a>）として返す。通知をどこへ出力するか（ログ等）は呼び出し側が決める</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab4"><a href="ExportTargetConsistency.ResolvedForeignKeys.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency.ResolvedForeignKeys</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab4">
