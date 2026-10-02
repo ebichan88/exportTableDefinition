@@ -30,6 +30,7 @@ import com.export_table_definition.domain.service.target.ExportTargetConsistency
 import jakarta.inject.Inject;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -189,16 +190,29 @@ final class SchemaExporter {
         builder.tableKeys().stream()
             .collect(
                 Collectors.groupingBy(TableKey::schema, LinkedHashMap::new, Collectors.toList()));
-    tableKeysBySchema.forEach(
-        (schemaName, tableKeys) -> {
-          final int total = tableKeys.size();
-          final int step = chunkSize > 0 ? chunkSize : total;
-          for (int from = 0; from < total; from += step) {
-            builder.add(
-                repository.selectColumnList(tableKeys.subList(from, Math.min(from + step, total))));
-          }
-        });
+    tableKeysBySchema
+        .values()
+        .forEach(
+            tableKeys -> {
+              for (final List<TableKey> chunk : splitIntoChunks(tableKeys, chunkSize)) {
+                builder.add(repository.selectColumnList(chunk));
+              }
+            });
     return builder.build();
+  }
+
+  /**
+   * リストを{@code chunkSize}件ずつの塊に分割するメソッド<br>
+   * {@code chunkSize}が0以下の場合は分割せず全体を1つの塊とする。空のリストは塊を持たない。 返す塊は元のリストのビューのため、元のリストを変更してはならない
+   */
+  private static <T> List<List<T>> splitIntoChunks(List<T> list, int chunkSize) {
+    final int total = list.size();
+    final int step = chunkSize > 0 ? chunkSize : total;
+    final List<List<T>> chunks = new ArrayList<>();
+    for (int from = 0; from < total; from += step) {
+      chunks.add(list.subList(from, Math.min(from + step, total)));
+    }
+    return chunks;
   }
 
   /**
@@ -247,12 +261,8 @@ final class SchemaExporter {
       int chunkSize,
       List<ExportSink> sinks) {
     sinks.forEach(sink -> sink.beginSchemaTables(schemaName, targets.baseInfo()));
-    final int total = tablesInSchema.size();
-    // chunkSizeが0以下の場合はスキーマ全体を1チャンクとして扱う
-    final int step = chunkSize > 0 ? chunkSize : total;
-    for (int from = 0; from < total; from += step) {
-      final int to = Math.min(from + step, total);
-      exportTableDefinitionChunk(tablesInSchema.subList(from, to), targets, triggers, sinks);
+    for (final List<TableEntity> chunk : splitIntoChunks(tablesInSchema, chunkSize)) {
+      exportTableDefinitionChunk(chunk, targets, triggers, sinks);
     }
   }
 
