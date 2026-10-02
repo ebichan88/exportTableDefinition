@@ -2521,7 +2521,7 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/file/repository/LocalFileRepository.html#%3Cinit%3E()" class="member-name-link">LocalFileRepository()</a> - Constructor for class com.export_table_definition.infrastructure.file.repository.<a href="com/export_table_definition/infrastructure/file/repository/LocalFileRepository.html" title="class in com.export_table_definition.infrastructure.file.repository">LocalFileRepository</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#logical(java.lang.String,java.lang.String,java.lang.String,java.util.List,java.lang.String,java.lang.String,java.util.List,com.export_table_definition.domain.model.relation.Cardinality)" class="member-name-link">logical(String, String, String, List&lt;String&gt;, String, String, List&lt;String&gt;, Cardinality)</a> - Static method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></dt>
+<dt><a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html#logical(com.export_table_definition.domain.model.table.TableKey,java.lang.String,java.util.List,com.export_table_definition.domain.model.table.TableKey,java.util.List,com.export_table_definition.domain.model.relation.Cardinality)" class="member-name-link">logical(TableKey, String, List&lt;String&gt;, TableKey, List&lt;String&gt;, Cardinality)</a> - Static method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></dt>
 <dd>
 <div class="block">サイドカーYAML由来の論理リレーションを生成する静的ファクトリメソッド<br>
  DBに外部キー制約が存在しないため、多重度は機械的に判定できない。 呼び出し側でYAMLの明示指定を解決した上で渡すこと</div>
@@ -2622,7 +2622,7 @@ loadScripts(document, 'script');</script>
 
  テーブル名リストはワイルドカード（<code>*</code>）・除外（先頭に<code>!</code>）・スキーマ修飾（<code>スキーマ名.テーブル名</code>）に 対応する。詳細は<a href="com/export_table_definition/domain/model/table/TableNamePatterns.html" title="class in com.export_table_definition.domain.model.table"><code>TableNamePatterns</code></a>を参照</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/model/table/TableNamePatterns.html#matches(java.lang.String,java.lang.String)" class="member-name-link">matches(String, String)</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/TableNamePatterns.html" title="class in com.export_table_definition.domain.model.table">TableNamePatterns</a></dt>
+<dt><a href="com/export_table_definition/domain/model/table/TableNamePatterns.html#matches(com.export_table_definition.domain.model.table.TableKey)" class="member-name-link">matches(TableKey)</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/TableNamePatterns.html" title="class in com.export_table_definition.domain.model.table">TableNamePatterns</a></dt>
 <dd>
 <div class="block">除外パターンに一致する場合は常にfalse。包含パターンが1件もない場合、除外に一致しない限りtrue</div>
 </dd>
@@ -2642,7 +2642,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <code>maxValue</code> record component.</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html#mermaidId(java.lang.String,java.lang.String)" class="member-name-link">mermaidId(String, String)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html#mermaidId(com.export_table_definition.domain.model.table.TableKey)" class="member-name-link">mermaidId(TableKey)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></dt>
 <dd>
 <div class="block">Mermaid記法のエンティティ識別子を生成するメソッド<br>
  スキーマ名を含めることで、同名テーブルが複数スキーマに存在する場合の識別子衝突を避ける</div>

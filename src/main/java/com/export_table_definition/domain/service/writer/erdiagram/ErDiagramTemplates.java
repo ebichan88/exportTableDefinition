@@ -295,7 +295,7 @@ public class ErDiagramTemplates {
     final Set<String> usedIds = new HashSet<>();
     nodes.forEach(
         key -> {
-          final String baseId = MermaidSupport.mermaidId(key.schema(), key.table());
+          final String baseId = MermaidSupport.mermaidId(key);
           String id = baseId;
           for (int suffix = 2; !usedIds.add(id); suffix++) {
             id = baseId + "_" + suffix;

@@ -83,24 +83,20 @@ public final class TableNamePatterns {
   /** テーブルのリネーム・削除によって、パターンがDBと乖離していないかの気付きに用いる */
   public List<String> unmatchedInclusions(Collection<TableEntity> tables) {
     return includes.stream()
-        .filter(
-            entry ->
-                tables.stream()
-                    .noneMatch(
-                        table -> entry.matches(table.schemaName(), table.physicalTableName())))
+        .filter(entry -> tables.stream().noneMatch(table -> entry.matches(TableKey.of(table))))
         .map(Entry::raw)
         .toList();
   }
 
   /** 除外パターンに一致する場合は常にfalse。包含パターンが1件もない場合、除外に一致しない限りtrue */
-  public boolean matches(String schemaName, String physicalTableName) {
-    if (excludes.stream().anyMatch(entry -> entry.matches(schemaName, physicalTableName))) {
+  public boolean matches(TableKey key) {
+    if (excludes.stream().anyMatch(entry -> entry.matches(key))) {
       return false;
     }
     if (includes.isEmpty()) {
       return true;
     }
-    return includes.stream().anyMatch(entry -> entry.matches(schemaName, physicalTableName));
+    return includes.stream().anyMatch(entry -> entry.matches(key));
   }
 
   /**
@@ -126,11 +122,11 @@ public final class TableNamePatterns {
       return Optional.of(new Entry(pattern, schema, toPattern(tablePart)));
     }
 
-    boolean matches(String schemaName, String physicalTableName) {
-      if (schema != null && !schema.equals(schemaName)) {
+    boolean matches(TableKey key) {
+      if (schema != null && !schema.equals(key.schema())) {
         return false;
       }
-      return tablePattern.matcher(physicalTableName).matches();
+      return tablePattern.matcher(key.table()).matches();
     }
 
     private static Pattern toPattern(String glob) {

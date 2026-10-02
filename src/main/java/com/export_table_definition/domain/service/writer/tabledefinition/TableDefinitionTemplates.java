@@ -281,30 +281,25 @@ public class TableDefinitionTemplates {
     if (outgoingFks.isEmpty() && incomingFks.isEmpty()) {
       return sb.append("関連するテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
     }
-    final String selfId = MermaidSupport.mermaidId(table.schemaName(), table.physicalTableName());
+    final TableKey selfKey = TableKey.of(table);
+    final String selfId = MermaidSupport.mermaidId(selfKey);
     final Set<TableKey> nodeKeys = new LinkedHashSet<>();
-    nodeKeys.add(TableKey.of(table));
+    nodeKeys.add(selfKey);
     outgoingFks.forEach(fk -> nodeKeys.add(fk.referenceTableKey()));
     incomingFks.forEach(fk -> nodeKeys.add(fk.tableKey()));
     final Map<TableKey, String> labels = MermaidSupport.assignLabels(nodeKeys);
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
     nodeKeys.forEach(
-        key ->
-            sb.append(
-                MermaidSupport.aliasLine(
-                    MermaidSupport.mermaidId(key.schema(), key.table()), labels.get(key))));
+        key -> sb.append(MermaidSupport.aliasLine(MermaidSupport.mermaidId(key), labels.get(key))));
     outgoingFks.forEach(
         fk ->
             sb.append(
                 MermaidSupport.relationLine(
-                    MermaidSupport.mermaidId(fk.referenceSchemaName(), fk.referenceTableName()),
-                    fk,
-                    selfId)));
+                    MermaidSupport.mermaidId(fk.referenceTableKey()), fk, selfId)));
     incomingFks.forEach(
         fk ->
             sb.append(
-                MermaidSupport.relationLine(
-                    selfId, fk, MermaidSupport.mermaidId(fk.schemaName(), fk.tableName()))));
+                MermaidSupport.relationLine(selfId, fk, MermaidSupport.mermaidId(fk.tableKey()))));
     sb.append("    ").append(selfId).append(" {").append(LINE_SEPARATOR);
     columns.forEach(
         c ->

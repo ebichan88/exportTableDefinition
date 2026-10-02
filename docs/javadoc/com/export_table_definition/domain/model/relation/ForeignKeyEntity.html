@@ -184,12 +184,10 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <div class="block">サイドカーYAML由来の論理リレーションか判定するメソッド</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#logical(java.lang.String,java.lang.String,java.lang.String,java.util.List,java.lang.String,java.lang.String,java.util.List,com.export_table_definition.domain.model.relation.Cardinality)" class="member-name-link">logical</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableName,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#logical(com.export_table_definition.domain.model.table.TableKey,java.lang.String,java.util.List,com.export_table_definition.domain.model.table.TableKey,java.util.List,com.export_table_definition.domain.model.relation.Cardinality)" class="member-name-link">logical</a><wbr>(<a href="../table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relationName,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;columnNames,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;referenceSchemaName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;referenceTableName,
+ <a href="../table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;referenceTable,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;referenceColumnNames,
  <a href="Cardinality.html" title="enum class in com.export_table_definition.domain.model.relation">Cardinality</a>&nbsp;cardinality)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
@@ -286,25 +284,21 @@ implements <a href="../table/SchemaTableKeyed.html" title="interface in com.expo
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="logical(java.lang.String,java.lang.String,java.lang.String,java.util.List,java.lang.String,java.lang.String,java.util.List,com.export_table_definition.domain.model.relation.Cardinality)">
+<section class="detail" id="logical(com.export_table_definition.domain.model.table.TableKey,java.lang.String,java.util.List,com.export_table_definition.domain.model.table.TableKey,java.util.List,com.export_table_definition.domain.model.relation.Cardinality)">
 <h3>logical</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></span>&nbsp;<span class="element-name">logical</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableName,
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a></span>&nbsp;<span class="element-name">logical</span><wbr><span class="parameters">(<a href="../table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;relationName,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;columnNames,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;referenceSchemaName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;referenceTableName,
+ <a href="../table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;referenceTable,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;referenceColumnNames,
  <a href="Cardinality.html" title="enum class in com.export_table_definition.domain.model.relation">Cardinality</a>&nbsp;cardinality)</span></div>
 <div class="block">サイドカーYAML由来の論理リレーションを生成する静的ファクトリメソッド<br>
  DBに外部キー制約が存在しないため、多重度は機械的に判定できない。 呼び出し側でYAMLの明示指定を解決した上で渡すこと</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>schemaName</code> - 参照元（子）スキーマ名</dd>
-<dd><code>tableName</code> - 参照元（子）テーブル名</dd>
+<dd><code>table</code> - 参照元（子）テーブル</dd>
 <dd><code>columnNames</code> - 参照元（子）の列名のリスト</dd>
-<dd><code>referenceSchemaName</code> - 参照先（親）スキーマ名</dd>
-<dd><code>referenceTableName</code> - 参照先（親）テーブル名</dd>
+<dd><code>referenceTable</code> - 参照先（親）テーブル</dd>
 <dd><code>referenceColumnNames</code> - 参照先（親）の列名のリスト</dd>
 <dt>Returns:</dt>
 <dd>論理リレーションを表すForeignKeyEntity</dd>

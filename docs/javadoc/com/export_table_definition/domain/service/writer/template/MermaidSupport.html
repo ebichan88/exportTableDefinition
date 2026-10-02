@@ -122,8 +122,7 @@ loadScripts(document, 'script');</script>
  場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#mermaidId(java.lang.String,java.lang.String)" class="member-name-link">mermaidId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;physicalTableName)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#mermaidId(com.export_table_definition.domain.model.table.TableKey)" class="member-name-link">mermaidId</a><wbr>(<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;key)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Mermaid記法のエンティティ識別子を生成するメソッド<br>
  スキーマ名を含めることで、同名テーブルが複数スキーマに存在する場合の識別子衝突を避ける</div>
@@ -165,10 +164,9 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="mermaidId(java.lang.String,java.lang.String)">
+<section class="detail" id="mermaidId(com.export_table_definition.domain.model.table.TableKey)">
 <h3>mermaidId</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">mermaidId</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaName,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;physicalTableName)</span></div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">mermaidId</span><wbr><span class="parameters">(<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;key)</span></div>
 <div class="block">Mermaid記法のエンティティ識別子を生成するメソッド<br>
  スキーマ名を含めることで、同名テーブルが複数スキーマに存在する場合の識別子衝突を避ける</div>
 <dl class="notes">
