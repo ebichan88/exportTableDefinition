@@ -127,7 +127,7 @@ public class ExportTargetConsistency {
     final TableEntity table = detail.table();
     final Set<String> actualColumnNames =
         detail.columns().stream().map(ColumnEntity::physicalColumnName).collect(Collectors.toSet());
-    return annotations.of(table).orphanColumnNames(actualColumnNames).stream()
+    return annotations.belongingTo(table).orphanColumnNames(actualColumnNames).stream()
         .map(
             columnName ->
                 new ConsistencyNotice(

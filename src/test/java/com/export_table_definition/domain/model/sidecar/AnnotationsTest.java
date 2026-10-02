@@ -22,7 +22,7 @@ public class AnnotationsTest {
     var annotation = new TableAnnotation("説明", "備考", Map.of());
     var annotations = Annotations.of(Map.of(TableKey.of("public", "orders"), annotation));
 
-    assertSame(annotation, annotations.of(table("public", "orders")));
+    assertSame(annotation, annotations.belongingTo(table("public", "orders")));
   }
 
   @Test
@@ -32,7 +32,7 @@ public class AnnotationsTest {
         Annotations.of(
             Map.of(TableKey.of("public", "orders"), new TableAnnotation("説明", "", Map.of())));
 
-    assertSame(TableAnnotation.EMPTY, annotations.of(table("public", "customers")));
+    assertSame(TableAnnotation.EMPTY, annotations.belongingTo(table("public", "customers")));
   }
 
   @Test
@@ -42,6 +42,6 @@ public class AnnotationsTest {
 
     assertTrue(annotations.isEmpty());
     assertTrue(annotations.tableKeys().isEmpty());
-    assertSame(TableAnnotation.EMPTY, annotations.of(table("public", "orders")));
+    assertSame(TableAnnotation.EMPTY, annotations.belongingTo(table("public", "orders")));
   }
 }

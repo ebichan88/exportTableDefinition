@@ -187,7 +187,7 @@ final class SchemaExporter {
     final DiagramBoxes.Builder builder =
         DiagramBoxes.builder(targets.tables(), targets.foreignKeys());
     final Map<String, List<TableKey>> tableKeysBySchema =
-        builder.tableKeys().stream()
+        builder.tablesNeedingColumns().stream()
             .collect(
                 Collectors.groupingBy(TableKey::schema, LinkedHashMap::new, Collectors.toList()));
     tableKeysBySchema
@@ -195,7 +195,7 @@ final class SchemaExporter {
         .forEach(
             tableKeys -> {
               for (final List<TableKey> chunk : splitIntoChunks(tableKeys, chunkSize)) {
-                builder.add(repository.selectColumnList(chunk));
+                builder.collectRelatedColumns(repository.selectColumnList(chunk));
               }
             });
     return builder.build();

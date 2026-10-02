@@ -57,7 +57,8 @@ public class ExportTargetConsistencyTest {
                 List.of(resolvable, missingParent), List.of(), Tables.of(tables), false)
             .foreignKeys();
 
-    assertEquals(List.of("fk_orders_customer"), names(result.of(table("public", "orders"))));
+    assertEquals(
+        List.of("fk_orders_customer"), names(result.belongingTo(table("public", "orders"))));
   }
 
   @Test
@@ -80,9 +81,11 @@ public class ExportTargetConsistencyTest {
     // 物理外部キー、論理リレーションの順に並ぶ
     assertEquals(
         List.of("fk_orders_staff", "rel_orders_staff"),
-        names(result.of(table("public", "orders"))));
-    assertEquals(List.of("fk_orders_staff"), names(result.physicalOf(table("public", "orders"))));
-    assertEquals(List.of("rel_orders_staff"), names(result.logicalOf(table("public", "orders"))));
+        names(result.belongingTo(table("public", "orders"))));
+    assertEquals(
+        List.of("fk_orders_staff"), names(result.physicalBelongingTo(table("public", "orders"))));
+    assertEquals(
+        List.of("rel_orders_staff"), names(result.logicalBelongingTo(table("public", "orders"))));
   }
 
   @Test
@@ -92,7 +95,7 @@ public class ExportTargetConsistencyTest {
         service.resolveForeignKeys(
             List.of(), List.of(), Tables.of(List.of(table("public", "orders"))), false);
 
-    assertEquals(List.of(), result.foreignKeys().of(table("public", "orders")));
+    assertEquals(List.of(), result.foreignKeys().belongingTo(table("public", "orders")));
     assertEquals(List.of(), result.foreignKeys().crossSchema());
     assertEquals(List.of(), result.consistencyNotices());
   }

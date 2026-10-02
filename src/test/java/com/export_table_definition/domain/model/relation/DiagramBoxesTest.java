@@ -71,7 +71,7 @@ public class DiagramBoxesTest {
   void testBuilderTableKeys() {
     assertEquals(
         List.of(ORDERS, CUSTOMERS, PRODUCTS),
-        builder(List.of(ordersToCustomers, ordersToProducts)).tableKeys());
+        builder(List.of(ordersToCustomers, ordersToProducts)).tablesNeedingColumns());
   }
 
   @Test
@@ -81,7 +81,7 @@ public class DiagramBoxesTest {
     var customerId = column("orders", "customer_id", false);
     var boxes =
         builder(List.of(ordersToCustomers, ordersToProducts))
-            .add(List.of(column("orders", "id", true), productId, customerId))
+            .collectRelatedColumns(List.of(column("orders", "id", true), productId, customerId))
             .build();
 
     assertEquals(
@@ -100,7 +100,7 @@ public class DiagramBoxesTest {
     var id = column("customers", "id", true);
     var boxes =
         builder(List.of(ordersToCustomers))
-            .add(List.of(id, column("customers", "name", false)))
+            .collectRelatedColumns(List.of(id, column("customers", "name", false)))
             .build();
 
     assertEquals(
@@ -115,7 +115,8 @@ public class DiagramBoxesTest {
         relation("orders", "fk_orders_parent", List.of("parent_id"), "orders", List.of("id"));
     var id = column("orders", "id", true);
     var parentId = column("orders", "parent_id", false);
-    var boxes = builder(List.of(selfReference)).add(List.of(id, parentId)).build();
+    var boxes =
+        builder(List.of(selfReference)).collectRelatedColumns(List.of(id, parentId)).build();
 
     assertEquals(
         List.of(new DiagramColumn(id, false), new DiagramColumn(parentId, true)),
@@ -125,7 +126,7 @@ public class DiagramBoxesTest {
   @Test
   @DisplayName("relationColumnsOf: 取得できなかったカラム（実在しないカラム）は含めない")
   void testRelationColumnsOfSkipsMissingColumns() {
-    var boxes = builder(List.of(ordersToCustomers)).add(List.of()).build();
+    var boxes = builder(List.of(ordersToCustomers)).collectRelatedColumns(List.of()).build();
 
     assertEquals(
         List.of(),
@@ -137,7 +138,8 @@ public class DiagramBoxesTest {
   void testRelationColumnsOfIgnoresOtherSchema() {
     var boxes =
         builder(List.of(ordersToCustomers))
-            .add(List.of(EntityFixtures.column("sales", "customers", "id", "integer", true)))
+            .collectRelatedColumns(
+                List.of(EntityFixtures.column("sales", "customers", "id", "integer", true)))
             .build();
 
     assertEquals(

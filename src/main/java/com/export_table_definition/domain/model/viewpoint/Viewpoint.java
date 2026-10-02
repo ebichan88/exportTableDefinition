@@ -128,7 +128,7 @@ public final class Viewpoint {
     return new ViewpointContent(
         this,
         members,
-        ForeignKeyGroup.of(foreignKeys.within(memberKeys)),
-        foreignKeys.crossing(memberKeys));
+        ForeignKeyGroup.of(foreignKeys.withinTables(memberKeys)),
+        foreignKeys.crossingTableSetBoundary(memberKeys));
   }
 }

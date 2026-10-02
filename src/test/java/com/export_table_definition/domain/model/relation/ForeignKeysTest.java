@@ -26,41 +26,41 @@ public class ForeignKeysTest {
             "public", "orders", "fk_orders_customer", "public", "customers");
     var foreignKeys = ForeignKeys.of(List.of(fk));
 
-    assertEquals(List.of(fk), foreignKeys.of(newTable("public", "orders")));
-    assertEquals(List.of(), foreignKeys.of(newTable("public", "customers")));
+    assertEquals(List.of(fk), foreignKeys.belongingTo(newTable("public", "orders")));
+    assertEquals(List.of(), foreignKeys.belongingTo(newTable("public", "customers")));
   }
 
   @Test
-  @DisplayName("incomingOf: 被参照側は自テーブルを参照している外部キーを返す")
+  @DisplayName("referencingTo: 被参照側は自テーブルを参照している外部キーを返す")
   void testIncomingOfReturnsReferencingForeignKeys() {
     var fk =
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
     var foreignKeys = ForeignKeys.of(List.of(fk));
 
-    assertEquals(List.of(fk), foreignKeys.incomingOf(newTable("public", "customers")));
-    assertEquals(List.of(), foreignKeys.incomingOf(newTable("public", "orders")));
+    assertEquals(List.of(fk), foreignKeys.referencingTo(newTable("public", "customers")));
+    assertEquals(List.of(), foreignKeys.referencingTo(newTable("public", "orders")));
   }
 
   @Test
-  @DisplayName("incomingOf: 自己参照の外部キーは被参照側に含まれない（外部キー情報セクションとの重複表示を避けるため）")
+  @DisplayName("referencingTo: 自己参照の外部キーは被参照側に含まれない（外部キー情報セクションとの重複表示を避けるため）")
   void testIncomingOfExcludesSelfReference() {
     var selfFk =
         ForeignKeyFixtures.physical(
             "public", "categories", "fk_categories_parent", "public", "categories");
     var foreignKeys = ForeignKeys.of(List.of(selfFk));
 
-    assertEquals(List.of(selfFk), foreignKeys.of(newTable("public", "categories")));
-    assertEquals(List.of(), foreignKeys.incomingOf(newTable("public", "categories")));
+    assertEquals(List.of(selfFk), foreignKeys.belongingTo(newTable("public", "categories")));
+    assertEquals(List.of(), foreignKeys.referencingTo(newTable("public", "categories")));
   }
 
   @Test
-  @DisplayName("incomingOf: スキーマを跨いだ参照でも正しく解決される")
+  @DisplayName("referencingTo: スキーマを跨いだ参照でも正しく解決される")
   void testIncomingOfAcrossSchemas() {
     var fk = ForeignKeyFixtures.physical("hr", "assignment", "fk_assignment_emp", "sales", "emp");
     var foreignKeys = ForeignKeys.of(List.of(fk));
 
-    assertEquals(List.of(fk), foreignKeys.incomingOf(newTable("sales", "emp")));
+    assertEquals(List.of(fk), foreignKeys.referencingTo(newTable("sales", "emp")));
   }
 
   @Test
@@ -109,7 +109,7 @@ public class ForeignKeysTest {
   }
 
   @Test
-  @DisplayName("physicalOf: 物理外部キーのみを返し、論理リレーションは含めない")
+  @DisplayName("physicalBelongingTo: 物理外部キーのみを返し、論理リレーションは含めない")
   void testPhysicalOfExcludesLogical() {
     var physical =
         ForeignKeyFixtures.physical(
@@ -118,11 +118,11 @@ public class ForeignKeysTest {
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
 
-    assertEquals(List.of(physical), foreignKeys.physicalOf(newTable("public", "orders")));
+    assertEquals(List.of(physical), foreignKeys.physicalBelongingTo(newTable("public", "orders")));
   }
 
   @Test
-  @DisplayName("logicalOf: 論理リレーションのみを返し、物理外部キーは含めない")
+  @DisplayName("logicalBelongingTo: 論理リレーションのみを返し、物理外部キーは含めない")
   void testLogicalOfExcludesPhysical() {
     var physical =
         ForeignKeyFixtures.physical(
@@ -131,7 +131,7 @@ public class ForeignKeysTest {
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
 
-    assertEquals(List.of(logical), foreignKeys.logicalOf(newTable("public", "orders")));
+    assertEquals(List.of(logical), foreignKeys.logicalBelongingTo(newTable("public", "orders")));
   }
 
   @Test
@@ -144,18 +144,18 @@ public class ForeignKeysTest {
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     var foreignKeys = ForeignKeys.of(List.of(physical, logical));
 
-    assertEquals(List.of(physical, logical), foreignKeys.of(newTable("public", "orders")));
+    assertEquals(List.of(physical, logical), foreignKeys.belongingTo(newTable("public", "orders")));
   }
 
   @Test
-  @DisplayName("incomingOf: 論理リレーションも被参照側として解決される")
+  @DisplayName("referencingTo: 論理リレーションも被参照側として解決される")
   void testIncomingOfResolvesLogical() {
     var logical =
         ForeignKeyFixtures.logical(
             "public", "audit_log", "rel_audit_employee", "public", "employee");
     var foreignKeys = ForeignKeys.of(List.of(logical));
 
-    assertEquals(List.of(logical), foreignKeys.incomingOf(newTable("public", "employee")));
+    assertEquals(List.of(logical), foreignKeys.referencingTo(newTable("public", "employee")));
   }
 
   @Test
@@ -170,7 +170,7 @@ public class ForeignKeysTest {
   }
 
   @Test
-  @DisplayName("within/crossing: テーブルの集合に対し、両端が含まれる関連と片端だけが含まれる関連を分けて返す")
+  @DisplayName("withinTables/crossingTableSetBoundary: テーブルの集合に対し、両端が含まれる関連と片端だけが含まれる関連を分けて返す")
   void testWithinAndCrossing() {
     var inside =
         ForeignKeyFixtures.physical("sales", "orders", "fk_orders_customer", "sales", "customer");
@@ -183,7 +183,7 @@ public class ForeignKeysTest {
     var foreignKeys = ForeignKeys.of(List.of(inside, outgoing, incoming, unrelated));
     var tableKeys = Set.of(TableKey.of("sales", "orders"), TableKey.of("sales", "customer"));
 
-    assertEquals(List.of(inside), foreignKeys.within(tableKeys));
-    assertEquals(List.of(outgoing, incoming), foreignKeys.crossing(tableKeys));
+    assertEquals(List.of(inside), foreignKeys.withinTables(tableKeys));
+    assertEquals(List.of(outgoing, incoming), foreignKeys.crossingTableSetBoundary(tableKeys));
   }
 }

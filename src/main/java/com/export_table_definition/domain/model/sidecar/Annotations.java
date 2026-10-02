@@ -44,7 +44,7 @@ public final class Annotations {
    *
    * @return 対応する付帯情報。存在しない場合は{@link TableAnnotation#EMPTY}
    */
-  public TableAnnotation of(TableEntity table) {
+  public TableAnnotation belongingTo(TableEntity table) {
     return byKey.getOrDefault(TableKey.of(table), TableAnnotation.EMPTY);
   }
 

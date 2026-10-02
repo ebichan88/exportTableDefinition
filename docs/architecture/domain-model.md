@@ -97,12 +97,12 @@ classDiagram
     of(unique, mandatory)$
   }
   class ForeignKeys {
-    physicalOf(table)
-    logicalOf(table)
-    incomingOf(table)
+    physicalBelongingTo(table)
+    logicalBelongingTo(table)
+    referencingTo(table)
     crossSchema()
-    within(tableKeys)
-    crossing(tableKeys)
+    withinTables(tableKeys)
+    crossingTableSetBoundary(tableKeys)
   }
   class ForeignKeyGroup {
     nodes()
@@ -174,7 +174,7 @@ classDiagram
   カラムはチャンク単位で取得するが、ER図はチャンクより先に書き出すため、関連を持つテーブルのカラムを別途取得し、
   関連カラムだけを残す（`DiagramBoxes.Builder`）。1枚の図の箱には、その図に描く関連で使われるカラムだけを表示し、
   参照元のカラムに`FK`を付ける（`DiagramColumn`）
-- 自己参照の関連は、被参照側（`incomingOf`）には含めない（参照側と重複して掲載されるため）
+- 自己参照の関連は、被参照側（`referencingTo`）には含めない（参照側と重複して掲載されるため）
 - カラム・インデックス・制約の集合（`Columns`・`Indexes`・`Constraints`）は`TableDetail`の組み立てでのみ使うため
   パッケージプライベートにしている
 
@@ -185,7 +185,7 @@ classDiagram
   direction LR
   class Sidecar
   class Annotations {
-    of(table)
+    belongingTo(table)
     tableKeys()
   }
   class TableAnnotation {
@@ -229,7 +229,7 @@ classDiagram
     resolve(tables, foreignKeys)
   }
   class Viewpoints {
-    of(table)
+    containing(table)
   }
   class ViewpointContent {
     List~TableEntity~ tables
@@ -254,7 +254,7 @@ classDiagram
 - **識別子（`id`）**は観点ページのファイル名に使うため、英数字・`-`・`_`に限る。表示名（`name`）は省略すると識別子になる
 - **1観点分の出力内容（`ViewpointContent`）**は、出力対象のテーブル・関連から`Viewpoint.resolve`で求める。所属テーブル同士の関連
   （両端が所属）はER図に描き、片端だけが所属する関連は「観点外のテーブルとの関連」として一覧にする
-- 1つのテーブルが複数の観点に所属してよい。テーブルから所属する観点は`Viewpoints.of(table)`で逆引きし、
+- 1つのテーブルが複数の観点に所属してよい。テーブルから所属する観点は`Viewpoints.containing(table)`で逆引きし、
   1テーブル分の出力内容（`TableDefinitionContent.viewpoints`）に持たせる
 - 観点は見せ方でありスキーマではないため、スナップショットには含めない
 
@@ -353,7 +353,7 @@ classDiagram
 | 関連は参照元・参照先の双方が出力対象のときだけ合流させる（除外した物理外部キーは絞り込み時は通知しない。論理リレーションは常に通知する） | `ExportTargetConsistency.resolveForeignKeys` |
 | 実在しないテーブル・カラムに対する付帯情報の検出（絞り込み時はテーブルの検出を行わない） | `ExportTargetConsistency.findOrphan*` / `TableAnnotation.orphanColumnNames` |
 | 観点の識別子の形式（英数字・`-`・`_`）・所属テーブルの包含パターンが必須・表示名の既定値（識別子） | `Viewpoint.of` |
-| 観点の所属テーブルと、所属テーブル同士の関連・観点外のテーブルとの関連の求め方 | `Viewpoint.resolve` / `ForeignKeys.within` / `ForeignKeys.crossing` |
+| 観点の所属テーブルと、所属テーブル同士の関連・観点外のテーブルとの関連の求め方 | `Viewpoint.resolve` / `ForeignKeys.withinTables` / `ForeignKeys.crossingTableSetBoundary` |
 | どのテーブルにも一致しない観点のパターンの検出（絞り込み時は検出を行わない） | `ExportTargetConsistency.findUnmatchedViewpointPatterns` / `TableNamePatterns.unmatchedInclusions` |
 | ER図のページ構成（上限に収まらなければ連結成分ごとにまとめ直す） | `ForeignKeyGroups.compose` |
 | ER図を描くか、描画を省略して外部キー一覧にフォールバックするか | `ForeignKeyGroup.renderingUnder` / `NodeLimit.isExceededBy` |
@@ -375,7 +375,7 @@ classDiagram
 | 関連 | 外部キー・論理リレーション | `ForeignKeyEntity` / `ForeignKeys` | 外部キー（物理）と論理リレーション（論理）の総称。クラス名は歴史的経緯で`ForeignKey` |
 | 外部キー | 外部キー | `RelationType.PHYSICAL` | DBに実在する外部キー制約による関連 |
 | 論理リレーション | 論理リレーション（`relations`） | `RelationType.LOGICAL` | DBに制約が無く、サイドカーYAMLで宣言した関連 |
-| 被参照の関連 | ER図の参照元テーブル | `incomingRelations` / `ForeignKeys.incomingOf` | 自テーブルを参照している関連（物理・論理の双方） |
+| 被参照の関連 | ER図の参照元テーブル | `incomingRelations` / `ForeignKeys.referencingTo` | 自テーブルを参照している関連（物理・論理の双方） |
 | 多重度 | 多重度（1対多 等） | `Cardinality` | 関連の両端の件数の関係 |
 | グループ | グループ（連結成分のまとまり） | `ForeignKeyGroup` / `ForeignKeyGroups` | 1枚のER図に描く関連の集合と、その分割 |
 | テーブルの箱 | ER図のテーブルの箱 | `DiagramBoxes` / `DiagramColumn` | ER図に描くテーブルの表示内容（`テーブル名（論理テーブル名）`の見出しと、表示するカラム） |
@@ -389,7 +389,7 @@ classDiagram
 | テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableNamePatterns` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法 |
 | 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |
 | 所属テーブル | 観点の所属テーブル | `ViewpointContent.tables` / `Viewpoint.contains` | 観点に含まれるテーブル |
-| 観点外のテーブルとの関連 | 観点外のテーブルとの関連 | `ViewpointContent.outsideRelations` / `ForeignKeys.crossing` | 片端だけが所属テーブルの関連 |
+| 観点外のテーブルとの関連 | 観点外のテーブルとの関連 | `ViewpointContent.outsideRelations` / `ForeignKeys.crossingTableSetBoundary` | 片端だけが所属テーブルの関連 |
 | 出力対象オブジェクト種別 | `outputObjects` | `OutputObjectType` | 出力対象の絞り込み条件のうち、テーブル以外のPostgreSQL固有オブジェクトを対象とするもの。トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（トリガーはテーブルに属するため、スキーマ直下のオブジェクトとは範囲が異なる） |
 | 出力対象 | － | `ExportTargets` | 出力対象の絞り込み条件を適用して取得した、出力するもの（条件ではなくデータ）。コード上は対象範囲全体を一括取得する軽量な情報の組を指す |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |

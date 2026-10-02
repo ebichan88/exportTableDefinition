@@ -22,9 +22,9 @@ public class ViewpointsTest {
     Viewpoint master = Viewpoint.of("master", "マスタ", "", List.of("customer", "product"));
     Viewpoints viewpoints = Viewpoints.of(List.of(order, master));
 
-    assertEquals(List.of(order, master), viewpoints.of(table("sales", "customer")));
-    assertEquals(List.of(order), viewpoints.of(table("sales", "orders")));
-    assertEquals(List.of(), viewpoints.of(table("sales", "stock")));
+    assertEquals(List.of(order, master), viewpoints.containing(table("sales", "customer")));
+    assertEquals(List.of(order), viewpoints.containing(table("sales", "orders")));
+    assertEquals(List.of(), viewpoints.containing(table("sales", "stock")));
   }
 
   @Test
@@ -32,7 +32,7 @@ public class ViewpointsTest {
   void testEmpty() {
     assertTrue(Viewpoints.empty().isEmpty());
     assertEquals(List.of(), Viewpoints.empty().asList());
-    assertEquals(List.of(), Viewpoints.empty().of(table("sales", "orders")));
+    assertEquals(List.of(), Viewpoints.empty().containing(table("sales", "orders")));
   }
 
   @Test

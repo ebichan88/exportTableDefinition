@@ -22,7 +22,7 @@ public class IndexesTest {
     var other = EntityFixtures.index("public", "customers");
     var indexes = Indexes.of(List.of(idx1, idx2, other));
 
-    assertEquals(List.of(idx1, idx2), indexes.of(newTable("public", "orders")));
+    assertEquals(List.of(idx1, idx2), indexes.belongingTo(newTable("public", "orders")));
   }
 
   @Test
@@ -30,7 +30,7 @@ public class IndexesTest {
   void testOfReturnsEmptyForUnknownTable() {
     var indexes = Indexes.of(List.of(EntityFixtures.index("public", "orders")));
 
-    assertEquals(List.of(), indexes.of(newTable("public", "unknown")));
+    assertEquals(List.of(), indexes.belongingTo(newTable("public", "unknown")));
   }
 
   @Test
@@ -40,7 +40,7 @@ public class IndexesTest {
     var salesIndex = EntityFixtures.index("sales", "orders");
     var indexes = Indexes.of(List.of(publicIndex, salesIndex));
 
-    assertEquals(List.of(publicIndex), indexes.of(newTable("public", "orders")));
-    assertEquals(List.of(salesIndex), indexes.of(newTable("sales", "orders")));
+    assertEquals(List.of(publicIndex), indexes.belongingTo(newTable("public", "orders")));
+    assertEquals(List.of(salesIndex), indexes.belongingTo(newTable("sales", "orders")));
   }
 }
