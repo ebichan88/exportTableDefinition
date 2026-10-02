@@ -7,8 +7,8 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
-import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RenderingPlan;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
@@ -54,14 +54,14 @@ public class ViewpointTemplates {
    * ER図セクション（Mermaid記法）<br>
    * 所属テーブル同士の関連のみを描画する。描画の内容・上限を超えた場合の扱いはスキーマ別ER図と同じ （{@link ErDiagramTemplates#erDiagram}）
    */
-  public static String erDiagram(DiagramRendering rendering, DiagramBoxes boxes) {
-    if (rendering.group().foreignKeys().isEmpty()) {
+  public static String erDiagram(RenderingPlan plan, DiagramBoxes boxes) {
+    if (plan.group().foreignKeys().isEmpty()) {
       return "## ER図"
           + LINE_SEPARATOR_DOUBLE
           + "所属テーブル同士の関連（外部キー・論理リレーション）はありません。"
           + LINE_SEPARATOR_DOUBLE;
     }
-    return ErDiagramTemplates.erDiagram(rendering, boxes);
+    return ErDiagramTemplates.erDiagram(plan, boxes);
   }
 
   /** 所属テーブルセクションの見出し */

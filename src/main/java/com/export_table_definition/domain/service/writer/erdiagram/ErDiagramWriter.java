@@ -2,13 +2,13 @@ package com.export_table_definition.domain.service.writer.erdiagram;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
-import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroups;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroups.PageComposition;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.relation.NodeLimit;
+import com.export_table_definition.domain.model.relation.RenderingPlan;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -162,16 +162,16 @@ public class ErDiagramWriter {
       DiagramBoxes boxes,
       NodeLimit limit,
       OutputRoot outputRoot) {
-    final DiagramRendering rendering = group.renderingUnder(limit);
+    final RenderingPlan plan = group.planRendering(limit);
     final PagedSection<?> detail =
-        switch (rendering) {
-          case DiagramRendering.Omit omit ->
+        switch (plan) {
+          case RenderingPlan.Omit omit ->
               new PagedSection<>(
                   ErDiagramTemplates.foreignKeyHeading(),
                   ErDiagramTemplates.foreignKeyTableHeader(),
                   omit.group().foreignKeys(),
                   ErDiagramTemplates::foreignKeyTableLine);
-          case DiagramRendering.Draw draw ->
+          case RenderingPlan.Draw draw ->
               new PagedSection<>(
                   ErDiagramTemplates.diagramTableHeading(),
                   ErDiagramTemplates.diagramTableHeader(),
@@ -184,7 +184,7 @@ public class ErDiagramWriter {
         List.of(
             layout.fileHeader(), // ヘッダー
             ErDiagramTemplates.baseInfo(outputRoot.baseInfo()), // 基本情報
-            ErDiagramTemplates.erDiagram(rendering, boxes), // ER図（描画結果または省略メッセージ）
+            ErDiagramTemplates.erDiagram(plan, boxes), // ER図（描画結果または省略メッセージ）
             detailSection, // 掲載テーブル または 外部キー一覧
             footer // フッター
             );

@@ -107,14 +107,14 @@ classDiagram
   class ForeignKeyGroup {
     nodes()
     exceeds(limit)
-    renderingUnder(limit)
+    planRendering(limit)
     mainTable()
   }
   class NodeLimit {
     <<record>>
     isExceededBy(nodeCount)
   }
-  class DiagramRendering {
+  class RenderingPlan {
     <<sealed>>
     Draw
     Omit
@@ -149,7 +149,7 @@ classDiagram
   ForeignKeyGroup "1" o-- "0..*" ForeignKeyEntity
   PageComposition "1" o-- "1..*" ForeignKeyGroup : Single／Grouped
   ForeignKeyGroup ..> NodeLimit : 上限との比較
-  DiagramRendering "1" --> "1" ForeignKeyGroup : 判断の対象
+  RenderingPlan "1" --> "1" ForeignKeyGroup : 計画の対象
   Omit ..> NodeLimit : 超過した上限
   DiagramBoxes ..> Tables : 論理テーブル名
   DiagramBoxes "1" o-- "0..*" ColumnEntity : 関連カラム
@@ -167,9 +167,9 @@ classDiagram
 - **ER図のまとまり（`ForeignKeyGroup`）**は1枚のER図に描く関連の集合。スキーマのノード数が上限（`erDiagramMaxNodes`）を
   超える場合は、関連で繋がったテーブルのまとまり（連結成分）を上限に収まる範囲でまとめ直し、複数ページに分割する
   （`ForeignKeyGroups.compose`が`PageComposition.Single`／`Grouped`を決める）
-- **描画するか省くか（`DiagramRendering`）**は、1つのまとまりを上限（`NodeLimit`。0以下は上限なし）と比べて
-  `Draw`（図を描く）／`Omit`（描画を省略し外部キー一覧にフォールバック）のどちらにするかの判断結果。
-  `ForeignKeyGroup.renderingUnder`が1回だけ決め、Writer・テンプレートはその結果に従う。規則の全体像はREADMEの「ER図の出し分け」を参照
+- **描画するか省くか（`RenderingPlan`）**は、1つのまとまりを上限（`NodeLimit`。0以下は上限なし）と比べて
+  `Draw`（図を描く）／`Omit`（描画を省略し外部キー一覧にフォールバック）のどちらにするかを表す描き方の計画。
+  `ForeignKeyGroup.planRendering`が1回だけ立て、Writer・テンプレートはその結果に従う。規則の全体像はREADMEの「ER図の出し分け」を参照
 - **テーブルの箱（`DiagramBoxes`）**は、ER図の箱に表示する論理テーブル名と**関連カラム**（関連の参照元・参照先として使われるカラム）を引く。
   カラムはチャンク単位で取得するが、ER図はチャンクより先に書き出すため、関連を持つテーブルのカラムを別途取得し、
   関連カラムだけを残す（`DiagramBoxes.Builder`）。1枚の図の箱には、その図に描く関連で使われるカラムだけを表示し、
@@ -356,7 +356,7 @@ classDiagram
 | 観点の所属テーブルと、所属テーブル同士の関連・観点外のテーブルとの関連の求め方 | `Viewpoint.resolve` / `ForeignKeys.withinTables` / `ForeignKeys.crossingTableSetBoundary` |
 | どのテーブルにも一致しない観点のパターンの検出（絞り込み時は検出を行わない） | `ExportTargetConsistency.findUnmatchedViewpointPatterns` / `TableNamePatterns.unmatchedInclusions` |
 | ER図のページ構成（上限に収まらなければ連結成分ごとにまとめ直す） | `ForeignKeyGroups.compose` |
-| ER図を描くか、描画を省略して外部キー一覧にフォールバックするか | `ForeignKeyGroup.renderingUnder` / `NodeLimit.isExceededBy` |
+| ER図を描くか、描画を省略して外部キー一覧にフォールバックするか | `ForeignKeyGroup.planRendering` / `NodeLimit.isExceededBy` |
 | ER図の箱に表示するカラム（図に描く関連で使われる関連カラムのみ。参照元のカラムは`FK`） | `DiagramBoxes.relationColumnsOf` / `DiagramColumn.of` |
 | 一覧ドキュメント（観点一覧を含む）は対象が1件以上あるときだけ出力し、関連ドキュメントとしてリンクする（テーブル一覧は常に出力） | `MarkdownExportSinkFactory.listDocuments` |
 | Markdownのファイル名・配置・相対リンク（関数・プロシージャのオーバーロードは`{名前}_{番号}`、観点ページは識別子から`viewpoint_{DB名}_{識別子}`） | `DocumentLocations` |

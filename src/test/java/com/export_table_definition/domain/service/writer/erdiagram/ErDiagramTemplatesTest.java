@@ -41,7 +41,7 @@ public class ErDiagramTemplatesTest {
   /** ER図セクションを、ノード算出込みで生成するテスト用ヘルパー */
   private String erDiagram(List<ForeignKeyEntity> foreignKeys, int maxNodes) {
     return ErDiagramTemplates.erDiagram(
-        ForeignKeyGroup.of(foreignKeys).renderingUnder(NodeLimit.of(maxNodes)),
+        ForeignKeyGroup.of(foreignKeys).planRendering(NodeLimit.of(maxNodes)),
         DiagramBoxesFixtures.none());
   }
 
@@ -162,7 +162,7 @@ public class ErDiagramTemplatesTest {
 
         """,
         ErDiagramTemplates.erDiagram(
-            ForeignKeyGroup.of(List.of(fk)).renderingUnder(NodeLimit.of(80)), boxes));
+            ForeignKeyGroup.of(List.of(fk)).planRendering(NodeLimit.of(80)), boxes));
   }
 
   @Test
