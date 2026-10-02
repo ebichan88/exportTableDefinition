@@ -161,9 +161,14 @@ loadScripts(document, 'script');</script>
 <div class="block">指定されたテーブルが持つ、DBに実在する外部キー制約のリストを取得するメソッド<br>
  テーブル定義書の「外部キー情報」セクションには制約として実在するものだけを掲載する</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#within(java.util.Set)" class="member-name-link">within</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&gt;&nbsp;tableKeys)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a><wbr>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#stream()" class="member-name-link">stream</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">すべての関連のストリームを取得するメソッド（参照元のテーブルキーごとにまとまった順）</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#within(java.util.Set)" class="member-name-link">within</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&gt;&nbsp;tableKeys)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">参照元・参照先の両方が指定したテーブルの集合に含まれる関連のリストを取得するメソッド<br>
  観点のように、テーブルの集合の中だけで閉じた関連（1枚のER図に描く関連）を求めるために用いる</div>
 </div>
@@ -192,6 +197,13 @@ loadScripts(document, 'script');</script>
 <h3>of</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;list)</span></div>
 <div class="block">物理外部キー・論理リレーションのリストから、参照元・被参照側の両方のテーブルキーで引けるコレクションを生成する</div>
+</section>
+</li>
+<li>
+<section class="detail" id="stream()">
+<h3>stream</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a>&lt;<a href="ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;</span>&nbsp;<span class="element-name">stream</span>()</div>
+<div class="block">すべての関連のストリームを取得するメソッド（参照元のテーブルキーごとにまとまった順）</div>
 </section>
 </li>
 <li>

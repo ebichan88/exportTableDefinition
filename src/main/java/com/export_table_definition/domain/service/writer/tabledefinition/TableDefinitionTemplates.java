@@ -6,6 +6,8 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
+import com.export_table_definition.domain.model.relation.DiagramColumn;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 /** テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス */
 public class TableDefinitionTemplates {
@@ -266,8 +269,8 @@ public class TableDefinitionTemplates {
 
   /**
    * ER図セクション（Mermaid記法）<br>
-   * 自テーブルはカラム・PK情報付きの箱として、関連テーブル（参照元・参照先）は 属性なしの箱として描画する。関連テーブルの属性情報を必要としないため、
-   * チャンク単位の分割取得（他チャンク・他スキーマのテーブル詳細を保持しないこと）の影響を受けない
+   * 自テーブルは全カラムを、関連テーブル（参照元・参照先）は描画する関連をつなぐカラムだけを箱に表示する。 関連テーブルのカラムはチャンク単位の分割取得の対象外のため、{@code
+   * boxes}が別途取得した関連カラムを用いる
    *
    * @param outgoingFks 自テーブルが参照している外部キー（自テーブル → 参照先）のリスト
    * @param incomingFks 自テーブルを参照している外部キー（参照元 → 自テーブル）のリスト
@@ -276,7 +279,8 @@ public class TableDefinitionTemplates {
       TableEntity table,
       List<ColumnEntity> columns,
       List<ForeignKeyEntity> outgoingFks,
-      List<ForeignKeyEntity> incomingFks) {
+      List<ForeignKeyEntity> incomingFks,
+      DiagramBoxes boxes) {
     StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
     if (outgoingFks.isEmpty() && incomingFks.isEmpty()) {
       return sb.append("関連するテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
@@ -287,7 +291,9 @@ public class TableDefinitionTemplates {
     nodeKeys.add(selfKey);
     outgoingFks.forEach(fk -> nodeKeys.add(fk.referenceTableKey()));
     incomingFks.forEach(fk -> nodeKeys.add(fk.tableKey()));
-    final Map<TableKey, String> labels = MermaidSupport.assignLabels(nodeKeys);
+    final List<ForeignKeyEntity> drawnRelations =
+        Stream.concat(outgoingFks.stream(), incomingFks.stream()).toList();
+    final Map<TableKey, String> labels = MermaidSupport.assignLabels(nodeKeys, boxes);
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
     nodeKeys.forEach(
         key -> sb.append(MermaidSupport.aliasLine(MermaidSupport.mermaidId(key), labels.get(key))));
@@ -300,17 +306,19 @@ public class TableDefinitionTemplates {
         fk ->
             sb.append(
                 MermaidSupport.relationLine(selfId, fk, MermaidSupport.mermaidId(fk.tableKey()))));
-    sb.append("    ").append(selfId).append(" {").append(LINE_SEPARATOR);
-    columns.forEach(
-        c ->
-            sb.append("        ")
-                .append(MermaidSupport.sanitizeType(c.columnType()))
-                .append(' ')
-                .append(MermaidSupport.sanitizeIdentifier(c.physicalColumnName()))
-                .append(c.primaryKey() ? " PK" : "")
-                .append(LINE_SEPARATOR));
-    sb.append("    }").append(LINE_SEPARATOR).append("```").append(LINE_SEPARATOR_DOUBLE);
-    return sb.toString();
+    sb.append(
+        MermaidSupport.attributeBlock(selfId, DiagramColumn.of(selfKey, columns, drawnRelations)));
+    final Map<TableKey, List<DiagramColumn>> relationColumns =
+        boxes.relationColumnsOf(drawnRelations);
+    nodeKeys.stream()
+        .filter(key -> !key.equals(selfKey))
+        .forEach(
+            key ->
+                sb.append(
+                    MermaidSupport.attributeBlock(
+                        MermaidSupport.mermaidId(key),
+                        relationColumns.getOrDefault(key, List.of()))));
+    return sb.append("```").append(LINE_SEPARATOR_DOUBLE).toString();
   }
 
   /**

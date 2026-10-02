@@ -8,6 +8,7 @@ import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.database.DatabaseEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
@@ -143,6 +144,10 @@ public class ExportTableDefinitionUsecaseImplTest {
     final List<List<String>> tableDetailCallArgs = new ArrayList<>();
 
     final List<List<String>> functionDefCallArgs = new ArrayList<>();
+
+    /** ER図の関連カラムの取得1回ごとの対象テーブル */
+    final List<List<TableKey>> columnListCallArgs = new ArrayList<>();
+
     int foreignKeyListCalls = 0;
 
     /** テーブル一覧の取得時に投げる例外（DBからの取得失敗の再現用。nullの場合は投げない） */
@@ -174,6 +179,12 @@ public class ExportTableDefinitionUsecaseImplTest {
           columns.stream().filter(c -> tableList.contains(c.tableName())).toList(),
           indexes.stream().filter(i -> tableList.contains(i.tableName())).toList(),
           constraints.stream().filter(c -> tableList.contains(c.tableName())).toList());
+    }
+
+    @Override
+    public List<ColumnEntity> selectColumnList(List<TableKey> tableKeys) {
+      columnListCallArgs.add(tableKeys);
+      return columns.stream().filter(c -> tableKeys.contains(c.tableKey())).toList();
     }
 
     @Override
@@ -672,6 +683,53 @@ public class ExportTableDefinitionUsecaseImplTest {
   }
 
   @Test
+  @DisplayName("ER図の箱には論理テーブル名と、関連をつなぐカラム（関連カラム）だけが表示される")
+  void testErDiagramShowsLogicalNamesAndRelationColumns() {
+    setUp();
+    repository.tables.add(new TableEntity("testdb", "public", "部署", "dept", TableType.TABLE, ""));
+    repository.tables.add(new TableEntity("testdb", "public", "社員", "emp", TableType.TABLE, ""));
+    repository.columns.add(
+        new ColumnEntity("public", "dept", "部署ID", "dept_id", "integer", "", true, true, ""));
+    repository.columns.add(
+        new ColumnEntity("public", "dept", "部署名", "dept_name", "text", "", false, true, ""));
+    repository.columns.add(
+        new ColumnEntity("public", "emp", "社員ID", "emp_id", "integer", "", true, true, ""));
+    repository.columns.add(
+        new ColumnEntity("public", "emp", "所属部署ID", "dept_id", "integer", "", false, true, ""));
+    repository.foreignKeys.add(
+        new ForeignKeyEntity(
+            "public",
+            "emp",
+            "fk_emp_dept",
+            List.of("dept_id"),
+            "public",
+            "dept",
+            List.of("dept_id"),
+            Cardinality.ONE_TO_MANY,
+            RelationType.PHYSICAL));
+
+    usecase.exportTableDefinition(
+        new ExportTableDefinitionRequest(
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 1, 80, false));
+
+    final String erContent = contentOf(dbFile(DEFAULT_OUT, "erDiagram_testdb_public.md"));
+    assertTrue(erContent.contains("public_dept[\"dept（部署）\"]"));
+    assertTrue(erContent.contains("integer dept_id PK \"部署ID\""));
+    assertTrue(erContent.contains("integer dept_id FK \"所属部署ID\""));
+    assertFalse(erContent.contains("dept_name"), "関連をつながないカラムは表示しない");
+    assertFalse(erContent.contains("emp_id"), "関連をつながないカラムは表示しない");
+    // 自テーブル（emp）は全カラム、関連テーブル（dept）は関連カラムだけを表示する
+    final String empContent = contentOf(tableDefFile(DEFAULT_OUT, "public", "emp"));
+    assertTrue(empContent.contains("integer emp_id PK \"社員ID\""));
+    assertTrue(empContent.contains("integer dept_id PK \"部署ID\""));
+    assertFalse(empContent.contains("text dept_name"));
+    // 関連カラムはchunkSize件ずつ取得する
+    assertEquals(
+        List.of(List.of(TableKey.of("public", "emp")), List.of(TableKey.of("public", "dept"))),
+        repository.columnListCallArgs);
+  }
+
+  @Test
   @DisplayName("targetTableListの絞り込みで除外されたテーブルへの物理外部キーは、スキーマ別ER図から除外される")
   void testForeignKeyToExcludedTableIsRemovedFromErDiagram() {
     setUp();
@@ -1080,6 +1138,7 @@ public class ExportTableDefinitionUsecaseImplTest {
     final DiffResult result = checkSnapshotDiff();
 
     assertTrue(fileRepository.writtenPaths.stream().noneMatch(p -> p.toString().endsWith(".md")));
+    assertTrue(repository.columnListCallArgs.isEmpty(), "ER図の関連カラムは取得しない");
     // committed側にスナップショットが存在しないため、生成した全オブジェクトがonlyInGeneratedとなる
     assertEquals(
         List.of(

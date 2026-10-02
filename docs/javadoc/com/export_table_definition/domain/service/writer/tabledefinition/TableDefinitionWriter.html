@@ -122,7 +122,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)" class="member-name-link">writeTableDefinition</a><wbr>(<a href="../../../model/target/TableDefinitionContent.html" title="class in com.export_table_definition.domain.model.target">TableDefinitionContent</a>&nbsp;content,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,com.export_table_definition.domain.model.relation.DiagramBoxes,java.nio.file.Path)" class="member-name-link">writeTableDefinition</a><wbr>(<a href="../../../model/target/TableDefinitionContent.html" title="class in com.export_table_definition.domain.model.target">TableDefinitionContent</a>&nbsp;content,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputDirectoryPath)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">テーブル定義の書き込み処理を行うメソッド</div>
@@ -185,14 +186,16 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)">
+<section class="detail" id="writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,com.export_table_definition.domain.model.relation.DiagramBoxes,java.nio.file.Path)">
 <h3>writeTableDefinition</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">writeTableDefinition</span><wbr><span class="parameters">(<a href="../../../model/target/TableDefinitionContent.html" title="class in com.export_table_definition.domain.model.target">TableDefinitionContent</a>&nbsp;content,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputDirectoryPath)</span></div>
 <div class="block">テーブル定義の書き込み処理を行うメソッド</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>content</code> - テーブル定義出力に必要な情報をまとめたレコード</dd>
+<dd><code>boxes</code> - ER図のテーブルの箱に表示する内容（関連テーブルの論理テーブル名・関連カラム）</dd>
 </dl>
 </section>
 </li>

@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL|testdb|2026/10/02|
 
 ## テーブル説明
 
@@ -61,9 +61,13 @@ erDiagram
     sample_warehouse_zone ||--o{ sample_shipment : "shipment_warehouse_code_zone_code_fkey"
     sample_shipment {
         integer shipment_id PK
-        character_varying warehouse_code
-        character_varying zone_code
+        character_varying warehouse_code FK
+        character_varying zone_code FK
         timestamp_without_time_zone shipped_at
+    }
+    sample_warehouse_zone {
+        character_varying warehouse_code PK
+        character_varying zone_code PK
     }
 ```
 

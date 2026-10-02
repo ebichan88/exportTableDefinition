@@ -55,6 +55,7 @@
 | | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalOf`/`logicalOf`で由来ごとに、`incomingOf`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`within`/`crossing`でテーブルの集合の内側・境界の関連を抽出する |
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の関連のまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し。`compose()`がページ構成`PageComposition`を決める） |
 | | `NodeLimit`, `DiagramRendering` | ER図1枚に描画するノード数の上限（0以下は上限なしへ正規化）と、上限との比較で決まる「描く（`Draw`）／描画を省略して一覧にフォールバック（`Omit`）」の判断結果 |
+| | `DiagramBoxes`, `DiagramColumn` | ER図のテーブルの箱に表示する内容。論理テーブル名と、取得したカラムから関連カラム（関連の参照元・参照先として使われるカラム）だけを集めて保持し（`Builder`）、図に描く関連で使われるカラムを`FK`の有無とともに返す |
 | | `Cardinality`, `RelationType` | 多重度（1対1／1対多等。判定と、論理リレーションの既定値を持つ）、関連の由来（物理／論理）のenum |
 | `domain.model.schemaobject` | `FunctionEntity`, `SequenceEntity`, `TypeEntity` | テーブルに属さないスキーマ直下のオブジェクト（関数・プロシージャ／シーケンス／ユーザー定義型）のrecord。`FunctionEntity`は同名関数（オーバーロード）内の番号を持つ |
 | | `Functions`, `Sequences`, `Types` | 上記エンティティのファーストクラスコレクション（取得順のリストを保持する。テーブルキーでは引かない） |
@@ -79,7 +80,7 @@
 
 | クラス | 役割 |
 |---|---|
-| `TableDefinitionRepository` | データベースの情報（`selectDatabase`）・テーブル一覧・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる）。カラム・インデックス・制約は、指定したテーブル分をテーブルごとの`TableDetail`に組み立てて返す（`selectTableDetails`） |
+| `TableDefinitionRepository` | データベースの情報（`selectDatabase`）・テーブル一覧・外部キー・トリガー・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる）。カラム・インデックス・制約は、指定したテーブル分をテーブルごとの`TableDetail`に組み立てて返す（`selectTableDetails`）。ER図の関連カラム用に、指定したテーブルのカラムだけも取得できる（`selectColumnList`） |
 | `SidecarRepository` | サイドカーYAML（手動付帯情報・論理リレーション・観点）読み込みIF |
 | `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`、パスの状態の問い合わせ用の`exists`/`isDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 

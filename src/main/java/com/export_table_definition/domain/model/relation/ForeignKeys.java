@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * 外部キー情報の集合を扱うクラス<br>
@@ -36,6 +37,11 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
     final Map<TableKey, List<ForeignKeyEntity>> incomingByKey =
         index(incomingCandidates, ForeignKeyEntity::referenceTableKey);
     return new ForeignKeys(byKey, incomingByKey);
+  }
+
+  /** すべての関連のストリームを取得するメソッド（参照元のテーブルキーごとにまとまった順） */
+  public Stream<ForeignKeyEntity> stream() {
+    return byKey.values().stream().flatMap(List::stream);
   }
 
   /**
@@ -100,10 +106,7 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    * @return 参照元と参照先のスキーマが異なる外部キーのリスト
    */
   public List<ForeignKeyEntity> crossSchema() {
-    return byKey.values().stream()
-        .flatMap(List::stream)
-        .filter(fk -> !fk.schemaName().equals(fk.referenceSchemaName()))
-        .toList();
+    return stream().filter(fk -> !fk.schemaName().equals(fk.referenceSchemaName())).toList();
   }
 
   /**
@@ -113,8 +116,7 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    * @return 両端が集合に含まれる関連のリスト
    */
   public List<ForeignKeyEntity> within(Set<TableKey> tableKeys) {
-    return byKey.values().stream()
-        .flatMap(List::stream)
+    return stream()
         .filter(
             fk -> tableKeys.contains(fk.tableKey()) && tableKeys.contains(fk.referenceTableKey()))
         .toList();
@@ -127,8 +129,7 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    * @return 片端だけが集合に含まれる関連のリスト
    */
   public List<ForeignKeyEntity> crossing(Set<TableKey> tableKeys) {
-    return byKey.values().stream()
-        .flatMap(List::stream)
+    return stream()
         .filter(
             fk -> tableKeys.contains(fk.tableKey()) != tableKeys.contains(fk.referenceTableKey()))
         .toList();

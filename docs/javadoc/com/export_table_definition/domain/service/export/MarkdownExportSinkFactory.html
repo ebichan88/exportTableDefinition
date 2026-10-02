@@ -124,8 +124,9 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export">ExportSink</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">create</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputBaseDir,
- <a href="../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;erDiagramLimit)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">create</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputBaseDir,
+ <a href="../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;erDiagramLimit,
+ <a href="../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;diagramBoxes)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">指定したディレクトリへMarkdownのドキュメントを書き出す<a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するメソッド</div>
 </div>
@@ -166,15 +167,17 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit)">
+<section class="detail" id="create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit,com.export_table_definition.domain.model.relation.DiagramBoxes)">
 <h3>create</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export">ExportSink</a></span>&nbsp;<span class="element-name">create</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;outputBaseDir,
- <a href="../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;erDiagramLimit)</span></div>
+ <a href="../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;erDiagramLimit,
+ <a href="../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;diagramBoxes)</span></div>
 <div class="block">指定したディレクトリへMarkdownのドキュメントを書き出す<a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するメソッド</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>outputBaseDir</code> - 出力先のベースディレクトリパス</dd>
 <dd><code>erDiagramLimit</code> - スキーマ別ER図1枚に描画するノード数の上限</dd>
+<dd><code>diagramBoxes</code> - ER図のテーブルの箱に表示する内容</dd>
 <dt>Returns:</dt>
 <dd>Markdownのドキュメントを書き出す<a href="ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a></dd>
 </dl>

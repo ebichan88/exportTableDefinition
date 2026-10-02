@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL|testdb|2026/10/02|
 
 ## テーブル説明
 
@@ -76,7 +76,7 @@
 
 ```mermaid
 erDiagram
-    sample_employee["employee"]
+    sample_employee["employee（従業員）"]
     sample_department["department"]
     sample_parking_spot["parking_spot"]
     sample_employee_profile["employee_profile"]
@@ -89,17 +89,32 @@ erDiagram
     sample_employee ||--o{ sample_project_assignment : "project_assignment_employee_id_fkey"
     sample_employee |o..o{ sample_audit_log : "record_id"
     sample_employee {
-        integer employee_id PK
-        character_varying employee_code
-        character_varying employee_name
-        integer department_id
-        integer manager_id
-        integer parking_spot_id
-        sample_employee_status_enum status
-        numeric salary
-        jsonb profile
-        date hired_date
-        timestamp_without_time_zone updated_at
+        integer employee_id PK "従業員ID"
+        character_varying employee_code "従業員コード"
+        character_varying employee_name "従業員名"
+        integer department_id FK "所属部署ID"
+        integer manager_id FK "上長の従業員ID"
+        integer parking_spot_id FK "駐車場ID"
+        sample_employee_status_enum status "在籍状況"
+        numeric salary "給与"
+        jsonb profile "プロフィール（JSON）"
+        date hired_date "入社日"
+        timestamp_without_time_zone updated_at "更新日時"
+    }
+    sample_department {
+        integer department_id PK
+    }
+    sample_parking_spot {
+        integer parking_spot_id PK
+    }
+    sample_employee_profile {
+        integer employee_id PK, FK
+    }
+    sample_project_assignment {
+        integer employee_id PK, FK
+    }
+    sample_audit_log {
+        integer record_id FK
     }
 ```
 

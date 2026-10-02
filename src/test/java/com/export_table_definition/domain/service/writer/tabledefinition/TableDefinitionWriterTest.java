@@ -17,6 +17,7 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
+import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -196,7 +197,7 @@ public class TableDefinitionWriterTest {
             annotation,
             List.of());
 
-    writer.writeTableDefinition(content, OUT);
+    writer.writeTableDefinition(content, DiagramBoxesFixtures.none(), OUT);
 
     Path expectedFile =
         OUT.resolve("testdb").resolve("public").resolve("table").resolve("orders.md");

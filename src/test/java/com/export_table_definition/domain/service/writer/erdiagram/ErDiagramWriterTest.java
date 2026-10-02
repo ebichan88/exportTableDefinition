@@ -13,6 +13,7 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
+import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -133,7 +134,12 @@ public class ErDiagramWriterTest {
     final ForeignKeys foreignKeys =
         ForeignKeys.of(List.of(fk("a", "fk_a", "hub"), fk("b", "fk_b", "hub")));
 
-    writer.writeErDiagram(Tables.of(tables), foreignKeys, outputRoot(), NodeLimit.of(80));
+    writer.writeErDiagram(
+        Tables.of(tables),
+        foreignKeys,
+        DiagramBoxesFixtures.none(),
+        outputRoot(),
+        NodeLimit.of(80));
 
     assertTrue(fileNames().contains("erDiagram_testdb_public.md"));
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")), "グループファイルは生成されない");
@@ -155,7 +161,11 @@ public class ErDiagramWriterTest {
             });
 
     writer.writeErDiagram(
-        Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), NodeLimit.of(4));
+        Tables.of(tables),
+        ForeignKeys.of(foreignKeys),
+        DiagramBoxesFixtures.none(),
+        outputRoot(),
+        NodeLimit.of(4));
 
     // 1グループあたり2まとまり(4ノード)まで詰め込まれるため、5まとまりは3グループになる
     assertTrue(fileNames().contains("erDiagram_testdb_public_group1.md"));
@@ -186,7 +196,11 @@ public class ErDiagramWriterTest {
             });
 
     writer.writeErDiagram(
-        Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), NodeLimit.of(4));
+        Tables.of(tables),
+        ForeignKeys.of(foreignKeys),
+        DiagramBoxesFixtures.none(),
+        outputRoot(),
+        NodeLimit.of(4));
 
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")), "グループファイルは生成されない");
     final String schemaPage = contentOf("erDiagram_testdb_public.md");
@@ -213,7 +227,11 @@ public class ErDiagramWriterTest {
     foreignKeys.add(fk("x", "fk_xy", "y"));
 
     writer.writeErDiagram(
-        Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), NodeLimit.of(4));
+        Tables.of(tables),
+        ForeignKeys.of(foreignKeys),
+        DiagramBoxesFixtures.none(),
+        outputRoot(),
+        NodeLimit.of(4));
 
     // グループ1は巨大なまとまり（上限超のためフォールバック）
     final String group1 = contentOf("erDiagram_testdb_public_group1.md");
@@ -240,7 +258,11 @@ public class ErDiagramWriterTest {
             });
 
     writer.writeErDiagram(
-        Tables.of(tables), ForeignKeys.of(foreignKeys), outputRoot(), NodeLimit.of(0));
+        Tables.of(tables),
+        ForeignKeys.of(foreignKeys),
+        DiagramBoxesFixtures.none(),
+        outputRoot(),
+        NodeLimit.of(0));
 
     assertTrue(fileNames().stream().noneMatch(name -> name.contains("_group")));
     assertTrue(contentOf("erDiagram_testdb_public.md").contains("```mermaid"));

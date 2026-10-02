@@ -10,6 +10,7 @@ import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.infrastructure.db.repository.dto.ColumnDto;
@@ -25,6 +26,7 @@ import com.export_table_definition.infrastructure.db.repository.dto.TypeDto;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.apache.ibatis.exceptions.PersistenceException;
@@ -78,6 +80,25 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
         selectTableDefinition(
             schemaList, tableList, "selectAllConstraintInfo", ConstraintDto::toEntity);
     return TableDetail.assembleAll(tables, columns, indexes, constraints);
+  }
+
+  /**
+   * {@inheritDoc}<br>
+   * スキーマ名・テーブル名をそれぞれIN句で絞り込むため、複数スキーマのテーブルを渡すと 他スキーマの同名テーブルも一致する。指定したテーブルのものだけを残す
+   */
+  @Override
+  public List<ColumnEntity> selectColumnList(List<TableKey> tables) {
+    // 空のリストを渡すとSQLの絞り込みが外れ、全テーブルのカラムを取得してしまう
+    if (tables.isEmpty()) {
+      return List.of();
+    }
+    final List<String> schemaList = tables.stream().map(TableKey::schema).distinct().toList();
+    final List<String> tableList = tables.stream().map(TableKey::table).distinct().toList();
+    final Set<TableKey> keys = Set.copyOf(tables);
+    return selectTableDefinition(schemaList, tableList, "selectAllColumnInfo", ColumnDto::toEntity)
+        .stream()
+        .filter(column -> keys.contains(column.tableKey()))
+        .toList();
   }
 
   /** {@inheritDoc} */

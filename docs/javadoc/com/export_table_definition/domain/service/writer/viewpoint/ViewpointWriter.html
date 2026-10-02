@@ -123,9 +123,10 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeViewpoints</a><wbr>(<a href="../../../model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.model.relation.DiagramBoxes,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeViewpoints</a><wbr>(<a href="../../../model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints,
  <a href="../../../model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  <a href="../../../model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes,
  <a href="../../path/OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;outputRoot,
  <a href="../../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -167,11 +168,12 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)">
+<section class="detail" id="writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.model.relation.DiagramBoxes,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)">
 <h3>writeViewpoints</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">writeViewpoints</span><wbr><span class="parameters">(<a href="../../../model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints,
  <a href="../../../model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  <a href="../../../model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes,
  <a href="../../path/OutputRoot.html" title="class in com.export_table_definition.domain.service.path">OutputRoot</a>&nbsp;outputRoot,
  <a href="../../../model/relation/NodeLimit.html" title="class in com.export_table_definition.domain.model.relation">NodeLimit</a>&nbsp;limit)</span></div>
 <div class="block">観点ページと観点一覧の書き込み処理を行うメソッド<br>
@@ -180,6 +182,7 @@ loadScripts(document, 'script');</script>
 <dt>Parameters:</dt>
 <dd><code>viewpoints</code> - サイドカーYAMLで宣言された観点</dd>
 <dd><code>foreignKeys</code> - 出力対象のテーブル同士の関連（外部キー・論理リレーション）</dd>
+<dd><code>boxes</code> - ER図のテーブルの箱に表示する内容</dd>
 <dd><code>outputRoot</code> - 出力先ベースディレクトリとデータベース基本情報</dd>
 <dd><code>limit</code> - 1つの図に描画するノード数の上限</dd>
 </dl>

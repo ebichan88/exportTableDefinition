@@ -2,6 +2,7 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.ExportTableDefinitionRequest;
 import com.export_table_definition.application.ExportTableDefinitionUsecase;
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
@@ -47,6 +48,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final ExportTargets targets =
         schemaExporter.fetchTargets(request.targetSelection(), request.sidecarPath());
+    final DiagramBoxes diagramBoxes =
+        schemaExporter.fetchDiagramBoxes(targets, request.chunkSize());
     if (request.rmDist()) {
       // 削除は一括取得（サイドカーの読み込みを含む）に成功してから行う。
       // 取得に失敗した場合に、既存の出力だけが削除されて何も残らない状態にしないため
@@ -55,7 +58,8 @@ public class ExportTableDefinitionUsecaseImpl implements ExportTableDefinitionUs
     schemaExporter.export(
         targets,
         List.of(
-            markdownSinkFactory.create(outputBaseDir, NodeLimit.of(request.erDiagramMaxNodes())),
+            markdownSinkFactory.create(
+                outputBaseDir, NodeLimit.of(request.erDiagramMaxNodes()), diagramBoxes),
             snapshotSinkFactory.create(outputBaseDir)),
         request.chunkSize());
   }

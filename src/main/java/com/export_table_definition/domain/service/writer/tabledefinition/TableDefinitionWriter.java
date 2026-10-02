@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.service.writer.tabledefinition;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
@@ -70,8 +71,10 @@ public class TableDefinitionWriter {
    * テーブル定義の書き込み処理を行うメソッド
    *
    * @param content テーブル定義出力に必要な情報をまとめたレコード
+   * @param boxes ER図のテーブルの箱に表示する内容（関連テーブルの論理テーブル名・関連カラム）
    */
-  public void writeTableDefinition(TableDefinitionContent content, Path outputDirectoryPath) {
+  public void writeTableDefinition(
+      TableDefinitionContent content, DiagramBoxes boxes, Path outputDirectoryPath) {
     final OutputRoot outputRoot = new OutputRoot(outputDirectoryPath, content.baseInfo());
     final Path directoryPath =
         outputPathResolver.resolveTableDefinitionDirectory(outputRoot, content.table());
@@ -95,7 +98,8 @@ public class TableDefinitionWriter {
                 content.table(),
                 content.columns(),
                 content.outgoingRelations(),
-                content.incomingRelations()), // ER図
+                content.incomingRelations(),
+                boxes), // ER図
             TableDefinitionTemplates.footer(content.baseInfo()) // フッター
             );
     fileRepository.createDirectory(directoryPath);

@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.service.writer.viewpoint;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.relation.NodeLimit;
@@ -48,6 +49,7 @@ public class ViewpointWriter {
    *
    * @param viewpoints サイドカーYAMLで宣言された観点
    * @param foreignKeys 出力対象のテーブル同士の関連（外部キー・論理リレーション）
+   * @param boxes ER図のテーブルの箱に表示する内容
    * @param outputRoot 出力先ベースディレクトリとデータベース基本情報
    * @param limit 1つの図に描画するノード数の上限
    */
@@ -55,12 +57,13 @@ public class ViewpointWriter {
       Viewpoints viewpoints,
       Tables tables,
       ForeignKeys foreignKeys,
+      DiagramBoxes boxes,
       OutputRoot outputRoot,
       NodeLimit limit) {
     // 観点ページと観点一覧（テーブル数）の双方が同じ出力内容を用いるため、観点ごとに1回だけ求める
     final List<ViewpointContent> contents =
         viewpoints.stream().map(viewpoint -> viewpoint.resolve(tables, foreignKeys)).toList();
-    contents.forEach(content -> writeViewpointPage(content, outputRoot, limit));
+    contents.forEach(content -> writeViewpointPage(content, boxes, outputRoot, limit));
     writeViewpointIndex(contents, outputRoot);
   }
 
@@ -74,7 +77,7 @@ public class ViewpointWriter {
    * @param limit 1つの図に描画するノード数の上限
    */
   private void writeViewpointPage(
-      ViewpointContent content, OutputRoot outputRoot, NodeLimit limit) {
+      ViewpointContent content, DiagramBoxes boxes, OutputRoot outputRoot, NodeLimit limit) {
     final PageLayout layout =
         new PageLayout(
             ViewpointTemplates.fileHeader(content.viewpoint(), outputRoot.baseInfo()),
@@ -96,7 +99,7 @@ public class ViewpointWriter {
             layout.fileHeader(), // ヘッダー
             ViewpointTemplates.baseInfo(outputRoot.baseInfo()), // 基本情報
             ViewpointTemplates.description(content.viewpoint()), // 説明
-            ViewpointTemplates.erDiagram(rendering), // ER図（描画結果または省略メッセージ）
+            ViewpointTemplates.erDiagram(rendering, boxes), // ER図（描画結果または省略メッセージ）
             rendering instanceof DiagramRendering.Omit
                 ? ViewpointTemplates.relations(rendering.group().foreignKeys())
                 : "", // ER図の代替の関連一覧

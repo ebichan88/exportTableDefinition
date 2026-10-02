@@ -6,6 +6,8 @@ import static com.export_table_definition.domain.service.writer.template.Markdow
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
+import com.export_table_definition.domain.model.relation.DiagramColumn;
 import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
@@ -27,8 +29,8 @@ import java.util.Set;
 
 /**
  * スキーマ単位のER図（全体ER図）書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
- * テーブル単位のER図（{@link TableDefinitionTemplates#erDiagram}）とは異なり、
- * すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
+ * テーブル単位のER図（{@link TableDefinitionTemplates#erDiagram}）とは異なり、 すべてのテーブルの箱に関連をつなぐカラムだけを表示する。
+ * カラムは関連カラム（{@link DiagramBoxes}）を用いるため、テーブル詳細のチャンク分割取得の影響を受けない<br>
  * 表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（{@link
  * TableDefinitionListTemplates}）と同じ方針である
  */
@@ -92,10 +94,11 @@ public class ErDiagramTemplates {
    * ER図セクション（Mermaid記法）<br>
    * 外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧{@code
    * tableList_{DB名}.md}側に掲載されている）。<br>
+   * テーブルの箱には、図に描画する関連をつなぐカラムだけを表示する。<br>
    * 描画を省略する判断結果（{@link DiagramRendering.Omit}）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
    * （代替として掲載する外部キー一覧は呼び出し側が組み立てる）
    */
-  public static String erDiagram(DiagramRendering rendering) {
+  public static String erDiagram(DiagramRendering rendering, DiagramBoxes boxes) {
     final ForeignKeyGroup group = rendering.group();
     StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
     if (group.foreignKeys().isEmpty()) {
@@ -112,7 +115,7 @@ public class ErDiagramTemplates {
           .toString();
     }
     final Map<TableKey, String> ids = assignNodeIds(group.nodes());
-    final Map<TableKey, String> labels = MermaidSupport.assignLabels(group.nodes());
+    final Map<TableKey, String> labels = MermaidSupport.assignLabels(group.nodes(), boxes);
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
     group
         .nodes()
@@ -125,6 +128,14 @@ public class ErDiagramTemplates {
                 sb.append(
                     MermaidSupport.relationLine(
                         ids.get(fk.referenceTableKey()), fk, ids.get(fk.tableKey()))));
+    final Map<TableKey, List<DiagramColumn>> columns = boxes.relationColumnsOf(group.foreignKeys());
+    group
+        .nodes()
+        .forEach(
+            key ->
+                sb.append(
+                    MermaidSupport.attributeBlock(
+                        ids.get(key), columns.getOrDefault(key, List.of()))));
     return sb.append("```").append(LINE_SEPARATOR_DOUBLE).toString();
   }
 

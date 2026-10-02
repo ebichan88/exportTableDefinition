@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL|testdb|2026/10/02|
 
 ## テーブル説明
 
@@ -61,6 +61,10 @@ erDiagram
         character_varying warehouse_code PK
         character_varying zone_code PK
         character_varying zone_name
+    }
+    sample_shipment {
+        character_varying warehouse_code FK
+        character_varying zone_code FK
     }
 ```
 

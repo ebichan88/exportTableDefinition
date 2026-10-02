@@ -16,6 +16,7 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
+import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -115,6 +116,7 @@ public class ViewpointWriterTest {
         Viewpoints.of(viewpoints),
         Tables.of(List.of(customer, orders, product)),
         ForeignKeys.of(List.of(ordersToCustomer, ordersToProduct)),
+        DiagramBoxesFixtures.none(),
         outputRoot(),
         NodeLimit.of(maxNodes));
   }
