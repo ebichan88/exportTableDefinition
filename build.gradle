@@ -156,7 +156,6 @@ javadoc {
     // 壊れたJavadoc（タグの誤り・参照先の無いリンク等）は検知するが、Javadocを書かないメンバーは
     // AGENTS.mdの「コメントスタイル」で許しているため、記述漏れ（missing）は検査しない
     options.addBooleanOption('Xdoclint:all,-missing', true)
-    destinationDir = file("docs/javadoc")
 }
 
 build.dependsOn(copyResources)
