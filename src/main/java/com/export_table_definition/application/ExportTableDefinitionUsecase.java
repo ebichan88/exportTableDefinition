@@ -15,12 +15,13 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * テーブル定義出力（通常実行）のユースケースクラス<br>
- * DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力先へ書き出す。 取得・書き出しの段取りは{@link SchemaExporter}に委ねる
+ * DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力先へ書き出す。 取得・書き出しの段取りは{@link
+ * SchemaExportPipeline}に委ねる
  */
 public class ExportTableDefinitionUsecase {
 
   private static final Logger logger = LogManager.getLogger(ExportTableDefinitionUsecase.class);
-  private final SchemaExporter schemaExporter;
+  private final SchemaExportPipeline schemaExportPipeline;
   private final MarkdownExportSinkFactory markdownSinkFactory;
   private final SnapshotExportSinkFactory snapshotSinkFactory;
   private final FileRepository fileRepository;
@@ -28,12 +29,12 @@ public class ExportTableDefinitionUsecase {
 
   @Inject
   public ExportTableDefinitionUsecase(
-      SchemaExporter schemaExporter,
+      SchemaExportPipeline schemaExportPipeline,
       MarkdownExportSinkFactory markdownSinkFactory,
       SnapshotExportSinkFactory snapshotSinkFactory,
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver) {
-    this.schemaExporter = schemaExporter;
+    this.schemaExportPipeline = schemaExportPipeline;
     this.markdownSinkFactory = markdownSinkFactory;
     this.snapshotSinkFactory = snapshotSinkFactory;
     this.fileRepository = fileRepository;
@@ -44,15 +45,15 @@ public class ExportTableDefinitionUsecase {
   public void exportTableDefinition(ExportTableDefinitionRequest request) {
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final ExportTargets targets =
-        schemaExporter.fetchTargets(request.targetSelection(), request.sidecarPath());
+        schemaExportPipeline.fetchTargets(request.targetSelection(), request.sidecarPath());
     final DiagramBoxes diagramBoxes =
-        schemaExporter.fetchDiagramBoxes(targets, request.chunkSize());
+        schemaExportPipeline.fetchDiagramBoxes(targets, request.chunkSize());
     if (request.rmDist()) {
       // 削除は一括取得（サイドカーの読み込みを含む）に成功してから行う。
       // 取得に失敗した場合に、既存の出力だけが削除されて何も残らない状態にしないため
       removeOutputBaseDir(outputBaseDir);
     }
-    schemaExporter.export(
+    schemaExportPipeline.export(
         targets,
         List.of(
             markdownSinkFactory.create(

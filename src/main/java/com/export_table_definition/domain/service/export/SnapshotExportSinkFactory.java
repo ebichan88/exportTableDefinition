@@ -31,11 +31,11 @@ public class SnapshotExportSinkFactory {
   }
 
   /** 1回の出力先に紐づく、スキーマのスナップショットの{@link ExportSink}実装 */
-  private final class SnapshotExportSink implements ExportSink {
+  final class SnapshotExportSink implements ExportSink {
 
     private final Path outputBaseDir;
 
-    private SnapshotExportSink(Path outputBaseDir) {
+    SnapshotExportSink(Path outputBaseDir) {
       this.outputBaseDir = outputBaseDir;
     }
 
