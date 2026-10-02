@@ -271,9 +271,9 @@ public class ExportTableDefinitionUsecaseTest {
         new SnapshotDiff(fileRepository, pathResolver, serializer, new UnifiedDiffGenerator());
     final SnapshotExportSinkFactory snapshotSinkFactory =
         new SnapshotExportSinkFactory(snapshotWriter);
-    final Function<LocalDate, SchemaExporter> schemaExporterAt =
+    final Function<LocalDate, SchemaExportPipeline> schemaExportPipelineAt =
         generatedDate ->
-            new SchemaExporter(
+            new SchemaExportPipeline(
                 repository,
                 sidecarRepository,
                 new ExportTargetConsistency(),
@@ -282,7 +282,7 @@ public class ExportTableDefinitionUsecaseTest {
     usecaseAt =
         generatedDate ->
             new ExportTableDefinitionUsecase(
-                schemaExporterAt.apply(generatedDate),
+                schemaExportPipelineAt.apply(generatedDate),
                 new MarkdownExportSinkFactory(
                     writer,
                     erDiagramWriter,
@@ -295,7 +295,7 @@ public class ExportTableDefinitionUsecaseTest {
     checkUsecaseAt =
         generatedDate ->
             new CheckDocumentDiffUsecase(
-                schemaExporterAt.apply(generatedDate),
+                schemaExportPipelineAt.apply(generatedDate),
                 snapshotSinkFactory,
                 snapshotDiff,
                 fileRepository,

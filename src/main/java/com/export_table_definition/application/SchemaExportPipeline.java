@@ -46,9 +46,9 @@ import org.apache.logging.log4j.Logger;
  * テーブル数に比例して重くなる情報はスキーマ・チャンク単位で取得・書き出し・破棄する（{@link #export}）。 取得した情報同士の突き合わせは{@link
  * ExportTargetConsistency}に委ねる
  */
-final class SchemaExporter {
+final class SchemaExportPipeline {
 
-  private static final Logger logger = LogManager.getLogger(SchemaExporter.class);
+  private static final Logger logger = LogManager.getLogger(SchemaExportPipeline.class);
   private final TableDefinitionRepository repository;
   private final SidecarRepository sidecarRepository;
   private final ExportTargetConsistency consistency;
@@ -58,7 +58,7 @@ final class SchemaExporter {
    * @param clock ドキュメントの生成日を決める時計
    */
   @Inject
-  SchemaExporter(
+  SchemaExportPipeline(
       TableDefinitionRepository repository,
       SidecarRepository sidecarRepository,
       ExportTargetConsistency consistency,

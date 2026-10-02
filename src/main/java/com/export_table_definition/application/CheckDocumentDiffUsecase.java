@@ -12,13 +12,13 @@ import java.util.List;
 
 /**
  * DB vs ドキュメントの差分検知（{@code --check}モード）のユースケースクラス<br>
- * DBからの取得は通常実行と同じ{@link SchemaExporter}で行い、差分の判定に不要なMarkdownの描画・ER図の生成は行わず、
+ * DBからの取得は通常実行と同じ{@link SchemaExportPipeline}で行い、差分の判定に不要なMarkdownの描画・ER図の生成は行わず、
  * スナップショットのみを一時ディレクトリへ生成して、コミット済みのスナップショットとオブジェクト単位で比較する
  */
 public class CheckDocumentDiffUsecase {
 
   private static final String CHECK_TEMP_DIR_PREFIX = "exportTableDefinition-check-";
-  private final SchemaExporter schemaExporter;
+  private final SchemaExportPipeline schemaExportPipeline;
   private final SnapshotExportSinkFactory snapshotSinkFactory;
   private final SnapshotDiff snapshotDiff;
   private final FileRepository fileRepository;
@@ -26,12 +26,12 @@ public class CheckDocumentDiffUsecase {
 
   @Inject
   public CheckDocumentDiffUsecase(
-      SchemaExporter schemaExporter,
+      SchemaExportPipeline schemaExportPipeline,
       SnapshotExportSinkFactory snapshotSinkFactory,
       SnapshotDiff snapshotDiff,
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver) {
-    this.schemaExporter = schemaExporter;
+    this.schemaExportPipeline = schemaExportPipeline;
     this.snapshotSinkFactory = snapshotSinkFactory;
     this.snapshotDiff = snapshotDiff;
     this.fileRepository = fileRepository;
@@ -51,8 +51,8 @@ public class CheckDocumentDiffUsecase {
     final Path generatedDir = fileRepository.createTempDirectory(CHECK_TEMP_DIR_PREFIX);
     try {
       final ExportTargets targets =
-          schemaExporter.fetchTargets(request.targetSelection(), request.sidecarPath());
-      schemaExporter.export(
+          schemaExportPipeline.fetchTargets(request.targetSelection(), request.sidecarPath());
+      schemaExportPipeline.export(
           targets, List.of(snapshotSinkFactory.create(generatedDir)), request.chunkSize());
       return snapshotDiff.compare(
           outputPathResolver.resolveSnapshotDirectory(generatedDir),

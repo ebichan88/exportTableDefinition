@@ -103,8 +103,7 @@ public class MarkdownExportSinkFactory {
     private final NodeLimit erDiagramLimit;
     private final DiagramBoxes diagramBoxes;
 
-    MarkdownExportSink(
-        Path outputBaseDir, NodeLimit erDiagramLimit, DiagramBoxes diagramBoxes) {
+    MarkdownExportSink(Path outputBaseDir, NodeLimit erDiagramLimit, DiagramBoxes diagramBoxes) {
       this.outputBaseDir = outputBaseDir;
       this.erDiagramLimit = erDiagramLimit;
       this.diagramBoxes = diagramBoxes;

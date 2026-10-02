@@ -67,14 +67,14 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、結果を `ResultDto`（`--check`時は差分の有無を持つ
    `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
 5. 通常実行のユースケース（`ExportTableDefinitionUsecase`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
-   段取りは `SchemaExporter`（`application`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
-   - `SchemaExporter.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
+   段取りは `SchemaExportPipeline`（`application`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
+   - `SchemaExportPipeline.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。
      `ExportTargetConsistency`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
      一括取得分を `ExportTargets` にまとめる
    - `--rm-dist`指定時は、ここまでの取得に成功してから出力先を削除する（取得に失敗した場合に既存の出力だけが消えないようにするため）。
      削除してよい出力先かは、ユースケースを呼ぶ前に入口（2.）で検証済みである
-   - `SchemaExporter.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
+   - `SchemaExportPipeline.export()`：取得した情報を、出力形式ごとの `ExportSink`（`domain.service.export`）へ渡して書き出す
      - Markdown（`MarkdownExportSinkFactory`）: `TableDefinitionWriter` / `ErDiagramWriter` / `ViewpointWriter` /
        `ObjectListWriter` / `ReadmeWriter`（いずれも `domain.service.writer`配下の種別ごとのサブパッケージ。Writerとテンプレートを同居させている）がMarkdownを組み立てて `FileRepository` 経由で出力
      - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriter`（`domain.service.snapshot`）が、
@@ -164,7 +164,7 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 
 ## メモリ効率のための分割取得
 
-対象スキーマ全体を一度にメモリへ載せないよう、`SchemaExporter` は以下の方針で処理する。
+対象スキーマ全体を一度にメモリへ載せないよう、`SchemaExportPipeline` は以下の方針で処理する。
 
 - テーブル一覧・外部キー・トリガーは軽量なため対象範囲全体を一括取得する（`fetchTargets`）
   （ER図でスキーマ・チャンクを跨いだ参照関係を解決するために全件が必要なため）
@@ -182,7 +182,7 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 
 各ドキュメントの先頭に掲載する基本情報（`domain.model.database.BaseInfoEntity`）は、DBのカタログから取得する
 データベースの情報（`DatabaseEntity`：DB名・DBMS種別。`TableDefinitionRepository.selectDatabase()`）に、
-ドキュメントの生成日を加えたもの。生成日はDBではなく実行時に決まる値のため、`SchemaExporter` がDIで受け取る
+ドキュメントの生成日を加えたもの。生成日はDBではなく実行時に決まる値のため、`SchemaExportPipeline` がDIで受け取る
 `java.time.Clock` から与える（`ExportTableDefinitionModule` が実行環境のタイムゾーンの時計を束縛する。テストでは固定の時計を渡せる）。
 
 ## 出力対象の突き合わせ
@@ -190,7 +190,7 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 外部キーはスキーマ全体から、サイドカーYAMLは出力対象に関係なく読み込むため、出力対象の絞り込みで除外したテーブルや、
 リネーム・削除されたテーブル／カラムを参照していることがある。`ExportTargetConsistency` がそれらを
 出力から除外し、利用者が気付くべき事柄を通知（`domain.model.target.ConsistencyNotice`）として値で返す。
-ログへの出力は呼び出し側の `SchemaExporter` が通知の重要度（`INFO`／`WARN`）に応じて行う
+ログへの出力は呼び出し側の `SchemaExportPipeline` が通知の重要度（`INFO`／`WARN`）に応じて行う
 （ドメインサービスはログ出力の手段に依存しない）。
 
 | 突き合わせ | メソッド | 通知 |
@@ -265,7 +265,7 @@ Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセ�
 `ExportTableDefinition.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
 `ExportTableDefinitionController.checkDiff()` → `CheckDocumentDiffUsecase.checkDocumentDiff()`を呼び出す。
 
-DBからの取得と出力は`SchemaExporter`が以下のように分けて持ち、通常実行（`ExportTableDefinitionUsecase`）と
+DBからの取得と出力は`SchemaExportPipeline`が以下のように分けて持ち、通常実行（`ExportTableDefinitionUsecase`）と
 `--check`（`CheckDocumentDiffUsecase`）の双方が利用する。両者は取得処理を共有し、書き出し先の出力形式
 （`ExportSink`のリスト）だけを切り替える。
 
@@ -273,7 +273,7 @@ DBからの取得と出力は`SchemaExporter`が以下のように分けて持�
   サイドカー）を取得し、`domain.model.target.ExportTargets`にまとめる
 - `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を`ExportSink.writeOverview()`で書き出した後、
   関数の定義本体をスキーマ単位で、テーブルの詳細情報をスキーマ・チャンク単位で取得し、各`ExportSink`へ渡す。
-  出力形式ごとの違い（何をどのファイルへ書くか）は`ExportSink`の実装が持ち、`SchemaExporter`は出力形式を意識しない
+  出力形式ごとの違い（何をどのファイルへ書くか）は`ExportSink`の実装が持ち、`SchemaExportPipeline`は出力形式を意識しない
 
 `checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、スナップショットの`ExportSink`のみで一時ディレクトリへ向けて
 `export()`を呼び出した上で（Markdownの描画・ER図の生成は行わない）、生成結果と`outputPath`配下の`snapshot/`を
@@ -373,6 +373,6 @@ DB種別は接続して初めて分かるため、まず`ExportTableDefinitionMo
 新しいリポジトリ実装やドメインサービスを追加する場合は、`ExportTableDefinitionModule`に束縛を追加する
 （`TableDefinitionRepository`の実装のように、DB接続後でないと決まらないものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
 各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。
-ユースケース（具象クラス）・`application.SchemaExporter`・`OutputDirectoryValidator`はインターフェースを持たないためモジュールでは束縛せず、Guiceのジャストインタイム束縛
+ユースケース（具象クラス）・`application.SchemaExportPipeline`・`OutputDirectoryValidator`はインターフェースを持たないためモジュールでは束縛せず、Guiceのジャストインタイム束縛
 （`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、エントリーポイントと同じ手順で実際にDIコンテナを組み立てる
 `ExportTableDefinitionModuleTest`で検知する。
