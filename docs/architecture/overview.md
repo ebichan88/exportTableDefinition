@@ -23,7 +23,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | 層 | パッケージ | 役割 |
 |---|---|---|
 | presentation | `presentation`, `presentation.dto`, `presentation.type` | エントリーポイントからの呼び出しを受け、ユースケースを実行して結果を返す |
-| application | `application`, `application.impl` | ユースケース（テーブル定義出力・差分検知それぞれのフロー制御）を実装する |
+| application | `application` | ユースケース（テーブル定義出力・差分検知それぞれのフロー制御）を実装する |
 | domain | `domain.model.*`, `domain.repository`, `domain.service.*` | エンティティ・値オブジェクト・リポジトリIF・書き込み処理（ドメインサービス）を持つ、DB種別に依存しない中核 |
 | infrastructure | `infrastructure.db`, `infrastructure.file`, `infrastructure.path`, `infrastructure.snapshot` | MyBatisによるDBアクセス、ファイル入出力、出力パス解決、JSON変換などドメインIFの実装を提供する |
 | config | `config`, `config.module` | プロパティ読み込み、Guiceによる依存関係の束縛（DI設定） |
@@ -66,8 +66,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
    `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、結果を `ResultDto`（`--check`時は差分の有無を持つ
    `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
-5. 通常実行のユースケース（`ExportTableDefinitionUsecaseImpl`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
-   段取りは `SchemaExporter`（`application.impl`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
+5. 通常実行のユースケース（`ExportTableDefinitionUsecase`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
+   段取りは `SchemaExporter`（`application`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
    - `SchemaExporter.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。
      `ExportTargetConsistency`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
@@ -263,10 +263,10 @@ Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセ�
 ## DB vs ドキュメントの差分検知（`--check`モード）
 
 `ExportTableDefinition.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
-`ExportTableDefinitionController.checkDiff()` → `CheckDocumentDiffUsecaseImpl.checkDocumentDiff()`を呼び出す。
+`ExportTableDefinitionController.checkDiff()` → `CheckDocumentDiffUsecase.checkDocumentDiff()`を呼び出す。
 
-DBからの取得と出力は`SchemaExporter`が以下のように分けて持ち、通常実行（`ExportTableDefinitionUsecaseImpl`）と
-`--check`（`CheckDocumentDiffUsecaseImpl`）の双方が利用する。両者は取得処理を共有し、書き出し先の出力形式
+DBからの取得と出力は`SchemaExporter`が以下のように分けて持ち、通常実行（`ExportTableDefinitionUsecase`）と
+`--check`（`CheckDocumentDiffUsecase`）の双方が利用する。両者は取得処理を共有し、書き出し先の出力形式
 （`ExportSink`のリスト）だけを切り替える。
 
 - `fetchTargets()`: 一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・
@@ -371,8 +371,8 @@ DB種別は接続して初めて分かるため、まず`ExportTableDefinitionMo
 1回だけ生成して子のコンテナへインスタンスとして束縛し、リポジトリはコンストラクタで受け取る。静的なシングルトンから取得しないため、
 テストでは任意の接続先（テスト用のDB等）の`SqlSessionFactory`を渡してリポジトリを組み立てられる。
 新しいリポジトリ実装やドメインサービスを追加する場合は、`ExportTableDefinitionModule`に束縛を追加する
-（`TableDefinitionRepository`に依存するものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
+（`TableDefinitionRepository`の実装のように、DB接続後でないと決まらないものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
 各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。
-`application.impl.SchemaExporter`・`OutputDirectoryValidator`はパッケージプライベートのためモジュールでは束縛せず、Guiceのジャストインタイム束縛
+ユースケース（具象クラス）・`application.SchemaExporter`・`OutputDirectoryValidator`はインターフェースを持たないためモジュールでは束縛せず、Guiceのジャストインタイム束縛
 （`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、エントリーポイントと同じ手順で実際にDIコンテナを組み立てる
 `ExportTableDefinitionModuleTest`で検知する。

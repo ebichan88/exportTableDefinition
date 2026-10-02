@@ -19,29 +19,37 @@ import org.junit.jupiter.api.Test;
 /** ExportTableDefinitionController の処理結果の組み立てと、例外を捕捉せずに伝えることに関するテスト */
 public class ExportTableDefinitionControllerTest {
 
-  /** 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ */
-  private static class RecordingUsecase
-      implements ExportTableDefinitionUsecase, CheckDocumentDiffUsecase {
+  /**
+   * 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ<br>
+   * ユースケースは具象クラスのため、メソッドを上書きしたサブクラスで差し替える（依存は使わないのでnullで足りる）
+   */
+  private static class RecordingUsecase {
     ExportTableDefinitionRequest capturedExportTableDefinitionRequest;
     CheckDocumentDiffRequest capturedCheckDocumentDiffRequest;
     RuntimeException toThrow;
     DiffResult diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
 
-    @Override
-    public void exportTableDefinition(ExportTableDefinitionRequest request) {
-      this.capturedExportTableDefinitionRequest = request;
-      if (toThrow != null) {
-        throw toThrow;
-      }
-    }
-
-    @Override
-    public DiffResult checkDocumentDiff(CheckDocumentDiffRequest request) {
-      this.capturedCheckDocumentDiffRequest = request;
-      if (toThrow != null) {
-        throw toThrow;
-      }
-      return diffResultToReturn;
+    ExportTableDefinitionController controller() {
+      return new ExportTableDefinitionController(
+          new ExportTableDefinitionUsecase(null, null, null, null, null) {
+            @Override
+            public void exportTableDefinition(ExportTableDefinitionRequest request) {
+              capturedExportTableDefinitionRequest = request;
+              if (toThrow != null) {
+                throw toThrow;
+              }
+            }
+          },
+          new CheckDocumentDiffUsecase(null, null, null, null, null) {
+            @Override
+            public DiffResult checkDocumentDiff(CheckDocumentDiffRequest request) {
+              capturedCheckDocumentDiffRequest = request;
+              if (toThrow != null) {
+                throw toThrow;
+              }
+              return diffResultToReturn;
+            }
+          });
     }
   }
 
@@ -81,7 +89,7 @@ public class ExportTableDefinitionControllerTest {
   @DisplayName("execute: ユースケースが正常終了した場合はSUCCESSの結果を返す")
   void testExecuteSuccessReturnsSuccessResult() {
     var usecase = new RecordingUsecase();
-    var controller = new ExportTableDefinitionController(usecase, usecase);
+    var controller = usecase.controller();
 
     ResultDto result =
         controller.execute(
@@ -103,7 +111,7 @@ public class ExportTableDefinitionControllerTest {
   @DisplayName("execute: 引数（ExportTableDefinitionRequest）をそのままユースケースへ渡す")
   void testExecutePassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
-    var controller = new ExportTableDefinitionController(usecase, usecase);
+    var controller = usecase.controller();
 
     ExportTableDefinitionRequest request =
         exportRequest(
@@ -126,7 +134,7 @@ public class ExportTableDefinitionControllerTest {
   void testExecutePropagatesUsecaseException() {
     var usecase = new RecordingUsecase();
     usecase.toThrow = new IllegalStateException("unexpected");
-    var controller = new ExportTableDefinitionController(usecase, usecase);
+    var controller = usecase.controller();
 
     var thrown =
         assertThrows(
@@ -143,7 +151,7 @@ public class ExportTableDefinitionControllerTest {
   void testCheckDiffNoDifferenceReturnsSuccessWithoutDifference() {
     var usecase = new RecordingUsecase();
     usecase.diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
-    var controller = new ExportTableDefinitionController(usecase, usecase);
+    var controller = usecase.controller();
 
     DiffCheckResultDto result =
         controller.checkDiff(
@@ -172,7 +180,7 @@ public class ExportTableDefinitionControllerTest {
                         "@@ -1 +1 @@",
                         "-old",
                         "+new"))));
-    var controller = new ExportTableDefinitionController(usecase, usecase);
+    var controller = usecase.controller();
 
     DiffCheckResultDto result =
         controller.checkDiff(
@@ -194,7 +202,7 @@ public class ExportTableDefinitionControllerTest {
   @DisplayName("checkDiff: 引数（CheckDocumentDiffRequest）をそのままユースケースへ渡す")
   void testCheckDiffPassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
-    var controller = new ExportTableDefinitionController(usecase, usecase);
+    var controller = usecase.controller();
 
     CheckDocumentDiffRequest request =
         checkDiffRequest(
@@ -215,7 +223,7 @@ public class ExportTableDefinitionControllerTest {
   void testCheckDiffPropagatesUsecaseException() {
     var usecase = new RecordingUsecase();
     usecase.toThrow = new RuntimeException("boom");
-    var controller = new ExportTableDefinitionController(usecase, usecase);
+    var controller = usecase.controller();
 
     var thrown =
         assertThrows(
