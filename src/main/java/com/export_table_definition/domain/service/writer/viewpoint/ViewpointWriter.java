@@ -2,9 +2,9 @@ package com.export_table_definition.domain.service.writer.viewpoint;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
-import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.relation.NodeLimit;
+import com.export_table_definition.domain.model.relation.RenderingPlan;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.viewpoint.ViewpointContent;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
@@ -93,15 +93,15 @@ public class ViewpointWriter {
                     content.tables(),
                     ViewpointTemplates::tableLine),
                 layout);
-    final DiagramRendering rendering = content.relations().renderingUnder(limit);
+    final RenderingPlan plan = content.relations().planRendering(limit);
     final List<String> contents =
         List.of(
             layout.fileHeader(), // ヘッダー
             ViewpointTemplates.baseInfo(outputRoot.baseInfo()), // 基本情報
             ViewpointTemplates.description(content.viewpoint()), // 説明
-            ViewpointTemplates.erDiagram(rendering, boxes), // ER図（描画結果または省略メッセージ）
-            rendering instanceof DiagramRendering.Omit
-                ? ViewpointTemplates.relations(rendering.group().foreignKeys())
+            ViewpointTemplates.erDiagram(plan, boxes), // ER図（描画結果または省略メッセージ）
+            plan instanceof RenderingPlan.Omit
+                ? ViewpointTemplates.relations(plan.group().foreignKeys())
                 : "", // ER図の代替の関連一覧
             tableSection, // 所属テーブル
             ViewpointTemplates.outsideRelations(content.outsideRelations()), // 観点外のテーブルとの関連

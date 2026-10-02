@@ -72,7 +72,7 @@ public final class Viewpoints {
    *
    * @return 当該テーブルが所属する観点のリスト（宣言順）。所属する観点が無い場合は空のリスト
    */
-  public List<Viewpoint> of(TableEntity table) {
+  public List<Viewpoint> containing(TableEntity table) {
     return list.stream().filter(viewpoint -> viewpoint.contains(table)).toList();
   }
 }

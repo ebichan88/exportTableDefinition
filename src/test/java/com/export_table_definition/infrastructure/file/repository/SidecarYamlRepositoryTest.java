@@ -58,7 +58,7 @@ public class SidecarYamlRepositoryTest {
                 """);
 
     Annotations annotations = repository.load(file.toString()).annotations();
-    TableAnnotation users = annotations.of(table("public", "users"));
+    TableAnnotation users = annotations.belongingTo(table("public", "users"));
 
     assertEquals("ユーザー基本情報。\n認証と紐づく。\n", users.description().replace("\r\n", "\n"));
     assertEquals("個人情報を含む", users.remarks());
@@ -107,7 +107,7 @@ public class SidecarYamlRepositoryTest {
     Annotations annotations = repository.load(file.toString()).annotations();
 
     assertEquals(1, annotations.tableKeys().size());
-    assertEquals("有効", annotations.of(table("public", "orders")).remarks());
+    assertEquals("有効", annotations.belongingTo(table("public", "orders")).remarks());
   }
 
   @Test
@@ -131,7 +131,7 @@ public class SidecarYamlRepositoryTest {
 
     Annotations annotations = repository.load(file.toString()).annotations();
 
-    assertEquals("ドット入りテーブル名", annotations.of(table("public", "my.table")).remarks());
+    assertEquals("ドット入りテーブル名", annotations.belongingTo(table("public", "my.table")).remarks());
   }
 
   @Test
@@ -326,7 +326,7 @@ public class SidecarYamlRepositoryTest {
 
     var sidecar = repository.load(file.toString());
 
-    assertEquals("監査ログ", sidecar.annotations().of(table("public", "logs")).remarks());
+    assertEquals("監査ログ", sidecar.annotations().belongingTo(table("public", "logs")).remarks());
     assertEquals(1, sidecar.logicalRelations().size());
   }
 
@@ -394,7 +394,7 @@ public class SidecarYamlRepositoryTest {
 
     var sidecar = repository.load(file.toString());
 
-    TableAnnotation users = sidecar.annotations().of(table("public", "users"));
+    TableAnnotation users = sidecar.annotations().belongingTo(table("public", "users"));
     assertEquals("", users.description());
     assertEquals("テーブル備考", users.remarks());
     assertEquals(1, sidecar.logicalRelations().size());
@@ -430,7 +430,7 @@ public class SidecarYamlRepositoryTest {
     var sidecar = repository.load(file.toString());
 
     assertEquals(Set.of(TableKey.of("public", "users")), sidecar.annotations().tableKeys());
-    TableAnnotation users = sidecar.annotations().of(table("public", "users"));
+    TableAnnotation users = sidecar.annotations().belongingTo(table("public", "users"));
     assertEquals("テーブル備考", users.remarks());
     assertEquals("", users.columnRemark("email"));
   }

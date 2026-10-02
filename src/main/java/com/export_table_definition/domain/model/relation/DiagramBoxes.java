@@ -118,7 +118,7 @@ public final class DiagramBoxes {
      *
      * @return 関連の参照元・参照先のテーブル（関連の出現順・重複なし）
      */
-    public List<TableKey> tableKeys() {
+    public List<TableKey> tablesNeedingColumns() {
       return List.copyOf(columnNamesByTable.keySet());
     }
 
@@ -127,7 +127,7 @@ public final class DiagramBoxes {
      *
      * @param columns 取得したカラム（テーブルごとに定義順）。関連カラム以外は参照を保持しない
      */
-    public Builder add(List<ColumnEntity> columns) {
+    public Builder collectRelatedColumns(List<ColumnEntity> columns) {
       columns.stream()
           .filter(
               column ->

@@ -28,7 +28,7 @@ public class TriggersTest {
             "public", "customers", "trg_customers_1", "BEFORE", List.of("INSERT"), "ROW", "", "");
     var triggers = Triggers.of(List.of(t1, t2, other));
 
-    assertEquals(List.of(t1, t2), triggers.of(newTable("public", "orders")));
+    assertEquals(List.of(t1, t2), triggers.belongingTo(newTable("public", "orders")));
   }
 
   @Test
@@ -36,7 +36,7 @@ public class TriggersTest {
   void testOfReturnsEmptyForUnknownTable() {
     var triggers = Triggers.of(List.of(EntityFixtures.trigger("public", "orders")));
 
-    assertEquals(List.of(), triggers.of(newTable("public", "unknown")));
+    assertEquals(List.of(), triggers.belongingTo(newTable("public", "unknown")));
   }
 
   @Test
@@ -46,8 +46,8 @@ public class TriggersTest {
     var salesTrigger = EntityFixtures.trigger("sales", "orders");
     var triggers = Triggers.of(List.of(publicTrigger, salesTrigger));
 
-    assertEquals(List.of(publicTrigger), triggers.of(newTable("public", "orders")));
-    assertEquals(List.of(salesTrigger), triggers.of(newTable("sales", "orders")));
+    assertEquals(List.of(publicTrigger), triggers.belongingTo(newTable("public", "orders")));
+    assertEquals(List.of(salesTrigger), triggers.belongingTo(newTable("sales", "orders")));
   }
 
   @Test

@@ -67,12 +67,12 @@ public record TableDefinitionContent(
         detail.columns(),
         detail.indexes(),
         detail.constraints(),
-        foreignkeys.physicalOf(table),
-        foreignkeys.logicalOf(table),
-        foreignkeys.incomingOf(table),
-        triggers.of(table),
-        annotations.of(table),
-        viewpoints.of(table));
+        foreignkeys.physicalBelongingTo(table),
+        foreignkeys.logicalBelongingTo(table),
+        foreignkeys.referencingTo(table),
+        triggers.belongingTo(table),
+        annotations.belongingTo(table),
+        viewpoints.containing(table));
   }
 
   /**

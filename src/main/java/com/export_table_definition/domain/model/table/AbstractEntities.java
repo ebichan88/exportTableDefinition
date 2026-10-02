@@ -43,7 +43,7 @@ public abstract class AbstractEntities<T extends SchemaTableKeyed> {
    *
    * @return エンティティのリスト。該当するエンティティがない場合は空のリストを返す
    */
-  public List<T> of(TableEntity table) {
+  public List<T> belongingTo(TableEntity table) {
     return byKey.getOrDefault(TableKey.of(table), List.of());
   }
 }

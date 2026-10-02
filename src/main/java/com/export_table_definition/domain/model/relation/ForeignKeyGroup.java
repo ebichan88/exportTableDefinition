@@ -72,18 +72,16 @@ public final class ForeignKeyGroup {
    *
    * @return 上限を超える場合はtrue（上限なしの場合は常にfalse）
    */
-  public boolean exceeds(NodeLimit limit) {
+  boolean exceeds(NodeLimit limit) {
     return limit.isExceededBy(nodeCount());
   }
 
   /**
-   * 上限のもとで図を描画するか、描画を省略するかを決めるメソッド<br>
-   * 「描くか・省くか」の判断はここに集約し、呼び出し側は結果に従って出力を切り替える
+   * 上限のもとで図を描画するか、描画を省略するかの計画を立てるメソッド<br>
+   * 「描くか・省くか」の決定はここに集約し、呼び出し側は結果に従って出力を切り替える
    */
-  public DiagramRendering renderingUnder(NodeLimit limit) {
-    return exceeds(limit)
-        ? new DiagramRendering.Omit(this, limit)
-        : new DiagramRendering.Draw(this);
+  public RenderingPlan planRendering(NodeLimit limit) {
+    return exceeds(limit) ? new RenderingPlan.Omit(this, limit) : new RenderingPlan.Draw(this);
   }
 
   /**

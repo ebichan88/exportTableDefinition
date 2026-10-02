@@ -50,9 +50,9 @@
 | | `Triggers`, `AbstractEntities` | エンティティのリストをテーブルキーで引けるようにしたコレクションとその基底クラス（`Columns`・`Indexes`・`Constraints`は`TableDetail`の組み立て専用のためパッケージプライベート） |
 | | `TableNamePatterns` | テーブル名パターン（`table=`の記法。ワイルドカード・除外・スキーマ修飾）のリストを判定する値オブジェクト。出力対象の範囲（`TableScope`）と観点の所属テーブルの指定で共通に使う。テーブル名・スキーマ名の部分が空のパターンは誤り |
 | `domain.model.relation` | `ForeignKeyEntity` | 関連（DBの外部キー制約＝物理、サイドカーで宣言した論理リレーション＝論理）のrecord。参照先の`referenceTableKey()`、論理リレーションの関連名の自動生成（`resolveLogicalRelationName`）を持つ |
-| | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalOf`/`logicalOf`で由来ごとに、`incomingOf`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`within`/`crossing`でテーブルの集合の内側・境界の関連を抽出する |
+| | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalBelongingTo`/`logicalBelongingTo`で由来ごとに、`referencingTo`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`withinTables`/`crossingTableSetBoundary`でテーブルの集合の内側・境界の関連を抽出する |
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の関連のまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し。`compose()`がページ構成`PageComposition`を決める） |
-| | `NodeLimit`, `DiagramRendering` | ER図1枚に描画するノード数の上限（0以下は上限なしへ正規化）と、上限との比較で決まる「描く（`Draw`）／描画を省略して一覧にフォールバック（`Omit`）」の判断結果 |
+| | `NodeLimit`, `RenderingPlan` | ER図1枚に描画するノード数の上限（0以下は上限なしへ正規化）と、上限との比較で決まる「描く（`Draw`）／描画を省略して一覧にフォールバック（`Omit`）」の描き方の計画 |
 | | `DiagramBoxes`, `DiagramColumn` | ER図のテーブルの箱に表示する内容。論理テーブル名と、取得したカラムから関連カラム（関連の参照元・参照先として使われるカラム）だけを集めて保持し（`Builder`）、図に描く関連で使われるカラムを`FK`の有無とともに返す |
 | | `Cardinality`, `RelationType` | 多重度（1対1／1対多等。判定と、論理リレーションの既定値を持つ）、関連の由来（物理／論理）のenum |
 | `domain.model.schemaobject` | `FunctionEntity`, `SequenceEntity`, `TypeEntity` | テーブルに属さないスキーマ直下のオブジェクト（関数・プロシージャ／シーケンス／ユーザー定義型）のrecord。`FunctionEntity`は同名関数（オーバーロード）内の番号を持つ |
@@ -104,7 +104,7 @@
 | パッケージ | 主なクラス | 役割 |
 |---|---|---|
 | `domain.service.writer.tabledefinition` | `TableDefinitionWriter`, `TableDefinitionTemplates`, `TableDefinitionListTemplates` | テーブル一覧・テーブル定義書のMarkdown書き込みとテンプレート |
-| `domain.service.writer.erdiagram` | `ErDiagramWriter`, `ErDiagramTemplates` | スキーマ別ER図（全体ER図）とその索引の書き込みとテンプレート。連結成分ごとのグループ分割・描画するか省くかの結果（`DiagramRendering`）に従った出力を含む |
+| `domain.service.writer.erdiagram` | `ErDiagramWriter`, `ErDiagramTemplates` | スキーマ別ER図（全体ER図）とその索引の書き込みとテンプレート。連結成分ごとのグループ分割・描画するか省くかの結果（`RenderingPlan`）に従った出力を含む |
 | `domain.service.writer.viewpoint` | `ViewpointWriter`, `ViewpointTemplates` | 観点ページ（所属テーブル同士のER図・所属テーブル・観点外のテーブルとの関連）と観点一覧の書き込みとテンプレート。ER図の描画は`erdiagram`のテンプレートを使う |
 | `domain.service.writer.objectlist` | `ObjectListWriter`, `ObjectListTemplates`, `ObjectDefinitionTemplates` | トリガー・関数/プロシージャ・シーケンス・ユーザー定義型の一覧および個別定義の書き込みとテンプレート |
 | `domain.service.writer.readme` | `ReadmeWriter`, `ReadmeTemplates` | データベース単位ディレクトリ（`{DB名}/`）のREADMEの書き込みとテンプレート。出力される一覧ドキュメントへのリンクをまとめる |

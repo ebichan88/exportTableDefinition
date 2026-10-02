@@ -8,10 +8,10 @@ import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.DiagramColumn;
-import com.export_table_definition.domain.model.relation.DiagramRendering;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
 import com.export_table_definition.domain.model.relation.NodeLimit;
+import com.export_table_definition.domain.model.relation.RenderingPlan;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.service.path.DocumentLocations;
@@ -95,16 +95,16 @@ public class ErDiagramTemplates {
    * 外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧{@code
    * tableList_{DB名}.md}側に掲載されている）。<br>
    * テーブルの箱には、図に描画する関連をつなぐカラムだけを表示する。<br>
-   * 描画を省略する判断結果（{@link DiagramRendering.Omit}）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
+   * 描画を省略する計画（{@link RenderingPlan.Omit}）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
    * （代替として掲載する外部キー一覧は呼び出し側が組み立てる）
    */
-  public static String erDiagram(DiagramRendering rendering, DiagramBoxes boxes) {
-    final ForeignKeyGroup group = rendering.group();
+  public static String erDiagram(RenderingPlan plan, DiagramBoxes boxes) {
+    final ForeignKeyGroup group = plan.group();
     StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
     if (group.foreignKeys().isEmpty()) {
       return sb.append("外部キーによる関連を持つテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
     }
-    if (rendering instanceof DiagramRendering.Omit(ForeignKeyGroup omitted, NodeLimit limit)) {
+    if (plan instanceof RenderingPlan.Omit(ForeignKeyGroup omitted, NodeLimit limit)) {
       return sb.append(
               String.format(
                   "ER図に描画するテーブル数が%d件となり、上限（erDiagramMaxNodes = %d件）を超えるため描画を省略しました。",

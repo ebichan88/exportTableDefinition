@@ -22,7 +22,7 @@ public class ColumnsTest {
     var other = EntityFixtures.column("public", "customers", "id", "int", true);
     var columns = Columns.of(List.of(id, name, other));
 
-    assertEquals(List.of(id, name), columns.of(newTable("public", "orders")));
+    assertEquals(List.of(id, name), columns.belongingTo(newTable("public", "orders")));
   }
 
   @Test
@@ -30,7 +30,7 @@ public class ColumnsTest {
   void testOfReturnsEmptyForUnknownTable() {
     var columns = Columns.of(List.of(EntityFixtures.column("public", "orders", "id", "int", true)));
 
-    assertEquals(List.of(), columns.of(newTable("public", "unknown")));
+    assertEquals(List.of(), columns.belongingTo(newTable("public", "unknown")));
   }
 
   @Test
@@ -40,8 +40,8 @@ public class ColumnsTest {
     var salesCol = EntityFixtures.column("sales", "orders", "id", "int", true);
     var columns = Columns.of(List.of(publicCol, salesCol));
 
-    assertEquals(List.of(publicCol), columns.of(newTable("public", "orders")));
-    assertEquals(List.of(salesCol), columns.of(newTable("sales", "orders")));
+    assertEquals(List.of(publicCol), columns.belongingTo(newTable("public", "orders")));
+    assertEquals(List.of(salesCol), columns.belongingTo(newTable("sales", "orders")));
   }
 
   @Test
@@ -52,6 +52,6 @@ public class ColumnsTest {
     var ordersName = EntityFixtures.column("public", "orders", "name", "varchar", false);
     var columns = Columns.of(List.of(ordersId, customersId, ordersName));
 
-    assertEquals(List.of(ordersId, ordersName), columns.of(newTable("public", "orders")));
+    assertEquals(List.of(ordersId, ordersName), columns.belongingTo(newTable("public", "orders")));
   }
 }

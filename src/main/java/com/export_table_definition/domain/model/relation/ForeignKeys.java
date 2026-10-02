@@ -14,7 +14,8 @@ import java.util.stream.Stream;
 /**
  * 外部キー情報の集合を扱うクラス<br>
  * DBに実在する外部キー制約と、サイドカーYAML由来の論理リレーションを同一の集合として保持する。 ER図はテーブル間の関連をまとめて描く必要があるため両者を区別せず扱い、
- * テーブル定義書のセクションは{@link #physicalOf(TableEntity)}／{@link #logicalOf(TableEntity)}で 由来ごとに取り出して掲載する
+ * テーブル定義書のセクションは{@link #physicalBelongingTo(TableEntity)}／{@link #logicalBelongingTo(TableEntity)}で
+ * 由来ごとに取り出して掲載する
  */
 public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
   /** 被参照側（自テーブルを参照している外部キー）をテーブルキーでインデックス化したマップ */
@@ -49,7 +50,7 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    *
    * @return 当該テーブルを参照している外部キーのリスト。存在しない場合は空のリストを返す
    */
-  public List<ForeignKeyEntity> incomingOf(TableEntity table) {
+  public List<ForeignKeyEntity> referencingTo(TableEntity table) {
     return incomingByKey.getOrDefault(TableKey.of(table), List.of());
   }
 
@@ -59,8 +60,8 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    *
    * @return 当該テーブルの物理外部キーのリスト。存在しない場合は空のリストを返す
    */
-  public List<ForeignKeyEntity> physicalOf(TableEntity table) {
-    return of(table).stream().filter(fk -> !fk.isLogical()).toList();
+  public List<ForeignKeyEntity> physicalBelongingTo(TableEntity table) {
+    return belongingTo(table).stream().filter(fk -> !fk.isLogical()).toList();
   }
 
   /**
@@ -69,8 +70,8 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    *
    * @return 当該テーブルの論理リレーションのリスト。存在しない場合は空のリストを返す
    */
-  public List<ForeignKeyEntity> logicalOf(TableEntity table) {
-    return of(table).stream().filter(ForeignKeyEntity::isLogical).toList();
+  public List<ForeignKeyEntity> logicalBelongingTo(TableEntity table) {
+    return belongingTo(table).stream().filter(ForeignKeyEntity::isLogical).toList();
   }
 
   /**
@@ -115,7 +116,7 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    *
    * @return 両端が集合に含まれる関連のリスト
    */
-  public List<ForeignKeyEntity> within(Set<TableKey> tableKeys) {
+  public List<ForeignKeyEntity> withinTables(Set<TableKey> tableKeys) {
     return stream()
         .filter(
             fk -> tableKeys.contains(fk.tableKey()) && tableKeys.contains(fk.referenceTableKey()))
@@ -128,7 +129,7 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    *
    * @return 片端だけが集合に含まれる関連のリスト
    */
-  public List<ForeignKeyEntity> crossing(Set<TableKey> tableKeys) {
+  public List<ForeignKeyEntity> crossingTableSetBoundary(Set<TableKey> tableKeys) {
     return stream()
         .filter(
             fk -> tableKeys.contains(fk.tableKey()) != tableKeys.contains(fk.referenceTableKey()))

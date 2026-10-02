@@ -69,7 +69,7 @@ public class ViewpointTemplatesTest {
 
         """,
         ViewpointTemplates.erDiagram(
-            ForeignKeyGroup.of(List.of()).renderingUnder(NodeLimit.of(80)),
+            ForeignKeyGroup.of(List.of()).planRendering(NodeLimit.of(80)),
             DiagramBoxesFixtures.none()));
   }
 
@@ -82,11 +82,10 @@ public class ViewpointTemplatesTest {
                 ForeignKeyFixtures.physical(
                     "public", "orders", "fk_orders_customer", "public", "customer")));
 
-    var rendering = group.renderingUnder(NodeLimit.of(80));
+    var plan = group.planRendering(NodeLimit.of(80));
     var boxes = DiagramBoxesFixtures.none();
     assertEquals(
-        ErDiagramTemplates.erDiagram(rendering, boxes),
-        ViewpointTemplates.erDiagram(rendering, boxes));
+        ErDiagramTemplates.erDiagram(plan, boxes), ViewpointTemplates.erDiagram(plan, boxes));
   }
 
   @Test

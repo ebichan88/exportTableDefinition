@@ -36,7 +36,7 @@ public final class DiagramBoxesFixtures {
   public static DiagramBoxes of(
       List<TableEntity> tables, List<ForeignKeyEntity> foreignKeys, List<ColumnEntity> columns) {
     return DiagramBoxes.builder(Tables.of(tables), ForeignKeys.of(foreignKeys))
-        .add(columns)
+        .collectRelatedColumns(columns)
         .build();
   }
 }

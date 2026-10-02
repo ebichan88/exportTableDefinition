@@ -205,7 +205,7 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
 ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）はREADME
 （[../../README.md](../../README.md) の「ER図」節・「ER図の出し分け」）に詳しい。実装は
 `ErDiagramWriter`（書き込みの段取り）と `domain.model.relation.ForeignKeyGroup`
-（1枚の図のノード算出・上限超過の判定・描画するか省くかの判断`renderingUnder`）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
+（1枚の図のノード算出・上限超過の判定・描画するか省くかの計画`planRendering`）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
 まとめ直し。`compose()`がページ構成（`PageComposition`）を1回で決める）、`domain.model.relation.Cardinality`（多重度判定）が中心。
 
 ## 出力ファイルの命名規則と相対リンク
@@ -336,9 +336,9 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
   論理リレーションを結合して `ForeignKeys.of()` に渡す。参照元・参照先の一方でも出力対象に
   存在しない関連は、ER図に片側だけのノードが現れるのを避けるため除外し、除外したことを通知として返す
 - 合流させることで、ER図のグループ分割（`ForeignKeyGroups` の連結成分算出）、スキーマ跨ぎ関連の抽出
-  （`ForeignKeys.crossSchema()`）、被参照側の解決（`incomingOf`）にも**追加実装なしで反映される**
+  （`ForeignKeys.crossSchema()`）、被参照側の解決（`referencingTo`）にも**追加実装なしで反映される**
 - 読み手が「DBに制約がある」と誤読しないよう、2箇所で区別する
-  - テーブル定義書：`ForeignKeys.physicalOf()` / `logicalOf()` で由来ごとに取り出し、別セクションへ掲載
+  - テーブル定義書：`ForeignKeys.physicalBelongingTo()` / `logicalBelongingTo()` で由来ごとに取り出し、別セクションへ掲載
   - ER図：`RelationType` が持つ線種を `Cardinality.getNotation(RelationType)` が組み立て、
     物理は実線（`||--o{`）、論理は破線（`||..o{`）で描画する
 
@@ -349,8 +349,8 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 - 所属テーブルの指定は、出力対象の範囲（`table=`）と同じテーブル名パターンの記法で書く（`domain.model.table.TableNamePatterns`を共有する）。
   観点（`domain.model.viewpoint`）はサイドカーより下の層にあるため、`TableNamePatterns`は`target`ではなく`table`に置いている
-- `Viewpoint.resolve()` が、一括取得済みの出力対象（`Tables`・`ForeignKeys`）から所属テーブルと、所属テーブル同士の関連（`ForeignKeys.within()`）・
-  観点外のテーブルとの関連（`ForeignKeys.crossing()`）を求める。ER図の描画は`ErDiagramTemplates.erDiagram()`をそのまま使う。
+- `Viewpoint.resolve()` が、一括取得済みの出力対象（`Tables`・`ForeignKeys`）から所属テーブルと、所属テーブル同士の関連（`ForeignKeys.withinTables()`）・
+  観点外のテーブルとの関連（`ForeignKeys.crossingTableSetBoundary()`）を求める。ER図の描画は`ErDiagramTemplates.erDiagram()`をそのまま使う。
   人が選んだまとまりのため、スキーマ別ER図のようなグループ分割は行わない（上限を超える場合は関連の一覧表に切り替える点は同じ）
 - 観点は「見せ方」でありスキーマではないため、スナップショットには含めない（観点を変えても`--check`は差分を報告しない）
 - 観点を宣言しない場合の出力は、観点の導入前と変わらない。観点一覧は観点が1件以上あるときだけ出力し

@@ -46,9 +46,9 @@ public record TableDetail(
             table ->
                 new TableDetail(
                     table,
-                    columnsByTable.of(table),
-                    indexesByTable.of(table),
-                    constraintsByTable.of(table)))
+                    columnsByTable.belongingTo(table),
+                    indexesByTable.belongingTo(table),
+                    constraintsByTable.belongingTo(table)))
         .toList();
   }
 }
