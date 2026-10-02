@@ -11,9 +11,9 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.Tables;
-import com.export_table_definition.domain.model.target.ConsistencyFinding;
-import com.export_table_definition.domain.model.target.ConsistencyFinding.Kind;
-import com.export_table_definition.domain.model.target.ConsistencyFinding.Severity;
+import com.export_table_definition.domain.model.target.ConsistencyNotice;
+import com.export_table_definition.domain.model.target.ConsistencyNotice.Kind;
+import com.export_table_definition.domain.model.target.ConsistencyNotice.Severity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.domain.service.target.ExportTargetConsistency.ResolvedForeignKeys;
@@ -37,8 +37,8 @@ public class ExportTargetConsistencyTest {
     return foreignKeys.stream().map(ForeignKeyEntity::foreignKeyName).toList();
   }
 
-  private List<Kind> kinds(List<ConsistencyFinding> findings) {
-    return findings.stream().map(ConsistencyFinding::kind).toList();
+  private List<Kind> kinds(List<ConsistencyNotice> consistencyNotices) {
+    return consistencyNotices.stream().map(ConsistencyNotice::kind).toList();
   }
 
   @Test
@@ -86,7 +86,7 @@ public class ExportTargetConsistencyTest {
   }
 
   @Test
-  @DisplayName("resolveForeignKeys: 対象が無い場合は空の集合を返し、指摘も無い")
+  @DisplayName("resolveForeignKeys: 対象が無い場合は空の集合を返し、通知も無い")
   void testResolveForeignKeysReturnsEmptyWhenNothingToResolve() {
     ResolvedForeignKeys result =
         service.resolveForeignKeys(
@@ -94,29 +94,31 @@ public class ExportTargetConsistencyTest {
 
     assertEquals(List.of(), result.foreignKeys().of(table("public", "orders")));
     assertEquals(List.of(), result.foreignKeys().crossSchema());
-    assertEquals(List.of(), result.findings());
+    assertEquals(List.of(), result.consistencyNotices());
   }
 
   @Test
-  @DisplayName("resolveForeignKeys: 絞り込みが無い場合、参照先が存在しない物理外部キーを指摘する")
+  @DisplayName("resolveForeignKeys: 絞り込みが無い場合、参照先が存在しない物理外部キーを通知する")
   void testResolveForeignKeysReportsUnresolvedPhysicalForeignKeyWhenNotFiltered() {
     var tables = Tables.of(List.of(table("public", "orders")));
     var missingParent =
         ForeignKeyFixtures.physical("public", "orders", "fk_orders_staff", "public", "staff");
 
-    List<ConsistencyFinding> findings =
-        service.resolveForeignKeys(List.of(missingParent), List.of(), tables, false).findings();
+    List<ConsistencyNotice> consistencyNotices =
+        service
+            .resolveForeignKeys(List.of(missingParent), List.of(), tables, false)
+            .consistencyNotices();
 
-    assertEquals(List.of(Kind.UNRESOLVED_FOREIGN_KEY), kinds(findings));
-    assertEquals(Severity.WARN, findings.get(0).severity());
+    assertEquals(List.of(Kind.UNRESOLVED_FOREIGN_KEY), kinds(consistencyNotices));
+    assertEquals(Severity.WARN, consistencyNotices.get(0).severity());
     assertEquals(
         "Skipping a foreign key because the referenced table was not found (renamed or dropped?)."
             + " [foreignKey=fk_orders_staff, table=public.orders, referenceTable=public.staff]",
-        findings.get(0).message());
+        consistencyNotices.get(0).message());
   }
 
   @Test
-  @DisplayName("resolveForeignKeys: 絞り込み時は、物理外部キーの除外は意図したものとして指摘しない")
+  @DisplayName("resolveForeignKeys: 絞り込み時は、物理外部キーの除外は意図したものとして通知しない")
   void testResolveForeignKeysDoesNotReportPhysicalForeignKeyWhenFiltered() {
     var tables = Tables.of(List.of(table("public", "orders")));
     var missingParent =
@@ -124,11 +126,13 @@ public class ExportTargetConsistencyTest {
 
     assertEquals(
         List.of(),
-        service.resolveForeignKeys(List.of(missingParent), List.of(), tables, true).findings());
+        service
+            .resolveForeignKeys(List.of(missingParent), List.of(), tables, true)
+            .consistencyNotices());
   }
 
   @Test
-  @DisplayName("resolveForeignKeys: 論理リレーションの除外は絞り込みの有無によらず指摘し、合流させた件数も報告する")
+  @DisplayName("resolveForeignKeys: 論理リレーションの除外は絞り込みの有無によらず通知し、合流させた件数も報告する")
   void testResolveForeignKeysReportsLogicalRelations() {
     var tables = Tables.of(List.of(table("public", "orders"), table("public", "staff")));
     var logical =
@@ -136,26 +140,27 @@ public class ExportTargetConsistencyTest {
     var unresolvedLogical =
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_coupon", "public", "coupons");
 
-    List<ConsistencyFinding> findings =
+    List<ConsistencyNotice> consistencyNotices =
         service
             .resolveForeignKeys(List.of(), List.of(logical, unresolvedLogical), tables, true)
-            .findings();
+            .consistencyNotices();
 
     assertEquals(
-        List.of(Kind.UNRESOLVED_LOGICAL_RELATION, Kind.LOGICAL_RELATIONS_MERGED), kinds(findings));
+        List.of(Kind.UNRESOLVED_LOGICAL_RELATION, Kind.LOGICAL_RELATIONS_MERGED),
+        kinds(consistencyNotices));
     assertEquals(
         "Skipping logical relation because the table was not found in the output target"
             + " (filtered, renamed or dropped?). [relation=rel_orders_coupon, table=public.orders,"
             + " parentTable=public.coupons (not found)]",
-        findings.get(0).message());
-    assertEquals(Severity.INFO, findings.get(1).severity());
+        consistencyNotices.get(0).message());
+    assertEquals(Severity.INFO, consistencyNotices.get(1).severity());
     assertEquals(
         "Merged logical relations declared in the sidecar. [relationCount=1]",
-        findings.get(1).message());
+        consistencyNotices.get(1).message());
   }
 
   @Test
-  @DisplayName("findOrphanTableAnnotations: 実在しないテーブルに対する付帯情報を指摘する")
+  @DisplayName("findOrphanTableAnnotations: 実在しないテーブルに対する付帯情報を通知する")
   void testFindOrphanTableAnnotations() {
     var annotations =
         Annotations.of(
@@ -163,15 +168,15 @@ public class ExportTargetConsistencyTest {
                 TableKey.of("public", "orders"), new TableAnnotation("説明", "", Map.of()),
                 TableKey.of("public", "removed"), new TableAnnotation("説明", "", Map.of())));
 
-    List<ConsistencyFinding> findings =
+    List<ConsistencyNotice> consistencyNotices =
         service.findOrphanTableAnnotations(
             annotations, Tables.of(List.of(table("public", "orders"))), false);
 
-    assertEquals(List.of(Kind.ORPHAN_TABLE_ANNOTATION), kinds(findings));
+    assertEquals(List.of(Kind.ORPHAN_TABLE_ANNOTATION), kinds(consistencyNotices));
     assertEquals(
         "Annotation exists for a table that was not found (renamed or dropped?)."
             + " [table=public.removed]",
-        findings.get(0).message());
+        consistencyNotices.get(0).message());
   }
 
   @Test
@@ -181,15 +186,15 @@ public class ExportTargetConsistencyTest {
         Annotations.of(
             Map.of(TableKey.of("public", "removed"), new TableAnnotation("説明", "", Map.of())));
 
-    List<ConsistencyFinding> findings =
+    List<ConsistencyNotice> consistencyNotices =
         service.findOrphanTableAnnotations(annotations, Tables.of(List.of()), true);
 
-    assertEquals(List.of(Kind.ORPHAN_TABLE_ANNOTATION_CHECK_SKIPPED), kinds(findings));
-    assertEquals(Severity.INFO, findings.get(0).severity());
+    assertEquals(List.of(Kind.ORPHAN_TABLE_ANNOTATION_CHECK_SKIPPED), kinds(consistencyNotices));
+    assertEquals(Severity.INFO, consistencyNotices.get(0).severity());
   }
 
   @Test
-  @DisplayName("findOrphanTableAnnotations: 付帯情報が無い場合は指摘も無い")
+  @DisplayName("findOrphanTableAnnotations: 付帯情報が無い場合は通知も無い")
   void testFindOrphanTableAnnotationsWithoutAnnotations() {
     assertEquals(
         List.of(),
@@ -197,7 +202,7 @@ public class ExportTargetConsistencyTest {
   }
 
   @Test
-  @DisplayName("findOrphanColumnAnnotations: 実在しないカラムに対するカラム備考を指摘する")
+  @DisplayName("findOrphanColumnAnnotations: 実在しないカラムに対するカラム備考を通知する")
   void testFindOrphanColumnAnnotations() {
     var orders = table("public", "orders");
     var annotations =
@@ -212,13 +217,14 @@ public class ExportTargetConsistencyTest {
             List.of(),
             List.of());
 
-    List<ConsistencyFinding> findings = service.findOrphanColumnAnnotations(detail, annotations);
+    List<ConsistencyNotice> consistencyNotices =
+        service.findOrphanColumnAnnotations(detail, annotations);
 
-    assertEquals(List.of(Kind.ORPHAN_COLUMN_ANNOTATION), kinds(findings));
+    assertEquals(List.of(Kind.ORPHAN_COLUMN_ANNOTATION), kinds(consistencyNotices));
     assertEquals(
         "Column annotation exists for a column that was not found (renamed or dropped?)."
             + " [table=public.orders, column=removed_column]",
-        findings.get(0).message());
+        consistencyNotices.get(0).message());
   }
 
   @Test
@@ -231,17 +237,17 @@ public class ExportTargetConsistencyTest {
                 Viewpoint.of("master", "", "", List.of("public.customers"))));
     var tables = Tables.of(List.of(table("public", "orders"), table("public", "customers")));
 
-    List<ConsistencyFinding> findings =
+    List<ConsistencyNotice> consistencyNotices =
         service.findUnmatchedViewpointPatterns(viewpoints, tables, false);
 
-    assertEquals(List.of(Kind.UNMATCHED_VIEWPOINT_PATTERN), kinds(findings));
-    assertEquals(Severity.WARN, findings.getFirst().severity());
-    assertTrue(findings.getFirst().message().contains("viewpoint=order"));
-    assertTrue(findings.getFirst().message().contains("pattern=public.custmer"));
+    assertEquals(List.of(Kind.UNMATCHED_VIEWPOINT_PATTERN), kinds(consistencyNotices));
+    assertEquals(Severity.WARN, consistencyNotices.getFirst().severity());
+    assertTrue(consistencyNotices.getFirst().message().contains("viewpoint=order"));
+    assertTrue(consistencyNotices.getFirst().message().contains("pattern=public.custmer"));
   }
 
   @Test
-  @DisplayName("findUnmatchedViewpointPatterns: 出力対象が絞り込まれている場合は、対象外のテーブルを指すパターンを誤って指摘しないよう検出しない")
+  @DisplayName("findUnmatchedViewpointPatterns: 出力対象が絞り込まれている場合は、対象外のテーブルを指すパターンを誤って通知しないよう検出しない")
   void testFindUnmatchedViewpointPatternsSkippedWhenFiltered() {
     var viewpoints = Viewpoints.of(List.of(Viewpoint.of("order", "", "", List.of("sales.orders"))));
 

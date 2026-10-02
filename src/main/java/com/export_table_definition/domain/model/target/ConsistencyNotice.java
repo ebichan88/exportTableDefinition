@@ -1,14 +1,14 @@
 package com.export_table_definition.domain.model.target;
 
 /**
- * 出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報／観点）を突き合わせた結果の 指摘1件分を表す値オブジェクト<br>
- * リネーム・削除によるDBとサイドカーの乖離など、利用者が気付くべき事柄を表す。 突き合わせ自体はドメインサービスが行い、指摘をどこへ（ログ等）どう出力するかは呼び出し側が決める
+ * 出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報／観点）を突き合わせた結果の 通知1件分を表す値オブジェクト<br>
+ * リネーム・削除によるDBとサイドカーの乖離など、利用者が気付くべき事柄を表す。 突き合わせ自体はドメインサービスが行い、通知をどこへ（ログ等）どう出力するかは呼び出し側が決める
  *
- * @param message 指摘の内容（利用者向けのメッセージ）
+ * @param message 通知の内容（利用者向けのメッセージ）
  */
-public record ConsistencyFinding(Kind kind, String message) {
+public record ConsistencyNotice(Kind kind, String message) {
 
-  /** 指摘の重要度 */
+  /** 通知の重要度 */
   public enum Severity {
     /** 処理内容の報告（対応は不要） */
     INFO,
@@ -16,7 +16,7 @@ public record ConsistencyFinding(Kind kind, String message) {
     WARN
   }
 
-  /** 指摘の種類 */
+  /** 通知の種類 */
   public enum Kind {
     /** 実在しないテーブルに対する付帯情報（リネーム・削除の可能性） */
     ORPHAN_TABLE_ANNOTATION(Severity.WARN),
@@ -39,13 +39,13 @@ public record ConsistencyFinding(Kind kind, String message) {
       this.severity = severity;
     }
 
-    /** 指摘の重要度を返却するメソッド */
+    /** 通知の重要度を返却するメソッド */
     public Severity getSeverity() {
       return severity;
     }
   }
 
-  /** 指摘の重要度を返却するメソッド */
+  /** 通知の重要度を返却するメソッド */
   public Severity severity() {
     return kind.getSeverity();
   }
