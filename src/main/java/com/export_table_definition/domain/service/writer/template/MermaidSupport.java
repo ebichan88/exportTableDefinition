@@ -25,8 +25,8 @@ public final class MermaidSupport {
    *
    * @return サニタイズ済みのエンティティ識別子
    */
-  public static String mermaidId(String schemaName, String physicalTableName) {
-    return sanitizeIdentifier(schemaName + "_" + physicalTableName);
+  public static String mermaidId(TableKey key) {
+    return sanitizeIdentifier(key.schema() + "_" + key.table());
   }
 
   /**

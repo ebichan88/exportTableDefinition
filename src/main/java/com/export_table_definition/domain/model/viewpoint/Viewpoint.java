@@ -103,7 +103,7 @@ public final class Viewpoint {
    * @return 所属する場合はtrue
    */
   public boolean contains(TableEntity table) {
-    return tableNamePatterns.matches(table.schemaName(), table.physicalTableName());
+    return tableNamePatterns.matches(TableKey.of(table));
   }
 
   /**

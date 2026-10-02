@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
@@ -109,12 +110,10 @@ public class TableSnapshotTest {
             RelationType.PHYSICAL);
     var logicalRelation =
         ForeignKeyEntity.logical(
-            "public",
-            "orders",
+            TableKey.of("public", "orders"),
             "orders_user_id_lrel",
             List.of("user_id"),
-            "public",
-            "users",
+            TableKey.of("public", "users"),
             List.of("id"),
             Cardinality.ONE_TO_MANY);
     var trigger =

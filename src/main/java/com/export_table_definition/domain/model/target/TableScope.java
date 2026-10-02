@@ -1,6 +1,7 @@
 package com.export_table_definition.domain.model.target;
 
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableNamePatterns;
 import java.util.List;
 import java.util.Objects;
@@ -84,12 +85,12 @@ public final class TableScope {
       return true;
     }
     if (!hasSchemaList) {
-      return tableNamePatterns.matches(table.schemaName(), table.physicalTableName());
+      return tableNamePatterns.matches(TableKey.of(table));
     }
     if (!hasTableList) {
       return targetSchemaList.contains(table.schemaName());
     }
     return targetSchemaList.contains(table.schemaName())
-        && tableNamePatterns.matches(table.schemaName(), table.physicalTableName());
+        && tableNamePatterns.matches(TableKey.of(table));
   }
 }

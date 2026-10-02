@@ -3,6 +3,7 @@ package com.export_table_definition.testsupport;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.RelationType;
+import com.export_table_definition.domain.model.table.TableKey;
 import java.util.List;
 
 /**
@@ -101,6 +102,11 @@ public final class ForeignKeyFixtures {
       List<String> refColumns,
       Cardinality cardinality) {
     return ForeignKeyEntity.logical(
-        schema, table, name, columns, refSchema, refTable, refColumns, cardinality);
+        TableKey.of(schema, table),
+        name,
+        columns,
+        TableKey.of(refSchema, refTable),
+        refColumns,
+        cardinality);
   }
 }

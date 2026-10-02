@@ -40,30 +40,26 @@ public record ForeignKeyEntity(
    * サイドカーYAML由来の論理リレーションを生成する静的ファクトリメソッド<br>
    * DBに外部キー制約が存在しないため、多重度は機械的に判定できない。 呼び出し側でYAMLの明示指定を解決した上で渡すこと
    *
-   * @param schemaName 参照元（子）スキーマ名
-   * @param tableName 参照元（子）テーブル名
+   * @param table 参照元（子）テーブル
    * @param columnNames 参照元（子）の列名のリスト
-   * @param referenceSchemaName 参照先（親）スキーマ名
-   * @param referenceTableName 参照先（親）テーブル名
+   * @param referenceTable 参照先（親）テーブル
    * @param referenceColumnNames 参照先（親）の列名のリスト
    * @return 論理リレーションを表すForeignKeyEntity
    */
   public static ForeignKeyEntity logical(
-      String schemaName,
-      String tableName,
+      TableKey table,
       String relationName,
       List<String> columnNames,
-      String referenceSchemaName,
-      String referenceTableName,
+      TableKey referenceTable,
       List<String> referenceColumnNames,
       Cardinality cardinality) {
     return new ForeignKeyEntity(
-        schemaName,
-        tableName,
+        table.schema(),
+        table.table(),
         relationName,
         columnNames,
-        referenceSchemaName,
-        referenceTableName,
+        referenceTable.schema(),
+        referenceTable.table(),
         referenceColumnNames,
         cardinality,
         RelationType.LOGICAL);

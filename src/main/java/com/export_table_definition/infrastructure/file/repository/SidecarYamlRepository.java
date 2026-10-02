@@ -306,12 +306,10 @@ public class SidecarYamlRepository implements SidecarRepository {
           path);
     }
     return ForeignKeyEntity.logical(
-        child.schema(),
-        child.table(),
+        child,
         ForeignKeyEntity.resolveLogicalRelationName(childColumns),
         childColumns,
-        parent.schema(),
-        parent.table(),
+        parent,
         parentColumns,
         resolveCardinality(asString(relationMap.get(KEY_CARDINALITY)), child, path));
   }

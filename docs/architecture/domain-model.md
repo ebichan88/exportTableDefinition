@@ -220,7 +220,7 @@ classDiagram
   class TableNamePatterns {
     hasInclusion()
     unmatchedInclusions(tables)
-    matches(schemaName, physicalTableName)
+    matches(TableKey)
   }
 
   Viewpoints "1" o-- "0..*" Viewpoint : 宣言順

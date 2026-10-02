@@ -14,7 +14,7 @@ public class MermaidSupportTest {
   @Test
   @DisplayName("mermaidId: スキーマ名とテーブル名をアンダースコアで連結する")
   void testMermaidId() {
-    assertEquals("public_orders", MermaidSupport.mermaidId("public", "orders"));
+    assertEquals("public_orders", MermaidSupport.mermaidId(TableKey.of("public", "orders")));
   }
 
   @Test
