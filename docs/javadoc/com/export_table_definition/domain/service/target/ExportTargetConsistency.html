@@ -93,7 +93,7 @@ loadScripts(document, 'script');</script>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">出力対象のテーブルと、それを参照する情報（外部キー・サイドカーの論理リレーション／付帯情報）を突き合わせるドメインサービス<br>
  外部キーはスキーマ全体から、サイドカーは出力対象に関係なく読み込むため、出力対象の絞り込みで除外されたテーブルや、
- リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう指摘（<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyFinding</code></a>）として返す。指摘をどこへ出力するか（ログ等）は呼び出し側が決める</div>
+ リネーム・削除されたテーブル／カラムを参照していることがある。それらを出力から除外し、利用者が気付けるよう通知（<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target"><code>ConsistencyNotice</code></a>）として返す。通知をどこへ出力するか（ログ等）は呼び出し側が決める</div>
 </section>
 <section class="summary">
 <ul class="summary-list">
@@ -138,23 +138,23 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOrphanColumnAnnotations(com.export_table_definition.domain.model.table.TableDetail,com.export_table_definition.domain.model.sidecar.Annotations)" class="member-name-link">findOrphanColumnAnnotations</a><wbr>(<a href="../../model/table/TableDetail.html" title="class in com.export_table_definition.domain.model.table">TableDetail</a>&nbsp;detail,
  <a href="../../model/sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">実在しないカラムに対するカラム備考（＝孤児付帯情報）を検出するメソッド<br>
  出力対象のテーブルに対してのみ、実在カラムと付帯情報のカラム名を突き合わせて検出する</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOrphanTableAnnotations(com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">findOrphanTableAnnotations</a><wbr>(<a href="../../model/sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations,
  <a href="../../model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  boolean&nbsp;isFiltered)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">実在しないテーブルに対する付帯情報（＝孤児付帯情報）を検出するメソッド<br>
  リネームや削除により、サイドカーの付帯情報が現在のスキーマと乖離した場合の気付きとする。 スキーマ・テーブルの出力対象が絞り込まれている場合は、対象外テーブルの付帯情報を
- 誤って孤児と判定しないよう検出を行わない（検出を行わなかったこと自体を指摘として返す）</div>
+ 誤って孤児と判定しないよう検出を行わない（検出を行わなかったこと自体を通知として返す）</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findUnmatchedViewpointPatterns(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,boolean)" class="member-name-link">findUnmatchedViewpointPatterns</a><wbr>(<a href="../../model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints,
  <a href="../../model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  boolean&nbsp;isFiltered)</code></div>
@@ -172,8 +172,8 @@ loadScripts(document, 'script');</script>
 <div class="block">物理外部キーとサイドカー由来の論理リレーションのうち、参照元・参照先の双方が出力対象のテーブルであるものを 1つの外部キーの集合にまとめるメソッド<br>
  片側だけが出力対象のものを残すと、テーブル一覧・個別の定義書には現れないテーブルがER図にだけ箱として残ってしまうため除外する。
  論理リレーションも物理外部キーと同じ集合へ合流させることで、ER図のグループ分割（連結成分）やスキーマ跨ぎ関連の抽出にも自動的に反映される。 <br>
- 除外したものを指摘とするかは由来ごとに異なる。物理外部キーは、出力対象が絞り込まれている場合は意図した除外のため指摘しない。
- 論理リレーションは、除外の理由が絞り込みによるものかリネーム・削除による乖離かを区別できないため、一律で指摘する</div>
+ 除外したものを通知とするかは由来ごとに異なる。物理外部キーは、出力対象が絞り込まれている場合は意図した除外のため通知しない。
+ 論理リレーションは、除外の理由が絞り込みによるものかリネーム・削除による乖離かを区別できないため、一律で通知する</div>
 </div>
 </div>
 </div>
@@ -216,25 +216,25 @@ loadScripts(document, 'script');</script>
 <div class="block">物理外部キーとサイドカー由来の論理リレーションのうち、参照元・参照先の双方が出力対象のテーブルであるものを 1つの外部キーの集合にまとめるメソッド<br>
  片側だけが出力対象のものを残すと、テーブル一覧・個別の定義書には現れないテーブルがER図にだけ箱として残ってしまうため除外する。
  論理リレーションも物理外部キーと同じ集合へ合流させることで、ER図のグループ分割（連結成分）やスキーマ跨ぎ関連の抽出にも自動的に反映される。 <br>
- 除外したものを指摘とするかは由来ごとに異なる。物理外部キーは、出力対象が絞り込まれている場合は意図した除外のため指摘しない。
- 論理リレーションは、除外の理由が絞り込みによるものかリネーム・削除による乖離かを区別できないため、一律で指摘する</div>
+ 除外したものを通知とするかは由来ごとに異なる。物理外部キーは、出力対象が絞り込まれている場合は意図した除外のため通知しない。
+ 論理リレーションは、除外の理由が絞り込みによるものかリネーム・削除による乖離かを区別できないため、一律で通知する</div>
 </section>
 </li>
 <li>
 <section class="detail" id="findOrphanTableAnnotations(com.export_table_definition.domain.model.sidecar.Annotations,com.export_table_definition.domain.model.table.Tables,boolean)">
 <h3>findOrphanTableAnnotations</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</span>&nbsp;<span class="element-name">findOrphanTableAnnotations</span><wbr><span class="parameters">(<a href="../../model/sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</span>&nbsp;<span class="element-name">findOrphanTableAnnotations</span><wbr><span class="parameters">(<a href="../../model/sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations,
  <a href="../../model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  boolean&nbsp;isFiltered)</span></div>
 <div class="block">実在しないテーブルに対する付帯情報（＝孤児付帯情報）を検出するメソッド<br>
  リネームや削除により、サイドカーの付帯情報が現在のスキーマと乖離した場合の気付きとする。 スキーマ・テーブルの出力対象が絞り込まれている場合は、対象外テーブルの付帯情報を
- 誤って孤児と判定しないよう検出を行わない（検出を行わなかったこと自体を指摘として返す）</div>
+ 誤って孤児と判定しないよう検出を行わない（検出を行わなかったこと自体を通知として返す）</div>
 </section>
 </li>
 <li>
 <section class="detail" id="findUnmatchedViewpointPatterns(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,boolean)">
 <h3>findUnmatchedViewpointPatterns</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</span>&nbsp;<span class="element-name">findUnmatchedViewpointPatterns</span><wbr><span class="parameters">(<a href="../../model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</span>&nbsp;<span class="element-name">findUnmatchedViewpointPatterns</span><wbr><span class="parameters">(<a href="../../model/viewpoint/Viewpoints.html" title="class in com.export_table_definition.domain.model.viewpoint">Viewpoints</a>&nbsp;viewpoints,
  <a href="../../model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a>&nbsp;tables,
  boolean&nbsp;isFiltered)</span></div>
 <div class="block">観点の所属テーブルのパターンのうち、どのテーブルにも一致しないものを検出するメソッド<br>
@@ -245,7 +245,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findOrphanColumnAnnotations(com.export_table_definition.domain.model.table.TableDetail,com.export_table_definition.domain.model.sidecar.Annotations)">
 <h3>findOrphanColumnAnnotations</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</span>&nbsp;<span class="element-name">findOrphanColumnAnnotations</span><wbr><span class="parameters">(<a href="../../model/table/TableDetail.html" title="class in com.export_table_definition.domain.model.table">TableDetail</a>&nbsp;detail,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</span>&nbsp;<span class="element-name">findOrphanColumnAnnotations</span><wbr><span class="parameters">(<a href="../../model/table/TableDetail.html" title="class in com.export_table_definition.domain.model.table">TableDetail</a>&nbsp;detail,
  <a href="../../model/sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a>&nbsp;annotations)</span></div>
 <div class="block">実在しないカラムに対するカラム備考（＝孤児付帯情報）を検出するメソッド<br>
  出力対象のテーブルに対してのみ、実在カラムと付帯情報のカラム名を突き合わせて検出する</div>

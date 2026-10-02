@@ -18,7 +18,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.table.Triggers;
-import com.export_table_definition.domain.model.target.ConsistencyFinding;
+import com.export_table_definition.domain.model.target.ConsistencyNotice;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.model.target.OutputObjectType;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
@@ -133,7 +133,7 @@ final class SchemaExporter {
             logicalRelations,
             tables,
             isFiltered);
-    report(resolvedForeignKeys.findings());
+    report(resolvedForeignKeys.consistencyNotices());
     return resolvedForeignKeys.foreignKeys();
   }
 
@@ -278,12 +278,12 @@ final class SchemaExporter {
     }
   }
 
-  private static void report(List<ConsistencyFinding> findings) {
-    findings.forEach(
-        finding -> {
-          switch (finding.severity()) {
-            case INFO -> logger.info(finding.message());
-            case WARN -> logger.warn(finding.message());
+  private static void report(List<ConsistencyNotice> consistencyNotices) {
+    consistencyNotices.forEach(
+        notice -> {
+          switch (notice.severity()) {
+            case INFO -> logger.info(notice.message());
+            case WARN -> logger.warn(notice.message());
           }
         });
   }

@@ -99,7 +99,7 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="ExportTargetConsistency.html" title="class in com.export_table_definition.domain.service.target">ExportTargetConsistency</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">ExportTargetConsistency.ResolvedForeignKeys</span>(<a href="../../model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;&nbsp;findings)
+<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">ExportTargetConsistency.ResolvedForeignKeys</span>(<a href="../../model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;&nbsp;consistencyNotices)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">外部キーの突き合わせ結果</div>
 </section>
@@ -114,7 +114,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List)" class="member-name-link">ResolvedForeignKeys</a><wbr>(<a href="../../model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;&nbsp;findings)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;&nbsp;consistencyNotices)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>ResolvedForeignKeys</code> record class.</div>
 </div>
@@ -132,15 +132,15 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#consistencyNotices()" class="member-name-link">consistencyNotices</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Indicates whether some other object is "equal to" this one.</div>
+<div class="block">Returns the value of the <code>consistencyNotices</code> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findings()" class="member-name-link">findings</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#equals(java.lang.Object)" class="member-name-link">equals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <code>findings</code> record component.</div>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#foreignKeys()" class="member-name-link">foreignKeys</a>()</code></div>
@@ -178,12 +178,12 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="&lt;init&gt;(com.export_table_definition.domain.model.relation.ForeignKeys,java.util.List)">
 <h3>ResolvedForeignKeys</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ResolvedForeignKeys</span><wbr><span class="parameters">(<a href="../../model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a>&nbsp;foreignKeys,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;&nbsp;findings)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;&nbsp;consistencyNotices)</span></div>
 <div class="block">Creates an instance of a <code>ResolvedForeignKeys</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>foreignKeys</code> - the value for the <a href="#param-foreignKeys"><code>foreignKeys</code></a> record component</dd>
-<dd><code>findings</code> - the value for the <code>findings</code> record component</dd>
+<dd><code>consistencyNotices</code> - the value for the <code>consistencyNotices</code> record component</dd>
 </dl>
 </section>
 </li>
@@ -248,13 +248,13 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="findings()">
-<h3>findings</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyFinding.html" title="class in com.export_table_definition.domain.model.target">ConsistencyFinding</a>&gt;</span>&nbsp;<span class="element-name">findings</span>()</div>
-<div class="block">Returns the value of the <code>findings</code> record component.</div>
+<section class="detail" id="consistencyNotices()">
+<h3>consistencyNotices</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/target/ConsistencyNotice.html" title="class in com.export_table_definition.domain.model.target">ConsistencyNotice</a>&gt;</span>&nbsp;<span class="element-name">consistencyNotices</span>()</div>
+<div class="block">Returns the value of the <code>consistencyNotices</code> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <code>findings</code> record component</dd>
+<dd>the value of the <code>consistencyNotices</code> record component</dd>
 </dl>
 </section>
 </li>
