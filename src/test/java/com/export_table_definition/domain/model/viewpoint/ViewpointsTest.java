@@ -34,4 +34,16 @@ public class ViewpointsTest {
     assertEquals(List.of(), Viewpoints.empty().asList());
     assertEquals(List.of(), Viewpoints.empty().of(table("sales", "orders")));
   }
+
+  @Test
+  @DisplayName("stream・size: 宣言順のストリームと件数を返す")
+  void testStreamAndSize() {
+    Viewpoint order = Viewpoint.of("order", "受注管理", "", List.of("sales.order*"));
+    Viewpoint master = Viewpoint.of("master", "マスタ", "", List.of("customer"));
+    Viewpoints viewpoints = Viewpoints.of(List.of(order, master));
+
+    assertEquals(2, viewpoints.size());
+    assertEquals(List.of(order, master), viewpoints.stream().toList());
+    assertEquals(0, Viewpoints.empty().size());
+  }
 }

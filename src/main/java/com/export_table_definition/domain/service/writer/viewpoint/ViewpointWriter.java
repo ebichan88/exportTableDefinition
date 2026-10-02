@@ -59,9 +59,7 @@ public class ViewpointWriter {
       NodeLimit limit) {
     // 観点ページと観点一覧（テーブル数）の双方が同じ出力内容を用いるため、観点ごとに1回だけ求める
     final List<ViewpointContent> contents =
-        viewpoints.asList().stream()
-            .map(viewpoint -> viewpoint.resolve(tables, foreignKeys))
-            .toList();
+        viewpoints.stream().map(viewpoint -> viewpoint.resolve(tables, foreignKeys)).toList();
     contents.forEach(content -> writeViewpointPage(content, outputRoot, limit));
     writeViewpointIndex(contents, outputRoot);
   }

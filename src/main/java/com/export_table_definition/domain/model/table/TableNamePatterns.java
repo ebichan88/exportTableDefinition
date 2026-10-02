@@ -1,7 +1,6 @@
 package com.export_table_definition.domain.model.table;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -81,7 +80,7 @@ public final class TableNamePatterns {
   }
 
   /** テーブルのリネーム・削除によって、パターンがDBと乖離していないかの気付きに用いる */
-  public List<String> unmatchedInclusions(Collection<TableEntity> tables) {
+  public List<String> unmatchedInclusions(Tables tables) {
     return includes.stream()
         .filter(entry -> tables.stream().noneMatch(table -> entry.matches(TableKey.of(table))))
         .map(Entry::raw)

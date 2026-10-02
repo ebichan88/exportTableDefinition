@@ -2,7 +2,9 @@ package com.export_table_definition.domain.service.snapshot;
 
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.Sequences;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.schemaobject.Types;
 import com.export_table_definition.domain.model.snapshot.DatabaseSnapshot;
 import com.export_table_definition.domain.model.snapshot.FunctionSnapshot;
 import com.export_table_definition.domain.model.snapshot.SequenceSnapshot;
@@ -55,9 +57,9 @@ public class SchemaSnapshotWriter {
   }
 
   /** スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない */
-  public void writeSequences(List<SequenceEntity> sequences, OutputRoot outputRoot) {
+  public void writeSequences(Sequences sequences, OutputRoot outputRoot) {
     writeBySchema(
-        sequences,
+        sequences.asList(),
         SequenceEntity::schemaName,
         SequenceSnapshot::of,
         SnapshotKind.SEQUENCE,
@@ -65,8 +67,9 @@ public class SchemaSnapshotWriter {
   }
 
   /** スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない */
-  public void writeTypes(List<TypeEntity> types, OutputRoot outputRoot) {
-    writeBySchema(types, TypeEntity::schemaName, TypeSnapshot::of, SnapshotKind.TYPE, outputRoot);
+  public void writeTypes(Types types, OutputRoot outputRoot) {
+    writeBySchema(
+        types.asList(), TypeEntity::schemaName, TypeSnapshot::of, SnapshotKind.TYPE, outputRoot);
   }
 
   /** 定義本体が大きくなり得るため、スキーマ単位で取得したものを受け取って1ファイルへ出力する */

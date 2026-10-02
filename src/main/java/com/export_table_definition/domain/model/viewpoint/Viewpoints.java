@@ -2,6 +2,7 @@ package com.export_table_definition.domain.model.viewpoint;
 
 import com.export_table_definition.domain.model.table.TableEntity;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * 観点（{@link Viewpoint}）の集合を扱うクラス<br>
@@ -44,6 +45,16 @@ public final class Viewpoints {
    */
   public List<Viewpoint> asList() {
     return list;
+  }
+
+  /** 観点のストリームを取得するメソッド（宣言順） */
+  public Stream<Viewpoint> stream() {
+    return list.stream();
+  }
+
+  /** 観点の件数を取得するメソッド */
+  public int size() {
+    return list.size();
   }
 
   /**
