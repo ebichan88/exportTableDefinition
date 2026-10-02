@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.ViewpointContent;
 import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramTemplates;
+import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.time.LocalDate;
 import java.util.List;
@@ -68,7 +69,8 @@ public class ViewpointTemplatesTest {
 
         """,
         ViewpointTemplates.erDiagram(
-            ForeignKeyGroup.of(List.of()).renderingUnder(NodeLimit.of(80))));
+            ForeignKeyGroup.of(List.of()).renderingUnder(NodeLimit.of(80)),
+            DiagramBoxesFixtures.none()));
   }
 
   @Test
@@ -81,7 +83,10 @@ public class ViewpointTemplatesTest {
                     "public", "orders", "fk_orders_customer", "public", "customer")));
 
     var rendering = group.renderingUnder(NodeLimit.of(80));
-    assertEquals(ErDiagramTemplates.erDiagram(rendering), ViewpointTemplates.erDiagram(rendering));
+    var boxes = DiagramBoxesFixtures.none();
+    assertEquals(
+        ErDiagramTemplates.erDiagram(rendering, boxes),
+        ViewpointTemplates.erDiagram(rendering, boxes));
   }
 
   @Test

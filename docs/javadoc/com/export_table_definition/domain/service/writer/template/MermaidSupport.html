@@ -115,34 +115,42 @@ loadScripts(document, 'script');</script>
  識別子ごとに図内で1回宣言すれば、以降その識別子が登場する箇所（属性ブロック・関係線の両方）に別名が適用される</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#assignLabels(java.util.Collection)" class="member-name-link">assignLabels</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&gt;&nbsp;nodes)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#assignLabels(java.util.Collection,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">assignLabels</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&gt;&nbsp;nodes,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">図に描画するノードの表示ラベルを決めるメソッド<br>
  識別子（スキーマ名込み）とは別に、Mermaidのエンティティ別名構文で表示名を差し替える。 通常はテーブル名のみを表示するが、同じ図内に同名テーブルが複数スキーマにまたがって存在する
- 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする</div>
+ 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする。 論理テーブル名がある場合は「テーブル名（論理テーブル名）」とする</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#mermaidId(com.export_table_definition.domain.model.table.TableKey)" class="member-name-link">mermaidId</a><wbr>(<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;key)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#attributeBlock(java.lang.String,java.util.List)" class="member-name-link">attributeBlock</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a>&gt;&nbsp;columns)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">テーブルの箱に表示するカラムの属性ブロックを生成するメソッド<br>
+ 1行は「型 物理カラム名 キー "論理カラム名"」。Mermaidの型・名前には記号や日本語を書けないため、論理カラム名は末尾のコメントに置く</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#mermaidId(com.export_table_definition.domain.model.table.TableKey)" class="member-name-link">mermaidId</a><wbr>(<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&nbsp;key)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Mermaid記法のエンティティ識別子を生成するメソッド<br>
  スキーマ名を含めることで、同名テーブルが複数スキーマに存在する場合の識別子衝突を避ける</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#relationLine(java.lang.String,com.export_table_definition.domain.model.relation.ForeignKeyEntity,java.lang.String)" class="member-name-link">relationLine</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parentId,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#relationLine(java.lang.String,com.export_table_definition.domain.model.relation.ForeignKeyEntity,java.lang.String)" class="member-name-link">relationLine</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parentId,
  <a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&nbsp;fk,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;childId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">関係線1本分の行を生成するメソッド<br>
  参照先（親）→ 参照元（子）の向きで描画し、線種（実線／破線）と多重度は外部キーの由来・多重度から組み立てる</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#sanitizeIdentifier(java.lang.String)" class="member-name-link">sanitizeIdentifier</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#sanitizeIdentifier(java.lang.String)" class="member-name-link">sanitizeIdentifier</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Mermaid記法で識別子として利用できない文字をアンダースコアに置換するメソッド</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#sanitizeType(java.lang.String)" class="member-name-link">sanitizeType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#sanitizeType(java.lang.String)" class="member-name-link">sanitizeType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnType)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">データ型からMermaid記法の属性型として利用できる文字列を生成するメソッド<br>
  桁数・精度を表す括弧部分を除去し、残った空白をアンダースコアに置換する</div>
 </div>
@@ -176,12 +184,13 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="assignLabels(java.util.Collection)">
+<section class="detail" id="assignLabels(java.util.Collection,com.export_table_definition.domain.model.relation.DiagramBoxes)">
 <h3>assignLabels</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">assignLabels</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&gt;&nbsp;nodes)</span></div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">assignLabels</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../../model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a>&gt;&nbsp;nodes,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes)</span></div>
 <div class="block">図に描画するノードの表示ラベルを決めるメソッド<br>
  識別子（スキーマ名込み）とは別に、Mermaidのエンティティ別名構文で表示名を差し替える。 通常はテーブル名のみを表示するが、同じ図内に同名テーブルが複数スキーマにまたがって存在する
- 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする</div>
+ 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする。 論理テーブル名がある場合は「テーブル名（論理テーブル名）」とする</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>nodes</code> - 図に描画するノードのテーブルキー（重複無し）</dd>
@@ -197,6 +206,19 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;label)</span></div>
 <div class="block">エンティティ別名の宣言1行分を生成するメソッド<br>
  識別子ごとに図内で1回宣言すれば、以降その識別子が登場する箇所（属性ブロック・関係線の両方）に別名が適用される</div>
+</section>
+</li>
+<li>
+<section class="detail" id="attributeBlock(java.lang.String,java.util.List)">
+<h3>attributeBlock</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">attributeBlock</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;id,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a>&gt;&nbsp;columns)</span></div>
+<div class="block">テーブルの箱に表示するカラムの属性ブロックを生成するメソッド<br>
+ 1行は「型 物理カラム名 キー "論理カラム名"」。Mermaidの型・名前には記号や日本語を書けないため、論理カラム名は末尾のコメントに置く</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>属性ブロック（末尾の改行を含む）。表示するカラムが無い場合は空文字</dd>
+</dl>
 </section>
 </li>
 <li>

@@ -5,8 +5,10 @@ import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import java.util.List;
 
@@ -28,6 +30,13 @@ public interface TableDefinitionRepository {
    * @return テーブルごとの詳細情報のリスト（{@code tables}と同じ順）
    */
   List<TableDetail> selectTableDetails(List<TableEntity> tables);
+
+  /**
+   * 指定したテーブルのカラムを取得する。テーブル数に比例して重くなる情報のため、呼び出し側は同一スキーマのテーブルをチャンク単位で渡す
+   *
+   * @return カラムのリスト（テーブルごとにカラムの定義順）。存在しないテーブルのカラムは含まない
+   */
+  List<ColumnEntity> selectColumnList(List<TableKey> tables);
 
   /** テーブル単位の絞り込みは行わず、スキーマ全体を取得する（{@link #selectTableList}を参照） */
   List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList);

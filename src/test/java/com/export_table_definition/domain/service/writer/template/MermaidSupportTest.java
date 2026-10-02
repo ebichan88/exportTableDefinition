@@ -1,8 +1,14 @@
 package com.export_table_definition.domain.service.writer.template;
 
+import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.relation.DiagramColumn;
+import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
+import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +29,8 @@ public class MermaidSupportTest {
     var orders = TableKey.of("public", "orders");
     var customers = TableKey.of("public", "customers");
 
-    Map<TableKey, String> labels = MermaidSupport.assignLabels(List.of(orders, customers));
+    Map<TableKey, String> labels =
+        MermaidSupport.assignLabels(List.of(orders, customers), DiagramBoxesFixtures.none());
 
     assertEquals("orders", labels.get(orders));
     assertEquals("customers", labels.get(customers));
@@ -36,7 +43,8 @@ public class MermaidSupportTest {
     var masterCustomers = TableKey.of("master", "customers");
 
     Map<TableKey, String> labels =
-        MermaidSupport.assignLabels(List.of(salesCustomers, masterCustomers));
+        MermaidSupport.assignLabels(
+            List.of(salesCustomers, masterCustomers), DiagramBoxesFixtures.none());
 
     assertEquals("sales.customers", labels.get(salesCustomers));
     assertEquals("master.customers", labels.get(masterCustomers));
@@ -50,7 +58,8 @@ public class MermaidSupportTest {
     var orders = TableKey.of("sales", "orders");
 
     Map<TableKey, String> labels =
-        MermaidSupport.assignLabels(List.of(salesCustomers, masterCustomers, orders));
+        MermaidSupport.assignLabels(
+            List.of(salesCustomers, masterCustomers, orders), DiagramBoxesFixtures.none());
 
     assertEquals("sales.customers", labels.get(salesCustomers));
     assertEquals("master.customers", labels.get(masterCustomers));
@@ -63,5 +72,73 @@ public class MermaidSupportTest {
     assertEquals(
         "    public_orders[\"orders\"]" + System.lineSeparator(),
         MermaidSupport.aliasLine("public_orders", "orders"));
+  }
+
+  @Test
+  @DisplayName("assignLabels: 論理テーブル名がある場合は「テーブル名（論理テーブル名）」にする")
+  void testAssignLabelsWithLogicalName() {
+    var orders = TableKey.of("public", "orders");
+    var customers = TableKey.of("public", "customers");
+    var boxes =
+        DiagramBoxesFixtures.of(
+            List.of(new TableEntity("testdb", "public", "受注", "orders", TableType.TABLE, "")),
+            List.of(),
+            List.of());
+
+    Map<TableKey, String> labels = MermaidSupport.assignLabels(List.of(orders, customers), boxes);
+
+    assertEquals("orders（受注）", labels.get(orders));
+    assertEquals("customers", labels.get(customers));
+  }
+
+  @Test
+  @DisplayName("aliasLine: ラベル中の二重引用符は単一引用符に置き換える")
+  void testAliasLineReplacesDoubleQuote() {
+    assertEquals(
+        "    public_orders[\"orders（'受注'）\"]" + System.lineSeparator(),
+        MermaidSupport.aliasLine("public_orders", "orders（\"受注\"）"));
+  }
+
+  @Test
+  @DisplayName("attributeBlock: 型・物理カラム名・キー・論理カラム名（コメント）を1行ずつ出力する")
+  void testAttributeBlock() {
+    var id = new ColumnEntity("public", "orders", "受注ID", "id", "integer", "", true, true, "");
+    var customerId =
+        new ColumnEntity(
+            "public",
+            "orders",
+            "顧客\"ID\"",
+            "customer_id",
+            "character varying(20)",
+            "",
+            false,
+            true,
+            "");
+    var note = new ColumnEntity("public", "orders", "", "note", "text", "", false, false, "");
+    var parentId =
+        new ColumnEntity("public", "orders", "親受注ID", "parent_id", "integer", "", true, true, "");
+
+    assertMarkdownEquals(
+        """
+            public_orders {
+                integer id PK "受注ID"
+                character_varying customer_id FK "顧客'ID'"
+                text note
+                integer parent_id PK, FK "親受注ID"
+            }
+        """,
+        MermaidSupport.attributeBlock(
+            "public_orders",
+            List.of(
+                new DiagramColumn(id, false),
+                new DiagramColumn(customerId, true),
+                new DiagramColumn(note, false),
+                new DiagramColumn(parentId, true))));
+  }
+
+  @Test
+  @DisplayName("attributeBlock: 表示するカラムが無い場合は属性ブロックを出力しない")
+  void testAttributeBlockEmpty() {
+    assertEquals("", MermaidSupport.attributeBlock("public_orders", List.of()));
   }
 }

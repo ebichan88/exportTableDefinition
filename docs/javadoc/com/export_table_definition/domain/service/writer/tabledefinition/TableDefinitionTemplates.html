@@ -139,14 +139,15 @@ loadScripts(document, 'script');</script>
  備考はDBコメント（<code>COMMENT ON CONSTRAINT</code>）由来の自由記述文字列のためエスケープする</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)" class="member-name-link">erDiagram</a><wbr>(<a href="../../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">erDiagram</a><wbr>(<a href="../../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/table/ColumnEntity.html" title="class in com.export_table_definition.domain.model.table">ColumnEntity</a>&gt;&nbsp;columns,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;outgoingFks,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;incomingFks)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;incomingFks,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">ER図セクション（Mermaid記法）<br>
- 自テーブルはカラム・PK情報付きの箱として、関連テーブル（参照元・参照先）は 属性なしの箱として描画する。関連テーブルの属性情報を必要としないため、
- チャンク単位の分割取得（他チャンク・他スキーマのテーブル詳細を保持しないこと）の影響を受けない</div>
+ 自テーブルは全カラムを、関連テーブル（参照元・参照先）は描画する関連をつなぐカラムだけを箱に表示する。 関連テーブルのカラムはチャンク単位の分割取得の対象外のため、<code>
+ boxes</code>が別途取得した関連カラムを用いる</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#fileHeader(com.export_table_definition.domain.model.table.TableEntity)" class="member-name-link">fileHeader</a><wbr>(<a href="../../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table)</code></div>
@@ -332,15 +333,16 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)">
+<section class="detail" id="erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.relation.DiagramBoxes)">
 <h3>erDiagram</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">erDiagram</span><wbr><span class="parameters">(<a href="../../../model/table/TableEntity.html" title="class in com.export_table_definition.domain.model.table">TableEntity</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/table/ColumnEntity.html" title="class in com.export_table_definition.domain.model.table">ColumnEntity</a>&gt;&nbsp;columns,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;outgoingFks,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;incomingFks)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/relation/ForeignKeyEntity.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeyEntity</a>&gt;&nbsp;incomingFks,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes)</span></div>
 <div class="block">ER図セクション（Mermaid記法）<br>
- 自テーブルはカラム・PK情報付きの箱として、関連テーブル（参照元・参照先）は 属性なしの箱として描画する。関連テーブルの属性情報を必要としないため、
- チャンク単位の分割取得（他チャンク・他スキーマのテーブル詳細を保持しないこと）の影響を受けない</div>
+ 自テーブルは全カラムを、関連テーブル（参照元・参照先）は描画する関連をつなぐカラムだけを箱に表示する。 関連テーブルのカラムはチャンク単位の分割取得の対象外のため、<code>
+ boxes</code>が別途取得した関連カラムを用いる</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>outgoingFks</code> - 自テーブルが参照している外部キー（自テーブル → 参照先）のリスト</dd>

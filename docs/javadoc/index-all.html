@@ -64,6 +64,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/db/repository/AbstractTableDefinitionRepository.html#%3Cinit%3E(com.export_table_definition.infrastructure.db.type.DatabaseType,org.apache.ibatis.session.SqlSessionFactory)" class="member-name-link">AbstractTableDefinitionRepository(DatabaseType, SqlSessionFactory)</a> - Constructor for class com.export_table_definition.infrastructure.db.repository.<a href="com/export_table_definition/infrastructure/db/repository/AbstractTableDefinitionRepository.html" title="class in com.export_table_definition.infrastructure.db.repository">AbstractTableDefinitionRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html#add(java.util.List)" class="member-name-link">add(List&lt;ColumnEntity&gt;)</a> - Method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes.Builder</a></dt>
+<dd>
+<div class="block">取得したカラムのうち、関連カラムだけを保持するメソッド</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html#aliasLine(java.lang.String,java.lang.String)" class="member-name-link">aliasLine(String, String)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></dt>
 <dd>
 <div class="block">エンティティ別名の宣言1行分を生成するメソッド<br>
@@ -140,11 +144,16 @@ loadScripts(document, 'script');</script>
 <div class="block">複数テーブル分の詳細情報を、テーブルごとに組み立てるメソッド<br>
  DBからは詳細情報の種類ごとに複数テーブル分をまとめて取得するため、それぞれを所属するテーブルへ振り分ける</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html#assignLabels(java.util.Collection)" class="member-name-link">assignLabels(Collection&lt;TableKey&gt;)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html#assignLabels(java.util.Collection,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">assignLabels(Collection&lt;TableKey&gt;, DiagramBoxes)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></dt>
 <dd>
 <div class="block">図に描画するノードの表示ラベルを決めるメソッド<br>
  識別子（スキーマ名込み）とは別に、Mermaidのエンティティ別名構文で表示名を差し替える。 通常はテーブル名のみを表示するが、同じ図内に同名テーブルが複数スキーマにまたがって存在する
- 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする</div>
+ 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする。 論理テーブル名がある場合は「テーブル名（論理テーブル名）」とする</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html#attributeBlock(java.lang.String,java.util.List)" class="member-name-link">attributeBlock(String, List&lt;DiagramColumn&gt;)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></dt>
+<dd>
+<div class="block">テーブルの箱に表示するカラムの属性ブロックを生成するメソッド<br>
+ 1行は「型 物理カラム名 キー "論理カラム名"」。Mermaidの型・名前には記号や日本語を書けないため、論理カラム名は末尾のコメントに置く</div>
 </dd>
 </dl>
 <h2 class="title" id="I:B">B</h2>
@@ -216,6 +225,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">スキーマ内のテーブル定義を書き出し始める前に呼ばれるメソッド<br>
  以降、当該スキーマのテーブルについて<a href="com/export_table_definition/domain/service/export/ExportSink.html#writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent)"><code>ExportSink.writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent)</code></a>がチャンク単位で繰り返し呼ばれる</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html#build()" class="member-name-link">build()</a> - Method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes.Builder</a></dt>
+<dd>
+<div class="block">集めた関連カラムから<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramBoxes</code></a>を組み立てるメソッド</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html#builder(com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys)" class="member-name-link">builder(Tables, ForeignKeys)</a> - Static method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a></dt>
+<dd>
+<div class="block">関連カラムを集めて組み立てるビルダーを生成するメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/table/AbstractEntities.html#byKey" class="member-name-link">byKey</a> - Variable in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/AbstractEntities.html" title="class in com.export_table_definition.domain.model.table">AbstractEntities</a></dt>
 <dd>&nbsp;</dd>
@@ -323,6 +340,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/presentation/type/ExitStatus.html#code()" class="member-name-link">code()</a> - Method in enum class com.export_table_definition.presentation.type.<a href="com/export_table_definition/presentation/type/ExitStatus.html" title="enum class in com.export_table_definition.presentation.type">ExitStatus</a></dt>
 <dd>
 <div class="block">プロセスの終了コードを返却する。</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html#column()" class="member-name-link">column()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a></dt>
+<dd>
+<div class="block">Returns the value of the <code>column</code> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Column.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,java.lang.String,java.lang.String)" class="member-name-link">Column(String, String, String, String, boolean, boolean, String, String)</a> - Constructor for record class com.export_table_definition.domain.model.snapshot.<a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Column.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Column</a></dt>
 <dd>
@@ -667,7 +688,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">指定したディレクトリへスキーマのスナップショットを書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html#create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">create(Path, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></dt>
+<dt><a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html#create(java.nio.file.Path,com.export_table_definition.domain.model.relation.NodeLimit,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">create(Path, NodeLimit, DiagramBoxes)</a> - Method in class com.export_table_definition.domain.service.export.<a href="com/export_table_definition/domain/service/export/MarkdownExportSinkFactory.html" title="class in com.export_table_definition.domain.service.export">MarkdownExportSinkFactory</a></dt>
 <dd>
 <div class="block">指定したディレクトリへMarkdownのドキュメントを書き出す<a href="com/export_table_definition/domain/service/export/ExportSink.html" title="interface in com.export_table_definition.domain.service.export"><code>ExportSink</code></a>を生成するメソッド</div>
 </dd>
@@ -939,6 +960,23 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">接続先のDB種別を判定するメソッド</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html" class="type-name-link" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a> - Class in <a href="com/export_table_definition/domain/model/relation/package-summary.html">com.export_table_definition.domain.model.relation</a></dt>
+<dd>
+<div class="block">ER図のテーブルの箱に表示する内容（論理テーブル名・関連カラム）を引くクラス<br>
+ 関連カラムは、関連の参照元・参照先として使われるカラム。カラムはテーブル数に比例して重くなるため、 取得したカラムのうち関連カラムだけを保持する（<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramBoxes.Builder</code></a>）</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html" class="type-name-link" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes.Builder</a> - Class in <a href="com/export_table_definition/domain/model/relation/package-summary.html">com.export_table_definition.domain.model.relation</a></dt>
+<dd>
+<div class="block">取得したカラムから関連カラムだけを集めて<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramBoxes</code></a>を組み立てるビルダー</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" class="type-name-link" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a> - Record Class in <a href="com/export_table_definition/domain/model/relation/package-summary.html">com.export_table_definition.domain.model.relation</a></dt>
+<dd>
+<div class="block">ER図のテーブルの箱に表示するカラム</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html#%3Cinit%3E(com.export_table_definition.domain.model.table.ColumnEntity,boolean)" class="member-name-link">DiagramColumn(ColumnEntity, boolean)</a> - Constructor for record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>DiagramColumn</code> record class.</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/model/relation/DiagramRendering.html" class="type-name-link" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a> - Interface in <a href="com/export_table_definition/domain/model/relation/package-summary.html">com.export_table_definition.domain.model.relation</a></dt>
 <dd>
 <div class="block">外部キーのまとまりをER図として描画するか、描画を省略して外部キー一覧にフォールバックするかの判断結果<br>
@@ -1047,6 +1085,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/database/DatabaseEntity.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.domain.model.database.<a href="com/export_table_definition/domain/model/database/DatabaseEntity.html" title="class in com.export_table_definition.domain.model.database">DatabaseEntity</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1254,24 +1296,25 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">ER図一覧（スキーマ別ER図の索引）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)" class="member-name-link">erDiagram(DiagramRendering)</a> - Static method in class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramTemplates</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">erDiagram(DiagramRendering, DiagramBoxes)</a> - Static method in class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramTemplates</a></dt>
 <dd>
 <div class="block">ER図セクション（Mermaid記法）<br>
  外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧<code>
  tableList_{DB名}.md</code>側に掲載されている）。<br>
+ テーブルの箱には、図に描画する関連をつなぐカラムだけを表示する。<br>
  描画を省略する判断結果（<a href="com/export_table_definition/domain/model/relation/DiagramRendering.Omit.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramRendering.Omit</code></a>）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
  （代替として掲載する外部キー一覧は呼び出し側が組み立てる）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)" class="member-name-link">erDiagram(DiagramRendering)</a> - Static method in class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointTemplates</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">erDiagram(DiagramRendering, DiagramBoxes)</a> - Static method in class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointTemplates.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointTemplates</a></dt>
 <dd>
 <div class="block">ER図セクション（Mermaid記法）<br>
- 所属テーブル同士の関連のみを描画する。描画の内容・上限を超えた場合の扱いはスキーマ別ER図と同じ （<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)"><code>ErDiagramTemplates.erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)</code></a>）</div>
+ 所属テーブル同士の関連のみを描画する。描画の内容・上限を超えた場合の扱いはスキーマ別ER図と同じ （<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering,com.export_table_definition.domain.model.relation.DiagramBoxes)"><code>ErDiagramTemplates.erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering, com.export_table_definition.domain.model.relation.DiagramBoxes)</code></a>）</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)" class="member-name-link">erDiagram(TableEntity, List&lt;ColumnEntity&gt;, List&lt;ForeignKeyEntity&gt;, List&lt;ForeignKeyEntity&gt;)</a> - Static method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionTemplates</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">erDiagram(TableEntity, List&lt;ColumnEntity&gt;, List&lt;ForeignKeyEntity&gt;, List&lt;ForeignKeyEntity&gt;, DiagramBoxes)</a> - Static method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionTemplates</a></dt>
 <dd>
 <div class="block">ER図セクション（Mermaid記法）<br>
- 自テーブルはカラム・PK情報付きの箱として、関連テーブル（参照元・参照先）は 属性なしの箱として描画する。関連テーブルの属性情報を必要としないため、
- チャンク単位の分割取得（他チャンク・他スキーマのテーブル詳細を保持しないこと）の影響を受けない</div>
+ 自テーブルは全カラムを、関連テーブル（参照元・参照先）は描画する関連をつなぐカラムだけを箱に表示する。 関連テーブルのカラムはチャンク単位の分割取得の対象外のため、<code>
+ boxes</code>が別途取得した関連カラムを用いる</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/path/DocumentLocations.html#erDiagramFile(java.lang.String,java.lang.String)" class="member-name-link">erDiagramFile(String, String)</a> - Static method in class com.export_table_definition.domain.service.path.<a href="com/export_table_definition/domain/service/path/DocumentLocations.html" title="class in com.export_table_definition.domain.service.path">DocumentLocations</a></dt>
 <dd>
@@ -1288,8 +1331,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" class="type-name-link" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramTemplates</a> - Class in <a href="com/export_table_definition/domain/service/writer/erdiagram/package-summary.html">com.export_table_definition.domain.service.writer.erdiagram</a></dt>
 <dd>
 <div class="block">スキーマ単位のER図（全体ER図）書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
- テーブル単位のER図（<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)"><code>TableDefinitionTemplates.erDiagram(com.export_table_definition.domain.model.table.TableEntity, java.util.List&lt;com.export_table_definition.domain.model.table.ColumnEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;)</code></a>）とは異なり、
- すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
+ テーブル単位のER図（<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.relation.DiagramBoxes)"><code>TableDefinitionTemplates.erDiagram(com.export_table_definition.domain.model.table.TableEntity, java.util.List&lt;com.export_table_definition.domain.model.table.ColumnEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, com.export_table_definition.domain.model.relation.DiagramBoxes)</code></a>）とは異なり、 すべてのテーブルの箱に関連をつなぐカラムだけを表示する。
+ カラムは関連カラム（<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramBoxes</code></a>）を用いるため、テーブル詳細のチャンク分割取得の影響を受けない<br>
  表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html#%3Cinit%3E()" class="member-name-link">ErDiagramTemplates()</a> - Constructor for class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramTemplates.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramTemplates</a></dt>
@@ -1546,6 +1589,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">観点ページのフッター<br>
  観点一覧・テーブル一覧へ戻る導線を置く</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html#foreignKey()" class="member-name-link">foreignKey()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./com/export_table_definition/domain/model/relation/DiagramColumn.html#param-foreignKey"><code>foreignKey</code></a> record component.</div>
 </dd>
 <dt><a href="com/export_table_definition/infrastructure/db/repository/dto/ForeignKeyDto.html" class="type-name-link" title="class in com.export_table_definition.infrastructure.db.repository.dto">ForeignKeyDto</a> - Record Class in <a href="com/export_table_definition/infrastructure/db/repository/dto/package-summary.html">com.export_table_definition.infrastructure.db.repository.dto</a></dt>
 <dd>
@@ -1956,6 +2003,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/database/DatabaseEntity.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.domain.model.database.<a href="com/export_table_definition/domain/model/database/DatabaseEntity.html" title="class in com.export_table_definition.domain.model.database">DatabaseEntity</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -2581,6 +2632,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <code>logicalTableName</code> record component.</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html#logicalTableName(com.export_table_definition.domain.model.table.TableKey)" class="member-name-link">logicalTableName(TableKey)</a> - Method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a></dt>
+<dd>
+<div class="block">論理テーブル名を取得するメソッド</div>
+</dd>
 </dl>
 <h2 class="title" id="I:M">M</h2>
 <dl class="index">
@@ -2840,6 +2895,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">指定されたテーブルが所属する観点を取得するメソッド<br>
  テーブル定義書から観点ページへ戻る導線（「所属する観点」）に用いる</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html#of(com.export_table_definition.domain.model.table.TableKey,java.util.List,java.util.Collection)" class="member-name-link">of(TableKey, List&lt;ColumnEntity&gt;, Collection&lt;ForeignKeyEntity&gt;)</a> - Static method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a></dt>
+<dd>
+<div class="block">テーブルのカラムに、図に描画する関連の参照元（子）として使われるかを添えるメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.html#of(com.export_table_definition.domain.model.target.TableDefinitionContent)" class="member-name-link">of(TableDefinitionContent)</a> - Static method in record class com.export_table_definition.domain.model.snapshot.<a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot</a></dt>
 <dd>
@@ -3264,6 +3323,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Relation.html#%3Cinit%3E(java.lang.String,java.util.List,java.lang.String,java.lang.String,java.util.List,com.export_table_definition.domain.model.relation.Cardinality)" class="member-name-link">Relation(String, List&lt;String&gt;, String, String, List&lt;String&gt;, Cardinality)</a> - Constructor for record class com.export_table_definition.domain.model.snapshot.<a href="com/export_table_definition/domain/model/snapshot/TableSnapshot.Relation.html" title="class in com.export_table_definition.domain.model.snapshot">TableSnapshot.Relation</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>Relation</code> record class.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html#relationColumnsOf(java.util.Collection)" class="member-name-link">relationColumnsOf(Collection&lt;ForeignKeyEntity&gt;)</a> - Method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a></dt>
+<dd>
+<div class="block">1枚の図のテーブルの箱に表示する関連カラムを、テーブルごとに求めるメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html#relationLine(java.lang.String,com.export_table_definition.domain.model.relation.ForeignKeyEntity,java.lang.String)" class="member-name-link">relationLine(String, ForeignKeyEntity, String)</a> - Static method in class com.export_table_definition.domain.service.writer.template.<a href="com/export_table_definition/domain/service/writer/template/MermaidSupport.html" title="class in com.export_table_definition.domain.service.writer.template">MermaidSupport</a></dt>
 <dd>
@@ -3696,6 +3759,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">スキーマ名・テーブル名を持つエンティティに共通の振る舞いを提供するインタフェース</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/repository/TableDefinitionRepository.html#selectColumnList(java.util.List)" class="member-name-link">selectColumnList(List&lt;TableKey&gt;)</a> - Method in interface com.export_table_definition.domain.repository.<a href="com/export_table_definition/domain/repository/TableDefinitionRepository.html" title="interface in com.export_table_definition.domain.repository">TableDefinitionRepository</a></dt>
+<dd>
+<div class="block">指定したテーブルのカラムを取得する。テーブル数に比例して重くなる情報のため、呼び出し側は同一スキーマのテーブルをチャンク単位で渡す</div>
+</dd>
+<dt><a href="com/export_table_definition/infrastructure/db/repository/AbstractTableDefinitionRepository.html#selectColumnList(java.util.List)" class="member-name-link">selectColumnList(List&lt;TableKey&gt;)</a> - Method in class com.export_table_definition.infrastructure.db.repository.<a href="com/export_table_definition/infrastructure/db/repository/AbstractTableDefinitionRepository.html" title="class in com.export_table_definition.infrastructure.db.repository">AbstractTableDefinitionRepository</a></dt>
+<dd>
+<div class="block">指定したテーブルのカラムを取得する。テーブル数に比例して重くなる情報のため、呼び出し側は同一スキーマのテーブルをチャンク単位で渡す</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/repository/TableDefinitionRepository.html#selectDatabase()" class="member-name-link">selectDatabase()</a> - Method in interface com.export_table_definition.domain.repository.<a href="com/export_table_definition/domain/repository/TableDefinitionRepository.html" title="interface in com.export_table_definition.domain.repository">TableDefinitionRepository</a></dt>
 <dd>
 <div class="block">ドキュメントの生成日はDBではなく実行時に決まるため含まない</div>
@@ -3957,6 +4028,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <code>startValue</code> record component.</div>
 </dd>
+<dt><a href="com/export_table_definition/domain/model/relation/ForeignKeys.html#stream()" class="member-name-link">stream()</a> - Method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/ForeignKeys.html" title="class in com.export_table_definition.domain.model.relation">ForeignKeys</a></dt>
+<dd>
+<div class="block">すべての関連のストリームを取得するメソッド（参照元のテーブルキーごとにまとまった順）</div>
+</dd>
 <dt><a href="com/export_table_definition/domain/model/table/Tables.html#stream()" class="member-name-link">stream()</a> - Method in class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/Tables.html" title="class in com.export_table_definition.domain.model.table">Tables</a></dt>
 <dd>
 <div class="block">テーブル情報のストリームを取得するメソッド</div>
@@ -4104,6 +4179,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="com/export_table_definition/domain/model/table/TableKey.html#%3Cinit%3E(java.lang.String,java.lang.String)" class="member-name-link">TableKey(String, String)</a> - Constructor for record class com.export_table_definition.domain.model.table.<a href="com/export_table_definition/domain/model/table/TableKey.html" title="class in com.export_table_definition.domain.model.table">TableKey</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>TableKey</code> record class.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html#tableKeys()" class="member-name-link">tableKeys()</a> - Method in class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramBoxes.Builder.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes.Builder</a></dt>
+<dd>
+<div class="block">カラムを取得する必要のあるテーブルを取得するメソッド</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/sidecar/Annotations.html#tableKeys()" class="member-name-link">tableKeys()</a> - Method in class com.export_table_definition.domain.model.sidecar.<a href="com/export_table_definition/domain/model/sidecar/Annotations.html" title="class in com.export_table_definition.domain.model.sidecar">Annotations</a></dt>
 <dd>
@@ -4352,6 +4431,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/model/database/DatabaseEntity.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.domain.model.database.<a href="com/export_table_definition/domain/model/database/DatabaseEntity.html" title="class in com.export_table_definition.domain.model.database">DatabaseEntity</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="com/export_table_definition/domain/model/relation/DiagramColumn.html#toString()" class="member-name-link">toString()</a> - Method in record class com.export_table_definition.domain.model.relation.<a href="com/export_table_definition/domain/model/relation/DiagramColumn.html" title="class in com.export_table_definition.domain.model.relation">DiagramColumn</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -4968,10 +5051,11 @@ the order they are declared.</div>
 <dd>
 <div class="block">DB全体の情報（DB名等）のスナップショットを書き込む</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html#writeErDiagram(com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeErDiagram(Tables, ForeignKeys, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html#writeErDiagram(com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.model.relation.DiagramBoxes,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeErDiagram(Tables, ForeignKeys, DiagramBoxes, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.erdiagram.<a href="com/export_table_definition/domain/service/writer/erdiagram/ErDiagramWriter.html" title="class in com.export_table_definition.domain.service.writer.erdiagram">ErDiagramWriter</a></dt>
 <dd>
 <div class="block">1つの図にすべてのテーブルを載せるとMermaidが描画できる規模を超えるため、スキーマ単位に分割して出力し、 それらへのリンクをまとめた索引ファイルを併せて出力する。
- 利用する情報はテーブル一覧と外部キー一覧のみで、テーブル詳細を必要としない。 テーブルが存在しない場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う</div>
+ 利用する情報はテーブル一覧・外部キー一覧・テーブルの箱に表示する関連カラムのみで、テーブル詳細を必要としない。
+ テーブルが存在しない場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う</div>
 </dd>
 <dt><a href="com/export_table_definition/domain/repository/FileRepository.html#writeFile(java.nio.file.Path,java.util.List)" class="member-name-link">writeFile(Path, List&lt;String&gt;)</a> - Method in interface com.export_table_definition.domain.repository.<a href="com/export_table_definition/domain/repository/FileRepository.html" title="interface in com.export_table_definition.domain.repository">FileRepository</a></dt>
 <dd>
@@ -5028,7 +5112,7 @@ the order they are declared.</div>
 <dd>
 <div class="block">1テーブル分の定義を書き出すメソッド</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html#writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,java.nio.file.Path)" class="member-name-link">writeTableDefinition(TableDefinitionContent, Path)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html#writeTableDefinition(com.export_table_definition.domain.model.target.TableDefinitionContent,com.export_table_definition.domain.model.relation.DiagramBoxes,java.nio.file.Path)" class="member-name-link">writeTableDefinition(TableDefinitionContent, DiagramBoxes, Path)</a> - Method in class com.export_table_definition.domain.service.writer.tabledefinition.<a href="com/export_table_definition/domain/service/writer/tabledefinition/TableDefinitionWriter.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition">TableDefinitionWriter</a></dt>
 <dd>
 <div class="block">テーブル定義の書き込み処理を行うメソッド</div>
 </dd>
@@ -5053,7 +5137,7 @@ the order they are declared.</div>
 <dd>
 <div class="block">スキーマごとに1ファイルへ出力する。対象が存在しないスキーマのファイルは出力しない</div>
 </dd>
-<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html#writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeViewpoints(Viewpoints, Tables, ForeignKeys, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriter</a></dt>
+<dt><a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html#writeViewpoints(com.export_table_definition.domain.model.viewpoint.Viewpoints,com.export_table_definition.domain.model.table.Tables,com.export_table_definition.domain.model.relation.ForeignKeys,com.export_table_definition.domain.model.relation.DiagramBoxes,com.export_table_definition.domain.service.path.OutputRoot,com.export_table_definition.domain.model.relation.NodeLimit)" class="member-name-link">writeViewpoints(Viewpoints, Tables, ForeignKeys, DiagramBoxes, OutputRoot, NodeLimit)</a> - Method in class com.export_table_definition.domain.service.writer.viewpoint.<a href="com/export_table_definition/domain/service/writer/viewpoint/ViewpointWriter.html" title="class in com.export_table_definition.domain.service.writer.viewpoint">ViewpointWriter</a></dt>
 <dd>
 <div class="block">観点ページと観点一覧の書き込み処理を行うメソッド<br>
  観点が1件も無い場合に出力しないことの判定は呼び出し側（出力する一覧の決定）が行う</div>

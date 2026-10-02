@@ -2,6 +2,7 @@ package com.export_table_definition.application.impl;
 
 import com.export_table_definition.application.TargetSelection;
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
@@ -14,6 +15,7 @@ import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.sidecar.Sidecar;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.table.Triggers;
 import com.export_table_definition.domain.model.target.ConsistencyFinding;
@@ -29,8 +31,11 @@ import com.export_table_definition.domain.service.target.ExportTargetConsistency
 import jakarta.inject.Inject;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -170,6 +175,32 @@ final class SchemaExporter {
 
   /** {@link #fetchSchemaObjects}の取得結果 */
   private record SchemaObjects(Functions functions, Sequences sequences, Types types) {}
+
+  /**
+   * ER図のテーブルの箱に表示する内容（論理テーブル名・関連カラム）を求めるメソッド<br>
+   * 関連カラムを持つテーブルのカラムをスキーマ・チャンク単位で取得し、関連カラムだけを残して他は破棄する。 Markdownの描画でのみ用いるため、差分検知（{@code
+   * --check}）では取得しない
+   *
+   * @param chunkSize 1回の取得でまとめて処理するテーブル数の上限。0以下の場合はスキーマ単位で分割しない
+   */
+  DiagramBoxes fetchDiagramBoxes(ExportTargets targets, int chunkSize) {
+    final DiagramBoxes.Builder builder =
+        DiagramBoxes.builder(targets.tables(), targets.foreignKeys());
+    final Map<String, List<TableKey>> tableKeysBySchema =
+        builder.tableKeys().stream()
+            .collect(
+                Collectors.groupingBy(TableKey::schema, LinkedHashMap::new, Collectors.toList()));
+    tableKeysBySchema.forEach(
+        (schemaName, tableKeys) -> {
+          final int total = tableKeys.size();
+          final int step = chunkSize > 0 ? chunkSize : total;
+          for (int from = 0; from < total; from += step) {
+            builder.add(
+                repository.selectColumnList(tableKeys.subList(from, Math.min(from + step, total))));
+          }
+        });
+    return builder.build();
+  }
 
   /**
    * 一括取得した情報をもとに、指定された出力形式で書き出すメソッド<br>

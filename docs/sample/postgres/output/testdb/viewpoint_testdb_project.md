@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL|testdb|2026/10/02|
 
 ## 説明
 
@@ -14,12 +14,23 @@
 
 ```mermaid
 erDiagram
-    sample_employee["employee"]
-    sample_project["project"]
+    sample_employee["employee（従業員）"]
+    sample_project["project（プロジェクト）"]
     sample_project_assignment["project_assignment"]
     sample_employee |o--o{ sample_employee : "employee_manager_id_fkey"
     sample_employee ||--o{ sample_project_assignment : "project_assignment_employee_id_fkey"
     sample_project ||--o{ sample_project_assignment : "project_assignment_project_id_fkey"
+    sample_employee {
+        integer employee_id PK "従業員ID"
+        integer manager_id FK "上長の従業員ID"
+    }
+    sample_project {
+        integer project_id PK "プロジェクトID"
+    }
+    sample_project_assignment {
+        integer project_id PK, FK
+        integer employee_id PK, FK
+    }
 ```
 
 ## 所属テーブル

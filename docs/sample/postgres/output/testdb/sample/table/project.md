@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL|testdb|2026/10/02|
 
 ## テーブル説明
 
@@ -57,14 +57,17 @@
 
 ```mermaid
 erDiagram
-    sample_project["project"]
+    sample_project["project（プロジェクト）"]
     sample_project_assignment["project_assignment"]
     sample_project ||--o{ sample_project_assignment : "project_assignment_project_id_fkey"
     sample_project {
-        integer project_id PK
-        character_varying project_code
-        character_varying project_name
-        sample_positive_numeric budget
+        integer project_id PK "プロジェクトID"
+        character_varying project_code "プロジェクトコード"
+        character_varying project_name "プロジェクト名"
+        sample_positive_numeric budget "予算"
+    }
+    sample_project_assignment {
+        integer project_id PK, FK
     }
 ```
 

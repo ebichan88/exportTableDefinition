@@ -92,8 +92,8 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">ErDiagramTemplates</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">スキーマ単位のER図（全体ER図）書き込みに利用するMarkdownのテンプレートを扱うクラス<br>
- テーブル単位のER図（<a href="../tabledefinition/TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List)"><code>TableDefinitionTemplates.erDiagram(com.export_table_definition.domain.model.table.TableEntity, java.util.List&lt;com.export_table_definition.domain.model.table.ColumnEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;)</code></a>）とは異なり、
- すべてのテーブルを属性なしの箱として描画し、外部キーによる関連のみを表現する。 必要な情報はテーブル一覧と外部キー一覧のみのため、テーブル詳細のチャンク分割取得の影響を受けない<br>
+ テーブル単位のER図（<a href="../tabledefinition/TableDefinitionTemplates.html#erDiagram(com.export_table_definition.domain.model.table.TableEntity,java.util.List,java.util.List,java.util.List,com.export_table_definition.domain.model.relation.DiagramBoxes)"><code>TableDefinitionTemplates.erDiagram(com.export_table_definition.domain.model.table.TableEntity, java.util.List&lt;com.export_table_definition.domain.model.table.ColumnEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, java.util.List&lt;com.export_table_definition.domain.model.relation.ForeignKeyEntity&gt;, com.export_table_definition.domain.model.relation.DiagramBoxes)</code></a>）とは異なり、 すべてのテーブルの箱に関連をつなぐカラムだけを表示する。
+ カラムは関連カラム（<a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramBoxes</code></a>）を用いるため、テーブル詳細のチャンク分割取得の影響を受けない<br>
  表のセクションはヘッダーと1行分を個別に生成できるようにしている。 行数が多い場合に呼び出し側がページ単位で切り出して書き込めるようにするためで、 テーブル一覧（<a href="../tabledefinition/TableDefinitionListTemplates.html" title="class in com.export_table_definition.domain.service.writer.tabledefinition"><code>TableDefinitionListTemplates</code></a>）と同じ方針である</div>
 </section>
 <section class="summary">
@@ -152,11 +152,13 @@ loadScripts(document, 'script');</script>
  Mermaidの<code>click</code>構文はGitHub上では無効化されるため、図中のノードからの導線をこの一覧で代替する</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)" class="member-name-link">erDiagram</a><wbr>(<a href="../../../model/relation/DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a>&nbsp;rendering)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering,com.export_table_definition.domain.model.relation.DiagramBoxes)" class="member-name-link">erDiagram</a><wbr>(<a href="../../../model/relation/DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a>&nbsp;rendering,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">ER図セクション（Mermaid記法）<br>
  外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧<code>
  tableList_{DB名}.md</code>側に掲載されている）。<br>
+ テーブルの箱には、図に描画する関連をつなぐカラムだけを表示する。<br>
  描画を省略する判断結果（<a href="../../../model/relation/DiagramRendering.Omit.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramRendering.Omit</code></a>）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
  （代替として掲載する外部キー一覧は呼び出し側が組み立てる）</div>
 </div>
@@ -320,12 +322,14 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering)">
+<section class="detail" id="erDiagram(com.export_table_definition.domain.model.relation.DiagramRendering,com.export_table_definition.domain.model.relation.DiagramBoxes)">
 <h3>erDiagram</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">erDiagram</span><wbr><span class="parameters">(<a href="../../../model/relation/DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a>&nbsp;rendering)</span></div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">erDiagram</span><wbr><span class="parameters">(<a href="../../../model/relation/DiagramRendering.html" title="interface in com.export_table_definition.domain.model.relation">DiagramRendering</a>&nbsp;rendering,
+ <a href="../../../model/relation/DiagramBoxes.html" title="class in com.export_table_definition.domain.model.relation">DiagramBoxes</a>&nbsp;boxes)</span></div>
 <div class="block">ER図セクション（Mermaid記法）<br>
  外部キーによる関連を持つテーブルのみをノードとして描画する。 関連を持たないテーブルを含めるとノード数が膨らみ図が読めなくなるため描画対象から除外する （全テーブルはテーブル一覧<code>
  tableList_{DB名}.md</code>側に掲載されている）。<br>
+ テーブルの箱には、図に描画する関連をつなぐカラムだけを表示する。<br>
  描画を省略する判断結果（<a href="../../../model/relation/DiagramRendering.Omit.html" title="class in com.export_table_definition.domain.model.relation"><code>DiagramRendering.Omit</code></a>）の場合はMermaidの描画を諦め、その旨のメッセージのみを返す
  （代替として掲載する外部キー一覧は呼び出し側が組み立てる）</div>
 </section>

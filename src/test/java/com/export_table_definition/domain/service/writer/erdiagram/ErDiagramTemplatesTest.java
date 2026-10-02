@@ -8,9 +8,12 @@ import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeyGroup;
 import com.export_table_definition.domain.model.relation.NodeLimit;
+import com.export_table_definition.domain.model.relation.RelationType;
+import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -38,7 +41,8 @@ public class ErDiagramTemplatesTest {
   /** ER図セクションを、ノード算出込みで生成するテスト用ヘルパー */
   private String erDiagram(List<ForeignKeyEntity> foreignKeys, int maxNodes) {
     return ErDiagramTemplates.erDiagram(
-        ForeignKeyGroup.of(foreignKeys).renderingUnder(NodeLimit.of(maxNodes)));
+        ForeignKeyGroup.of(foreignKeys).renderingUnder(NodeLimit.of(maxNodes)),
+        DiagramBoxesFixtures.none());
   }
 
   @Test
@@ -115,8 +119,55 @@ public class ErDiagramTemplatesTest {
   }
 
   @Test
-  @DisplayName("erDiagram: 属性（カラム）は出力しない")
-  void testErDiagramHasNoAttributes() {
+  @DisplayName("erDiagram: 箱には論理テーブル名と、関連をつなぐカラムだけを表示する")
+  void testErDiagramShowsRelationColumns() {
+    var fk =
+        new ForeignKeyEntity(
+            "public",
+            "orders",
+            "fk_orders_customer",
+            List.of("customer_id"),
+            "public",
+            "customers",
+            List.of("id"),
+            Cardinality.ONE_TO_MANY,
+            RelationType.PHYSICAL);
+    var boxes =
+        DiagramBoxesFixtures.of(
+            List.of(newTable("public", "orders", "受注"), newTable("public", "customers", "")),
+            List.of(fk),
+            List.of(
+                new ColumnEntity(
+                    "public", "customers", "顧客ID", "id", "integer", "", true, true, ""),
+                new ColumnEntity("public", "customers", "顧客名", "name", "text", "", false, true, ""),
+                new ColumnEntity("public", "orders", "受注ID", "id", "integer", "", true, true, ""),
+                new ColumnEntity(
+                    "public", "orders", "顧客ID", "customer_id", "integer", "", false, true, "")));
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        ```mermaid
+        erDiagram
+            public_customers["customers"]
+            public_orders["orders（受注）"]
+            public_customers ||--o{ public_orders : "fk_orders_customer"
+            public_customers {
+                integer id PK "顧客ID"
+            }
+            public_orders {
+                integer customer_id FK "顧客ID"
+            }
+        ```
+
+        """,
+        ErDiagramTemplates.erDiagram(
+            ForeignKeyGroup.of(List.of(fk)).renderingUnder(NodeLimit.of(80)), boxes));
+  }
+
+  @Test
+  @DisplayName("erDiagram: 関連カラムを取得していないテーブルは属性を出力しない")
+  void testErDiagramHasNoAttributesWithoutRelationColumns() {
     var fk = newFk("public", "orders", "fk_orders_customer", "public", "customers");
     String section = erDiagram(List.of(fk), 80);
     // 属性を持つ箱は「<エンティティ名> {」で始まるブロックとして出力される

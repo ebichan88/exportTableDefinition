@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL|testdb|2026/10/02|
 
 ## ER図
 
@@ -12,10 +12,10 @@
 erDiagram
     sample_audit_log["audit_log"]
     sample_department["department"]
-    sample_employee["employee"]
+    sample_employee["employee（従業員）"]
     sample_employee_profile["employee_profile"]
     sample_parking_spot["parking_spot"]
-    sample_project["project"]
+    sample_project["project（プロジェクト）"]
     sample_project_assignment["project_assignment"]
     sample_shipment["shipment"]
     sample_warehouse_zone["warehouse_zone"]
@@ -27,6 +27,39 @@ erDiagram
     sample_project ||--o{ sample_project_assignment : "project_assignment_project_id_fkey"
     sample_warehouse_zone ||--o{ sample_shipment : "shipment_warehouse_code_zone_code_fkey"
     sample_employee |o..o{ sample_audit_log : "record_id"
+    sample_audit_log {
+        integer record_id FK
+    }
+    sample_department {
+        integer department_id PK
+    }
+    sample_employee {
+        integer employee_id PK "従業員ID"
+        integer department_id FK "所属部署ID"
+        integer manager_id FK "上長の従業員ID"
+        integer parking_spot_id FK "駐車場ID"
+    }
+    sample_employee_profile {
+        integer employee_id PK, FK
+    }
+    sample_parking_spot {
+        integer parking_spot_id PK
+    }
+    sample_project {
+        integer project_id PK "プロジェクトID"
+    }
+    sample_project_assignment {
+        integer project_id PK, FK
+        integer employee_id PK, FK
+    }
+    sample_shipment {
+        character_varying warehouse_code FK
+        character_varying zone_code FK
+    }
+    sample_warehouse_zone {
+        character_varying warehouse_code PK
+        character_varying zone_code PK
+    }
 ```
 
 ## ER図に掲載しているテーブル

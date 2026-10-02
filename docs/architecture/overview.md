@@ -174,6 +174,9 @@ PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ�
   組み立てて返す。そこへ一括取得分の外部キー・トリガー・手動付帯情報を合わせ、1テーブル分の出力内容
   （`TableDefinitionContent`）として各 `ExportSink` へ渡す
 - 関数・プロシージャの定義本体はスキーマ単位で取得・出力・破棄する（`exportSchemaFunctionDefinitions`）
+- ER図のテーブルの箱に表示する関連カラム（関連の参照元・参照先として使われるカラム）は、ER図をチャンクより先に
+  書き出すため、関連を持つテーブルのカラムをスキーマ単位かつ `chunkSize` 件ごとに別途取得し、関連カラムだけを残す
+  （`fetchDiagramBoxes` → `domain.model.relation.DiagramBoxes`）。Markdownの描画でのみ使うため、差分検知（`--check`）では取得しない
 
 ## 基本情報と生成日
 

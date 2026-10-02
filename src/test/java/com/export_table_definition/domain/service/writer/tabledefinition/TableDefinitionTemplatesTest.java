@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
@@ -13,6 +15,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
+import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.time.LocalDate;
@@ -361,7 +364,8 @@ public class TableDefinitionTemplatesTest {
         関連するテーブルはありません。
 
         """,
-        TableDefinitionTemplates.erDiagram(table, List.of(), List.of(), List.of()));
+        TableDefinitionTemplates.erDiagram(
+            table, List.of(), List.of(), List.of(), DiagramBoxesFixtures.none()));
   }
 
   @Test
@@ -394,7 +398,11 @@ public class TableDefinitionTemplatesTest {
 
         """,
         TableDefinitionTemplates.erDiagram(
-            table, List.of(column), List.of(outgoing), List.of(incoming)));
+            table,
+            List.of(column),
+            List.of(outgoing),
+            List.of(incoming),
+            DiagramBoxesFixtures.none()));
   }
 
   @Test
@@ -410,7 +418,11 @@ public class TableDefinitionTemplatesTest {
             "master", "customers", "fk_customers_orders", "public", "orders");
     String section =
         TableDefinitionTemplates.erDiagram(
-            table, List.of(column), List.of(outgoing), List.of(incoming));
+            table,
+            List.of(column),
+            List.of(outgoing),
+            List.of(incoming),
+            DiagramBoxesFixtures.none());
     assertTrue(section.contains("sales_customers[\"sales.customers\"]"));
     assertTrue(section.contains("master_customers[\"master.customers\"]"));
     // 衝突していない自テーブルはテーブル名のみのまま
@@ -441,10 +453,84 @@ public class TableDefinitionTemplatesTest {
             Cardinality.ONE_TO_ONE);
     String section =
         TableDefinitionTemplates.erDiagram(
-            table, List.of(column), List.of(outgoing), List.of(incoming));
+            table,
+            List.of(column),
+            List.of(outgoing),
+            List.of(incoming),
+            DiagramBoxesFixtures.none());
     assertTrue(section.contains("public_coupons |o--o{ public_orders : \"fk_orders_coupon\""));
     assertTrue(
         section.contains("public_orders ||--o| public_order_details : \"fk_details_orders\""));
+  }
+
+  @Test
+  @DisplayName("erDiagram: 自テーブルは全カラムを、関連テーブルは関連をつなぐカラムだけを、論理名とともに表示する")
+  void testErDiagramShowsRelationColumnsOfRelatedTables() {
+    TableEntity table = newTable("public", "orders", "受注", "table", "");
+    var id = new ColumnEntity("public", "orders", "受注ID", "id", "integer", "", true, true, "");
+    var customerId =
+        new ColumnEntity("public", "orders", "顧客ID", "customer_id", "integer", "", false, true, "");
+    var outgoing =
+        new ForeignKeyEntity(
+            "public",
+            "orders",
+            "fk_orders_customer",
+            List.of("customer_id"),
+            "public",
+            "customers",
+            List.of("id"),
+            Cardinality.ONE_TO_MANY,
+            RelationType.PHYSICAL);
+    var incoming =
+        new ForeignKeyEntity(
+            "public",
+            "items",
+            "fk_items_orders",
+            List.of("order_id"),
+            "public",
+            "orders",
+            List.of("id"),
+            Cardinality.ONE_TO_MANY,
+            RelationType.PHYSICAL);
+    var boxes =
+        DiagramBoxesFixtures.of(
+            List.of(
+                table,
+                newTable("public", "customers", "顧客", "table", ""),
+                newTable("public", "items", "", "table", "")),
+            List.of(outgoing, incoming),
+            List.of(
+                new ColumnEntity(
+                    "public", "customers", "顧客ID", "id", "integer", "", true, true, ""),
+                new ColumnEntity("public", "customers", "顧客名", "name", "text", "", false, true, ""),
+                new ColumnEntity("public", "items", "", "order_id", "integer", "", true, true, ""),
+                new ColumnEntity("public", "items", "", "item_no", "integer", "", true, true, "")));
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        ```mermaid
+        erDiagram
+            public_orders["orders（受注）"]
+            public_customers["customers（顧客）"]
+            public_items["items"]
+            public_customers ||--o{ public_orders : "fk_orders_customer"
+            public_orders ||--o{ public_items : "fk_items_orders"
+            public_orders {
+                integer id PK "受注ID"
+                integer customer_id FK "顧客ID"
+            }
+            public_customers {
+                integer id PK "顧客ID"
+            }
+            public_items {
+                integer order_id PK, FK
+            }
+        ```
+
+        """,
+        TableDefinitionTemplates.erDiagram(
+            table, List.of(id, customerId), List.of(outgoing), List.of(incoming), boxes));
   }
 
   @Test
@@ -456,7 +542,8 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.physical(
             "public", "orders", "fk_orders_customer", "public", "customers");
     String section =
-        TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(outgoing), List.of());
+        TableDefinitionTemplates.erDiagram(
+            table, List.of(column), List.of(outgoing), List.of(), DiagramBoxesFixtures.none());
     assertTrue(section.contains("numeric amount"));
     assertFalse(section.contains("(10,2)"));
   }
@@ -531,7 +618,11 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
     String section =
         TableDefinitionTemplates.erDiagram(
-            table, List.of(column), List.of(physical, logical), List.of());
+            table,
+            List.of(column),
+            List.of(physical, logical),
+            List.of(),
+            DiagramBoxesFixtures.none());
 
     assertTrue(section.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
     assertTrue(section.contains("public_staff ||..o{ public_orders : \"rel_orders_staff\""));
@@ -545,7 +636,8 @@ public class TableDefinitionTemplatesTest {
     var incoming =
         ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_orders", "public", "orders");
     String section =
-        TableDefinitionTemplates.erDiagram(table, List.of(column), List.of(), List.of(incoming));
+        TableDefinitionTemplates.erDiagram(
+            table, List.of(column), List.of(), List.of(incoming), DiagramBoxesFixtures.none());
 
     assertTrue(section.contains("public_orders ||..o{ public_audit_log : \"rel_audit_orders\""));
   }

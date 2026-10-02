@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
+import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.testsupport.SampleDatabase;
@@ -183,6 +184,34 @@ class PostgresTableDefinitionRepositoryIT {
                 detail.columns().stream()
                     .allMatch(
                         column -> column.tableName().equals(detail.table().physicalTableName()))));
+  }
+
+  @Test
+  @DisplayName("selectColumnList: 指定したテーブルのカラムだけを、テーブルごとに定義順で取得する")
+  void testSelectColumnListOnlyForRequestedTables() {
+    final List<ColumnEntity> columns =
+        repository.selectColumnList(
+            List.of(TableKey.of("sample", "employee"), TableKey.of("sample", "department")));
+
+    assertEquals(
+        List.of("department", "employee"),
+        columns.stream().map(ColumnEntity::tableName).distinct().toList());
+    final List<ColumnEntity> employeeColumns =
+        columns.stream().filter(column -> column.tableName().equals("employee")).toList();
+    assertEquals("employee_id", employeeColumns.get(0).physicalColumnName());
+    final ColumnEntity departmentId =
+        employeeColumns.stream()
+            .filter(column -> column.physicalColumnName().equals("department_id"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("所属部署ID", departmentId.logicalColumnName());
+    assertEquals("integer", departmentId.columnType());
+  }
+
+  @Test
+  @DisplayName("selectColumnList: テーブルを指定しない場合は何も取得しない（全テーブルのカラムを取得しない）")
+  void testSelectColumnListWithoutTables() {
+    assertEquals(List.of(), repository.selectColumnList(List.of()));
   }
 
   @Test

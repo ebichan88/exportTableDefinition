@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.export;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.target.ExportTargets;
@@ -46,10 +47,12 @@ public class MarkdownExportSinkFactory {
    *
    * @param outputBaseDir 出力先のベースディレクトリパス
    * @param erDiagramLimit スキーマ別ER図1枚に描画するノード数の上限
+   * @param diagramBoxes ER図のテーブルの箱に表示する内容
    * @return Markdownのドキュメントを書き出す{@link ExportSink}
    */
-  public ExportSink create(Path outputBaseDir, NodeLimit erDiagramLimit) {
-    return new MarkdownExportSink(outputBaseDir, erDiagramLimit);
+  public ExportSink create(
+      Path outputBaseDir, NodeLimit erDiagramLimit, DiagramBoxes diagramBoxes) {
+    return new MarkdownExportSink(outputBaseDir, erDiagramLimit, diagramBoxes);
   }
 
   /**
@@ -98,16 +101,19 @@ public class MarkdownExportSinkFactory {
 
     private final Path outputBaseDir;
     private final NodeLimit erDiagramLimit;
+    private final DiagramBoxes diagramBoxes;
 
-    private MarkdownExportSink(Path outputBaseDir, NodeLimit erDiagramLimit) {
+    private MarkdownExportSink(
+        Path outputBaseDir, NodeLimit erDiagramLimit, DiagramBoxes diagramBoxes) {
       this.outputBaseDir = outputBaseDir;
       this.erDiagramLimit = erDiagramLimit;
+      this.diagramBoxes = diagramBoxes;
     }
 
     /**
      * {@inheritDoc}<br>
-     * テーブル一覧・README・ER図・各種一覧・観点・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧と外部キー一覧のみで
-     * 生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる
+     * テーブル一覧・README・ER図・各種一覧・観点・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧・外部キー一覧と、
+     * 別途取得した関連カラムのみで生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる
      */
     @Override
     public void writeOverview(ExportTargets targets) {
@@ -118,7 +124,7 @@ public class MarkdownExportSinkFactory {
       readmeWriter.writeReadme(documents, outputRoot);
       if (documents.contains(ListDocumentType.ER_DIAGRAM)) {
         erDiagramWriter.writeErDiagram(
-            targets.tables(), targets.foreignKeys(), outputRoot, erDiagramLimit);
+            targets.tables(), targets.foreignKeys(), diagramBoxes, outputRoot, erDiagramLimit);
       }
       if (documents.contains(ListDocumentType.TRIGGER)) {
         objectListWriter.writeTriggerList(targets.triggers(), outputRoot);
@@ -137,6 +143,7 @@ public class MarkdownExportSinkFactory {
             targets.viewpoints(),
             targets.tables(),
             targets.foreignKeys(),
+            diagramBoxes,
             outputRoot,
             erDiagramLimit);
       }
@@ -158,7 +165,7 @@ public class MarkdownExportSinkFactory {
     /** {@inheritDoc} */
     @Override
     public void writeTableDefinition(TableDefinitionContent content) {
-      tableDefinitionWriter.writeTableDefinition(content, outputBaseDir);
+      tableDefinitionWriter.writeTableDefinition(content, diagramBoxes, outputBaseDir);
     }
   }
 }

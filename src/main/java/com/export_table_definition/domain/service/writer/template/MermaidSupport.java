@@ -2,12 +2,17 @@ package com.export_table_definition.domain.service.writer.template;
 
 import static com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport.LINE_SEPARATOR;
 
+import com.export_table_definition.domain.model.relation.DiagramBoxes;
+import com.export_table_definition.domain.model.relation.DiagramColumn;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.tabledefinition.TableDefinitionTemplates;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,19 +37,22 @@ public final class MermaidSupport {
   /**
    * 図に描画するノードの表示ラベルを決めるメソッド<br>
    * 識別子（スキーマ名込み）とは別に、Mermaidのエンティティ別名構文で表示名を差し替える。 通常はテーブル名のみを表示するが、同じ図内に同名テーブルが複数スキーマにまたがって存在する
-   * 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする
+   * 場合は見分けが付かなくなるため、その場合だけ「スキーマ名.テーブル名」の完全修飾名にする。 論理テーブル名がある場合は「テーブル名（論理テーブル名）」とする
    *
    * @param nodes 図に描画するノードのテーブルキー（重複無し）
    * @return テーブルキーごとの表示ラベル
    */
-  public static Map<TableKey, String> assignLabels(Collection<TableKey> nodes) {
+  public static Map<TableKey, String> assignLabels(Collection<TableKey> nodes, DiagramBoxes boxes) {
     final Map<String, Long> tableNameCounts =
         nodes.stream().collect(Collectors.groupingBy(TableKey::table, Collectors.counting()));
     final Map<TableKey, String> labels = new LinkedHashMap<>();
     nodes.forEach(
-        key ->
-            labels.put(
-                key, tableNameCounts.get(key.table()) > 1 ? key.qualifiedName() : key.table()));
+        key -> {
+          final String name =
+              tableNameCounts.get(key.table()) > 1 ? key.qualifiedName() : key.table();
+          final String logicalName = boxes.logicalTableName(key);
+          labels.put(key, logicalName.isEmpty() ? name : name + "（" + logicalName + "）");
+        });
     return labels;
   }
 
@@ -53,7 +61,52 @@ public final class MermaidSupport {
    * 識別子ごとに図内で1回宣言すれば、以降その識別子が登場する箇所（属性ブロック・関係線の両方）に別名が適用される
    */
   public static String aliasLine(String id, String label) {
-    return "    " + id + "[\"" + label + "\"]" + LINE_SEPARATOR;
+    return "    " + id + "[\"" + quotable(label) + "\"]" + LINE_SEPARATOR;
+  }
+
+  /**
+   * テーブルの箱に表示するカラムの属性ブロックを生成するメソッド<br>
+   * 1行は「型 物理カラム名 キー "論理カラム名"」。Mermaidの型・名前には記号や日本語を書けないため、論理カラム名は末尾のコメントに置く
+   *
+   * @return 属性ブロック（末尾の改行を含む）。表示するカラムが無い場合は空文字
+   */
+  public static String attributeBlock(String id, List<DiagramColumn> columns) {
+    if (columns.isEmpty()) {
+      return "";
+    }
+    final StringBuilder sb =
+        new StringBuilder("    ").append(id).append(" {").append(LINE_SEPARATOR);
+    columns.forEach(c -> sb.append(attributeLine(c)));
+    return sb.append("    }").append(LINE_SEPARATOR).toString();
+  }
+
+  /** 属性1行分（末尾の改行を含む）を生成するメソッド */
+  private static String attributeLine(DiagramColumn diagramColumn) {
+    final ColumnEntity column = diagramColumn.column();
+    final List<String> keys = new ArrayList<>();
+    if (column.primaryKey()) {
+      keys.add("PK");
+    }
+    if (diagramColumn.foreignKey()) {
+      keys.add("FK");
+    }
+    final StringBuilder sb =
+        new StringBuilder("        ")
+            .append(sanitizeType(column.columnType()))
+            .append(' ')
+            .append(sanitizeIdentifier(column.physicalColumnName()));
+    if (!keys.isEmpty()) {
+      sb.append(' ').append(String.join(", ", keys));
+    }
+    if (!column.logicalColumnName().isBlank()) {
+      sb.append(" \"").append(quotable(column.logicalColumnName())).append('"');
+    }
+    return sb.append(LINE_SEPARATOR).toString();
+  }
+
+  /** 二重引用符で囲む表示名・コメントは、二重引用符を含められないため単一引用符に置き換える */
+  private static String quotable(String value) {
+    return value.replace('"', '\'');
   }
 
   /**
