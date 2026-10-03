@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /** スナップショットから読み込んだ全オブジェクトと、その検索・名前の解決・関連のたどりを担うクラス */
@@ -298,19 +297,6 @@ public final class SchemaCatalog {
             !column.type().isEmpty()
                 && SqlNames.sameObject(
                     SqlNames.typeOfColumn(column.type(), table.key()), type.key()));
-  }
-
-  /**
-   * 定義本体にテーブル名が1つの語として現れる関数・プロシージャを求めるメソッド<br>
-   * 文字列の一致で判定するため、同名のカラム・別スキーマの同名テーブル・コメント中の出現も含む（参照している可能性がある関数）
-   *
-   * @return 同じDBの関数を、DB名・スキーマ名・関数名の順（オーバーロードはスナップショットの並び順）
-   */
-  public List<FunctionEntry> functionsMentioning(TableEntry table) {
-    final Pattern name = SqlNames.wordPattern(table.key().name());
-    return listFunctions(new SearchScope(table.key().database(), null), NameFilter.ALL).stream()
-        .filter(function -> name.matcher(function.definition()).find())
-        .toList();
   }
 
   /**

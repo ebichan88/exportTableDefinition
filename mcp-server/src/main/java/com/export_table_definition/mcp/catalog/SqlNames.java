@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** SQLの識別子・式（カラムの型・デフォルト値・トリガーの関数・関数の定義本体）に現れる、オブジェクトの名前の判定 */
+/** SQLの識別子・式（カラムの型・デフォルト値・トリガーの関数）に現れる、オブジェクトの名前の判定 */
 final class SqlNames {
 
   /** {@code nextval('sample.orders_id_seq'::regclass)}のシーケンス名。PostgreSQLがカラムのデフォルト値を表示する形 */
@@ -52,16 +52,6 @@ final class SqlNames {
     return left.database().equalsIgnoreCase(right.database())
         && left.schema().equalsIgnoreCase(right.schema())
         && left.name().equalsIgnoreCase(right.name());
-  }
-
-  /**
-   * 名前が1つの語として現れるか判定する正規表現を作るメソッド<br>
-   * {@code employee}は{@code employee_id}・{@code v_employee}には当てはまらない（識別子に使える文字が続く場合は別の語とみなす）
-   */
-  static Pattern wordPattern(String name) {
-    return Pattern.compile(
-        "(?<![\\p{L}\\p{N}_$])" + Pattern.quote(name) + "(?![\\p{L}\\p{N}_$])",
-        Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
   }
 
   /** {@code スキーマ名.名前}・{@code 名前}（二重引用符で囲まれていてもよい）を、DB名・スキーマ名を補ったキーにする */

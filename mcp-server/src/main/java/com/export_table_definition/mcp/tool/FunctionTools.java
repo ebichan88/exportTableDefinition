@@ -91,15 +91,6 @@ final class FunctionTools {
             catalog.triggersCalling(function).stream().map(CallingTrigger::of).toList()));
   }
 
-  /**
-   * 関数を、オーバーロードを区別できる形で表すメソッド
-   *
-   * @return {@code スキーマ名.関数名(引数)}
-   */
-  static String signatureName(FunctionEntry function) {
-    return function.key().qualifiedName() + "(" + function.arguments() + ")";
-  }
-
   /** スナップショットの1行から、関数を識別する項目（呼び出し側で返す）と定義本体を除いたもの */
   private static ObjectNode signature(FunctionEntry function) {
     final ObjectNode signature = ToolResults.readObject(function.json());

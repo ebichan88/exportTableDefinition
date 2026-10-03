@@ -677,7 +677,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 | `list_schemas` | なし | スナップショットに含まれるDB（DBMS種別）・スキーマと、スキーマごとのテーブル・ビュー・マテリアライズドビュー・関数・シーケンス・ユーザー定義型の数を返す |
 | `search_tables` | `query`（必須）、`schema`・`database`・`limit` | テーブル名・論理名・説明・カラム名・カラムの論理名を部分一致で検索し、一致の強い順に概要を返す。空白区切りの複数語はすべてを含むものだけを返す |
 | `list_tables` | `schema`・`database`・`type`（`table`／`view`／`materialized_view`）・`includeDescription`・`limit`（既定100、最大500）・`offset` | テーブル（ビューを含む）の名前・論理名・区分を名前の順に返す |
-| `get_table` | `table`（必須）、`schema`・`database`・`sections`・`columns` | テーブル（ビューを含む）の定義を返す（スナップショットの1行）。定義本体にテーブル名が現れる関数（`mentionedInFunctions`）も加える。`sections`（`columns`・`indexes`・`constraints`・`foreignKeys`・`logicalRelations`・`triggers`・`definition`・`mentionedInFunctions`）で返す項目を、`columns`で返すカラムを絞り込める |
+| `get_table` | `table`（必須）、`schema`・`database`・`sections`・`columns` | テーブル（ビューを含む）の定義を返す（スナップショットの1行）。`sections`（`columns`・`indexes`・`constraints`・`foreignKeys`・`logicalRelations`・`triggers`・`definition`）で返す項目を、`columns`で返すカラムを絞り込める |
 | `find_columns` | `column`（必須）、`match`（`exact`／`partial`、既定`exact`）・`schema`・`database`・`limit`（既定50、最大500）・`offset` | カラムの物理名・論理名から、そのカラムを持つテーブルを逆引きする。型・PK・NOT NULL・デフォルト値と、外部キー・論理リレーションの参照先も返す |
 | `get_related_tables` | `table`（必須）、`schema`・`database`・`depth`（1〜3、既定1）・`direction`（`outgoing`／`incoming`／`both`、既定`both`） | 外部キーと論理リレーションをたどり、つながるテーブルと、どのカラム同士でつながるか・多重度を返す。参照される側（被参照）からもたどれる |
 | `find_join_path` | `from`・`to`（必須。`スキーマ名.テーブル名`も可）、`database`・`maxLength`（1〜6、既定4）・`limit`（1〜20、既定5） | 2つのテーブルをつなぐ最短のJOIN経路を、外部キーと論理リレーションを向きを問わずたどって返す。同じ長さの経路が複数ある場合はすべて（`limit`まで）返す |
@@ -695,8 +695,6 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 * 関数・シーケンス・ユーザー定義型・トリガーはPostgreSQLのみが対象です（Oracleのスナップショットでは0件になります）。
   `outputObjects`で出力対象から外した種別も0件になります。
 * 関数・プロシージャの定義本体は、AIのコンテキストを圧迫するため返しません。
-* `mentionedInFunctions`は、関数の定義本体にテーブル名が1つの語として現れるかを文字列で判定したものです。
-  同名のカラム・別スキーマの同名テーブル・コメント中の出現も含むため、「参照している可能性がある関数」として扱ってください。
 * `get_table`の`sections`を指定しても、テーブル名・論理名・区分・説明・備考は常に返します。`columns`を指定した場合は、`sections`に関わらず指定したカラムを返します。
 
 ## 開発者向け（ソースからビルドする場合）

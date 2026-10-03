@@ -294,7 +294,7 @@ class SchemaCatalogTest {
     private static FunctionEntry function(
         String database, String schema, String name, String arguments) {
       return new FunctionEntry(
-          new ObjectKey(database, schema, name), "FUNCTION", arguments, "void", "sql", "", "{}");
+          new ObjectKey(database, schema, name), "FUNCTION", arguments, "void", "sql", "{}");
     }
   }
 
@@ -335,15 +335,6 @@ class SchemaCatalogTest {
                     "",
                     "trigger",
                     "plpgsql",
-                    "begin insert into sales.audit_log select * from orders; end;",
-                    "{}"),
-                new FunctionEntry(
-                    new ObjectKey("db1", "sales", "count_items"),
-                    "FUNCTION",
-                    "",
-                    "bigint",
-                    "sql",
-                    "select count(*) from order_items where orders_id = $1",
                     "{}")),
             List.of(new SequenceEntry(new ObjectKey("db1", "sales", "orders_id_seq"), null, "{}")),
             List.of(new TypeEntry(new ObjectKey("db1", "sales", "status"), "ENUM", "{}")));
@@ -379,25 +370,6 @@ class SchemaCatalogTest {
           describe(
               catalog.columnsUsingType(
                   catalog.listTypes(SearchScope.ALL, NameFilter.ALL, "").get(0))));
-    }
-
-    @Test
-    @DisplayName("定義本体にテーブル名が1つの語として現れる関数を求める")
-    void findsFunctionsMentioningTable() {
-      assertEquals(
-          List.of("audit"),
-          catalog.functionsMentioning(findTable("orders")).stream()
-              .map(f -> f.key().name())
-              .toList());
-      assertEquals(
-          List.of("count_items"),
-          catalog.functionsMentioning(findTable("order_items")).stream()
-              .map(f -> f.key().name())
-              .toList());
-    }
-
-    private TableEntry findTable(String name) {
-      return Lookups.found(catalog.lookupTable(ObjectReference.of(null, "sales", name)));
     }
 
     private static List<String> describe(List<TableColumn> columns) {

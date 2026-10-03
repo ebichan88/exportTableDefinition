@@ -123,8 +123,8 @@ class SnapshotDirectoryReaderTest {
 
     final FunctionEntry calc = catalog.listFunctions(SearchScope.ALL, NameFilter.ALL).get(0);
     assertEquals(
-        List.of("FUNCTION", "p numeric", "numeric", "sql", "select 1"),
-        List.of(calc.kind(), calc.arguments(), calc.result(), calc.language(), calc.definition()));
+        List.of("FUNCTION", "p numeric", "numeric", "sql"),
+        List.of(calc.kind(), calc.arguments(), calc.result(), calc.language()));
     assertEquals(function, calc.json());
     final SequenceEntry ordersId = catalog.listSequences(SearchScope.ALL, NameFilter.ALL).get(0);
     assertEquals("orders.id", ordersId.ownedBy());

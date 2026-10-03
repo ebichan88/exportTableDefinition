@@ -84,7 +84,6 @@ class TableDefinitionToolsTest {
                       "",
                       "trigger",
                       "plpgsql",
-                      "begin insert into sample.audit_log values (new.employee_id); end;",
                       "{}")),
               List.of(
                   new SequenceEntry(
@@ -316,19 +315,6 @@ class TableDefinitionToolsTest {
   }
 
   @Test
-  @DisplayName("get_tableは、定義本体にテーブル名が現れる関数を加え、sectionsで外せる")
-  void getTableWithMentionedFunctions() throws Exception {
-    assertEquals(
-        "[\"sample.log_change()\"]",
-        json(call("get_table", Map.of("table", "audit_log")))
-            .get("mentionedInFunctions")
-            .toString());
-    assertFalse(
-        json(call("get_table", Map.of("table", "audit_log", "sections", "columns")))
-            .has("mentionedInFunctions"));
-  }
-
-  @Test
   @DisplayName("list_sequences・get_sequenceは、シーケンスの所有カラム・定義と、採番に使うカラムを返す")
   void sequences() throws Exception {
     assertEquals(
@@ -481,13 +467,7 @@ class TableDefinitionToolsTest {
 
   private static FunctionEntry function(String name, String arguments, String json) {
     return new FunctionEntry(
-        new ObjectKey("testdb", "sample", name),
-        "FUNCTION",
-        arguments,
-        "void",
-        "sql",
-        "CREATE FUNCTION ...",
-        json);
+        new ObjectKey("testdb", "sample", name), "FUNCTION", arguments, "void", "sql", json);
   }
 
   private CallToolResult call(String name, Map<String, Object> arguments) {

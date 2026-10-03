@@ -167,7 +167,7 @@ class SampleSnapshotContractTest {
   }
 
   @Test
-  @DisplayName("サンプルの相互参照（トリガー関数・シーケンス・型・関数の本体に現れるテーブル）を求められる")
+  @DisplayName("サンプルの相互参照（トリガー関数・シーケンス・型）を求められる")
   void findsCrossReferencesOfSample() {
     final FunctionOverloads logEmployeeChange =
         Lookups.found(
@@ -193,9 +193,6 @@ class SampleSnapshotContractTest {
                     catalog.lookupType(ObjectReference.of(null, null, "employee_status_enum"))))
             .stream()
             .anyMatch(found -> found.table().key().name().equals("employee")));
-    assertTrue(
-        catalog.functionsMentioning(find("audit_log")).stream()
-            .anyMatch(function -> function.key().name().equals("log_employee_change")));
   }
 
   @Test

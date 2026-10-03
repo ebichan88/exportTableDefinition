@@ -47,13 +47,4 @@ class SqlNamesTest {
     assertTrue(SqlNames.sameObject(TABLE, new ObjectKey("DB", "Sales", "ORDERS")));
     assertFalse(SqlNames.sameObject(TABLE, new ObjectKey("db", "hr", "orders")));
   }
-
-  @Test
-  @DisplayName("名前は1つの語として現れる場合だけ当てはまる（識別子の一部・日本語の一部は除く）")
-  void matchesWholeWords() {
-    assertTrue(SqlNames.wordPattern("employee").matcher("insert into sample.Employee(").find());
-    assertTrue(SqlNames.wordPattern("employee").matcher("from \"employee\" e").find());
-    assertFalse(SqlNames.wordPattern("employee").matcher("employee_id = v_employee").find());
-    assertFalse(SqlNames.wordPattern("社員").matcher("from 社員履歴").find());
-  }
 }

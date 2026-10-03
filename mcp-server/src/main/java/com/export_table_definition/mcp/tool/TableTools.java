@@ -109,7 +109,6 @@ final class TableTools {
             GET_TABLE,
             "テーブル（ビューを含む）の定義を返す。カラム（型・PK・NOT NULL・デフォルト値・論理名・備考）、"
                 + "インデックス、制約、外部キー、論理リレーション、トリガー、説明・備考を含む。"
-                + "mentionedInFunctionsは定義本体にテーブル名が現れる関数（文字列の一致による、参照している可能性がある関数）。"
                 + "必要な項目だけをsections・columnsで指定すると結果が小さくなる",
             objectSchema(
                 namedObjectProperties(
@@ -187,17 +186,6 @@ final class TableTools {
     }
     if (!columns.isEmpty()) {
       output.set("columns", selectColumns(table, output.path("columns"), columns));
-    }
-    if (sections.isEmpty() || sections.contains(TableSection.MENTIONED_IN_FUNCTIONS)) {
-      final List<String> functions =
-          catalog.functionsMentioning(table).stream().map(FunctionTools::signatureName).toList();
-      if (!functions.isEmpty()) {
-        output.set(
-            TableSection.MENTIONED_IN_FUNCTIONS.fieldName(),
-            JsonNodeFactory.instance
-                .arrayNode()
-                .addAll(functions.stream().map(JsonNodeFactory.instance::textNode).toList()));
-      }
     }
     return CallToolResult.builder().addTextContent(output.toString()).build();
   }

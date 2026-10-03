@@ -283,24 +283,12 @@ public final class SnapshotDirectoryReader {
   /** {@code functions.jsonl}の1行 */
   @JsonIgnoreProperties(ignoreUnknown = true)
   record FunctionLine(
-      String schema,
-      String name,
-      String kind,
-      String arguments,
-      String result,
-      String language,
-      String definition)
+      String schema, String name, String kind, String arguments, String result, String language)
       implements NamedLine {
 
     FunctionEntry toEntry(String database, String json) {
       return new FunctionEntry(
-          new ObjectKey(database, schema, name),
-          kind,
-          arguments,
-          result,
-          language,
-          definition,
-          json);
+          new ObjectKey(database, schema, name), kind, arguments, result, language, json);
     }
   }
 
