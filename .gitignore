@@ -6,3 +6,4 @@ var/
 /.project
 /.classpath
 conf/mybatis.properties
+/.mcp.json
