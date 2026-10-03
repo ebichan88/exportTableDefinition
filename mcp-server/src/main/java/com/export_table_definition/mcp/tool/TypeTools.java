@@ -80,7 +80,7 @@ final class TypeTools {
   private CallToolResult getType(ToolArguments arguments) {
     final TypeEntry type =
         ObjectResolver.resolve(arguments, "type", "型", LIST_TYPES, catalog::lookupType);
-    return CallToolResult.builder().addTextContent(type.json()).build();
+    return ToolResults.withUsedByColumns(type.json(), catalog.columnsUsingType(type));
   }
 
   /**

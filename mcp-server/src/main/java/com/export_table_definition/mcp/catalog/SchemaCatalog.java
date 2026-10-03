@@ -4,20 +4,16 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-/**
- * スナップショットから読み込んだ全オブジェクトと、その検索・名前の解決・関連のたどりを担うクラス<br>
- * 被参照側の関連はスナップショットに保持されないため、組み立て時に全テーブルの関連から逆引きの索引を作る
- */
+/** スナップショットから読み込んだ全オブジェクトと、その検索・名前の解決・関連のたどりを担うクラス */
 public final class SchemaCatalog {
 
   /** 名前が見つからないときに返す、似た名前の候補の上限 */
@@ -40,9 +36,7 @@ public final class SchemaCatalog {
   private final List<FunctionOverloads> functions;
   private final List<SequenceEntry> sequences;
   private final List<TypeEntry> types;
-  private final Map<ObjectKey, TableEntry> tablesByKey;
-  private final Map<ObjectKey, List<Relation>> outgoing;
-  private final Map<ObjectKey, List<Relation>> incoming;
+  private final RelationGraph relations;
 
   private SchemaCatalog(
       List<DatabaseEntry> databases,
@@ -62,23 +56,7 @@ public final class SchemaCatalog {
             .toList();
     this.sequences = List.copyOf(sequences);
     this.types = List.copyOf(types);
-    this.tablesByKey = new HashMap<>();
-    this.outgoing = new HashMap<>();
-    this.incoming = new HashMap<>();
-    for (final TableEntry table : this.tables) {
-      tablesByKey.put(table.key(), table);
-      final List<Relation> relations =
-          Stream.concat(
-                  table.foreignKeys().stream()
-                      .map(entry -> Relation.of(table.key(), entry, RelationKind.FOREIGN_KEY)),
-                  table.logicalRelations().stream()
-                      .map(entry -> Relation.of(table.key(), entry, RelationKind.LOGICAL_RELATION)))
-              .toList();
-      outgoing.put(table.key(), relations);
-      for (final Relation relation : relations) {
-        incoming.computeIfAbsent(relation.to(), key -> new ArrayList<>()).add(relation);
-      }
-    }
+    this.relations = new RelationGraph(this.tables);
   }
 
   /**
@@ -282,6 +260,60 @@ public final class SchemaCatalog {
   }
 
   /**
+   * 関数を実行するトリガーを求めるメソッド
+   *
+   * @return DB名・スキーマ名・テーブル名の順
+   */
+  public List<TableTrigger> triggersCalling(FunctionOverloads function) {
+    return listTriggers(SearchScope.ALL).stream()
+        .filter(
+            found ->
+                SqlNames.sameObject(
+                    SqlNames.functionOfTrigger(found.trigger().function(), found.table().key()),
+                    function.key()))
+        .toList();
+  }
+
+  /**
+   * シーケンスを採番（デフォルト値の{@code nextval}）に使うカラムを求めるメソッド
+   *
+   * @return DB名・スキーマ名・テーブル名・カラムの並び順
+   */
+  public List<TableColumn> columnsUsingSequence(SequenceEntry sequence) {
+    return columnsWhere(
+        (table, column) ->
+            SqlNames.sequenceOfDefault(column.defaultValue(), table.key())
+                .filter(key -> SqlNames.sameObject(key, sequence.key()))
+                .isPresent());
+  }
+
+  /**
+   * ユーザー定義型をカラムの型（配列を含む）に使うカラムを求めるメソッド
+   *
+   * @return DB名・スキーマ名・テーブル名・カラムの並び順
+   */
+  public List<TableColumn> columnsUsingType(TypeEntry type) {
+    return columnsWhere(
+        (table, column) ->
+            !column.type().isEmpty()
+                && SqlNames.sameObject(
+                    SqlNames.typeOfColumn(column.type(), table.key()), type.key()));
+  }
+
+  /**
+   * 定義本体にテーブル名が1つの語として現れる関数・プロシージャを求めるメソッド<br>
+   * 文字列の一致で判定するため、同名のカラム・別スキーマの同名テーブル・コメント中の出現も含む（参照している可能性がある関数）
+   *
+   * @return 同じDBの関数を、DB名・スキーマ名・関数名の順（オーバーロードはスナップショットの並び順）
+   */
+  public List<FunctionEntry> functionsMentioning(TableEntry table) {
+    final Pattern name = SqlNames.wordPattern(table.key().name());
+    return listFunctions(new SearchScope(table.key().database(), null), NameFilter.ALL).stream()
+        .filter(function -> name.matcher(function.definition()).find())
+        .toList();
+  }
+
+  /**
    * 名前で指定された関数・プロシージャを解決するメソッド（オーバーロードはまとめて1つとみなす）<br>
    * 名前は大文字小文字を区別せず完全一致で比べる。見つからない場合は、名前の一部に指定を含むものを候補として返す
    */
@@ -314,51 +346,24 @@ public final class SchemaCatalog {
    * @param depth たどる段数（1以上）
    */
   public RelatedTables relatedTables(TableEntry start, int depth, Direction direction) {
-    final Map<Relation, Integer> found = new LinkedHashMap<>();
-    final Set<ObjectKey> visited = new LinkedHashSet<>(List.of(start.key()));
-    final Set<ObjectKey> missing = new LinkedHashSet<>();
-    List<ObjectKey> frontier = List.of(start.key());
-    for (int level = 1; level <= depth && !frontier.isEmpty(); level++) {
-      final List<ObjectKey> next = new ArrayList<>();
-      for (final ObjectKey current : frontier) {
-        for (final Relation relation : relationsOf(current, direction)) {
-          found.putIfAbsent(relation, level);
-          final ObjectKey neighbor =
-              relation.from().equals(current) ? relation.to() : relation.from();
-          if (!tablesByKey.containsKey(neighbor)) {
-            missing.add(neighbor);
-          } else if (visited.add(neighbor)) {
-            next.add(neighbor);
-          }
-        }
-      }
-      frontier = next;
-    }
-    return new RelatedTables(
-        start,
-        found.entrySet().stream()
-            .map(entry -> new RelatedTables.RelationAtDepth(entry.getKey(), entry.getValue()))
-            .toList(),
-        visited.stream().map(tablesByKey::get).toList(),
-        List.copyOf(missing));
+    return relations.relatedTables(start, depth, direction);
   }
 
-  /** 指定した向きの関連を、参照先へ向かうもの・参照元から来るものの順に返す */
-  private List<Relation> relationsOf(ObjectKey table, Direction direction) {
-    final List<Relation> relations = new ArrayList<>();
-    if (direction.followsOutgoing()) {
-      relations.addAll(outgoing.getOrDefault(table, List.of()));
-    }
-    if (direction.followsIncoming()) {
-      relations.addAll(incoming.getOrDefault(table, List.of()));
-    }
-    return relations;
+  /**
+   * 2つのテーブルをつなぐ最短の経路を探すメソッド<br>
+   * 外部キー・論理リレーションを向きを問わずたどる。スナップショットに含まれないテーブルは経由しない
+   *
+   * @param maxLength 経路の関連の数の上限（1以上）。これより長い経路は探さない
+   * @param limit 返す経路の数の上限（1以上）
+   */
+  public JoinPaths joinPaths(TableEntry from, TableEntry to, int maxLength, int limit) {
+    return relations.joinPaths(from, to, maxLength, limit);
   }
 
   /** カラムが外部キー・論理リレーションで参照している先を、関連の定義順に返す */
   private List<ColumnHit.ColumnReference> referencesOf(TableEntry table, ColumnEntry column) {
     final List<ColumnHit.ColumnReference> references = new ArrayList<>();
-    for (final Relation relation : outgoing.getOrDefault(table.key(), List.of())) {
+    for (final Relation relation : relations.outgoing(table.key())) {
       final int position = relation.fromColumns().indexOf(column.name());
       if (position >= 0 && position < relation.toColumns().size()) {
         references.add(
@@ -393,6 +398,17 @@ public final class SchemaCatalog {
   private static SchemaCounter counterOf(Map<List<String>, SchemaCounter> counters, ObjectKey key) {
     return counters.computeIfAbsent(
         List.of(key.database(), key.schema()), id -> new SchemaCounter());
+  }
+
+  private List<TableColumn> columnsWhere(BiPredicate<TableEntry, ColumnEntry> condition) {
+    return tables.stream()
+        .sorted(BY_KEY)
+        .flatMap(
+            table ->
+                table.columns().stream()
+                    .filter(column -> condition.test(table, column))
+                    .map(column -> new TableColumn(table, column)))
+        .toList();
   }
 
   private static <E extends SchemaObject> List<E> inOrder(

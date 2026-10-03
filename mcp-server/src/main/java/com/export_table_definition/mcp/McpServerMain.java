@@ -26,10 +26,14 @@ public final class McpServerMain {
 
   private static final String SERVER_NAME = "exportTableDefinition";
 
+  /** ツールの使い分け。ツールが多いため、AIが最初の手を選べるよう探し方の順を示す */
   private static final String INSTRUCTIONS =
       "DBのテーブル定義（exportTableDefinitionが出力したスキーマのスナップショット）を調べるサーバー。"
-          + "テーブル名が分からなければsearch_tablesで探し、get_tableで定義を、"
-          + "get_related_tablesでJOINに使う関連（外部キーと、DBに制約の無い論理リレーション）を確認する。";
+          + "全体像はlist_schemas、テーブルはキーワードならsearch_tables・一覧ならlist_tablesで探し、"
+          + "get_tableで定義を取得する（必要な項目だけをsections・columnsで指定すると結果が小さくなる）。"
+          + "カラム名からテーブルを探すときはfind_columns、JOINの条件はget_related_tables"
+          + "（外部キーと、DBに制約の無い論理リレーション）、直接つながらないテーブル同士はfind_join_pathを使う。"
+          + "関数・シーケンス・ユーザー定義型・トリガーは、list_*で探してget_*で取得する（PostgreSQLのみ）。";
 
   private McpServerMain() {}
 

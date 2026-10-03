@@ -12,6 +12,7 @@ import com.export_table_definition.mcp.catalog.FunctionEntry;
 import com.export_table_definition.mcp.catalog.FunctionOverloads;
 import com.export_table_definition.mcp.catalog.NameFilter;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.TableTrigger;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -86,7 +87,17 @@ final class FunctionTools {
             function.key().database(),
             function.key().schema(),
             function.key().name(),
-            function.overloads().stream().map(FunctionTools::signature).toList()));
+            function.overloads().stream().map(FunctionTools::signature).toList(),
+            catalog.triggersCalling(function).stream().map(CallingTrigger::of).toList()));
+  }
+
+  /**
+   * 関数を、オーバーロードを区別できる形で表すメソッド
+   *
+   * @return {@code スキーマ名.関数名(引数)}
+   */
+  static String signatureName(FunctionEntry function) {
+    return function.key().qualifiedName() + "(" + function.arguments() + ")";
   }
 
   /** スナップショットの1行から、関数を識別する項目（呼び出し側で返す）と定義本体を除いたもの */
@@ -130,7 +141,28 @@ final class FunctionTools {
    * {@code get_function}の結果
    *
    * @param overloads オーバーロードごとのシグネチャ（スナップショットの1行から定義本体を除いたもの。cliが項目を追加すれば、そのまま返る）
+   * @param calledByTriggers この関数を実行するトリガー
    */
   record GetFunctionOutput(
-      String database, String schema, String name, List<ObjectNode> overloads) {}
+      String database,
+      String schema,
+      String name,
+      List<ObjectNode> overloads,
+      List<CallingTrigger> calledByTriggers) {}
+
+  /**
+   * 関数を実行するトリガー
+   *
+   * @param table トリガーを持つテーブル（{@code スキーマ名.テーブル名}）
+   */
+  record CallingTrigger(String table, String trigger, String timing, List<String> events) {
+
+    static CallingTrigger of(TableTrigger found) {
+      return new CallingTrigger(
+          found.table().key().qualifiedName(),
+          found.trigger().name(),
+          found.trigger().timing(),
+          found.trigger().events());
+    }
+  }
 }

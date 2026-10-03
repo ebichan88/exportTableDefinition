@@ -16,11 +16,13 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `mcp`（直下） | `McpServerMain` | エントリーポイント。起動引数の検証とスナップショットの読み込みの後、stdioのトランスポートでサーバーを起動する |
 | | `ServerArguments` | 起動引数（`--snapshot=<ディレクトリ>`）の解釈と検証 |
 | | `UserCorrectableException` | 利用者が起動引数・スナップショットを見直せば解消する失敗。起動時に標準エラーへ出して終了コード2で終了する |
-| `mcp.catalog` | `SchemaCatalog` | 全オブジェクトを保持し、検索・一覧・名前の解決・カラムの逆引き・関連のたどりを担う。被参照側の関連はスナップショットに無いため、組み立て時に逆引きの索引を作る |
+| `mcp.catalog` | `SchemaCatalog` | 全オブジェクトを保持し、検索・一覧・名前の解決・カラムの逆引き・オブジェクト間の相互参照・関連のたどりを担う |
 | | `SearchQuery` | テーブルの検索語。空白区切りのAND、NFKC正規化＋小文字化した部分一致、項目ごとの点数（テーブル名＞論理名＞カラム＞説明・備考） |
 | | `ColumnQuery`・`ColumnHit` | カラムの逆引きの条件（物理名・論理名の完全一致／部分一致）と、当てはまったカラム（参照先を含む） |
 | | `ObjectReference`・`Lookup` | 名前で指定されたオブジェクト（`スキーマ名.名前`も可）と、その解決結果（1つに定まる・複数ある・見つからない）。テーブル以外の種類にも共通で使う |
-| | `Relation`・`RelatedTables` | テーブル間の関連（外部キー・論理リレーション）と、幅優先でたどった結果 |
+| | `RelationGraph` | テーブルを頂点、関連（外部キー・論理リレーション）を辺とするグラフ。被参照側の逆引きの索引を持ち、関連のたどりと最短のJOIN経路の探索を担う |
+| | `Relation`・`RelatedTables`・`JoinPath`・`JoinPaths` | テーブル間の関連と、幅優先でたどった結果・2つのテーブルをつなぐ最短経路 |
+| | `SqlNames`・`TableColumn` | カラムの型・デフォルト値（`nextval`）・トリガーの関数名・関数の定義本体に現れるオブジェクトの名前の判定（相互参照に使う）と、カラムとそれを持つテーブル |
 | | `TableEntry`・`ColumnEntry`・`RelationEntry`・`TriggerEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
 | | `FunctionEntry`・`FunctionOverloads`・`SequenceEntry`・`TypeEntry` | 関数・シーケンス・ユーザー定義型の1行。関数は同名のもの（オーバーロード）を`FunctionOverloads`にまとめて名前の解決の単位にする |
 | | `NameFilter` | 関数・シーケンス・型の一覧を、名前の部分一致で絞り込む条件 |
@@ -37,12 +39,13 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `list_schemas` | なし | DB（DBMS種別）ごとのスキーマと、スキーマごとのオブジェクトの数 |
 | `search_tables` | `query`、`schema`・`database`・`limit`（任意） | 一致したテーブルの概要（名前・論理名・区分・説明）と、一致した項目（`matchedIn`） |
 | `list_tables` | `schema`・`database`・`type`・`includeDescription`・`limit`・`offset`（任意） | テーブルの概要（名前・論理名・区分）の一覧 |
-| `get_table` | `table`、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）。`sections`・`columns`で項目・カラムを絞れる |
+| `get_table` | `table`、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）に、定義本体にテーブル名が現れる関数（`mentionedInFunctions`）を加えたもの。`sections`・`columns`で項目・カラムを絞れる |
 | `find_columns` | `column`、`match`・`schema`・`database`・`limit`・`offset`（任意） | 当てはまったカラム（テーブル・型・PK・NOT NULL・デフォルト値・参照先） |
 | `get_related_tables` | `table`、`depth`（1〜3）・`direction`（outgoing/incoming/both）等（任意） | 関連（どのカラム同士か・外部キーか論理リレーションか・多重度・段数）と、関連に現れたテーブルの概要 |
-| `list_functions`・`get_function` | `query`等（任意）／`function` | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）。`get_function`はオーバーロードをまとめて返す |
-| `list_sequences`・`get_sequence` | `query`等（任意）／`sequence` | シーケンスの名前・所有カラム／スナップショットの1行 |
-| `list_types`・`get_type` | `query`・`category`等（任意）／`type` | ユーザー定義型の名前・種別／スナップショットの1行（ENUMの値の一覧等） |
+| `find_join_path` | `from`・`to`、`maxLength`（1〜6）・`limit`等（任意） | 2つのテーブルをつなぐ最短の経路（たどる順のテーブルと、各段の関連）。同じ長さの経路はすべて（`limit`まで）返す |
+| `list_functions`・`get_function` | `query`等（任意）／`function` | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）。`get_function`はオーバーロードをまとめ、関数を実行するトリガーも返す |
+| `list_sequences`・`get_sequence` | `query`等（任意）／`sequence` | シーケンスの名前・所有カラム／スナップショットの1行と、採番に使うカラム（`usedByColumns`） |
+| `list_types`・`get_type` | `query`・`category`等（任意）／`type` | ユーザー定義型の名前・種別／スナップショットの1行（ENUMの値の一覧等）と、型を使うカラム（`usedByColumns`） |
 | `list_triggers` | `schema`・`database`等（任意） | テーブルをまたいだトリガーの一覧（テーブル・タイミング・イベント・実行単位・関数） |
 
 - 結果はJSONの文字列で返す。値が無い項目（空文字・空リスト）は出力しない。
@@ -52,7 +55,11 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
   `get_table`の`columns`にテーブルに無いカラムを指定した場合も、カラムの一覧を示すエラーにする。
 - 一覧を返すツールは`limit`・`offset`で範囲を指定し、続きがあれば`nextOffset`を返す。AIのコンテキストを圧迫しないよう、
   件数の上限を設ける。
-- 関数・プロシージャの定義本体はAIのコンテキストを圧迫するため、ツールの結果には出さない（読み込みはする）。
+- 関数・プロシージャの定義本体はAIのコンテキストを圧迫するため、ツールの結果には出さない
+  （読み込みはして、テーブル名が現れる関数の判定にだけ使う）。
+- オブジェクト間の相互参照（関数↔トリガー、シーケンス・型↔カラム、テーブル↔関数の定義本体）はスナップショットに無いため、
+  呼び出しのたびに求める。名前の比較は大文字小文字を区別せず、スキーマ修飾の無い名前は参照元と同じスキーマとみなす。
+- ツールの使い分け（どれから呼ぶか）は、初期化時にサーバーからAIへ渡す説明（`instructions`）に書く。
 - 文字列のリストの引数は、JSONの配列のほかカンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）。
 
 ## stdioでの動作
@@ -87,7 +94,7 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 
 | テスト | 対象 |
 |---|---|
-| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先） |
+| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、相互参照、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先）、JOIN経路の探索 |
 | `SnapshotDirectoryReaderTest` | 読み込みと、起動時の誤り（ファイル名・行番号を含むメッセージ） |
 | `SampleSnapshotContractTest` | ベースラインとの契約（上記） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証 |

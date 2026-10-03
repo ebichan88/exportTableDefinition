@@ -3,7 +3,7 @@ package com.export_table_definition.mcp.tool;
 import java.util.Arrays;
 import java.util.List;
 
-/** {@code get_table}で返す範囲を選べる、テーブル定義の項目（スナップショットの項目名） */
+/** {@code get_table}で返す範囲を選べる、テーブル定義の項目（スナップショットの項目名、またはツールが加える項目名） */
 enum TableSection {
   COLUMNS("columns"),
   INDEXES("indexes"),
@@ -12,7 +12,9 @@ enum TableSection {
   LOGICAL_RELATIONS("logicalRelations"),
   TRIGGERS("triggers"),
   /** ビュー・マテリアライズドビューのソース定義 */
-  DEFINITION("definition");
+  DEFINITION("definition"),
+  /** 定義本体にテーブル名が現れる関数。スナップショットには無く、ツールが求めて加える */
+  MENTIONED_IN_FUNCTIONS("mentionedInFunctions");
 
   private final String fieldName;
 

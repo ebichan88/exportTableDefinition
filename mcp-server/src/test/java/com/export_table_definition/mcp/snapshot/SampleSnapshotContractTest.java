@@ -9,8 +9,10 @@ import com.export_table_definition.mcp.catalog.ColumnQuery;
 import com.export_table_definition.mcp.catalog.Direction;
 import com.export_table_definition.mcp.catalog.FunctionEntry;
 import com.export_table_definition.mcp.catalog.FunctionOverloads;
+import com.export_table_definition.mcp.catalog.JoinPaths;
 import com.export_table_definition.mcp.catalog.Lookups;
 import com.export_table_definition.mcp.catalog.MatchMode;
+import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.ObjectReference;
 import com.export_table_definition.mcp.catalog.RelatedTables;
 import com.export_table_definition.mcp.catalog.RelationKind;
@@ -162,6 +164,48 @@ class SampleSnapshotContractTest {
             .orElseThrow();
     assertEquals("sample.log_employee_change", audit.function());
     assertEquals(List.of("INSERT", "DELETE", "UPDATE"), audit.events());
+  }
+
+  @Test
+  @DisplayName("サンプルの相互参照（トリガー関数・シーケンス・型・関数の本体に現れるテーブル）を求められる")
+  void findsCrossReferencesOfSample() {
+    final FunctionOverloads logEmployeeChange =
+        Lookups.found(
+            catalog.lookupFunction(ObjectReference.of(null, null, "log_employee_change")));
+    assertEquals(
+        List.of("employee.trg_employee_audit"),
+        catalog.triggersCalling(logEmployeeChange).stream()
+            .map(found -> found.table().key().name() + "." + found.trigger().name())
+            .toList());
+    assertEquals(
+        List.of("audit_log.log_id"),
+        catalog
+            .columnsUsingSequence(
+                Lookups.found(
+                    catalog.lookupSequence(ObjectReference.of(null, null, "audit_log_log_id_seq"))))
+            .stream()
+            .map(found -> found.table().key().name() + "." + found.column().name())
+            .toList());
+    assertTrue(
+        catalog
+            .columnsUsingType(
+                Lookups.found(
+                    catalog.lookupType(ObjectReference.of(null, null, "employee_status_enum"))))
+            .stream()
+            .anyMatch(found -> found.table().key().name().equals("employee")));
+    assertTrue(
+        catalog.functionsMentioning(find("audit_log")).stream()
+            .anyMatch(function -> function.key().name().equals("log_employee_change")));
+  }
+
+  @Test
+  @DisplayName("サンプルのテーブル同士をつなぐJOIN経路を探せる")
+  void findsJoinPathOfSample() {
+    final JoinPaths paths = catalog.joinPaths(find("audit_log"), find("department"), 4, 5);
+
+    assertEquals(
+        List.of("audit_log", "employee", "department"),
+        paths.paths().get(0).tables().stream().map(ObjectKey::name).toList());
   }
 
   private static TableEntry find(String name) {

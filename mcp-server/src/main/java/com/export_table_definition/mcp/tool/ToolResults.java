@@ -1,11 +1,14 @@
 package com.export_table_definition.mcp.tool;
 
+import com.export_table_definition.mcp.catalog.TableColumn;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.io.UncheckedIOException;
+import java.util.List;
 
 /** ツールの結果のJSON化。値が無い項目（null・空文字・空リスト）は出力しない */
 final class ToolResults {
@@ -24,6 +27,22 @@ final class ToolResults {
     } catch (JsonProcessingException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  /**
+   * スナップショットの1行に、そのオブジェクトを使うカラムを加えて返すメソッド
+   *
+   * @return 使うカラムが無い場合は1行そのもの。ある場合は{@code usedByColumns}（{@code スキーマ名.テーブル名.カラム名}）を加えたもの
+   */
+  static CallToolResult withUsedByColumns(String json, List<TableColumn> columns) {
+    if (columns.isEmpty()) {
+      return CallToolResult.builder().addTextContent(json).build();
+    }
+    final ObjectNode output = readObject(json);
+    final ArrayNode names = output.putArray("usedByColumns");
+    columns.forEach(
+        found -> names.add(found.table().key().qualifiedName() + "." + found.column().name()));
+    return CallToolResult.builder().addTextContent(output.toString()).build();
   }
 
   /**

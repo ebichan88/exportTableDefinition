@@ -5,8 +5,11 @@ import static com.export_table_definition.mcp.tool.ToolSpecifications.integerPro
 import static com.export_table_definition.mcp.tool.ToolSpecifications.namedObjectProperties;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.objectSchema;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.readOnlyTool;
+import static com.export_table_definition.mcp.tool.ToolSpecifications.stringProperty;
 
 import com.export_table_definition.mcp.catalog.Direction;
+import com.export_table_definition.mcp.catalog.JoinPath;
+import com.export_table_definition.mcp.catalog.JoinPaths;
 import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.RelatedTables;
 import com.export_table_definition.mcp.catalog.Relation;
@@ -18,13 +21,21 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.util.List;
 import java.util.Map;
 
-/** テーブル間の関連をたどるツール（{@code get_related_tables}） */
+/** テーブル間の関連をたどるツール（{@code get_related_tables}・{@code find_join_path}） */
 final class RelationTools {
 
   static final String GET_RELATED_TABLES = "get_related_tables";
+  static final String FIND_JOIN_PATH = "find_join_path";
 
   /** 段数を増やすと結果が急に膨らみAIのコンテキストを圧迫するため、3段までに抑える */
   private static final int MAX_DEPTH = 3;
+
+  /** 経路の探索は最短の経路だけを返すため結果は膨らまないが、長すぎる経路はJOINの候補として現実的でない */
+  private static final int DEFAULT_MAX_LENGTH = 4;
+
+  private static final int MAX_MAX_LENGTH = 6;
+  private static final int DEFAULT_PATH_LIMIT = 5;
+  private static final int MAX_PATH_LIMIT = 20;
 
   private final SchemaCatalog catalog;
 
@@ -51,7 +62,25 @@ final class RelationTools {
                                 "outgoing: 参照先へ、incoming: 参照元へ、both: 両方（既定both）",
                                 ToolArguments.lowerNames(Direction.class)))),
                 List.of("table")),
-            this::getRelatedTables));
+            this::getRelatedTables),
+        readOnlyTool(
+            FIND_JOIN_PATH,
+            "2つのテーブルをつなぐ最短のJOIN経路を、外部キーと論理リレーションを向きを問わずたどって返す。"
+                + "経路上の各段で、どのカラム同士でつながるかを返す。直接の関連が無いテーブル同士をJOINするときに使う。"
+                + "同じ長さの経路が複数ある場合はすべて（limitまで）返す",
+            objectSchema(
+                Map.of(
+                    "from", stringProperty("始点のテーブル名。スキーマ名.テーブル名の形でもよい"),
+                    "to", stringProperty("終点のテーブル名。スキーマ名.テーブル名の形でもよい"),
+                    "database", ToolSpecifications.DATABASE_PROPERTY,
+                    "maxLength",
+                        integerProperty(
+                            "経路の関連の数の上限（既定" + DEFAULT_MAX_LENGTH + "）", 1, MAX_MAX_LENGTH),
+                    "limit",
+                        integerProperty(
+                            "返す経路の数の上限（既定" + DEFAULT_PATH_LIMIT + "）", 1, MAX_PATH_LIMIT)),
+                List.of("from", "to")),
+            this::findJoinPath));
   }
 
   /**
@@ -64,13 +93,61 @@ final class RelationTools {
   }
 
   private CallToolResult getRelatedTables(ToolArguments arguments) {
-    final TableEntry table =
-        ObjectResolver.resolve(
-            arguments, "table", "テーブル", TableTools.SEARCH_TABLES, catalog::lookupTable);
+    final TableEntry table = resolveTable(arguments, "table");
     final int depth = arguments.optionalInt("depth", 1, 1, MAX_DEPTH);
     final Direction direction =
         arguments.optionalEnum("direction", Direction.class, Direction.BOTH);
     return ToolResults.json(RelatedTablesOutput.of(catalog.relatedTables(table, depth, direction)));
+  }
+
+  private CallToolResult findJoinPath(ToolArguments arguments) {
+    final TableEntry from = resolveTable(arguments, "from");
+    final TableEntry to = resolveTable(arguments, "to");
+    if (from.key().equals(to.key())) {
+      throw new InvalidToolArgumentException("fromとtoに同じテーブルが指定されています。");
+    }
+    final int maxLength = arguments.optionalInt("maxLength", DEFAULT_MAX_LENGTH, 1, MAX_MAX_LENGTH);
+    final int limit = arguments.optionalInt("limit", DEFAULT_PATH_LIMIT, 1, MAX_PATH_LIMIT);
+    final JoinPaths found = catalog.joinPaths(from, to, maxLength, limit);
+    return ToolResults.json(
+        new JoinPathOutput(
+            from.key().qualifiedName(),
+            to.key().qualifiedName(),
+            found.paths().stream().map(JoinPathOutput.Path::of).toList(),
+            found.hasMore() ? Boolean.TRUE : null,
+            found.paths().isEmpty()
+                ? maxLength + "段以内でつながる経路はありません。maxLengthを増やすか、get_related_tablesで関連を確認してください。"
+                : null));
+  }
+
+  /** テーブル名を受け取る引数（スキーマ名は{@code スキーマ名.テーブル名}の形で指定する）から、テーブルを1つに解決する */
+  private TableEntry resolveTable(ToolArguments arguments, String argumentName) {
+    return ObjectResolver.resolve(
+        arguments, argumentName, "テーブル", TableTools.SEARCH_TABLES, catalog::lookupTable);
+  }
+
+  /**
+   * {@code find_join_path}の結果
+   *
+   * @param hasMore 件数の上限で切り捨てた同じ長さの経路が他にもある場合はtrue。無い場合はnull
+   * @param message 経路が見つからない場合に、次に何をすればよいかを示す。見つかった場合はnull
+   */
+  record JoinPathOutput(String from, String to, List<Path> paths, Boolean hasMore, String message) {
+
+    /**
+     * 1つの経路
+     *
+     * @param tables 始点から終点まで、たどる順のテーブル（{@code スキーマ名.テーブル名}）
+     * @param joins 隣り合うテーブルをつなぐ関連（{@code tables}の順）。from・toは関連の参照元・参照先で、たどる向きとは限らない
+     */
+    record Path(List<String> tables, List<RelationOutput> joins) {
+
+      static Path of(JoinPath path) {
+        return new Path(
+            path.tables().stream().map(ObjectKey::qualifiedName).toList(),
+            path.relations().stream().map(relation -> RelationOutput.of(relation, null)).toList());
+      }
+    }
   }
 
   /**

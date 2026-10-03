@@ -55,6 +55,7 @@ class McpServerProcessTest {
               "get_table",
               "find_columns",
               "get_related_tables",
+              "find_join_path",
               "list_functions",
               "get_function",
               "list_sequences",

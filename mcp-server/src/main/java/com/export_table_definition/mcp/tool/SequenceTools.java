@@ -50,7 +50,8 @@ final class SequenceTools {
             this::listSequences),
         readOnlyTool(
             GET_SEQUENCE,
-            "シーケンスの定義（増分・最小値・最大値・キャッシュ・開始値・循環の有無・所有カラム）を返す",
+            "シーケンスの定義（増分・最小値・最大値・キャッシュ・開始値・循環の有無・所有カラム）と、"
+                + "デフォルト値（nextval）で採番に使うカラム（usedByColumns）を返す",
             objectSchema(
                 namedObjectProperties(
                     "sequence", "シーケンス名（大文字小文字を区別しない）。スキーマ名.シーケンス名の形でもよい", Map.of()),
@@ -73,7 +74,7 @@ final class SequenceTools {
     final SequenceEntry sequence =
         ObjectResolver.resolve(
             arguments, "sequence", "シーケンス", LIST_SEQUENCES, catalog::lookupSequence);
-    return CallToolResult.builder().addTextContent(sequence.json()).build();
+    return ToolResults.withUsedByColumns(sequence.json(), catalog.columnsUsingSequence(sequence));
   }
 
   /**

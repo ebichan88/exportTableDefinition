@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.export_table_definition.mcp.catalog.ColumnEntry;
 import com.export_table_definition.mcp.catalog.DatabaseEntry;
 import com.export_table_definition.mcp.catalog.FunctionEntry;
 import com.export_table_definition.mcp.catalog.ObjectKey;
@@ -33,6 +34,17 @@ class TableDefinitionToolsTest {
                   table("department").logicalName("部署").description("組織のマスタ").build(),
                   table("employee")
                       .logicalName("従業員")
+                      .column(
+                          new ColumnEntry(
+                              "employee_id",
+                              null,
+                              "integer",
+                              true,
+                              true,
+                              "nextval('sample.employee_id_seq'::regclass)",
+                              null))
+                      .column(
+                          new ColumnEntry("status", null, "sample.status", false, true, null, null))
                       .column("department_id", "部署ID", null)
                       .foreignKey("department_id", "department", "department_id")
                       .trigger("trg_employee_audit", "sample.log_change")
@@ -66,7 +78,14 @@ class TableDefinitionToolsTest {
                       "{\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
                           + "\"arguments\":\"p_salary numeric, p_rate numeric\",\"result\":\"numeric\","
                           + "\"language\":\"sql\",\"definition\":\"CREATE FUNCTION ...\"}"),
-                  function("log_change", "", "{}")),
+                  new FunctionEntry(
+                      new ObjectKey("testdb", "sample", "log_change"),
+                      "FUNCTION",
+                      "",
+                      "trigger",
+                      "plpgsql",
+                      "begin insert into sample.audit_log values (new.employee_id); end;",
+                      "{}")),
               List.of(
                   new SequenceEntry(
                       new ObjectKey("testdb", "sample", "employee_id_seq"),
@@ -93,6 +112,7 @@ class TableDefinitionToolsTest {
             "get_table",
             "find_columns",
             "get_related_tables",
+            "find_join_path",
             "list_functions",
             "get_function",
             "list_sequences",
@@ -285,14 +305,39 @@ class TableDefinitionToolsTest {
   }
 
   @Test
-  @DisplayName("list_sequences・get_sequenceは、シーケンスの所有カラム・定義を返す")
+  @DisplayName("get_functionは、トリガー関数を実行するトリガーも返す")
+  void getFunctionWithTriggers() throws Exception {
+    assertEquals(
+        "[{\"table\":\"sample.employee\",\"trigger\":\"trg_employee_audit\",\"timing\":\"AFTER\","
+            + "\"events\":[\"INSERT\"]}]",
+        json(call("get_function", Map.of("function", "log_change")))
+            .get("calledByTriggers")
+            .toString());
+  }
+
+  @Test
+  @DisplayName("get_tableは、定義本体にテーブル名が現れる関数を加え、sectionsで外せる")
+  void getTableWithMentionedFunctions() throws Exception {
+    assertEquals(
+        "[\"sample.log_change()\"]",
+        json(call("get_table", Map.of("table", "audit_log")))
+            .get("mentionedInFunctions")
+            .toString());
+    assertFalse(
+        json(call("get_table", Map.of("table", "audit_log", "sections", "columns")))
+            .has("mentionedInFunctions"));
+  }
+
+  @Test
+  @DisplayName("list_sequences・get_sequenceは、シーケンスの所有カラム・定義と、採番に使うカラムを返す")
   void sequences() throws Exception {
     assertEquals(
         "{\"total\":1,\"sequences\":[{\"database\":\"testdb\",\"schema\":\"sample\","
             + "\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\"}]}",
         json(call("list_sequences", Map.of())).toString());
     assertEquals(
-        "{\"schema\":\"sample\",\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\"}",
+        "{\"schema\":\"sample\",\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\","
+            + "\"usedByColumns\":[\"sample.employee.employee_id\"]}",
         text(call("get_sequence", Map.of("sequence", "EMPLOYEE_ID_SEQ"))));
 
     final CallToolResult notFound = call("get_sequence", Map.of("sequence", "invoice_seq"));
@@ -301,12 +346,13 @@ class TableDefinitionToolsTest {
   }
 
   @Test
-  @DisplayName("list_types・get_typeは、ユーザー定義型の種別・定義を返し、種別で絞り込める")
+  @DisplayName("list_types・get_typeは、ユーザー定義型の種別・定義と型を使うカラムを返し、種別で絞り込める")
   void types() throws Exception {
     assertEquals(1, json(call("list_types", Map.of("category", "enum"))).get("total").asInt());
     assertEquals(0, json(call("list_types", Map.of("category", "DOMAIN"))).get("total").asInt());
     assertEquals(
-        "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\"}",
+        "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\","
+            + "\"usedByColumns\":[\"sample.employee.status\"]}",
         text(call("get_type", Map.of("type", "status"))));
   }
 
@@ -380,6 +426,38 @@ class TableDefinitionToolsTest {
     assertEquals(
         List.of(1, 2),
         result.get("relations").findValues("depth").stream().map(JsonNode::asInt).toList());
+  }
+
+  @Test
+  @DisplayName("find_join_pathは、最短の経路をたどる順のテーブルと、各段の関連で返す")
+  void findJoinPath() throws Exception {
+    final JsonNode result =
+        json(call("find_join_path", Map.of("from", "audit_log", "to", "sample.department")));
+
+    assertEquals("sample.audit_log", result.get("from").asText());
+    assertEquals(1, result.get("paths").size());
+    final JsonNode path = result.get("paths").get(0);
+    assertEquals(
+        "[\"sample.audit_log\",\"sample.employee\",\"sample.department\"]",
+        path.get("tables").toString());
+    assertEquals(
+        List.of("logicalRelation", "foreignKey"), path.get("joins").findValuesAsText("kind"));
+    assertFalse(path.get("joins").get(0).has("depth"));
+    assertFalse(result.has("hasMore"));
+  }
+
+  @Test
+  @DisplayName("find_join_pathでつながらない場合は、次に何をすればよいかを返し、同じテーブルはエラーにする")
+  void findJoinPathUnreachable() throws Exception {
+    final JsonNode result =
+        json(call("find_join_path", Map.of("from", "project", "to", "department")));
+    assertFalse(result.has("paths"));
+    assertTrue(result.get("message").asText().contains("maxLength"), result.toString());
+
+    final CallToolResult same =
+        call("find_join_path", Map.of("from", "department", "to", "sample.department"));
+    assertTrue(same.isError());
+    assertEquals("fromとtoに同じテーブルが指定されています。", text(same));
   }
 
   @Test

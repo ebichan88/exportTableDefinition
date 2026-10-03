@@ -19,6 +19,15 @@ public record Relation(
     String cardinality,
     String name) {
 
+  /**
+   * 関連の、指定したテーブルとは反対側のテーブルを返すメソッド
+   *
+   * @param side 関連の参照元または参照先。自己参照の場合はそのテーブル自身を返す
+   */
+  public ObjectKey otherSide(ObjectKey side) {
+    return from.equals(side) ? to : from;
+  }
+
   /** テーブルが持つ外部キー・論理リレーションから組み立てるメソッド */
   static Relation of(ObjectKey from, RelationEntry entry, RelationKind kind) {
     final String referenceSchema =
