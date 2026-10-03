@@ -41,7 +41,8 @@ public final class DatabaseTypeDetector {
     } catch (PersistenceException e) {
       throw new UserCorrectableException(
           "Could not connect to the database. Check the connection settings "
-              + "(conf/mybatis.properties, --db-* arguments or DB_* environment variables) "
+              + "(conf/mybatis.properties, --db-* arguments and the EXPORT_TABLE_DEFINITION_DB_PASSWORD "
+              + "environment variable) "
               + "and that the database is running.",
           e);
     }

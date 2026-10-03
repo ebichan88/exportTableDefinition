@@ -70,7 +70,7 @@ public class ExportTableDefinition {
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
     final ConnectionSettings connectionSettings =
-        ConnectionSettings.load(cliArguments.connectionOverrides());
+        ConnectionSettings.load(cliArguments.connectionOverrides(), System.getenv());
     final ResultDto resultDto = createController(injector, connectionSettings).execute(request);
     System.out.println(resultDto.getResultMessage());
     return ExitStatus.SUCCESS;
@@ -97,7 +97,7 @@ public class ExportTableDefinition {
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
     final ConnectionSettings connectionSettings =
-        ConnectionSettings.load(cliArguments.connectionOverrides());
+        ConnectionSettings.load(cliArguments.connectionOverrides(), System.getenv());
     final DiffCheckResultDto diffCheckResultDto =
         createController(injector, connectionSettings).checkDiff(request);
     System.out.println(diffCheckResultDto.getResultMessage());

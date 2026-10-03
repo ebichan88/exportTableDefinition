@@ -3,13 +3,23 @@ package com.export_table_definition.infrastructure.db;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.config.InvalidConfigurationException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ConnectionSettings のDB接続情報の組み立て・検証（READMEに記載したmybatis.propertiesの仕様）に関するテスト */
+/** ConnectionSettings のDB接続情報の組み立て・検証（READMEに記載したmybatis.properties・パスワードの環境変数の仕様）に関するテスト */
 public class ConnectionSettingsTest {
+
+  /** READMEに記載した環境変数名（実装の定数を参照せず、仕様として固定する） */
+  private static final String PASSWORD_ENVIRONMENT_VARIABLE = "EXPORT_TABLE_DEFINITION_DB_PASSWORD";
+
+  private static final Map<String, String> BASE_VALUES =
+      Map.of(
+          "driver", "org.postgresql.Driver",
+          "url", "jdbc:postgresql://localhost:5432/testdb",
+          "username", "user");
 
   private static Properties properties(String... keyValues) {
     final Properties properties = new Properties();
@@ -70,7 +80,8 @@ public class ConnectionSettingsTest {
                 "driver", "org.postgresql.Driver",
                 "url", "jdbc:postgresql://localhost:5432/filedb",
                 "username", "fileuser"),
-            properties("url", "jdbc:postgresql://localhost:5432/clidb"));
+            properties("url", "jdbc:postgresql://localhost:5432/clidb"),
+            Map.of());
 
     final Properties result = settings.toProperties();
     assertEquals("org.postgresql.Driver", result.getProperty("driver"));
@@ -84,7 +95,8 @@ public class ConnectionSettingsTest {
     final ConnectionSettings settings =
         ConnectionSettings.merge(
             Map.of(),
-            properties("driver", "org.postgresql.Driver", "url", "jdbc:postgresql://db/testdb"));
+            properties("driver", "org.postgresql.Driver", "url", "jdbc:postgresql://db/testdb"),
+            Map.of());
 
     assertEquals("jdbc:postgresql://db/testdb", settings.toProperties().getProperty("url"));
   }
@@ -94,6 +106,57 @@ public class ConnectionSettingsTest {
   void testValidatesMergedValues() {
     assertThrows(
         InvalidConfigurationException.class,
-        () -> ConnectionSettings.merge(Map.of(), properties("username", "user")));
+        () -> ConnectionSettings.merge(Map.of(), properties("username", "user"), Map.of()));
+  }
+
+  @Test
+  @DisplayName("merge: パスワードは環境変数から読む")
+  void testReadsPasswordFromEnvironment() {
+    final ConnectionSettings settings =
+        ConnectionSettings.merge(
+            BASE_VALUES, new Properties(), Map.of(PASSWORD_ENVIRONMENT_VARIABLE, "envpass"));
+
+    assertEquals("envpass", settings.toProperties().getProperty("password"));
+  }
+
+  @Test
+  @DisplayName("merge: CLI引数のパスワードが環境変数より優先される")
+  void testCliPasswordTakesPrecedenceOverEnvironment() {
+    final ConnectionSettings settings =
+        ConnectionSettings.merge(
+            BASE_VALUES,
+            properties("password", "clipass"),
+            Map.of(PASSWORD_ENVIRONMENT_VARIABLE, "envpass"));
+
+    assertEquals("clipass", settings.toProperties().getProperty("password"));
+  }
+
+  @Test
+  @DisplayName("merge: 環境変数の値が空の場合は、指定しなかったものとして扱う")
+  void testIgnoresBlankEnvironmentPassword() {
+    final ConnectionSettings settings =
+        ConnectionSettings.merge(
+            BASE_VALUES, new Properties(), Map.of(PASSWORD_ENVIRONMENT_VARIABLE, " "));
+
+    assertNull(settings.toProperties().getProperty("password"));
+  }
+
+  @Test
+  @DisplayName("merge: 設定ファイルのpasswordは、値が空でも環境変数への移行を案内して誤りとする")
+  void testRejectsPasswordInFile() {
+    final Map<String, String> baseValues = new HashMap<>(BASE_VALUES);
+    baseValues.put("password", "");
+
+    InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () ->
+                ConnectionSettings.merge(
+                    baseValues,
+                    properties("password", "clipass"),
+                    Map.of(PASSWORD_ENVIRONMENT_VARIABLE, "envpass")));
+
+    assertTrue(e.getMessage().contains("password cannot be set in conf/mybatis.properties"));
+    assertTrue(e.getMessage().contains(PASSWORD_ENVIRONMENT_VARIABLE));
   }
 }

@@ -13,17 +13,27 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * 検証済みのDB接続情報を表すクラス<br>
- * {@code conf/mybatis.properties}の値を、CLI引数の値で上書きしたもの。組み立てる時に検証するため、
+ * {@code conf/mybatis.properties}の値に、環境変数のパスワード・CLI引数の値を重ねたもの。組み立てる時に検証するため、
  * インスタンスがあれば必須の項目がそろい、未知のキーを含まないことが保証される
  */
 public final class ConnectionSettings {
 
+  /**
+   * パスワードを渡す環境変数<br>
+   * パスワードは設定ファイルに書けない。作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない
+   */
+  private static final String PASSWORD_ENVIRONMENT_VARIABLE = "EXPORT_TABLE_DEFINITION_DB_PASSWORD";
+
   private static final Logger logger = LogManager.getLogger(ConnectionSettings.class);
   private static final String PROPERTY_BUNDLE_NAME = "mybatis";
+  private static final String PASSWORD_KEY = "password";
 
-  /** DB接続情報のキー（mybatis-config.xmlが参照する。conf/mybatis.properties・CLI引数で指定する） */
+  /**
+   * DB接続情報のキー（mybatis-config.xmlが参照する）<br>
+   * passwordは環境変数・CLI引数でのみ指定でき、conf/mybatis.propertiesには書けない
+   */
   private static final List<String> CONNECTION_KEYS =
-      List.of("driver", "url", "username", "password");
+      List.of("driver", "url", "username", PASSWORD_KEY);
 
   /** DB接続情報のうち、既定値が無く指定が必須のキー（username・passwordはDBの認証方式によっては空でよい） */
   private static final List<String> REQUIRED_CONNECTION_KEYS = List.of("driver", "url");
@@ -35,15 +45,17 @@ public final class ConnectionSettings {
   }
 
   /**
-   * {@code conf/mybatis.properties}を読み込み、CLI引数の値で上書きしたDB接続情報を組み立てるメソッド<br>
+   * {@code conf/mybatis.properties}を読み込み、環境変数のパスワード・CLI引数の値で上書きしたDB接続情報を組み立てるメソッド<br>
    * {@code conf/mybatis.properties}が存在しない場合は、上書きする値だけで組み立てる（CLI引数のみで接続情報を賄うケースを許容するため）
    *
    * @param overrides 上書きする接続情報（CLI引数由来。未指定のキーは含まない）
+   * @param environment 環境変数（{@link #PASSWORD_ENVIRONMENT_VARIABLE}だけを参照する）
    * @return 検証済みのDB接続情報
-   * @throws InvalidConfigurationException 未知のキーがある場合や、必須の項目が未指定の場合
+   * @throws InvalidConfigurationException 未知のキーがある場合（{@code conf/mybatis.properties}の{@code
+   *     password}を含む）や、必須の項目が未指定の場合
    */
-  public static ConnectionSettings load(Properties overrides) {
-    return merge(loadBaseProperties(), overrides);
+  public static ConnectionSettings load(Properties overrides, Map<String, String> environment) {
+    return merge(loadBaseProperties(), overrides, environment);
   }
 
   /**
@@ -58,16 +70,40 @@ public final class ConnectionSettings {
   }
 
   /**
-   * {@code conf/mybatis.properties}の値を、上書きする値で上書きしてDB接続情報を組み立てるメソッド
+   * {@code conf/mybatis.properties}の値を、環境変数のパスワード・上書きする値の順に上書きしてDB接続情報を組み立てるメソッド<br>
+   * 環境変数の値が空（空白のみを含む）の場合は、指定しなかったものとして扱う
    *
    * @param baseValues {@code conf/mybatis.properties}の値
+   * @param environment 環境変数（{@link #PASSWORD_ENVIRONMENT_VARIABLE}だけを参照する）
    * @return 検証済みのDB接続情報
-   * @throws InvalidConfigurationException 未知のキーがある場合や、必須の項目が未指定の場合
+   * @throws InvalidConfigurationException 未知のキーがある場合（{@code conf/mybatis.properties}の{@code
+   *     password}を含む）や、必須の項目が未指定の場合
    */
-  static ConnectionSettings merge(Map<String, String> baseValues, Properties overrides) {
+  static ConnectionSettings merge(
+      Map<String, String> baseValues, Properties overrides, Map<String, String> environment) {
+    requireNoPasswordInFile(baseValues);
     final Map<String, String> values = new HashMap<>(baseValues);
+    final String environmentPassword = environment.get(PASSWORD_ENVIRONMENT_VARIABLE);
+    if (environmentPassword != null && !environmentPassword.isBlank()) {
+      values.put(PASSWORD_KEY, environmentPassword);
+    }
     overrides.stringPropertyNames().forEach(key -> values.put(key, overrides.getProperty(key)));
     return of(values);
+  }
+
+  /**
+   * 未知のキーの一覧に紛れさせず、パスワードの渡し方を示して誤りとする<br>
+   * 値が空でも誤りとするのは、行が残っているとパスワードを書く場所だと誤解されるため
+   */
+  private static void requireNoPasswordInFile(Map<String, String> baseValues) {
+    if (baseValues.containsKey(PASSWORD_KEY)) {
+      throw new InvalidConfigurationException(
+          "password cannot be set in conf/"
+              + PROPERTY_BUNDLE_NAME
+              + ".properties. Remove the password line, and set the password with the "
+              + PASSWORD_ENVIRONMENT_VARIABLE
+              + " environment variable (or the --db-password argument).");
+    }
   }
 
   /** mybatis-config.xmlのプレースホルダ（{@code ${driver}}等）へ渡す形に変換するメソッド */

@@ -60,8 +60,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - DB種別に依存しない部品のDIコンテナ（`ExportTableDefinitionModule`）を組み立て、`OutputDirectoryValidator`が出力先
      （`outputPath`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
      ディレクトリ・カレントディレクトリ自体）を指す場合は、DBへ接続する前に`[result]:FAIL`として報告する
-   - `ConnectionSettings.load()`（`infrastructure.db`）が`conf/mybatis.properties`をCLI引数の値で上書きし、
-     DB接続情報を検証する
+   - `ConnectionSettings.load()`（`infrastructure.db`）が`conf/mybatis.properties`を、環境変数のパスワード・CLI引数の値で
+     上書きし、DB接続情報を検証する。パスワードは設定ファイルに書けない（秘密をファイルに残さないため）
 3. 入力の検証に成功した後、`MyBatisSqlSessionFactories.create()`で`SqlSessionFactory`を1回だけ生成し、
    `DatabaseTypeDetector.detect()`がDBへ接続して接続先のDB種別を判定する。
    2.のDIコンテナの子として、DB種別に依存する部品（`DatabaseDependentModule`）を束縛したコンテナを組み立て、

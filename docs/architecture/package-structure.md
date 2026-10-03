@@ -116,7 +116,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `infrastructure.db` | `ConnectionSettings` | 検証済みのDB接続情報。`conf/mybatis.properties`の値をCLI引数の値で上書きし、組み立てる時に検証する（`driver`・`url`は必須、未知のキーは誤り） |
+| `infrastructure.db` | `ConnectionSettings` | 検証済みのDB接続情報。`conf/mybatis.properties`の値を、環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`のパスワード・CLI引数の値で上書きし、組み立てる時に検証する（`driver`・`url`は必須、未知のキー・設定ファイルの`password`は誤り） |
 | | `MyBatisSqlSessionFactories` | `ConnectionSettings`からMyBatisの`SqlSessionFactory`を生成する（状態を持たない。生成したものはDIコンテナで使い回す） |
 | | `DatabaseTypeDetector` | DBへ接続して接続先のDB種別を判定する。DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
