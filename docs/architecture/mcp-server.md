@@ -21,10 +21,12 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `ColumnQuery`・`ColumnHit` | カラムの逆引きの条件（物理名・論理名の完全一致／部分一致）と、当てはまったカラム（参照先を含む） |
 | | `ObjectReference`・`Lookup` | 名前で指定されたオブジェクト（`スキーマ名.名前`も可）と、その解決結果（1つに定まる・複数ある・見つからない）。テーブル以外の種類にも共通で使う |
 | | `Relation`・`RelatedTables` | テーブル間の関連（外部キー・論理リレーション）と、幅優先でたどった結果 |
-| | `TableEntry`・`ColumnEntry`・`RelationEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
+| | `TableEntry`・`ColumnEntry`・`RelationEntry`・`TriggerEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
+| | `FunctionEntry`・`FunctionOverloads`・`SequenceEntry`・`TypeEntry` | 関数・シーケンス・ユーザー定義型の1行。関数は同名のもの（オーバーロード）を`FunctionOverloads`にまとめて名前の解決の単位にする |
+| | `NameFilter` | 関数・シーケンス・型の一覧を、名前の部分一致で絞り込む条件 |
 | | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
-| `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリを読み込み`SchemaCatalog`を組み立てる。未知の項目は無視する |
-| `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`TableTools`・`RelationTools`）に分けて定義する |
+| `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリ（`tables.jsonl`・`functions.jsonl`・`sequences.jsonl`・`types.jsonl`）を読み込み`SchemaCatalog`を組み立てる。未知の項目は無視し、無いファイルは0件とする（cliの`outputObjects`で外せるため） |
+| `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
 | | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`） |
 | | `ToolArguments` | ツールの引数の読み取りと検証。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
 
@@ -38,6 +40,10 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `get_table` | `table`、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）。`sections`・`columns`で項目・カラムを絞れる |
 | `find_columns` | `column`、`match`・`schema`・`database`・`limit`・`offset`（任意） | 当てはまったカラム（テーブル・型・PK・NOT NULL・デフォルト値・参照先） |
 | `get_related_tables` | `table`、`depth`（1〜3）・`direction`（outgoing/incoming/both）等（任意） | 関連（どのカラム同士か・外部キーか論理リレーションか・多重度・段数）と、関連に現れたテーブルの概要 |
+| `list_functions`・`get_function` | `query`等（任意）／`function` | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）。`get_function`はオーバーロードをまとめて返す |
+| `list_sequences`・`get_sequence` | `query`等（任意）／`sequence` | シーケンスの名前・所有カラム／スナップショットの1行 |
+| `list_types`・`get_type` | `query`・`category`等（任意）／`type` | ユーザー定義型の名前・種別／スナップショットの1行（ENUMの値の一覧等） |
+| `list_triggers` | `schema`・`database`等（任意） | テーブルをまたいだトリガーの一覧（テーブル・タイミング・イベント・実行単位・関数） |
 
 - 結果はJSONの文字列で返す。値が無い項目（空文字・空リスト）は出力しない。
 - テーブル名は大文字小文字を区別しない。同名のテーブルが複数ある・見つからない場合は、候補を示すツールのエラーを返し、
@@ -46,6 +52,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
   `get_table`の`columns`にテーブルに無いカラムを指定した場合も、カラムの一覧を示すエラーにする。
 - 一覧を返すツールは`limit`・`offset`で範囲を指定し、続きがあれば`nextOffset`を返す。AIのコンテキストを圧迫しないよう、
   件数の上限を設ける。
+- 関数・プロシージャの定義本体はAIのコンテキストを圧迫するため、ツールの結果には出さない（読み込みはする）。
 - 文字列のリストの引数は、JSONの配列のほかカンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）。
 
 ## stdioでの動作

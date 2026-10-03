@@ -3,10 +3,14 @@ package com.export_table_definition.mcp.snapshot;
 import com.export_table_definition.mcp.UserCorrectableException;
 import com.export_table_definition.mcp.catalog.ColumnEntry;
 import com.export_table_definition.mcp.catalog.DatabaseEntry;
+import com.export_table_definition.mcp.catalog.FunctionEntry;
 import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.RelationEntry;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.SequenceEntry;
 import com.export_table_definition.mcp.catalog.TableEntry;
+import com.export_table_definition.mcp.catalog.TriggerEntry;
+import com.export_table_definition.mcp.catalog.TypeEntry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,11 +21,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 /**
  * スナップショットのディレクトリを読み込み、{@link SchemaCatalog}を組み立てるクラス<br>
- * 配置はcliの出力と同じく{@code {DB名}/database.json}・{@code {DB名}/{スキーマ名}/tables.jsonl}。
+ * 配置はcliの出力と同じく{@code {DB名}/database.json}・{@code {DB名}/{スキーマ名}/tables.jsonl}等。
+ * 種類ごとのファイルは出力対象から外せる（cliの{@code outputObjects}）ため、無いファイルは0件として扱う。
  * 項目の追加に追従できるよう未知の項目は無視し、形式を互換性なく変えた場合は{@code formatVersion}で検知する
  */
 public final class SnapshotDirectoryReader {
@@ -31,6 +37,9 @@ public final class SnapshotDirectoryReader {
 
   private static final String DATABASE_FILE_NAME = "database.json";
   private static final String TABLE_FILE_NAME = "tables.jsonl";
+  private static final String FUNCTION_FILE_NAME = "functions.jsonl";
+  private static final String SEQUENCE_FILE_NAME = "sequences.jsonl";
+  private static final String TYPE_FILE_NAME = "types.jsonl";
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -61,18 +70,37 @@ public final class SnapshotDirectoryReader {
     }
     final List<DatabaseEntry> databases = new ArrayList<>();
     final List<TableEntry> tables = new ArrayList<>();
+    final List<FunctionEntry> functions = new ArrayList<>();
+    final List<SequenceEntry> sequences = new ArrayList<>();
+    final List<TypeEntry> types = new ArrayList<>();
     for (final Path databaseDirectory : databaseDirectories) {
       final DatabaseLine databaseLine = readDatabase(databaseDirectory.resolve(DATABASE_FILE_NAME));
       databases.add(new DatabaseEntry(databaseLine.name(), databaseLine.dbms()));
       final String database = databaseLine.name();
       for (final Path schemaDirectory : subdirectories(databaseDirectory)) {
-        final Path tableFile = schemaDirectory.resolve(TABLE_FILE_NAME);
-        if (Files.isRegularFile(tableFile)) {
-          tables.addAll(readTables(database, tableFile));
-        }
+        tables.addAll(
+            readObjects(
+                schemaDirectory.resolve(TABLE_FILE_NAME),
+                TableLine.class,
+                (line, json) -> line.toEntry(database, json)));
+        functions.addAll(
+            readObjects(
+                schemaDirectory.resolve(FUNCTION_FILE_NAME),
+                FunctionLine.class,
+                (line, json) -> line.toEntry(database, json)));
+        sequences.addAll(
+            readObjects(
+                schemaDirectory.resolve(SEQUENCE_FILE_NAME),
+                SequenceLine.class,
+                (line, json) -> line.toEntry(database, json)));
+        types.addAll(
+            readObjects(
+                schemaDirectory.resolve(TYPE_FILE_NAME),
+                TypeLine.class,
+                (line, json) -> line.toEntry(database, json)));
       }
     }
-    return SchemaCatalog.of(databases, tables);
+    return SchemaCatalog.of(databases, tables, functions, sequences, types);
   }
 
   private DatabaseLine readDatabase(Path file) {
@@ -94,16 +122,26 @@ public final class SnapshotDirectoryReader {
     return database;
   }
 
-  private List<TableEntry> readTables(String database, Path file) {
+  /**
+   * JSON Linesのファイルを1行1オブジェクトとして読み込む
+   *
+   * @param toEntry 読み込んだ行と、行の文字列そのものから、カタログに渡す値を作る処理
+   * @return ファイルの行の順。ファイルが無い場合は空
+   */
+  private <L extends NamedLine, E> List<E> readObjects(
+      Path file, Class<L> lineType, BiFunction<L, String, E> toEntry) {
+    if (!Files.isRegularFile(file)) {
+      return List.of();
+    }
     final List<String> lines = readLines(file);
-    final List<TableEntry> tables = new ArrayList<>();
+    final List<E> entries = new ArrayList<>();
     for (int i = 0; i < lines.size(); i++) {
       final String line = lines.get(i);
       if (line.isBlank()) {
         continue;
       }
-      final TableLine table = parse(file, i + 1, line, TableLine.class);
-      if (table.schema() == null || table.name() == null) {
+      final L parsed = parse(file, i + 1, line, lineType);
+      if (parsed.schema() == null || parsed.name() == null) {
         throw new UserCorrectableException(
             "スナップショットの行にschema・nameがありません。cliで出力し直してください。 [file="
                 + file
@@ -111,9 +149,9 @@ public final class SnapshotDirectoryReader {
                 + (i + 1)
                 + "]");
       }
-      tables.add(table.toEntry(database, line));
+      entries.add(toEntry.apply(parsed, line));
     }
-    return tables;
+    return entries;
   }
 
   /** JSONを読み込む。読めない場合は、利用者が該当箇所を探せるようファイル名と行番号を示す */
@@ -159,6 +197,13 @@ public final class SnapshotDirectoryReader {
   @JsonIgnoreProperties(ignoreUnknown = true)
   record DatabaseLine(Integer formatVersion, String name, String dbms) {}
 
+  /** スキーマに属するオブジェクトの1行。schema・nameは必須 */
+  interface NamedLine {
+    String schema();
+
+    String name();
+  }
+
   /** {@code tables.jsonl}の1行のうち、検索・関連のたどり・逆引きに使う項目 */
   @JsonIgnoreProperties(ignoreUnknown = true)
   record TableLine(
@@ -170,7 +215,9 @@ public final class SnapshotDirectoryReader {
       String remarks,
       List<ColumnLine> columns,
       List<RelationLine> foreignKeys,
-      List<RelationLine> logicalRelations) {
+      List<RelationLine> logicalRelations,
+      List<TriggerLine> triggers)
+      implements NamedLine {
 
     TableEntry toEntry(String database, String json) {
       return new TableEntry(
@@ -182,6 +229,7 @@ public final class SnapshotDirectoryReader {
           columns == null ? null : columns.stream().map(ColumnLine::toEntry).toList(),
           relations(foreignKeys),
           relations(logicalRelations),
+          triggers == null ? null : triggers.stream().map(TriggerLine::toEntry).toList(),
           json);
     }
 
@@ -219,6 +267,58 @@ public final class SnapshotDirectoryReader {
     RelationEntry toEntry() {
       return new RelationEntry(
           name, columns, referenceSchema, referenceTable, referenceColumns, cardinality);
+    }
+  }
+
+  /** トリガーのうち、一覧・関数からの逆引きに使う項目 */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  record TriggerLine(
+      String name, String timing, List<String> events, String orientation, String function) {
+
+    TriggerEntry toEntry() {
+      return new TriggerEntry(name, timing, events, orientation, function);
+    }
+  }
+
+  /** {@code functions.jsonl}の1行 */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  record FunctionLine(
+      String schema,
+      String name,
+      String kind,
+      String arguments,
+      String result,
+      String language,
+      String definition)
+      implements NamedLine {
+
+    FunctionEntry toEntry(String database, String json) {
+      return new FunctionEntry(
+          new ObjectKey(database, schema, name),
+          kind,
+          arguments,
+          result,
+          language,
+          definition,
+          json);
+    }
+  }
+
+  /** {@code sequences.jsonl}の1行のうち、一覧・逆引きに使う項目 */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  record SequenceLine(String schema, String name, String ownedBy) implements NamedLine {
+
+    SequenceEntry toEntry(String database, String json) {
+      return new SequenceEntry(new ObjectKey(database, schema, name), ownedBy, json);
+    }
+  }
+
+  /** {@code types.jsonl}の1行のうち、一覧に使う項目 */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  record TypeLine(String schema, String name, String category) implements NamedLine {
+
+    TypeEntry toEntry(String database, String json) {
+      return new TypeEntry(new ObjectKey(database, schema, name), category, json);
     }
   }
 }

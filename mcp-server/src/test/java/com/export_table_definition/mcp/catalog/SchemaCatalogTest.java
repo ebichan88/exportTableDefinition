@@ -74,16 +74,19 @@ class SchemaCatalogTest {
                 table("db1", "sales", "orders").build(),
                 table("db1", "sales", "order_summary").type("view").build(),
                 table("db1", "hr", "employee").build(),
-                table("db2", "hr", "employee").build()));
+                table("db2", "hr", "employee").build()),
+            List.of(),
+            List.of(),
+            List.of());
 
     @Test
     @DisplayName("スキーマごとにテーブル・ビューの数を、DB名・スキーマ名の順に返す")
     void summarizesSchemas() {
       assertEquals(
           List.of(
-              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 0, 0),
-              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 1, 0),
-              new SchemaSummary("db2", "Oracle", "hr", 1, 0, 0)),
+              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 0, 0, 0, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 1, 0, 0, 0, 0),
+              new SchemaSummary("db2", "Oracle", "hr", 1, 0, 0, 0, 0, 0)),
           catalog.schemas());
     }
 
@@ -179,6 +182,118 @@ class SchemaCatalogTest {
       return hits.stream()
           .map(hit -> hit.table().key().name() + "." + hit.column().name())
           .toList();
+    }
+  }
+
+  @Nested
+  @DisplayName("関数・シーケンス・ユーザー定義型・トリガー")
+  class OtherObjects {
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(new DatabaseEntry("db1", "PostgreSQL")),
+            List.of(
+                table("db1", "sales", "orders")
+                    .trigger("trg_orders_audit", "sales.audit")
+                    .trigger("trg_orders_touch", "sales.touch")
+                    .build(),
+                table("db1", "hr", "employee").trigger("trg_employee_audit", "sales.audit").build(),
+                table("db1", "hr", "department").type("view").build()),
+            List.of(
+                function("db1", "sales", "calc_tax", "p_amount numeric"),
+                function("db1", "sales", "audit", ""),
+                function("db1", "sales", "calc_tax", "p_amount numeric, p_rate numeric"),
+                function("db1", "hr", "calc_tax", "")),
+            List.of(
+                new SequenceEntry(
+                    new ObjectKey("db1", "sales", "orders_id_seq"), "orders.id", "{}"),
+                new SequenceEntry(new ObjectKey("db1", "sales", "invoice_no_seq"), null, "{}")),
+            List.of(
+                new TypeEntry(new ObjectKey("db1", "sales", "order_status"), "ENUM", "{}"),
+                new TypeEntry(new ObjectKey("db1", "sales", "address"), "COMPOSITE", "{}")));
+
+    @Test
+    @DisplayName("スキーマごとの数に、関数（オーバーロードはそれぞれ）・シーケンス・型も数える")
+    void summarizesAllKinds() {
+      assertEquals(
+          List.of(
+              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 1, 0, 1, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 0, 0, 3, 2, 2)),
+          catalog.schemas());
+    }
+
+    @Test
+    @DisplayName("関数は名前の順に、オーバーロードは並び順のまま一覧にし、名前の一部で絞り込める")
+    void listsFunctions() {
+      assertEquals(
+          List.of(
+              "hr.calc_tax()",
+              "sales.calc_tax(p_amount numeric)",
+              "sales.calc_tax(p_amount numeric, p_rate numeric)"),
+          catalog.listFunctions(SearchScope.ALL, NameFilter.of("CALC")).stream()
+              .map(f -> f.key().qualifiedName() + "(" + f.arguments() + ")")
+              .toList());
+    }
+
+    @Test
+    @DisplayName("関数のオーバーロードは、名前の解決では1つとみなす")
+    void resolvesOverloadsAsOne() {
+      final FunctionOverloads calcTax =
+          Lookups.found(catalog.lookupFunction(ObjectReference.of(null, null, "sales.calc_tax")));
+
+      assertEquals(2, calcTax.overloads().size());
+      assertEquals(
+          List.of("hr.calc_tax", "sales.calc_tax"),
+          Lookups.candidates(catalog.lookupFunction(ObjectReference.of(null, null, "calc_tax")))
+              .stream()
+              .map(f -> f.key().qualifiedName())
+              .toList());
+    }
+
+    @Test
+    @DisplayName("関数・シーケンス・型が見つからない場合は、名前の一部に指定を含むものを候補にする")
+    void suggestsByPartialName() {
+      assertEquals(
+          List.of("sales.orders_id_seq"),
+          Lookups.suggestions(catalog.lookupSequence(ObjectReference.of(null, null, "orders")))
+              .stream()
+              .map(sequence -> sequence.key().qualifiedName())
+              .toList());
+      assertTrue(
+          Lookups.suggestions(catalog.lookupType(ObjectReference.of(null, null, "invoice")))
+              .isEmpty());
+    }
+
+    @Test
+    @DisplayName("シーケンス・型を名前の順に一覧にし、型は種別で絞り込める")
+    void listsSequencesAndTypes() {
+      assertEquals(
+          List.of("invoice_no_seq", "orders_id_seq"),
+          catalog.listSequences(SearchScope.ALL, NameFilter.ALL).stream()
+              .map(sequence -> sequence.key().name())
+              .toList());
+      assertEquals(
+          List.of("order_status"),
+          catalog.listTypes(SearchScope.ALL, NameFilter.ALL, "enum").stream()
+              .map(type -> type.key().name())
+              .toList());
+    }
+
+    @Test
+    @DisplayName("トリガーを、テーブル名の順にテーブルをまたいで一覧にする")
+    void listsTriggers() {
+      assertEquals(
+          List.of(
+              "employee.trg_employee_audit", "orders.trg_orders_audit", "orders.trg_orders_touch"),
+          catalog.listTriggers(SearchScope.ALL).stream()
+              .map(found -> found.table().key().name() + "." + found.trigger().name())
+              .toList());
+    }
+
+    private static FunctionEntry function(
+        String database, String schema, String name, String arguments) {
+      return new FunctionEntry(
+          new ObjectKey(database, schema, name), "FUNCTION", arguments, "void", "sql", "", "{}");
     }
   }
 

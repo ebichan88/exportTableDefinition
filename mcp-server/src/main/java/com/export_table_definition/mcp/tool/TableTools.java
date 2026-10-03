@@ -1,6 +1,8 @@
 package com.export_table_definition.mcp.tool;
 
+import static com.export_table_definition.mcp.tool.Page.withPageProperties;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.DATABASE_PROPERTY;
+import static com.export_table_definition.mcp.tool.ToolSpecifications.SCHEMA_FILTER_PROPERTY;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.booleanProperty;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.enumArrayProperty;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.enumProperty;
@@ -18,7 +20,6 @@ import com.export_table_definition.mcp.catalog.MatchMode;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchResult;
-import com.export_table_definition.mcp.catalog.SearchScope;
 import com.export_table_definition.mcp.catalog.TableEntry;
 import com.export_table_definition.mcp.catalog.TableHit;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,7 +31,6 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -75,12 +75,15 @@ final class TableTools {
                 + "一致の強い順に返す（空白区切りの複数語はすべてを含むものだけ）。テーブル名が分からないときに最初に使う",
             objectSchema(
                 Map.of(
-                    "query", stringProperty("検索語（例: 従業員、user_id、受注 明細）"),
-                    "schema", stringProperty("スキーマ名で絞り込む場合に指定する"),
-                    "database", DATABASE_PROPERTY,
+                    "query",
+                    stringProperty("検索語（例: 従業員、user_id、受注 明細）"),
+                    "schema",
+                    SCHEMA_FILTER_PROPERTY,
+                    "database",
+                    DATABASE_PROPERTY,
                     "limit",
-                        integerProperty(
-                            "返す件数の上限（既定" + DEFAULT_SEARCH_LIMIT + "）", 1, MAX_SEARCH_LIMIT)),
+                    integerProperty(
+                        "返す件数の上限（既定" + DEFAULT_SEARCH_LIMIT + "）", 1, MAX_SEARCH_LIMIT)),
                 List.of("query")),
             this::searchTables),
         readOnlyTool(
@@ -88,12 +91,16 @@ final class TableTools {
             "テーブル（ビューを含む）の名前・論理名・区分を、DB名・スキーマ名・テーブル名の順に一覧で返す。"
                 + "スキーマにどんなテーブルがあるか眺めるときに使う。キーワードで探す場合はsearch_tablesを使う",
             objectSchema(
-                withPage(
+                withPageProperties(
                     Map.of(
-                        "schema", stringProperty("スキーマ名で絞り込む場合に指定する"),
-                        "database", DATABASE_PROPERTY,
-                        "type", enumProperty("区分で絞り込む場合に指定する", TABLE_TYPES),
-                        "includeDescription", booleanProperty("テーブルの説明も返す（既定false）")),
+                        "schema",
+                        SCHEMA_FILTER_PROPERTY,
+                        "database",
+                        DATABASE_PROPERTY,
+                        "type",
+                        enumProperty("区分で絞り込む場合に指定する", TABLE_TYPES),
+                        "includeDescription",
+                        booleanProperty("テーブルの説明も返す（既定false）")),
                     DEFAULT_LIST_LIMIT,
                     MAX_LIST_LIMIT),
                 List.of()),
@@ -121,15 +128,18 @@ final class TableTools {
                 + "型・PK・NOT NULLと、外部キー・論理リレーションの参照先も返す。"
                 + "同じ意味のカラムがどのテーブルにあるか、型が揃っているかを調べるときに使う",
             objectSchema(
-                withPage(
+                withPageProperties(
                     Map.of(
-                        "column", stringProperty("カラムの物理名または論理名（例: employee_id、従業員ID）"),
+                        "column",
+                        stringProperty("カラムの物理名または論理名（例: employee_id、従業員ID）"),
                         "match",
-                            enumProperty(
-                                "exact: 完全一致（既定）、partial: 部分一致",
-                                ToolArguments.lowerNames(MatchMode.class)),
-                        "schema", stringProperty("スキーマ名で絞り込む場合に指定する"),
-                        "database", DATABASE_PROPERTY),
+                        enumProperty(
+                            "exact: 完全一致（既定）、partial: 部分一致",
+                            ToolArguments.lowerNames(MatchMode.class)),
+                        "schema",
+                        SCHEMA_FILTER_PROPERTY,
+                        "database",
+                        DATABASE_PROPERTY),
                     DEFAULT_COLUMN_LIMIT,
                     MAX_COLUMN_LIMIT),
                 List.of("column")),
@@ -139,7 +149,7 @@ final class TableTools {
   private CallToolResult searchTables(ToolArguments arguments) {
     final SearchQuery query = SearchQuery.of(arguments.requiredString("query"));
     final int limit = arguments.optionalInt("limit", DEFAULT_SEARCH_LIMIT, 1, MAX_SEARCH_LIMIT);
-    final SearchResult result = catalog.searchTables(query, scope(arguments), limit);
+    final SearchResult result = catalog.searchTables(query, arguments.scope(), limit);
     return ToolResults.json(
         new SearchTablesOutput(
             result.total(), result.hits().stream().map(SearchTablesOutput.Hit::of).toList()));
@@ -149,7 +159,7 @@ final class TableTools {
     final String type = arguments.optionalChoice("type", TABLE_TYPES);
     final boolean includeDescription = arguments.optionalBoolean("includeDescription", false);
     final Page page = Page.read(arguments, DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT);
-    final List<TableEntry> tables = catalog.listTables(scope(arguments), type);
+    final List<TableEntry> tables = catalog.listTables(arguments.scope(), type);
     return ToolResults.json(
         new ListTablesOutput(
             tables.size(),
@@ -186,7 +196,7 @@ final class TableTools {
             arguments.requiredString("column"),
             arguments.optionalEnum("match", MatchMode.class, MatchMode.EXACT));
     final Page page = Page.read(arguments, DEFAULT_COLUMN_LIMIT, MAX_COLUMN_LIMIT);
-    final List<ColumnHit> hits = catalog.findColumns(query, scope(arguments));
+    final List<ColumnHit> hits = catalog.findColumns(query, arguments.scope());
     return ToolResults.json(
         new FindColumnsOutput(
             hits.size(),
@@ -196,11 +206,6 @@ final class TableTools {
 
   private TableEntry resolve(ToolArguments arguments) {
     return ObjectResolver.resolve(arguments, "table", "テーブル", SEARCH_TABLES, catalog::lookupTable);
-  }
-
-  private static SearchScope scope(ToolArguments arguments) {
-    return new SearchScope(
-        arguments.optionalString("database"), arguments.optionalString("schema"));
   }
 
   private static Set<TableSection> sections(ToolArguments arguments) {
@@ -242,13 +247,6 @@ final class TableTools {
               + table.columns().stream().map(ColumnEntry::name).collect(Collectors.joining(", ")));
     }
     return selected;
-  }
-
-  private static Map<String, Object> withPage(
-      Map<String, Object> properties, int defaultLimit, int maxLimit) {
-    final Map<String, Object> merged = new LinkedHashMap<>(properties);
-    merged.putAll(Page.properties(defaultLimit, maxLimit));
-    return merged;
   }
 
   /** {@code search_tables}の結果 */

@@ -5,7 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.export_table_definition.mcp.catalog.DatabaseEntry;
+import com.export_table_definition.mcp.catalog.FunctionEntry;
+import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.SequenceEntry;
+import com.export_table_definition.mcp.catalog.TypeEntry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -23,12 +28,14 @@ class TableDefinitionToolsTest {
   private final TableDefinitionTools tools =
       new TableDefinitionTools(
           SchemaCatalog.of(
+              List.of(new DatabaseEntry("testdb", "PostgreSQL")),
               List.of(
                   table("department").logicalName("部署").description("組織のマスタ").build(),
                   table("employee")
                       .logicalName("従業員")
                       .column("department_id", "部署ID", null)
                       .foreignKey("department_id", "department", "department_id")
+                      .trigger("trg_employee_audit", "sample.log_change")
                       .build(),
                   table("audit_log")
                       .logicalRelation("record_id", "employee", "employee_id")
@@ -45,7 +52,31 @@ class TableDefinitionToolsTest {
                       .column("project_id")
                       .column("title")
                       .column("budget")
-                      .build())));
+                      .build()),
+              List.of(
+                  function(
+                      "calc_bonus",
+                      "p_salary numeric",
+                      "{\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
+                          + "\"arguments\":\"p_salary numeric\",\"result\":\"numeric\",\"language\":\"sql\","
+                          + "\"definition\":\"CREATE FUNCTION ...\"}"),
+                  function(
+                      "calc_bonus",
+                      "p_salary numeric, p_rate numeric",
+                      "{\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
+                          + "\"arguments\":\"p_salary numeric, p_rate numeric\",\"result\":\"numeric\","
+                          + "\"language\":\"sql\",\"definition\":\"CREATE FUNCTION ...\"}"),
+                  function("log_change", "", "{}")),
+              List.of(
+                  new SequenceEntry(
+                      new ObjectKey("testdb", "sample", "employee_id_seq"),
+                      "employee.employee_id",
+                      "{\"schema\":\"sample\",\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\"}")),
+              List.of(
+                  new TypeEntry(
+                      new ObjectKey("testdb", "sample", "status"),
+                      "ENUM",
+                      "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\"}"))));
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -61,7 +92,14 @@ class TableDefinitionToolsTest {
             "list_tables",
             "get_table",
             "find_columns",
-            "get_related_tables"),
+            "get_related_tables",
+            "list_functions",
+            "get_function",
+            "list_sequences",
+            "get_sequence",
+            "list_types",
+            "get_type",
+            "list_triggers"),
         specifications.stream().map(specification -> specification.tool().name()).toList());
     assertTrue(
         specifications.stream()
@@ -71,12 +109,14 @@ class TableDefinitionToolsTest {
   }
 
   @Test
-  @DisplayName("list_schemasは、DBごとにスキーマと、スキーマごとのテーブル・ビューの数を返す")
+  @DisplayName("list_schemasは、DBごとにスキーマと、スキーマごとのオブジェクトの数を返す")
   void listSchemas() throws Exception {
     assertEquals(
-        "{\"databases\":[{\"name\":\"testdb\",\"schemas\":["
-            + "{\"name\":\"archive\",\"tables\":1,\"views\":0,\"materializedViews\":0},"
-            + "{\"name\":\"sample\",\"tables\":4,\"views\":0,\"materializedViews\":0}]}]}",
+        "{\"databases\":[{\"name\":\"testdb\",\"dbms\":\"PostgreSQL\",\"schemas\":["
+            + "{\"name\":\"archive\",\"tables\":1,\"views\":0,\"materializedViews\":0,"
+            + "\"functions\":0,\"sequences\":0,\"types\":0},"
+            + "{\"name\":\"sample\",\"tables\":4,\"views\":0,\"materializedViews\":0,"
+            + "\"functions\":3,\"sequences\":1,\"types\":1}]}]}",
         json(call("list_schemas", Map.of())).toString());
   }
 
@@ -218,6 +258,69 @@ class TableDefinitionToolsTest {
   }
 
   @Test
+  @DisplayName("list_functionsは、関数のシグネチャを定義本体を除いて返し、名前の一部で絞り込める")
+  void listFunctions() throws Exception {
+    final JsonNode result = json(call("list_functions", Map.of("query", "BONUS")));
+
+    assertEquals(2, result.get("total").asInt());
+    assertEquals(
+        "{\"database\":\"testdb\",\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
+            + "\"arguments\":\"p_salary numeric\",\"result\":\"void\",\"language\":\"sql\"}",
+        result.get("functions").get(0).toString());
+  }
+
+  @Test
+  @DisplayName("get_functionは、オーバーロードをまとめて、定義本体を除いたシグネチャを返す")
+  void getFunction() throws Exception {
+    assertEquals(
+        "{\"database\":\"testdb\",\"schema\":\"sample\",\"name\":\"calc_bonus\",\"overloads\":["
+            + "{\"kind\":\"FUNCTION\",\"arguments\":\"p_salary numeric\",\"result\":\"numeric\",\"language\":\"sql\"},"
+            + "{\"kind\":\"FUNCTION\",\"arguments\":\"p_salary numeric, p_rate numeric\",\"result\":\"numeric\","
+            + "\"language\":\"sql\"}]}",
+        json(call("get_function", Map.of("function", "sample.calc_bonus"))).toString());
+
+    final CallToolResult notFound = call("get_function", Map.of("function", "calc"));
+    assertTrue(notFound.isError());
+    assertEquals("関数calcが見つかりません。名前の似た関数: testdb:sample.calc_bonus", text(notFound));
+  }
+
+  @Test
+  @DisplayName("list_sequences・get_sequenceは、シーケンスの所有カラム・定義を返す")
+  void sequences() throws Exception {
+    assertEquals(
+        "{\"total\":1,\"sequences\":[{\"database\":\"testdb\",\"schema\":\"sample\","
+            + "\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\"}]}",
+        json(call("list_sequences", Map.of())).toString());
+    assertEquals(
+        "{\"schema\":\"sample\",\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\"}",
+        text(call("get_sequence", Map.of("sequence", "EMPLOYEE_ID_SEQ"))));
+
+    final CallToolResult notFound = call("get_sequence", Map.of("sequence", "invoice_seq"));
+    assertTrue(notFound.isError());
+    assertEquals("シーケンスinvoice_seqが見つかりません。list_sequencesで探してください。", text(notFound));
+  }
+
+  @Test
+  @DisplayName("list_types・get_typeは、ユーザー定義型の種別・定義を返し、種別で絞り込める")
+  void types() throws Exception {
+    assertEquals(1, json(call("list_types", Map.of("category", "enum"))).get("total").asInt());
+    assertEquals(0, json(call("list_types", Map.of("category", "DOMAIN"))).get("total").asInt());
+    assertEquals(
+        "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\"}",
+        text(call("get_type", Map.of("type", "status"))));
+  }
+
+  @Test
+  @DisplayName("list_triggersは、テーブルをまたいでトリガーと実行される関数を返す")
+  void listTriggers() throws Exception {
+    assertEquals(
+        "{\"total\":1,\"triggers\":[{\"database\":\"testdb\",\"schema\":\"sample\",\"table\":\"employee\","
+            + "\"name\":\"trg_employee_audit\",\"timing\":\"AFTER\",\"events\":[\"INSERT\"],"
+            + "\"orientation\":\"ROW\",\"function\":\"sample.log_change\"}]}",
+        json(call("list_triggers", Map.of())).toString());
+  }
+
+  @Test
   @DisplayName("get_tableで同名のテーブルが複数ある場合は、候補を示すエラーを返す")
   void getTableAmbiguous() {
     final CallToolResult result = call("get_table", Map.of("table", "employee"));
@@ -296,6 +399,17 @@ class TableDefinitionToolsTest {
     assertTrue(unknown.isError());
     assertEquals(
         "未知の引数です: verbose。使える引数: columns, database, schema, sections, table", text(unknown));
+  }
+
+  private static FunctionEntry function(String name, String arguments, String json) {
+    return new FunctionEntry(
+        new ObjectKey("testdb", "sample", name),
+        "FUNCTION",
+        arguments,
+        "void",
+        "sql",
+        "CREATE FUNCTION ...",
+        json);
   }
 
   private CallToolResult call(String name, Map<String, Object> arguments) {

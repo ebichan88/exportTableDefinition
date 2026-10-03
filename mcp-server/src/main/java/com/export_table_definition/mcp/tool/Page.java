@@ -23,9 +23,10 @@ record Page(int offset, int limit) {
         arguments.optionalInt("limit", defaultLimit, 1, maxLimit));
   }
 
-  /** 引数{@code offset}・{@code limit}の入力スキーマ */
-  static Map<String, Object> properties(int defaultLimit, int maxLimit) {
-    final Map<String, Object> properties = new LinkedHashMap<>();
+  /** ツール固有の引数に、引数{@code offset}・{@code limit}の入力スキーマを加えたプロパティ */
+  static Map<String, Object> withPageProperties(
+      Map<String, Object> toolProperties, int defaultLimit, int maxLimit) {
+    final Map<String, Object> properties = new LinkedHashMap<>(toolProperties);
     properties.put(
         "limit",
         ToolSpecifications.integerProperty("返す件数の上限（既定" + defaultLimit + "）", 1, maxLimit));

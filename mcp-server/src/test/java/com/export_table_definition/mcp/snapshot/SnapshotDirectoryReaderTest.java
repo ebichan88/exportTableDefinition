@@ -5,10 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.export_table_definition.mcp.UserCorrectableException;
+import com.export_table_definition.mcp.catalog.FunctionEntry;
+import com.export_table_definition.mcp.catalog.NameFilter;
 import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.RelationEntry;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.SearchScope;
+import com.export_table_definition.mcp.catalog.SequenceEntry;
 import com.export_table_definition.mcp.catalog.TableEntry;
+import com.export_table_definition.mcp.catalog.TriggerEntry;
+import com.export_table_definition.mcp.catalog.TypeEntry;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -78,13 +84,57 @@ class SnapshotDirectoryReaderTest {
   }
 
   @Test
-  @DisplayName("tables.jsonlの無いスキーマ・database.jsonの無いディレクトリは読み飛ばす")
+  @DisplayName("種類ごとのファイルが無い場合は0件とし、database.jsonの無いディレクトリは読み飛ばす")
   void skipsDirectoriesWithoutSnapshot() throws IOException {
     write("testdb/database.json", DATABASE_JSON);
     write("testdb/sample/functions.jsonl", "{\"schema\":\"sample\",\"name\":\"f\"}\n");
     write("notadb/sample/tables.jsonl", "{\"schema\":\"sample\",\"name\":\"t\"}\n");
 
-    assertTrue(reader.read(snapshot).tables().isEmpty());
+    final SchemaCatalog catalog = reader.read(snapshot);
+
+    assertTrue(catalog.tables().isEmpty());
+    assertEquals(
+        List.of(new ObjectKey("testdb", "sample", "f")),
+        catalog.listFunctions(SearchScope.ALL, NameFilter.ALL).stream()
+            .map(FunctionEntry::key)
+            .toList());
+  }
+
+  @Test
+  @DisplayName("関数・シーケンス・ユーザー定義型・トリガーを読み込み、1行をそのまま保持する")
+  void readsOtherObjects() throws IOException {
+    final String function =
+        "{\"schema\":\"sample\",\"name\":\"calc\",\"kind\":\"FUNCTION\",\"arguments\":\"p numeric\","
+            + "\"result\":\"numeric\",\"language\":\"sql\",\"definition\":\"select 1\"}";
+    final String sequence =
+        "{\"schema\":\"sample\",\"name\":\"orders_id_seq\",\"incrementBy\":\"1\",\"ownedBy\":\"orders.id\"}";
+    final String type =
+        "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\"}";
+    write("testdb/database.json", DATABASE_JSON);
+    write("testdb/sample/functions.jsonl", function + "\n");
+    write("testdb/sample/sequences.jsonl", sequence + "\n");
+    write("testdb/sample/types.jsonl", type + "\n");
+    write(
+        "testdb/sample/tables.jsonl",
+        "{\"schema\":\"sample\",\"name\":\"orders\",\"triggers\":[{\"name\":\"trg\",\"timing\":\"AFTER\","
+            + "\"events\":[\"INSERT\",\"UPDATE\"],\"orientation\":\"ROW\",\"function\":\"sample.calc\"}]}\n");
+
+    final SchemaCatalog catalog = reader.read(snapshot);
+
+    final FunctionEntry calc = catalog.listFunctions(SearchScope.ALL, NameFilter.ALL).get(0);
+    assertEquals(
+        List.of("FUNCTION", "p numeric", "numeric", "sql", "select 1"),
+        List.of(calc.kind(), calc.arguments(), calc.result(), calc.language(), calc.definition()));
+    assertEquals(function, calc.json());
+    final SequenceEntry ordersId = catalog.listSequences(SearchScope.ALL, NameFilter.ALL).get(0);
+    assertEquals("orders.id", ordersId.ownedBy());
+    assertEquals(sequence, ordersId.json());
+    final TypeEntry status = catalog.listTypes(SearchScope.ALL, NameFilter.ALL, "").get(0);
+    assertEquals("ENUM", status.category());
+    assertEquals(type, status.json());
+    assertEquals(
+        new TriggerEntry("trg", "AFTER", List.of("INSERT", "UPDATE"), "ROW", "sample.calc"),
+        catalog.tables().get(0).triggers().get(0));
   }
 
   @Test
@@ -151,6 +201,19 @@ class SnapshotDirectoryReaderTest {
         assertThrows(UserCorrectableException.class, () -> reader.read(snapshot));
 
     assertTrue(e.getMessage().contains("file=" + tables + ", line=1"), e.getMessage());
+  }
+
+  @Test
+  @DisplayName("関数等のファイルでも、JSONとして読めない行はファイルと行番号を示して失敗にする")
+  void failsOnBrokenLineOfOtherObjects() throws IOException {
+    write("testdb/database.json", DATABASE_JSON);
+    final Path sequences =
+        write("testdb/sample/sequences.jsonl", "{\"schema\":\"sample\",\"name\":\"s\"}\n{\n");
+
+    final UserCorrectableException e =
+        assertThrows(UserCorrectableException.class, () -> reader.read(snapshot));
+
+    assertTrue(e.getMessage().contains("file=" + sequences + ", line=2"), e.getMessage());
   }
 
   private Path write(String relativePath, String content) throws IOException {

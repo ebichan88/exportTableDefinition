@@ -29,7 +29,11 @@ public final class TableDefinitionTools {
     return Stream.of(
             new SchemaTools(catalog).specifications(),
             new TableTools(catalog).specifications(),
-            new RelationTools(catalog).specifications())
+            new RelationTools(catalog).specifications(),
+            new FunctionTools(catalog).specifications(),
+            new SequenceTools(catalog).specifications(),
+            new TypeTools(catalog).specifications(),
+            new TriggerTools(catalog).specifications())
         .flatMap(List::stream)
         .toList();
   }

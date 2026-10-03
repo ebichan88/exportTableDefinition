@@ -14,6 +14,7 @@ public final class TestTables {
   private final List<ColumnEntry> columns = new ArrayList<>();
   private final List<RelationEntry> foreignKeys = new ArrayList<>();
   private final List<RelationEntry> logicalRelations = new ArrayList<>();
+  private final List<TriggerEntry> triggers = new ArrayList<>();
   private String json;
 
   private TestTables(String database, String schema, String name) {
@@ -94,6 +95,12 @@ public final class TestTables {
     return this;
   }
 
+  /** 行ごとに実行するAFTER INSERTのトリガー */
+  public TestTables trigger(String name, String function) {
+    triggers.add(new TriggerEntry(name, "AFTER", List.of("INSERT"), "ROW", function));
+    return this;
+  }
+
   /** スナップショットの1行（未指定の場合はschema・nameだけの行） */
   public TestTables json(String value) {
     this.json = value;
@@ -110,6 +117,7 @@ public final class TestTables {
         columns,
         foreignKeys,
         logicalRelations,
+        triggers,
         json != null
             ? json
             : "{\"schema\":\"" + key.schema() + "\",\"name\":\"" + key.name() + "\"}");

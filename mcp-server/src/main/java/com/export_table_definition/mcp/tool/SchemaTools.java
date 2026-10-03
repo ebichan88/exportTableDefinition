@@ -59,12 +59,29 @@ final class SchemaTools {
       }
     }
 
-    /** 1スキーマと、含まれるオブジェクトの数 */
-    record Schema(String name, int tables, int views, int materializedViews) {
+    /**
+     * 1スキーマと、含まれるオブジェクトの数
+     *
+     * @param functions 関数・プロシージャの数（オーバーロードはそれぞれ数える）
+     */
+    record Schema(
+        String name,
+        int tables,
+        int views,
+        int materializedViews,
+        int functions,
+        int sequences,
+        int types) {
 
       static Schema of(SchemaSummary summary) {
         return new Schema(
-            summary.schema(), summary.tables(), summary.views(), summary.materializedViews());
+            summary.schema(),
+            summary.tables(),
+            summary.views(),
+            summary.materializedViews(),
+            summary.functions(),
+            summary.sequences(),
+            summary.types());
       }
     }
   }

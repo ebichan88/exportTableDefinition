@@ -7,6 +7,8 @@ import com.export_table_definition.mcp.catalog.ColumnEntry;
 import com.export_table_definition.mcp.catalog.ColumnHit;
 import com.export_table_definition.mcp.catalog.ColumnQuery;
 import com.export_table_definition.mcp.catalog.Direction;
+import com.export_table_definition.mcp.catalog.FunctionEntry;
+import com.export_table_definition.mcp.catalog.FunctionOverloads;
 import com.export_table_definition.mcp.catalog.Lookups;
 import com.export_table_definition.mcp.catalog.MatchMode;
 import com.export_table_definition.mcp.catalog.ObjectReference;
@@ -17,6 +19,7 @@ import com.export_table_definition.mcp.catalog.SchemaSummary;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchScope;
 import com.export_table_definition.mcp.catalog.TableEntry;
+import com.export_table_definition.mcp.catalog.TriggerEntry;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -102,10 +105,11 @@ class SampleSnapshotContractTest {
   }
 
   @Test
-  @DisplayName("database.jsonのDBMS種別と、スキーマごとのテーブル・ビューの数を読み込む")
+  @DisplayName("database.jsonのDBMS種別と、スキーマごとのオブジェクトの数を読み込む")
   void summarizesSchemas() {
     assertEquals(
-        List.of(new SchemaSummary("testdb", "PostgreSQL", "sample", 9, 1, 1)), catalog.schemas());
+        List.of(new SchemaSummary("testdb", "PostgreSQL", "sample", 9, 1, 1, 7, 7, 3)),
+        catalog.schemas());
   }
 
   @Test
@@ -131,6 +135,33 @@ class SampleSnapshotContractTest {
                     hit.references().stream()
                         .anyMatch(reference -> reference.table().name().equals("employee"))),
         "外部キーで従業員を参照するカラムがある");
+  }
+
+  @Test
+  @DisplayName("関数のシグネチャ（オーバーロードを含む）・シーケンスの所有カラム・型の種別・トリガーを読み込む")
+  void readsOtherObjectsOfSample() {
+    final FunctionOverloads calculateBonus =
+        Lookups.found(catalog.lookupFunction(ObjectReference.of(null, null, "calculate_bonus")));
+    assertEquals(
+        List.of("p_salary numeric, p_rate numeric", "p_salary numeric"),
+        calculateBonus.overloads().stream().map(FunctionEntry::arguments).toList());
+    assertEquals("numeric", calculateBonus.overloads().get(0).result());
+    assertEquals(
+        "audit_log.log_id",
+        Lookups.found(
+                catalog.lookupSequence(ObjectReference.of(null, null, "audit_log_log_id_seq")))
+            .ownedBy());
+    assertEquals(
+        "ENUM",
+        Lookups.found(catalog.lookupType(ObjectReference.of(null, null, "employee_status_enum")))
+            .category());
+    final TriggerEntry audit =
+        find("employee").triggers().stream()
+            .filter(trigger -> trigger.name().equals("trg_employee_audit"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("sample.log_employee_change", audit.function());
+    assertEquals(List.of("INSERT", "DELETE", "UPDATE"), audit.events());
   }
 
   private static TableEntry find(String name) {

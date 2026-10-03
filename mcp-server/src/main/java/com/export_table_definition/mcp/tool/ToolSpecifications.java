@@ -17,6 +17,9 @@ final class ToolSpecifications {
   static final Map<String, Object> DATABASE_PROPERTY =
       stringProperty("DB名。スナップショットに複数のDBがあり、同名のオブジェクトを区別したい場合だけ指定する");
 
+  /** 一覧・検索をスキーマ名で絞り込む引数 */
+  static final Map<String, Object> SCHEMA_FILTER_PROPERTY = stringProperty("スキーマ名で絞り込む場合に指定する");
+
   private ToolSpecifications() {}
 
   /**

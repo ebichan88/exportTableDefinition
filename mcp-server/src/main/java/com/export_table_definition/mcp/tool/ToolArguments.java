@@ -1,5 +1,6 @@
 package com.export_table_definition.mcp.tool;
 
+import com.export_table_definition.mcp.catalog.SearchScope;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -167,6 +168,15 @@ final class ToolArguments {
       }
     }
     throw invalidChoice(name, lowerNames(type), value);
+  }
+
+  /**
+   * 引数{@code database}・{@code schema}による絞り込みを読み取るメソッド
+   *
+   * @throws InvalidToolArgumentException 文字列でない場合
+   */
+  SearchScope scope() {
+    return new SearchScope(optionalString("database"), optionalString("schema"));
   }
 
   /** 決まった値のいずれでもない引数の誤り */

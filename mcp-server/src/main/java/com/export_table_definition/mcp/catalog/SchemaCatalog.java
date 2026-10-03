@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,17 +37,35 @@ public final class SchemaCatalog {
 
   private final List<DatabaseEntry> databases;
   private final List<TableEntry> tables;
+  private final List<FunctionOverloads> functions;
+  private final List<SequenceEntry> sequences;
+  private final List<TypeEntry> types;
   private final Map<ObjectKey, TableEntry> tablesByKey;
   private final Map<ObjectKey, List<Relation>> outgoing;
   private final Map<ObjectKey, List<Relation>> incoming;
 
-  private SchemaCatalog(List<DatabaseEntry> databases, List<TableEntry> tables) {
-    this.databases = databases;
-    this.tables = tables;
+  private SchemaCatalog(
+      List<DatabaseEntry> databases,
+      List<TableEntry> tables,
+      List<FunctionEntry> functions,
+      List<SequenceEntry> sequences,
+      List<TypeEntry> types) {
+    this.databases = List.copyOf(databases);
+    this.tables = List.copyOf(tables);
+    this.functions =
+        functions.stream()
+            .collect(
+                Collectors.groupingBy(FunctionEntry::key, LinkedHashMap::new, Collectors.toList()))
+            .entrySet()
+            .stream()
+            .map(entry -> new FunctionOverloads(entry.getKey(), entry.getValue()))
+            .toList();
+    this.sequences = List.copyOf(sequences);
+    this.types = List.copyOf(types);
     this.tablesByKey = new HashMap<>();
     this.outgoing = new HashMap<>();
     this.incoming = new HashMap<>();
-    for (final TableEntry table : tables) {
+    for (final TableEntry table : this.tables) {
       tablesByKey.put(table.key(), table);
       final List<Relation> relations =
           Stream.concat(
@@ -65,11 +84,19 @@ public final class SchemaCatalog {
   /**
    * スナップショットの内容から組み立てるメソッド
    *
-   * @param databases 全DB。テーブルを持たないDBも含める
+   * @param databases 全DB。オブジェクトを持たないDBも含める
    * @param tables 全テーブル。キー（DB名・スキーマ名・テーブル名）が重複しないこと
+   * @param functions 全関数・プロシージャ。オーバーロードはキーが重複する
+   * @param sequences 全シーケンス
+   * @param types 全ユーザー定義型
    */
-  public static SchemaCatalog of(List<DatabaseEntry> databases, List<TableEntry> tables) {
-    return new SchemaCatalog(List.copyOf(databases), List.copyOf(tables));
+  public static SchemaCatalog of(
+      List<DatabaseEntry> databases,
+      List<TableEntry> tables,
+      List<FunctionEntry> functions,
+      List<SequenceEntry> sequences,
+      List<TypeEntry> types) {
+    return new SchemaCatalog(databases, tables, functions, sequences, types);
   }
 
   /**
@@ -84,7 +111,10 @@ public final class SchemaCatalog {
             .distinct()
             .map(name -> new DatabaseEntry(name, null))
             .toList(),
-        tables);
+        tables,
+        List.of(),
+        List.of(),
+        List.of());
   }
 
   /**
@@ -104,26 +134,37 @@ public final class SchemaCatalog {
   public List<SchemaSummary> schemas() {
     final Map<String, String> dbmsByDatabase = new HashMap<>();
     databases.forEach(database -> dbmsByDatabase.put(database.name(), database.dbms()));
-    final Map<List<String>, List<TableEntry>> tablesBySchema =
-        tables.stream()
-            .sorted(BY_KEY)
-            .collect(
-                Collectors.groupingBy(
-                    table -> List.of(table.key().database(), table.key().schema()),
-                    LinkedHashMap::new,
-                    Collectors.toList()));
-    return tablesBySchema.entrySet().stream()
+    final Map<List<String>, SchemaCounter> counters =
+        new TreeMap<>(
+            Comparator.comparing((List<String> id) -> id.get(0)).thenComparing(id -> id.get(1)));
+    for (final TableEntry table : tables) {
+      final SchemaCounter counter = counterOf(counters, table.key());
+      switch (table.type()) {
+        case TABLE -> counter.tables++;
+        case VIEW -> counter.views++;
+        case MATERIALIZED_VIEW -> counter.materializedViews++;
+        default -> {}
+      }
+    }
+    functions.forEach(
+        function -> counterOf(counters, function.key()).functions += function.overloads().size());
+    sequences.forEach(sequence -> counterOf(counters, sequence.key()).sequences++);
+    types.forEach(type -> counterOf(counters, type.key()).types++);
+    return counters.entrySet().stream()
         .map(
             entry -> {
               final String database = entry.getKey().get(0);
-              final List<TableEntry> schemaTables = entry.getValue();
+              final SchemaCounter counter = entry.getValue();
               return new SchemaSummary(
                   database,
                   dbmsByDatabase.getOrDefault(database, ""),
                   entry.getKey().get(1),
-                  count(schemaTables, TABLE),
-                  count(schemaTables, VIEW),
-                  count(schemaTables, MATERIALIZED_VIEW));
+                  counter.tables,
+                  counter.views,
+                  counter.materializedViews,
+                  counter.functions,
+                  counter.sequences,
+                  counter.types);
             })
         .toList();
   }
@@ -167,6 +208,52 @@ public final class SchemaCatalog {
   }
 
   /**
+   * 関数・プロシージャを一覧にするメソッド
+   *
+   * @return DB名・スキーマ名・関数名の順（オーバーロードはスナップショットの並び順）
+   */
+  public List<FunctionEntry> listFunctions(SearchScope scope, NameFilter filter) {
+    return inOrder(functions, scope, filter).stream()
+        .flatMap(function -> function.overloads().stream())
+        .toList();
+  }
+
+  /**
+   * シーケンスを一覧にするメソッド
+   *
+   * @return DB名・スキーマ名・シーケンス名の順
+   */
+  public List<SequenceEntry> listSequences(SearchScope scope, NameFilter filter) {
+    return inOrder(sequences, scope, filter);
+  }
+
+  /**
+   * ユーザー定義型を一覧にするメソッド
+   *
+   * @param category 種別（ENUM等）で絞り込む場合に指定する。空文字の場合は絞り込まない
+   * @return DB名・スキーマ名・型名の順
+   */
+  public List<TypeEntry> listTypes(SearchScope scope, NameFilter filter, String category) {
+    return inOrder(types, scope, filter).stream()
+        .filter(type -> category.isEmpty() || category.equalsIgnoreCase(type.category()))
+        .toList();
+  }
+
+  /**
+   * テーブルのトリガーを一覧にするメソッド
+   *
+   * @return DB名・スキーマ名・テーブル名の順（同じテーブルのトリガーはスナップショットの並び順）
+   */
+  public List<TableTrigger> listTriggers(SearchScope scope) {
+    return tables.stream()
+        .filter(table -> scope.matches(table.key()))
+        .sorted(BY_KEY)
+        .flatMap(
+            table -> table.triggers().stream().map(trigger -> new TableTrigger(table, trigger)))
+        .toList();
+  }
+
+  /**
    * テーブルを検索するメソッド
    *
    * @param limit 返す件数の上限（1以上）
@@ -192,6 +279,32 @@ public final class SchemaCatalog {
    */
   public Lookup<TableEntry> lookupTable(ObjectReference reference) {
     return lookup(tables, reference, this::tableSuggestionsFor);
+  }
+
+  /**
+   * 名前で指定された関数・プロシージャを解決するメソッド（オーバーロードはまとめて1つとみなす）<br>
+   * 名前は大文字小文字を区別せず完全一致で比べる。見つからない場合は、名前の一部に指定を含むものを候補として返す
+   */
+  public Lookup<FunctionOverloads> lookupFunction(ObjectReference reference) {
+    return lookup(functions, reference, ref -> suggestionsFor(functions, ref));
+  }
+
+  /**
+   * 名前で指定されたシーケンスを解決するメソッド
+   *
+   * @see #lookupFunction(ObjectReference) 名前の比べ方・候補の求め方
+   */
+  public Lookup<SequenceEntry> lookupSequence(ObjectReference reference) {
+    return lookup(sequences, reference, ref -> suggestionsFor(sequences, ref));
+  }
+
+  /**
+   * 名前で指定されたユーザー定義型を解決するメソッド
+   *
+   * @see #lookupFunction(ObjectReference) 名前の比べ方・候補の求め方
+   */
+  public Lookup<TypeEntry> lookupType(ObjectReference reference) {
+    return lookup(types, reference, ref -> suggestionsFor(types, ref));
   }
 
   /**
@@ -277,8 +390,28 @@ public final class SchemaCatalog {
     return new Lookup.NotFound<>(suggestions.apply(reference));
   }
 
-  private static int count(List<TableEntry> tables, String type) {
-    return (int) tables.stream().filter(table -> type.equals(table.type())).count();
+  private static SchemaCounter counterOf(Map<List<String>, SchemaCounter> counters, ObjectKey key) {
+    return counters.computeIfAbsent(
+        List.of(key.database(), key.schema()), id -> new SchemaCounter());
+  }
+
+  private static <E extends SchemaObject> List<E> inOrder(
+      List<E> objects, SearchScope scope, NameFilter filter) {
+    return objects.stream()
+        .filter(object -> scope.matches(object.key()) && filter.matches(object.key()))
+        .sorted(Comparator.comparing(SchemaObject::key, KEY_ORDER))
+        .toList();
+  }
+
+  /** 見つからなかった名前を一部に含むオブジェクトを、DB・スキーマの絞り込みを外して探す */
+  private static <E extends SchemaObject> List<E> suggestionsFor(
+      List<E> objects, ObjectReference reference) {
+    if (reference.name().isBlank()) {
+      return List.of();
+    }
+    return inOrder(objects, SearchScope.ALL, NameFilter.of(reference.name())).stream()
+        .limit(MAX_SUGGESTIONS)
+        .toList();
   }
 
   /** 見つからなかったテーブル名に似た名前のテーブルを、DB・スキーマの絞り込みを外して探す */
@@ -295,4 +428,14 @@ public final class SchemaCatalog {
 
   /** 逆引きで当てはまったカラムと、当てはまりの強さ */
   private record ScoredColumn(int score, ColumnHit hit) {}
+
+  /** スキーマごとのオブジェクトの数の集計 */
+  private static final class SchemaCounter {
+    private int tables;
+    private int views;
+    private int materializedViews;
+    private int functions;
+    private int sequences;
+    private int types;
+  }
 }
