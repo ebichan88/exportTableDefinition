@@ -39,21 +39,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: build/reports/tests/
+          path: cli/build/reports/tests/
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-coverage-report
-          path: build/reports/jacoco/test/html/
+          path: cli/build/reports/jacoco/test/html/
 
       # PRに単体テストのカバレッジをコメントする（forkからのPRはGITHUB_TOKENが読み取り専用のため投稿できない）
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: madrapps/jacoco-report@v1.7.1
         with:
-          paths: build/reports/jacoco/test/jacocoTestReport.xml
+          paths: cli/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           title: カバレッジレポート（単体テスト）
           update-comment: true

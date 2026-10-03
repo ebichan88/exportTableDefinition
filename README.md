@@ -594,29 +594,33 @@ jq等で機械的に扱えます。
 
 ```
 exportTableDefinition
-│  build
-│  └─libs
-│      ├─conf  ・・・ 設定ファイルが格納されているフォルダ
-│      │  ├─ExportTableDefinition.properties
-│      │  └─mybatis.properties
-│      ├─output
-│      └─exportTableDefinition-1.0-SNAPSHOT.jar ・・・ 実行可能形式Jarファイル
+├─cli              ・・・ このツール本体（Gradleのサブプロジェクト）
+│  ├─build
+│  │  └─libs
+│  │      ├─conf  ・・・ 設定ファイルが格納されているフォルダ
+│  │      │  ├─ExportTableDefinition.properties
+│  │      │  └─mybatis.properties
+│  │      ├─output
+│  │      └─exportTableDefinition-1.0-SNAPSHOT.jar ・・・ 実行可能形式Jarファイル
+│  └─src
+│      ├─ main     ・・・ javaソースコードが格納されているフォルダ
+│      │   └─ java
+│      │        └─ com
+│      │            └─ export_table_definition
+│      ├─ test     ・・・ 単体テスト（DB不要）
+│      └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQLを使う）
 ├─docs           ・・・ アーキテクチャ等のドキュメントが格納されているフォルダ
 │  └─sample       ・・・ サンプルDBのDDLと出力のベースライン（結合テストの入力）
 ├─gradle
 │  └─wrapper
-└─src
-    ├─ main     ・・・ javaソースコードが格納されているフォルダ
-    │   └─ java
-    │        └─ com
-    │            └─ export_table_definition
-    ├─ test     ・・・ 単体テスト（DB不要）
-    └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQLを使う）
+├─scripts        ・・・ 配布用zipに同梱する起動スクリプト
+├─build.gradle   ・・・ サブプロジェクト共通のビルド設定
+└─settings.gradle
 ```
 
 ### ビルド
 
-以下のコマンドを実行することで、`exportTableDefinition/build/libs`フォルダ配下に`exportTableDefinition-1.0-SNAPSHOT.jar`が作成される
+以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition-1.0-SNAPSHOT.jar`が作成される
 
 ```
 gradlew build
@@ -643,15 +647,15 @@ gradlew integrationTest
 gradlew jacocoTestReport
 ```
 
-でHTMLレポート（`build/reports/jacoco/test/html/index.html`）を生成できる。
+でHTMLレポート（`cli/build/reports/jacoco/test/html/index.html`）を生成できる。
 また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、ドメイン層
 （`com.export_table_definition.domain`配下）の単体テストカバレッジがline 95%・branch 85%を下回ると
-ビルドが失敗する（結合テストは対象外。基準は`build.gradle`の`jacocoTestCoverageVerification`で定義）。
+ビルドが失敗する（結合テストは対象外。基準は`cli/build.gradle`の`jacocoTestCoverageVerification`で定義）。
 PRではGitHub ActionsがカバレッジレポートをArtifactとしてアップロードし、PRへの概要コメントも投稿する。
 
 ### Javadoc
 
-以下のコマンドを実行することで、`exportTableDefinition/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
+以下のコマンドを実行することで、`exportTableDefinition/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
 
 ```
 gradlew javadoc
