@@ -609,6 +609,10 @@ exportTableDefinition
 │      │            └─ export_table_definition
 │      ├─ test     ・・・ 単体テスト（DB不要）
 │      └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQLを使う）
+├─mcp-server       ・・・ スナップショットをAIから検索するMCPサーバー（Gradleのサブプロジェクト）
+│  └─build
+│      └─libs
+│          └─exportTableDefinition-mcp.jar ・・・ MCPサーバーの実行可能形式Jarファイル
 ├─docs           ・・・ アーキテクチャ等のドキュメントが格納されているフォルダ
 │  └─sample       ・・・ サンプルDBのDDLと出力のベースライン（結合テストの入力）
 ├─gradle
@@ -620,7 +624,8 @@ exportTableDefinition
 
 ### ビルド
 
-以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition-1.0-SNAPSHOT.jar`が作成される
+以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition-1.0-SNAPSHOT.jar`が、
+`exportTableDefinition/mcp-server/build/libs`フォルダ配下にMCPサーバーの`exportTableDefinition-mcp.jar`が作成される
 
 ```
 gradlew build
@@ -628,7 +633,8 @@ gradlew build
 
 ### テスト
 
-`gradlew build`（`gradlew test`）で実行される単体テストはDBを使わない。
+`gradlew build`（`gradlew test`）で実行される単体テストはDBを使わない。MCPサーバー（`mcp-server`）のテストもここに含まれ、
+ビルドしたjarを子プロセスで起動してMCPクライアントから呼び出すE2Eテストまでを行う。
 mapperのSQLを実DBに対して確かめる結合テストは、Dockerで使い捨てのPostgreSQLを起動するため別のタスクに分けてある（Dockerが必要）。
 
 ```

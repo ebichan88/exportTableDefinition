@@ -1,0 +1,104 @@
+package com.export_table_definition.mcp.catalog;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/** テスト用のテーブルを組み立てるビルダー */
+public final class TestTables {
+
+  private final TableKey key;
+  private String logicalName;
+  private String type = "table";
+  private String description;
+  private String remarks;
+  private final List<ColumnEntry> columns = new ArrayList<>();
+  private final List<RelationEntry> foreignKeys = new ArrayList<>();
+  private final List<RelationEntry> logicalRelations = new ArrayList<>();
+
+  private TestTables(String database, String schema, String name) {
+    this.key = new TableKey(database, schema, name);
+  }
+
+  /** DB名testdb・スキーマsampleのテーブル */
+  public static TestTables table(String name) {
+    return new TestTables("testdb", "sample", name);
+  }
+
+  /** DB名・スキーマ名を指定したテーブル */
+  public static TestTables table(String database, String schema, String name) {
+    return new TestTables(database, schema, name);
+  }
+
+  public TestTables logicalName(String value) {
+    this.logicalName = value;
+    return this;
+  }
+
+  public TestTables type(String value) {
+    this.type = value;
+    return this;
+  }
+
+  public TestTables description(String value) {
+    this.description = value;
+    return this;
+  }
+
+  public TestTables remarks(String value) {
+    this.remarks = value;
+    return this;
+  }
+
+  public TestTables column(String name) {
+    return column(name, null, null);
+  }
+
+  public TestTables column(String name, String logicalName, String remarks) {
+    columns.add(new ColumnEntry(name, logicalName, remarks));
+    return this;
+  }
+
+  /** 同じスキーマのテーブルへの1カラムの外部キー */
+  public TestTables foreignKey(String column, String referenceTable, String referenceColumn) {
+    foreignKeys.add(
+        new RelationEntry(
+            key.name() + "_" + column + "_fkey",
+            List.of(column),
+            key.schema(),
+            referenceTable,
+            List.of(referenceColumn),
+            "ONE_TO_MANY"));
+    return this;
+  }
+
+  public TestTables foreignKey(RelationEntry relation) {
+    foreignKeys.add(relation);
+    return this;
+  }
+
+  /** 同じスキーマのテーブルへの1カラムの論理リレーション */
+  public TestTables logicalRelation(String column, String referenceTable, String referenceColumn) {
+    logicalRelations.add(
+        new RelationEntry(
+            column,
+            List.of(column),
+            key.schema(),
+            referenceTable,
+            List.of(referenceColumn),
+            "OPTIONAL_ONE_TO_MANY"));
+    return this;
+  }
+
+  public TableEntry build() {
+    return new TableEntry(
+        key,
+        logicalName,
+        type,
+        description,
+        remarks,
+        columns,
+        foreignKeys,
+        logicalRelations,
+        "{\"schema\":\"" + key.schema() + "\",\"name\":\"" + key.name() + "\"}");
+  }
+}

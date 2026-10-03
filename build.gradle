@@ -1,3 +1,9 @@
+// プラグインのバージョンはここで1回だけ宣言し、各サブプロジェクトはバージョンなしで適用する
+plugins {
+    id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
+    id 'com.diffplug.spotless' version '8.8.0' apply false
+}
+
 // 各サブプロジェクト共通の設定だけを置く。サブプロジェクト固有の設定は各ディレクトリのbuild.gradleに書く
 subprojects {
     group = 'exportTableDefinition'
@@ -5,5 +11,45 @@ subprojects {
 
     repositories {
         mavenCentral()
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'com.diffplug.spotless'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Test) {
+        useJUnitPlatform()
+        testLogging {
+            exceptionFormat = 'full'
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+            events 'failed'
+        }
+    }
+
+    javadoc {
+        options.charSet = 'UTF-8'
+        options.encoding = 'UTF-8'
+        // 壊れたJavadoc（タグの誤り・参照先の無いリンク等）は検知するが、Javadocを書かないメンバーは
+        // AGENTS.mdの「コメントスタイル」で許しているため、記述漏れ（missing）は検査しない
+        options.addBooleanOption('Xdoclint:all,-missing', true)
+    }
+
+    spotless {
+        java {
+            googleJavaFormat('1.27.0')
+            // static importを第1グループ、それ以外をASCII辞書順の1グループとする
+            importOrder('\\#', '')
+            removeUnusedImports()
+        }
     }
 }

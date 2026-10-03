@@ -1,0 +1,42 @@
+plugins {
+    id 'com.github.johnrengelman.shadow'
+}
+
+dependencies {
+    // mcp（バンドル版）はJackson 3を同梱するため、cliと同じJackson 2系で揃えるcore＋jackson2の組み合わせを使う
+    implementation 'io.modelcontextprotocol.sdk:mcp-core:2.0.1'
+    implementation 'io.modelcontextprotocol.sdk:mcp-json-jackson2:2.0.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
+    // SDKのログ（SLF4J）の出力先。標準出力はMCPのプロトコルが使うため、標準エラーへ出すsimpleを使う
+    runtimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'com.export_table_definition.mcp.McpServerMain',
+            'Implementation-Version': project.version)
+    }
+}
+
+shadowJar {
+    // MCPクライアントの設定に書くパスが更新で変わらないよう、バージョンを含めない固定名にする
+    archiveFileName = 'exportTableDefinition-mcp.jar'
+    // SDKはJSONマッパーをServiceLoaderで探すため、依存jarのMETA-INF/servicesを結合して残す
+    mergeServiceFiles()
+}
+
+tasks.named('build').configure {
+    dependsOn(tasks.named('shadowJar'))
+}
+
+test {
+    // E2Eテストは、配布するjarそのものを子プロセスで起動して確かめる
+    dependsOn(tasks.named('shadowJar'))
+    systemProperty 'mcpServerJar', tasks.named('shadowJar').get().archiveFile.get().asFile.absolutePath
+    // ベースライン（cliが出力したサンプルのスナップショット）を、形式の互換を確かめる契約テストの入力にする
+    systemProperty 'sampleSnapshotDir', rootProject.file('docs/sample/postgres/output/snapshot').absolutePath
+}

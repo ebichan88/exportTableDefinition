@@ -1,0 +1,5 @@
+/**
+ * スキーマのスナップショットをAIから検索できるようにするMCPサーバー<br>
+ * 依存の向きは{@code tool → catalog ← snapshot}。検索・リレーションのたどりは{@code catalog}に置き、MCPのSDKにもJSONにも依存させない
+ */
+package com.export_table_definition.mcp;

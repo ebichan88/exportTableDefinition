@@ -1,3 +1,4 @@
 rootProject.name = 'exportTableDefinition'
 
 include 'cli'
+include 'mcp-server'
