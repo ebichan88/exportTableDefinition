@@ -6,14 +6,21 @@
 
 DBに接続し、Markdown形式のテーブル定義書・ER図を出力するJava(21)製CLIツール。
 同じ取得結果から機械可読なスキーマのスナップショット（JSON Lines）も出力し、`--check`モードではDBとの差分を検知する。
+スナップショットをAIからMCPのツールで検索できるようにするMCPサーバーも同じリポジトリにある。
 機能仕様（出力されるドキュメントの種類、ER図の分割・多重度判定ルール、対応DBMS等）は
 [README.md](./README.md) に詳しい。実装に手を入れる前に該当箇所を確認すること。
 
 ## ディレクトリ構成
 
-Gradleのマルチプロジェクト構成で、このツール本体は`cli/`サブプロジェクトにある（`cli/src/{main,test,integrationTest}`）。
-ルートの`build.gradle`にはサブプロジェクト共通の設定だけを置き、本体固有の設定は`cli/build.gradle`に書く。
-`docs/`・`scripts/`・`.github/`はリポジトリルートにある。以降の文書で`src/...`と書いたパスは、特に断りが無ければ`cli/src/...`を指す。
+Gradleのマルチプロジェクト構成。
+
+- `cli/` — このツール本体（`cli/src/{main,test,integrationTest}`）
+- `mcp-server/` — スナップショットを検索するMCPサーバー。cliのコードには依存せず、接点はスナップショットの形式だけ。
+  設計は[docs/architecture/mcp-server.md](./docs/architecture/mcp-server.md)を参照
+
+ルートの`build.gradle`にはサブプロジェクト共通の設定（プラグインのバージョン・Javaのバージョン・Spotless・doclint等）だけを置き、
+固有の設定は各サブプロジェクトの`build.gradle`に書く。`docs/`・`scripts/`・`.github/`はリポジトリルートにある。
+以降の文書で`src/...`と書いたパスは、特に断りが無ければ`cli/src/...`を指す。
 
 ## アーキテクチャドキュメント
 
@@ -26,6 +33,8 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   サイドカー・出力対象等）同士の関係図、主なルールを持つ場所、用語集（README・コード・会話で使う呼び方の対応）
 - [docs/architecture/package-structure.md](./docs/architecture/package-structure.md) — 全パッケージ・主要クラスの
   役割一覧（リファレンス）
+- [docs/architecture/mcp-server.md](./docs/architecture/mcp-server.md) — MCPサーバー（`mcp-server/`）の構成・ツール・
+  スナップショット形式との互換の守り方
 
 ## 作業時の注意
 
@@ -76,6 +85,10 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   mapperのSQLを変えた場合は`PostgresTableDefinitionRepositoryIT`に、変えた取得結果を確かめるテストを足す。
   出力がベースライン（`docs/sample/postgres/output`）と変わる場合は、`verify` スキル（`.claude/skills/verify/SKILL.md`）に従って
   出力結果を確認し、意図した変更であればベースラインを出力し直す。Oracle用mapperは結合テストの対象外のため、変更した場合は差分を目視で確認する。
+- スナップショットの形式（`domain.model.snapshot`のrecord）を変えた場合は、MCPサーバーの`./gradlew :mcp-server:test`も実行する
+  （`SampleSnapshotContractTest`がベースラインを読む）。互換性の無い変更なら`DatabaseSnapshot.FORMAT_VERSION`を上げ、
+  `SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させる。
+- MCPサーバーは標準出力をMCPのプロトコルに使う。`System.out`への出力や、標準出力へ出すログの設定を追加しない（表示は標準エラーへ）。
 - 新規ロジックを書く前・既存クラスに数行足す前に、以下のような「小さな責務の混在」が
   再発していないか確認する（過去に実際に見つかった逸脱パターン）。
   - 同じ値をループのたびに再構築していないか。`TableNamePatterns.of(...)`のような値オブジェクトを
@@ -130,7 +143,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 呼び出し元・呼び出し先や他クラスの実装の説明 → 削除（そのクラス・メソッド自身の責務ではない）
   - 「なぜこの実装が良いか」という設計の弁護 → コミットメッセージ
   - コメントアウトしたコード → 削除（必要ならGit履歴から戻す）
-- Javadocを書く対象は宣言の種類で決める（`cli/src/main`。上の「書かない」はどの種類にも当てはまる）。
+- Javadocを書く対象は宣言の種類で決める（`cli/src/main`・`mcp-server/src/main`。上の「書かない」はどの種類にも当てはまる）。
   可視性は外側の型で絞った後のもので判断する（privateなネストクラスのメソッドはprivate扱い）。
 
   | 対象 | 扱い | 書く内容 |

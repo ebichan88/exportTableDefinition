@@ -39,7 +39,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: cli/build/reports/tests/
+          path: |
+            cli/build/reports/tests/
+            mcp-server/build/reports/tests/
 
       - name: Upload coverage report
         if: always()

@@ -1,17 +1,6 @@
 plugins {
-    id 'java'
     id 'jacoco'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'com.diffplug.spotless' version '8.8.0'
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+    id 'com.github.johnrengelman.shadow'
 }
 
 // 結合テスト（Docker上の実DBに対してmapperのSQLと出力全体を検証する）は、Dockerが無い環境でも
@@ -49,14 +38,6 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform()
-    testLogging {
-        exceptionFormat = 'full'
-        showExceptions = true
-        showCauses = true
-        showStackTraces = true
-        events 'failed'
-    }
     finalizedBy jacocoTestReport
 }
 
@@ -103,14 +84,6 @@ tasks.register('integrationTest', Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     shouldRunAfter tasks.named('test')
-    useJUnitPlatform()
-    testLogging {
-        exceptionFormat = 'full'
-        showExceptions = true
-        showCauses = true
-        showStackTraces = true
-        events 'failed'
-    }
 }
 
 // PropertyLoaderはconfディレクトリをファイルシステムパスとして直接参照するため、
@@ -148,21 +121,4 @@ task copyResources(type: Copy) {
     exclude('PropertyLoaderTestFixture.properties')
 }
 
-javadoc {
-    options.charSet = 'UTF-8'
-    options.encoding = 'UTF-8'
-    // 壊れたJavadoc（タグの誤り・参照先の無いリンク等）は検知するが、Javadocを書かないメンバーは
-    // AGENTS.mdの「コメントスタイル」で許しているため、記述漏れ（missing）は検査しない
-    options.addBooleanOption('Xdoclint:all,-missing', true)
-}
-
 build.dependsOn(copyResources)
-
-spotless {
-    java {
-        googleJavaFormat('1.27.0')
-        // static importを第1グループ、それ以外をASCII辞書順の1グループとする
-        importOrder('\\#', '')
-        removeUnusedImports()
-    }
-}

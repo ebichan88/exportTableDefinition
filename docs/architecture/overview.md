@@ -5,6 +5,9 @@
 機械可読なスキーマのスナップショット（JSON Lines）を出力し、`--check`モードではDBとコミット済みのスナップショットの差分を検知する。
 Java 21 / Gradle製で、DIコンテナにGoogle Guiceを、O/RマッパーにMyBatisを使用する。
 
+この文書はcli（`cli/`）のアーキテクチャを扱う。スナップショットをAIから検索するMCPサーバー（`mcp-server/`）は
+[mcp-server.md](./mcp-server.md)を参照。
+
 ## レイヤー構成
 
 `com.export_table_definition` 配下は4層構成（プレゼンテーション / アプリケーション / ドメイン / インフラ）で、
@@ -236,6 +239,7 @@ Markdownドキュメントのファイル名・配置（一覧・ER図・観点�
 Markdownと同じ取得結果から、常にスキーマ情報を構造化したスナップショット（JSON Lines）を
 `{outputPath}/snapshot/{DB名}/`配下へ出力する。Markdownは最終成果物（表示形式）であり機械処理に向かないため、
 差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
+MCPサーバー（[mcp-server.md](./mcp-server.md)）もこのスナップショットを読むため、形式はcliの外部との契約でもある。
 
 - モデルは`domain.model.snapshot`配下のrecord（`TableSnapshot`等）。エンティティから変換する際に、
   値が無いこと（エンティティでは空文字）をnullで表す（JSONでは項目ごと省略される）。

@@ -1,6 +1,7 @@
 # パッケージ構成リファレンス
 
-`com.export_table_definition` 配下の全パッケージと主要クラスの一覧。
+cli（`cli/`）の`com.export_table_definition` 配下の全パッケージと主要クラスの一覧。
+MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）のパッケージは[mcp-server.md](./mcp-server.md)を参照。
 役割の全体像は先に [overview.md](./overview.md)、ドメインの概念同士の関係・用語は [domain-model.md](./domain-model.md) を参照。
 
 ## エントリーポイント（`com.export_table_definition`直下）
