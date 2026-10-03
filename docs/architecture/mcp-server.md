@@ -16,27 +16,37 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `mcp`（直下） | `McpServerMain` | エントリーポイント。起動引数の検証とスナップショットの読み込みの後、stdioのトランスポートでサーバーを起動する |
 | | `ServerArguments` | 起動引数（`--snapshot=<ディレクトリ>`）の解釈と検証 |
 | | `UserCorrectableException` | 利用者が起動引数・スナップショットを見直せば解消する失敗。起動時に標準エラーへ出して終了コード2で終了する |
-| `mcp.catalog` | `SchemaCatalog` | 全テーブルを保持し、検索・名前の解決・関連のたどりを担う。被参照側の関連はスナップショットに無いため、組み立て時に逆引きの索引を作る |
-| | `SearchQuery` | 検索語。空白区切りのAND、NFKC正規化＋小文字化した部分一致、項目ごとの点数（テーブル名＞論理名＞カラム＞説明・備考） |
-| | `TableReference`・`TableLookup` | 名前で指定されたテーブル（`スキーマ名.テーブル名`も可）と、その解決結果（1つに定まる・複数ある・見つからない） |
+| `mcp.catalog` | `SchemaCatalog` | 全オブジェクトを保持し、検索・一覧・名前の解決・カラムの逆引き・関連のたどりを担う。被参照側の関連はスナップショットに無いため、組み立て時に逆引きの索引を作る |
+| | `SearchQuery` | テーブルの検索語。空白区切りのAND、NFKC正規化＋小文字化した部分一致、項目ごとの点数（テーブル名＞論理名＞カラム＞説明・備考） |
+| | `ColumnQuery`・`ColumnHit` | カラムの逆引きの条件（物理名・論理名の完全一致／部分一致）と、当てはまったカラム（参照先を含む） |
+| | `ObjectReference`・`Lookup` | 名前で指定されたオブジェクト（`スキーマ名.名前`も可）と、その解決結果（1つに定まる・複数ある・見つからない）。テーブル以外の種類にも共通で使う |
 | | `Relation`・`RelatedTables` | テーブル間の関連（外部キー・論理リレーション）と、幅優先でたどった結果 |
-| | `TableEntry`・`ColumnEntry`・`RelationEntry`・`TableKey` | スナップショットの1行のうち、検索・関連のたどりに使う項目 |
+| | `TableEntry`・`ColumnEntry`・`RelationEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
+| | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
 | `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリを読み込み`SchemaCatalog`を組み立てる。未知の項目は無視する |
-| `mcp.tool` | `TableDefinitionTools` | MCPのツール（`search_tables`・`get_table`・`get_related_tables`）の定義と、結果のJSON化 |
+| `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`TableTools`・`RelationTools`）に分けて定義する |
+| | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`） |
 | | `ToolArguments` | ツールの引数の読み取りと検証。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
 
 ## ツール
 
 | ツール | 主な引数 | 返すもの |
 |---|---|---|
+| `list_schemas` | なし | DB（DBMS種別）ごとのスキーマと、スキーマごとのオブジェクトの数 |
 | `search_tables` | `query`、`schema`・`database`・`limit`（任意） | 一致したテーブルの概要（名前・論理名・区分・説明）と、一致した項目（`matchedIn`） |
-| `get_table` | `table`、`schema`・`database`（任意） | スナップショットの1行そのもの（cliが項目を追加すれば、そのまま返る） |
+| `list_tables` | `schema`・`database`・`type`・`includeDescription`・`limit`・`offset`（任意） | テーブルの概要（名前・論理名・区分）の一覧 |
+| `get_table` | `table`、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）。`sections`・`columns`で項目・カラムを絞れる |
+| `find_columns` | `column`、`match`・`schema`・`database`・`limit`・`offset`（任意） | 当てはまったカラム（テーブル・型・PK・NOT NULL・デフォルト値・参照先） |
 | `get_related_tables` | `table`、`depth`（1〜3）・`direction`（outgoing/incoming/both）等（任意） | 関連（どのカラム同士か・外部キーか論理リレーションか・多重度・段数）と、関連に現れたテーブルの概要 |
 
 - 結果はJSONの文字列で返す。値が無い項目（空文字・空リスト）は出力しない。
 - テーブル名は大文字小文字を区別しない。同名のテーブルが複数ある・見つからない場合は、候補を示すツールのエラーを返し、
   AIが引数を直して呼び直せるようにする。
 - 未知の引数・範囲外の値は、既定値へ黙って置き換えずにツールのエラーにする（cliの入力の検証と同じ方針）。
+  `get_table`の`columns`にテーブルに無いカラムを指定した場合も、カラムの一覧を示すエラーにする。
+- 一覧を返すツールは`limit`・`offset`で範囲を指定し、続きがあれば`nextOffset`を返す。AIのコンテキストを圧迫しないよう、
+  件数の上限を設ける。
+- 文字列のリストの引数は、JSONの配列のほかカンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）。
 
 ## stdioでの動作
 
@@ -70,7 +80,7 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 
 | テスト | 対象 |
 |---|---|
-| `catalog`配下 | 検索の順位・AND・正規化、名前の解決、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先） |
+| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先） |
 | `SnapshotDirectoryReaderTest` | 読み込みと、起動時の誤り（ファイル名・行番号を含むメッセージ） |
 | `SampleSnapshotContractTest` | ベースラインとの契約（上記） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証 |

@@ -2,7 +2,6 @@ package com.export_table_definition.mcp.catalog;
 
 import static com.export_table_definition.mcp.catalog.TestTables.table;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -60,13 +59,132 @@ class SchemaCatalogTest {
       final SearchResult result =
           catalog.searchTables(SearchQuery.of("user"), new SearchScope("DB1", "SALES"), 10);
 
-      assertEquals(List.of(new TableKey("db1", "sales", "user")), keys(result));
+      assertEquals(List.of(new ObjectKey("db1", "sales", "user")), keys(result));
+    }
+  }
+
+  @Nested
+  @DisplayName("一覧")
+  class Listing {
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(new DatabaseEntry("db1", "PostgreSQL"), new DatabaseEntry("db2", "Oracle")),
+            List.of(
+                table("db1", "sales", "orders").build(),
+                table("db1", "sales", "order_summary").type("view").build(),
+                table("db1", "hr", "employee").build(),
+                table("db2", "hr", "employee").build()));
+
+    @Test
+    @DisplayName("スキーマごとにテーブル・ビューの数を、DB名・スキーマ名の順に返す")
+    void summarizesSchemas() {
+      assertEquals(
+          List.of(
+              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 1, 0),
+              new SchemaSummary("db2", "Oracle", "hr", 1, 0, 0)),
+          catalog.schemas());
+    }
+
+    @Test
+    @DisplayName("テーブルをDB名・スキーマ名・テーブル名の順に並べ、スコープ・区分で絞り込む")
+    void listsTables() {
+      assertEquals(
+          List.of(
+              "db1:hr.employee", "db1:sales.order_summary", "db1:sales.orders", "db2:hr.employee"),
+          catalog.listTables(SearchScope.ALL, "").stream().map(t -> describe(t.key())).toList());
+      assertEquals(
+          List.of("db1:sales.orders"),
+          catalog.listTables(new SearchScope(null, "SALES"), "table").stream()
+              .map(t -> describe(t.key()))
+              .toList());
+    }
+
+    private static String describe(ObjectKey key) {
+      return key.database() + ":" + key.qualifiedName();
+    }
+  }
+
+  @Nested
+  @DisplayName("カラムの逆引き")
+  class FindColumns {
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(
+                table("department").column("department_id", "部署ID", null).build(),
+                table("employee")
+                    .column("employee_id", "従業員ID", null)
+                    .column("department_id", "所属部署ID", null)
+                    .foreignKey("department_id", "department", "department_id")
+                    .build(),
+                table("audit_log")
+                    .column("employee_no", "従業員ID", null)
+                    .logicalRelation("employee_no", "employee", "employee_id")
+                    .build(),
+                table("project").column("leader_employee_id").column("employee").build()));
+
+    @Test
+    @DisplayName("完全一致では、物理名・論理名のどちらかが一致するカラムを返す（大文字小文字を区別しない）")
+    void findsExactMatches() {
+      assertEquals(
+          List.of("audit_log.employee_no", "employee.employee_id"),
+          describe(catalog.findColumns(ColumnQuery.of("従業員ID", MatchMode.EXACT), SearchScope.ALL)));
+      assertEquals(
+          List.of("department.department_id", "employee.department_id"),
+          describe(
+              catalog.findColumns(
+                  ColumnQuery.of("DEPARTMENT_ID", MatchMode.EXACT), SearchScope.ALL)));
+    }
+
+    @Test
+    @DisplayName("部分一致では、完全一致・前方一致・部分一致の順に返す")
+    void findsPartialMatches() {
+      assertEquals(
+          List.of(
+              "project.employee",
+              "audit_log.employee_no",
+              "employee.employee_id",
+              "project.leader_employee_id"),
+          describe(
+              catalog.findColumns(ColumnQuery.of("employee", MatchMode.PARTIAL), SearchScope.ALL)));
+    }
+
+    @Test
+    @DisplayName("カラムが外部キー・論理リレーションで参照している先を返す")
+    void returnsReferences() {
+      final List<ColumnHit> hits =
+          catalog.findColumns(ColumnQuery.of("department_id", MatchMode.EXACT), SearchScope.ALL);
+
+      assertTrue(hits.get(0).references().isEmpty());
+      assertEquals(
+          List.of(
+              new ColumnHit.ColumnReference(
+                  new ObjectKey("testdb", "sample", "department"),
+                  "department_id",
+                  RelationKind.FOREIGN_KEY)),
+          hits.get(1).references());
+      assertEquals(
+          RelationKind.LOGICAL_RELATION,
+          catalog
+              .findColumns(ColumnQuery.of("employee_no", MatchMode.EXACT), SearchScope.ALL)
+              .get(0)
+              .references()
+              .get(0)
+              .kind());
+    }
+
+    private static List<String> describe(List<ColumnHit> hits) {
+      return hits.stream()
+          .map(hit -> hit.table().key().name() + "." + hit.column().name())
+          .toList();
     }
   }
 
   @Nested
   @DisplayName("名前の解決")
-  class Lookup {
+  class LookupTable {
 
     private final SchemaCatalog catalog =
         SchemaCatalog.of(
@@ -79,64 +197,53 @@ class SchemaCatalogTest {
     @Test
     @DisplayName("テーブル名を大文字小文字を区別せず完全一致で解決する")
     void findsByNameIgnoringCase() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, null, "ORDERS"));
-
       assertEquals(
-          new TableKey("db1", "sales", "orders"),
-          assertInstanceOf(TableLookup.Found.class, lookup).table().key());
+          new ObjectKey("db1", "sales", "orders"),
+          found(ObjectReference.of(null, null, "ORDERS")).key());
     }
 
     @Test
     @DisplayName("同名のテーブルが複数のスキーマにある場合は、候補をスキーマ名の順に返す")
     void reportsAmbiguousNames() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, null, "employee"));
+      final Lookup<TableEntry> lookup =
+          catalog.lookupTable(ObjectReference.of(null, null, "employee"));
 
       assertEquals(
           List.of("archive.employee", "hr.employee"),
-          assertInstanceOf(TableLookup.Ambiguous.class, lookup).candidates().stream()
-              .map(table -> table.key().qualifiedName())
-              .toList());
+          Lookups.candidates(lookup).stream().map(table -> table.key().qualifiedName()).toList());
     }
 
     @Test
     @DisplayName("スキーマ名を引数で指定するか、スキーマ名.テーブル名の形で指定すると1つに定まる")
     void resolvesBySchema() {
-      final TableKey expected = new TableKey("db1", "hr", "employee");
+      final ObjectKey expected = new ObjectKey("db1", "hr", "employee");
 
-      assertEquals(
-          expected,
-          assertInstanceOf(
-                  TableLookup.Found.class,
-                  catalog.lookup(TableReference.of(null, "hr", "employee")))
-              .table()
-              .key());
-      assertEquals(
-          expected,
-          assertInstanceOf(
-                  TableLookup.Found.class,
-                  catalog.lookup(TableReference.of(null, null, "hr.employee")))
-              .table()
-              .key());
+      assertEquals(expected, found(ObjectReference.of(null, "hr", "employee")).key());
+      assertEquals(expected, found(ObjectReference.of(null, null, "hr.employee")).key());
     }
 
     @Test
     @DisplayName("見つからない場合は、スキーマの指定を外して名前の似たテーブルを候補に返す")
     void suggestsSimilarNames() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, "sales", "employe"));
+      final Lookup<TableEntry> lookup =
+          catalog.lookupTable(ObjectReference.of(null, "sales", "employe"));
 
       assertEquals(
           List.of("archive.employee", "hr.employee", "hr.employee_profile"),
-          assertInstanceOf(TableLookup.NotFound.class, lookup).suggestions().stream()
-              .map(table -> table.key().qualifiedName())
-              .toList());
+          Lookups.suggestions(lookup).stream().map(table -> table.key().qualifiedName()).toList());
     }
 
     @Test
     @DisplayName("似た名前も無い場合は、候補を空で返す")
     void returnsNoSuggestions() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, null, "invoice"));
+      final Lookup<TableEntry> lookup =
+          catalog.lookupTable(ObjectReference.of(null, null, "invoice"));
 
-      assertTrue(assertInstanceOf(TableLookup.NotFound.class, lookup).suggestions().isEmpty());
+      assertTrue(Lookups.suggestions(lookup).isEmpty());
+    }
+
+    private TableEntry found(ObjectReference reference) {
+      return Lookups.found(catalog.lookupTable(reference));
     }
   }
 
@@ -225,7 +332,7 @@ class SchemaCatalogTest {
       final RelatedTables related = withMissing.relatedTables(orders, 3, Direction.BOTH);
 
       assertEquals(List.of("orders.customer_id->customer FOREIGN_KEY 1"), describe(related));
-      assertEquals(List.of(new TableKey("testdb", "sample", "customer")), related.missingTables());
+      assertEquals(List.of(new ObjectKey("testdb", "sample", "customer")), related.missingTables());
       assertEquals(List.of(orders), related.tables());
     }
 
@@ -255,7 +362,7 @@ class SchemaCatalogTest {
 
     private RelatedTables related(String name, int depth, Direction direction) {
       final TableEntry start =
-          ((TableLookup.Found) catalog.lookup(TableReference.of(null, null, name))).table();
+          Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, name)));
       return catalog.relatedTables(start, depth, direction);
     }
   }
@@ -264,7 +371,7 @@ class SchemaCatalogTest {
     return result.hits().stream().map(hit -> hit.table().key().name()).toList();
   }
 
-  private static List<TableKey> keys(SearchResult result) {
+  private static List<ObjectKey> keys(SearchResult result) {
     return result.hits().stream().map(hit -> hit.table().key()).toList();
   }
 

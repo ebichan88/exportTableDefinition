@@ -13,7 +13,7 @@ import java.util.List;
  * @param json スナップショットの1行そのもの。テーブル定義の全項目を返すときに使う
  */
 public record TableEntry(
-    TableKey key,
+    ObjectKey key,
     String logicalName,
     String type,
     String description,
@@ -21,7 +21,8 @@ public record TableEntry(
     List<ColumnEntry> columns,
     List<RelationEntry> foreignKeys,
     List<RelationEntry> logicalRelations,
-    String json) {
+    String json)
+    implements SchemaObject {
 
   /** 未設定の項目（null）を空文字・空リストへ揃える */
   public TableEntry {

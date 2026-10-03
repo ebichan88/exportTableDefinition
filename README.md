@@ -674,12 +674,17 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 
 | ツール | 主な引数 | 内容 |
 |---|---|---|
+| `list_schemas` | なし | スナップショットに含まれるDB（DBMS種別）・スキーマと、スキーマごとのテーブル・ビュー・マテリアライズドビューの数を返す |
 | `search_tables` | `query`（必須）、`schema`・`database`・`limit` | テーブル名・論理名・説明・カラム名・カラムの論理名を部分一致で検索し、一致の強い順に概要を返す。空白区切りの複数語はすべてを含むものだけを返す |
-| `get_table` | `table`（必須）、`schema`・`database` | テーブル（ビューを含む）の定義をすべて返す（スナップショットの1行そのもの） |
+| `list_tables` | `schema`・`database`・`type`（`table`／`view`／`materialized_view`）・`includeDescription`・`limit`（既定100、最大500）・`offset` | テーブル（ビューを含む）の名前・論理名・区分を名前の順に返す |
+| `get_table` | `table`（必須）、`schema`・`database`・`sections`・`columns` | テーブル（ビューを含む）の定義を返す（スナップショットの1行）。`sections`（`columns`・`indexes`・`constraints`・`foreignKeys`・`logicalRelations`・`triggers`・`definition`）で返す項目を、`columns`で返すカラムを絞り込める |
+| `find_columns` | `column`（必須）、`match`（`exact`／`partial`、既定`exact`）・`schema`・`database`・`limit`（既定50、最大500）・`offset` | カラムの物理名・論理名から、そのカラムを持つテーブルを逆引きする。型・PK・NOT NULL・デフォルト値と、外部キー・論理リレーションの参照先も返す |
 | `get_related_tables` | `table`（必須）、`schema`・`database`・`depth`（1〜3、既定1）・`direction`（`outgoing`／`incoming`／`both`、既定`both`） | 外部キーと論理リレーションをたどり、つながるテーブルと、どのカラム同士でつながるか・多重度を返す。参照される側（被参照）からもたどれる |
 
 * テーブル名は大文字小文字を区別しません。`スキーマ名.テーブル名`の形でも指定できます。
 * 同名のテーブルが複数のスキーマにある場合・見つからない場合は、候補を示すエラーを返します（AIが引数を直して呼び直します）。
+* 一覧を返すツールは、件数が`limit`を超える場合に続きの`offset`（`nextOffset`）を返します。
+* `get_table`の`sections`を指定しても、テーブル名・論理名・区分・説明・備考は常に返します。`columns`を指定した場合は、`sections`に関わらず指定したカラムを返します。
 
 ## 開発者向け（ソースからビルドする場合）
 

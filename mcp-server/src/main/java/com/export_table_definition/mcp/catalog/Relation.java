@@ -11,22 +11,22 @@ import java.util.List;
  * @param name 外部キー名（論理リレーションの場合は関連名）
  */
 public record Relation(
-    TableKey from,
+    ObjectKey from,
     List<String> fromColumns,
-    TableKey to,
+    ObjectKey to,
     List<String> toColumns,
     RelationKind kind,
     String cardinality,
     String name) {
 
   /** テーブルが持つ外部キー・論理リレーションから組み立てるメソッド */
-  static Relation of(TableKey from, RelationEntry entry, RelationKind kind) {
+  static Relation of(ObjectKey from, RelationEntry entry, RelationKind kind) {
     final String referenceSchema =
         entry.referenceSchema().isEmpty() ? from.schema() : entry.referenceSchema();
     return new Relation(
         from,
         entry.columns(),
-        new TableKey(from.database(), referenceSchema, entry.referenceTable()),
+        new ObjectKey(from.database(), referenceSchema, entry.referenceTable()),
         entry.referenceColumns(),
         kind,
         entry.cardinality(),

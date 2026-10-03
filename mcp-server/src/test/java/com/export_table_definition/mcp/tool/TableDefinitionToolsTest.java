@@ -33,22 +33,84 @@ class TableDefinitionToolsTest {
                   table("audit_log")
                       .logicalRelation("record_id", "employee", "employee_id")
                       .build(),
-                  table("testdb", "archive", "employee").build())));
+                  table("testdb", "archive", "employee").build(),
+                  table("project")
+                      .type("table")
+                      .json(
+                          "{\"schema\":\"sample\",\"name\":\"project\",\"type\":\"table\","
+                              + "\"columns\":[{\"name\":\"project_id\"},{\"name\":\"title\"},{\"name\":\"budget\"}],"
+                              + "\"indexes\":[{\"name\":\"project_pkey\"}],"
+                              + "\"triggers\":[{\"name\":\"trg_project\"}],"
+                              + "\"addedByNewerCli\":1}")
+                      .column("project_id")
+                      .column("title")
+                      .column("budget")
+                      .build())));
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
-  @DisplayName("search_tables・get_table・get_related_tablesを、読み取り専用のツールとして登録する")
+  @DisplayName("全体像をつかむ・探す・詳細を見る、の順に、読み取り専用のツールとして登録する")
   void registersReadOnlyTools() {
     final List<SyncToolSpecification> specifications = tools.specifications();
 
     assertEquals(
-        List.of("search_tables", "get_table", "get_related_tables"),
+        List.of(
+            "list_schemas",
+            "search_tables",
+            "list_tables",
+            "get_table",
+            "find_columns",
+            "get_related_tables"),
         specifications.stream().map(specification -> specification.tool().name()).toList());
     assertTrue(
         specifications.stream()
             .allMatch(specification -> specification.tool().annotations().readOnlyHint()));
-    assertEquals(List.of("query"), specifications.get(0).tool().inputSchema().get("required"));
+    assertEquals(
+        List.of("query"), specification("search_tables").tool().inputSchema().get("required"));
+  }
+
+  @Test
+  @DisplayName("list_schemasは、DBごとにスキーマと、スキーマごとのテーブル・ビューの数を返す")
+  void listSchemas() throws Exception {
+    assertEquals(
+        "{\"databases\":[{\"name\":\"testdb\",\"schemas\":["
+            + "{\"name\":\"archive\",\"tables\":1,\"views\":0,\"materializedViews\":0},"
+            + "{\"name\":\"sample\",\"tables\":4,\"views\":0,\"materializedViews\":0}]}]}",
+        json(call("list_schemas", Map.of())).toString());
+  }
+
+  @Test
+  @DisplayName("list_tablesは、テーブルの概要を名前の順に返し、続きがある場合はnextOffsetを返す")
+  void listTables() throws Exception {
+    final JsonNode first = json(call("list_tables", Map.of("schema", "sample", "limit", 2)));
+
+    assertEquals(4, first.get("total").asInt());
+    assertEquals(2, first.get("nextOffset").asInt());
+    assertEquals(List.of("audit_log", "department"), first.get("tables").findValuesAsText("name"));
+    assertFalse(first.get("tables").get(1).has("description"), "既定では説明を返さない");
+
+    final JsonNode rest =
+        json(
+            call(
+                "list_tables",
+                Map.of("schema", "sample", "offset", 2, "limit", 2, "includeDescription", true)));
+    assertEquals(List.of("employee", "project"), rest.get("tables").findValuesAsText("name"));
+    assertFalse(rest.has("nextOffset"), "続きが無い場合はnextOffsetを返さない");
+
+    final JsonNode described = json(call("list_tables", Map.of("includeDescription", "true")));
+    assertEquals("組織のマスタ", described.get("tables").get(2).get("description").asText());
+  }
+
+  @Test
+  @DisplayName("list_tablesは区分で絞り込め、未知の区分はエラーにする")
+  void listTablesByType() throws Exception {
+    assertEquals(0, json(call("list_tables", Map.of("type", "view"))).get("total").asInt());
+
+    final CallToolResult invalid = call("list_tables", Map.of("type", "index"));
+    assertTrue(invalid.isError());
+    assertEquals(
+        "引数typeにはtable, view, materialized_viewのいずれかを指定してください。 [value=index]", text(invalid));
   }
 
   @Test
@@ -86,6 +148,73 @@ class TableDefinitionToolsTest {
     assertEquals(
         "{\"schema\":\"sample\",\"name\":\"department\"}",
         text(call("get_table", Map.of("table", "department"))));
+  }
+
+  @Test
+  @DisplayName("get_tableは、sectionsで指定した項目と常に返す項目だけを返し、スナップショットの未知の項目も残す")
+  void getTableWithSections() throws Exception {
+    assertEquals(
+        "{\"schema\":\"sample\",\"name\":\"project\",\"type\":\"table\","
+            + "\"triggers\":[{\"name\":\"trg_project\"}],\"addedByNewerCli\":1}",
+        json(call("get_table", Map.of("table", "project", "sections", List.of("triggers"))))
+            .toString());
+  }
+
+  @Test
+  @DisplayName("get_tableは、columnsで指定したカラムだけを定義の並び順で返す（sectionsに無くてもcolumnsの項目は返す）")
+  void getTableWithColumns() throws Exception {
+    final JsonNode onlyColumns =
+        json(
+            call(
+                "get_table",
+                Map.of("table", "project", "columns", List.of("BUDGET", "project_id"))));
+    assertEquals(
+        "[{\"name\":\"project_id\"},{\"name\":\"budget\"}]", onlyColumns.get("columns").toString());
+    assertTrue(onlyColumns.has("indexes"), "sectionsを指定しなければ他の項目も返す");
+
+    final JsonNode withSections =
+        json(
+            call(
+                "get_table",
+                Map.of("table", "project", "sections", "indexes", "columns", List.of("title"))));
+    assertEquals("[{\"name\":\"title\"}]", withSections.get("columns").toString());
+    assertTrue(withSections.has("indexes"));
+    assertFalse(withSections.has("triggers"));
+  }
+
+  @Test
+  @DisplayName("get_tableで、テーブルに無いカラム・未知の項目を指定した場合はエラーにする")
+  void getTableWithInvalidSelection() {
+    final CallToolResult column =
+        call("get_table", Map.of("table", "project", "columns", List.of("title", "owner")));
+    assertTrue(column.isError());
+    assertEquals("テーブルsample.projectにカラムownerがありません。カラム: project_id, title, budget", text(column));
+
+    final CallToolResult section =
+        call("get_table", Map.of("table", "project", "sections", List.of("columns", "partitions")));
+    assertTrue(section.isError());
+    assertTrue(text(section).startsWith("引数sectionsにはcolumns, indexes,"), text(section));
+  }
+
+  @Test
+  @DisplayName("find_columnsは、カラムを持つテーブルと、カラムの型・参照先を返す")
+  void findColumns() throws Exception {
+    final JsonNode result = json(call("find_columns", Map.of("column", "部署ID")));
+
+    assertEquals(
+        "{\"total\":1,\"columns\":[{\"database\":\"testdb\",\"schema\":\"sample\","
+            + "\"table\":\"employee\",\"tableLogicalName\":\"従業員\",\"column\":\"department_id\","
+            + "\"logicalName\":\"部署ID\",\"type\":\"integer\",\"primaryKey\":false,\"notNull\":false,"
+            + "\"references\":[{\"table\":\"sample.department\",\"column\":\"department_id\","
+            + "\"kind\":\"foreignKey\"}]}]}",
+        result.toString());
+    assertEquals(
+        0, json(call("find_columns", Map.of("column", "project"))).get("total").asInt(), "既定は完全一致");
+    assertEquals(
+        1,
+        json(call("find_columns", Map.of("column", "project", "match", "partial")))
+            .get("total")
+            .asInt());
   }
 
   @Test
@@ -165,18 +294,21 @@ class TableDefinitionToolsTest {
     final CallToolResult unknown =
         call("get_table", Map.of("table", "department", "verbose", true));
     assertTrue(unknown.isError());
-    assertEquals("未知の引数です: verbose。使える引数: database, schema, table", text(unknown));
+    assertEquals(
+        "未知の引数です: verbose。使える引数: columns, database, schema, sections, table", text(unknown));
   }
 
   private CallToolResult call(String name, Map<String, Object> arguments) {
-    final SyncToolSpecification specification =
-        tools.specifications().stream()
-            .filter(candidate -> candidate.tool().name().equals(name))
-            .findFirst()
-            .orElseThrow();
-    return specification
+    return specification(name)
         .callHandler()
         .apply(null, CallToolRequest.builder(name).arguments(arguments).build());
+  }
+
+  private SyncToolSpecification specification(String name) {
+    return tools.specifications().stream()
+        .filter(candidate -> candidate.tool().name().equals(name))
+        .findFirst()
+        .orElseThrow();
   }
 
   private JsonNode json(CallToolResult result) throws Exception {

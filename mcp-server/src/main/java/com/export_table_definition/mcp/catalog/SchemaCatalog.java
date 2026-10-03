@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * スナップショットから読み込んだ全テーブルと、その検索・名前の解決・関連のたどりを担うクラス<br>
+ * スナップショットから読み込んだ全オブジェクトと、その検索・名前の解決・関連のたどりを担うクラス<br>
  * 被参照側の関連はスナップショットに保持されないため、組み立て時に全テーブルの関連から逆引きの索引を作る
  */
 public final class SchemaCatalog {
@@ -20,17 +22,26 @@ public final class SchemaCatalog {
   /** 名前が見つからないときに返す、似た名前の候補の上限 */
   private static final int MAX_SUGGESTIONS = 5;
 
+  private static final String TABLE = "table";
+  private static final String VIEW = "view";
+  private static final String MATERIALIZED_VIEW = "materialized_view";
+
+  private static final Comparator<ObjectKey> KEY_ORDER =
+      Comparator.comparing(ObjectKey::database)
+          .thenComparing(ObjectKey::schema)
+          .thenComparing(ObjectKey::name);
+
   private static final Comparator<TableEntry> BY_KEY =
-      Comparator.comparing((TableEntry table) -> table.key().database())
-          .thenComparing(table -> table.key().schema())
-          .thenComparing(table -> table.key().name());
+      Comparator.comparing(TableEntry::key, KEY_ORDER);
 
+  private final List<DatabaseEntry> databases;
   private final List<TableEntry> tables;
-  private final Map<TableKey, TableEntry> tablesByKey;
-  private final Map<TableKey, List<Relation>> outgoing;
-  private final Map<TableKey, List<Relation>> incoming;
+  private final Map<ObjectKey, TableEntry> tablesByKey;
+  private final Map<ObjectKey, List<Relation>> outgoing;
+  private final Map<ObjectKey, List<Relation>> incoming;
 
-  private SchemaCatalog(List<TableEntry> tables) {
+  private SchemaCatalog(List<DatabaseEntry> databases, List<TableEntry> tables) {
+    this.databases = databases;
     this.tables = tables;
     this.tablesByKey = new HashMap<>();
     this.outgoing = new HashMap<>();
@@ -52,12 +63,28 @@ public final class SchemaCatalog {
   }
 
   /**
-   * テーブルの一覧から組み立てるメソッド
+   * スナップショットの内容から組み立てるメソッド
+   *
+   * @param databases 全DB。テーブルを持たないDBも含める
+   * @param tables 全テーブル。キー（DB名・スキーマ名・テーブル名）が重複しないこと
+   */
+  public static SchemaCatalog of(List<DatabaseEntry> databases, List<TableEntry> tables) {
+    return new SchemaCatalog(List.copyOf(databases), List.copyOf(tables));
+  }
+
+  /**
+   * テーブルの一覧だけから組み立てるメソッド（DBMS種別は不明として扱う）
    *
    * @param tables 全テーブル。キー（DB名・スキーマ名・テーブル名）が重複しないこと
    */
   public static SchemaCatalog of(List<TableEntry> tables) {
-    return new SchemaCatalog(List.copyOf(tables));
+    return of(
+        tables.stream()
+            .map(table -> table.key().database())
+            .distinct()
+            .map(name -> new DatabaseEntry(name, null))
+            .toList(),
+        tables);
   }
 
   /**
@@ -67,6 +94,76 @@ public final class SchemaCatalog {
    */
   public List<TableEntry> tables() {
     return tables;
+  }
+
+  /**
+   * スキーマごとのオブジェクトの数を返すメソッド
+   *
+   * @return DB名・スキーマ名の順。オブジェクトを1つも持たないスキーマは含まない
+   */
+  public List<SchemaSummary> schemas() {
+    final Map<String, String> dbmsByDatabase = new HashMap<>();
+    databases.forEach(database -> dbmsByDatabase.put(database.name(), database.dbms()));
+    final Map<List<String>, List<TableEntry>> tablesBySchema =
+        tables.stream()
+            .sorted(BY_KEY)
+            .collect(
+                Collectors.groupingBy(
+                    table -> List.of(table.key().database(), table.key().schema()),
+                    LinkedHashMap::new,
+                    Collectors.toList()));
+    return tablesBySchema.entrySet().stream()
+        .map(
+            entry -> {
+              final String database = entry.getKey().get(0);
+              final List<TableEntry> schemaTables = entry.getValue();
+              return new SchemaSummary(
+                  database,
+                  dbmsByDatabase.getOrDefault(database, ""),
+                  entry.getKey().get(1),
+                  count(schemaTables, TABLE),
+                  count(schemaTables, VIEW),
+                  count(schemaTables, MATERIALIZED_VIEW));
+            })
+        .toList();
+  }
+
+  /**
+   * テーブルを一覧にするメソッド
+   *
+   * @param type 区分（table/view/materialized_view）で絞り込む場合に指定する。空文字の場合は絞り込まない
+   * @return DB名・スキーマ名・テーブル名の順
+   */
+  public List<TableEntry> listTables(SearchScope scope, String type) {
+    return tables.stream()
+        .filter(table -> scope.matches(table.key()))
+        .filter(table -> type.isEmpty() || type.equals(table.type()))
+        .sorted(BY_KEY)
+        .toList();
+  }
+
+  /**
+   * カラムを名前（物理名・論理名）で逆引きするメソッド
+   *
+   * @return 当てはまりの強い順（同じ強さの場合はDB名・スキーマ名・テーブル名・カラムの並び順）
+   */
+  public List<ColumnHit> findColumns(ColumnQuery query, SearchScope scope) {
+    final List<ScoredColumn> found = new ArrayList<>();
+    final List<TableEntry> inScope =
+        tables.stream().filter(table -> scope.matches(table.key())).sorted(BY_KEY).toList();
+    for (final TableEntry table : inScope) {
+      for (final ColumnEntry column : table.columns()) {
+        final int score = query.score(column);
+        if (score > 0) {
+          found.add(
+              new ScoredColumn(score, new ColumnHit(table, column, referencesOf(table, column))));
+        }
+      }
+    }
+    return found.stream()
+        .sorted(Comparator.comparingInt(ScoredColumn::score).reversed())
+        .map(ScoredColumn::hit)
+        .toList();
   }
 
   /**
@@ -93,16 +190,8 @@ public final class SchemaCatalog {
    * 名前で指定されたテーブルを解決するメソッド<br>
    * テーブル名は大文字小文字を区別せず完全一致で比べる。見つからない場合は、テーブル名を検索語にした検索の上位を候補として返す
    */
-  public TableLookup lookup(TableReference reference) {
-    final List<TableEntry> matched =
-        tables.stream().filter(table -> reference.matches(table.key())).sorted(BY_KEY).toList();
-    if (matched.size() == 1) {
-      return new TableLookup.Found(matched.get(0));
-    }
-    if (matched.size() > 1) {
-      return new TableLookup.Ambiguous(matched);
-    }
-    return new TableLookup.NotFound(suggestionsFor(reference));
+  public Lookup<TableEntry> lookupTable(ObjectReference reference) {
+    return lookup(tables, reference, this::tableSuggestionsFor);
   }
 
   /**
@@ -113,15 +202,15 @@ public final class SchemaCatalog {
    */
   public RelatedTables relatedTables(TableEntry start, int depth, Direction direction) {
     final Map<Relation, Integer> found = new LinkedHashMap<>();
-    final Set<TableKey> visited = new LinkedHashSet<>(List.of(start.key()));
-    final Set<TableKey> missing = new LinkedHashSet<>();
-    List<TableKey> frontier = List.of(start.key());
+    final Set<ObjectKey> visited = new LinkedHashSet<>(List.of(start.key()));
+    final Set<ObjectKey> missing = new LinkedHashSet<>();
+    List<ObjectKey> frontier = List.of(start.key());
     for (int level = 1; level <= depth && !frontier.isEmpty(); level++) {
-      final List<TableKey> next = new ArrayList<>();
-      for (final TableKey current : frontier) {
+      final List<ObjectKey> next = new ArrayList<>();
+      for (final ObjectKey current : frontier) {
         for (final Relation relation : relationsOf(current, direction)) {
           found.putIfAbsent(relation, level);
-          final TableKey neighbor =
+          final ObjectKey neighbor =
               relation.from().equals(current) ? relation.to() : relation.from();
           if (!tablesByKey.containsKey(neighbor)) {
             missing.add(neighbor);
@@ -142,7 +231,7 @@ public final class SchemaCatalog {
   }
 
   /** 指定した向きの関連を、参照先へ向かうもの・参照元から来るものの順に返す */
-  private List<Relation> relationsOf(TableKey table, Direction direction) {
+  private List<Relation> relationsOf(ObjectKey table, Direction direction) {
     final List<Relation> relations = new ArrayList<>();
     if (direction.followsOutgoing()) {
       relations.addAll(outgoing.getOrDefault(table, List.of()));
@@ -153,15 +242,57 @@ public final class SchemaCatalog {
     return relations;
   }
 
+  /** カラムが外部キー・論理リレーションで参照している先を、関連の定義順に返す */
+  private List<ColumnHit.ColumnReference> referencesOf(TableEntry table, ColumnEntry column) {
+    final List<ColumnHit.ColumnReference> references = new ArrayList<>();
+    for (final Relation relation : outgoing.getOrDefault(table.key(), List.of())) {
+      final int position = relation.fromColumns().indexOf(column.name());
+      if (position >= 0 && position < relation.toColumns().size()) {
+        references.add(
+            new ColumnHit.ColumnReference(
+                relation.to(), relation.toColumns().get(position), relation.kind()));
+      }
+    }
+    return references;
+  }
+
+  /**
+   * 名前でオブジェクトを解決する
+   *
+   * @param suggestions 見つからなかった場合に、名前の似たオブジェクトを求める処理
+   */
+  private static <E extends SchemaObject> Lookup<E> lookup(
+      List<E> objects, ObjectReference reference, Function<ObjectReference, List<E>> suggestions) {
+    final List<E> matched =
+        objects.stream()
+            .filter(object -> reference.matches(object.key()))
+            .sorted(Comparator.comparing(SchemaObject::key, KEY_ORDER))
+            .toList();
+    if (matched.size() == 1) {
+      return new Lookup.Found<>(matched.get(0));
+    }
+    if (matched.size() > 1) {
+      return new Lookup.Ambiguous<>(matched);
+    }
+    return new Lookup.NotFound<>(suggestions.apply(reference));
+  }
+
+  private static int count(List<TableEntry> tables, String type) {
+    return (int) tables.stream().filter(table -> type.equals(table.type())).count();
+  }
+
   /** 見つからなかったテーブル名に似た名前のテーブルを、DB・スキーマの絞り込みを外して探す */
-  private List<TableEntry> suggestionsFor(TableReference reference) {
-    if (reference.table().isBlank()) {
+  private List<TableEntry> tableSuggestionsFor(ObjectReference reference) {
+    if (reference.name().isBlank()) {
       return List.of();
     }
-    return searchTables(SearchQuery.of(reference.table()), SearchScope.ALL, MAX_SUGGESTIONS)
+    return searchTables(SearchQuery.of(reference.name()), SearchScope.ALL, MAX_SUGGESTIONS)
         .hits()
         .stream()
         .map(TableHit::table)
         .toList();
   }
+
+  /** 逆引きで当てはまったカラムと、当てはまりの強さ */
+  private record ScoredColumn(int score, ColumnHit hit) {}
 }

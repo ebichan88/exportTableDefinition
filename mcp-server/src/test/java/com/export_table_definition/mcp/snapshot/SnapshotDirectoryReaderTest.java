@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.export_table_definition.mcp.UserCorrectableException;
+import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.RelationEntry;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.TableEntry;
-import com.export_table_definition.mcp.catalog.TableKey;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,9 +48,9 @@ class SnapshotDirectoryReaderTest {
 
     assertEquals(
         List.of(
-            new TableKey("otherdb", "public", "item"),
-            new TableKey("testdb", "hr", "employee"),
-            new TableKey("testdb", "sales", "orders")),
+            new ObjectKey("otherdb", "public", "item"),
+            new ObjectKey("testdb", "hr", "employee"),
+            new ObjectKey("testdb", "sales", "orders")),
         catalog.tables().stream().map(TableEntry::key).toList());
     final TableEntry orders = catalog.tables().get(2);
     assertEquals("受注", orders.logicalName());

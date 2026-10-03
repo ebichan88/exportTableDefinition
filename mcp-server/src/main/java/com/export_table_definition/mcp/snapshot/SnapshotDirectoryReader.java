@@ -2,10 +2,11 @@ package com.export_table_definition.mcp.snapshot;
 
 import com.export_table_definition.mcp.UserCorrectableException;
 import com.export_table_definition.mcp.catalog.ColumnEntry;
+import com.export_table_definition.mcp.catalog.DatabaseEntry;
+import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.RelationEntry;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.TableEntry;
-import com.export_table_definition.mcp.catalog.TableKey;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,9 +59,12 @@ public final class SnapshotDirectoryReader {
               + snapshotDirectory
               + "]");
     }
+    final List<DatabaseEntry> databases = new ArrayList<>();
     final List<TableEntry> tables = new ArrayList<>();
     for (final Path databaseDirectory : databaseDirectories) {
-      final String database = readDatabase(databaseDirectory.resolve(DATABASE_FILE_NAME)).name();
+      final DatabaseLine databaseLine = readDatabase(databaseDirectory.resolve(DATABASE_FILE_NAME));
+      databases.add(new DatabaseEntry(databaseLine.name(), databaseLine.dbms()));
+      final String database = databaseLine.name();
       for (final Path schemaDirectory : subdirectories(databaseDirectory)) {
         final Path tableFile = schemaDirectory.resolve(TABLE_FILE_NAME);
         if (Files.isRegularFile(tableFile)) {
@@ -68,7 +72,7 @@ public final class SnapshotDirectoryReader {
         }
       }
     }
-    return SchemaCatalog.of(tables);
+    return SchemaCatalog.of(databases, tables);
   }
 
   private DatabaseLine readDatabase(Path file) {
@@ -153,9 +157,9 @@ public final class SnapshotDirectoryReader {
 
   /** {@code database.json}のうち、読み込みに使う項目 */
   @JsonIgnoreProperties(ignoreUnknown = true)
-  record DatabaseLine(Integer formatVersion, String name) {}
+  record DatabaseLine(Integer formatVersion, String name, String dbms) {}
 
-  /** {@code tables.jsonl}の1行のうち、検索・関連のたどりに使う項目 */
+  /** {@code tables.jsonl}の1行のうち、検索・関連のたどり・逆引きに使う項目 */
   @JsonIgnoreProperties(ignoreUnknown = true)
   record TableLine(
       String schema,
@@ -170,7 +174,7 @@ public final class SnapshotDirectoryReader {
 
     TableEntry toEntry(String database, String json) {
       return new TableEntry(
-          new TableKey(database, schema, name),
+          new ObjectKey(database, schema, name),
           logicalName,
           type,
           description,
@@ -186,12 +190,19 @@ public final class SnapshotDirectoryReader {
     }
   }
 
-  /** カラムのうち、検索に使う項目 */
+  /** カラムのうち、検索・逆引きに使う項目 */
   @JsonIgnoreProperties(ignoreUnknown = true)
-  record ColumnLine(String name, String logicalName, String remarks) {
+  record ColumnLine(
+      String name,
+      String logicalName,
+      String type,
+      boolean primaryKey,
+      boolean notNull,
+      String defaultValue,
+      String remarks) {
 
     ColumnEntry toEntry() {
-      return new ColumnEntry(name, logicalName, remarks);
+      return new ColumnEntry(name, logicalName, type, primaryKey, notNull, defaultValue, remarks);
     }
   }
 

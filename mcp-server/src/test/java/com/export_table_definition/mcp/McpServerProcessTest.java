@@ -48,7 +48,13 @@ class McpServerProcessTest {
 
       assertEquals("exportTableDefinition", client.getServerInfo().name());
       assertEquals(
-          List.of("search_tables", "get_table", "get_related_tables"),
+          List.of(
+              "list_schemas",
+              "search_tables",
+              "list_tables",
+              "get_table",
+              "find_columns",
+              "get_related_tables"),
           client.listTools().tools().stream().map(Tool::name).toList());
 
       final CallToolResult search =
@@ -63,6 +69,15 @@ class McpServerProcessTest {
                   .arguments(Map.of("table", "audit_log"))
                   .build());
       assertTrue(text(related).contains("\"kind\":\"logicalRelation\""), text(related));
+
+      final CallToolResult sections =
+          client.callTool(
+              CallToolRequest.builder("get_table")
+                  .arguments(Map.of("table", "employee", "sections", List.of("foreignKeys")))
+                  .build());
+      assertFalse(Boolean.TRUE.equals(sections.isError()), () -> text(sections));
+      assertTrue(text(sections).contains("\"foreignKeys\""), text(sections));
+      assertFalse(text(sections).contains("\"indexes\""), text(sections));
 
       final CallToolResult notFound =
           client.callTool(

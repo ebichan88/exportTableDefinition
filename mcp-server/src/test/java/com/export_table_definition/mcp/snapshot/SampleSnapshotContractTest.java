@@ -3,15 +3,20 @@ package com.export_table_definition.mcp.snapshot;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.export_table_definition.mcp.catalog.ColumnEntry;
+import com.export_table_definition.mcp.catalog.ColumnHit;
+import com.export_table_definition.mcp.catalog.ColumnQuery;
 import com.export_table_definition.mcp.catalog.Direction;
+import com.export_table_definition.mcp.catalog.Lookups;
+import com.export_table_definition.mcp.catalog.MatchMode;
+import com.export_table_definition.mcp.catalog.ObjectReference;
 import com.export_table_definition.mcp.catalog.RelatedTables;
 import com.export_table_definition.mcp.catalog.RelationKind;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.SchemaSummary;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchScope;
 import com.export_table_definition.mcp.catalog.TableEntry;
-import com.export_table_definition.mcp.catalog.TableLookup;
-import com.export_table_definition.mcp.catalog.TableReference;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -96,7 +101,39 @@ class SampleSnapshotContractTest {
     assertTrue(shipment.missingTables().isEmpty());
   }
 
+  @Test
+  @DisplayName("database.jsonのDBMS種別と、スキーマごとのテーブル・ビューの数を読み込む")
+  void summarizesSchemas() {
+    assertEquals(
+        List.of(new SchemaSummary("testdb", "PostgreSQL", "sample", 9, 1, 1)), catalog.schemas());
+  }
+
+  @Test
+  @DisplayName("カラムの型・PK・NOT NULL・デフォルト値を読み込み、カラム名から逆引きできる")
+  void findsColumnsOfSample() {
+    final List<ColumnHit> hits =
+        catalog.findColumns(ColumnQuery.of("employee_id", MatchMode.EXACT), SearchScope.ALL);
+
+    final ColumnEntry primaryKey =
+        hits.stream()
+            .filter(hit -> hit.table().key().name().equals("employee"))
+            .findFirst()
+            .orElseThrow()
+            .column();
+    assertEquals("integer", primaryKey.type());
+    assertTrue(primaryKey.primaryKey());
+    assertTrue(primaryKey.notNull());
+    assertEquals("nextval('sample.employee_employee_id_seq'::regclass)", primaryKey.defaultValue());
+    assertTrue(
+        hits.stream()
+            .anyMatch(
+                hit ->
+                    hit.references().stream()
+                        .anyMatch(reference -> reference.table().name().equals("employee"))),
+        "外部キーで従業員を参照するカラムがある");
+  }
+
   private static TableEntry find(String name) {
-    return ((TableLookup.Found) catalog.lookup(TableReference.of(null, null, name))).table();
+    return Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, name)));
   }
 }
