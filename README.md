@@ -16,6 +16,9 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 | PostgreSQL固有オブジェクトの一覧・個別ページ | 関数・プロシージャ、シーケンス、ユーザー定義型（ENUM等） |
 | スキーマのスナップショット | 上記と同じ情報を機械可読なJSON Lines形式で構造化したもの。[詳細](#スキーマのスナップショットjson-lines) |
 
+あわせて、出力したスナップショットをAI（Claude Code等）から検索できるようにするMCPサーバーを同梱しています。
+別のリポジトリでコードを書くAIが、テーブル定義やJOINの条件を調べられます。[詳細](#aiからテーブル定義を調べるmcpサーバー)
+
 出力サンプル: [README](./docs/sample/postgres/output/testdb/README.md) / [テーブル一覧](./docs/sample/postgres/output/testdb/tableList_testdb.md)
 
 ### 対象DBMS
@@ -46,6 +49,8 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 exportTableDefinition-windows
 │  run.bat                                     ・・・ ダブルクリックで実行する起動ファイル
 │  exportTableDefinition-1.0-SNAPSHOT.jar      ・・・ 実行可能形式Jarファイル
+├─mcp
+│     exportTableDefinition-mcp.jar             ・・・ MCPサーバー（「AIからテーブル定義を調べる」を参照）
 ├─runtime                                       ・・・ 同梱のJava実行環境（別途Javaのインストール不要）
 └─conf
    ├─ExportTableDefinition.properties
@@ -587,6 +592,75 @@ jq等で機械的に扱えます。
 * 値はMarkdown向けのエスケープ（`|`→`\|`等）をしない、DBのカタログ・サイドカーYAMLから取得したままの値です。
 * 被参照側の外部キーは、参照元テーブルの`foreignKeys`から導出できるため保持しません。
 * `schema`・`table`・`outputObjects`・`annotationPath`の設定はMarkdownと同様に適用されます。`chunkSize`・`erDiagramMaxNodes`はMarkdownの分割出力のための設定のため、スナップショットの内容には影響しません。
+
+## AIからテーブル定義を調べる（MCPサーバー）
+
+出力した[スキーマのスナップショット](#スキーマのスナップショットjson-lines)を、AIからMCP（Model Context Protocol）のツールで
+検索できるようにするサーバーです。テーブル定義書のリポジトリとは別のリポジトリでコードを書くとき、AIが正しいテーブル名・カラム・
+JOINの条件（外部キーと、サイドカーYAMLで宣言した論理リレーション）を調べられるようになります。
+
+* DBには接続しません。スナップショットのファイルを読むだけなので、DBの接続情報をAIに渡す必要はありません。
+* 配布用zipの`mcp/exportTableDefinition-mcp.jar`がサーバー本体です。同梱のJava実行環境（`runtime`）で動くため、Javaのインストールは不要です。
+
+### 準備
+
+1. このツールでテーブル定義書を出力し、`outputPath`配下の`snapshot/`をGit等で共有する（テーブル定義書と一緒にコミットしておく等）
+2. AIを使う人が、そのリポジトリを手元にcloneし、zipを展開しておく
+
+### 起動方法
+
+MCPクライアント（Claude Code・Claude Desktop等）が、標準入出力で通信するサーバーとして起動します。自分で起動しておく必要はありません。
+
+```
+<展開先>/runtime/bin/java -jar <展開先>/mcp/exportTableDefinition-mcp.jar --snapshot=<outputPath配下のsnapshotディレクトリ>
+```
+
+Windowsでは`<展開先>\runtime\bin\java.exe`を指定します。
+
+| 引数 | 必須 | 内容 |
+|---|---|---|
+| `--snapshot=<ディレクトリ>` | ○ | このツールの出力先（`outputPath`）配下の`snapshot`ディレクトリ。複数のDBのスナップショットを含んでいてもよい |
+
+* 上記以外の引数・`--snapshot`の重複は誤りとして扱います。
+* 引数・スナップショットに誤りがある場合（ディレクトリが無い、`outputPath`そのものを指定した、新しい形式のスナップショット、
+  マージの衝突等でJSONとして読めない行がある等）は、何を直せばよいか（ファイル名・行番号を含む）を標準エラーに出し、終了コード`2`で終了します。
+  MCPクライアントでサーバーの起動に失敗した場合は、クライアントのログで確認してください。
+* スナップショットは起動時に読み込みます。スナップショットを更新（`git pull`等）した場合は、MCPクライアントからサーバーに再接続してください。
+
+### MCPクライアントの設定例
+
+Claude Codeの場合、次のコマンドで登録できます（Linux／macOSの例）。
+
+```
+claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/java -jar /opt/exportTableDefinition-linux/mcp/exportTableDefinition-mcp.jar --snapshot=/work/schema-docs/output/snapshot
+```
+
+チームで共有する場合は、アプリのリポジトリに`.mcp.json`をコミットし、各自の環境で異なるパスを環境変数で与えます
+（`ETD_HOME`はzipの展開先、`SCHEMA_SNAPSHOT_DIR`はcloneしたテーブル定義書のリポジトリの`snapshot`ディレクトリ）。
+
+```json
+{
+  "mcpServers": {
+    "table-definition": {
+      "command": "${ETD_HOME}/runtime/bin/java",
+      "args": ["-jar", "${ETD_HOME}/mcp/exportTableDefinition-mcp.jar", "--snapshot=${SCHEMA_SNAPSHOT_DIR}"]
+    }
+  }
+}
+```
+
+他のMCPクライアントでも、`command`に同梱のjava、`args`に上記の引数を指定すれば利用できます。
+
+### ツール
+
+| ツール | 主な引数 | 内容 |
+|---|---|---|
+| `search_tables` | `query`（必須）、`schema`・`database`・`limit` | テーブル名・論理名・説明・カラム名・カラムの論理名を部分一致で検索し、一致の強い順に概要を返す。空白区切りの複数語はすべてを含むものだけを返す |
+| `get_table` | `table`（必須）、`schema`・`database` | テーブル（ビューを含む）の定義をすべて返す（スナップショットの1行そのもの） |
+| `get_related_tables` | `table`（必須）、`schema`・`database`・`depth`（1〜3、既定1）・`direction`（`outgoing`／`incoming`／`both`、既定`both`） | 外部キーと論理リレーションをたどり、つながるテーブルと、どのカラム同士でつながるか・多重度を返す。参照される側（被参照）からもたどれる |
+
+* テーブル名は大文字小文字を区別しません。`スキーマ名.テーブル名`の形でも指定できます。
+* 同名のテーブルが複数のスキーマにある場合・見つからない場合は、候補を示すエラーを返します（AIが引数を直して呼び直します）。
 
 ## 開発者向け（ソースからビルドする場合）
 

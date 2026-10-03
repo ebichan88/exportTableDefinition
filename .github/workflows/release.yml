@@ -51,7 +51,8 @@ jobs:
           chmod +x ./gradlew
           ./gradlew build
 
-      # 依存ライブラリ（JDBCドライバ、log4j、Guice等）が実際に使用するJDKモジュールを検出する。
+      # 依存ライブラリ（JDBCドライバ、log4j、Guice、MCPのSDK等）が実際に使用するJDKモジュールを検出する。
+      # cliとMCPサーバーで同梱のJava実行環境（runtime）を共有するため、両方のjarを渡して必要なモジュールを合算する。
       # jdk.crypto.ec / jdk.charsets / jdk.unsupported はリフレクションやSPI経由で使われ
       # jdeps検出から漏れやすいため明示的に追加する（jdk.charsetsは日本語(Shift_JIS等)の
       # 文字コード対応に必須）。
@@ -60,8 +61,8 @@ jobs:
         id: jdeps_windows
         shell: pwsh
         run: |
-          $jar = "cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
-          $detected = (& "$env:JAVA_HOME\bin\jdeps.exe" --ignore-missing-deps --print-module-deps --multi-release 21 $jar | Select-Object -Last 1).Trim()
+          $jars = @("cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar", "mcp-server/build/libs/exportTableDefinition-mcp.jar")
+          $detected = (& "$env:JAVA_HOME\bin\jdeps.exe" --ignore-missing-deps --print-module-deps --multi-release 21 @jars | Select-Object -Last 1).Trim()
           $modules = "$detected,jdk.crypto.ec,jdk.charsets,jdk.unsupported"
           Write-Host "Required modules: $modules"
           "modules=$modules" >> $env:GITHUB_OUTPUT
@@ -71,8 +72,8 @@ jobs:
         id: jdeps_unix
         shell: bash
         run: |
-          jar="cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
-          detected=$("$JAVA_HOME/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 21 "$jar" | tail -1 | tr -d '\r')
+          jars=("cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar" "mcp-server/build/libs/exportTableDefinition-mcp.jar")
+          detected=$("$JAVA_HOME/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 21 "${jars[@]}" | tail -1 | tr -d '\r')
           modules="$detected,jdk.crypto.ec,jdk.charsets,jdk.unsupported"
           echo "Required modules: $modules"
           echo "modules=$modules" >> "$GITHUB_OUTPUT"
@@ -109,6 +110,8 @@ jobs:
           Copy-Item -Recurse cli/build/libs/conf release/conf
           Copy-Item README.md release/
           Copy-Item scripts/run.bat release/
+          New-Item -ItemType Directory -Force release/mcp | Out-Null
+          Copy-Item mcp-server/build/libs/exportTableDefinition-mcp.jar release/mcp/
 
       - name: Assemble release package (Unix)
         if: matrix.platform != 'windows'
@@ -118,6 +121,8 @@ jobs:
           cp -r cli/build/libs/conf release/conf
           cp README.md release/
           cp scripts/run.sh release/
+          mkdir -p release/mcp
+          cp mcp-server/build/libs/exportTableDefinition-mcp.jar release/mcp/
           chmod +x release/run.sh release/runtime/bin/java
 
       - name: Create ZIP (Windows)

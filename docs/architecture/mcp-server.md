@@ -47,6 +47,15 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 - 起動時の誤り（`--snapshot`の誤り、ディレクトリ・`database.json`が無い、対応していない`formatVersion`、
   JSONとして読めない行）は、何を直せばよいか（ファイル名・行番号を含む）を標準エラーへ出し、終了コード2で終了する。
 
+## 配布
+
+配布用zip（`.github/workflows/release.yml`）の`mcp/exportTableDefinition-mcp.jar`として、cliと同じzipに同梱する。
+
+- Java実行環境（`runtime`）はcliと共有する。jlinkに含めるモジュールは、cliとMCPサーバーの両方のjarを`jdeps`に渡して合算する。
+- jarはzipの直下ではなく`mcp/`に置く。cliの起動スクリプト（`run.bat`/`run.sh`）は直下の`*.jar`を起動するため。
+- MCPクライアントからは同梱のjavaを直接起動してもらう（起動スクリプトは`pause`や画面表示をするためMCPには使えない）。
+  利用手順はREADMEの「AIからテーブル定義を調べる（MCPサーバー）」に書く。
+
 ## スナップショット形式との互換
 
 mcp-serverはcliのスナップショットのrecordを共有せず、読み込み用の型を自前で持つ（cliのrecordがエンティティに依存しているため）。
