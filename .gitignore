@@ -1,6 +1,6 @@
-/build/
+build/
 /.gradle/
-/var/
+var/
 /bin/
 /.settings/
 /.project

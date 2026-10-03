@@ -120,7 +120,7 @@
 | | `DatabaseTypeDetector` | DBへ接続して接続先のDB種別を判定する。DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
 | `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。`SqlSessionFactory`をコンストラクタで受け取る。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
-| | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
+| | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
 | `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
@@ -149,16 +149,16 @@
 
 | パス | 役割 |
 |---|---|
-| `src/main/resources/conf/ExportTableDefinition.properties` | 出力対象スキーマ/テーブル、出力先、chunkSize等のアプリ設定 |
-| `src/main/resources/conf/mybatis.properties.template` | DB接続情報テンプレート（実ファイルは`mybatis.properties`としてgitignore対象） |
-| `src/main/resources/mybatis-config.xml` | MyBatisのメイン設定（DB種別ごとのmapper読み込み等） |
-| `src/main/resources/mapper/oracle/tableDefinitionMapper.xml` | Oracle向けSQL定義 |
-| `src/main/resources/mapper/postgresql/tableDefinitionMapper.xml` | PostgreSQL向けSQL定義 |
-| `src/main/resources/log4j2.xml` | ログ設定（ログファイルへの出力に加え、このツールのWARNログを`[warn]:`付きで標準エラー出力へ出す） |
+| `cli/src/main/resources/conf/ExportTableDefinition.properties` | 出力対象スキーマ/テーブル、出力先、chunkSize等のアプリ設定 |
+| `cli/src/main/resources/conf/mybatis.properties.template` | DB接続情報テンプレート（実ファイルは`mybatis.properties`としてgitignore対象） |
+| `cli/src/main/resources/mybatis-config.xml` | MyBatisのメイン設定（DB種別ごとのmapper読み込み等） |
+| `cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml` | Oracle向けSQL定義 |
+| `cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml` | PostgreSQL向けSQL定義 |
+| `cli/src/main/resources/log4j2.xml` | ログ設定（ログファイルへの出力に加え、このツールのWARNログを`[warn]:`付きで標準エラー出力へ出す） |
 
 ## テスト
 
-`src/test/java/com/export_table_definition` 配下は本体パッケージとほぼ1:1で対応する構成
+`cli/src/test/java/com/export_table_definition` 配下は本体パッケージとほぼ1:1で対応する構成
 （`application`, `config`, `domain`, `infrastructure`, `presentation`, `testsupport`）。
 `testsupport`にはテスト用のビルダー・フィクスチャ等の共通部品を置く
 （`MarkdownAssert`、`EntityFixtures`、`ForeignKeyFixtures`など）。

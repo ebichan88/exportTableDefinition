@@ -39,11 +39,11 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class SampleDatabaseExportIT {
 
-  /** ベースライン（verifyスキルの手順で出力したもの） */
-  private static final Path BASELINE = Path.of("docs/sample/postgres/output");
+  /** ベースライン（verifyスキルの手順で出力したもの）。テストの作業ディレクトリはcli/のため、リポジトリルートのdocsは{@code ../}で参照する */
+  private static final Path BASELINE = Path.of("../docs/sample/postgres/output");
 
   /** verifyスキルの手順で指定しているサイドカーYAML */
-  private static final String ANNOTATION_PATH = "docs/sample/postgres/annotations.sample.yml";
+  private static final String ANNOTATION_PATH = "../docs/sample/postgres/annotations.sample.yml";
 
   /** 基本情報の作成日（実行日。ベースラインを出力した日と異なるため、比較の前に置き換える） */
   private static final String CREATED_DATE_PATTERN = "\\|\\d{4}/\\d{2}/\\d{2}\\|";

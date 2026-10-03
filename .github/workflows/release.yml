@@ -60,7 +60,7 @@ jobs:
         id: jdeps_windows
         shell: pwsh
         run: |
-          $jar = "build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
+          $jar = "cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
           $detected = (& "$env:JAVA_HOME\bin\jdeps.exe" --ignore-missing-deps --print-module-deps --multi-release 21 $jar | Select-Object -Last 1).Trim()
           $modules = "$detected,jdk.crypto.ec,jdk.charsets,jdk.unsupported"
           Write-Host "Required modules: $modules"
@@ -71,7 +71,7 @@ jobs:
         id: jdeps_unix
         shell: bash
         run: |
-          jar="build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
+          jar="cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar"
           detected=$("$JAVA_HOME/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 21 "$jar" | tail -1 | tr -d '\r')
           modules="$detected,jdk.crypto.ec,jdk.charsets,jdk.unsupported"
           echo "Required modules: $modules"
@@ -105,8 +105,8 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          Copy-Item build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
-          Copy-Item -Recurse build/libs/conf release/conf
+          Copy-Item cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
+          Copy-Item -Recurse cli/build/libs/conf release/conf
           Copy-Item README.md release/
           Copy-Item scripts/run.bat release/
 
@@ -114,8 +114,8 @@ jobs:
         if: matrix.platform != 'windows'
         shell: bash
         run: |
-          cp build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
-          cp -r build/libs/conf release/conf
+          cp cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
+          cp -r cli/build/libs/conf release/conf
           cp README.md release/
           cp scripts/run.sh release/
           chmod +x release/run.sh release/runtime/bin/java

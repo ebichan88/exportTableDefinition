@@ -153,8 +153,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 エントリーポイントが（入力の検証に成功した後に）`DatabaseTypeDetector.detect()` で接続先のDB種別を判定して
 `DatabaseDependentModule` のコンストラクタへ（`SqlSessionFactory`とともに）渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
 `TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
-[src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
-[src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
+[cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
+[cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
 両リポジトリは共通処理を `AbstractTableDefinitionRepository` に持つ。
 
 PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は

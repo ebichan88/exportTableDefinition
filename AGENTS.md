@@ -9,6 +9,12 @@ DBに接続し、Markdown形式のテーブル定義書・ER図を出力するJa
 機能仕様（出力されるドキュメントの種類、ER図の分割・多重度判定ルール、対応DBMS等）は
 [README.md](./README.md) に詳しい。実装に手を入れる前に該当箇所を確認すること。
 
+## ディレクトリ構成
+
+Gradleのマルチプロジェクト構成で、このツール本体は`cli/`サブプロジェクトにある（`cli/src/{main,test,integrationTest}`）。
+ルートの`build.gradle`にはサブプロジェクト共通の設定だけを置き、本体固有の設定は`cli/build.gradle`に書く。
+`docs/`・`scripts/`・`.github/`はリポジトリルートにある。以降の文書で`src/...`と書いたパスは、特に断りが無ければ`cli/src/...`を指す。
+
 ## アーキテクチャドキュメント
 
 Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ドメインモデルは以下にまとめてある。
@@ -33,7 +39,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   `docs/architecture/domain-model.md` の図・ルール表・用語集も同じ変更で更新する。
   新しいクラス・メソッドの名前は用語集の用語（READMEで使っている呼び方）に揃え、同じものに別の名前を付けない。
 - DB種別（Oracle/PostgreSQL）固有のSQLは
-  `src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` に分離されている。
+  `cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` に分離されている。
   両DBで挙動を揃える変更は両方のmapperを確認・修正すること。
 - 新しいリポジトリ実装やドメインサービスを追加した場合は、
   `config/module/ExportTableDefinitionModule.java` にGuiceの束縛を追加する
@@ -66,7 +72,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 未指定（キーの省略・空）は既定値。未知のキー・引数や解釈できない値は、既定値へ黙って置き換えずに失敗にする。
   - サイドカーYAMLの個々の記述の誤りは、読み飛ばして警告する（WARNログはコンソールにも出る）。
 - `tableDefinitionMapper.xml` やドメイン層（エンティティ・テンプレート・ER図生成ロジック等）を変更した後は、
-  `./gradlew integrationTest`（Docker上のPostgreSQLに対する結合テスト。`src/integrationTest`）を実行すること。
+  `./gradlew integrationTest`（Docker上のPostgreSQLに対する結合テスト。`cli/src/integrationTest`）を実行すること。
   mapperのSQLを変えた場合は`PostgresTableDefinitionRepositoryIT`に、変えた取得結果を確かめるテストを足す。
   出力がベースライン（`docs/sample/postgres/output`）と変わる場合は、`verify` スキル（`.claude/skills/verify/SKILL.md`）に従って
   出力結果を確認し、意図した変更であればベースラインを出力し直す。Oracle用mapperは結合テストの対象外のため、変更した場合は差分を目視で確認する。
@@ -124,7 +130,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 呼び出し元・呼び出し先や他クラスの実装の説明 → 削除（そのクラス・メソッド自身の責務ではない）
   - 「なぜこの実装が良いか」という設計の弁護 → コミットメッセージ
   - コメントアウトしたコード → 削除（必要ならGit履歴から戻す）
-- Javadocを書く対象は宣言の種類で決める（`src/main`。上の「書かない」はどの種類にも当てはまる）。
+- Javadocを書く対象は宣言の種類で決める（`cli/src/main`。上の「書かない」はどの種類にも当てはまる）。
   可視性は外側の型で絞った後のもので判断する（privateなネストクラスのメソッドはprivate扱い）。
 
   | 対象 | 扱い | 書く内容 |

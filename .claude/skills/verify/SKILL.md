@@ -15,7 +15,7 @@ Markdown表崩れ。詳細は末尾「踏み抜いた地雷」参照）。**マ�
 必ずこの手順で実DBに対して1回通してから完了とする。**
 
 まずは`./gradlew integrationTest`を実行する。この手順と同じDDL・設定で出力し、ベースライン
-（`docs/sample/postgres/output`）との一致までを自動で確かめる（`src/integrationTest`）。
+（`docs/sample/postgres/output`）との一致までを自動で確かめる（`cli/src/integrationTest`）。
 この手順は、結合テストが失敗した出力を目で確かめる場合と、意図した出力の変更に合わせてベースラインを
 出力し直す場合に使う。
 
@@ -56,15 +56,15 @@ export PATH=$JAVA_HOME/bin:$PATH
 ./gradlew build --console=plain
 ```
 
-`build/libs/exportTableDefinition-1.0-SNAPSHOT.jar` と `build/libs/conf/` 一式が作られる
+`cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar` と `cli/build/libs/conf/` 一式が作られる
 （`test`タスクも実行されるが数秒で終わる。ユニットテストが落ちたらそこで止めて直す）。
 
 ### 3. 設定ファイルを書き換える（ビルドの後に行うこと）
 
-`build.dependsOn(copyResources)` により、ビルドのたびに `src/main/resources/conf/` の内容で
-`build/libs/conf/` が**上書きされる**。設定編集は必ずビルドの後に行うこと（先に編集すると消える）。
+`build.dependsOn(copyResources)`（`cli/build.gradle`）により、ビルドのたびに `cli/src/main/resources/conf/` の内容で
+`cli/build/libs/conf/` が**上書きされる**。設定編集は必ずビルドの後に行うこと（先に編集すると消える）。
 
-`build/libs/conf/ExportTableDefinition.properties` を編集:
+`cli/build/libs/conf/ExportTableDefinition.properties` を編集:
 
 ```properties
 schema=sample
@@ -83,11 +83,11 @@ Markdownに加えて、常に`docs/sample/postgres/output/snapshot/`配下へス
 
 DB接続情報はCLI引数で渡せる（`conf/mybatis.properties` を用意しなくてよい）。
 `PropertyLoader`はカレントディレクトリ相対の`./conf`→`./src/main/resources/conf`の順で探すため、
-**`build/libs` に `cd` してから実行する**こと（リポジトリ直下から実行すると `src/main/resources/conf`
-側の設定＝schema空白＝全スキーマ対象を拾ってしまう）。
+**`cli/build/libs` に `cd` してから実行する**こと（`cli`に`cd`して実行すると `src/main/resources/conf`
+側の設定＝schema空白＝全スキーマ対象を拾ってしまう。リポジトリ直下では`conf`が見つからず失敗する）。
 
 ```bash
-cd build/libs
+cd cli/build/libs
 java -jar exportTableDefinition-1.0-SNAPSHOT.jar \
   --db-driver=org.postgresql.Driver \
   --db-url=jdbc:postgresql://localhost:15432/testdb \
@@ -129,13 +129,13 @@ docker rm -f exporttabledefinition-verify-db
 
 まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectAllColumnInfo`等）と
 `[cause]`（DBが返したエラー。PSQLExceptionのメッセージ等）を見る。スタックトレースは実行したディレクトリの
-`var/log/exportTableDefinition.log`（`build/libs`で実行した場合は`build/libs/var/log/`）に記録される
+`var/log/exportTableDefinition.log`（`cli/build/libs`で実行した場合は`cli/build/libs/var/log/`）に記録される
 （`FailureReporter`が想定外の失敗をスタックトレース付きでログへ出す）。
 実際に組み立てられたSQL文と合わせて調べたい場合は、該当のMyBatisステートメントを直接叩く
 使い捨てJavaプログラムを書くのが早い。
 
 ```java
-// /tmp/repro/Repro.java など、build/libs の jar をクラスパスに使う
+// /tmp/repro/Repro.java など、cli/build/libs の jar をクラスパスに使う
 SqlSessionFactory factory =
     MyBatisSqlSessionFactories.create(
         ConnectionSettings.of(
@@ -155,8 +155,8 @@ try (SqlSession session = factory.openSession()) {
 
 ```bash
 cd /tmp/repro
-javac -cp <リポジトリルート>/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar Repro.java
-java -cp .:<リポジトリルート>/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar Repro
+javac -cp <リポジトリルート>/cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar Repro.java
+java -cp .:<リポジトリルート>/cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar Repro
 ```
 
 PSQLExceptionの`Position:`はUTF-8バイトオフセットなので、日本語コメントが混じるSQLでは
