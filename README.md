@@ -62,6 +62,7 @@ Java実行環境（runtimeフォルダ）を同梱しているため、PCにJava
 ### 設定
 
 1. `conf/mybatis.properties.template`を`conf/mybatis.properties`にリネームし、接続先DBの情報を記載する（[mybatis.propertiesの記載内容](#mybatisproperties-の記載内容)を参照）
+   * パスワードは`conf/mybatis.properties`には書けません。環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡してください（[パスワードの指定](#パスワードの指定)を参照）
 2. 必要に応じて`conf/ExportTableDefinition.properties`を編集する（[ExportTableDefinition.propertiesの記載内容](#exporttabledefinitionproperties-の記載内容)を参照。未編集でも全スキーマ・全テーブルが`./output`配下に出力される）
 
 ### 実行
@@ -254,7 +255,6 @@ viewpoints:
 driver=ドライバーの名称
 url=データベース接続先のURL
 username=ユーザ名
-password=パスワード
 ```
 
 | キー | 値 | 未指定の場合 |
@@ -262,10 +262,28 @@ password=パスワード
 | `driver` | JDBCドライバーのクラス名 | 誤り |
 | `url` | 接続先のJDBC URL | 誤り |
 | `username` | ユーザ名 | 空（DBの認証方式による） |
-| `password` | パスワード | 空（DBの認証方式による） |
 
 * 各項目は、後述のCLI引数でも指定できます。`driver`・`url`がいずれの方法でも指定されていない場合は、DBへ接続する前に`[result]:FAIL`（終了コード`2`）で終了します。
 * 上記以外のキー（キー名の書き誤り等）を書いた場合は誤りとして扱います。
+* `password`は書けません（値が空でも誤りとして扱います）。以前のテンプレートから作ったファイルに`password=`の行が残っている場合は、行ごと削除してください。パスワードは次項の環境変数で渡します。
+
+### パスワードの指定
+
+パスワードは、環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡します。
+
+```
+# Linux／macOS
+export EXPORT_TABLE_DEFINITION_DB_PASSWORD='パスワード'
+./run.sh
+
+# Windows（コマンドプロンプト）
+set EXPORT_TABLE_DEFINITION_DB_PASSWORD=パスワード
+run.bat
+```
+
+* CLI引数`--db-password=値`でも指定でき、環境変数より優先します。
+* 環境変数・CLI引数のどちらも未指定（空を含む）の場合は、パスワードを空として接続します（DBの認証方式による）。
+* 設定ファイルに書けないのは、作業ディレクトリ内のファイルが、AIエージェント等のツールから読まれ得るためです。秘密をファイルに残さないようにしています。
 
 ### コマンドライン引数
 
@@ -273,7 +291,8 @@ password=パスワード
 |---|---|
 | `--check` | DB vs ドキュメントの差分検知モードで実行する（[後述](#db-vs-ドキュメントの差分検知--checkモード)） |
 | `--rm-dist` | 書き込み前に出力先ディレクトリを削除する（[後述](#出力先ディレクトリの事前クリーンアップ--rm-distオプション)） |
-| `--db-driver=値`・`--db-url=値`・`--db-username=値`・`--db-password=値` | DB接続情報を上書きする（次項） |
+| `--db-driver=値`・`--db-url=値`・`--db-username=値` | DB接続情報を上書きする（次項） |
+| `--db-password=値` | パスワードを指定する（[パスワードの指定](#パスワードの指定)を参照） |
 | `--schema=値`・`--table=値`・`--output-path=値`・`--chunk-size=値`・`--er-diagram-max-nodes=値`・`--output-objects=値`・`--annotation-path=値` | `conf/ExportTableDefinition.properties`の設定を上書きする（次項） |
 
 上記以外の引数（`--chek`のような書き誤り等）を指定した場合は、何も処理せずに`[result]:FAIL`（終了コード`2`）で終了します。書き誤りによって、意図しないモードで実行されないようにするためです。
@@ -294,13 +313,13 @@ DB接続情報（`conf/mybatis.properties`）:
 | driver | `--db-driver=値` |
 | url | `--db-url=値` |
 | username | `--db-username=値` |
-| password | `--db-password=値` |
+| password | `--db-password=値`（設定ファイルではなく、環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`の値より優先する） |
 
 ```
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://localhost:5432/testdb --db-username=user --db-password=pass
+java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://localhost:5432/testdb --db-username=user
 ```
 
-CLI引数で `driver`/`url`/`username`/`password` の4項目すべてを指定する場合、`conf/mybatis.properties`自体が存在しなくても起動できます。
+CLI引数で `driver`/`url`/`username` の3項目すべてを指定する場合（パスワードは環境変数またはCLI引数）、`conf/mybatis.properties`自体が存在しなくても起動できます。
 
 実行時設定（`conf/ExportTableDefinition.properties`）:
 
@@ -323,7 +342,7 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --output-path=./docs/db/prod --
 * すべての項目を上書きする場合でも、`conf/ExportTableDefinition.properties`自体は必要です（実行するディレクトリを誤った場合に、既定の出力先へ黙って出力しないようにするため）。配布物に同梱の、全項目が未指定の設定ファイルをそのまま使えます。
 * 環境変数の値を使いたい場合は、`--db-url="$DB_URL"`のようにシェルで展開して渡してください（[GitHub Actionsでの利用例](#db-vs-ドキュメントの差分検知--checkモード)も参照）。
 * `table`の除外（`!`）・ワイルドカード（`*`）は、シェルに解釈されないよう引用符で囲んでください（bashでは`'...'`）。
-* 複数のユーザーが使うマシンでは、コマンドラインの引数が他のユーザーからプロセスの一覧で見える場合があります。その場合、パスワードはCLI引数ではなく`conf/mybatis.properties`に記載してください。
+* 複数のユーザーが使うマシンでは、コマンドラインの引数が他のユーザーからプロセスの一覧で見える場合があります。パスワードはCLI引数ではなく、環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡してください。
 
 ### 出力先ディレクトリの事前クリーンアップ（`--rm-dist`オプション）
 
@@ -390,15 +409,15 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
 ```yaml
 - name: Check table definition document diff
   # secretsはenvで受け取り、シェルで展開してCLI引数へ渡す（ワークフローの値をスクリプトへ直接埋め込まないため）。
-  # 出力先・出力対象もCLI引数でジョブごとに切り替えられる
+  # パスワードはツールが環境変数から直接読む。出力先・出力対象もCLI引数でジョブごとに切り替えられる
   run: >-
     java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
-    --db-url="$DB_URL" --db-username="$DB_USERNAME" --db-password="$DB_PASSWORD"
+    --db-url="$DB_URL" --db-username="$DB_USERNAME"
     --output-path=./docs/db/prod --table='!flyway_schema_history'
   env:
     DB_URL: ${{ secrets.DB_URL }}
     DB_USERNAME: ${{ secrets.DB_USERNAME }}
-    DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    EXPORT_TABLE_DEFINITION_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 ```
 
 ## 出力される内容の詳細
