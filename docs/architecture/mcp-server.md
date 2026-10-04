@@ -124,3 +124,6 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 | `SampleInsightsContractTest` | ベースラインとの契約（観点の所属テーブルを含む） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証 |
 | `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる。応答を待たずに続けてツールを呼び出しても止まらないこと（`immediateExecution`の回帰）も確かめる |
+
+`catalog`には単体テストのカバレッジの最低基準（line 95%・branch 85%）を設け、`./gradlew build`で検査する。
+検索・関連のたどりのルールを持つ中心のロジックのため（cliのドメイン層と同じ扱い）。E2Eテストは子プロセスで動くため計測の対象外。

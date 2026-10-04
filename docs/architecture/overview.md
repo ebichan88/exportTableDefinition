@@ -36,6 +36,10 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 置くのは失敗の分類を伝える例外だけとし、`shared`の直下や、例外以外の共通部品の置き場所にはしない
 （範囲を広げると、層に属さない何でも置き場になり、依存の向きのルールが形骸化するため）。
 
+これらの依存の向きは`ArchitectureTest`（ArchUnit）が単体テストとして検査する。エントリーポイント（直下のパッケージ）と`config`は、
+全体を組み立てる役割のため全層に依存してよい。`config`に依存してよいのはエントリーポイントと`infrastructure`
+（`ConnectionSettings`が`PropertyLoader`・`InvalidConfigurationException`を使う）だけ。
+
 `domain.model` は概念ごとのサブパッケージ（`table`・`relation`・`sidecar`・`viewpoint`・`target` 等）に分かれている。
 ドメインの概念・用語・主なルールの置き場所は [domain-model.md](./domain-model.md)、
 パッケージ・クラス単位の役割は [package-structure.md](./package-structure.md) を参照。

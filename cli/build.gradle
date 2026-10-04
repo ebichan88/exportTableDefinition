@@ -30,6 +30,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    // レイヤーの依存方向・命名等、AGENTS.mdの規約のうち機械的に判定できるものをArchitectureTestで検査する
+    testImplementation 'com.tngtech.archunit:archunit:1.5.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 
     // 結合テスト（integrationTest・oracleIntegrationTest）だけが使う。Docker上に使い捨てのDBを起動する
@@ -61,10 +63,13 @@ jacocoTestReport {
 // 現状の実績（line 99%・branch 95%超）を下回ったら気づけるよう、実績より少し低い値を基準にする
 jacocoTestCoverageVerification {
     dependsOn test
+    // 対象のパッケージは検査するクラスの範囲で絞る。BUNDLEのincludesはクラスではなくバンドル（プロジェクト）名に
+    // 照合されるため、クラスのパターンを書くとルールがどのクラスにも当てはまらず、基準を下回っても失敗しない
+    classDirectories.setFrom(sourceSets.main.output.classesDirs.collect {
+        fileTree(it) { include 'com/export_table_definition/domain/**' }
+    })
     violationRules {
         rule {
-            element = 'BUNDLE'
-            includes = ['com.export_table_definition.domain.*']
             limit {
                 counter = 'LINE'
                 minimum = 0.95

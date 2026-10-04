@@ -38,12 +38,11 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
 
 ## 作業時の注意
 
-- レイヤーの依存方向は `presentation → application → domain ← infrastructure` を厳守する。
-  `domain` パッケージから `infrastructure`／`presentation` への依存を追加しない。
-  レイヤーの外にある`shared.exception`（層をまたいで失敗の分類を伝える例外）は、どの層からも依存してよい。
-  `shared.exception`自身はJDK以外に依存させず、失敗の分類を伝える例外以外は置かない（`shared`の直下や、例外以外の共通部品を置く場所にしない）。
-  `domain.model` 配下の概念ごとのパッケージ（`table`・`relation`・`sidecar`・`target` 等）の間も、
-  [domain-model.md](./docs/architecture/domain-model.md) の依存の向きに従い循環させない。
+- cliの構造の規約のうち機械的に判定できるものは、`ArchitectureTest`（`cli/src/test`、ArchUnit）で検査している。
+  対象は、レイヤーの依存方向（`presentation → application → domain ← infrastructure`）、`shared.exception`の制約、
+  `domain.model`配下のパッケージの循環（向きそのものは[domain-model.md](./docs/architecture/domain-model.md)に従う）、`java.nio.file.Files`・引数なしの`now()`・Guiceへの依存、接尾辞とパッケージの対応
+  （[package-structure.md の「命名」](./docs/architecture/package-structure.md#命名)）。
+  違反したら、テストを緩めずに依存や置き場所のほうを直す。規約の意図は[overview.md](./docs/architecture/overview.md#レイヤー構成)を参照。
 - ドメインの概念（`domain.model` のクラス）を追加・改名・削除した場合や、ルールを持つ場所を移した場合は、
   `docs/architecture/domain-model.md` の図・ルール表・用語集も同じ変更で更新する。
   新しいクラス・メソッドの名前は用語集の用語（READMEで使っている呼び方）に揃え、同じものに別の名前を付けない。
@@ -54,11 +53,10 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   `config/module/ExportTableDefinitionModule.java` にGuiceの束縛を追加する
   （接続先の`SqlSessionFactory`と、DB種別で実装が変わる`TableDefinitionRepository`だけは、DB接続後に組み立てる子のコンテナ用の
   `config/module/DatabaseDependentModule.java`に置く）。
-  コンストラクタには`com.google.inject.Inject`ではなく`jakarta.inject.Inject`を付ける（ドメイン層をGuiceに依存させない）。
+  コンストラクタには`jakarta.inject.Inject`を付ける。
   インターフェースを持たない具象クラス（ユースケース等）は、`@Inject`付きコンストラクタがあればGuiceのジャストインタイム束縛で解決されるため束縛しない。
   束縛漏れは`ExportTableDefinitionModuleTest`（実際にDIコンテナを組み立てるテスト）で検知できる。
-- ファイルI/O（読み書き・一覧取得・一時ディレクトリ作成／削除等）は必ず`domain.repository.FileRepository`経由で行い、
-  `application`/`domain`層で`java.nio.file.Files`を直接呼ばない。出力先パスの組み立てやデフォルト値解決
+- ファイルI/O（読み書き・一覧取得・一時ディレクトリ作成／削除等）は必ず`domain.repository.FileRepository`経由で行う。出力先パスの組み立てやデフォルト値解決
   （未指定時のフォールバック等）は必ず`domain.service.path.OutputPathResolver`経由で行い、`application`層で
   パス文字列を直接組み立てない。Markdownのファイル名やドキュメント間の相対リンクも、テンプレート・Writerで
   `String.format`等により直接組み立てず、`domain.service.path.DocumentLocations`の規則を使う
@@ -115,8 +113,8 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   - 判定を行うドメインサービス（突き合わせ・検証等）が、利用者に知らせるべき判定結果（警告等）をログへ直接
     出力していないか。判定結果は値として返し（例: `domain.model.target.ConsistencyNotice`）、どこへどう出力するかは
     呼び出し側が決める（書き込みの進捗を示すデバッグログは対象外）。
-  - 実行のたびに変わる値（日付等）をDBから取得したり、`LocalDate.now()`等で直接取得したりしていないか。
-    DIで受け取る`java.time.Clock`から求める（テストで固定できるようにするため）。
+  - 実行のたびに変わる値（日付等）をDBから取得していないか。DIで受け取る`java.time.Clock`から求める
+    （テストで固定できるようにするため。引数なしの`now()`は`ArchitectureTest`が検出する）。
   - Writer（書き込み担当）クラスがMarkdown文字列を自前で組み立てていないか。行・セクションの
     組み立ては必ず`domain.service.writer`配下のテンプレートクラス（`*Templates`。種別ごとのサブパッケージにWriterと同居する）に委ね、Writerは
     「何を・どの順で・どのファイルに書くか」の段取りに専念する。
