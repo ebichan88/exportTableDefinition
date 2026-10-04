@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/02|
+|PostgreSQL|testdb|2026/10/04|
 
 ## テーブル説明
 
@@ -43,6 +43,12 @@
 | No. | 外部キー名 | カラムリスト | 参照先 | 参照先カラムリスト | 多重度 |
 |:---|:---|:---|:---|:---|:---|
 
+
+## 被参照情報
+
+| No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |
+|:---|:---|:---|:---|:---|:---|:---|
+|1|sample.shipment|warehouse_code,zone_code|warehouse_code,zone_code|shipment_warehouse_code_zone_code_fkey|1対多|物理|
 
 ## トリガー情報
 

@@ -260,6 +260,39 @@ public class TableDefinitionTemplates {
   }
 
   /**
+   * 被参照情報セクション<br>
+   * 自テーブルを参照している関連（物理外部キー・論理リレーションの双方）を、由来を「区分」列で区別して掲載する。 自己参照は外部キー情報・論理リレーション情報に掲載されるため含まれない。
+   * 参照元が無い場合はセクションごと出力しない（外部キー情報と異なり、参照されないテーブルの定義書は変わらない）
+   *
+   * @param incomingRelations 自テーブルを参照している関連のリスト
+   * @return 対象が存在しない場合は空文字
+   */
+  public static String incomingRelations(List<ForeignKeyEntity> incomingRelations) {
+    if (incomingRelations.isEmpty()) {
+      return "";
+    }
+    final String header =
+        """
+                ## 被参照情報
+
+                | No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |
+                |:---|:---|:---|:---|:---|:---|:---|
+                """;
+    return tableSection(
+        incomingRelations,
+        header,
+        (no, fk) ->
+            row(
+                no,
+                fk.tableKey().qualifiedName(),
+                String.join(",", fk.columnNames()),
+                String.join(",", fk.referenceColumnNames()),
+                fk.foreignKeyName(),
+                fk.cardinality().getLabel(),
+                fk.relationType().getLabel()));
+  }
+
+  /**
    * 多重度のラベル表記は{@link com.export_table_definition.domain.model.relation.Cardinality}に集約している
    *
    * @return 1行分の文字列（改行を含まない）
