@@ -793,4 +793,8 @@ gradlew javadoc
 java -jar .\exportTableDefinition-1.0-SNAPSHOT.jar
 ```
 
+## License
+
+[MIT License](./LICENSE)
+
 ※`conf/mybatis.properties.template`を`conf/mybatis.properties`にリネームしてください
