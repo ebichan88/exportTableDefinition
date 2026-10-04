@@ -8,6 +8,8 @@ import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
+import com.export_table_definition.domain.model.table.Partitions;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
@@ -24,6 +26,7 @@ import java.util.stream.Stream;
  * @param foreignKeys 自テーブルが参照する関連のうち、DBに実在する外部キー制約（物理）のリスト
  * @param logicalRelations 自テーブルが参照する関連のうち、サイドカーYAMLで宣言された論理リレーションのリスト
  * @param incomingRelations 自テーブルを参照する関連（物理外部キー・論理リレーションの双方）のリスト
+ * @param partitions 当該テーブルがパーティション表の場合の、下位のパーティション（親から子へ階層順。パーティション表でない場合は空）
  * @param annotation 手動付帯情報
  * @param viewpoints 当該テーブルが所属する観点のリスト（宣言順。所属する観点が無い場合は空）
  */
@@ -37,6 +40,7 @@ public record TableDefinitionContent(
     List<ForeignKeyEntity> logicalRelations,
     List<ForeignKeyEntity> incomingRelations,
     List<TriggerEntity> triggers,
+    List<PartitionEntity> partitions,
     TableAnnotation annotation,
     List<Viewpoint> viewpoints) {
 
@@ -49,6 +53,7 @@ public record TableDefinitionContent(
    * @param detail 当該テーブルの詳細情報（カラム・インデックス・制約）
    * @param foreignkeys 対象範囲全体の外部キー（論理リレーションを含む。当該テーブル分を抽出して保持する）
    * @param triggers 対象範囲全体のトリガー情報（当該テーブル分を抽出して保持する）
+   * @param partitions 対象範囲全体のパーティション情報（当該テーブル分を抽出して保持する）
    * @param annotations 対象範囲全体の手動付帯情報（当該テーブル分を抽出して保持する）
    * @param viewpoints サイドカーYAMLで宣言された観点（当該テーブルが所属するものを抽出して保持する）
    * @return TableDefinitionContent
@@ -58,6 +63,7 @@ public record TableDefinitionContent(
       TableDetail detail,
       ForeignKeys foreignkeys,
       Triggers triggers,
+      Partitions partitions,
       Annotations annotations,
       Viewpoints viewpoints) {
     final TableEntity table = detail.table();
@@ -71,6 +77,7 @@ public record TableDefinitionContent(
         foreignkeys.logicalBelongingTo(table),
         foreignkeys.referencingTo(table),
         triggers.belongingTo(table),
+        partitions.belongingTo(table),
         annotations.belongingTo(table),
         viewpoints.containing(table));
   }

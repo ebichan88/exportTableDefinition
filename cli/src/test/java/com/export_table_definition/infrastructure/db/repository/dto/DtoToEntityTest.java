@@ -6,6 +6,7 @@ import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.RelationType;
 import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ public class DtoToEntityTest {
   @Test
   @DisplayName("TableDto: 区分の文字列をTableTypeへ変換する")
   void testTableDtoConvertsTableType() {
-    var dto = new TableDto("testdb", "public", "受注ビュー", "v_orders", "view", "SELECT 1");
+    var dto = new TableDto("testdb", "public", "受注ビュー", "v_orders", "view", "SELECT 1", "");
 
     assertEquals(TableType.VIEW, dto.toEntity().tableType());
   }
@@ -25,7 +26,7 @@ public class DtoToEntityTest {
   @Test
   @DisplayName("TableDto: 未知の区分は変換時にIllegalArgumentExceptionをスローする")
   void testTableDtoRejectsUnknownTableType() {
-    var dto = new TableDto("testdb", "public", "", "orders", "foreign_table", "");
+    var dto = new TableDto("testdb", "public", "", "orders", "foreign_table", "", "");
 
     assertThrows(IllegalArgumentException.class, dto::toEntity);
   }
@@ -84,8 +85,43 @@ public class DtoToEntityTest {
   @Test
   @DisplayName("値を持つ項目は前後の空白も含めてそのまま保持する")
   void testPresentValuesAreKeptAsIs() {
-    var dto = new TableDto("testdb", "public", "", "v_orders", "view", " SELECT 1;");
+    var dto = new TableDto("testdb", "public", "", "v_orders", "view", " SELECT 1;", "");
 
     assertEquals(" SELECT 1;", dto.toEntity().definition());
+  }
+
+  @Test
+  @DisplayName("TableDto: パーティションキーが無い場合（Oracle・パーティション表でないテーブル）は空文字へ正規化する")
+  void testTableDtoNormalizesMissingPartitionKey() {
+    assertEquals(
+        "",
+        new TableDto("testdb", "public", "", "orders", "table", "", null)
+            .toEntity()
+            .partitionKey());
+    assertEquals(
+        "RANGE (sold_on)",
+        new TableDto("testdb", "public", "", "sales", "table", "", "RANGE (sold_on)")
+            .toEntity()
+            .partitionKey());
+  }
+
+  @Test
+  @DisplayName("PartitionDto: 末端のパーティションの下位のパーティションキーは空文字へ正規化する")
+  void testPartitionDtoNormalizesMissingPartitionKey() {
+    PartitionEntity leaf =
+        new PartitionDto(
+                "public",
+                "sales",
+                "public",
+                "sales_2026_01",
+                "public",
+                "sales",
+                "FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')",
+                null)
+            .toEntity();
+
+    assertEquals("", leaf.partitionKey());
+    assertEquals("FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')", leaf.bound());
+    assertEquals("sales_2026_01", leaf.partitionName());
   }
 }

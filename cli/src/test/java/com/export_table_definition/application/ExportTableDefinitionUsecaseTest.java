@@ -17,6 +17,7 @@ import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
@@ -132,6 +133,7 @@ public class ExportTableDefinitionUsecaseTest {
     List<ConstraintEntity> constraints = new ArrayList<>();
     List<ForeignKeyEntity> foreignKeys = new ArrayList<>();
     List<TriggerEntity> triggers = new ArrayList<>();
+    List<PartitionEntity> partitions = new ArrayList<>();
     List<FunctionEntity> functions = new ArrayList<>();
     List<FunctionEntity> functionDefs = new ArrayList<>();
     List<SequenceEntity> sequences = new ArrayList<>();
@@ -193,6 +195,11 @@ public class ExportTableDefinitionUsecaseTest {
     @Override
     public List<TriggerEntity> selectTriggerList(List<String> schemaList) {
       return List.copyOf(triggers);
+    }
+
+    @Override
+    public List<PartitionEntity> selectPartitionList(List<String> schemaList) {
+      return List.copyOf(partitions);
     }
 
     @Override
@@ -583,6 +590,37 @@ public class ExportTableDefinitionUsecaseTest {
     final String tableListContent = contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md"));
     assertTrue(tableListContent.contains("|keep|"));
     assertFalse(tableListContent.contains("|skip|"));
+  }
+
+  @Test
+  @DisplayName("パーティション表の定義書にはリポジトリから取得したパーティションが載り、パーティション表でないテーブルの定義書には載らない")
+  void testPartitionedTableDefinitionListsPartitions() {
+    setUp();
+    repository.tables.add(
+        new TableEntity("testdb", "public", "売上", "sales", TableType.TABLE, "", "RANGE (sold_on)"));
+    repository.tables.add(table("public", "customer"));
+    repository.partitions.add(
+        new PartitionEntity(
+            "public",
+            "sales",
+            "public",
+            "sales_2026_01",
+            "public",
+            "sales",
+            "FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')",
+            ""));
+
+    usecase.exportTableDefinition(
+        new ExportTableDefinitionRequest(
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
+
+    final String sales = contentOf(tableDefFile(DEFAULT_OUT, "public", "sales"));
+    assertTrue(sales.contains("パーティションキー: `RANGE (sold_on)`"));
+    assertTrue(
+        sales.contains(
+            "|1|sales_2026_01|sales|FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')||"));
+    assertFalse(
+        contentOf(tableDefFile(DEFAULT_OUT, "public", "customer")).contains("## パーティション情報"));
   }
 
   @Test

@@ -12,6 +12,7 @@ import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.schemaobject.Types;
 import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.sidecar.Sidecar;
+import com.export_table_definition.domain.model.table.Partitions;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
@@ -70,7 +71,7 @@ final class SchemaExportPipeline {
   }
 
   /**
-   * 出力対象のうち、一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・ 手動付帯情報）を取得するメソッド<br>
+   * 出力対象のうち、一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・パーティション・関数/シーケンス/型の一覧・ 手動付帯情報）を取得するメソッド<br>
    * テーブル数に比例して重くなる詳細情報（カラム・インデックス・制約）と関数の定義本体は、 出力時（{@link #export}）にスキーマ・チャンク単位で取得する
    */
   ExportTargets fetchTargets(TargetSelection targetSelection, String sidecarPath) {
@@ -90,6 +91,8 @@ final class SchemaExportPipeline {
     final ForeignKeys foreignKeys =
         fetchForeignKeys(tableScope.schemaNames(), sidecar.logicalRelations(), tables, isFiltered);
     final Triggers triggers = fetchTriggers(tableScope.schemaNames(), outputObjectTypes);
+    final Partitions partitions =
+        Partitions.of(repository.selectPartitionList(tableScope.schemaNames()));
     final SchemaObjects schemaObjects =
         fetchSchemaObjects(tableScope.schemaNames(), outputObjectTypes);
 
@@ -98,6 +101,7 @@ final class SchemaExportPipeline {
         tables,
         foreignKeys,
         triggers,
+        partitions,
         schemaObjects.functions(),
         schemaObjects.sequences(),
         schemaObjects.types(),
@@ -281,6 +285,7 @@ final class SchemaExportPipeline {
               detail,
               targets.foreignKeys(),
               triggers,
+              targets.partitions(),
               targets.annotations(),
               targets.viewpoints());
       sinks.forEach(sink -> sink.writeTableDefinition(content));

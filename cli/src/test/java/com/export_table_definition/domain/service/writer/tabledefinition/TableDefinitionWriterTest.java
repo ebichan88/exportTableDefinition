@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.Tables;
@@ -18,6 +19,7 @@ import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.writer.PagedSectionWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.testsupport.DiagramBoxesFixtures;
+import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -194,6 +196,7 @@ public class TableDefinitionWriterTest {
             List.of(),
             List.of(incomingFk),
             List.of(trigger),
+            List.of(),
             annotation,
             List.of());
 
@@ -228,5 +231,70 @@ public class TableDefinitionWriterTest {
     assertTrue(fileContent.contains("受注を管理するテーブル"));
     assertTrue(fileContent.contains("|public|受注|orders|table|個人情報を含む|"));
     assertTrue(fileContent.contains("|1|受注ID|order_id|int||○|○||受注の主キー|"));
+  }
+
+  @Test
+  @DisplayName("writeTableDefinition: パーティション表の定義書にだけパーティション情報をカラム情報の後に出力する")
+  void testWriteTableDefinitionPartitionSection() {
+    var partitioned =
+        new TableEntity("testdb", "public", "売上", "sales", TableType.TABLE, "", "RANGE (sold_on)");
+    var ordinary = new TableEntity("testdb", "public", "", "customer", TableType.TABLE, "");
+    var partition =
+        new PartitionEntity(
+            "public",
+            "sales",
+            "public",
+            "sales_2026_01",
+            "public",
+            "sales",
+            "FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')",
+            "");
+    var column = EntityFixtures.column("public", "sales", "sold_on", "date", false);
+
+    writer.writeTableDefinition(
+        new TableDefinitionContent(
+            baseInfo(),
+            partitioned,
+            List.of(column),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(partition),
+            TableAnnotation.EMPTY,
+            List.of()),
+        DiagramBoxesFixtures.none(),
+        OUT);
+    writer.writeTableDefinition(
+        new TableDefinitionContent(
+            baseInfo(),
+            ordinary,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            TableAnnotation.EMPTY,
+            List.of()),
+        DiagramBoxesFixtures.none(),
+        OUT);
+
+    String salesContent = definitionOf("sales");
+    assertTrue(salesContent.contains("## パーティション情報"));
+    assertTrue(salesContent.contains("|1|sales_2026_01|sales|FOR VALUES FROM"));
+    assertTrue(
+        salesContent.indexOf("## カラム情報") < salesContent.indexOf("## パーティション情報")
+            && salesContent.indexOf("## パーティション情報") < salesContent.indexOf("## インデックス情報"));
+    assertFalse(definitionOf("customer").contains("## パーティション情報"));
+  }
+
+  private String definitionOf(String table) {
+    return fileRepository.files.get(
+        OUT.resolve("testdb").resolve("public").resolve("table").resolve(table + ".md"));
   }
 }

@@ -46,6 +46,7 @@ public class TableSnapshotTest {
         logicalRelations,
         List.of(),
         triggers,
+        List.of(),
         annotation,
         List.of());
   }
@@ -203,5 +204,39 @@ public class TableSnapshotTest {
 
     assertEquals("view", snapshot.type());
     assertEquals(" SELECT id FROM orders;", snapshot.definition());
+  }
+
+  @Test
+  @DisplayName("of: パーティション表はパーティションキーを保持し、パーティション表でないテーブルでは持たない")
+  void testOfKeepsPartitionKeyOnlyForPartitionedTable() {
+    var partitioned =
+        new TableEntity("testdb", "public", "", "sales", TableType.TABLE, "", "RANGE (sold_on)");
+    var ordinary = new TableEntity("testdb", "public", "", "customer", TableType.TABLE, "");
+
+    assertEquals(
+        "RANGE (sold_on)",
+        TableSnapshot.of(
+                content(
+                    partitioned,
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    TableAnnotation.EMPTY))
+            .partitionKey());
+    assertNull(
+        TableSnapshot.of(
+                content(
+                    ordinary,
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    TableAnnotation.EMPTY))
+            .partitionKey());
   }
 }

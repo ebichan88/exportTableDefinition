@@ -8,6 +8,8 @@ import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.sidecar.Annotations;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
+import com.export_table_definition.domain.model.table.PartitionEntity;
+import com.export_table_definition.domain.model.table.Partitions;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
@@ -71,7 +73,13 @@ public class TableDefinitionContentTest {
 
     TableDefinitionContent content =
         TableDefinitionContent.assemble(
-            baseInfo, detail, foreignKeys, triggers, annotations, Viewpoints.empty());
+            baseInfo,
+            detail,
+            foreignKeys,
+            triggers,
+            Partitions.of(List.of()),
+            annotations,
+            Viewpoints.empty());
 
     assertSame(baseInfo, content.baseInfo());
     assertSame(target, content.table());
@@ -99,6 +107,7 @@ public class TableDefinitionContentTest {
             new TableDetail(target, List.of(), List.of(), List.of()),
             ForeignKeys.of(List.of()),
             Triggers.of(List.of()),
+            Partitions.of(List.of()),
             Annotations.empty(),
             Viewpoints.empty());
 
@@ -129,6 +138,7 @@ public class TableDefinitionContentTest {
             new TableDetail(table, List.of(), List.of(), List.of()),
             foreignKeys,
             Triggers.of(List.of()),
+            Partitions.of(List.of()),
             Annotations.empty(),
             Viewpoints.empty());
 
@@ -153,9 +163,36 @@ public class TableDefinitionContentTest {
             new TableDetail(table, List.of(), List.of(), List.of()),
             foreignKeys,
             Triggers.of(List.of()),
+            Partitions.of(List.of()),
             Annotations.empty(),
             Viewpoints.empty());
 
     assertEquals(List.of(physical, logical), content.outgoingRelations());
+  }
+
+  @Test
+  @DisplayName("assemble: パーティション表には自テーブルのパーティションのみが設定される")
+  void testAssembleExtractsOwnPartitions() {
+    var baseInfo = new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH);
+    var sales =
+        new TableEntity("testdb", "public", "", "sales", TableType.TABLE, "", "RANGE (sold_on)");
+    var own =
+        new PartitionEntity(
+            "public", "sales", "public", "sales_2026_01", "public", "sales", "DEFAULT", "");
+    var other =
+        new PartitionEntity(
+            "public", "logs", "public", "logs_2026_01", "public", "logs", "DEFAULT", "");
+
+    TableDefinitionContent content =
+        TableDefinitionContent.assemble(
+            baseInfo,
+            new TableDetail(sales, List.of(), List.of(), List.of()),
+            ForeignKeys.of(List.of()),
+            Triggers.of(List.of()),
+            Partitions.of(List.of(own, other)),
+            Annotations.empty(),
+            Viewpoints.empty());
+
+    assertEquals(List.of(own), content.partitions());
   }
 }

@@ -5,6 +5,8 @@ package com.export_table_definition.domain.model.table;
  *
  * @param tableType 区分（table/view/materialized_view）
  * @param definition view/materialized viewの場合のソース定義（tableの場合は空文字）
+ * @param partitionKey パーティション表（宣言的パーティションの親）の場合のパーティションキー（例: {@code RANGE (sold_on)}）。
+ *     パーティション表でない場合は空文字
  */
 public record TableEntity(
     String dbName,
@@ -12,7 +14,18 @@ public record TableEntity(
     String logicalTableName,
     String physicalTableName,
     TableType tableType,
-    String definition) {
+    String definition,
+    String partitionKey) {
+
+  public TableEntity(
+      String dbName,
+      String schemaName,
+      String logicalTableName,
+      String physicalTableName,
+      TableType tableType,
+      String definition) {
+    this(dbName, schemaName, logicalTableName, physicalTableName, tableType, definition, "");
+  }
 
   /**
    * スキーマ.テーブル 形式の名称を取得するメソッド
@@ -34,6 +47,15 @@ public record TableEntity(
       return physicalTableName;
     }
     return physicalTableName + "（" + logicalTableName + "）";
+  }
+
+  /**
+   * パーティション表（宣言的パーティションの親）であるか判定するメソッド
+   *
+   * @return パーティション表の場合はtrue
+   */
+  public boolean isPartitioned() {
+    return !partitionKey.isEmpty();
   }
 
   /**

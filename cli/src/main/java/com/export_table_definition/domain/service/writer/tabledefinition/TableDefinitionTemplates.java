@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TriggerEntity;
@@ -109,6 +110,46 @@ public class TableDefinitionTemplates {
                 MarkdownTemplateSupport.escapeTableCell(c.defaultValue()),
                 MarkdownTemplateSupport.escapeTableCell(
                     annotation.columnRemark(c.physicalColumnName()))));
+  }
+
+  /**
+   * パーティション情報セクション<br>
+   * パーティション表（宣言的パーティションの親）にだけ出力する。パーティションは個別の定義書を持たないため、ここにまとめる。 多段パーティションは、親から子へ階層順に並べ、親の列で入れ子を示す。
+   * パーティション境界・下位のパーティションキーは式のため、{@code |}・改行を含みうるのでエスケープする
+   *
+   * @param partitions 当該テーブルの下位のパーティション（親から子へ階層順）
+   * @return パーティション表でない場合は空文字
+   */
+  public static String partitions(TableEntity table, List<PartitionEntity> partitions) {
+    if (!table.isPartitioned()) {
+      return "";
+    }
+    final String keyLine =
+        "## パーティション情報"
+            + LINE_SEPARATOR_DOUBLE
+            + "パーティションキー: `"
+            + table.partitionKey()
+            + "`"
+            + LINE_SEPARATOR_DOUBLE;
+    if (partitions.isEmpty()) {
+      return keyLine + "パーティションはありません。" + LINE_SEPARATOR_DOUBLE;
+    }
+    final String header =
+        keyLine
+            + """
+                | No. | パーティション | 親 | パーティション境界 | 下位のパーティションキー |
+                |:---|:---|:---|:---|:---|
+                """;
+    return tableSection(
+        partitions,
+        header,
+        (no, p) ->
+            row(
+                no,
+                p.getDisplayName(),
+                p.getDisplayParentName(),
+                MarkdownTemplateSupport.escapeTableCell(p.bound()),
+                MarkdownTemplateSupport.escapeTableCell(p.partitionKey())));
   }
 
   /** ソース（view・materialized viewの定義）セクション。viewでないテーブルでは空文字 */

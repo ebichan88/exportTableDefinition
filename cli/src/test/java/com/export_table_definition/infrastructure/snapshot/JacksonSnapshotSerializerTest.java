@@ -36,7 +36,7 @@ public class JacksonSnapshotSerializerTest {
 
     var table =
         new TableSnapshot(
-            "public", "t1", null, "table", null, null, null, List.of(), List.of(), List.of(),
+            "public", "t1", null, "table", null, null, null, null, List.of(), List.of(), List.of(),
             List.of(), List.of(), List.of());
     assertEquals(
         "{\"schema\":\"public\",\"name\":\"t1\",\"type\":\"table\"}", serializer.serialize(table));
@@ -110,6 +110,7 @@ public class JacksonSnapshotSerializerTest {
             "t1",
             null,
             "table",
+            null,
             null,
             null,
             null,

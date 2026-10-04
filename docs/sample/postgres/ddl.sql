@@ -4,7 +4,7 @@
 -- テーブル定義書の出力結果サンプルを作成するためのDDLです。
 -- 出力対象となりうるオブジェクト種別（テーブル／ビュー／マテリアライズドビュー／
 -- インデックス／制約／外部キー／シーケンス／トリガー／関数・プロシージャ／
--- ユーザー定義型（ENUM/COMPOSITE/DOMAIN））と、ER図の多重度パターン
+-- ユーザー定義型（ENUM/COMPOSITE/DOMAIN）／パーティション表）と、ER図の多重度パターン
 -- （1対1・0..1対1・1対多・0..1対多・多対多・自己参照・複合外部キー・関連なし）
 -- を一通り含めています。
 --
@@ -130,6 +130,49 @@ create table sample.audit_log (
     changed_by varchar(50)
 );
 
+-- パーティション表（月次のレンジパーティション）。子のパーティションはテーブル一覧・個別の定義書・ER図に並ばず、
+-- 親の定義書の「パーティション情報」にまとまる。2026年3月は半月ごとに分ける多段パーティションで、DEFAULTパーティションも持つ
+create table sample.attendance (
+    attendance_id bigint not null,
+    work_date date not null,
+    employee_id integer not null references sample.employee(employee_id),
+    work_minutes integer,
+    primary key (attendance_id, work_date)
+) partition by range (work_date);
+
+create table sample.attendance_2026_01 partition of sample.attendance
+    for values from ('2026-01-01') to ('2026-02-01');
+create table sample.attendance_2026_02 partition of sample.attendance
+    for values from ('2026-02-01') to ('2026-03-01');
+create table sample.attendance_2026_03 partition of sample.attendance
+    for values from ('2026-03-01') to ('2026-04-01') partition by range (work_date);
+create table sample.attendance_2026_03_a partition of sample.attendance_2026_03
+    for values from ('2026-03-01') to ('2026-03-16');
+create table sample.attendance_2026_03_b partition of sample.attendance_2026_03
+    for values from ('2026-03-16') to ('2026-04-01');
+create table sample.attendance_default partition of sample.attendance default;
+
+-- パーティションは親と別のスキーマにも置ける（出力対象のスキーマは親で決まる）
+create schema sample_archive;
+create table sample_archive.attendance_2025 partition of sample.attendance
+    for values from ('2025-01-01') to ('2026-01-01');
+
+-- 別スキーマに同名のテーブル（sample.department）があっても、索引・カラム等は取り違えず、スキーマごとに取得する
+create table sample_archive.department (
+    archive_id integer primary key,
+    note varchar(50)
+);
+create index idx_archive_department_note on sample_archive.department (note);
+
+-- パーティション表を参照するテーブル（外部キー制約は参照先のパーティションごとにDB内で複製されるが、定義書・ER図には1本だけ出す）
+create table sample.attendance_note (
+    note_id serial primary key,
+    attendance_id bigint not null,
+    work_date date not null,
+    note text,
+    foreign key (attendance_id, work_date) references sample.attendance(attendance_id, work_date)
+);
+
 /*
  * ビュー
  */
@@ -161,6 +204,8 @@ create materialized view sample.project_summary_mv as
 create index idx_employee_department_status on sample.employee (department_id, status);
 create index idx_employee_profile_gin on sample.employee using gin (profile);
 create unique index project_summary_mv_pkey on sample.project_summary_mv (project_id);
+-- パーティション表の索引は、親にパーティションインデックスとして付く（子のパーティションへは自動で複製される）
+create index idx_attendance_employee on sample.attendance (employee_id);
 
 /*
  * トリガー用関数
@@ -190,6 +235,16 @@ language plpgsql as $$
 begin
     raise notice 'sample.project_assignment was truncated';
     return null;
+end;
+$$;
+
+create or replace function sample.check_work_minutes() returns trigger
+language plpgsql as $$
+begin
+    if new.work_minutes < 0 then
+        raise exception 'work_minutes must not be negative';
+    end if;
+    return new;
 end;
 $$;
 
@@ -226,6 +281,11 @@ create trigger trg_project_assignment_truncate
 create trigger trg_employee_directory_insert
     instead of insert on sample.employee_directory_view
     for each row execute function sample.employee_directory_insert();
+
+-- パーティション表の行トリガーは、子のパーティションへ複製される
+create trigger trg_attendance_check_work_minutes
+    before insert or update on sample.attendance
+    for each row execute function sample.check_work_minutes();
 
 /*
  * 関数・プロシージャ（オーバーロード関数、プロシージャを含める）
@@ -272,3 +332,7 @@ comment on column sample.project.project_name is 'プロジェクト名';
 comment on column sample.project.budget is '予算';
 
 comment on materialized view sample.project_summary_mv is 'プロジェクト別要員数集計';
+
+comment on table sample.attendance is '勤怠（月次パーティション）';
+comment on column sample.attendance.work_date is '勤務日（パーティションキー）';
+comment on column sample.attendance.work_minutes is '勤務時間（分）';

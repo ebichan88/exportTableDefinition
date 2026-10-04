@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
@@ -56,6 +57,8 @@ class PostgresTableDefinitionRepositoryIT {
 
     assertEquals(
         List.of(
+            "attendance",
+            "attendance_note",
             "audit_log",
             "department",
             "employee",
@@ -77,6 +80,167 @@ class PostgresTableDefinitionRepositoryIT {
         tables.get("employee_directory_view").definition().contains("JOIN sample.department"));
     assertEquals(TableType.MATERIALIZED_VIEW, tables.get("project_summary_mv").tableType());
     assertEquals("プロジェクト別要員数集計", tables.get("project_summary_mv").logicalTableName());
+  }
+
+  @Test
+  @DisplayName("selectTableList: パーティションの子（多段の中間・別スキーマのものを含む）は含めず、パーティション表だけがパーティションキーを持つ")
+  void testSelectTableListExcludesPartitions() {
+    final Map<String, TableEntity> tables = byName(tables(), TableEntity::physicalTableName);
+
+    assertTrue(
+        tables.keySet().stream()
+            .noneMatch(
+                name -> name.startsWith("attendance_2") || name.equals("attendance_default")));
+    final TableEntity attendance = tables.get("attendance");
+    assertEquals(TableType.TABLE, attendance.tableType());
+    assertEquals("勤怠（月次パーティション）", attendance.logicalTableName());
+    assertEquals("RANGE (work_date)", attendance.partitionKey());
+    assertTrue(attendance.isPartitioned());
+    assertEquals("", tables.get("employee").partitionKey());
+    // 別スキーマに置いた子は、スキーマを指定しない一覧にも、子のスキーマを指定した一覧にも載らない
+    assertTrue(
+        repository.selectTableList(List.of()).stream()
+            .noneMatch(table -> table.physicalTableName().equals("attendance_2025")));
+    assertEquals(
+        List.of("department"),
+        repository.selectTableList(List.of("sample_archive")).stream()
+            .map(TableEntity::physicalTableName)
+            .toList());
+  }
+
+  @Test
+  @DisplayName("selectPartitionList: 下位のパーティションを親から子へ階層順に、範囲・親つきで取得する（別スキーマの子・DEFAULT・多段を含む）")
+  void testSelectPartitions() {
+    final List<PartitionEntity> partitions = repository.selectPartitionList(SAMPLE_SCHEMA);
+
+    assertEquals(
+        List.of(
+            "attendance_2025",
+            "attendance_2026_01",
+            "attendance_2026_02",
+            "attendance_2026_03",
+            "attendance_2026_03_a",
+            "attendance_2026_03_b",
+            "attendance_default"),
+        partitions.stream().map(PartitionEntity::partitionName).toList());
+    assertTrue(
+        partitions.stream()
+            .allMatch(p -> p.tableKey().equals(TableKey.of("sample", "attendance"))));
+    final Map<String, PartitionEntity> byName = byName(partitions, PartitionEntity::partitionName);
+    assertEquals("sample_archive", byName.get("attendance_2025").partitionSchemaName());
+    assertEquals("sample", byName.get("attendance_2026_01").partitionSchemaName());
+    assertEquals(
+        "FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')",
+        byName.get("attendance_2026_01").bound());
+    assertEquals("DEFAULT", byName.get("attendance_default").bound());
+    // 多段パーティション: 中間は自身のパーティションキーを持ち、その下位は中間を親とする
+    assertEquals("RANGE (work_date)", byName.get("attendance_2026_03").partitionKey());
+    assertEquals("attendance", byName.get("attendance_2026_03").parentName());
+    assertEquals("attendance_2026_03", byName.get("attendance_2026_03_a").parentName());
+    assertEquals("", byName.get("attendance_2026_03_a").partitionKey());
+  }
+
+  @Test
+  @DisplayName("selectPartitionList: パーティション表（根）のスキーマで絞り込む（子のスキーマでは絞り込まない）")
+  void testSelectPartitionsFiltersByRootSchema() {
+    assertEquals(List.of(), repository.selectPartitionList(List.of("sample_archive")));
+    assertEquals(7, repository.selectPartitionList(List.of()).size());
+  }
+
+  @Test
+  @DisplayName("selectTableDetails: パーティション表（親）のカラムと、パーティションインデックス・制約を取得する")
+  void testSelectPartitionedTableDetails() {
+    final TableDetail detail = detail("attendance");
+
+    assertEquals(
+        List.of("attendance_id", "work_date", "employee_id", "work_minutes"),
+        detail.columns().stream().map(ColumnEntity::physicalColumnName).toList());
+    final Map<String, ColumnEntity> columns =
+        byName(detail.columns(), ColumnEntity::physicalColumnName);
+    assertTrue(columns.get("attendance_id").primaryKey());
+    assertTrue(columns.get("work_date").primaryKey());
+    assertEquals("勤務日（パーティションキー）", columns.get("work_date").logicalColumnName());
+    final Map<String, IndexEntity> indexes = byName(detail.indexes(), IndexEntity::indexName);
+    assertEquals(
+        List.of("attendance_pkey", "idx_attendance_employee"),
+        indexes.keySet().stream().sorted().toList());
+    assertTrue(indexes.get("attendance_pkey").isPrimary());
+    // 親の索引は、子のパーティションへ複製される元になるパーティションインデックス
+    assertTrue(
+        indexes
+            .get("idx_attendance_employee")
+            .indexDefinition()
+            .contains("ON ONLY sample.attendance"));
+    assertEquals(
+        List.of("attendance_employee_id_fkey", "attendance_pkey"),
+        detail.constraints().stream().map(ConstraintEntity::constraintName).sorted().toList());
+  }
+
+  @Test
+  @DisplayName("selectTableDetails: パーティション表を参照するテーブルの制約に、参照先のパーティションごとに複製された外部キー制約を含めない")
+  void testSelectConstraintsExcludesClonedForeignKeys() {
+    assertEquals(
+        List.of("attendance_note_attendance_id_work_date_fkey", "attendance_note_pkey"),
+        detail("attendance_note").constraints().stream()
+            .map(ConstraintEntity::constraintName)
+            .sorted()
+            .toList());
+  }
+
+  @Test
+  @DisplayName("selectTableDetails: 別スキーマに同名のテーブルがあっても、インデックスは自スキーマのテーブルのものだけを取得する")
+  void testSelectIndexesOfSameNamedTablesInDifferentSchemas() {
+    assertEquals(
+        List.of("department_department_code_key", "department_pkey"),
+        detail("department").indexes().stream().map(IndexEntity::indexName).sorted().toList());
+
+    final TableEntity archived =
+        repository.selectTableList(List.of("sample_archive")).stream().findFirst().orElseThrow();
+    final List<IndexEntity> archivedIndexes =
+        repository.selectTableDetails(List.of(archived)).get(0).indexes();
+    assertEquals(
+        List.of("department_pkey", "idx_archive_department_note"),
+        archivedIndexes.stream().map(IndexEntity::indexName).sorted().toList());
+    assertTrue(
+        archivedIndexes.stream().allMatch(index -> index.schemaName().equals("sample_archive")));
+  }
+
+  @Test
+  @DisplayName("selectForeignKeyList: 親から子のパーティションへ複製された外部キー・パーティション表を参照するテーブルの複製された外部キーを含めない")
+  void testSelectForeignKeysExcludesClonedOnes() {
+    final List<ForeignKeyEntity> foreignKeys = repository.selectForeignKeyList(SAMPLE_SCHEMA);
+
+    final List<ForeignKeyEntity> attendanceRelated =
+        foreignKeys.stream()
+            .filter(
+                fk ->
+                    fk.tableName().startsWith("attendance")
+                        || fk.referenceTableName().startsWith("attendance"))
+            .toList();
+    assertEquals(
+        List.of(
+            "attendance.attendance_employee_id_fkey",
+            "attendance_note.attendance_note_attendance_id_work_date_fkey"),
+        attendanceRelated.stream()
+            .map(fk -> fk.tableName() + "." + fk.foreignKeyName())
+            .sorted()
+            .toList());
+    assertEquals(
+        Cardinality.ONE_TO_MANY,
+        foreignKey("attendance_note_attendance_id_work_date_fkey").cardinality());
+  }
+
+  @Test
+  @DisplayName("selectTriggerList: パーティション表の行トリガーは、子のパーティションへ複製されたものを含めず親の1件だけを取得する")
+  void testSelectTriggersExcludesClonedOnes() {
+    final List<TriggerEntity> triggers =
+        repository.selectTriggerList(SAMPLE_SCHEMA).stream()
+            .filter(trigger -> trigger.tableName().startsWith("attendance"))
+            .toList();
+
+    assertEquals(1, triggers.size());
+    assertEquals("attendance", triggers.get(0).tableName());
+    assertEquals("trg_attendance_check_work_minutes", triggers.get(0).triggerName());
   }
 
   @Test

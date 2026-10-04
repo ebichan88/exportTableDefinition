@@ -44,13 +44,26 @@ class SampleSnapshotContractTest {
   @Test
   @DisplayName("サンプルの全テーブル（ビュー・マテリアライズドビューを含む）を読み込む")
   void readsAllTables() {
-    assertEquals(11, catalog.tables().size());
+    assertEquals(13, catalog.tables().size());
     final TableEntry employee = find("employee");
     assertEquals("従業員", employee.logicalName());
     assertEquals("table", employee.type());
     assertTrue(employee.json().startsWith("{\"schema\":\"sample\",\"name\":\"employee\""));
     assertEquals("view", find("employee_directory_view").type());
     assertEquals("materialized_view", find("project_summary_mv").type());
+  }
+
+  @Test
+  @DisplayName("パーティション表は通常のテーブルとして読み込め（パーティションキーの項目は無視される）、子のパーティションは含まれない")
+  void readsPartitionedTableWithoutPartitions() {
+    final TableEntry attendance = find("attendance");
+
+    assertEquals("table", attendance.type());
+    assertEquals("勤怠（月次パーティション）", attendance.logicalName());
+    assertTrue(attendance.json().contains("\"partitionKey\":\"RANGE (work_date)\""));
+    assertTrue(
+        catalog.tables().stream()
+            .noneMatch(table -> table.key().name().startsWith("attendance_2")));
   }
 
   @Test
@@ -110,7 +123,7 @@ class SampleSnapshotContractTest {
   @DisplayName("database.jsonのDBMS種別と、スキーマごとのオブジェクトの数を読み込む")
   void summarizesSchemas() {
     assertEquals(
-        List.of(new SchemaSummary("testdb", "PostgreSQL", "sample", 9, 1, 1, 7, 7, 3)),
+        List.of(new SchemaSummary("testdb", "PostgreSQL", "sample", 11, 1, 1, 8, 8, 3)),
         catalog.schemas());
   }
 

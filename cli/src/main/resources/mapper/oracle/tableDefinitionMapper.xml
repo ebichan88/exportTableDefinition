@@ -68,7 +68,8 @@
             logical_table_name AS "logicalTableName",
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
-            definition AS definition
+            definition AS definition,
+            '' AS "partitionKey"
         FROM ora_all_tables
         ORDER BY schema_name, physical_table_name
     </select>

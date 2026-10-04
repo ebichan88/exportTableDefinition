@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/02|
+|PostgreSQL|testdb|2026/10/04|
 
 ## テーブル説明
 
@@ -79,12 +79,14 @@ erDiagram
     sample_employee["employee（従業員）"]
     sample_department["department"]
     sample_parking_spot["parking_spot"]
+    sample_attendance["attendance（勤怠（月次パーティション））"]
     sample_employee_profile["employee_profile"]
     sample_project_assignment["project_assignment"]
     sample_audit_log["audit_log"]
     sample_department ||--o{ sample_employee : "employee_department_id_fkey"
     sample_employee |o--o{ sample_employee : "employee_manager_id_fkey"
     sample_parking_spot |o--o| sample_employee : "employee_parking_spot_id_fkey"
+    sample_employee ||--o{ sample_attendance : "attendance_employee_id_fkey"
     sample_employee ||--o| sample_employee_profile : "employee_profile_employee_id_fkey"
     sample_employee ||--o{ sample_project_assignment : "project_assignment_employee_id_fkey"
     sample_employee |o..o{ sample_audit_log : "record_id"
@@ -106,6 +108,9 @@ erDiagram
     }
     sample_parking_spot {
         integer parking_spot_id PK
+    }
+    sample_attendance {
+        integer employee_id FK
     }
     sample_employee_profile {
         integer employee_id PK, FK

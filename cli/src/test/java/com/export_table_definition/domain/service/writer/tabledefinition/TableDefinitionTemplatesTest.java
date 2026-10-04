@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
@@ -666,5 +667,109 @@ public class TableDefinitionTemplatesTest {
                 Viewpoint.of("order", "受注管理", "", List.of("orders")),
                 Viewpoint.of("master", "", "", List.of("orders"))),
             base));
+  }
+
+  private TableEntity partitionedTable(String partitionKey) {
+    return new TableEntity("TEST_DB", "public", "売上", "sales", TableType.TABLE, "", partitionKey);
+  }
+
+  private PartitionEntity partition(
+      String partitionSchema,
+      String name,
+      String parentSchema,
+      String parent,
+      String bound,
+      String partitionKey) {
+    return new PartitionEntity(
+        "public", "sales", partitionSchema, name, parentSchema, parent, bound, partitionKey);
+  }
+
+  @Test
+  @DisplayName("partitions: パーティション表でないテーブルでは空文字")
+  void testPartitionsNonPartitionedTable() {
+    assertEquals(
+        "",
+        TableDefinitionTemplates.partitions(
+            newTable("public", "customer", "", "table", ""), List.of()));
+  }
+
+  @Test
+  @DisplayName("partitions: パーティションが無いパーティション表では、パーティションキーとその旨のみ出力する")
+  void testPartitionsWithoutPartitions() {
+    assertMarkdownEquals(
+        """
+        ## パーティション情報
+
+        パーティションキー: `RANGE (sold_on)`
+
+        パーティションはありません。
+
+        """,
+        TableDefinitionTemplates.partitions(partitionedTable("RANGE (sold_on)"), List.of()));
+  }
+
+  @Test
+  @DisplayName("partitions: パーティションを1から採番し、多段パーティションは親の列で入れ子を示す")
+  void testPartitionsNested() {
+    var p1 =
+        partition(
+            "public",
+            "sales_2026_01",
+            "public",
+            "sales",
+            "FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')",
+            "");
+    var p2 =
+        partition(
+            "public",
+            "sales_2026_03",
+            "public",
+            "sales",
+            "FOR VALUES FROM ('2026-03-01') TO ('2026-04-01')",
+            "RANGE (sold_on)");
+    var p3 =
+        partition(
+            "public",
+            "sales_2026_03_a",
+            "public",
+            "sales_2026_03",
+            "FOR VALUES FROM ('2026-03-01') TO ('2026-03-16')",
+            "");
+
+    assertMarkdownEquals(
+        """
+        ## パーティション情報
+
+        パーティションキー: `RANGE (sold_on)`
+
+        | No. | パーティション | 親 | パーティション境界 | 下位のパーティションキー |
+        |:---|:---|:---|:---|:---|
+        |1|sales_2026_01|sales|FOR VALUES FROM ('2026-01-01') TO ('2026-02-01')||
+        |2|sales_2026_03|sales|FOR VALUES FROM ('2026-03-01') TO ('2026-04-01')|RANGE (sold_on)|
+        |3|sales_2026_03_a|sales_2026_03|FOR VALUES FROM ('2026-03-01') TO ('2026-03-16')||
+
+        """,
+        TableDefinitionTemplates.partitions(
+            partitionedTable("RANGE (sold_on)"), List.of(p1, p2, p3)));
+  }
+
+  @Test
+  @DisplayName("partitions: 別スキーマのパーティションはスキーマ修飾で表し、境界に含まれる|は表を崩さないようエスケープする")
+  void testPartitionsOtherSchemaAndEscape() {
+    var archived =
+        partition("archive", "sales_2020", "public", "sales", "FOR VALUES IN ('a|b')", "");
+
+    assertMarkdownEquals(
+        """
+        ## パーティション情報
+
+        パーティションキー: `LIST (region)`
+
+        | No. | パーティション | 親 | パーティション境界 | 下位のパーティションキー |
+        |:---|:---|:---|:---|:---|
+        |1|archive.sales_2020|sales|FOR VALUES IN ('a\\|b')||
+
+        """,
+        TableDefinitionTemplates.partitions(partitionedTable("LIST (region)"), List.of(archived)));
   }
 }
