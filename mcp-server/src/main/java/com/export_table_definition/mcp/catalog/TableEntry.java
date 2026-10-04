@@ -10,10 +10,11 @@ import java.util.List;
  * @param remarks テーブル備考（サイドカーYAML由来）。未設定の場合は空文字
  * @param foreignKeys DBに実在する外部キー制約
  * @param logicalRelations サイドカーYAMLで宣言された論理リレーション
+ * @param triggers トリガー（PostgreSQLのみ）
  * @param json スナップショットの1行そのもの。テーブル定義の全項目を返すときに使う
  */
 public record TableEntry(
-    TableKey key,
+    ObjectKey key,
     String logicalName,
     String type,
     String description,
@@ -21,7 +22,9 @@ public record TableEntry(
     List<ColumnEntry> columns,
     List<RelationEntry> foreignKeys,
     List<RelationEntry> logicalRelations,
-    String json) {
+    List<TriggerEntry> triggers,
+    String json)
+    implements SchemaObject {
 
   /** 未設定の項目（null）を空文字・空リストへ揃える */
   public TableEntry {
@@ -32,5 +35,6 @@ public record TableEntry(
     columns = columns == null ? List.of() : List.copyOf(columns);
     foreignKeys = foreignKeys == null ? List.of() : List.copyOf(foreignKeys);
     logicalRelations = logicalRelations == null ? List.of() : List.copyOf(logicalRelations);
+    triggers = triggers == null ? List.of() : List.copyOf(triggers);
   }
 }

@@ -1,6 +1,8 @@
 package com.export_table_definition.mcp.tool;
 
+import com.export_table_definition.mcp.catalog.SearchScope;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -78,6 +80,78 @@ final class ToolArguments {
   }
 
   /**
+   * 任意の真偽値の引数を読み取るメソッド（JSONの真偽値と、{@code true}・{@code false}の文字列を受け付ける）
+   *
+   * @return 引数の値。未指定（null）の場合は{@code defaultValue}
+   * @throws InvalidToolArgumentException 真偽値として解釈できない場合
+   */
+  boolean optionalBoolean(String name, boolean defaultValue) {
+    final Object value = values.get(name);
+    if (value == null) {
+      return defaultValue;
+    }
+    if (value instanceof Boolean bool) {
+      return bool;
+    }
+    if (value instanceof String text
+        && (text.strip().equalsIgnoreCase("true") || text.strip().equalsIgnoreCase("false"))) {
+      return Boolean.parseBoolean(text.strip());
+    }
+    throw new InvalidToolArgumentException(
+        "引数" + name + "にはtrueまたはfalseを指定してください。 [value=" + value + "]");
+  }
+
+  /**
+   * 任意の文字列のリストの引数を読み取るメソッド<br>
+   * JSONの配列のほか、カンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）
+   *
+   * @return 前後の空白を除き、空の要素と重複を除いた値（指定順）。未指定（null）の場合は空リスト
+   * @throws InvalidToolArgumentException 配列・文字列でない場合、文字列でない要素を含む場合
+   */
+  List<String> optionalStringList(String name) {
+    final Object value = values.get(name);
+    if (value == null) {
+      return List.of();
+    }
+    final List<?> elements;
+    if (value instanceof List<?> list) {
+      elements = list;
+    } else if (value instanceof String text) {
+      elements = Arrays.asList(text.split(","));
+    } else {
+      throw new InvalidToolArgumentException("引数" + name + "には文字列の配列を指定してください。");
+    }
+    final Set<String> result = new LinkedHashSet<>();
+    for (final Object element : elements) {
+      if (!(element instanceof String text)) {
+        throw new InvalidToolArgumentException("引数" + name + "には文字列の配列を指定してください。");
+      }
+      if (!text.isBlank()) {
+        result.add(text.strip());
+      }
+    }
+    return List.copyOf(result);
+  }
+
+  /**
+   * 任意の、決まった値のいずれかを取る文字列の引数を読み取るメソッド（大文字小文字を区別しない）
+   *
+   * @param choices 受け付ける値
+   * @return {@code choices}のうち当てはまった値。未指定（null・空）の場合は空文字
+   * @throws InvalidToolArgumentException {@code choices}のいずれにも当てはまらない場合
+   */
+  String optionalChoice(String name, List<String> choices) {
+    final String value = optionalString(name);
+    if (value.isEmpty()) {
+      return value;
+    }
+    return choices.stream()
+        .filter(choice -> choice.equalsIgnoreCase(value))
+        .findFirst()
+        .orElseThrow(() -> invalidChoice(name, choices, value));
+  }
+
+  /**
    * 任意の列挙値の引数を読み取るメソッド（列挙定数名を小文字にした値で受け付ける）
    *
    * @return 引数の値。未指定（null）の場合は{@code defaultValue}
@@ -93,14 +167,23 @@ final class ToolArguments {
         return constant;
       }
     }
-    throw new InvalidToolArgumentException(
-        "引数"
-            + name
-            + "には"
-            + String.join(", ", lowerNames(type))
-            + "のいずれかを指定してください。 [value="
-            + value
-            + "]");
+    throw invalidChoice(name, lowerNames(type), value);
+  }
+
+  /**
+   * 引数{@code database}・{@code schema}による絞り込みを読み取るメソッド
+   *
+   * @throws InvalidToolArgumentException 文字列でない場合
+   */
+  SearchScope scope() {
+    return new SearchScope(optionalString("database"), optionalString("schema"));
+  }
+
+  /** 決まった値のいずれでもない引数の誤り */
+  static InvalidToolArgumentException invalidChoice(
+      String name, List<String> choices, String value) {
+    return new InvalidToolArgumentException(
+        "引数" + name + "には" + String.join(", ", choices) + "のいずれかを指定してください。 [value=" + value + "]");
   }
 
   /** ツールの入力スキーマ（enum）にも使う、列挙定数名を小文字にした値の一覧 */

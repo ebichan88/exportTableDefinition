@@ -6,7 +6,7 @@ import java.util.List;
 /** テスト用のテーブルを組み立てるビルダー */
 public final class TestTables {
 
-  private final TableKey key;
+  private final ObjectKey key;
   private String logicalName;
   private String type = "table";
   private String description;
@@ -14,9 +14,11 @@ public final class TestTables {
   private final List<ColumnEntry> columns = new ArrayList<>();
   private final List<RelationEntry> foreignKeys = new ArrayList<>();
   private final List<RelationEntry> logicalRelations = new ArrayList<>();
+  private final List<TriggerEntry> triggers = new ArrayList<>();
+  private String json;
 
   private TestTables(String database, String schema, String name) {
-    this.key = new TableKey(database, schema, name);
+    this.key = new ObjectKey(database, schema, name);
   }
 
   /** DB名testdb・スキーマsampleのテーブル */
@@ -54,7 +56,11 @@ public final class TestTables {
   }
 
   public TestTables column(String name, String logicalName, String remarks) {
-    columns.add(new ColumnEntry(name, logicalName, remarks));
+    return column(new ColumnEntry(name, logicalName, "integer", false, false, null, remarks));
+  }
+
+  public TestTables column(ColumnEntry column) {
+    columns.add(column);
     return this;
   }
 
@@ -89,6 +95,18 @@ public final class TestTables {
     return this;
   }
 
+  /** 行ごとに実行するAFTER INSERTのトリガー */
+  public TestTables trigger(String name, String function) {
+    triggers.add(new TriggerEntry(name, "AFTER", List.of("INSERT"), "ROW", function));
+    return this;
+  }
+
+  /** スナップショットの1行（未指定の場合はschema・nameだけの行） */
+  public TestTables json(String value) {
+    this.json = value;
+    return this;
+  }
+
   public TableEntry build() {
     return new TableEntry(
         key,
@@ -99,6 +117,9 @@ public final class TestTables {
         columns,
         foreignKeys,
         logicalRelations,
-        "{\"schema\":\"" + key.schema() + "\",\"name\":\"" + key.name() + "\"}");
+        triggers,
+        json != null
+            ? json
+            : "{\"schema\":\"" + key.schema() + "\",\"name\":\"" + key.name() + "\"}");
   }
 }

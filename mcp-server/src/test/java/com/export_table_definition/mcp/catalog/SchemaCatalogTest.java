@@ -2,7 +2,7 @@ package com.export_table_definition.mcp.catalog;
 
 import static com.export_table_definition.mcp.catalog.TestTables.table;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -60,13 +60,404 @@ class SchemaCatalogTest {
       final SearchResult result =
           catalog.searchTables(SearchQuery.of("user"), new SearchScope("DB1", "SALES"), 10);
 
-      assertEquals(List.of(new TableKey("db1", "sales", "user")), keys(result));
+      assertEquals(List.of(new ObjectKey("db1", "sales", "user")), keys(result));
+    }
+  }
+
+  @Nested
+  @DisplayName("一覧")
+  class Listing {
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(new DatabaseEntry("db1", "PostgreSQL"), new DatabaseEntry("db2", "Oracle")),
+            List.of(
+                table("db1", "sales", "orders").build(),
+                table("db1", "sales", "order_summary").type("view").build(),
+                table("db1", "hr", "employee").build(),
+                table("db2", "hr", "employee").build()),
+            List.of(),
+            List.of(),
+            List.of());
+
+    @Test
+    @DisplayName("スキーマごとにテーブル・ビューの数を、DB名・スキーマ名の順に返す")
+    void summarizesSchemas() {
+      assertEquals(
+          List.of(
+              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 0, 0, 0, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 1, 0, 0, 0, 0),
+              new SchemaSummary("db2", "Oracle", "hr", 1, 0, 0, 0, 0, 0)),
+          catalog.schemas());
+    }
+
+    @Test
+    @DisplayName("テーブルをDB名・スキーマ名・テーブル名の順に並べ、スコープ・区分で絞り込む")
+    void listsTables() {
+      assertEquals(
+          List.of(
+              "db1:hr.employee", "db1:sales.order_summary", "db1:sales.orders", "db2:hr.employee"),
+          catalog.listTables(SearchScope.ALL, "").stream().map(t -> describe(t.key())).toList());
+      assertEquals(
+          List.of("db1:sales.orders"),
+          catalog.listTables(new SearchScope(null, "SALES"), "table").stream()
+              .map(t -> describe(t.key()))
+              .toList());
+    }
+
+    private static String describe(ObjectKey key) {
+      return key.database() + ":" + key.qualifiedName();
+    }
+  }
+
+  @Nested
+  @DisplayName("カラムの逆引き")
+  class FindColumns {
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(
+                table("department").column("department_id", "部署ID", null).build(),
+                table("employee")
+                    .column("employee_id", "従業員ID", null)
+                    .column("department_id", "所属部署ID", null)
+                    .foreignKey("department_id", "department", "department_id")
+                    .build(),
+                table("audit_log")
+                    .column("employee_no", "従業員ID", null)
+                    .logicalRelation("employee_no", "employee", "employee_id")
+                    .build(),
+                table("project").column("leader_employee_id").column("employee").build()));
+
+    @Test
+    @DisplayName("完全一致では、物理名・論理名のどちらかが一致するカラムを返す（大文字小文字を区別しない）")
+    void findsExactMatches() {
+      assertEquals(
+          List.of("audit_log.employee_no", "employee.employee_id"),
+          describe(catalog.findColumns(ColumnQuery.of("従業員ID", MatchMode.EXACT), SearchScope.ALL)));
+      assertEquals(
+          List.of("department.department_id", "employee.department_id"),
+          describe(
+              catalog.findColumns(
+                  ColumnQuery.of("DEPARTMENT_ID", MatchMode.EXACT), SearchScope.ALL)));
+    }
+
+    @Test
+    @DisplayName("部分一致では、完全一致・前方一致・部分一致の順に返す")
+    void findsPartialMatches() {
+      assertEquals(
+          List.of(
+              "project.employee",
+              "audit_log.employee_no",
+              "employee.employee_id",
+              "project.leader_employee_id"),
+          describe(
+              catalog.findColumns(ColumnQuery.of("employee", MatchMode.PARTIAL), SearchScope.ALL)));
+    }
+
+    @Test
+    @DisplayName("カラムが外部キー・論理リレーションで参照している先を返す")
+    void returnsReferences() {
+      final List<ColumnHit> hits =
+          catalog.findColumns(ColumnQuery.of("department_id", MatchMode.EXACT), SearchScope.ALL);
+
+      assertTrue(hits.get(0).references().isEmpty());
+      assertEquals(
+          List.of(
+              new ColumnHit.ColumnReference(
+                  new ObjectKey("testdb", "sample", "department"),
+                  "department_id",
+                  RelationKind.FOREIGN_KEY)),
+          hits.get(1).references());
+      assertEquals(
+          RelationKind.LOGICAL_RELATION,
+          catalog
+              .findColumns(ColumnQuery.of("employee_no", MatchMode.EXACT), SearchScope.ALL)
+              .get(0)
+              .references()
+              .get(0)
+              .kind());
+    }
+
+    private static List<String> describe(List<ColumnHit> hits) {
+      return hits.stream()
+          .map(hit -> hit.table().key().name() + "." + hit.column().name())
+          .toList();
+    }
+  }
+
+  @Nested
+  @DisplayName("関数・シーケンス・ユーザー定義型・トリガー")
+  class OtherObjects {
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(new DatabaseEntry("db1", "PostgreSQL")),
+            List.of(
+                table("db1", "sales", "orders")
+                    .trigger("trg_orders_audit", "sales.audit")
+                    .trigger("trg_orders_touch", "sales.touch")
+                    .build(),
+                table("db1", "hr", "employee").trigger("trg_employee_audit", "sales.audit").build(),
+                table("db1", "hr", "department").type("view").build()),
+            List.of(
+                function("db1", "sales", "calc_tax", "p_amount numeric"),
+                function("db1", "sales", "audit", ""),
+                function("db1", "sales", "calc_tax", "p_amount numeric, p_rate numeric"),
+                function("db1", "hr", "calc_tax", "")),
+            List.of(
+                new SequenceEntry(
+                    new ObjectKey("db1", "sales", "orders_id_seq"), "orders.id", "{}"),
+                new SequenceEntry(new ObjectKey("db1", "sales", "invoice_no_seq"), null, "{}")),
+            List.of(
+                new TypeEntry(new ObjectKey("db1", "sales", "order_status"), "ENUM", "{}"),
+                new TypeEntry(new ObjectKey("db1", "sales", "address"), "COMPOSITE", "{}")));
+
+    @Test
+    @DisplayName("スキーマごとの数に、関数（オーバーロードはそれぞれ）・シーケンス・型も数える")
+    void summarizesAllKinds() {
+      assertEquals(
+          List.of(
+              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 1, 0, 1, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 0, 0, 3, 2, 2)),
+          catalog.schemas());
+    }
+
+    @Test
+    @DisplayName("関数は名前の順に、オーバーロードは並び順のまま一覧にし、名前の一部で絞り込める")
+    void listsFunctions() {
+      assertEquals(
+          List.of(
+              "hr.calc_tax()",
+              "sales.calc_tax(p_amount numeric)",
+              "sales.calc_tax(p_amount numeric, p_rate numeric)"),
+          catalog.listFunctions(SearchScope.ALL, NameFilter.of("CALC")).stream()
+              .map(f -> f.key().qualifiedName() + "(" + f.arguments() + ")")
+              .toList());
+    }
+
+    @Test
+    @DisplayName("関数のオーバーロードは、名前の解決では1つとみなす")
+    void resolvesOverloadsAsOne() {
+      final FunctionOverloads calcTax =
+          Lookups.found(catalog.lookupFunction(ObjectReference.of(null, null, "sales.calc_tax")));
+
+      assertEquals(2, calcTax.overloads().size());
+      assertEquals(
+          List.of("hr.calc_tax", "sales.calc_tax"),
+          Lookups.candidates(catalog.lookupFunction(ObjectReference.of(null, null, "calc_tax")))
+              .stream()
+              .map(f -> f.key().qualifiedName())
+              .toList());
+    }
+
+    @Test
+    @DisplayName("関数・シーケンス・型が見つからない場合は、名前の一部に指定を含むものを候補にする")
+    void suggestsByPartialName() {
+      assertEquals(
+          List.of("sales.orders_id_seq"),
+          Lookups.suggestions(catalog.lookupSequence(ObjectReference.of(null, null, "orders")))
+              .stream()
+              .map(sequence -> sequence.key().qualifiedName())
+              .toList());
+      assertTrue(
+          Lookups.suggestions(catalog.lookupType(ObjectReference.of(null, null, "invoice")))
+              .isEmpty());
+    }
+
+    @Test
+    @DisplayName("シーケンス・型を名前の順に一覧にし、型は種別で絞り込める")
+    void listsSequencesAndTypes() {
+      assertEquals(
+          List.of("invoice_no_seq", "orders_id_seq"),
+          catalog.listSequences(SearchScope.ALL, NameFilter.ALL).stream()
+              .map(sequence -> sequence.key().name())
+              .toList());
+      assertEquals(
+          List.of("order_status"),
+          catalog.listTypes(SearchScope.ALL, NameFilter.ALL, "enum").stream()
+              .map(type -> type.key().name())
+              .toList());
+    }
+
+    @Test
+    @DisplayName("トリガーを、テーブル名の順にテーブルをまたいで一覧にする")
+    void listsTriggers() {
+      assertEquals(
+          List.of(
+              "employee.trg_employee_audit", "orders.trg_orders_audit", "orders.trg_orders_touch"),
+          catalog.listTriggers(SearchScope.ALL).stream()
+              .map(found -> found.table().key().name() + "." + found.trigger().name())
+              .toList());
+    }
+
+    private static FunctionEntry function(
+        String database, String schema, String name, String arguments) {
+      return new FunctionEntry(
+          new ObjectKey(database, schema, name), "FUNCTION", arguments, "void", "sql", "{}");
+    }
+  }
+
+  @Nested
+  @DisplayName("オブジェクト間の相互参照")
+  class CrossReferences {
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(new DatabaseEntry("db1", "PostgreSQL")),
+            List.of(
+                table("db1", "sales", "orders")
+                    .column(
+                        new ColumnEntry(
+                            "id",
+                            null,
+                            "integer",
+                            true,
+                            true,
+                            "nextval('sales.orders_id_seq'::regclass)",
+                            null))
+                    .column(
+                        new ColumnEntry("status", null, "sales.status", false, true, null, null))
+                    .column(new ColumnEntry("history", null, "status[]", false, false, null, null))
+                    .trigger("trg_orders_audit", "sales.audit")
+                    .build(),
+                table("db1", "sales", "order_items")
+                    .column(
+                        new ColumnEntry(
+                            "id", null, "integer", true, true, "nextval('orders_id_seq')", null))
+                    .trigger("trg_items_audit", "audit()")
+                    .build(),
+                table("db1", "hr", "status").build()),
+            List.of(
+                new FunctionEntry(
+                    new ObjectKey("db1", "sales", "audit"),
+                    "FUNCTION",
+                    "",
+                    "trigger",
+                    "plpgsql",
+                    "{}")),
+            List.of(new SequenceEntry(new ObjectKey("db1", "sales", "orders_id_seq"), null, "{}")),
+            List.of(new TypeEntry(new ObjectKey("db1", "sales", "status"), "ENUM", "{}")));
+
+    @Test
+    @DisplayName("関数を実行するトリガーを、トリガーの関数名のスキーマ修飾・括弧の有無に関わらず求める")
+    void findsTriggersCallingFunction() {
+      final FunctionOverloads audit =
+          Lookups.found(catalog.lookupFunction(ObjectReference.of(null, null, "audit")));
+
+      assertEquals(
+          List.of("order_items.trg_items_audit", "orders.trg_orders_audit"),
+          catalog.triggersCalling(audit).stream()
+              .map(found -> found.table().key().name() + "." + found.trigger().name())
+              .toList());
+    }
+
+    @Test
+    @DisplayName("シーケンスをデフォルト値のnextvalで使うカラムを求める")
+    void findsColumnsUsingSequence() {
+      assertEquals(
+          List.of("order_items.id", "orders.id"),
+          describe(
+              catalog.columnsUsingSequence(
+                  catalog.listSequences(SearchScope.ALL, NameFilter.ALL).get(0))));
+    }
+
+    @Test
+    @DisplayName("ユーザー定義型を型（配列を含む）に使うカラムを求め、同名のテーブルとは区別する")
+    void findsColumnsUsingType() {
+      assertEquals(
+          List.of("orders.status", "orders.history"),
+          describe(
+              catalog.columnsUsingType(
+                  catalog.listTypes(SearchScope.ALL, NameFilter.ALL, "").get(0))));
+    }
+
+    private static List<String> describe(List<TableColumn> columns) {
+      return columns.stream()
+          .map(found -> found.table().key().name() + "." + found.column().name())
+          .toList();
+    }
+  }
+
+  @Nested
+  @DisplayName("JOIN経路の探索")
+  class JoinPathsTest {
+
+    /**
+     * employee → department、assignment → employee・project、project → department、 audit_log ⇢
+     * employee（論理）、orders → customer（スナップショットに無い）
+     */
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+            List.of(
+                table("department").build(),
+                table("employee")
+                    .foreignKey("department_id", "department", "department_id")
+                    .foreignKey("manager_id", "employee", "employee_id")
+                    .build(),
+                table("project").foreignKey("department_id", "department", "department_id").build(),
+                table("assignment")
+                    .foreignKey("employee_id", "employee", "employee_id")
+                    .foreignKey("project_id", "project", "project_id")
+                    .build(),
+                table("audit_log").logicalRelation("record_id", "employee", "employee_id").build(),
+                table("orders").foreignKey("customer_id", "customer", "customer_id").build(),
+                table("invoice").foreignKey("customer_id", "customer", "customer_id").build()));
+
+    @Test
+    @DisplayName("関連を向きを問わずたどり、最短の経路を、たどる順のテーブルと関連で返す")
+    void findsShortestPath() {
+      final JoinPaths found = paths("audit_log", "department", 4, 5);
+
+      assertEquals(List.of("audit_log -> employee -> department"), describe(found));
+      assertEquals(
+          List.of(RelationKind.LOGICAL_RELATION, RelationKind.FOREIGN_KEY),
+          found.paths().get(0).relations().stream().map(Relation::kind).toList());
+      assertFalse(found.hasMore());
+    }
+
+    @Test
+    @DisplayName("同じ長さの経路が複数ある場合はすべて返し、上限を超える分はhasMoreで示す")
+    void returnsAllShortestPaths() {
+      assertEquals(
+          List.of("assignment -> employee -> department", "assignment -> project -> department"),
+          describe(paths("assignment", "department", 4, 5)));
+
+      final JoinPaths limited = paths("assignment", "department", 4, 1);
+      assertEquals(1, limited.paths().size());
+      assertTrue(limited.hasMore());
+    }
+
+    @Test
+    @DisplayName("上限の長さ以内でつながらない場合・スナップショットに無いテーブルを経由しないとつながらない場合は空を返す")
+    void returnsEmptyWhenUnreachable() {
+      assertTrue(paths("audit_log", "project", 2, 5).paths().isEmpty());
+      assertEquals(
+          List.of(
+              "audit_log -> employee -> department -> project",
+              "audit_log -> employee -> assignment -> project"),
+          describe(paths("audit_log", "project", 3, 5)));
+      assertTrue(paths("orders", "invoice", 6, 5).paths().isEmpty());
+    }
+
+    private JoinPaths paths(String from, String to, int maxLength, int limit) {
+      return catalog.joinPaths(find(from), find(to), maxLength, limit);
+    }
+
+    private TableEntry find(String name) {
+      return Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, name)));
+    }
+
+    private static List<String> describe(JoinPaths found) {
+      return found.paths().stream()
+          .map(path -> String.join(" -> ", path.tables().stream().map(ObjectKey::name).toList()))
+          .toList();
     }
   }
 
   @Nested
   @DisplayName("名前の解決")
-  class Lookup {
+  class LookupTable {
 
     private final SchemaCatalog catalog =
         SchemaCatalog.of(
@@ -79,64 +470,53 @@ class SchemaCatalogTest {
     @Test
     @DisplayName("テーブル名を大文字小文字を区別せず完全一致で解決する")
     void findsByNameIgnoringCase() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, null, "ORDERS"));
-
       assertEquals(
-          new TableKey("db1", "sales", "orders"),
-          assertInstanceOf(TableLookup.Found.class, lookup).table().key());
+          new ObjectKey("db1", "sales", "orders"),
+          found(ObjectReference.of(null, null, "ORDERS")).key());
     }
 
     @Test
     @DisplayName("同名のテーブルが複数のスキーマにある場合は、候補をスキーマ名の順に返す")
     void reportsAmbiguousNames() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, null, "employee"));
+      final Lookup<TableEntry> lookup =
+          catalog.lookupTable(ObjectReference.of(null, null, "employee"));
 
       assertEquals(
           List.of("archive.employee", "hr.employee"),
-          assertInstanceOf(TableLookup.Ambiguous.class, lookup).candidates().stream()
-              .map(table -> table.key().qualifiedName())
-              .toList());
+          Lookups.candidates(lookup).stream().map(table -> table.key().qualifiedName()).toList());
     }
 
     @Test
     @DisplayName("スキーマ名を引数で指定するか、スキーマ名.テーブル名の形で指定すると1つに定まる")
     void resolvesBySchema() {
-      final TableKey expected = new TableKey("db1", "hr", "employee");
+      final ObjectKey expected = new ObjectKey("db1", "hr", "employee");
 
-      assertEquals(
-          expected,
-          assertInstanceOf(
-                  TableLookup.Found.class,
-                  catalog.lookup(TableReference.of(null, "hr", "employee")))
-              .table()
-              .key());
-      assertEquals(
-          expected,
-          assertInstanceOf(
-                  TableLookup.Found.class,
-                  catalog.lookup(TableReference.of(null, null, "hr.employee")))
-              .table()
-              .key());
+      assertEquals(expected, found(ObjectReference.of(null, "hr", "employee")).key());
+      assertEquals(expected, found(ObjectReference.of(null, null, "hr.employee")).key());
     }
 
     @Test
     @DisplayName("見つからない場合は、スキーマの指定を外して名前の似たテーブルを候補に返す")
     void suggestsSimilarNames() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, "sales", "employe"));
+      final Lookup<TableEntry> lookup =
+          catalog.lookupTable(ObjectReference.of(null, "sales", "employe"));
 
       assertEquals(
           List.of("archive.employee", "hr.employee", "hr.employee_profile"),
-          assertInstanceOf(TableLookup.NotFound.class, lookup).suggestions().stream()
-              .map(table -> table.key().qualifiedName())
-              .toList());
+          Lookups.suggestions(lookup).stream().map(table -> table.key().qualifiedName()).toList());
     }
 
     @Test
     @DisplayName("似た名前も無い場合は、候補を空で返す")
     void returnsNoSuggestions() {
-      final TableLookup lookup = catalog.lookup(TableReference.of(null, null, "invoice"));
+      final Lookup<TableEntry> lookup =
+          catalog.lookupTable(ObjectReference.of(null, null, "invoice"));
 
-      assertTrue(assertInstanceOf(TableLookup.NotFound.class, lookup).suggestions().isEmpty());
+      assertTrue(Lookups.suggestions(lookup).isEmpty());
+    }
+
+    private TableEntry found(ObjectReference reference) {
+      return Lookups.found(catalog.lookupTable(reference));
     }
   }
 
@@ -225,7 +605,7 @@ class SchemaCatalogTest {
       final RelatedTables related = withMissing.relatedTables(orders, 3, Direction.BOTH);
 
       assertEquals(List.of("orders.customer_id->customer FOREIGN_KEY 1"), describe(related));
-      assertEquals(List.of(new TableKey("testdb", "sample", "customer")), related.missingTables());
+      assertEquals(List.of(new ObjectKey("testdb", "sample", "customer")), related.missingTables());
       assertEquals(List.of(orders), related.tables());
     }
 
@@ -255,7 +635,7 @@ class SchemaCatalogTest {
 
     private RelatedTables related(String name, int depth, Direction direction) {
       final TableEntry start =
-          ((TableLookup.Found) catalog.lookup(TableReference.of(null, null, name))).table();
+          Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, name)));
       return catalog.relatedTables(start, depth, direction);
     }
   }
@@ -264,7 +644,7 @@ class SchemaCatalogTest {
     return result.hits().stream().map(hit -> hit.table().key().name()).toList();
   }
 
-  private static List<TableKey> keys(SearchResult result) {
+  private static List<ObjectKey> keys(SearchResult result) {
     return result.hits().stream().map(hit -> hit.table().key()).toList();
   }
 

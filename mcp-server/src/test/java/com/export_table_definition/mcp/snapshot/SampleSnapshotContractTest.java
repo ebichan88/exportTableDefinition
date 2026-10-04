@@ -3,15 +3,25 @@ package com.export_table_definition.mcp.snapshot;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.export_table_definition.mcp.catalog.ColumnEntry;
+import com.export_table_definition.mcp.catalog.ColumnHit;
+import com.export_table_definition.mcp.catalog.ColumnQuery;
 import com.export_table_definition.mcp.catalog.Direction;
+import com.export_table_definition.mcp.catalog.FunctionEntry;
+import com.export_table_definition.mcp.catalog.FunctionOverloads;
+import com.export_table_definition.mcp.catalog.JoinPaths;
+import com.export_table_definition.mcp.catalog.Lookups;
+import com.export_table_definition.mcp.catalog.MatchMode;
+import com.export_table_definition.mcp.catalog.ObjectKey;
+import com.export_table_definition.mcp.catalog.ObjectReference;
 import com.export_table_definition.mcp.catalog.RelatedTables;
 import com.export_table_definition.mcp.catalog.RelationKind;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.SchemaSummary;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchScope;
 import com.export_table_definition.mcp.catalog.TableEntry;
-import com.export_table_definition.mcp.catalog.TableLookup;
-import com.export_table_definition.mcp.catalog.TableReference;
+import com.export_table_definition.mcp.catalog.TriggerEntry;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -96,7 +106,106 @@ class SampleSnapshotContractTest {
     assertTrue(shipment.missingTables().isEmpty());
   }
 
+  @Test
+  @DisplayName("database.jsonのDBMS種別と、スキーマごとのオブジェクトの数を読み込む")
+  void summarizesSchemas() {
+    assertEquals(
+        List.of(new SchemaSummary("testdb", "PostgreSQL", "sample", 9, 1, 1, 7, 7, 3)),
+        catalog.schemas());
+  }
+
+  @Test
+  @DisplayName("カラムの型・PK・NOT NULL・デフォルト値を読み込み、カラム名から逆引きできる")
+  void findsColumnsOfSample() {
+    final List<ColumnHit> hits =
+        catalog.findColumns(ColumnQuery.of("employee_id", MatchMode.EXACT), SearchScope.ALL);
+
+    final ColumnEntry primaryKey =
+        hits.stream()
+            .filter(hit -> hit.table().key().name().equals("employee"))
+            .findFirst()
+            .orElseThrow()
+            .column();
+    assertEquals("integer", primaryKey.type());
+    assertTrue(primaryKey.primaryKey());
+    assertTrue(primaryKey.notNull());
+    assertEquals("nextval('sample.employee_employee_id_seq'::regclass)", primaryKey.defaultValue());
+    assertTrue(
+        hits.stream()
+            .anyMatch(
+                hit ->
+                    hit.references().stream()
+                        .anyMatch(reference -> reference.table().name().equals("employee"))),
+        "外部キーで従業員を参照するカラムがある");
+  }
+
+  @Test
+  @DisplayName("関数のシグネチャ（オーバーロードを含む）・シーケンスの所有カラム・型の種別・トリガーを読み込む")
+  void readsOtherObjectsOfSample() {
+    final FunctionOverloads calculateBonus =
+        Lookups.found(catalog.lookupFunction(ObjectReference.of(null, null, "calculate_bonus")));
+    assertEquals(
+        List.of("p_salary numeric, p_rate numeric", "p_salary numeric"),
+        calculateBonus.overloads().stream().map(FunctionEntry::arguments).toList());
+    assertEquals("numeric", calculateBonus.overloads().get(0).result());
+    assertEquals(
+        "audit_log.log_id",
+        Lookups.found(
+                catalog.lookupSequence(ObjectReference.of(null, null, "audit_log_log_id_seq")))
+            .ownedBy());
+    assertEquals(
+        "ENUM",
+        Lookups.found(catalog.lookupType(ObjectReference.of(null, null, "employee_status_enum")))
+            .category());
+    final TriggerEntry audit =
+        find("employee").triggers().stream()
+            .filter(trigger -> trigger.name().equals("trg_employee_audit"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("sample.log_employee_change", audit.function());
+    assertEquals(List.of("INSERT", "DELETE", "UPDATE"), audit.events());
+  }
+
+  @Test
+  @DisplayName("サンプルの相互参照（トリガー関数・シーケンス・型）を求められる")
+  void findsCrossReferencesOfSample() {
+    final FunctionOverloads logEmployeeChange =
+        Lookups.found(
+            catalog.lookupFunction(ObjectReference.of(null, null, "log_employee_change")));
+    assertEquals(
+        List.of("employee.trg_employee_audit"),
+        catalog.triggersCalling(logEmployeeChange).stream()
+            .map(found -> found.table().key().name() + "." + found.trigger().name())
+            .toList());
+    assertEquals(
+        List.of("audit_log.log_id"),
+        catalog
+            .columnsUsingSequence(
+                Lookups.found(
+                    catalog.lookupSequence(ObjectReference.of(null, null, "audit_log_log_id_seq"))))
+            .stream()
+            .map(found -> found.table().key().name() + "." + found.column().name())
+            .toList());
+    assertTrue(
+        catalog
+            .columnsUsingType(
+                Lookups.found(
+                    catalog.lookupType(ObjectReference.of(null, null, "employee_status_enum"))))
+            .stream()
+            .anyMatch(found -> found.table().key().name().equals("employee")));
+  }
+
+  @Test
+  @DisplayName("サンプルのテーブル同士をつなぐJOIN経路を探せる")
+  void findsJoinPathOfSample() {
+    final JoinPaths paths = catalog.joinPaths(find("audit_log"), find("department"), 4, 5);
+
+    assertEquals(
+        List.of("audit_log", "employee", "department"),
+        paths.paths().get(0).tables().stream().map(ObjectKey::name).toList());
+  }
+
   private static TableEntry find(String name) {
-    return ((TableLookup.Found) catalog.lookup(TableReference.of(null, null, name))).table();
+    return Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, name)));
   }
 }

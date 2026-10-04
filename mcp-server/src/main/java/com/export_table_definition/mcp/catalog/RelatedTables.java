@@ -14,7 +14,7 @@ public record RelatedTables(
     TableEntry start,
     List<RelationAtDepth> relations,
     List<TableEntry> tables,
-    List<TableKey> missingTables) {
+    List<ObjectKey> missingTables) {
 
   /**
    * たどった関連と、たどり始めたテーブルからの距離

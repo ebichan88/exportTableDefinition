@@ -48,7 +48,21 @@ class McpServerProcessTest {
 
       assertEquals("exportTableDefinition", client.getServerInfo().name());
       assertEquals(
-          List.of("search_tables", "get_table", "get_related_tables"),
+          List.of(
+              "list_schemas",
+              "search_tables",
+              "list_tables",
+              "get_table",
+              "find_columns",
+              "get_related_tables",
+              "find_join_path",
+              "list_functions",
+              "get_function",
+              "list_sequences",
+              "get_sequence",
+              "list_types",
+              "get_type",
+              "list_triggers"),
           client.listTools().tools().stream().map(Tool::name).toList());
 
       final CallToolResult search =
@@ -63,6 +77,24 @@ class McpServerProcessTest {
                   .arguments(Map.of("table", "audit_log"))
                   .build());
       assertTrue(text(related).contains("\"kind\":\"logicalRelation\""), text(related));
+
+      final CallToolResult sections =
+          client.callTool(
+              CallToolRequest.builder("get_table")
+                  .arguments(Map.of("table", "employee", "sections", List.of("foreignKeys")))
+                  .build());
+      assertFalse(Boolean.TRUE.equals(sections.isError()), () -> text(sections));
+      assertTrue(text(sections).contains("\"foreignKeys\""), text(sections));
+      assertFalse(text(sections).contains("\"indexes\""), text(sections));
+
+      final CallToolResult function =
+          client.callTool(
+              CallToolRequest.builder("get_function")
+                  .arguments(Map.of("function", "calculate_bonus"))
+                  .build());
+      assertFalse(Boolean.TRUE.equals(function.isError()), () -> text(function));
+      assertTrue(text(function).contains("\"arguments\":\"p_salary numeric\""), text(function));
+      assertFalse(text(function).contains("\"definition\""), "定義本体は返さない");
 
       final CallToolResult notFound =
           client.callTool(
