@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/02|
+|PostgreSQL|testdb|2026/10/04|
 
 ## 説明
 
@@ -46,10 +46,11 @@ erDiagram
 
 | No. | 参照元 | 外部キー名 | 参照先 |
 |:---|:---|:---|:---|
-| 1 | sample.employee | employee_department_id_fkey | sample.department |
-| 2 | sample.employee | employee_parking_spot_id_fkey | sample.parking_spot |
-| 3 | sample.employee_profile | employee_profile_employee_id_fkey | sample.employee |
-| 4 | sample.audit_log | record_id | sample.employee |
+| 1 | sample.attendance | attendance_employee_id_fkey | sample.employee |
+| 2 | sample.employee | employee_department_id_fkey | sample.department |
+| 3 | sample.employee | employee_parking_spot_id_fkey | sample.parking_spot |
+| 4 | sample.employee_profile | employee_profile_employee_id_fkey | sample.employee |
+| 5 | sample.audit_log | record_id | sample.employee |
 
 ___
 

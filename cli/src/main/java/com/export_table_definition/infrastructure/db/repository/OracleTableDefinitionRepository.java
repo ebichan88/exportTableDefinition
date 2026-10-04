@@ -3,6 +3,7 @@ package com.export_table_definition.infrastructure.db.repository;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import jakarta.inject.Inject;
@@ -31,6 +32,16 @@ public final class OracleTableDefinitionRepository extends AbstractTableDefiniti
    */
   @Override
   public List<TriggerEntity> selectTriggerList(List<String> schemaList) {
+    return List.of();
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>Oracleではパーティションが{@code ALL_TABLES}に別のテーブルとして現れないため、パーティション情報の出力に非対応で空リストを返却する。
+   */
+  @Override
+  public List<PartitionEntity> selectPartitionList(List<String> schemaList) {
     return List.of();
   }
 

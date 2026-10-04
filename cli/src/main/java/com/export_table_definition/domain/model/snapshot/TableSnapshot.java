@@ -22,6 +22,8 @@ import java.util.List;
  * @param description テーブル説明（サイドカーYAML由来）
  * @param remarks テーブル備考（サイドカーYAML由来）
  * @param definition view/materialized viewのソース定義
+ * @param partitionKey パーティション表のパーティションキー（例: {@code RANGE (sold_on)}）。個々のパーティションは含めない
+ *     （パーティションを自動で追加する運用で、{@code --check}が追加のたびに差分を報告しないようにするため）
  * @param foreignKeys DBに実在する外部キー制約のリスト
  * @param logicalRelations サイドカーYAMLで宣言された論理リレーションのリスト
  */
@@ -33,6 +35,7 @@ public record TableSnapshot(
     String description,
     String remarks,
     String definition,
+    String partitionKey,
     List<Column> columns,
     List<Index> indexes,
     List<Constraint> constraints,
@@ -52,6 +55,7 @@ public record TableSnapshot(
         text(annotation.description()),
         text(annotation.remarks()),
         text(table.definition()),
+        text(table.partitionKey()),
         content.columns().stream().map(column -> Column.of(column, annotation)).toList(),
         content.indexes().stream().map(Index::of).toList(),
         content.constraints().stream().map(Constraint::of).toList(),

@@ -71,7 +71,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
 5. 通常実行のユースケース（`ExportTableDefinitionUsecase`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExportPipeline`（`application`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
-   - `SchemaExportPipeline.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー等をMyBatis経由で取得し、
+   - `SchemaExportPipeline.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー・パーティション等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。
      `ExportTargetConsistency`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
      一括取得分を `ExportTargets` にまとめる
@@ -163,18 +163,21 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は
 `domain.model.target.OutputObjectType` で種別ごとに絞り込み可能。Oracle接続時はこれらの取得・出力自体が行われない。
 
+パーティション表の子のパーティション（`selectPartitionList`）の出力もPostgreSQL専用で、Oracleの`OracleTableDefinitionRepository`は
+空リストを返す（`ALL_TABLES`にパーティションが別のテーブルとして現れないため、テーブル一覧からの除外も不要）。
+
 なお論理リレーション（サイドカーYAML由来）はDBに依存しないため、PostgreSQL／Oracleの双方で利用できる。
 
 ## メモリ効率のための分割取得
 
 対象スキーマ全体を一度にメモリへ載せないよう、`SchemaExportPipeline` は以下の方針で処理する。
 
-- テーブル一覧・外部キー・トリガーは軽量なため対象範囲全体を一括取得する（`fetchTargets`）
+- テーブル一覧・外部キー・トリガー・パーティションは軽量なため対象範囲全体を一括取得する（`fetchTargets`）
   （ER図でスキーマ・チャンクを跨いだ参照関係を解決するために全件が必要なため）
 - カラム・インデックス・制約はテーブル数に比例して重くなるため、スキーマ単位かつ `chunkSize` 件ごとに
   取得・出力・破棄する（`exportSchemaTableDefinitions` / `exportTableDefinitionChunk`）。
   `TableDefinitionRepository.selectTableDetails()` がチャンク分をまとめて取得し、テーブルごとの `TableDetail` に
-  組み立てて返す。そこへ一括取得分の外部キー・トリガー・手動付帯情報を合わせ、1テーブル分の出力内容
+  組み立てて返す。そこへ一括取得分の外部キー・トリガー・パーティション・手動付帯情報を合わせ、1テーブル分の出力内容
   （`TableDefinitionContent`）として各 `ExportSink` へ渡す
 - 関数・プロシージャの定義本体はスキーマ単位で取得・出力・破棄する（`exportSchemaFunctionDefinitions`）
 - ER図のテーブルの箱に表示する関連カラム（関連の参照元・参照先として使われるカラム）は、ER図をチャンクより先に
@@ -273,7 +276,7 @@ DBからの取得と出力は`SchemaExportPipeline`が以下のように分け�
 `--check`（`CheckDocumentDiffUsecase`）の双方が利用する。両者は取得処理を共有し、書き出し先の出力形式
 （`ExportSink`のリスト）だけを切り替える。
 
-- `fetchTargets()`: 一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・関数/シーケンス/型の一覧・
+- `fetchTargets()`: 一括取得する軽量な情報（基本情報・テーブル一覧・外部キー・トリガー・パーティション・関数/シーケンス/型の一覧・
   サイドカー）を取得し、`domain.model.target.ExportTargets`にまとめる
 - `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を`ExportSink.writeOverview()`で書き出した後、
   関数の定義本体をスキーマ単位で、テーブルの詳細情報をスキーマ・チャンク単位で取得し、各`ExportSink`へ渡す。

@@ -6,6 +6,7 @@ import com.export_table_definition.domain.model.schemaobject.Functions;
 import com.export_table_definition.domain.model.schemaobject.Sequences;
 import com.export_table_definition.domain.model.schemaobject.Types;
 import com.export_table_definition.domain.model.sidecar.Annotations;
+import com.export_table_definition.domain.model.table.Partitions;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.table.Triggers;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
@@ -17,6 +18,7 @@ import com.export_table_definition.domain.model.viewpoint.Viewpoints;
  * @param tables 出力対象のテーブル情報のリスト（テーブルの絞り込み済み）
  * @param foreignKeys 出力対象のテーブル同士の外部キー（論理リレーションを含む）
  * @param triggers 対象範囲全体のトリガー情報
+ * @param partitions 対象範囲全体のパーティション表の下位のパーティション（テーブルには含まれない）
  * @param functions 関数・プロシージャの一覧情報（定義本体を含まない）
  * @param annotations 対象範囲全体の手動付帯情報
  * @param viewpoints サイドカーYAMLで宣言された観点
@@ -26,6 +28,7 @@ public record ExportTargets(
     Tables tables,
     ForeignKeys foreignKeys,
     Triggers triggers,
+    Partitions partitions,
     Functions functions,
     Sequences sequences,
     Types types,

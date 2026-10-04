@@ -6,6 +6,7 @@ import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
 import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.table.ColumnEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
@@ -43,6 +44,16 @@ public interface TableDefinitionRepository {
 
   /** テーブル単位の絞り込みは行わず、スキーマ全体を取得する（{@link #selectTableList}を参照） */
   List<TriggerEntity> selectTriggerList(List<String> schemaList);
+
+  /**
+   * パーティション表の下位のパーティション（多段パーティションの中間を含む）を取得する。パーティションはテーブルとして {@link
+   * #selectTableList}に含まれないため、パーティション表の定義書にまとめるために別に取得する。 テーブル単位の絞り込みは行わず、スキーマ全体を取得する（{@link
+   * #selectTableList}を参照）
+   *
+   * @param schemaList パーティション表（根）のスキーマで絞り込む。パーティションは別スキーマにあってもよい
+   * @return パーティション表ごとに、親から子へ階層順に並べたパーティションのリスト
+   */
+  List<PartitionEntity> selectPartitionList(List<String> schemaList);
 
   /** 定義本体を含まない軽量情報 */
   List<FunctionEntity> selectFunctionList(List<String> schemaList);

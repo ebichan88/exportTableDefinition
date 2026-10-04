@@ -11,16 +11,21 @@
 
     <select id="selectAllTableInfo" resultType="TableDto">
         WITH all_tables AS (
+            <!-- パーティションの子（relispartition）は一覧に載せず、親の「パーティション情報」へまとめる。
+                 中間のパーティション表（多段パーティション）も子のため同様に除く -->
             SELECT
-                coalesce(t1.schemaname, '') AS schema_name,
+                coalesce(t1n.nspname, '') AS schema_name,
                 'table' AS table_type,
-                coalesce(regexp_replace(pg_catalog.obj_description(to_regclass(quote_ident(t1.schemaname) || '.' || quote_ident(t1.tablename))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
-                coalesce(t1.tablename, '') AS physical_table_name,
-                '' AS definition
-            FROM pg_catalog.pg_tables t1
-            WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema')
+                coalesce(regexp_replace(pg_catalog.obj_description(t1.oid, 'pg_class'),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
+                coalesce(t1.relname, '') AS physical_table_name,
+                '' AS definition,
+                CASE WHEN t1.relkind = 'p' THEN pg_catalog.pg_get_partkeydef(t1.oid) ELSE '' END AS partition_key
+            FROM pg_catalog.pg_class t1
+            LEFT OUTER JOIN pg_catalog.pg_namespace t1n ON t1.relnamespace = t1n.oid
+            WHERE t1.relkind IN ('r', 'p') AND NOT t1.relispartition
+                AND t1n.nspname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
-                    AND t1.schemaname IN
+                    AND t1n.nspname IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
                         #{schema}
                     </foreach>
@@ -31,7 +36,8 @@
                 'view' AS table_type,
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t2.schemaname) || '.' || quote_ident(t2.viewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t2.viewname, '') AS physical_table_name,
-                definition AS definition
+                definition AS definition,
+                '' AS partition_key
             FROM pg_catalog.pg_views t2
             WHERE t2.schemaname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
@@ -46,7 +52,8 @@
                 'materialized_view' AS table_type,
                 coalesce(regexp_replace(obj_description(to_regclass(quote_ident(t3.schemaname) || '.' || quote_ident(t3.matviewname))),'\r|\n|\r\n', '', 'g'), '') AS logical_table_name,
                 coalesce(t3.matviewname, '') AS physical_table_name,
-                definition AS definition
+                definition AS definition,
+                '' AS partition_key
             FROM pg_catalog.pg_matviews t3
             WHERE t3.schemaname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
@@ -62,7 +69,8 @@
             logical_table_name AS "logicalTableName",
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
-            definition AS definition
+            definition AS definition,
+            partition_key AS "partitionKey"
         FROM all_tables
         ORDER BY schema_name, physical_table_name;
     </select>
@@ -95,7 +103,7 @@
                 LEFT OUTER JOIN pg_catalog.pg_description t4 ON t3.attrelid = t4.objoid AND t3.attnum = t4.objsubid
                 <!-- PostgreSQLは列をDROPしてもpg_attributeに行が残り、列名が内部生成の
                      'pg.dropped.N'形式に置き換わる。実在する列だけを対象にするため除外する -->
-                WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema') AND t2.relkind = 'r' AND t3.attnum > 0 AND t3.attname NOT LIKE '%pg.dropped%'
+                WHERE t1.schemaname NOT IN ('pg_catalog', 'information_schema') AND t2.relkind IN ('r', 'p') AND t3.attnum > 0 AND t3.attname NOT LIKE '%pg.dropped%'
                     <if test="schemaList != null and schemaList.size() > 0">
                         AND t1.schemaname IN
                         <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -210,7 +218,7 @@
     <select id="selectAllIndexInfo" resultType="IndexDto">
         WITH all_indexes AS (
             SELECT
-                t5.schemaname AS schema_name,
+                t5.nspname AS schema_name,
                 t1.relname AS table_name,
                 t2.relname AS index_name,
                 am.amname AS index_method,
@@ -222,10 +230,11 @@
             LEFT OUTER JOIN pg_index AS t3 ON t1.oid = t3.indrelid
             LEFT OUTER JOIN pg_class AS t2 ON t2.oid = t3.indexrelid
             LEFT OUTER JOIN pg_am AS am ON t2.relam = am.oid
-            LEFT OUTER JOIN pg_tables AS t5 ON t1.relname = t5.tablename
-            WHERE t1.relkind = 'r' AND t3.indexrelid IS NOT NULL AND t5.schemaname NOT IN ('pg_catalog', 'information_schema')
+            LEFT OUTER JOIN pg_namespace AS t5 ON t1.relnamespace = t5.oid
+            <!-- パーティション表（relkind = 'p'）の索引はパーティションインデックス（relkind = 'I'）として親に付く -->
+            WHERE t1.relkind IN ('r', 'p') AND t3.indexrelid IS NOT NULL AND t5.nspname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
-                    AND t5.schemaname IN
+                    AND t5.nspname IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
                         #{schema}
                     </foreach>
@@ -268,7 +277,9 @@
             FROM pg_catalog.pg_constraint t1
             LEFT OUTER JOIN pg_catalog.pg_class t2 ON t1.conrelid = t2.oid
             LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
-            WHERE t1.contype in ('c', 'f', 'p', 'u') AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
+            <!-- conparentidが設定されている制約は、パーティションの親から子へ複製されたもの。
+                 パーティション表を参照するテーブルにも、参照先のパーティションごとに外部キー制約が複製される -->
+            WHERE t1.contype in ('c', 'f', 'p', 'u') AND t1.conparentid = 0 AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND t3.nspname IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -324,7 +335,10 @@
             LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
             LEFT OUTER JOIN pg_catalog.pg_class t4 ON t1.confrelid = t4.oid
             LEFT OUTER JOIN pg_catalog.pg_namespace t5 ON t4.relnamespace = t5.oid
-            WHERE t1.contype = 'f' AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
+            <!-- 親から子パーティションへ複製された外部キー（conparentid）は除く。子パーティション自身に付けた外部キーは、
+                 子が出力対象のテーブルでないため、参照元が見つからない警告の原因になるので除く -->
+            WHERE t1.contype = 'f' AND t1.conparentid = 0 AND NOT t2.relispartition
+                AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND t3.nspname IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -371,7 +385,8 @@
             LEFT OUTER JOIN pg_catalog.pg_namespace t3 ON t2.relnamespace = t3.oid
             LEFT OUTER JOIN pg_catalog.pg_proc t4 ON t1.tgfoid = t4.oid
             LEFT OUTER JOIN pg_catalog.pg_namespace t5 ON t4.pronamespace = t5.oid
-            WHERE NOT t1.tgisinternal AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
+            <!-- tgparentidが設定されているトリガーは、パーティションの親から子へ複製されたもの（PostgreSQL 13以上） -->
+            WHERE NOT t1.tgisinternal AND t1.tgparentid = 0 AND t3.nspname NOT IN ('pg_catalog', 'information_schema')
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND t3.nspname IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -390,6 +405,61 @@
             trigger_definition AS "triggerDefinition"
         FROM all_triggers
         ORDER BY schema_name, table_name, trigger_name;
+    </select>
+
+    <select id="selectAllPartitionInfo" resultType="PartitionDto">
+        WITH RECURSIVE all_partitions AS (
+            <!-- パーティション表（自身はパーティションではない親）を根として、pg_inheritsをたどり下位のパーティションを集める。
+                 子が別スキーマにあっても根のスキーマで絞り込めるよう、子ではなく根を基準にする。
+                 旧来の継承（INHERITS）は子のrelispartitionが偽のため、たどらない -->
+            SELECT
+                t1.oid AS partition_oid,
+                t2.nspname AS schema_name,
+                t1.relname AS table_name,
+                t2.nspname AS parent_schema_name,
+                t1.relname AS parent_name,
+                t2.nspname AS partition_schema_name,
+                t1.relname AS partition_name,
+                0 AS depth,
+                ARRAY[t1.relname::text] AS path
+            FROM pg_catalog.pg_class t1
+            LEFT OUTER JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid
+            WHERE t1.relkind = 'p' AND NOT t1.relispartition AND t2.nspname NOT IN ('pg_catalog', 'information_schema')
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t2.nspname IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+            UNION ALL
+            SELECT
+                t4.oid,
+                t3.schema_name,
+                t3.table_name,
+                t3.partition_schema_name,
+                t3.partition_name,
+                t5.nspname,
+                t4.relname,
+                t3.depth + 1,
+                t3.path || t4.relname::text
+            FROM all_partitions t3
+            INNER JOIN pg_catalog.pg_inherits ih ON ih.inhparent = t3.partition_oid
+            INNER JOIN pg_catalog.pg_class t4 ON t4.oid = ih.inhrelid AND t4.relispartition
+            LEFT OUTER JOIN pg_catalog.pg_namespace t5 ON t4.relnamespace = t5.oid
+        )
+        SELECT
+            p.schema_name AS "schemaName",
+            p.table_name AS "tableName",
+            p.partition_schema_name AS "partitionSchemaName",
+            p.partition_name AS "partitionName",
+            p.parent_schema_name AS "parentSchemaName",
+            p.parent_name AS "parentName",
+            pg_catalog.pg_get_expr(c.relpartbound, c.oid) AS "bound",
+            CASE WHEN c.relkind = 'p' THEN pg_catalog.pg_get_partkeydef(c.oid) ELSE '' END AS "partitionKey"
+        FROM all_partitions p
+        INNER JOIN pg_catalog.pg_class c ON c.oid = p.partition_oid
+        WHERE p.depth > 0
+        ORDER BY p.schema_name, p.table_name, p.path;
     </select>
 
     <select id="selectAllFunctionInfo" resultType="FunctionDto">

@@ -63,7 +63,9 @@ classDiagram
     String physicalTableName
     String logicalTableName
     TableType tableType
+    String partitionKey
     isView()
+    isPartitioned()
   }
   class Tables {
     bySchema()
@@ -77,6 +79,14 @@ classDiagram
   class IndexEntity
   class ConstraintEntity
   class TriggerEntity
+  class PartitionEntity {
+    String partitionName
+    String parentName
+    String bound
+    String partitionKey
+    getDisplayName()
+  }
+  class Partitions
   class ForeignKeyEntity {
     String foreignKeyName
     List~String~ columnNames
@@ -141,6 +151,8 @@ classDiagram
   TableDetail "1" *-- "0..*" IndexEntity
   TableDetail "1" *-- "0..*" ConstraintEntity
   TriggerEntity "0..*" ..> "1" TableKey : 所属するテーブル
+  PartitionEntity "0..*" ..> "1" TableKey : 所属するパーティション表（根）
+  Partitions "1" o-- "0..*" PartitionEntity
   ForeignKeyEntity "0..*" ..> "1" TableKey : 参照元（子）
   ForeignKeyEntity "0..*" ..> "1" TableKey : 参照先（親）
   ForeignKeyEntity --> "1" RelationType : 由来
@@ -174,6 +186,12 @@ classDiagram
   カラムはチャンク単位で取得するが、ER図はチャンクより先に書き出すため、関連を持つテーブルのカラムを別途取得し、
   関連カラムだけを残す（`DiagramBoxes.Builder`）。1枚の図の箱には、その図に描く関連で使われるカラムだけを表示し、
   参照元のカラムに`FK`を付ける（`DiagramColumn`）
+- **パーティション表**（`TableEntity.isPartitioned()`。宣言的パーティションの親）だけをテーブルとして持ち、子のパーティション
+  （多段パーティションの中間・親と別のスキーマに置いたものを含む）は`TableEntity`にしない。子はテーブル一覧・個別の定義書・ER図・
+  スナップショットに出さず、パーティション表のテーブル定義書の「パーティション情報」にまとめる。そのため子は`PartitionEntity`として、
+  所属するパーティション表（根）のテーブルキーで引く（`Partitions`。トリガーと同じく対象範囲全体を一括取得する）。
+  パーティション表のパーティションキーは`TableEntity.partitionKey`が持つ（パーティション表でなければ空文字）。
+  親から子へ複製された外部キー・トリガーは取得時に除き、親に定義されたものだけを関連・トリガーとして扱う
 - 自己参照の関連は、被参照側（`referencingTo`）には含めない（参照側と重複して掲載されるため）
 - カラム・インデックス・制約の集合（`Columns`・`Indexes`・`Constraints`）は`TableDetail`の組み立てでのみ使うため
   パッケージプライベートにしている
@@ -286,9 +304,10 @@ classDiagram
     List~ForeignKeyEntity~ foreignKeys
     List~ForeignKeyEntity~ logicalRelations
     List~ForeignKeyEntity~ incomingRelations
+    List~PartitionEntity~ partitions
     List~Viewpoint~ viewpoints
     outgoingRelations()
-    assemble(baseInfo, detail, foreignKeys, triggers, annotations, viewpoints)$
+    assemble(baseInfo, detail, foreignKeys, triggers, partitions, annotations, viewpoints)$
   }
   class BaseInfoEntity {
     LocalDate generatedDate
@@ -311,6 +330,7 @@ classDiagram
   ExportTargets "1" *-- "1" Annotations
   ExportTargets "1" *-- "1" Viewpoints
   ExportTargets "1" *-- "1" Triggers
+  ExportTargets "1" *-- "1" Partitions
   ExportTargets "1" *-- "1" Functions
   ExportTargets "1" *-- "1" Sequences
   ExportTargets "1" *-- "1" Types
@@ -348,6 +368,9 @@ classDiagram
 | 「スキーマ.テーブル」形式のキーの解析 | `TableKey.parse` |
 | 出力対象の絞り込み（スキーマ名・テーブル名パターン。除外が包含より優先。テーブル名・スキーマ名の部分が空のパターンは設定誤り） | `TableScope` / `TableNamePatterns` |
 | 出力対象オブジェクト種別の解釈（未指定なら全種別。未知の種別名は設定誤り） | `OutputObjectType.parse` |
+| 子のパーティションはテーブルに含めない・親から複製された外部キー（`conparentid`）・トリガー（`tgparentid`）は取得しない（PostgreSQL 13以上） | `tableDefinitionMapper.xml`（PostgreSQL）の`selectAllTableInfo`・`selectAllConstraintInfo`・`selectAllForeignKeyInfo`・`selectAllTriggerInfo` |
+| パーティション表の判定、パーティションの名前を根のスキーマからの相対で表す規則 | `TableEntity.isPartitioned` / `PartitionEntity.getDisplayName` |
+| パーティション表のパーティションを、親から子へ階層順に取得する | `tableDefinitionMapper.xml`（PostgreSQL）の`selectAllPartitionInfo`（再帰CTE） |
 | 多重度の判定・論理リレーションの多重度の既定値 | `Cardinality.of` / `Cardinality.DEFAULT_FOR_LOGICAL_RELATION` |
 | 論理リレーションの関連名の自動生成（`{列名...}`） | `ForeignKeyEntity.resolveLogicalRelationName` |
 | 関連は参照元・参照先の双方が出力対象のときだけ合流させる（除外した物理外部キーは絞り込み時は通知しない。論理リレーションは常に通知する） | `ExportTargetConsistency.resolveForeignKeys` |
@@ -372,6 +395,8 @@ classDiagram
 | テーブル | テーブル | `TableEntity` | テーブル・ビュー・マテリアライズドビュー（区分は`TableType`） |
 | テーブルキー | スキーマ名.テーブル名 | `TableKey` | テーブルの識別子（スキーマ名＋物理テーブル名） |
 | 詳細情報 | カラム・インデックス・制約 | `TableDetail` | 1テーブル分のカラム・インデックス・制約。チャンク単位で取得する |
+| パーティション表 | パーティション表（`PARTITION BY`） | `TableEntity.isPartitioned` / `TableEntity.partitionKey` | 宣言的パーティションの親。テーブルとして出力し、パーティションキーを持つ。PostgreSQLのみ |
+| パーティション | パーティション（子のパーティション） | `PartitionEntity` / `Partitions` | パーティション表の下位のテーブル（多段パーティションの中間を含む）。テーブルとして出力せず、パーティション表の定義書の「パーティション情報」にまとめる |
 | 関連 | 外部キー・論理リレーション | `ForeignKeyEntity` / `ForeignKeys` | 外部キー（物理）と論理リレーション（論理）の総称。クラス名は歴史的経緯で`ForeignKey` |
 | 外部キー | 外部キー | `RelationType.PHYSICAL` | DBに実在する外部キー制約による関連 |
 | 論理リレーション | 論理リレーション（`relations`） | `RelationType.LOGICAL` | DBに制約が無く、サイドカーYAMLで宣言した関連 |

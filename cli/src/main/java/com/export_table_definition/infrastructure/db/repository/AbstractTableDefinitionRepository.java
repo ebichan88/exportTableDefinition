@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
@@ -19,6 +20,7 @@ import com.export_table_definition.infrastructure.db.repository.dto.DatabaseDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ForeignKeyDto;
 import com.export_table_definition.infrastructure.db.repository.dto.FunctionDto;
 import com.export_table_definition.infrastructure.db.repository.dto.IndexDto;
+import com.export_table_definition.infrastructure.db.repository.dto.PartitionDto;
 import com.export_table_definition.infrastructure.db.repository.dto.SequenceDto;
 import com.export_table_definition.infrastructure.db.repository.dto.TableDto;
 import com.export_table_definition.infrastructure.db.repository.dto.TriggerDto;
@@ -113,6 +115,13 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
   public List<TriggerEntity> selectTriggerList(List<String> schemaList) {
     return selectTableDefinition(
         schemaList, List.of(), "selectAllTriggerInfo", TriggerDto::toEntity);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<PartitionEntity> selectPartitionList(List<String> schemaList) {
+    return selectTableDefinition(
+        schemaList, List.of(), "selectAllPartitionInfo", PartitionDto::toEntity);
   }
 
   /** {@inheritDoc} */

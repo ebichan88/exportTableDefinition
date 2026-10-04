@@ -109,6 +109,7 @@ public class SchemaSnapshotWriterTest {
         List.of(),
         List.of(),
         List.of(),
+        List.of(),
         TableAnnotation.EMPTY,
         List.of());
   }

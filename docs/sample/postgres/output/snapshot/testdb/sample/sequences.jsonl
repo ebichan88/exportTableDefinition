@@ -1,3 +1,4 @@
+{"schema":"sample","name":"attendance_note_note_id_seq","incrementBy":"1","minValue":"1","maxValue":"2147483647","cacheSize":"1","startValue":"1","cycle":false,"ownedBy":"attendance_note.note_id"}
 {"schema":"sample","name":"audit_log_log_id_seq","incrementBy":"1","minValue":"1","maxValue":"9223372036854775807","cacheSize":"1","startValue":"1","cycle":false,"ownedBy":"audit_log.log_id"}
 {"schema":"sample","name":"department_department_id_seq","incrementBy":"1","minValue":"1","maxValue":"2147483647","cacheSize":"1","startValue":"1","cycle":false,"ownedBy":"department.department_id"}
 {"schema":"sample","name":"employee_employee_id_seq","incrementBy":"1","minValue":"1","maxValue":"2147483647","cacheSize":"1","startValue":"1","cycle":false,"ownedBy":"employee.employee_id"}

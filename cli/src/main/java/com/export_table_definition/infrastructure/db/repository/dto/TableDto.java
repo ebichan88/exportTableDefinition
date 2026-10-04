@@ -10,7 +10,8 @@ public record TableDto(
     String logicalTableName,
     String physicalTableName,
     String tableType,
-    String definition) {
+    String definition,
+    String partitionKey) {
 
   /**
    * DTOからEntityへの変換メソッド<br>
@@ -26,6 +27,7 @@ public record TableDto(
         DtoValues.text(logicalTableName),
         physicalTableName,
         TableType.findByName(tableType),
-        DtoValues.text(definition));
+        DtoValues.text(definition),
+        DtoValues.text(partitionKey));
   }
 }

@@ -88,6 +88,7 @@ public class TableDefinitionWriter {
             TableDefinitionTemplates.tableInfo(content.table(), content.annotation()), // テーブル情報
             TableDefinitionTemplates.viewpoints(content.viewpoints(), content.baseInfo()), // 所属する観点
             TableDefinitionTemplates.columns(content.columns(), content.annotation()), // カラム情報
+            TableDefinitionTemplates.partitions(content.table(), content.partitions()), // パーティション情報
             TableDefinitionTemplates.view(content.table()), // View情報
             TableDefinitionTemplates.indexes(content.indexes()), // インデックス情報
             TableDefinitionTemplates.constraints(content.constraints()), // 制約情報

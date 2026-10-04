@@ -4,16 +4,17 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL|testdb|2026/10/04|
 
 ## トリガー一覧
 
 | No. | スキーマ名 | テーブル名 | トリガー名 | タイミング | イベント | 実行関数 |
 |:---|:---|:---|:---|:---|:---|:---|
-|1|sample|employee|trg_employee_audit|AFTER|INSERT/DELETE/UPDATE|sample.log_employee_change|
-|2|sample|employee|trg_employee_set_updated_at|BEFORE|UPDATE|sample.set_updated_at|
-|3|sample|employee_directory_view|trg_employee_directory_insert|INSTEAD OF|INSERT|sample.employee_directory_insert|
-|4|sample|project_assignment|trg_project_assignment_truncate|AFTER|TRUNCATE|sample.notify_truncate|
+|1|sample|attendance|trg_attendance_check_work_minutes|BEFORE|INSERT/UPDATE|sample.check_work_minutes|
+|2|sample|employee|trg_employee_audit|AFTER|INSERT/DELETE/UPDATE|sample.log_employee_change|
+|3|sample|employee|trg_employee_set_updated_at|BEFORE|UPDATE|sample.set_updated_at|
+|4|sample|employee_directory_view|trg_employee_directory_insert|INSTEAD OF|INSERT|sample.employee_directory_insert|
+|5|sample|project_assignment|trg_project_assignment_truncate|AFTER|TRUNCATE|sample.notify_truncate|
 
 ___
 
