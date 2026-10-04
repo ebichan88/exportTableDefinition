@@ -4,6 +4,26 @@ cli（`cli/`）の`com.export_table_definition` 配下の全パッケージと�
 MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）のパッケージは[mcp-server.md](./mcp-server.md)を参照。
 役割の全体像は先に [overview.md](./overview.md)、ドメインの概念同士の関係・用語は [domain-model.md](./domain-model.md) を参照。
 
+## 命名
+
+クラス名の接尾辞で役割を表す。名前の本体（何についてのクラスか）は[domain-model.md の用語集](./domain-model.md)の用語に揃え、
+接尾辞（どんな形のクラスか）は次の表に揃える。新しい種類のクラスで当てはまる接尾辞が無い場合は、既存の接尾辞を流用せず、
+役割をそのまま表す名前にする（例: `TableNamePatterns`・`NodeLimit`）。
+「置き場所」の列は`ArchitectureTest`で検査している（✓の行）。
+
+| 接尾辞 | 役割 | 置き場所 | 検査 | 例 |
+|---|---|---|---|---|
+| `…Entity` | DBから取得したメタ情報1件のrecord | `domain.model.*` | ✓ | `TableEntity`・`ColumnEntity` |
+| 複数形 | エンティティの集合（ファーストクラスコレクション）。検索・振り分けのメソッドを持つ | `domain.model.*` | | `Tables`・`ForeignKeys`・`Triggers` |
+| `…Dto` | 層の境界で受け渡すだけの形（SQLの結果・コントローラーの処理結果） | `infrastructure.db.repository.dto`・`presentation.dto` | ✓ | `ColumnDto`・`ResultDto` |
+| `…Repository` | 外部（DB・ファイル）とのやり取り。インタフェースはdomain、実装はinfrastructure | `domain.repository`／`infrastructure.*.repository` | ✓ | `TableDefinitionRepository`・`PostgresTableDefinitionRepository` |
+| `…Usecase`・`…Request` | ユースケースと、その入力をまとめたrecord | `application` | ✓ | `ExportTableDefinitionUsecase`・`ExportTableDefinitionRequest` |
+| `…Writer` | 何を・どの順で・どのファイルに書くかの段取り | `domain.service.*` | ✓ | `ErDiagramWriter`・`SchemaSnapshotWriter` |
+| `…Templates` | Markdownの行・セクションの組み立て（副作用の無いstaticメソッド） | `domain.service.writer.*`（対応するWriterと同じサブパッケージ。種別をまたぐ部品は`template`） | ✓ | `ErDiagramTemplates` |
+| `…Locations` | 出力物の配置・ファイル名の規則 | `domain.service.path` | ✓ | `DocumentLocations`・`SnapshotLocations` |
+| `…Resolver` | 出力先パスの解決（インタフェースと実装） | `domain.service.path`／`infrastructure.path` | | `OutputPathResolver`・`DefaultOutputPathResolver` |
+| `…Module` | Guiceの束縛定義 | `config.module` | | `ExportTableDefinitionModule` |
+
 ## エントリーポイント（`com.export_table_definition`直下）
 
 | クラス | 役割 |
@@ -163,3 +183,5 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 （`application`, `config`, `domain`, `infrastructure`, `presentation`, `testsupport`）。
 `testsupport`にはテスト用のビルダー・フィクスチャ等の共通部品を置く
 （`MarkdownAssert`、`EntityFixtures`、`ForeignKeyFixtures`など）。
+直下の`ArchitectureTest`は、レイヤーの依存方向・`shared.exception`の制約・`domain.model`配下の循環・
+接尾辞とパッケージの対応（[命名](#命名)）等の構造の規約をArchUnitで検査する。
