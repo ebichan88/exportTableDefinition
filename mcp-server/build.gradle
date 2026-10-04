@@ -1,4 +1,5 @@
 plugins {
+    id 'jacoco'
     id 'com.github.johnrengelman.shadow'
 }
 
@@ -39,4 +40,43 @@ test {
     systemProperty 'mcpServerJar', tasks.named('shadowJar').get().archiveFile.get().asFile.absolutePath
     // ベースライン（cliが出力したサンプルのスナップショット）を、形式の互換を確かめる契約テストの入力にする
     systemProperty 'sampleSnapshotDir', rootProject.file('docs/sample/postgres/output/snapshot').absolutePath
+    finalizedBy jacocoTestReport
 }
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+
+// 検索・関連のたどりのルールを持つcatalogのみ、単体テストのカバレッジに最低基準を設ける（cliのドメイン層と同じ考え方）。
+// 現状の実績（line 99%・branch 92%）を下回ったら気づけるよう、cliと同じく実績より少し低い値を基準にする
+jacocoTestCoverageVerification {
+    dependsOn test
+    // 対象のパッケージは検査するクラスの範囲で絞る。BUNDLEのincludesはクラスではなくバンドル（プロジェクト）名に
+    // 照合されるため、クラスのパターンを書くとルールがどのクラスにも当てはまらず、基準を下回っても失敗しない
+    classDirectories.setFrom(sourceSets.main.output.classesDirs.collect {
+        fileTree(it) { include 'com/export_table_definition/mcp/catalog/**' }
+    })
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                minimum = 0.95
+            }
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.85
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification

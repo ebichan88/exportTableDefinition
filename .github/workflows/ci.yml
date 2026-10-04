@@ -26,7 +26,7 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      # build（test含む）の中で、ドメイン層のカバレッジがAGENTS.mdに定めた基準を下回ると
+      # build（test含む）の中で、cliのドメイン層・mcp-serverのcatalogのカバレッジが各build.gradleに定めた基準を下回ると
       # jacocoTestCoverageVerificationが失敗し、buildごと失敗する。
       # javadocは、doclintで壊れたJavadoc（タグの誤り・参照先の無いリンク等）を検知するために実行する
       - name: Build and run tests
@@ -48,14 +48,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-coverage-report
-          path: cli/build/reports/jacoco/test/html/
+          path: |
+            cli/build/reports/jacoco/test/html/
+            mcp-server/build/reports/jacoco/test/html/
 
       # PRに単体テストのカバレッジをコメントする（forkからのPRはGITHUB_TOKENが読み取り専用のため投稿できない）
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: madrapps/jacoco-report@v1.7.1
         with:
-          paths: cli/build/reports/jacoco/test/jacocoTestReport.xml
+          paths: cli/build/reports/jacoco/test/jacocoTestReport.xml,mcp-server/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           title: カバレッジレポート（単体テスト）
           update-comment: true

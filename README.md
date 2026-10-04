@@ -790,10 +790,11 @@ PRではGitHub Actions（`.github/workflows/ci.yml`）でこれらのテスト�
 gradlew jacocoTestReport
 ```
 
-でHTMLレポート（`cli/build/reports/jacoco/test/html/index.html`）を生成できる。
-また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、ドメイン層
-（`com.export_table_definition.domain`配下）の単体テストカバレッジがline 95%・branch 85%を下回ると
-ビルドが失敗する（結合テストは対象外。基準は`cli/build.gradle`の`jacocoTestCoverageVerification`で定義）。
+でHTMLレポート（`cli/build/reports/jacoco/test/html/index.html`・`mcp-server/build/reports/jacoco/test/html/index.html`）を生成できる。
+また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、cliのドメイン層
+（`com.export_table_definition.domain`配下）とMCPサーバーの`catalog`（`com.export_table_definition.mcp.catalog`配下）の
+単体テストカバレッジが、それぞれline 95%・branch 85%を下回るとビルドが失敗する
+（結合テスト・MCPサーバーのE2Eテストは対象外。基準は各サブプロジェクトの`build.gradle`の`jacocoTestCoverageVerification`で定義）。
 PRではGitHub ActionsがカバレッジレポートをArtifactとしてアップロードし、PRへの概要コメントも投稿する。
 
 ### Javadoc

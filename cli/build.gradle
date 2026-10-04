@@ -63,10 +63,13 @@ jacocoTestReport {
 // 現状の実績（line 99%・branch 95%超）を下回ったら気づけるよう、実績より少し低い値を基準にする
 jacocoTestCoverageVerification {
     dependsOn test
+    // 対象のパッケージは検査するクラスの範囲で絞る。BUNDLEのincludesはクラスではなくバンドル（プロジェクト）名に
+    // 照合されるため、クラスのパターンを書くとルールがどのクラスにも当てはまらず、基準を下回っても失敗しない
+    classDirectories.setFrom(sourceSets.main.output.classesDirs.collect {
+        fileTree(it) { include 'com/export_table_definition/domain/**' }
+    })
     violationRules {
         rule {
-            element = 'BUNDLE'
-            includes = ['com.export_table_definition.domain.*']
             limit {
                 counter = 'LINE'
                 minimum = 0.95
