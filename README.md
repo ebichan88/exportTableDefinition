@@ -13,7 +13,7 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 | 各テーブル定義書 | カラム・インデックス・制約・外部キー情報など（PostgreSQLの場合はトリガー情報も） |
 | ER図 | テーブル間の外部キー関係を表すMermaid記法の図（テーブル単位・スキーマ単位の2種類） |
 | 観点ごとのページ・観点一覧 | サイドカーYAMLで宣言した業務ドメイン別の観点（「受注管理」等）ごとのER図と所属テーブル。[詳細](#観点viewpoints) |
-| PostgreSQL固有オブジェクトの一覧・個別ページ | 関数・プロシージャ、シーケンス、ユーザー定義型（ENUM等） |
+| 追加オブジェクトの一覧・個別ページ | 関数・プロシージャ、シーケンス、ユーザー定義型（ENUM等） |
 | スキーマのスナップショット | 上記と同じ情報を機械可読なJSON Lines形式で構造化したもの。[詳細](#スキーマのスナップショットjson-lines) |
 
 あわせて、出力したスナップショットをAI（Claude Code等）から検索できるようにするMCPサーバーを同梱しています。
@@ -24,13 +24,8 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 ### 対象DBMS
 
 * PostgreSQL（13以上。パーティション表の外部キー・トリガーが親から子へ複製されたものを見分けるため、13以上の列を参照します）
-* Oracle（一部制限あり）
-    * Oracleの場合は、以下の項目の出力が不可
-        * デフォルト値
-        * view／materialized_viewのソース
-        * Check制約の定義
-        * トリガー／関数・プロシージャ／シーケンス／ユーザー定義型（ENUM等）
-        * パーティション情報
+* Oracle（12c以上）
+    * Oracle固有の扱いは[Oracleの場合](#oracleの場合)を参照
 
 ## Getting Started（ビルド不要）
 
@@ -113,7 +108,7 @@ annotationPath=./conf/annotations.yml
 | `outputPath` | テーブル定義の出力先ディレクトリのパス（存在しない場合は作成する） | `./output` | 既存のファイル（ディレクトリではないもの）を指すパス（`--check`でも誤りとする）。このほか、書き込めない場合は実行時に失敗する |
 | `chunkSize` | 詳細情報をまとめて取得・出力するテーブル数の上限（整数。0以下を指定するとスキーマ単位で分割しない） | `3000` | 整数として解釈できない値 |
 | `erDiagramMaxNodes` | スキーマ別ER図1枚に描画するテーブル数の上限（整数。0以下を指定すると上限なし） | `80` | 整数として解釈できない値 |
-| `outputObjects` | 出力対象とするPostgreSQL固有オブジェクトの種別（`trigger`・`function`・`sequence`・`type`。カンマ区切りで複数指定可。後述） | 全種別 | 左記以外の値 |
+| `outputObjects` | 出力対象とする追加オブジェクトの種別（`trigger`・`function`・`sequence`・`type`。カンマ区切りで複数指定可。後述） | 全種別 | 左記以外の値 |
 | `annotationPath` | 手動付帯情報・論理リレーション・観点を記述したサイドカーYAMLのパス（後述） | マージしない | 存在しないファイル、YAMLとして読めないファイル |
 
 * すべての項目は省略できます。キーを書かない場合と値を空白にした場合は、同じ「未指定」として扱います。
@@ -126,7 +121,7 @@ Markdownのドキュメントに加えて、同じ取得結果から構造化し
 `outputPath`配下の`snapshot/`へ出力します。jq等での機械処理や、プルリクエストでのスキーマ変更のレビュー（git diff）、
 `--check`モードでの差分検知に利用できます。形式は[スキーマのスナップショット（JSON Lines）](#スキーマのスナップショットjson-lines)を参照してください。
 
-`outputObjects`は、PostgreSQL固有の追加オブジェクト（トリガー・関数/プロシージャ・シーケンス・ユーザー定義型）のうち、
+`outputObjects`は、追加オブジェクト（トリガー・関数/プロシージャ・シーケンス・ユーザー定義型）のうち、
 出力したい種別だけを指定するための設定です。指定できる値は以下のとおりで、`table`（テーブル定義書・ER図）は
 常に出力されるため指定対象に含まれません。
 
@@ -139,7 +134,6 @@ Markdownのドキュメントに加えて、同じ取得結果から構造化し
 
 例えば、テーブル定義とER図のみが必要で関数・プロシージャは不要な場合は、`outputObjects=trigger,sequence,type`のように
 不要な種別（この例では`function`）を除いて指定してください。空白のまま（未指定）の場合は、従来どおり全種別が出力されます。
-Oracle接続時はこれらの追加オブジェクトがそもそも出力されないため、`outputObjects`の指定は無視されます。
 
 `table`には完全一致のテーブル名だけでなく、以下の記法も指定できます（`schema`はスキーマ名の完全一致のみ対応）。
 
@@ -437,15 +431,15 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
    ├─erDiagramList_{DB名}.md
    ├─viewpointList_{DB名}.md         ・・・ 観点を宣言した場合のみ
    ├─viewpoint_{DB名}_{識別子}.md
-   ├─triggerList_{DB名}.md           ・・・ PostgreSQLのみ
-   ├─functionList_{DB名}.md          ・・・ PostgreSQLのみ
-   ├─sequenceList_{DB名}.md          ・・・ PostgreSQLのみ
-   ├─typeList_{DB名}.md              ・・・ PostgreSQLのみ
+   ├─triggerList_{DB名}.md
+   ├─functionList_{DB名}.md
+   ├─sequenceList_{DB名}.md
+   ├─typeList_{DB名}.md
    └─{スキーマ名}/
       ├─{テーブル区分}/{物理テーブル名}.md ・・・ テーブル定義書
-      ├─function/{関数名}.md          ・・・ PostgreSQLのみ
-      ├─sequence/{シーケンス名}.md     ・・・ PostgreSQLのみ
-      └─type/{型名}.md                ・・・ PostgreSQLのみ
+      ├─function/{関数名}.md
+      ├─sequence/{シーケンス名}.md
+      └─type/{型名}.md
 ```
 
 以降の節に記載するファイル名は、この`{DB名}/`ディレクトリからの相対的なファイル名です
@@ -549,7 +543,7 @@ ER図の描画・分割・フォールバックの規則は、このセクショ
 * 観点は人が選んだテーブルのまとまりのため、スキーマ別ER図のようなグループ分割は行いません。ER図に描画するテーブル数が`erDiagramMaxNodes`を超える場合の扱いは[ER図の出し分け](#er図の出し分け)を参照してください。
 * 所属テーブルの一覧が3000行を超える場合は、テーブル一覧と同様に別ファイルへ分割します。
 
-### PostgreSQL固有の出力対象
+### 追加の出力対象（トリガー・関数等）
 
 PostgreSQLの場合は、テーブル定義に加えて以下のオブジェクトも出力します。
 
@@ -563,7 +557,7 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 各一覧（`functionList`／`sequenceList`／`typeList`／`triggerList`）への導線は、`tableList_{DB名}.md` の
 「関連ドキュメント」セクションに集約しています（対象が存在するカテゴリのみリンクを表示します）。
 
-なお、これらの追加オブジェクトの出力はPostgreSQL専用です。Oracle接続時は出力されません。
+上の表の取得元はPostgreSQLのものです。Oracleでの扱いは[Oracleの場合](#oracleの場合)を参照してください。
 また、関数・プロシージャ・シーケンス・ユーザー定義型はスキーマ単位のオブジェクトのため、
 `table`（出力対象テーブル）による絞り込みの対象外です（`schema`による絞り込みのみ適用されます）。
 
@@ -588,7 +582,20 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 * スナップショットには、パーティションキー（`partitionKey`）だけを含め、個々のパーティションは含めません。`pg_partman`等でパーティションを自動的に追加する運用でも、`--check`が追加のたびに差分を報告しないようにするためです。パーティションの追加で変わるのは、親の「パーティション情報」（Markdown）だけです。
 * 旧来の継承（`INHERITS`）は対象外で、親子とも通常のテーブルとして出力します。
 * **この機能を含むバージョンへ更新した後の初回の`--check`は、パーティション表を持つDBで差分を報告します**（親へのカラム・インデックスの追加、子のパーティションの消滅、`partitionKey`の追加）。ドキュメントとスナップショットを再生成してコミットしてください。
-* Oracleは、パーティションが`ALL_TABLES`に別のテーブルとして現れないため、パーティション情報の出力に対応していません。
+
+### Oracleの場合
+
+テーブル・ビュー等に加えて、PostgreSQLと同じ種別の追加オブジェクトとパーティション情報を出力します。Oracleの仕組みに合わせて、以下のように扱います。
+
+| 対象 | 出力 |
+|---|---|
+| トリガー | テーブル・ビューのトリガー（スキーマ・データベースのイベントトリガーは対象外）。本体のPL/SQLはトリガーの中に書かれ、呼び出す関数が無いため、「実行関数」は空欄です。定義には宣言部（`CREATE OR REPLACE TRIGGER ... FOR EACH ROW`とWHEN句）を出力します。 |
+| 関数・プロシージャ | 単独の関数・プロシージャと、パッケージ内のサブプログラム（`パッケージ名.サブプログラム名`の名前。オーバーロードには番号を振ります）。サブプログラムの定義には、パッケージの仕様部と本体を出力します。 |
+| シーケンス | IDENTITY列が自動で作るシーケンス（`ISEQ$$_...`）は出力しません（名前が環境ごとに変わるため。IDENTITY列はカラムのデフォルト値に`GENERATED ... AS IDENTITY`と出力します）。開始値はディクショナリに残らないため空欄です。 |
+| ユーザー定義型 | オブジェクト型（属性の一覧）と、コレクション型（`VARRAY(n) OF ...`・`TABLE OF ...`）。 |
+| パーティション | テーブル一覧には元からパーティション表だけが並びます。パーティション表の「パーティション情報」に、パーティションキー（`RANGE (WORK_DATE)`等）と、パーティション・サブパーティションを位置の順に、境界（`VALUES LESS THAN (...)`・`VALUES (...)`・`DEFAULT`）とともに載せます。HASHパーティションは境界を持たないため空欄です。 |
+
+* **この機能を含むバージョンへ更新した後の初回の`--check`は、Oracleのデータベースで差分を報告します**（関数・シーケンス・ユーザー定義型・トリガー・カラムのデフォルト値・`partitionKey`の追加）。ドキュメントとスナップショットを再生成してコミットしてください。
 
 ### スキーマのスナップショット（JSON Lines）
 
@@ -705,15 +712,14 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 | `get_function` | `function`（必須）、`schema`・`database` | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）を、同名のもの（オーバーロード）をまとめて返す（定義本体は返さない）。関数を実行するトリガー（`calledByTriggers`）も返す |
 | `list_sequences` | `query`・`schema`・`database`・`limit`（既定100、最大500）・`offset` | シーケンスの名前と所有カラムを返す |
 | `get_sequence` | `sequence`（必須）、`schema`・`database` | シーケンスの定義（増分・最小値・最大値・キャッシュ・開始値・循環の有無・所有カラム）と、デフォルト値（`nextval`）で採番に使うカラム（`usedByColumns`）を返す |
-| `list_types` | `query`・`category`（`ENUM`／`COMPOSITE`／`DOMAIN`／`RANGE`）・`schema`・`database`・`limit`（既定100、最大500）・`offset` | ユーザー定義型の名前と種別を返す |
+| `list_types` | `query`・`category`（PostgreSQLは`ENUM`／`COMPOSITE`／`DOMAIN`／`RANGE`、Oracleは`OBJECT`／`VARRAY`／`NESTED TABLE`）・`schema`・`database`・`limit`（既定100、最大500）・`offset` | ユーザー定義型の名前と種別を返す |
 | `get_type` | `type`（必須）、`schema`・`database` | ユーザー定義型の定義（ENUMの値の一覧・複合型の属性等）と、型を使うカラム（`usedByColumns`）を返す |
 | `list_triggers` | `schema`・`database`・`limit`（既定100、最大500）・`offset` | トリガーを、テーブル・タイミング・イベント・実行単位・実行される関数とともに、テーブルをまたいで返す |
 
 * テーブル名は大文字小文字を区別しません。`スキーマ名.テーブル名`の形でも指定できます。
 * 同名のテーブルが複数のスキーマにある場合・見つからない場合は、候補を示すエラーを返します（AIが引数を直して呼び直します）。
 * 一覧を返すツールは、件数が`limit`を超える場合に続きの`offset`（`nextOffset`）を返します。
-* 関数・シーケンス・ユーザー定義型・トリガーはPostgreSQLのみが対象です（Oracleのスナップショットでは0件になります）。
-  `outputObjects`で出力対象から外した種別も0件になります。
+* `outputObjects`で出力対象から外した種別は0件になります。
 * 関数・プロシージャの定義本体は、AIのコンテキストを圧迫するため返しません。
 * `get_table`の`sections`を指定しても、テーブル名・論理名・区分・説明・備考は常に返します。`columns`を指定した場合は、`sections`に関わらず指定したカラムを返します。
 
@@ -737,7 +743,7 @@ exportTableDefinition
 │      │        └─ com
 │      │            └─ export_table_definition
 │      ├─ test     ・・・ 単体テスト（DB不要）
-│      └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQLを使う）
+│      └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQL・Oracleを使う）
 ├─mcp-server       ・・・ スナップショットをAIから検索するMCPサーバー（Gradleのサブプロジェクト）
 │  └─build
 │      └─libs
@@ -772,7 +778,18 @@ gradlew integrationTest
 
 結合テストは`docs/sample/postgres/ddl.sql`を流し込んだDBに対して、各SQLの取得結果と、出力全体がコミット済みのベースライン
 （`docs/sample/postgres/output`）と一致することを確かめる（基本情報の作成日は比較しない）。出力仕様を意図して変えた場合は、
-ベースラインを出力し直してコミットする。PRではGitHub Actions（`.github/workflows/ci.yml`）で両方のテストが実行される。
+ベースラインを出力し直してコミットする。
+
+Oracle用のmapperは、Docker上の使い捨てのOracle Database Free（`gvenzl/oracle-free`。イメージ約1.3GB・メモリ2GB程度）に対して確かめる。
+PostgreSQLより重いため、さらに別のタスクに分けてある。
+
+```
+gradlew oracleIntegrationTest
+```
+
+`docs/sample/oracle/ddl.sql`（PostgreSQL版と同じスキーマ構成をOracleで作るDDL）を流し込んだDBに対して、各SQLの取得結果と、
+出力全体がベースライン（`docs/sample/oracle/output`）と一致することを確かめる。
+PRではGitHub Actions（`.github/workflows/ci.yml`）でこれらのテストがすべて実行される。
 
 #### カバレッジ
 

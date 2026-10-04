@@ -160,11 +160,12 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 [cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
 両リポジトリは共通処理を `AbstractTableDefinitionRepository` に持つ。
 
-PostgreSQL固有オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は
-`domain.model.target.OutputObjectType` で種別ごとに絞り込み可能。Oracle接続時はこれらの取得・出力自体が行われない。
+追加オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は
+`domain.model.target.OutputObjectType` で種別ごとに絞り込み可能。両DBとも同じエンティティへ変換し、DBによる違い
+（Oracleのパッケージ内のサブプログラムを`パッケージ名.名前`で並べる等）はSQLで吸収する。
 
-パーティション表の子のパーティション（`selectPartitionList`）の出力もPostgreSQL専用で、Oracleの`OracleTableDefinitionRepository`は
-空リストを返す（`ALL_TABLES`にパーティションが別のテーブルとして現れないため、テーブル一覧からの除外も不要）。
+パーティション表の子のパーティション（`selectPartitionList`）は、PostgreSQLでは`pg_inherits`をたどった階層、Oracleではパーティションと
+サブパーティションの2階層を返す（Oracleは`ALL_TABLES`にパーティションが別のテーブルとして現れないため、テーブル一覧からの除外も不要）。
 
 なお論理リレーション（サイドカーYAML由来）はDBに依存しないため、PostgreSQL／Oracleの双方で利用できる。
 

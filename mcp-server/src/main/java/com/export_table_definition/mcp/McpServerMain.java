@@ -33,7 +33,7 @@ public final class McpServerMain {
           + "get_tableで定義を取得する（必要な項目だけをsections・columnsで指定すると結果が小さくなる）。"
           + "カラム名からテーブルを探すときはfind_columns、JOINの条件はget_related_tables"
           + "（外部キーと、DBに制約の無い論理リレーション）、直接つながらないテーブル同士はfind_join_pathを使う。"
-          + "関数・シーケンス・ユーザー定義型・トリガーは、list_*で探してget_*で取得する（PostgreSQLのみ）。";
+          + "関数・シーケンス・ユーザー定義型・トリガーは、list_*で探してget_*で取得する。";
 
   private McpServerMain() {}
 

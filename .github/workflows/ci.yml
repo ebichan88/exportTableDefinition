@@ -1,7 +1,7 @@
 name: CI
 
-# PRごとに、単体テスト・フォーマットの検査（build）と、Docker上の実DBに対する結合テスト（integrationTest）を行う。
-# docs/sample/postgres配下（DDL・ベースライン）は結合テストの入力のため、docsの変更でも実行する
+# PRごとに、単体テスト・フォーマットの検査（build）と、Docker上の実DBに対する結合テスト（integrationTest・oracleIntegrationTest）を行う。
+# docs/sample配下（DDL・ベースライン）は結合テストの入力のため、docsの変更でも実行する
 on:
   pull_request:
   push:
@@ -59,3 +59,29 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: カバレッジレポート（単体テスト）
           update-comment: true
+
+  # Oracleの結合テストはイメージ（約1.3GB）の取得とDBの起動に時間がかかるため、別のジョブで並行して実行する
+  oracle-integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Run Oracle integration tests
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :cli:oracleIntegrationTest --console=plain
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-test-reports
+          path: cli/build/reports/tests/oracleIntegrationTest/

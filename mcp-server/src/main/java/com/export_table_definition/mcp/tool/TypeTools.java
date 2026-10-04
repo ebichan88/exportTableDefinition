@@ -26,7 +26,9 @@ final class TypeTools {
   private static final int DEFAULT_LIMIT = 100;
   private static final int MAX_LIMIT = 500;
 
-  private static final List<String> CATEGORIES = List.of("ENUM", "COMPOSITE", "DOMAIN", "RANGE");
+  /** PostgreSQLの種別（ENUM〜RANGE）とOracleの種別（OBJECT〜NESTED TABLE） */
+  private static final List<String> CATEGORIES =
+      List.of("ENUM", "COMPOSITE", "DOMAIN", "RANGE", "OBJECT", "VARRAY", "NESTED TABLE");
 
   private final SchemaCatalog catalog;
 
@@ -39,8 +41,8 @@ final class TypeTools {
     return List.of(
         readOnlyTool(
             LIST_TYPES,
-            "ユーザー定義型（ENUM・複合型・ドメイン・範囲型）の名前と種別を、DB名・スキーマ名・名前の順に一覧で返す。"
-                + "PostgreSQLのみ（Oracleのスナップショットでは0件）",
+            "ユーザー定義型（PostgreSQLのENUM・複合型・ドメイン・範囲型、Oracleのオブジェクト型・コレクション型）の名前と種別を、"
+                + "DB名・スキーマ名・名前の順に一覧で返す",
             objectSchema(
                 withPageProperties(
                     Map.of(
@@ -58,7 +60,8 @@ final class TypeTools {
             this::listTypes),
         readOnlyTool(
             GET_TYPE,
-            "ユーザー定義型の定義を返す。ENUMは値の一覧、複合型は属性と型、ドメインは元の型と制約を含む。" + "アプリ側で列挙型・定数を書くときに使う",
+            "ユーザー定義型の定義を返す。ENUMは値の一覧、複合型・オブジェクト型は属性と型、ドメインは元の型と制約、"
+                + "コレクション型は要素の型を含む。アプリ側で列挙型・定数を書くときに使う",
             objectSchema(
                 namedObjectProperties("type", "型名（大文字小文字を区別しない）。スキーマ名.型名の形でもよい", Map.of()),
                 List.of("type")),

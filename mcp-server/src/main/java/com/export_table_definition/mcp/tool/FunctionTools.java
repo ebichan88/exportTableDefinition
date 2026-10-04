@@ -45,8 +45,7 @@ final class FunctionTools {
     return List.of(
         readOnlyTool(
             LIST_FUNCTIONS,
-            "関数・プロシージャの名前・種別・引数・戻り値・言語を、DB名・スキーマ名・名前の順に一覧で返す（定義本体は返さない）。"
-                + "同名の関数（オーバーロード）はそれぞれ返す。PostgreSQLのみ（Oracleのスナップショットでは0件）",
+            "関数・プロシージャの名前・種別・引数・戻り値・言語を、DB名・スキーマ名・名前の順に一覧で返す（定義本体は返さない）。" + "同名の関数（オーバーロード）はそれぞれ返す",
             objectSchema(
                 withPageProperties(
                     Map.of(

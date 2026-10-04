@@ -1,0 +1,2 @@
+{"schema":"SAMPLE","name":"ADDRESS_TYPE","category":"OBJECT","definition":"STREET VARCHAR2(100), CITY VARCHAR2(50), POSTAL_CODE VARCHAR2(10)"}
+{"schema":"SAMPLE","name":"PHONE_NUMBER_LIST","category":"VARRAY","definition":"VARRAY(5) OF VARCHAR2(20)"}

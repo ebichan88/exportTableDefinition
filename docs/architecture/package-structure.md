@@ -65,7 +65,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 | `domain.model.viewpoint` | `Viewpoint`, `Viewpoints` | 観点（業務ドメイン別にテーブルをまとめる切り口）とその集合。`Viewpoint.of()`が識別子の形式・所属テーブルの指定（`TableNamePatterns`）を検証し、`resolve()`で1観点分の出力内容を求める。`Viewpoints.of(TableEntity)`でテーブルから所属する観点を逆引きする |
 | | `ViewpointContent` | 1観点分の出力内容（所属テーブル・所属テーブル同士の関連・観点外のテーブルとの関連）のrecord |
 | `domain.model.target` | `TableScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は`TableNamePatterns`が行う） |
-| | `OutputObjectType` | PostgreSQL固有の出力対象オブジェクト種別のenum。`parse()`で設定値を解釈する（未指定なら全種別、未知の種別名は例外） |
+| | `OutputObjectType` | 追加オブジェクト（テーブル以外）の出力対象の種別のenum。`parse()`で設定値を解釈する（未指定なら全種別、未知の種別名は例外） |
 | | `ExportTargets` | 一括取得する軽量な出力対象の情報（基本情報・テーブル一覧・関連・トリガー・パーティション・関数/シーケンス/型の一覧・手動付帯情報・観点）の組 |
 | | `TableDefinitionContent` | 1テーブル分の出力内容を束ねるrecord（`assemble()`で`TableDetail`と一括取得分から組み立て）。出力先は持たない |
 | | `ConsistencyNotice` | 出力対象のテーブルと関連・付帯情報・観点を突き合わせた通知1件分の値オブジェクト（種類・メッセージ。重要度は種類が決める） |
