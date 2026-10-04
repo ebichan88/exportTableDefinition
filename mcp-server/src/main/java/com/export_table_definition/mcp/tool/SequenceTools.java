@@ -36,6 +36,7 @@ final class SequenceTools {
     return List.of(
         readOnlyTool(
             LIST_SEQUENCES,
+            "シーケンス一覧",
             "シーケンスの名前と所有カラム（テーブル名.カラム名）を、DB名・スキーマ名・名前の順に一覧で返す",
             objectSchema(
                 withPageProperties(
@@ -49,6 +50,7 @@ final class SequenceTools {
             this::listSequences),
         readOnlyTool(
             GET_SEQUENCE,
+            "シーケンス定義取得",
             "シーケンスの定義（増分・最小値・最大値・キャッシュ・開始値・循環の有無・所有カラム）と、"
                 + "デフォルト値（nextval）で採番に使うカラム（usedByColumns）を返す",
             objectSchema(

@@ -48,6 +48,7 @@ final class RelationTools {
     return List.of(
         readOnlyTool(
             GET_RELATED_TABLES,
+            "関連テーブル取得",
             "テーブルとつながるテーブルを、外部キーと論理リレーション（DBに制約が無い関連）の両方からたどって返す。"
                 + "JOINの条件（どのカラム同士でつながるか）を調べるときに使う。"
                 + "cardinalityは参照先（to）1行に対する参照元（from）の行数を表す（例: ONE_TO_MANY）",
@@ -65,6 +66,7 @@ final class RelationTools {
             this::getRelatedTables),
         readOnlyTool(
             FIND_JOIN_PATH,
+            "JOIN経路探索",
             "2つのテーブルをつなぐ最短のJOIN経路を、外部キーと論理リレーションを向きを問わずたどって返す。"
                 + "経路上の各段で、どのカラム同士でつながるかを返す。直接の関連が無いテーブル同士をJOINするときに使う。"
                 + "同じ長さの経路が複数ある場合はすべて（limitまで）返す",

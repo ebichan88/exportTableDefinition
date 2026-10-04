@@ -32,6 +32,7 @@ final class TriggerTools {
     return List.of(
         readOnlyTool(
             LIST_TRIGGERS,
+            "トリガー一覧",
             "トリガーを、テーブル・タイミング・イベント・実行単位・実行される関数とともに、テーブルをまたいで一覧で返す。"
                 + "1テーブルのトリガーの定義はget_table（sections: triggers）で取得できる",
             objectSchema(

@@ -20,6 +20,7 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -84,7 +85,21 @@ class TableDefinitionToolsTest {
                       "",
                       "trigger",
                       "plpgsql",
-                      "{}")),
+                      "{}"),
+                  function(
+                      "withhold_tax",
+                      "p_price numeric",
+                      "{\"schema\":\"sample\",\"name\":\"withhold_tax\",\"kind\":\"FUNCTION\","
+                          + "\"arguments\":\"p_price numeric\",\"result\":\"numeric\",\"language\":\"sql\","
+                          + "\"definition\":\"CREATE FUNCTION withhold_tax(p_price numeric) ...\"}"),
+                  function(
+                      "withhold_tax",
+                      "p_price numeric, p_rate numeric",
+                      "{\"schema\":\"sample\",\"name\":\"withhold_tax\",\"kind\":\"FUNCTION\","
+                          + "\"arguments\":\"p_price numeric, p_rate numeric\",\"result\":\"numeric\","
+                          + "\"language\":\"sql\",\"definition\":\""
+                          + "A".repeat(4500)
+                          + "\"}")),
               List.of(
                   new SequenceEntry(
                       new ObjectKey("testdb", "sample", "employee_id_seq"),
@@ -123,6 +138,9 @@ class TableDefinitionToolsTest {
     assertTrue(
         specifications.stream()
             .allMatch(specification -> specification.tool().annotations().readOnlyHint()));
+    assertTrue(
+        specifications.stream().allMatch(specification -> !specification.tool().title().isBlank()),
+        "MCPクライアントの表示用に、全ツールにtitleを付ける");
     assertEquals(
         List.of("query"), specification("search_tables").tool().inputSchema().get("required"));
   }
@@ -135,7 +153,7 @@ class TableDefinitionToolsTest {
             + "{\"name\":\"archive\",\"tables\":1,\"views\":0,\"materializedViews\":0,"
             + "\"functions\":0,\"sequences\":0,\"types\":0},"
             + "{\"name\":\"sample\",\"tables\":4,\"views\":0,\"materializedViews\":0,"
-            + "\"functions\":3,\"sequences\":1,\"types\":1}]}]}",
+            + "\"functions\":5,\"sequences\":1,\"types\":1}]}]}",
         json(call("list_schemas", Map.of())).toString());
   }
 
@@ -315,6 +333,36 @@ class TableDefinitionToolsTest {
   }
 
   @Test
+  @DisplayName("get_functionは、includeDefinitionを指定すると定義本体を返す。" + "オーバーロードの本体が同じ場合は1つにまとめる")
+  void getFunctionWithSharedDefinition() throws Exception {
+    final JsonNode result =
+        json(call("get_function", Map.of("function", "calc_bonus", "includeDefinition", true)));
+    assertEquals("CREATE FUNCTION ...", result.get("definition").asText());
+    assertFalse(result.get("overloads").get(0).has("definition"));
+    assertFalse(result.get("overloads").get(1).has("definition"));
+
+    final JsonNode withoutDefinition = json(call("get_function", Map.of("function", "calc_bonus")));
+    assertFalse(withoutDefinition.has("definition"), "includeDefinition未指定では返さない");
+  }
+
+  @Test
+  @DisplayName("get_functionは、includeDefinition指定時にオーバーロードの本体が異なる場合はそれぞれ残し、" + "長い場合は切り詰める")
+  void getFunctionWithDifferingDefinitions() throws Exception {
+    final JsonNode result =
+        json(call("get_function", Map.of("function", "withhold_tax", "includeDefinition", true)));
+    assertFalse(result.has("definition"), "本体が異なる場合はオーバーロードごとに返す");
+
+    final JsonNode overloads = result.get("overloads");
+    assertEquals(
+        "CREATE FUNCTION withhold_tax(p_price numeric) ...",
+        overloads.get(0).get("definition").asText());
+
+    final String truncated = overloads.get(1).get("definition").asText();
+    assertTrue(truncated.length() < 4500, "長い本体は切り詰められる");
+    assertTrue(truncated.contains("切り詰め"), truncated);
+  }
+
+  @Test
   @DisplayName("list_sequences・get_sequenceは、シーケンスの所有カラム・定義と、採番に使うカラムを返す")
   void sequences() throws Exception {
     assertEquals(
@@ -375,6 +423,52 @@ class TableDefinitionToolsTest {
     final CallToolResult none = call("get_table", Map.of("table", "invoice"));
     assertTrue(none.isError());
     assertEquals("テーブルinvoiceが見つかりません。search_tablesで探してください。", text(none));
+  }
+
+  @Test
+  @DisplayName("get_tableはtableに配列を指定すると、複数のテーブルをまとめて返す")
+  void getTableMultiple() throws Exception {
+    final JsonNode result =
+        json(call("get_table", Map.of("table", List.of("department", "project"))));
+
+    final JsonNode tables = result.get("tables");
+    assertEquals(2, tables.size());
+    assertEquals("department", tables.get(0).get("name").asText());
+    assertEquals("project", tables.get(1).get("name").asText());
+  }
+
+  @Test
+  @DisplayName("get_tableで配列のうち1つでも解決できない名前があれば、まとめてエラーを返す")
+  void getTableMultipleWithError() {
+    final CallToolResult result =
+        call("get_table", Map.of("table", List.of("department", "invoice", "employee")));
+
+    assertTrue(result.isError());
+    assertTrue(text(result).contains("テーブルinvoiceが見つかりません"), text(result));
+    assertTrue(text(result).contains("テーブルemployeeが複数あります"), text(result));
+  }
+
+  @Test
+  @DisplayName("get_tableでtableを複数指定した場合、columnsは使えない")
+  void getTableMultipleWithColumns() {
+    final CallToolResult result =
+        call(
+            "get_table",
+            Map.of("table", List.of("department", "project"), "columns", List.of("title")));
+
+    assertTrue(result.isError());
+    assertEquals("引数columnsは、tableを1件指定した場合だけ使えます。", text(result));
+  }
+
+  @Test
+  @DisplayName("get_tableでtableの件数が上限を超える場合はエラーにする")
+  void getTableTooMany() {
+    final List<String> names = IntStream.range(0, 11).mapToObj(i -> "t" + i).toList();
+
+    final CallToolResult result = call("get_table", Map.of("table", names));
+
+    assertTrue(result.isError());
+    assertEquals("引数tableは10件までにしてください。 [count=11]", text(result));
   }
 
   @Test

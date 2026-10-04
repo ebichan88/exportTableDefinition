@@ -41,6 +41,7 @@ final class TypeTools {
     return List.of(
         readOnlyTool(
             LIST_TYPES,
+            "ユーザー定義型一覧",
             "ユーザー定義型（PostgreSQLのENUM・複合型・ドメイン・範囲型、Oracleのオブジェクト型・コレクション型）の名前と種別を、"
                 + "DB名・スキーマ名・名前の順に一覧で返す",
             objectSchema(
@@ -60,6 +61,7 @@ final class TypeTools {
             this::listTypes),
         readOnlyTool(
             GET_TYPE,
+            "ユーザー定義型定義取得",
             "ユーザー定義型の定義を返す。ENUMは値の一覧、複合型・オブジェクト型は属性と型、ドメインは元の型と制約、"
                 + "コレクション型は要素の型を含む。アプリ側で列挙型・定数を書くときに使う",
             objectSchema(

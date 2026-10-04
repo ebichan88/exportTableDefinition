@@ -11,12 +11,14 @@ import static com.export_table_definition.mcp.tool.ToolSpecifications.namedObjec
 import static com.export_table_definition.mcp.tool.ToolSpecifications.objectSchema;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.readOnlyTool;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.stringArrayProperty;
+import static com.export_table_definition.mcp.tool.ToolSpecifications.stringOrArrayProperty;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.stringProperty;
 
 import com.export_table_definition.mcp.catalog.ColumnEntry;
 import com.export_table_definition.mcp.catalog.ColumnHit;
 import com.export_table_definition.mcp.catalog.ColumnQuery;
 import com.export_table_definition.mcp.catalog.MatchMode;
+import com.export_table_definition.mcp.catalog.ObjectReference;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchResult;
@@ -28,6 +30,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -58,6 +61,9 @@ final class TableTools {
   private static final int DEFAULT_COLUMN_LIMIT = 50;
   private static final int MAX_COLUMN_LIMIT = 500;
 
+  /** {@code get_table}の{@code table}に配列で指定できる件数の上限 */
+  private static final int MAX_TABLES = 10;
+
   private static final List<String> TABLE_TYPES = List.of("table", "view", "materialized_view");
 
   private final SchemaCatalog catalog;
@@ -71,6 +77,7 @@ final class TableTools {
     return List.of(
         readOnlyTool(
             SEARCH_TABLES,
+            "テーブル検索",
             "テーブルをキーワードで検索する。テーブル名・論理名・説明・カラム名・カラムの論理名を部分一致で探し、"
                 + "一致の強い順に返す（空白区切りの複数語はすべてを含むものだけ）。テーブル名が分からないときに最初に使う",
             objectSchema(
@@ -88,6 +95,7 @@ final class TableTools {
             this::searchTables),
         readOnlyTool(
             LIST_TABLES,
+            "テーブル一覧",
             "テーブル（ビューを含む）の名前・論理名・区分を、DB名・スキーマ名・テーブル名の順に一覧で返す。"
                 + "スキーマにどんなテーブルがあるか眺めるときに使う。キーワードで探す場合はsearch_tablesを使う",
             objectSchema(
@@ -107,23 +115,30 @@ final class TableTools {
             this::listTables),
         readOnlyTool(
             GET_TABLE,
+            "テーブル定義取得",
             "テーブル（ビューを含む）の定義を返す。カラム（型・PK・NOT NULL・デフォルト値・論理名・備考）、"
                 + "インデックス、制約、外部キー、論理リレーション、トリガー、説明・備考を含む。"
-                + "必要な項目だけをsections・columnsで指定すると結果が小さくなる",
+                + "必要な項目だけをsections・columnsで指定すると結果が小さくなる。"
+                + "複数のテーブルをまとめて取得する場合はtableに配列を指定する（最大"
+                + MAX_TABLES
+                + "件。columnsは1件指定したときだけ使える）",
             objectSchema(
                 namedObjectProperties(
                     "table",
-                    TABLE_DESCRIPTION,
+                    stringOrArrayProperty(TABLE_DESCRIPTION + "。配列で複数指定できる（最大" + MAX_TABLES + "件）"),
                     Map.of(
                         "sections",
                         enumArrayProperty(
                             "返す項目（未指定の場合はすべて）。テーブル名・論理名・区分・説明・備考は常に返す", TableSection.fieldNames()),
                         "columns",
-                        stringArrayProperty("返すカラムの名前（大文字小文字を区別しない）。指定するとcolumnsの項目はそのカラムだけになる"))),
+                        stringArrayProperty(
+                            "返すカラムの名前（大文字小文字を区別しない）。指定するとcolumnsの項目はそのカラムだけになる。"
+                                + "tableを複数指定した場合は使えない"))),
                 List.of("table")),
             this::getTable),
         readOnlyTool(
             FIND_COLUMNS,
+            "カラム逆引き",
             "カラム名（物理名・論理名）から、そのカラムを持つテーブルを逆引きする。"
                 + "型・PK・NOT NULLと、外部キー・論理リレーションの参照先も返す。"
                 + "同じ意味のカラムがどのテーブルにあるか、型が揃っているかを調べるときに使う",
@@ -170,16 +185,60 @@ final class TableTools {
   }
 
   private CallToolResult getTable(ToolArguments arguments) {
-    final TableEntry table = resolve(arguments);
+    final List<String> names = arguments.requiredStringList("table", MAX_TABLES);
     final Set<TableSection> sections = sections(arguments);
     final List<String> columns = arguments.optionalStringList("columns");
+    if (names.size() > 1 && !columns.isEmpty()) {
+      throw new InvalidToolArgumentException("引数columnsは、tableを1件指定した場合だけ使えます。");
+    }
+    final List<TableEntry> tables = resolveTables(arguments, names);
+    final List<ObjectNode> outputs =
+        tables.stream().map(table -> buildTableOutput(table, sections, columns)).toList();
+    if (outputs.size() == 1) {
+      return CallToolResult.builder().addTextContent(outputs.get(0).toString()).build();
+    }
+    return ToolResults.json(new GetTableOutput(outputs));
+  }
+
+  /**
+   * 指定された名前をすべて解決するメソッド
+   *
+   * @throws InvalidToolArgumentException 1件でも解決できない名前があれば、その名前すべての失敗（候補を含む）をまとめて返す
+   */
+  private List<TableEntry> resolveTables(ToolArguments arguments, List<String> names) {
+    final String database = arguments.optionalString("database");
+    final String schema = arguments.optionalString("schema");
+    final List<TableEntry> tables = new ArrayList<>();
+    final List<String> errors = new ArrayList<>();
+    for (final String name : names) {
+      try {
+        tables.add(
+            ObjectResolver.resolve(
+                ObjectReference.of(database, schema, name),
+                "テーブル",
+                SEARCH_TABLES,
+                catalog::lookupTable));
+      } catch (InvalidToolArgumentException e) {
+        errors.add(e.getMessage());
+      }
+    }
+    if (!errors.isEmpty()) {
+      throw new InvalidToolArgumentException(String.join("\n", errors));
+    }
+    return tables;
+  }
+
+  /** 1テーブルの結果に、sections・columnsによる絞り込みを反映する */
+  private static ObjectNode buildTableOutput(
+      TableEntry table, Set<TableSection> sections, List<String> columns) {
     final ObjectNode output = ToolResults.readObject(table.json());
     if (!sections.isEmpty()) {
+      final Set<TableSection> effective = EnumSet.copyOf(sections);
       if (!columns.isEmpty()) {
-        sections.add(TableSection.COLUMNS);
+        effective.add(TableSection.COLUMNS);
       }
       for (final TableSection section : TableSection.values()) {
-        if (!sections.contains(section)) {
+        if (!effective.contains(section)) {
           output.remove(section.fieldName());
         }
       }
@@ -187,7 +246,7 @@ final class TableTools {
     if (!columns.isEmpty()) {
       output.set("columns", selectColumns(table, output.path("columns"), columns));
     }
-    return CallToolResult.builder().addTextContent(output.toString()).build();
+    return output;
   }
 
   private CallToolResult findColumns(ToolArguments arguments) {
@@ -202,10 +261,6 @@ final class TableTools {
             hits.size(),
             page.nextOffset(hits.size()),
             page.apply(hits).stream().map(FindColumnsOutput.Column::of).toList()));
-  }
-
-  private TableEntry resolve(ToolArguments arguments) {
-    return ObjectResolver.resolve(arguments, "table", "テーブル", SEARCH_TABLES, catalog::lookupTable);
   }
 
   private static Set<TableSection> sections(ToolArguments arguments) {
@@ -248,6 +303,9 @@ final class TableTools {
     }
     return selected;
   }
+
+  /** {@code get_table}で{@code table}を複数指定した場合の結果（1件の場合はスナップショットの1行をそのまま返す） */
+  record GetTableOutput(List<ObjectNode> tables) {}
 
   /** {@code search_tables}の結果 */
   record SearchTablesOutput(int total, List<Hit> tables) {
