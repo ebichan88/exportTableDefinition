@@ -26,7 +26,13 @@
 
 ```sql
 
--- Oracleは未対応 --
+select
+        p.project_id,
+        p.project_name,
+        count(pa.employee_id) as member_count
+    from sample.project p
+    left join sample.project_assignment pa on pa.project_id = p.project_id
+    group by p.project_id, p.project_name
 
 ```
 

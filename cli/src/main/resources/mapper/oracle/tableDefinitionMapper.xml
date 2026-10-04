@@ -10,8 +10,45 @@
         fetch first 1 rows only
     </select>
 
+    <!-- LONG型の列（ビューのソース・デフォルト値・索引の式等）は、SQLの関数を適用できず（ORA-00932）、
+         DBMS_XMLGENで書き出しても値をエスケープしないため、&や<を含むとXMLの解析に失敗する（ORA-31011）。
+         SQLの中に定義するPL/SQLの関数で、DBMS_SQLにより少しずつ読み出してCLOBにする（32KBを超える値も読める）。
+         問い合わせは1行1列を返し、:p1・:p2・:p3（p3が無ければ:p1・:p2）を条件に取ること -->
+    <sql id="longValueFunction">
+        FUNCTION long_value(p_query VARCHAR2, p1 VARCHAR2, p2 VARCHAR2, p3 VARCHAR2 DEFAULT NULL) RETURN CLOB IS
+            cur INTEGER := DBMS_SQL.OPEN_CURSOR;
+            buf VARCHAR2(32767);
+            buf_len INTEGER;
+            pos INTEGER := 0;
+            result CLOB;
+            ignore INTEGER;
+        BEGIN
+            DBMS_SQL.PARSE(cur, p_query, DBMS_SQL.NATIVE);
+            DBMS_SQL.BIND_VARIABLE(cur, ':p1', p1);
+            DBMS_SQL.BIND_VARIABLE(cur, ':p2', p2);
+            IF p3 IS NOT NULL THEN
+                DBMS_SQL.BIND_VARIABLE(cur, ':p3', p3);
+            END IF;
+            DBMS_SQL.DEFINE_COLUMN_LONG(cur, 1);
+            ignore := DBMS_SQL.EXECUTE(cur);
+            IF DBMS_SQL.FETCH_ROWS(cur) > 0 THEN
+                DBMS_LOB.CREATETEMPORARY(result, TRUE);
+                LOOP
+                    DBMS_SQL.COLUMN_VALUE_LONG(cur, 1, 32767, pos, buf, buf_len);
+                    EXIT WHEN buf_len = 0;
+                    DBMS_LOB.WRITEAPPEND(result, LENGTH(buf), buf);
+                    pos := pos + buf_len;
+                END LOOP;
+            END IF;
+            DBMS_SQL.CLOSE_CURSOR(cur);
+            RETURN result;
+        END;
+    </sql>
+
     <select id="selectAllTableInfo" resultType="TableDto">
-        WITH ora_all_tables AS (
+        WITH
+        <include refid="longValueFunction"/>
+        ora_all_tables AS (
             SELECT
                 COALESCE(t1.OWNER, '') AS schema_name,
                 'table' AS table_type,
@@ -35,7 +72,7 @@
                 'view' AS table_type,
                 COALESCE(REGEXP_REPLACE(vcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t2.VIEW_NAME, '') AS physical_table_name,
-                '-- Oracleは未対応 --' AS definition
+                long_value('SELECT text FROM all_views WHERE owner = :p1 AND view_name = :p2', t2.OWNER, t2.VIEW_NAME) AS definition
             FROM ALL_VIEWS t2
             LEFT OUTER JOIN ALL_TAB_COMMENTS vcom ON t2.OWNER = vcom.OWNER AND t2.VIEW_NAME = vcom.TABLE_NAME
             WHERE t2.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
@@ -51,7 +88,7 @@
                 'materialized_view' AS table_type,
                 COALESCE(REGEXP_REPLACE(mcom.COMMENTS, '\r|\n|\r\n', ''), '') AS logical_table_name,
                 COALESCE(t3.MVIEW_NAME, '') AS physical_table_name,
-                '-- Oracleは未対応 --' AS definition
+                long_value('SELECT query FROM all_mviews WHERE owner = :p1 AND mview_name = :p2', t3.OWNER, t3.MVIEW_NAME) AS definition
             FROM ALL_MVIEWS t3
             LEFT OUTER JOIN ALL_MVIEW_COMMENTS mcom ON t3.OWNER = mcom.OWNER AND t3.MVIEW_NAME = mcom.MVIEW_NAME
             WHERE t3.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
@@ -75,7 +112,9 @@
     </select>
 
     <select id="selectAllColumnInfo" resultType="ColumnDto">
-        WITH ora_all_columns AS (
+        WITH
+        <include refid="longValueFunction"/>
+        ora_all_columns AS (
             SELECT
                 c.OWNER AS schema_name,
                 c.TABLE_NAME AS table_name,
@@ -105,7 +144,21 @@
                     ELSE 0
                 END AS primary_key,
                 CASE c.NULLABLE WHEN 'N' THEN 1 ELSE 0 END AS not_null,
-                '' AS default_value,
+                CASE
+                    <!-- IDENTITY列のDATA_DEFAULTは、環境ごとに名前の変わるシーケンス（ISEQ$$_...）のnextvalになるため、生成の種別で表す -->
+                    WHEN c.IDENTITY_COLUMN = 'YES' THEN (
+                        SELECT TO_CLOB('GENERATED ' || ic.GENERATION_TYPE || ' AS IDENTITY')
+                        FROM ALL_TAB_IDENTITY_COLS ic
+                        WHERE ic.OWNER = c.OWNER AND ic.TABLE_NAME = c.TABLE_NAME AND ic.COLUMN_NAME = c.COLUMN_NAME
+                    )
+                    <!-- DATA_DEFAULTは書いたとおりに格納され末尾の空白・改行を含むため、前後の空白を除く。
+                         列ごとに問い合わせるため、デフォルト値を持つ列（DEFAULT_LENGTHが正）だけに絞る -->
+                    WHEN c.DEFAULT_LENGTH > 0 THEN REGEXP_REPLACE(
+                        long_value('SELECT data_default FROM all_tab_columns WHERE owner = :p1 AND table_name = :p2 AND column_name = :p3',
+                            c.OWNER, c.TABLE_NAME, c.COLUMN_NAME),
+                        '^\s+|\s+$', '')
+                    ELSE TO_CLOB('')
+                END AS default_value,
                 '' AS remarks
             FROM ALL_TAB_COLUMNS c
             LEFT OUTER JOIN ALL_COL_COMMENTS com ON c.OWNER = com.OWNER AND c.TABLE_NAME = com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME
@@ -139,7 +192,9 @@
     </select>
 
     <select id="selectAllIndexInfo" resultType="IndexDto">
-        WITH ora_all_indexes AS (
+        WITH
+        <include refid="longValueFunction"/>
+        ora_all_indexes AS (
             SELECT
                 idx.owner AS schema_name,
                 idx.table_name AS table_name,
@@ -155,21 +210,18 @@
                 END AS is_primary,
                 (CASE WHEN idx.uniqueness = 'UNIQUE' THEN 'CREATE UNIQUE INDEX ' ELSE 'CREATE INDEX ' END)
                     || idx.index_name || ' ON ' || idx.table_name || ' ('
-                    || LISTAGG(COALESCE(ie.column_expression, col.column_name), ',') WITHIN GROUP (ORDER BY col.column_position)
+                    || LISTAGG(
+                        CASE
+                            WHEN ie.index_name IS NULL THEN col.column_name
+                            ELSE TO_CHAR(DBMS_LOB.SUBSTR(long_value(
+                                'SELECT column_expression FROM all_ind_expressions WHERE index_owner = :p1 AND index_name = :p2 AND column_position = :p3',
+                                ie.index_owner, ie.index_name, TO_CHAR(ie.column_position)), 1000, 1))
+                        END, ',') WITHIN GROUP (ORDER BY col.column_position)
                     || ')' AS index_definition,
                 '' AS remarks
             FROM all_indexes idx
             LEFT JOIN all_ind_columns col ON idx.index_name = col.index_name AND idx.owner = col.index_owner
-            <!-- column_expressionはLONG型で、SUBSTR等の関数もLISTAGGも適用できない（ORA-00932）。
-                 DBMS_XMLGENはLONGを文字列としてXMLへ書き出すため、XMLTABLEで読み戻してVARCHAR2にする -->
-            LEFT JOIN XMLTABLE('/ROWSET/ROW'
-                PASSING DBMS_XMLGEN.GETXMLTYPE('SELECT index_owner, index_name, column_position, column_expression FROM all_ind_expressions')
-                COLUMNS
-                    index_owner VARCHAR2(128) PATH 'INDEX_OWNER',
-                    index_name VARCHAR2(128) PATH 'INDEX_NAME',
-                    column_position NUMBER PATH 'COLUMN_POSITION',
-                    column_expression VARCHAR2(4000) PATH 'COLUMN_EXPRESSION'
-            ) ie ON idx.index_name = ie.index_name AND idx.owner = ie.index_owner AND col.column_position = ie.column_position
+            LEFT JOIN all_ind_expressions ie ON idx.index_name = ie.index_name AND idx.owner = ie.index_owner AND col.column_position = ie.column_position
             WHERE idx.index_type != 'LOB'
                 AND idx.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
                 <if test="schemaList != null and schemaList.size() > 0">

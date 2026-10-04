@@ -13,9 +13,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
 /**
  * [oracle]テーブル定義出力に関するリポジトリクラス
  *
- * <p>OracleのLong型をJDBCDriverでは扱えないため、Oracleにおいてデフォルト、View/materialized_viewのソースは表示不可
- * 参考リンク：https://support.oracle.com/knowledge/Middleware/832903_1.html
- *
  * <p>トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（ENUM等）の出力はPostgreSQL専用のため、 Oracleでは空リストを返却し出力しない。
  */
 public final class OracleTableDefinitionRepository extends AbstractTableDefinitionRepository {

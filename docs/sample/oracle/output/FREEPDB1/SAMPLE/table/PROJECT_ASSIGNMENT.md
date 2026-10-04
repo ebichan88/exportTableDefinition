@@ -20,8 +20,8 @@
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 |1||PROJECT_ID|NUMBER(10,0)|10|○|○|||
 |2||EMPLOYEE_ID|NUMBER(10,0)|10|○|○|||
-|3||ROLE|VARCHAR2(30)|30||○|||
-|4||ASSIGNED_AT|DATE|||○|||
+|3||ROLE|VARCHAR2(30)|30||○|'MEMBER'||
+|4||ASSIGNED_AT|DATE|||○|trunc(sysdate)||
 
 ## インデックス情報
 

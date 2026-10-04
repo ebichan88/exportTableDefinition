@@ -28,7 +28,14 @@
 
 ```sql
 
--- Oracleは未対応 --
+select
+        e.employee_id,
+        e.employee_code,
+        e.employee_name,
+        d.department_name,
+        e.status
+    from sample.employee e
+    join sample.department d on e.department_id = d.department_id
 
 ```
 

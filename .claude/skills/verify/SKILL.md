@@ -224,7 +224,8 @@ Javaの文字インデックスとズレる。位置を厳密に特定したい�
 
 5. **OracleのLONG型の列（`ALL_IND_EXPRESSIONS.COLUMN_EXPRESSION`・`ALL_TAB_COLUMNS.DATA_DEFAULT`・`ALL_VIEWS.TEXT`等）には、
    `SUBSTR`等の関数も`LISTAGG`も適用できない**（ORA-00932）。関数索引を持つDBで`selectAllIndexInfo`がこれで落ちていた。
-   `DBMS_XMLGEN.GETXMLTYPE`でXMLに書き出し`XMLTABLE`で読み戻すか、`_VC`の付いたVARCHAR2版の列
+   `DBMS_XMLGEN`でXMLに書き出す方法は、LONGの値をエスケープしないため`&`や`<`を含むと壊れる（ORA-31011）。
+   Oracle用mapperの`longValueFunction`（SQL内で定義するPL/SQLの関数）で読むか、`_VC`の付いたVARCHAR2版の列
    （`ALL_CONSTRAINTS.SEARCH_CONDITION_VC`等）があればそれを使う。
 
 この手順（実DBに対して1回通す）を省略すると、上記のような「単体テストは通るが実行すると
