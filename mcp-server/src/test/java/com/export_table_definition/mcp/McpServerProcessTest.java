@@ -2,6 +2,7 @@ package com.export_table_definition.mcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,12 +15,22 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +117,52 @@ class McpServerProcessTest {
   }
 
   @Test
+  @DisplayName("応答を待たずに続けてツールを呼び出しても、すべての応答が返る（並行呼び出しで応答が止まる不具合の回帰）")
+  void respondsToPipelinedToolCalls() throws Exception {
+    final int callCount = 8;
+    final Process process =
+        new ProcessBuilder(JAVA, "-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT).start();
+    try {
+      final BufferedWriter stdin =
+          new BufferedWriter(
+              new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
+      final BlockingQueue<String> responses = new LinkedBlockingQueue<>();
+      final Thread reader = new Thread(() -> readLines(process, responses));
+      reader.setDaemon(true);
+      reader.start();
+
+      send(
+          stdin,
+          "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{"
+              + "\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},"
+              + "\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}");
+      assertNotNull(responses.poll(30, TimeUnit.SECONDS), "initializeの応答がありません");
+      send(stdin, "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\",\"params\":{}}");
+
+      // 応答を待たずに続けて書き込む（Claude Code等が独立したツールを並行に呼ぶのと同じ状況を作る）
+      for (int i = 0; i < callCount; i++) {
+        send(
+            stdin,
+            "{\"jsonrpc\":\"2.0\",\"id\":"
+                + (100 + i)
+                + ",\"method\":\"tools/call\",\"params\":{\"name\":\"list_schemas\",\"arguments\":{}}}");
+      }
+
+      final ObjectMapper mapper = new ObjectMapper();
+      final Set<Integer> receivedIds = new HashSet<>();
+      for (int i = 0; i < callCount; i++) {
+        final String line = responses.poll(30, TimeUnit.SECONDS);
+        assertNotNull(line, (i + 1) + "件目の応答がタイムアウトしました（並行呼び出しで応答が止まる不具合の再発）");
+        receivedIds.add(mapper.readTree(line).get("id").asInt());
+      }
+      assertEquals(
+          IntStream.range(100, 100 + callCount).boxed().collect(Collectors.toSet()), receivedIds);
+    } finally {
+      process.destroyForcibly();
+    }
+  }
+
+  @Test
   @DisplayName("スナップショットのディレクトリを読めない場合は、標準エラーに理由を出して終了コード2で終了する")
   void exitsWithMessageOnInvalidSnapshot() throws IOException, InterruptedException {
     final Process process =
@@ -122,5 +179,25 @@ class McpServerProcessTest {
 
   private static String text(CallToolResult result) {
     return ((TextContent) result.content().get(0)).text();
+  }
+
+  private static void send(BufferedWriter stdin, String json) throws IOException {
+    stdin.write(json);
+    stdin.write("\n");
+    stdin.flush();
+  }
+
+  /** プロセスの標準出力を行ごとにキューへ流す。プロセス終了時の読み取りの中断は呼び出し側のタイムアウトで判定する */
+  private static void readLines(Process process, BlockingQueue<String> lines) {
+    try (BufferedReader stdout =
+        new BufferedReader(
+            new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = stdout.readLine()) != null) {
+        lines.put(line);
+      }
+    } catch (IOException | InterruptedException e) {
+      // プロセスの終了・破棄で読み取りが止まる。テスト側はpollのタイムアウトで判定するため無視する
+    }
   }
 }

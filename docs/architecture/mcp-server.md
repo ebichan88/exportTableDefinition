@@ -39,11 +39,11 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `list_schemas` | なし | DB（DBMS種別）ごとのスキーマと、スキーマごとのオブジェクトの数 |
 | `search_tables` | `query`、`schema`・`database`・`limit`（任意） | 一致したテーブルの概要（名前・論理名・区分・説明）と、一致した項目（`matchedIn`） |
 | `list_tables` | `schema`・`database`・`type`・`includeDescription`・`limit`・`offset`（任意） | テーブルの概要（名前・論理名・区分）の一覧 |
-| `get_table` | `table`、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）。`sections`・`columns`で項目・カラムを絞れる |
+| `get_table` | `table`（配列も可。最大10件）、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）。`sections`・`columns`で項目・カラムを絞れる。`table`に配列を指定すると`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える） |
 | `find_columns` | `column`、`match`・`schema`・`database`・`limit`・`offset`（任意） | 当てはまったカラム（テーブル・型・PK・NOT NULL・デフォルト値・参照先） |
 | `get_related_tables` | `table`、`depth`（1〜3）・`direction`（outgoing/incoming/both）等（任意） | 関連（どのカラム同士か・外部キーか論理リレーションか・多重度・段数）と、関連に現れたテーブルの概要 |
 | `find_join_path` | `from`・`to`、`maxLength`（1〜6）・`limit`等（任意） | 2つのテーブルをつなぐ最短の経路（たどる順のテーブルと、各段の関連）。同じ長さの経路はすべて（`limit`まで）返す |
-| `list_functions`・`get_function` | `query`等（任意）／`function` | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）。`get_function`はオーバーロードをまとめ、関数を実行するトリガーも返す |
+| `list_functions`・`get_function` | `query`等（任意）／`function`、`includeDefinition`（任意） | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）。`get_function`はオーバーロードをまとめ、関数を実行するトリガーも返す。`includeDefinition`指定時は定義本体も返す（オーバーロードの本体が同じ場合は1つにまとめ、長い場合は切り詰める） |
 | `list_sequences`・`get_sequence` | `query`等（任意）／`sequence` | シーケンスの名前・所有カラム／スナップショットの1行と、採番に使うカラム（`usedByColumns`） |
 | `list_types`・`get_type` | `query`・`category`等（任意）／`type` | ユーザー定義型の名前・種別／スナップショットの1行（ENUMの値の一覧等）と、型を使うカラム（`usedByColumns`） |
 | `list_triggers` | `schema`・`database`等（任意） | テーブルをまたいだトリガーの一覧（テーブル・タイミング・イベント・実行単位・関数） |
@@ -55,11 +55,13 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
   `get_table`の`columns`にテーブルに無いカラムを指定した場合も、カラムの一覧を示すエラーにする。
 - 一覧を返すツールは`limit`・`offset`で範囲を指定し、続きがあれば`nextOffset`を返す。AIのコンテキストを圧迫しないよう、
   件数の上限を設ける。
-- 関数・プロシージャの定義本体はAIのコンテキストを圧迫するため、ツールの結果には出さない。
+- 関数・プロシージャの定義本体はAIのコンテキストを圧迫するため、既定では返さない（`get_function`の`includeDefinition`で返す）。
 - オブジェクト間の相互参照（関数↔トリガー、シーケンス・型↔カラム）はスナップショットに無いため、
   呼び出しのたびに求める。名前の比較は大文字小文字を区別せず、スキーマ修飾の無い名前は参照元と同じスキーマとみなす。
 - ツールの使い分け（どれから呼ぶか）は、初期化時にサーバーからAIへ渡す説明（`instructions`）に書く。
 - 文字列のリストの引数は、JSONの配列のほかカンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）。
+  `get_table`の`table`のように、名前を1件・複数件のどちらでも指定できる引数もこれを使う（単一の文字列は1件の配列として読む）。
+- 全ツールに`title`（短い日本語の表示名）を付ける。MCPクライアントのツール一覧・許可の確認画面での表示に使われる。
 
 ## stdioでの動作
 
@@ -69,6 +71,11 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 - スナップショットは起動時に全件読み込む。更新した場合はサーバーを再起動する（MCPクライアントから再接続する）。
 - 起動時の誤り（`--snapshot`の誤り、ディレクトリ・`database.json`が無い、対応していない`formatVersion`、
   JSONとして読めない行）は、何を直せばよいか（ファイル名・行番号を含む）を標準エラーへ出し、終了コード2で終了する。
+- ツールの呼び出しは、標準入力を読むスレッドで1つずつ直列に実行する（`McpServer.sync(...)`の`immediateExecution(true)`）。
+  MCP Java SDK（`mcp-core:2.0.1`）の既定（ツールをboundedElasticの複数スレッドに並行実行）は、応答の書き込み先への同時書き込みで
+  応答が止まる不具合があり（[java-sdk#686](https://github.com/modelcontextprotocol/java-sdk/issues/686)。修正はSDKのmainに入ったが
+  未リリース）、MCPクライアントは独立したツールを並行に呼ぶため日常的に起こる。ツールはメモリ上の検索だけで速いため、直列実行による
+  実用上の影響は小さい。SDKの修正入りの版がリリースされたら、`immediateExecution`を残すかを判断する。
 
 ## 配布
 
@@ -97,4 +104,4 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 | `SnapshotDirectoryReaderTest` | 読み込みと、起動時の誤り（ファイル名・行番号を含むメッセージ） |
 | `SampleSnapshotContractTest` | ベースラインとの契約（上記） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証 |
-| `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる |
+| `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる。応答を待たずに続けてツールを呼び出しても止まらないこと（`immediateExecution`の回帰）も確かめる |

@@ -28,6 +28,7 @@ final class SchemaTools {
     return List.of(
         readOnlyTool(
             LIST_SCHEMAS,
+            "スキーマ一覧",
             "スナップショットに含まれるDB（DBMS種別）とスキーマの一覧を、スキーマごとのオブジェクトの数とともに返す。"
                 + "どのDB・スキーマがあるか、全体像をつかむときに最初に使う",
             objectSchema(Map.of(), List.of()),

@@ -74,6 +74,10 @@ public final class McpServerMain {
         .capabilities(ServerCapabilities.builder().tools(false).build())
         .jsonMapper(jsonMapper)
         .tools(new TableDefinitionTools(catalog).specifications())
+        // mcp-core 2.0.1は既定でツールをboundedElasticの複数スレッドに並行実行させ、応答の書き込み先
+        // （Reactorのunicastシンク）への同時書き込みで止まる（java-sdk#686。修正はSDKのmainに入ったが未リリース）。
+        // 標準入力を読むスレッドで1つずつ実行させて回避する
+        .immediateExecution(true)
         .build();
   }
 

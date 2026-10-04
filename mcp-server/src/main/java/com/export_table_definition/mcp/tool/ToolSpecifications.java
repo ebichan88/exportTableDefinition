@@ -26,10 +26,12 @@ final class ToolSpecifications {
    * 読み取り専用のツールを組み立てるメソッド<br>
    * 引数の誤り（{@link InvalidToolArgumentException}）は、ツールのエラー（{@code isError}）としてメッセージを返す
    *
+   * @param title MCPクライアントの表示に使う短い日本語の名前
    * @param inputSchema {@link #objectSchema}で組み立てた入力スキーマ。プロパティ以外の引数は受け付けない
    */
   static SyncToolSpecification readOnlyTool(
       String name,
+      String title,
       String description,
       Map<String, Object> inputSchema,
       Function<ToolArguments, CallToolResult> handler) {
@@ -39,6 +41,7 @@ final class ToolSpecifications {
     return SyncToolSpecification.builder()
         .tool(
             Tool.builder(name, inputSchema)
+                .title(title)
                 .description(description)
                 .annotations(
                     ToolAnnotations.builder()
@@ -83,8 +86,19 @@ final class ToolSpecifications {
    */
   static Map<String, Object> namedObjectProperties(
       String nameArgument, String nameDescription, Map<String, Object> extra) {
+    return namedObjectProperties(nameArgument, stringProperty(nameDescription), extra);
+  }
+
+  /**
+   * 名前で1つ（または複数）のオブジェクトを指定する引数に、ツール固有の引数を加えたプロパティ
+   *
+   * @param nameArgument オブジェクト名を受け取る引数名
+   * @param nameProperty オブジェクト名の引数のプロパティ（{@link #stringProperty}・{@link #stringOrArrayProperty}等）
+   */
+  static Map<String, Object> namedObjectProperties(
+      String nameArgument, Map<String, Object> nameProperty, Map<String, Object> extra) {
     final Map<String, Object> properties = new LinkedHashMap<>();
-    properties.put(nameArgument, stringProperty(nameDescription));
+    properties.put(nameArgument, nameProperty);
     properties.put("schema", stringProperty("スキーマ名。同名のものが複数のスキーマにある場合に指定する"));
     properties.put("database", DATABASE_PROPERTY);
     properties.putAll(extra);
@@ -121,5 +135,16 @@ final class ToolSpecifications {
 
   static Map<String, Object> stringArrayProperty(String description) {
     return Map.of("type", "array", "items", Map.of("type", "string"), "description", description);
+  }
+
+  /** 文字列1つ、または文字列の配列を受け付ける引数（名前を1件だけ・複数まとめて指定できる引数に使う） */
+  static Map<String, Object> stringOrArrayProperty(String description) {
+    return Map.of(
+        "type",
+        List.of("string", "array"),
+        "items",
+        Map.of("type", "string"),
+        "description",
+        description);
   }
 }

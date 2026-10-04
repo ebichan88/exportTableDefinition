@@ -31,6 +31,20 @@ final class ObjectResolver {
             arguments.optionalString("database"),
             arguments.optionalString("schema"),
             arguments.requiredString(nameArgument));
+    return resolve(reference, kind, searchTool, lookup);
+  }
+
+  /**
+   * 名前の指定（{@link ObjectReference}）で、オブジェクトを1つに解決するメソッド<br>
+   * 1件の名前を複数回解決する場合（{@code get_table}で複数のテーブルを指定する等）に使う
+   *
+   * @throws InvalidToolArgumentException 見つからない場合、複数に当てはまる場合（候補をメッセージに含める）
+   */
+  static <E extends SchemaObject> E resolve(
+      ObjectReference reference,
+      String kind,
+      String searchTool,
+      Function<ObjectReference, Lookup<E>> lookup) {
     return switch (lookup.apply(reference)) {
       case Lookup.Found<E> found -> found.value();
       case Lookup.Ambiguous<E> ambiguous ->
