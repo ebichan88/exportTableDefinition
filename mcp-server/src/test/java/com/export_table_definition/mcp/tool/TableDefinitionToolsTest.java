@@ -12,6 +12,7 @@ import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SequenceEntry;
 import com.export_table_definition.mcp.catalog.TypeEntry;
+import com.export_table_definition.mcp.catalog.ViewpointEntry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -30,86 +31,97 @@ class TableDefinitionToolsTest {
   private final TableDefinitionTools tools =
       new TableDefinitionTools(
           SchemaCatalog.of(
-              List.of(new DatabaseEntry("testdb", "PostgreSQL")),
-              List.of(
-                  table("department").logicalName("部署").description("組織のマスタ").build(),
-                  table("employee")
-                      .logicalName("従業員")
-                      .column(
-                          new ColumnEntry(
-                              "employee_id",
-                              null,
-                              "integer",
-                              true,
-                              true,
-                              "nextval('sample.employee_id_seq'::regclass)",
-                              null))
-                      .column(
-                          new ColumnEntry("status", null, "sample.status", false, true, null, null))
-                      .column("department_id", "部署ID", null)
-                      .foreignKey("department_id", "department", "department_id")
-                      .trigger("trg_employee_audit", "sample.log_change")
-                      .build(),
-                  table("audit_log")
-                      .logicalRelation("record_id", "employee", "employee_id")
-                      .build(),
-                  table("testdb", "archive", "employee").build(),
-                  table("project")
-                      .type("table")
-                      .json(
-                          "{\"schema\":\"sample\",\"name\":\"project\",\"type\":\"table\","
-                              + "\"columns\":[{\"name\":\"project_id\"},{\"name\":\"title\"},{\"name\":\"budget\"}],"
-                              + "\"indexes\":[{\"name\":\"project_pkey\"}],"
-                              + "\"triggers\":[{\"name\":\"trg_project\"}],"
-                              + "\"addedByNewerCli\":1}")
-                      .column("project_id")
-                      .column("title")
-                      .column("budget")
-                      .build()),
-              List.of(
-                  function(
-                      "calc_bonus",
-                      "p_salary numeric",
-                      "{\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
-                          + "\"arguments\":\"p_salary numeric\",\"result\":\"numeric\",\"language\":\"sql\","
-                          + "\"definition\":\"CREATE FUNCTION ...\"}"),
-                  function(
-                      "calc_bonus",
-                      "p_salary numeric, p_rate numeric",
-                      "{\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
-                          + "\"arguments\":\"p_salary numeric, p_rate numeric\",\"result\":\"numeric\","
-                          + "\"language\":\"sql\",\"definition\":\"CREATE FUNCTION ...\"}"),
-                  new FunctionEntry(
-                      new ObjectKey("testdb", "sample", "log_change"),
-                      "FUNCTION",
-                      "",
-                      "trigger",
-                      "plpgsql",
-                      "{}"),
-                  function(
-                      "withhold_tax",
-                      "p_price numeric",
-                      "{\"schema\":\"sample\",\"name\":\"withhold_tax\",\"kind\":\"FUNCTION\","
-                          + "\"arguments\":\"p_price numeric\",\"result\":\"numeric\",\"language\":\"sql\","
-                          + "\"definition\":\"CREATE FUNCTION withhold_tax(p_price numeric) ...\"}"),
-                  function(
-                      "withhold_tax",
-                      "p_price numeric, p_rate numeric",
-                      "{\"schema\":\"sample\",\"name\":\"withhold_tax\",\"kind\":\"FUNCTION\","
-                          + "\"arguments\":\"p_price numeric, p_rate numeric\",\"result\":\"numeric\","
-                          + "\"language\":\"sql\",\"definition\":\""
-                          + "A".repeat(4500)
-                          + "\"}")),
-              List.of(
-                  new SequenceEntry(
-                      new ObjectKey("testdb", "sample", "employee_id_seq"),
-                      "employee.employee_id",
-                      "{\"schema\":\"sample\",\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\"}")),
-              List.of(
-                  new TypeEntry(
-                      new ObjectKey("testdb", "sample", "status"),
-                      "ENUM",
-                      "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\"}"))));
+                  List.of(new DatabaseEntry("testdb", "PostgreSQL")),
+                  List.of(
+                      table("department").logicalName("部署").description("組織のマスタ").build(),
+                      table("employee")
+                          .logicalName("従業員")
+                          .column(
+                              new ColumnEntry(
+                                  "employee_id",
+                                  null,
+                                  "integer",
+                                  true,
+                                  true,
+                                  "nextval('sample.employee_id_seq'::regclass)",
+                                  null))
+                          .column(
+                              new ColumnEntry(
+                                  "status", null, "sample.status", false, true, null, null))
+                          .column("department_id", "部署ID", null)
+                          .foreignKey("department_id", "department", "department_id")
+                          .trigger("trg_employee_audit", "sample.log_change")
+                          .build(),
+                      table("audit_log")
+                          .logicalRelation("record_id", "employee", "employee_id")
+                          .build(),
+                      table("testdb", "archive", "employee").build(),
+                      table("project")
+                          .type("table")
+                          .json(
+                              "{\"schema\":\"sample\",\"name\":\"project\",\"type\":\"table\","
+                                  + "\"columns\":[{\"name\":\"project_id\"},{\"name\":\"title\"},{\"name\":\"budget\"}],"
+                                  + "\"indexes\":[{\"name\":\"project_pkey\"}],"
+                                  + "\"triggers\":[{\"name\":\"trg_project\"}],"
+                                  + "\"addedByNewerCli\":1}")
+                          .column("project_id")
+                          .column("title")
+                          .column("budget")
+                          .build()),
+                  List.of(
+                      function(
+                          "calc_bonus",
+                          "p_salary numeric",
+                          "{\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
+                              + "\"arguments\":\"p_salary numeric\",\"result\":\"numeric\",\"language\":\"sql\","
+                              + "\"definition\":\"CREATE FUNCTION ...\"}"),
+                      function(
+                          "calc_bonus",
+                          "p_salary numeric, p_rate numeric",
+                          "{\"schema\":\"sample\",\"name\":\"calc_bonus\",\"kind\":\"FUNCTION\","
+                              + "\"arguments\":\"p_salary numeric, p_rate numeric\",\"result\":\"numeric\","
+                              + "\"language\":\"sql\",\"definition\":\"CREATE FUNCTION ...\"}"),
+                      new FunctionEntry(
+                          new ObjectKey("testdb", "sample", "log_change"),
+                          "FUNCTION",
+                          "",
+                          "trigger",
+                          "plpgsql",
+                          "{}"),
+                      function(
+                          "withhold_tax",
+                          "p_price numeric",
+                          "{\"schema\":\"sample\",\"name\":\"withhold_tax\",\"kind\":\"FUNCTION\","
+                              + "\"arguments\":\"p_price numeric\",\"result\":\"numeric\",\"language\":\"sql\","
+                              + "\"definition\":\"CREATE FUNCTION withhold_tax(p_price numeric) ...\"}"),
+                      function(
+                          "withhold_tax",
+                          "p_price numeric, p_rate numeric",
+                          "{\"schema\":\"sample\",\"name\":\"withhold_tax\",\"kind\":\"FUNCTION\","
+                              + "\"arguments\":\"p_price numeric, p_rate numeric\",\"result\":\"numeric\","
+                              + "\"language\":\"sql\",\"definition\":\""
+                              + "A".repeat(4500)
+                              + "\"}")),
+                  List.of(
+                      new SequenceEntry(
+                          new ObjectKey("testdb", "sample", "employee_id_seq"),
+                          "employee.employee_id",
+                          "{\"schema\":\"sample\",\"name\":\"employee_id_seq\",\"ownedBy\":\"employee.employee_id\"}")),
+                  List.of(
+                      new TypeEntry(
+                          new ObjectKey("testdb", "sample", "status"),
+                          "ENUM",
+                          "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\"}")))
+              .withViewpoints(
+                  List.of(
+                      new ViewpointEntry(
+                          "testdb",
+                          "org",
+                          "組織",
+                          "",
+                          List.of(
+                              new ObjectKey("testdb", "sample", "department"),
+                              new ObjectKey("testdb", "sample", "employee"))))));
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -121,6 +133,7 @@ class TableDefinitionToolsTest {
     assertEquals(
         List.of(
             "list_schemas",
+            "list_viewpoints",
             "search_tables",
             "list_tables",
             "get_table",
@@ -155,6 +168,14 @@ class TableDefinitionToolsTest {
             + "{\"name\":\"sample\",\"tables\":4,\"views\":0,\"materializedViews\":0,"
             + "\"functions\":5,\"sequences\":1,\"types\":1}]}]}",
         json(call("list_schemas", Map.of())).toString());
+  }
+
+  @Test
+  @DisplayName("list_viewpointsは、識別子・表示名・説明・所属テーブル数を返す")
+  void listViewpoints() throws Exception {
+    assertEquals(
+        "{\"viewpoints\":[{\"database\":\"testdb\",\"id\":\"org\",\"name\":\"組織\",\"tableCount\":2}]}",
+        json(call("list_viewpoints", Map.of())).toString());
   }
 
   @Test
@@ -217,6 +238,36 @@ class TableDefinitionToolsTest {
     final JsonNode limited = json(call("search_tables", Map.of("query", "employee", "limit", 1)));
     assertEquals(2, limited.get("total").asInt());
     assertEquals(1, limited.get("tables").size());
+  }
+
+  @Test
+  @DisplayName("list_tablesは、viewpointで指定した観点の所属テーブルだけに絞り込める")
+  void listTablesByViewpoint() throws Exception {
+    final JsonNode result = json(call("list_tables", Map.of("viewpoint", "org")));
+
+    assertEquals(List.of("department", "employee"), result.get("tables").findValuesAsText("name"));
+  }
+
+  @Test
+  @DisplayName("list_tablesは、存在しない観点を指定すると、観点の一覧を示すエラーを返す")
+  void listTablesByUnknownViewpoint() {
+    final CallToolResult result = call("list_tables", Map.of("viewpoint", "nope"));
+
+    assertTrue(result.isError());
+    assertEquals("観点nopeが見つかりません。観点: org", text(result));
+  }
+
+  @Test
+  @DisplayName("search_tablesは、viewpointで指定した観点の所属テーブルだけに絞り込む（観点外の一致は除く）")
+  void searchTablesByViewpoint() throws Exception {
+    assertEquals(2, json(call("search_tables", Map.of("query", "employee"))).get("total").asInt());
+
+    final JsonNode result =
+        json(call("search_tables", Map.of("query", "employee", "viewpoint", "org")));
+    assertEquals(1, result.get("total").asInt());
+    final JsonNode hit = result.get("tables").get(0);
+    assertEquals("sample", hit.get("schema").asText());
+    assertEquals("employee", hit.get("name").asText());
   }
 
   @Test

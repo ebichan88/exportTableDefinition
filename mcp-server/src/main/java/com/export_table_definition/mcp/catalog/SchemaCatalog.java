@@ -35,6 +35,7 @@ public final class SchemaCatalog {
   private final List<FunctionOverloads> functions;
   private final List<SequenceEntry> sequences;
   private final List<TypeEntry> types;
+  private final List<ViewpointEntry> viewpoints;
   private final RelationGraph relations;
 
   private SchemaCatalog(
@@ -42,7 +43,8 @@ public final class SchemaCatalog {
       List<TableEntry> tables,
       List<FunctionEntry> functions,
       List<SequenceEntry> sequences,
-      List<TypeEntry> types) {
+      List<TypeEntry> types,
+      List<ViewpointEntry> viewpoints) {
     this.databases = List.copyOf(databases);
     this.tables = List.copyOf(tables);
     this.functions =
@@ -55,17 +57,34 @@ public final class SchemaCatalog {
             .toList();
     this.sequences = List.copyOf(sequences);
     this.types = List.copyOf(types);
+    this.viewpoints = List.copyOf(viewpoints);
     this.relations = new RelationGraph(this.tables);
   }
 
   /**
-   * スナップショットの内容から組み立てるメソッド
+   * スナップショットの内容から組み立てるメソッド（観点の参考情報を含む）
    *
    * @param databases 全DB。オブジェクトを持たないDBも含める
    * @param tables 全テーブル。キー（DB名・スキーマ名・テーブル名）が重複しないこと
    * @param functions 全関数・プロシージャ。オーバーロードはキーが重複する
    * @param sequences 全シーケンス
    * @param types 全ユーザー定義型
+   * @param viewpoints 観点の参考情報（宣言順）
+   */
+  public static SchemaCatalog of(
+      List<DatabaseEntry> databases,
+      List<TableEntry> tables,
+      List<FunctionEntry> functions,
+      List<SequenceEntry> sequences,
+      List<TypeEntry> types,
+      List<ViewpointEntry> viewpoints) {
+    return new SchemaCatalog(databases, tables, functions, sequences, types, viewpoints);
+  }
+
+  /**
+   * スナップショットの内容から組み立てるメソッド（観点の参考情報を持たない）
+   *
+   * @see #of(List, List, List, List, List, List)
    */
   public static SchemaCatalog of(
       List<DatabaseEntry> databases,
@@ -73,7 +92,21 @@ public final class SchemaCatalog {
       List<FunctionEntry> functions,
       List<SequenceEntry> sequences,
       List<TypeEntry> types) {
-    return new SchemaCatalog(databases, tables, functions, sequences, types);
+    return of(databases, tables, functions, sequences, types, List.of());
+  }
+
+  /**
+   * 観点の参考情報を追加した新しいインスタンスを返すメソッド<br>
+   * スナップショットとは別の読み込み元（参考情報）の内容を、組み立て後に合成するために用いる
+   */
+  public SchemaCatalog withViewpoints(List<ViewpointEntry> viewpoints) {
+    return of(
+        databases,
+        tables,
+        functions.stream().flatMap(overloads -> overloads.overloads().stream()).toList(),
+        sequences,
+        types,
+        viewpoints);
   }
 
   /**
@@ -153,9 +186,22 @@ public final class SchemaCatalog {
    * @return DB名・スキーマ名・テーブル名の順
    */
   public List<TableEntry> listTables(SearchScope scope, String type) {
+    return listTables(scope, type, Optional.empty());
+  }
+
+  /**
+   * テーブルを一覧にするメソッド（指定した観点の所属テーブルだけに絞り込める版）
+   *
+   * @param type 区分（table/view/materialized_view）で絞り込む場合に指定する。空文字の場合は絞り込まない
+   * @param viewpoint 指定した観点の所属テーブルだけに絞り込む場合に指定する
+   * @return DB名・スキーマ名・テーブル名の順
+   */
+  public List<TableEntry> listTables(
+      SearchScope scope, String type, Optional<ViewpointEntry> viewpoint) {
     return tables.stream()
         .filter(table -> scope.matches(table.key()))
         .filter(table -> type.isEmpty() || type.equals(table.type()))
+        .filter(table -> viewpoint.isEmpty() || viewpoint.get().tables().contains(table.key()))
         .sorted(BY_KEY)
         .toList();
   }
@@ -237,9 +283,23 @@ public final class SchemaCatalog {
    * @return 一致の強い順（同点の場合はDB名・スキーマ名・テーブル名の順）の検索結果
    */
   public SearchResult searchTables(SearchQuery query, SearchScope scope, int limit) {
+    return searchTables(query, scope, limit, Optional.empty());
+  }
+
+  /**
+   * テーブルを検索するメソッド（指定した観点の所属テーブルだけに絞り込める版）<br>
+   * 観点による絞り込みは、総数・{@code limit}に正しく反映されるよう検索・並べ替えの前に適用する
+   *
+   * @param limit 返す件数の上限（1以上）
+   * @param viewpoint 指定した観点の所属テーブルだけに絞り込む場合に指定する
+   * @return 一致の強い順（同点の場合はDB名・スキーマ名・テーブル名の順）の検索結果
+   */
+  public SearchResult searchTables(
+      SearchQuery query, SearchScope scope, int limit, Optional<ViewpointEntry> viewpoint) {
     final List<TableHit> hits =
         tables.stream()
             .filter(table -> scope.matches(table.key()))
+            .filter(table -> viewpoint.isEmpty() || viewpoint.get().tables().contains(table.key()))
             .map(query::match)
             .flatMap(Optional::stream)
             .sorted(
@@ -248,6 +308,33 @@ public final class SchemaCatalog {
                     .thenComparing(TableHit::table, BY_KEY))
             .toList();
     return new SearchResult(hits.size(), hits.stream().limit(limit).toList());
+  }
+
+  /**
+   * 観点を一覧にするメソッド<br>
+   * 観点はスキーマを持たないため、{@code scope}の{@code schema}は無視する
+   *
+   * @return 宣言順
+   */
+  public List<ViewpointEntry> listViewpoints(SearchScope scope) {
+    return viewpoints.stream()
+        .filter(
+            viewpoint ->
+                scope.database().isEmpty()
+                    || scope.database().equalsIgnoreCase(viewpoint.database()))
+        .toList();
+  }
+
+  /**
+   * 識別子で観点を解決するメソッド（識別子は大文字小文字を区別しない）
+   *
+   * @param database DBで絞り込む場合に指定する。空文字の場合は絞り込まない
+   */
+  public Optional<ViewpointEntry> findViewpoint(String database, String id) {
+    return viewpoints.stream()
+        .filter(viewpoint -> database.isEmpty() || database.equalsIgnoreCase(viewpoint.database()))
+        .filter(viewpoint -> viewpoint.id().equalsIgnoreCase(id))
+        .findFirst();
   }
 
   /**

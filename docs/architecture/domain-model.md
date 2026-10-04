@@ -25,6 +25,7 @@ DBのメタ情報を**読み取るだけで更新しない**ため、更新の�
 ```mermaid
 flowchart TB
   snapshot["snapshot<br/>スナップショット・差分"]
+  insight["insight<br/>参考情報"]
   target["target<br/>出力対象"]
   sidecar["sidecar<br/>サイドカー"]
   viewpoint["viewpoint<br/>観点"]
@@ -35,6 +36,7 @@ flowchart TB
   document["document<br/>一覧ドキュメント"]
 
   snapshot --> target
+  insight --> viewpoint
   target --> sidecar
   target --> schemaobject
   target --> database
@@ -46,7 +48,8 @@ flowchart TB
 
 矢印は「依存する側 → 依存される側」（パッケージは`domain.model.{名前}`）。矢印を辿って到達できるパッケージへは
 直接依存してよい（例：`target`・`snapshot`は`table`のクラスを直接参照する）が、逆向きの依存や循環は作らない。
-`document`（一覧ドキュメントの種別）は他の概念に依存しない。
+`document`（一覧ドキュメントの種別）は他の概念に依存しない。`insight`（参考情報）は`snapshot`とは独立の出力先を持ち、
+`snapshot`に依存しない（両者は役割が異なるだけで、互いを経由する関係ではない）。
 
 ## テーブルと関連
 
@@ -361,6 +364,11 @@ classDiagram
 （トリガーは所属テーブルで引くため、`Triggers`は`AbstractEntities`を継承してテーブルキーの索引も持つ）。
 スナップショット（`snapshot`）は`TableDefinitionContent`等を機械可読な形へ写したもので、図は省略する。
 
+参考情報（`insight`）は、スナップショットの事実とは別にAIへ渡す情報（観点等。`--check`の比較対象ではない）を
+機械可読な形へ写したもので、`snapshot`と対になる出力だが依存しない。現時点の内容は`ViewpointsInsight`
+（1ファイル分。`formatVersion`を持つ）／`ViewpointInsight`（観点1件。識別子・表示名・説明・所属テーブル）のみで、
+`Viewpoint.resolve`の結果（`ViewpointContent`）から変換する。図は省略する。
+
 ## 主なルールと、それを持つ場所
 
 | ルール | 場所 |
@@ -384,6 +392,7 @@ classDiagram
 | 一覧ドキュメント（観点一覧を含む）は対象が1件以上あるときだけ出力し、関連ドキュメントとしてリンクする（テーブル一覧は常に出力） | `MarkdownExportSinkFactory.listDocuments` |
 | Markdownのファイル名・配置・相対リンク（関数・プロシージャのオーバーロードは`{名前}_{番号}`、観点ページは識別子から`viewpoint_{DB名}_{識別子}`） | `DocumentLocations` |
 | スナップショットのファイル名・配置 | `SnapshotLocations` |
+| 参考情報のファイル名・配置（`snapshot`の兄弟。`--check`の対象外） | `InsightLocations` |
 | スナップショットの行をオブジェクトとして識別する名前（関数・プロシージャは引数を含む） | `SnapshotKind.identify` |
 
 ## 用語集
@@ -425,3 +434,4 @@ classDiagram
 | 一覧ドキュメント | テーブル一覧・ER図一覧・観点一覧 等 | `ListDocumentType` | 種別ごとの一覧ページ |
 | スナップショット | スキーマのスナップショット | `domain.model.snapshot` | 取得結果を構造化したJSON Lines（生成日を含まない） |
 | 差分検知 | `--check`モード | `CheckDocumentDiffUsecase` / `DiffResult` | 生成したスナップショットとコミット済みのスナップショットの比較 |
+| 参考情報 | 参考情報（`insights/`） | `domain.model.insight` | スナップショットの事実とは別にAIへ渡す情報（観点等）。`--check`の比較対象ではなく、`snapshot`の兄弟ディレクトリに出力する |

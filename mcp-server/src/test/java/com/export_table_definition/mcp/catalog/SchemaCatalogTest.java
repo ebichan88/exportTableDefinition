@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -637,6 +638,80 @@ class SchemaCatalogTest {
       final TableEntry start =
           Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, name)));
       return catalog.relatedTables(start, depth, direction);
+    }
+  }
+
+  @Nested
+  @DisplayName("観点")
+  class ViewpointsTest {
+
+    private final ViewpointEntry order =
+        new ViewpointEntry(
+            "testdb",
+            "order",
+            "受注管理",
+            "受注から出荷までを扱う",
+            List.of(new ObjectKey("testdb", "sales", "orders")));
+    private final ViewpointEntry inventory =
+        new ViewpointEntry(
+            "testdb", "inventory", "在庫管理", "", List.of(new ObjectKey("testdb", "sales", "stock")));
+    private final ViewpointEntry otherDbOrder =
+        new ViewpointEntry("otherdb", "order", "受注", "", List.of());
+
+    private final SchemaCatalog catalog =
+        SchemaCatalog.of(
+                List.of(
+                    table("testdb", "sales", "orders").build(),
+                    table("testdb", "sales", "stock").build(),
+                    table("testdb", "sales", "store").build(),
+                    table("testdb", "hr", "employee").build()))
+            .withViewpoints(List.of(order, inventory, otherDbOrder));
+
+    @Test
+    @DisplayName("宣言順に返し、DBで絞り込める（スキーマは無視する）")
+    void listsInDeclarationOrderAndFiltersByDatabase() {
+      assertEquals(
+          List.of("testdb:order", "testdb:inventory", "otherdb:order"),
+          catalog.listViewpoints(SearchScope.ALL).stream()
+              .map(viewpoint -> viewpoint.database() + ":" + viewpoint.id())
+              .toList());
+      assertEquals(
+          List.of("order"),
+          catalog.listViewpoints(new SearchScope("otherdb", "")).stream()
+              .map(ViewpointEntry::id)
+              .toList());
+    }
+
+    @Test
+    @DisplayName("識別子を大文字小文字を区別せず解決し、DBで絞り込める")
+    void findsViewpointIgnoringCase() {
+      assertEquals(order, catalog.findViewpoint("", "ORDER").orElseThrow());
+      assertEquals(otherDbOrder, catalog.findViewpoint("otherdb", "order").orElseThrow());
+      assertTrue(catalog.findViewpoint("nodb", "order").isEmpty());
+      assertTrue(catalog.findViewpoint("", "unknown").isEmpty());
+    }
+
+    @Test
+    @DisplayName("listTablesは、観点を指定すると所属テーブルだけに絞り込む")
+    void listTablesFiltersByViewpoint() {
+      assertEquals(
+          List.of("orders"),
+          catalog.listTables(SearchScope.ALL, "", Optional.of(order)).stream()
+              .map(table -> table.key().name())
+              .toList());
+    }
+
+    @Test
+    @DisplayName("searchTablesは、観点による絞り込みをtotal・limitへ正しく反映する（絞り込みは件数算出より前に行う）")
+    void searchTablesFiltersByViewpointBeforeCountingTotal() {
+      final SearchResult withoutViewpoint =
+          catalog.searchTables(SearchQuery.of("st"), SearchScope.ALL, 10);
+      assertEquals(2, withoutViewpoint.total());
+
+      final SearchResult withViewpoint =
+          catalog.searchTables(SearchQuery.of("st"), SearchScope.ALL, 10, Optional.of(inventory));
+      assertEquals(1, withViewpoint.total());
+      assertEquals(List.of("stock"), names(withViewpoint));
     }
   }
 

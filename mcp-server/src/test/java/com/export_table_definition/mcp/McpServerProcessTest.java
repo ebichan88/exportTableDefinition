@@ -61,6 +61,7 @@ class McpServerProcessTest {
       assertEquals(
           List.of(
               "list_schemas",
+              "list_viewpoints",
               "search_tables",
               "list_tables",
               "get_table",

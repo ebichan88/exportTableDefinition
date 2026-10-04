@@ -24,6 +24,7 @@ import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchResult;
 import com.export_table_definition.mcp.catalog.TableEntry;
 import com.export_table_definition.mcp.catalog.TableHit;
+import com.export_table_definition.mcp.catalog.ViewpointEntry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -37,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,6 +55,10 @@ final class TableTools {
 
   /** {@code get_table}等でテーブルを指定する引数の説明 */
   static final String TABLE_DESCRIPTION = "テーブル名（大文字小文字を区別しない）。スキーマ名.テーブル名の形でもよい";
+
+  /** {@code list_tables}・{@code search_tables}で観点に絞り込む引数のプロパティ */
+  private static final Map<String, Object> VIEWPOINT_PROPERTY =
+      stringProperty("指定した観点（list_viewpointsのid）の所属テーブルだけに絞り込む場合に指定する");
 
   private static final int DEFAULT_SEARCH_LIMIT = 20;
   private static final int MAX_SEARCH_LIMIT = 100;
@@ -89,8 +95,9 @@ final class TableTools {
                     "database",
                     DATABASE_PROPERTY,
                     "limit",
-                    integerProperty(
-                        "返す件数の上限（既定" + DEFAULT_SEARCH_LIMIT + "）", 1, MAX_SEARCH_LIMIT)),
+                    integerProperty("返す件数の上限（既定" + DEFAULT_SEARCH_LIMIT + "）", 1, MAX_SEARCH_LIMIT),
+                    "viewpoint",
+                    VIEWPOINT_PROPERTY),
                 List.of("query")),
             this::searchTables),
         readOnlyTool(
@@ -108,7 +115,9 @@ final class TableTools {
                         "type",
                         enumProperty("区分で絞り込む場合に指定する", TABLE_TYPES),
                         "includeDescription",
-                        booleanProperty("テーブルの説明も返す（既定false）")),
+                        booleanProperty("テーブルの説明も返す（既定false）"),
+                        "viewpoint",
+                        VIEWPOINT_PROPERTY),
                     DEFAULT_LIST_LIMIT,
                     MAX_LIST_LIMIT),
                 List.of()),
@@ -164,7 +173,8 @@ final class TableTools {
   private CallToolResult searchTables(ToolArguments arguments) {
     final SearchQuery query = SearchQuery.of(arguments.requiredString("query"));
     final int limit = arguments.optionalInt("limit", DEFAULT_SEARCH_LIMIT, 1, MAX_SEARCH_LIMIT);
-    final SearchResult result = catalog.searchTables(query, arguments.scope(), limit);
+    final SearchResult result =
+        catalog.searchTables(query, arguments.scope(), limit, resolveViewpoint(arguments));
     return ToolResults.json(
         new SearchTablesOutput(
             result.total(), result.hits().stream().map(SearchTablesOutput.Hit::of).toList()));
@@ -174,7 +184,8 @@ final class TableTools {
     final String type = arguments.optionalChoice("type", TABLE_TYPES);
     final boolean includeDescription = arguments.optionalBoolean("includeDescription", false);
     final Page page = Page.read(arguments, DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT);
-    final List<TableEntry> tables = catalog.listTables(arguments.scope(), type);
+    final List<TableEntry> tables =
+        catalog.listTables(arguments.scope(), type, resolveViewpoint(arguments));
     return ToolResults.json(
         new ListTablesOutput(
             tables.size(),
@@ -182,6 +193,30 @@ final class TableTools {
             page.apply(tables).stream()
                 .map(table -> ListTablesOutput.Table.of(table, includeDescription))
                 .toList()));
+  }
+
+  /**
+   * 引数{@code viewpoint}（観点のid）を解決するメソッド
+   *
+   * @throws InvalidToolArgumentException 指定した観点が見つからない場合
+   */
+  private Optional<ViewpointEntry> resolveViewpoint(ToolArguments arguments) {
+    final String id = arguments.optionalString("viewpoint");
+    if (id.isEmpty()) {
+      return Optional.empty();
+    }
+    final String database = arguments.optionalString("database");
+    return Optional.of(
+        catalog.findViewpoint(database, id).orElseThrow(() -> viewpointNotFound(id, arguments)));
+  }
+
+  private InvalidToolArgumentException viewpointNotFound(String id, ToolArguments arguments) {
+    final List<String> ids =
+        catalog.listViewpoints(arguments.scope()).stream().map(ViewpointEntry::id).toList();
+    if (ids.isEmpty()) {
+      return new InvalidToolArgumentException("観点" + id + "が見つかりません。観点は1件も宣言されていません。");
+    }
+    return new InvalidToolArgumentException("観点" + id + "が見つかりません。観点: " + String.join(", ", ids));
   }
 
   private CallToolResult getTable(ToolArguments arguments) {

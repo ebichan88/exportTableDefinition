@@ -31,7 +31,7 @@ public class ExportTableDefinitionControllerTest {
 
     ExportTableDefinitionController controller() {
       return new ExportTableDefinitionController(
-          new ExportTableDefinitionUsecase(null, null, null, null, null) {
+          new ExportTableDefinitionUsecase(null, null, null, null, null, null) {
             @Override
             public void exportTableDefinition(ExportTableDefinitionRequest request) {
               capturedExportTableDefinitionRequest = request;

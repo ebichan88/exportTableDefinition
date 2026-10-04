@@ -5,6 +5,7 @@ import com.export_table_definition.domain.model.snapshot.SnapshotKind;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.service.path.DocumentLocations;
+import com.export_table_definition.domain.service.path.InsightLocations;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.path.OutputRoot;
 import com.export_table_definition.domain.service.path.SnapshotLocations;
@@ -140,5 +141,18 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   @Override
   public Optional<SnapshotKind> resolveSnapshotKind(Path snapshotFile) {
     return SnapshotLocations.kindOf(String.valueOf(snapshotFile.getFileName()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Path resolveInsightsDirectory(Path baseOutputDir) {
+    return baseOutputDir.resolve(InsightLocations.insightsDirectory());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Path resolveViewpointsInsightFile(OutputRoot root) {
+    return resolveInsightsDirectory(root.baseDir())
+        .resolve(InsightLocations.viewpointsFile(root.baseInfo().dbName()));
   }
 }

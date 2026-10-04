@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * スキーマのスナップショット（{@code domain.model.snapshot}配下のrecord）とJSON文字列の相互変換を行うインタフェース<br>
+ * スキーマのスナップショット・参考情報（{@code domain.model.snapshot}・{@code domain.model.insight}配下のrecord）と
+ * JSON文字列の相互変換を行うインタフェース<br>
  * JSONライブラリへの依存をドメイン層へ持ち込まないため、変換処理はインフラ層で実装する
  */
 public interface SnapshotSerializer {

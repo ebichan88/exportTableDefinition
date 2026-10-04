@@ -82,6 +82,9 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
        `ObjectListWriter` / `ReadmeWriter`（いずれも `domain.service.writer`配下の種別ごとのサブパッケージ。Writerとテンプレートを同居させている）がMarkdownを組み立てて `FileRepository` 経由で出力
      - スナップショット（`SnapshotExportSinkFactory`）: `SchemaSnapshotWriter`（`domain.service.snapshot`）が、
        同じ取得結果から常にスキーマのスナップショット（JSON Lines）を出力
+     - 参考情報（`InsightExportSinkFactory`）: `InsightWriter`（`domain.service.insight`）が、`writeOverview`時点の
+       一括取得データ（観点等）だけから参考情報を出力（[参考情報（insights）](#参考情報insights)を参照）。
+       `--check`（`CheckDocumentDiffUsecase`）はこのSinkを使わないため、参考情報は`--check`の比較対象に一切現れない
 
 ## 例外の扱いと終了コード
 
@@ -267,6 +270,26 @@ SQLの取得結果（DTO）からエンティティへの変換時（`infrastruc
 表示用の連結・空欄の描画はテンプレートが行う。
 主キー・NOT NULL・一意性・循環などの真偽値もSQLは真偽値で返し（PostgreSQLは`boolean`、`boolean`型を持たない
 Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセルの「○」は`MarkdownTemplateSupport.marker()`で描画する。
+
+## 参考情報（insights）
+
+スナップショットが「DBの構造から一意に決まる事実」を表すのに対し、参考情報は**それ以外**（実行ごとに変わる値、
+見せ方の選択、未確認の推測、cli側で1回計算すれば足りる派生結果）をAIへ渡すための出力。観点（`viewpoints`）は
+「見せ方」でありスキーマの事実ではないため[スナップショットには含めない](#サイドカーyaml手動付帯情報論理リレーション観点)が、
+MCPサーバーからAIが引けるよう、参考情報としては出力する。
+
+- 配置は`{outputPath}/insights/{DB名}/`で、スナップショット（`snapshot/`）の**兄弟**
+  （`domain.service.path.InsightLocations`）。`snapshot/`の中には置かない
+- `--check`（`CheckDocumentDiffUsecase`）は参考情報用の`ExportSink`（`InsightExportSinkFactory`）を
+  一切使わないため、参考情報は生成されず、比較対象にもならない。「生成してから比較対象から除外する」のではなく
+  「`--check`では最初から生成しない」ことで、新しい参考情報の種類を増やすたびに除外リストを保守する必要がない
+- モデルは`domain.model.insight`配下のrecord（`ViewpointsInsight`等）。スナップショットと同様に`formatVersion`を持ち、
+  互換性の無い変更をした場合は上げる（現行は1）
+- MCPサーバー（[mcp-server.md](./mcp-server.md)）は、起動引数`--snapshot`に渡されたスナップショットのディレクトリの
+  **親の兄弟**として参考情報のディレクトリを自前で求めて読む。新しい起動引数は増やさない。参考情報のディレクトリ・
+  DBごとのファイルが無い場合は0件として扱う（観点を1つも宣言していない場合等）
+- 現時点の内容は観点（所属テーブルを含む。`ViewpointContent`から変換）のみ。参考情報の種類が増える場合も、
+  この仕組み（配置・`--check`から独立したSink・`formatVersion`）をそのまま使う想定
 
 ## DB vs ドキュメントの差分検知（`--check`モード）
 
