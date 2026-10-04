@@ -40,6 +40,12 @@
 |:---|:---|:---|:---|:---|:---|
 
 
+## 被参照情報
+
+| No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |
+|:---|:---|:---|:---|:---|:---|:---|
+|1|SAMPLE.SHIPMENT|WAREHOUSE_CODE,ZONE_CODE|WAREHOUSE_CODE,ZONE_CODE|SHIPMENT_WAREHOUSE_CODE_ZONE_CODE_FKEY|1対多|物理|
+
 ## トリガー情報
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
