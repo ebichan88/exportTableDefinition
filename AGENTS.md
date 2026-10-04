@@ -84,7 +84,10 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   `./gradlew integrationTest`（Docker上のPostgreSQLに対する結合テスト。`cli/src/integrationTest`）を実行すること。
   mapperのSQLを変えた場合は`PostgresTableDefinitionRepositoryIT`に、変えた取得結果を確かめるテストを足す。
   出力がベースライン（`docs/sample/postgres/output`）と変わる場合は、`verify` スキル（`.claude/skills/verify/SKILL.md`）に従って
-  出力結果を確認し、意図した変更であればベースラインを出力し直す。Oracle用mapperは結合テストの対象外のため、変更した場合は差分を目視で確認する。
+  出力結果を確認し、意図した変更であればベースラインを出力し直す。
+  Oracle用mapperを変えた場合や、ドメイン層の変更でOracleの出力が変わりうる場合は、`./gradlew oracleIntegrationTest`
+  （Docker上のOracle Database Freeに対する結合テスト。メモリを2GB程度使う）も実行し、変えた取得結果を確かめるテストを
+  `OracleTableDefinitionRepositoryIT`に足す。ベースラインは`docs/sample/oracle/output`（出力し直す手順は`verify`スキルのOracleの節）。
 - スナップショットの形式（`domain.model.snapshot`のrecord）を変えた場合は、MCPサーバーの`./gradlew :mcp-server:test`も実行する
   （`SampleSnapshotContractTest`がベースラインを読む）。互換性の無い変更なら`DatabaseSnapshot.FORMAT_VERSION`を上げ、
   `SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させる。

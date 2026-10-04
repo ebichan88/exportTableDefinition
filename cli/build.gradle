@@ -32,9 +32,10 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 
-    // 結合テスト（integrationTest）だけが使う。Docker上に使い捨てのPostgreSQLを起動する
+    // 結合テスト（integrationTest・oracleIntegrationTest）だけが使う。Docker上に使い捨てのDBを起動する
     integrationTestImplementation platform('org.testcontainers:testcontainers-bom:2.0.5')
     integrationTestImplementation 'org.testcontainers:testcontainers-postgresql'
+    integrationTestImplementation 'org.testcontainers:testcontainers-oracle-free'
 }
 
 test {
@@ -83,6 +84,21 @@ tasks.register('integrationTest', Test) {
     group = 'verification'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform {
+        excludeTags 'oracle'
+    }
+    shouldRunAfter tasks.named('test')
+}
+
+// Oracleのコンテナはイメージが大きく（約1.3GB）メモリも2GB程度使うため、PostgreSQLの結合テストとは別のタスクに分ける
+tasks.register('oracleIntegrationTest', Test) {
+    description = 'Runs integration tests against a disposable Oracle Database Free on Docker (requires Docker).'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'oracle'
+    }
     shouldRunAfter tasks.named('test')
 }
 

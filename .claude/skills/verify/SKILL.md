@@ -125,6 +125,38 @@ docker rm -f exporttabledefinition-verify-db
 
 継続して何度も試す場合はコンテナを残しておいてよい（次回はステップ1で作り直せばよい）。
 
+## Oracleの場合
+
+Oracle用mapper（`mapper/oracle/tableDefinitionMapper.xml`）を変えた場合は、まず`./gradlew oracleIntegrationTest`を実行する
+（`docs/sample/oracle/ddl.sql`を流し込んだOracle Database Freeに対して、取得結果とベースライン`docs/sample/oracle/output`との一致を確かめる）。
+ベースラインを出力し直す場合は、PostgreSQLの手順1・4・6を次のように読み替える（手順2・3・5は同じ）。
+
+```bash
+# 1. 起動とDDLの流し込み。イメージは初期化スクリプトをCDBのルートで実行するため、PDBへ切り替えてからDDLを流す
+docker rm -f exporttabledefinition-verify-oracle 2>/dev/null
+printf 'alter session set container = FREEPDB1;\n@/opt/sample/ddl.sql\n' > /tmp/oracle-init.sql
+docker run -d --name exporttabledefinition-verify-oracle \
+  -e ORACLE_PASSWORD=oracle -p 11521:1521 \
+  -v "$PWD/docs/sample/oracle/ddl.sql:/opt/sample/ddl.sql:ro" \
+  -v /tmp/oracle-init.sql:/container-entrypoint-initdb.d/init.sql:ro \
+  gvenzl/oracle-free:23-slim-faststart
+# 起動待ち（数十秒）。DDLが失敗するとコンテナが終了するので、その場合はdocker logsでORA-を確認する
+for i in $(seq 1 90); do docker logs exporttabledefinition-verify-oracle 2>&1 | grep -q 'DATABASE IS READY TO USE' && break; sleep 2; done
+
+# 4. 実行（cli/build/libsで）。Oracleのスキーマ名は大文字
+rm -rf <リポジトリの絶対パス>/docs/sample/oracle/output
+java -jar exportTableDefinition-1.0-SNAPSHOT.jar \
+  --db-driver=oracle.jdbc.OracleDriver \
+  --db-url=jdbc:oracle:thin:@//localhost:11521/FREEPDB1 \
+  --db-username=sample --db-password=sample \
+  --schema=SAMPLE --output-path=<リポジトリの絶対パス>/docs/sample/oracle/output --annotation-path=
+
+# 6. 後片付け
+docker rm -f exporttabledefinition-verify-oracle
+```
+
+`--annotation-path=`を空で指定するのは、手順3で書き換えた設定ファイルのPostgreSQL用サイドカーを拾わないため（Oracleのベースラインはサイドカー無しで出力している）。
+
 ## 原因調査（`[result]:FAIL` になったら）
 
 まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectAllColumnInfo`等）と
@@ -183,12 +215,17 @@ Javaの文字インデックスとズレる。位置を厳密に特定したい�
    同様の理由でOracle側マッパーの`'CREATE INDEX '`も修正済み。
 3. 上記1点目のパターンで、Oracle側マッパー（`mapper/oracle/tableDefinitionMapper.xml`）の
    `selectAllForeignKeyInfo`にも同種の壊れたコメントが3箇所あり、目視で同様に修正した
-   （**Oracle環境での動作確認は未実施**。Oracle DBが手元にあるときに一度流して確認すること）。
+   （その後`oracleIntegrationTest`で実DBに対して確かめた）。
 
 4. **resultMapの`<arg javaType>`でプリミティブ型を指定するときは`_int`・`_boolean`のように`_`を付ける。**
    MyBatisの型エイリアスでは`int`は`Integer`、`boolean`は`Boolean`を指すため、DTO（record）の
    コンポーネントが`int`・`boolean`だとコンストラクタが見つからず、`Failed to select: ...`で失敗する
    （関数のオーバーロード番号を追加した際に実際に踏んだ。単体テストはDTOを直接生成するため検知できない）。
+
+5. **OracleのLONG型の列（`ALL_IND_EXPRESSIONS.COLUMN_EXPRESSION`・`ALL_TAB_COLUMNS.DATA_DEFAULT`・`ALL_VIEWS.TEXT`等）には、
+   `SUBSTR`等の関数も`LISTAGG`も適用できない**（ORA-00932）。関数索引を持つDBで`selectAllIndexInfo`がこれで落ちていた。
+   `DBMS_XMLGEN.GETXMLTYPE`でXMLに書き出し`XMLTABLE`で読み戻すか、`_VC`の付いたVARCHAR2版の列
+   （`ALL_CONSTRAINTS.SEARCH_CONDITION_VC`等）があればそれを使う。
 
 この手順（実DBに対して1回通す）を省略すると、上記のような「単体テストは通るが実行すると
 即エラー」という不具合を見逃す。

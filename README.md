@@ -24,11 +24,10 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 ### 対象DBMS
 
 * PostgreSQL（13以上。パーティション表の外部キー・トリガーが親から子へ複製されたものを見分けるため、13以上の列を参照します）
-* Oracle（一部制限あり）
+* Oracle（12c以上。一部制限あり）
     * Oracleの場合は、以下の項目の出力が不可
         * デフォルト値
         * view／materialized_viewのソース
-        * Check制約の定義
         * トリガー／関数・プロシージャ／シーケンス／ユーザー定義型（ENUM等）
         * パーティション情報
 
@@ -737,7 +736,7 @@ exportTableDefinition
 │      │        └─ com
 │      │            └─ export_table_definition
 │      ├─ test     ・・・ 単体テスト（DB不要）
-│      └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQLを使う）
+│      └─ integrationTest ・・・ 結合テスト（Docker上のPostgreSQL・Oracleを使う）
 ├─mcp-server       ・・・ スナップショットをAIから検索するMCPサーバー（Gradleのサブプロジェクト）
 │  └─build
 │      └─libs
@@ -772,7 +771,18 @@ gradlew integrationTest
 
 結合テストは`docs/sample/postgres/ddl.sql`を流し込んだDBに対して、各SQLの取得結果と、出力全体がコミット済みのベースライン
 （`docs/sample/postgres/output`）と一致することを確かめる（基本情報の作成日は比較しない）。出力仕様を意図して変えた場合は、
-ベースラインを出力し直してコミットする。PRではGitHub Actions（`.github/workflows/ci.yml`）で両方のテストが実行される。
+ベースラインを出力し直してコミットする。
+
+Oracle用のmapperは、Docker上の使い捨てのOracle Database Free（`gvenzl/oracle-free`。イメージ約1.3GB・メモリ2GB程度）に対して確かめる。
+PostgreSQLより重いため、さらに別のタスクに分けてある。
+
+```
+gradlew oracleIntegrationTest
+```
+
+`docs/sample/oracle/ddl.sql`（PostgreSQL版と同じスキーマ構成をOracleで作るDDL）を流し込んだDBに対して、各SQLの取得結果と、
+出力全体がベースライン（`docs/sample/oracle/output`）と一致することを確かめる。
+PRではGitHub Actions（`.github/workflows/ci.yml`）でこれらのテストがすべて実行される。
 
 #### カバレッジ
 
