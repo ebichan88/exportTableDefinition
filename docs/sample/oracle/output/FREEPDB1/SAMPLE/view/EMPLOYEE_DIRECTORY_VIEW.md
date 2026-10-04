@@ -61,7 +61,7 @@ select
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
 |:---|:---|:---|:---|:---|:---|
-
+|1|TRG_EMPLOYEE_DIRECTORY_INSERT|INSTEAD OF|INSERT|ROW|CREATE OR REPLACE TRIGGER sample.trg_employee_directory_insert instead of insert on sample.employee_directory_view for each row|
 
 ## ER図
 

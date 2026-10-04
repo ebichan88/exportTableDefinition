@@ -2,11 +2,10 @@
 -- exportTableDefinition サンプルDDL（Oracle）
 --
 -- PostgreSQL版（docs/sample/postgres/ddl.sql）と同じスキーマ構成をOracleで作るDDLです。
--- テーブル・ビュー・マテリアライズドビュー・インデックス・制約・外部キーと、
+-- 出力対象となりうるオブジェクト種別（テーブル／ビュー／マテリアライズドビュー／インデックス／制約／外部キー／
+-- シーケンス／トリガー／関数・プロシージャ・パッケージ／ユーザー定義型（オブジェクト型・コレクション型）／パーティション表）と、
 -- ER図の多重度パターン（1対1・0..1対1・1対多・0..1対多・多対多・自己参照・複合外部キー・関連なし）を
 -- PostgreSQL版と同じテーブル・列で一通り含めています。
--- シーケンス・トリガー・関数・プロシージャ・ユーザー定義型・パーティション表は現状Oracleでは出力されませんが、
--- 対応したときに同じ構成で確かめられるよう、Oracleで書ける形で用意しています。
 --
 -- PostgreSQL版との主な違い:
 --   * スキーマはユーザーとして作る。名前は大文字で格納される（SAMPLE.EMPLOYEE等）
@@ -14,7 +13,9 @@
 --     主キー・一意・外部キー・CHECK制約に、PostgreSQLが自動で付ける名前と同じ名前を付ける（NOT NULLは制約として出力されない）
 --   * serial → IDENTITY列、ENUM型 → CHECK制約、DOMAIN型 → 型＋CHECK制約、jsonb → CLOB＋IS JSON、
 --     GIN索引 → JSON_VALUEの関数索引、オーバーロード関数 → パッケージ、TRUNCATEトリガー → 文単位のDELETEトリガー、
---     多段・DEFAULT・別スキーマのパーティション → MAXVALUEのパーティション
+--     多段・DEFAULT・別スキーマのパーティション → MAXVALUEのパーティション（多段に当たるサブパーティションは、
+--     パーティションごとに名前を付けないとSYS_SUBP...の名前が振られるため、結合テストの中で確かめる）、
+--     RANGE型 → コレクション型（VARRAY）
 --
 -- SQL*PlusにSYSDBA等の権限を持つユーザーでPDBへ接続して流し込みます（ユーザーの作成から行うため）。
 -- 実行後、SAMPLEユーザーで接続し、conf/ExportTableDefinition.properties の schema に "SAMPLE" を指定して
@@ -34,13 +35,16 @@ grant create session, create table, create view, create materialized view, creat
 create user sample_archive identified by sample_archive quota unlimited on users;
 
 /*
- * 型定義（PostgreSQLのCOMPOSITE型に当たるオブジェクト型）
+ * 型定義（PostgreSQLのCOMPOSITE型に当たるオブジェクト型と、コレクション型）
  */
 create type sample.address_type as object (
     street varchar2(100),
     city varchar2(50),
     postal_code varchar2(10)
 );
+/
+
+create type sample.phone_number_list as varray(5) of varchar2(20);
 /
 
 /*

@@ -5,13 +5,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.domain.model.database.DatabaseEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
+import com.export_table_definition.domain.model.schemaobject.SequenceEntity;
+import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
+import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
+import com.export_table_definition.domain.model.table.TriggerEntity;
 import com.export_table_definition.testsupport.OracleSampleDatabase;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -394,6 +399,210 @@ class OracleTableDefinitionRepositoryIT {
     assertEquals(
         Cardinality.ONE_TO_MANY,
         foreignKey("ATTENDANCE_NOTE_ATTENDANCE_ID_WORK_DATE_FKEY").cardinality());
+  }
+
+  @Test
+  @DisplayName("selectTableList: パーティション表だけが、分割方法とキーの列からなるパーティションキーを持つ")
+  void testSelectTableListPartitionKey() {
+    final Map<String, TableEntity> tables = byName(tables(), TableEntity::physicalTableName);
+
+    assertEquals("RANGE (WORK_DATE)", tables.get("ATTENDANCE").partitionKey());
+    assertTrue(tables.get("ATTENDANCE").isPartitioned());
+    assertEquals("", tables.get("EMPLOYEE").partitionKey());
+  }
+
+  @Test
+  @DisplayName("selectPartitionList: パーティションを位置の順に、境界（LONG型の上限値）・親つきで取得する")
+  void testSelectPartitions() {
+    final List<PartitionEntity> partitions = repository.selectPartitionList(SAMPLE_SCHEMA);
+
+    assertEquals(
+        List.of(
+            "ATTENDANCE_2025",
+            "ATTENDANCE_2026_01",
+            "ATTENDANCE_2026_02",
+            "ATTENDANCE_2026_03",
+            "ATTENDANCE_DEFAULT"),
+        partitions.stream().map(PartitionEntity::partitionName).toList());
+    assertTrue(
+        partitions.stream()
+            .allMatch(
+                p ->
+                    p.tableKey().equals(TableKey.of("SAMPLE", "ATTENDANCE"))
+                        && p.parentName().equals("ATTENDANCE")
+                        && p.partitionKey().isEmpty()));
+    assertEquals(
+        "VALUES LESS THAN (TO_DATE(' 2026-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS',"
+            + " 'NLS_CALENDAR=GREGORIAN'))",
+        partitions.get(0).bound());
+    assertEquals("VALUES LESS THAN (MAXVALUE)", partitions.get(4).bound());
+    assertEquals(List.of(), repository.selectPartitionList(List.of("SAMPLE_ARCHIVE")));
+  }
+
+  @Test
+  @DisplayName("selectPartitionList: サブパーティションは親のパーティションの下に並べ、LISTのDEFAULTは「DEFAULT」とする")
+  void testSelectSubpartitions() throws SQLException {
+    try {
+      execute(
+          "CREATE TABLE sample.zz_part (id NUMBER, region VARCHAR2(10), d DATE)"
+              + " PARTITION BY LIST (region) SUBPARTITION BY RANGE (d) SUBPARTITION TEMPLATE ("
+              + " SUBPARTITION early VALUES LESS THAN (DATE '2026-01-01'),"
+              + " SUBPARTITION late VALUES LESS THAN (MAXVALUE))"
+              + " (PARTITION east VALUES ('EAST'), PARTITION other VALUES (DEFAULT))");
+
+      assertEquals("LIST (REGION)", table("ZZ_PART").partitionKey());
+      final List<PartitionEntity> partitions =
+          repository.selectPartitionList(SAMPLE_SCHEMA).stream()
+              .filter(p -> p.tableName().equals("ZZ_PART"))
+              .toList();
+      assertEquals(
+          List.of(
+              "EAST:ZZ_PART:VALUES ('EAST'):RANGE (D)",
+              "EAST_EARLY:EAST:VALUES LESS THAN (TO_DATE(' 2026-01-01 00:00:00',"
+                  + " 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')):",
+              "EAST_LATE:EAST:VALUES LESS THAN (MAXVALUE):",
+              "OTHER:ZZ_PART:DEFAULT:RANGE (D)",
+              "OTHER_EARLY:OTHER:VALUES LESS THAN (TO_DATE(' 2026-01-01 00:00:00',"
+                  + " 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN')):",
+              "OTHER_LATE:OTHER:VALUES LESS THAN (MAXVALUE):"),
+          partitions.stream()
+              .map(
+                  p ->
+                      String.join(
+                          ":", p.partitionName(), p.parentName(), p.bound(), p.partitionKey()))
+              .toList());
+    } finally {
+      execute("DROP TABLE sample.zz_part PURGE");
+    }
+  }
+
+  @Test
+  @DisplayName("selectTriggerList: タイミング（BEFORE/AFTER/INSTEAD OF）・イベント・行/文単位・宣言部を取得する")
+  void testSelectTriggers() {
+    final Map<String, TriggerEntity> triggers =
+        byName(repository.selectTriggerList(SAMPLE_SCHEMA), TriggerEntity::triggerName);
+
+    assertEquals(
+        List.of(
+            "TRG_ATTENDANCE_CHECK_WORK_MINUTES",
+            "TRG_EMPLOYEE_AUDIT",
+            "TRG_EMPLOYEE_DIRECTORY_INSERT",
+            "TRG_EMPLOYEE_SET_UPDATED_AT",
+            "TRG_PROJECT_ASSIGNMENT_DELETE"),
+        triggers.keySet().stream().sorted().toList());
+    final TriggerEntity audit = triggers.get("TRG_EMPLOYEE_AUDIT");
+    assertEquals("EMPLOYEE", audit.tableName());
+    assertEquals("AFTER", audit.timing());
+    assertEquals(List.of("INSERT", "UPDATE", "DELETE"), audit.events());
+    assertEquals("ROW", audit.orientation());
+    // 本体はトリガーの中に書かれ、呼び出す関数は無い
+    assertEquals("", audit.functionName());
+    assertEquals(
+        "CREATE OR REPLACE TRIGGER sample.trg_employee_audit after insert or update or delete on"
+            + " sample.employee for each row",
+        audit.triggerDefinition());
+    assertEquals("BEFORE", triggers.get("TRG_EMPLOYEE_SET_UPDATED_AT").timing());
+    assertEquals("STATEMENT", triggers.get("TRG_PROJECT_ASSIGNMENT_DELETE").orientation());
+    final TriggerEntity insteadOf = triggers.get("TRG_EMPLOYEE_DIRECTORY_INSERT");
+    assertEquals("INSTEAD OF", insteadOf.timing());
+    assertEquals("ROW", insteadOf.orientation());
+    assertEquals("EMPLOYEE_DIRECTORY_VIEW", insteadOf.tableName());
+  }
+
+  @Test
+  @DisplayName("selectTriggerList: WHEN句を持つトリガーは、定義にWHEN句を含める")
+  void testSelectTriggerWithWhenClause() throws SQLException {
+    try {
+      execute(
+          "CREATE TABLE sample.zz_trigger_target (id NUMBER)",
+          "CREATE TRIGGER sample.zz_trigger BEFORE INSERT ON sample.zz_trigger_target"
+              + " FOR EACH ROW WHEN (new.id < 0) BEGIN :new.id := 0; END;");
+
+      final TriggerEntity trigger =
+          byName(repository.selectTriggerList(SAMPLE_SCHEMA), TriggerEntity::triggerName)
+              .get("ZZ_TRIGGER");
+      assertEquals(
+          "CREATE OR REPLACE TRIGGER sample.zz_trigger BEFORE INSERT ON sample.zz_trigger_target"
+              + " FOR EACH ROW WHEN (new.id < 0)",
+          trigger.triggerDefinition());
+    } finally {
+      execute("DROP TABLE sample.zz_trigger_target PURGE");
+    }
+  }
+
+  @Test
+  @DisplayName("selectFunctionList: 単独の関数・プロシージャと、パッケージ内のサブプログラム（オーバーロードに番号を振る）を取得する")
+  void testSelectFunctions() {
+    final List<FunctionEntity> functions = repository.selectFunctionList(SAMPLE_SCHEMA);
+
+    final List<FunctionEntity> overloads =
+        functions.stream()
+            .filter(function -> function.functionName().equals("BONUS.CALCULATE_BONUS"))
+            .toList();
+    assertEquals(List.of(1, 2), overloads.stream().map(FunctionEntity::overloadIndex).toList());
+    assertTrue(overloads.stream().allMatch(function -> function.overloadCount() == 2));
+    assertEquals("FUNCTION", overloads.get(0).functionKind());
+    assertEquals("P_SALARY NUMBER, P_RATE NUMBER", overloads.get(0).functionArguments());
+    assertEquals("NUMBER", overloads.get(0).functionResult());
+    assertEquals("P_SALARY NUMBER", overloads.get(1).functionArguments());
+    final FunctionEntity procedure =
+        functions.stream()
+            .filter(function -> function.functionName().equals("RAISE_SALARY"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("PROCEDURE", procedure.functionKind());
+    assertEquals("", procedure.functionResult());
+    assertEquals(1, procedure.overloadCount());
+    // 一覧の取得では定義本体を取得しない
+    assertEquals("", procedure.definition());
+  }
+
+  @Test
+  @DisplayName("selectFunctionDefList: 定義本体を取得する（パッケージ内のサブプログラムは、パッケージの仕様部と本体）")
+  void testSelectFunctionDefinitions() {
+    final Map<String, FunctionEntity> definitions =
+        repository.selectFunctionDefList(SAMPLE_SCHEMA).stream()
+            .filter(function -> function.overloadIndex() == 1)
+            .collect(Collectors.toMap(FunctionEntity::functionName, Function.identity()));
+
+    final String procedure = definitions.get("RAISE_SALARY").definition();
+    assertTrue(
+        procedure.startsWith("CREATE OR REPLACE procedure raise_salary(p_employee_id number,"),
+        procedure);
+    final String bonus = definitions.get("BONUS.CALCULATE_BONUS").definition();
+    assertTrue(bonus.startsWith("CREATE OR REPLACE package bonus as"), bonus);
+    assertTrue(bonus.contains("CREATE OR REPLACE package body bonus as"), bonus);
+    assertTrue(bonus.contains("return p_salary * p_rate;"), bonus);
+  }
+
+  @Test
+  @DisplayName("selectSequenceList: シーケンスを取得し、IDENTITY列が自動で作るシーケンスは含めない")
+  void testSelectSequences() {
+    final List<SequenceEntity> sequences = repository.selectSequenceList(SAMPLE_SCHEMA);
+
+    assertEquals(
+        List.of("INVOICE_NO_SEQ"), sequences.stream().map(SequenceEntity::sequenceName).toList());
+    final SequenceEntity invoice = sequences.get(0);
+    assertEquals("1", invoice.incrementBy());
+    assertEquals("1000", invoice.minValue());
+    assertEquals("999999", invoice.maxValue());
+    assertEquals("5", invoice.cacheSize());
+    assertTrue(invoice.cycle());
+    assertEquals("", invoice.ownedBy());
+  }
+
+  @Test
+  @DisplayName("selectTypeList: オブジェクト型は属性を、コレクション型は要素の型を定義として取得する")
+  void testSelectTypes() {
+    final Map<String, TypeEntity> types =
+        byName(repository.selectTypeList(SAMPLE_SCHEMA), TypeEntity::typeName);
+
+    assertEquals("OBJECT", types.get("ADDRESS_TYPE").typeCategory());
+    assertEquals(
+        "STREET VARCHAR2(100), CITY VARCHAR2(50), POSTAL_CODE VARCHAR2(10)",
+        types.get("ADDRESS_TYPE").definition());
+    assertEquals("VARRAY", types.get("PHONE_NUMBER_LIST").typeCategory());
+    assertEquals("VARRAY(5) OF VARCHAR2(20)", types.get("PHONE_NUMBER_LIST").definition());
   }
 
   private static List<TableEntity> tables() {

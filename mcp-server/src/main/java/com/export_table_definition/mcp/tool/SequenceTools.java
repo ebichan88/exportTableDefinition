@@ -36,8 +36,7 @@ final class SequenceTools {
     return List.of(
         readOnlyTool(
             LIST_SEQUENCES,
-            "シーケンスの名前と所有カラム（テーブル名.カラム名）を、DB名・スキーマ名・名前の順に一覧で返す。"
-                + "PostgreSQLのみ（Oracleのスナップショットでは0件）",
+            "シーケンスの名前と所有カラム（テーブル名.カラム名）を、DB名・スキーマ名・名前の順に一覧で返す",
             objectSchema(
                 withPageProperties(
                     Map.of(

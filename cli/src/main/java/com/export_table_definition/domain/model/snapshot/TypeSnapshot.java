@@ -7,7 +7,7 @@ import com.export_table_definition.domain.model.schemaobject.TypeEntity;
 /**
  * スキーマのスナップショットのうち、1ユーザー定義型分の情報を表すrecordクラス
  *
- * @param category 種別（ENUM/COMPOSITE/DOMAIN/RANGE）
+ * @param category 種別（PostgreSQLはENUM/COMPOSITE/DOMAIN/RANGE、OracleはOBJECT/VARRAY/NESTED TABLE）
  */
 public record TypeSnapshot(String schema, String name, String category, String definition) {
 

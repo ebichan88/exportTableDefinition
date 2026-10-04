@@ -23,6 +23,18 @@
 |3||EMPLOYEE_ID|NUMBER(10,0)|10||○|||
 |4|勤務時間（分）|WORK_MINUTES|NUMBER(*,0)||||||
 
+## パーティション情報
+
+パーティションキー: `RANGE (WORK_DATE)`
+
+| No. | パーティション | 親 | パーティション境界 | 下位のパーティションキー |
+|:---|:---|:---|:---|:---|
+|1|ATTENDANCE_2025|ATTENDANCE|VALUES LESS THAN (TO_DATE(' 2026-01-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN'))||
+|2|ATTENDANCE_2026_01|ATTENDANCE|VALUES LESS THAN (TO_DATE(' 2026-02-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN'))||
+|3|ATTENDANCE_2026_02|ATTENDANCE|VALUES LESS THAN (TO_DATE(' 2026-03-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN'))||
+|4|ATTENDANCE_2026_03|ATTENDANCE|VALUES LESS THAN (TO_DATE(' 2026-04-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS', 'NLS_CALENDAR=GREGORIAN'))||
+|5|ATTENDANCE_DEFAULT|ATTENDANCE|VALUES LESS THAN (MAXVALUE)||
+
 ## インデックス情報
 
 | No. | インデックス名 | 種別 | UNIQUE | PRIMARY | 定義 | 備考 |
@@ -47,7 +59,7 @@
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
 |:---|:---|:---|:---|:---|:---|
-
+|1|TRG_ATTENDANCE_CHECK_WORK_MINUTES|BEFORE|INSERT/UPDATE|ROW|CREATE OR REPLACE TRIGGER sample.trg_attendance_check_work_minutes before insert or update on sample.attendance for each row|
 
 ## ER図
 

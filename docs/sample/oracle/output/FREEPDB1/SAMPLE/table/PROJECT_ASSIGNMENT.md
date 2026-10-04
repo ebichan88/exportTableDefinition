@@ -48,7 +48,7 @@
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
 |:---|:---|:---|:---|:---|:---|
-
+|1|TRG_PROJECT_ASSIGNMENT_DELETE|AFTER|DELETE|STATEMENT|CREATE OR REPLACE TRIGGER sample.trg_project_assignment_delete after delete on sample.project_assignment|
 
 ## ER図
 

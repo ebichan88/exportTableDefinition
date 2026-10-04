@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * 未知の出力対象オブジェクト種別などの設定誤りは、DBへの問い合わせや出力先の削除（{@code --rm-dist}）より前に検知される
  *
  * @param tableScope テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）
- * @param outputObjectTypes 出力対象とするPostgreSQL固有オブジェクト種別の集合（未指定の場合は全種別）
+ * @param outputObjectTypes 出力対象とする追加オブジェクト種別の集合（未指定の場合は全種別）
  */
 public record TargetSelection(TableScope tableScope, Set<OutputObjectType> outputObjectTypes) {
 
@@ -26,7 +26,7 @@ public record TargetSelection(TableScope tableScope, Set<OutputObjectType> outpu
    *
    * @param targetSchemaList テーブル定義出力対象のスキーマのリスト
    * @param targetTableList テーブル定義出力対象のテーブルのリスト（ワイルドカード・除外・スキーマ修飾を指定可）
-   * @param outputObjectList 出力対象とするPostgreSQL固有オブジェクト種別名（{@link OutputObjectType#getName()}）のリスト。
+   * @param outputObjectList 出力対象とする追加オブジェクト種別名（{@link OutputObjectType#getName()}）のリスト。
    *     空の場合は全種別を出力対象とする
    * @throws IllegalArgumentException テーブル名パターンの書き誤りや、未知の出力対象オブジェクト種別名が含まれる場合。
    *     両方に誤りがある場合は、1件ずつではなくまとめて（1行に1件）示す

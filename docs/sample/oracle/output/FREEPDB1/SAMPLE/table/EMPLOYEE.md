@@ -66,7 +66,8 @@
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
 |:---|:---|:---|:---|:---|:---|
-
+|1|TRG_EMPLOYEE_AUDIT|AFTER|INSERT/UPDATE/DELETE|ROW|CREATE OR REPLACE TRIGGER sample.trg_employee_audit after insert or update or delete on sample.employee for each row|
+|2|TRG_EMPLOYEE_SET_UPDATED_AT|BEFORE|UPDATE|ROW|CREATE OR REPLACE TRIGGER sample.trg_employee_set_updated_at before update on sample.employee for each row|
 
 ## ER図
 

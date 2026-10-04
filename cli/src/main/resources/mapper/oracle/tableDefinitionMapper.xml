@@ -10,6 +10,34 @@
         fetch first 1 rows only
     </select>
 
+    <!-- Oracleが管理するスキーマ。スキーマを指定しない場合に、ディクショナリ等を出力対象から外す -->
+    <sql id="oracleMaintainedSchemas">
+        ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+    </sql>
+
+    <!-- ストアドプログラム（関数・プロシージャ・パッケージ）のソース。ALL_SOURCEに行ごとに格納されるため、行順に連結する。
+         作成時の「CREATE OR REPLACE」は格納されないため補う。
+         作成時にスキーマ名で修飾した名前は、1行目でスキーマ名の部分が空白に置き換えて格納されるため、1行目の連続する空白を詰める -->
+    <sql id="sourceTextFunction">
+        FUNCTION source_text(p_owner VARCHAR2, p_name VARCHAR2, p_type VARCHAR2) RETURN CLOB IS
+            result CLOB;
+        BEGIN
+            FOR r IN (
+                SELECT CASE WHEN line = 1 THEN REGEXP_REPLACE(text, ' {2,}', ' ') ELSE text END AS text
+                FROM all_source WHERE owner = p_owner AND name = p_name AND type = p_type ORDER BY line
+            ) LOOP
+                IF result IS NULL THEN
+                    DBMS_LOB.CREATETEMPORARY(result, TRUE);
+                    DBMS_LOB.WRITEAPPEND(result, LENGTH('CREATE OR REPLACE '), 'CREATE OR REPLACE ');
+                END IF;
+                IF r.text IS NOT NULL THEN
+                    DBMS_LOB.WRITEAPPEND(result, LENGTH(r.text), r.text);
+                END IF;
+            END LOOP;
+            RETURN result;
+        END;
+    </sql>
+
     <!-- LONG型の列（ビューのソース・デフォルト値・索引の式等）は、SQLの関数を適用できず（ORA-00932）、
          DBMS_XMLGENで書き出しても値をエスケープしないため、&や<を含むとXMLの解析に失敗する（ORA-31011）。
          SQLの中に定義するPL/SQLの関数で、DBMS_SQLにより少しずつ読み出してCLOBにする（32KBを超える値も読める）。
@@ -59,7 +87,7 @@
             LEFT OUTER JOIN ALL_MVIEWS m ON t1.OWNER = m.OWNER AND t1.TABLE_NAME = m.MVIEW_NAME
             LEFT OUTER JOIN ALL_TAB_COMMENTS tcom ON t1.OWNER = tcom.OWNER AND t1.TABLE_NAME = tcom.TABLE_NAME
             WHERE m.MVIEW_NAME IS NULL
-                AND t1.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                AND t1.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND t1.OWNER IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -75,7 +103,7 @@
                 long_value('SELECT text FROM all_views WHERE owner = :p1 AND view_name = :p2', t2.OWNER, t2.VIEW_NAME) AS definition
             FROM ALL_VIEWS t2
             LEFT OUTER JOIN ALL_TAB_COMMENTS vcom ON t2.OWNER = vcom.OWNER AND t2.VIEW_NAME = vcom.TABLE_NAME
-            WHERE t2.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+            WHERE t2.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND t2.OWNER IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -91,7 +119,7 @@
                 long_value('SELECT query FROM all_mviews WHERE owner = :p1 AND mview_name = :p2', t3.OWNER, t3.MVIEW_NAME) AS definition
             FROM ALL_MVIEWS t3
             LEFT OUTER JOIN ALL_MVIEW_COMMENTS mcom ON t3.OWNER = mcom.OWNER AND t3.MVIEW_NAME = mcom.MVIEW_NAME
-            WHERE t3.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+            WHERE t3.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND t3.OWNER IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -106,7 +134,13 @@
             physical_table_name AS "physicalTableName",
             table_type AS "tableType",
             definition AS definition,
-            '' AS "partitionKey"
+            COALESCE((
+                SELECT pt.partitioning_type || ' (' || LISTAGG(k.column_name, ', ') WITHIN GROUP (ORDER BY k.column_position) || ')'
+                FROM all_part_tables pt
+                JOIN all_part_key_columns k ON k.owner = pt.owner AND k.name = pt.table_name AND k.object_type = 'TABLE'
+                WHERE pt.owner = schema_name AND pt.table_name = physical_table_name AND table_type = 'table'
+                GROUP BY pt.partitioning_type
+            ), '') AS "partitionKey"
         FROM ora_all_tables
         ORDER BY schema_name, physical_table_name
     </select>
@@ -162,7 +196,7 @@
                 '' AS remarks
             FROM ALL_TAB_COLUMNS c
             LEFT OUTER JOIN ALL_COL_COMMENTS com ON c.OWNER = com.OWNER AND c.TABLE_NAME = com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME
-            WHERE c.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+            WHERE c.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND c.OWNER IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -223,7 +257,7 @@
             LEFT JOIN all_ind_columns col ON idx.index_name = col.index_name AND idx.owner = col.index_owner
             LEFT JOIN all_ind_expressions ie ON idx.index_name = ie.index_name AND idx.owner = ie.index_owner AND col.column_position = ie.column_position
             WHERE idx.index_type != 'LOB'
-                AND idx.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                AND idx.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND idx.owner IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -281,7 +315,7 @@
                    NOT NULLはカラム情報に出すため、制約としては出さない。
                    NOT NULLの条件は「"列名" IS NOT NULL」の形で格納される（CHECK句に書いた条件は書いたとおりに格納される） */
                 AND CASE WHEN ac.constraint_type = 'C' AND ac.search_condition_vc = '"' || acc.column_name || '" IS NOT NULL' THEN 1 ELSE 0 END = 0
-                AND ac.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+                AND ac.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND ac.owner IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -389,7 +423,7 @@
             LEFT OUTER JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner AND ac.constraint_type = 'R'
             LEFT OUTER JOIN all_constraints ac_r ON ac.r_constraint_name = ac_r.constraint_name AND ac.r_owner = ac_r.owner
             LEFT OUTER JOIN all_cons_columns acc_r ON ac_r.constraint_name = acc_r.constraint_name AND ac_r.owner = acc_r.owner AND acc.position = acc_r.position
-            WHERE ac.OWNER NOT IN ('ANONYMOUS','APPQOSSYS','AUDSYS','CTXSYS','DBSFWUSER','DBSNMP','DGPDB_INT','DIP','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER','LBACSYS','MDDATA','MDSYS','OJVMSYS','OLAPSYS','ORACLEUSER','ORACLE_OCM','ORDDATA','ORDPLUGINS','OUTLN','PDBADMIN','REMOTE_SCHEDULER_AGENT','SI_INFORMTN_SCHEMA','SYS','SYS$UMF','SYSBACKUP','SYSDG','SYSKM','SYSRAC','SYSTEM','WMSYS','XDB','XS$NULL','ORDSYS')
+            WHERE ac.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
                 <if test="schemaList != null and schemaList.size() > 0">
                     AND ac.owner IN
                     <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
@@ -424,6 +458,337 @@
         FROM ora_all_foreignkeys f
         WHERE column_names IS NOT NULL
         ORDER BY schema_name, table_name, foreignkey_name
+    </select>
+
+    <select id="selectAllTriggerInfo" resultType="TriggerDto">
+        WITH ora_triggers AS (
+            <!-- テーブル・ビューのトリガーだけを対象にする（スキーマ・データベースのイベントトリガーは対象外）。
+                 本体のPL/SQLはトリガーの中に直接書かれ、PostgreSQLのように呼び出す関数が無いため、定義には宣言部だけを出す -->
+            SELECT
+                tr.table_owner AS schema_name,
+                tr.table_name AS table_name,
+                tr.trigger_name AS trigger_name,
+                CASE
+                    WHEN tr.trigger_type LIKE 'BEFORE%' THEN 'BEFORE'
+                    WHEN tr.trigger_type LIKE 'AFTER%' THEN 'AFTER'
+                    ELSE tr.trigger_type
+                END AS timing,
+                REPLACE(TRIM(tr.triggering_event), ' OR ', '/') AS events,
+                CASE
+                    WHEN tr.trigger_type LIKE '%EACH ROW' OR tr.trigger_type = 'INSTEAD OF' THEN 'ROW'
+                    WHEN tr.trigger_type = 'COMPOUND' THEN ''
+                    ELSE 'STATEMENT'
+                END AS orientation,
+                'CREATE OR REPLACE TRIGGER ' || TRIM(REGEXP_REPLACE(tr.description, '\s+', ' '))
+                    || CASE WHEN tr.when_clause IS NOT NULL THEN ' WHEN (' || tr.when_clause || ')' END AS trigger_definition
+            FROM all_triggers tr
+            WHERE tr.base_object_type IN ('TABLE', 'VIEW')
+                AND tr.table_owner NOT IN <include refid="oracleMaintainedSchemas"/>
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND tr.table_owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            trigger_name AS "triggerName",
+            timing AS "timing",
+            events AS "events",
+            orientation AS "orientation",
+            '' AS "functionName",
+            trigger_definition AS "triggerDefinition"
+        FROM ora_triggers
+        ORDER BY schema_name, table_name, trigger_name
+    </select>
+
+    <select id="selectAllPartitionInfo" resultType="PartitionDto">
+        WITH
+        <include refid="longValueFunction"/>
+        ora_partitions AS (
+            <!-- パーティションの親はテーブル、サブパーティションの親はパーティション。
+                 サブパーティションを持つパーティションは、下位のパーティションキー（表のサブパーティションキー）を持つ -->
+            SELECT
+                tp.table_owner AS schema_name,
+                tp.table_name AS table_name,
+                tp.partition_name AS partition_name,
+                tp.table_name AS parent_name,
+                pt.partitioning_type AS partitioning_type,
+                long_value('SELECT high_value FROM all_tab_partitions WHERE table_owner = :p1 AND table_name = :p2 AND partition_name = :p3',
+                    tp.table_owner, tp.table_name, tp.partition_name) AS high_value,
+                CASE
+                    WHEN tp.subpartition_count > 0 THEN pt.subpartitioning_type || ' (' || (
+                        SELECT LISTAGG(k.column_name, ', ') WITHIN GROUP (ORDER BY k.column_position)
+                        FROM all_subpart_key_columns k
+                        WHERE k.owner = tp.table_owner AND k.name = tp.table_name AND k.object_type = 'TABLE'
+                    ) || ')'
+                    ELSE ''
+                END AS partition_key,
+                tp.partition_position AS partition_position,
+                0 AS subpartition_position
+            FROM all_tab_partitions tp
+            JOIN all_part_tables pt ON pt.owner = tp.table_owner AND pt.table_name = tp.table_name
+            WHERE tp.table_owner NOT IN <include refid="oracleMaintainedSchemas"/>
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND tp.table_owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+            UNION ALL
+            SELECT
+                sp.table_owner,
+                sp.table_name,
+                sp.subpartition_name,
+                sp.partition_name,
+                pt.subpartitioning_type,
+                long_value('SELECT high_value FROM all_tab_subpartitions WHERE table_owner = :p1 AND table_name = :p2 AND subpartition_name = :p3',
+                    sp.table_owner, sp.table_name, sp.subpartition_name),
+                '',
+                tp.partition_position,
+                sp.subpartition_position
+            FROM all_tab_subpartitions sp
+            JOIN all_tab_partitions tp ON tp.table_owner = sp.table_owner AND tp.table_name = sp.table_name AND tp.partition_name = sp.partition_name
+            JOIN all_part_tables pt ON pt.owner = sp.table_owner AND pt.table_name = sp.table_name
+            WHERE sp.table_owner NOT IN <include refid="oracleMaintainedSchemas"/>
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND sp.table_owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            schema_name AS "schemaName",
+            table_name AS "tableName",
+            schema_name AS "partitionSchemaName",
+            partition_name AS "partitionName",
+            schema_name AS "parentSchemaName",
+            parent_name AS "parentName",
+            <!-- HASHパーティションは境界の値を持たない。LISTのDEFAULTパーティションの値は「DEFAULT」 -->
+            CASE
+                WHEN partitioning_type = 'RANGE' THEN TO_CLOB('VALUES LESS THAN (') || high_value || ')'
+                WHEN partitioning_type = 'LIST' AND DBMS_LOB.COMPARE(high_value, TO_CLOB('DEFAULT')) = 0 THEN TO_CLOB('DEFAULT')
+                WHEN partitioning_type = 'LIST' THEN TO_CLOB('VALUES (') || high_value || ')'
+                ELSE TO_CLOB('')
+            END AS "bound",
+            partition_key AS "partitionKey"
+        FROM ora_partitions
+        ORDER BY schema_name, table_name, partition_position, subpartition_position
+    </select>
+
+    <select id="selectAllFunctionInfo" resultType="FunctionDto">
+        WITH
+
+        ora_functions AS (
+            <!-- 単独の関数・プロシージャと、パッケージ内のサブプログラム。オーバーロードはパッケージ内にしか作れないため、
+                 サブプログラムは「パッケージ名.サブプログラム名」の名前で並べる。
+                 パッケージ自身の行（PROCEDURE_NAMEがNULL）は、サブプログラムの行と重複するため除く -->
+            SELECT
+                p.owner AS schema_name,
+                p.object_name AS object_name,
+                p.object_type AS object_type,
+                CASE WHEN p.object_type = 'PACKAGE' THEN p.object_name || '.' || p.procedure_name ELSE p.object_name END AS function_name,
+                p.subprogram_id AS subprogram_id,
+                CASE
+                    WHEN p.object_type != 'PACKAGE' THEN p.object_type
+                    WHEN EXISTS (
+                        SELECT 1 FROM all_arguments r
+                        WHERE r.object_id = p.object_id AND r.subprogram_id = p.subprogram_id AND r.position = 0 AND r.data_level = 0
+                    ) THEN 'FUNCTION'
+                    ELSE 'PROCEDURE'
+                END AS function_kind,
+                (
+                    SELECT LISTAGG(
+                            a.argument_name || CASE a.in_out WHEN 'IN' THEN '' ELSE ' ' || a.in_out END || ' ' || COALESCE(a.type_name, a.data_type),
+                            ', ') WITHIN GROUP (ORDER BY a.sequence)
+                    FROM all_arguments a
+                    WHERE a.object_id = p.object_id AND a.subprogram_id = p.subprogram_id
+                        AND a.position > 0 AND a.data_level = 0 AND a.argument_name IS NOT NULL
+                ) AS function_arguments,
+                (
+                    SELECT MAX(COALESCE(r.type_name, r.data_type))
+                    FROM all_arguments r
+                    WHERE r.object_id = p.object_id AND r.subprogram_id = p.subprogram_id AND r.position = 0 AND r.data_level = 0
+                ) AS function_result,
+                ROW_NUMBER() OVER (
+                    PARTITION BY p.owner, CASE WHEN p.object_type = 'PACKAGE' THEN p.object_name || '.' || p.procedure_name ELSE p.object_name END
+                    ORDER BY p.subprogram_id) AS overload_index,
+                COUNT(*) OVER (
+                    PARTITION BY p.owner, CASE WHEN p.object_type = 'PACKAGE' THEN p.object_name || '.' || p.procedure_name ELSE p.object_name END
+                ) AS overload_count
+            FROM all_procedures p
+            WHERE (p.object_type IN ('FUNCTION', 'PROCEDURE') OR (p.object_type = 'PACKAGE' AND p.procedure_name IS NOT NULL))
+                AND p.owner NOT IN <include refid="oracleMaintainedSchemas"/>
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND p.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
+            schema_name AS "schemaName",
+            function_name AS "functionName",
+            overload_index AS "overloadIndex",
+            overload_count AS "overloadCount",
+            function_kind AS "functionKind",
+            function_arguments AS "functionArguments",
+            CASE function_kind WHEN 'PROCEDURE' THEN '' ELSE function_result END AS "functionResult",
+            'PL/SQL' AS "languageName",
+            '' AS definition
+        FROM ora_functions
+        ORDER BY schema_name, function_name, overload_index
+    </select>
+
+    <select id="selectAllFunctionDefInfo" resultType="FunctionDto">
+        WITH
+        <include refid="sourceTextFunction"/>
+        ora_functions AS (
+            <!-- 単独の関数・プロシージャと、パッケージ内のサブプログラム。オーバーロードはパッケージ内にしか作れないため、
+                 サブプログラムは「パッケージ名.サブプログラム名」の名前で並べる。
+                 パッケージ自身の行（PROCEDURE_NAMEがNULL）は、サブプログラムの行と重複するため除く -->
+            SELECT
+                p.owner AS schema_name,
+                p.object_name AS object_name,
+                p.object_type AS object_type,
+                CASE WHEN p.object_type = 'PACKAGE' THEN p.object_name || '.' || p.procedure_name ELSE p.object_name END AS function_name,
+                p.subprogram_id AS subprogram_id,
+                CASE
+                    WHEN p.object_type != 'PACKAGE' THEN p.object_type
+                    WHEN EXISTS (
+                        SELECT 1 FROM all_arguments r
+                        WHERE r.object_id = p.object_id AND r.subprogram_id = p.subprogram_id AND r.position = 0 AND r.data_level = 0
+                    ) THEN 'FUNCTION'
+                    ELSE 'PROCEDURE'
+                END AS function_kind,
+                (
+                    SELECT LISTAGG(
+                            a.argument_name || CASE a.in_out WHEN 'IN' THEN '' ELSE ' ' || a.in_out END || ' ' || COALESCE(a.type_name, a.data_type),
+                            ', ') WITHIN GROUP (ORDER BY a.sequence)
+                    FROM all_arguments a
+                    WHERE a.object_id = p.object_id AND a.subprogram_id = p.subprogram_id
+                        AND a.position > 0 AND a.data_level = 0 AND a.argument_name IS NOT NULL
+                ) AS function_arguments,
+                (
+                    SELECT MAX(COALESCE(r.type_name, r.data_type))
+                    FROM all_arguments r
+                    WHERE r.object_id = p.object_id AND r.subprogram_id = p.subprogram_id AND r.position = 0 AND r.data_level = 0
+                ) AS function_result,
+                ROW_NUMBER() OVER (
+                    PARTITION BY p.owner, CASE WHEN p.object_type = 'PACKAGE' THEN p.object_name || '.' || p.procedure_name ELSE p.object_name END
+                    ORDER BY p.subprogram_id) AS overload_index,
+                COUNT(*) OVER (
+                    PARTITION BY p.owner, CASE WHEN p.object_type = 'PACKAGE' THEN p.object_name || '.' || p.procedure_name ELSE p.object_name END
+                ) AS overload_count
+            FROM all_procedures p
+            WHERE (p.object_type IN ('FUNCTION', 'PROCEDURE') OR (p.object_type = 'PACKAGE' AND p.procedure_name IS NOT NULL))
+                AND p.owner NOT IN <include refid="oracleMaintainedSchemas"/>
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND p.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
+            schema_name AS "schemaName",
+            function_name AS "functionName",
+            overload_index AS "overloadIndex",
+            overload_count AS "overloadCount",
+            function_kind AS "functionKind",
+            function_arguments AS "functionArguments",
+            CASE function_kind WHEN 'PROCEDURE' THEN '' ELSE function_result END AS "functionResult",
+            'PL/SQL' AS "languageName",
+            CASE object_type
+                WHEN 'PACKAGE' THEN source_text(schema_name, object_name, 'PACKAGE') || CHR(10) || CHR(10) || source_text(schema_name, object_name, 'PACKAGE BODY')
+                ELSE source_text(schema_name, object_name, object_type)
+            END AS definition
+        FROM ora_functions
+        ORDER BY schema_name, function_name, overload_index
+    </select>
+
+    <select id="selectAllSequenceInfo" resultType="SequenceDto">
+        <!-- IDENTITY列が自動で作るシーケンス（ISEQ$$_...）は、名前が環境ごとに変わり、列のデフォルト値として出力するため除く。
+             開始値はディクショナリに残らない（LAST_NUMBERは次に払い出す値）ため出力しない -->
+        SELECT
+            SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
+            s.sequence_owner AS "schemaName",
+            s.sequence_name AS "sequenceName",
+            TO_CHAR(s.increment_by) AS "incrementBy",
+            TO_CHAR(s.min_value) AS "minValue",
+            TO_CHAR(s.max_value) AS "maxValue",
+            TO_CHAR(s.cache_size) AS "cacheSize",
+            '' AS "startValue",
+            CASE s.cycle_flag WHEN 'Y' THEN 1 ELSE 0 END AS "cycle",
+            '' AS "ownedBy"
+        FROM all_sequences s
+        WHERE NOT EXISTS (
+                SELECT 1 FROM all_tab_identity_cols ic
+                WHERE ic.owner = s.sequence_owner AND ic.sequence_name = s.sequence_name
+            )
+            AND s.sequence_owner NOT IN <include refid="oracleMaintainedSchemas"/>
+            <if test="schemaList != null and schemaList.size() > 0">
+                AND s.sequence_owner IN
+                <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                    #{schema}
+                </foreach>
+            </if>
+        ORDER BY s.sequence_owner, s.sequence_name
+    </select>
+
+    <select id="selectAllTypeInfo" resultType="TypeDto">
+        WITH ora_types AS (
+            SELECT
+                t.owner AS schema_name,
+                t.type_name AS type_name,
+                CASE
+                    WHEN t.typecode = 'OBJECT' THEN 'OBJECT'
+                    WHEN c.coll_type = 'TABLE' THEN 'NESTED TABLE'
+                    ELSE 'VARRAY'
+                END AS type_category,
+                CASE
+                    WHEN t.typecode = 'OBJECT' THEN (
+                        SELECT LISTAGG(
+                                a.attr_name || ' ' || a.attr_type_name || CASE
+                                    WHEN a.attr_type_name IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR', 'RAW') THEN '(' || a.length || ')'
+                                    WHEN a.attr_type_name = 'NUMBER' AND a.precision IS NOT NULL THEN '(' || a.precision || ',' || a.scale || ')'
+                                    ELSE ''
+                                END,
+                                ', ') WITHIN GROUP (ORDER BY a.attr_no)
+                        FROM all_type_attrs a
+                        WHERE a.owner = t.owner AND a.type_name = t.type_name
+                    )
+                    ELSE CASE WHEN c.coll_type = 'TABLE' THEN 'TABLE' ELSE 'VARRAY(' || c.upper_bound || ')' END
+                        || ' OF ' || c.elem_type_name || CASE
+                            WHEN c.elem_type_name IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR', 'RAW') THEN '(' || c.length || ')'
+                            WHEN c.elem_type_name = 'NUMBER' AND c.precision IS NOT NULL THEN '(' || c.precision || ',' || c.scale || ')'
+                            ELSE ''
+                        END
+                END AS definition
+            FROM all_types t
+            LEFT OUTER JOIN all_coll_types c ON c.owner = t.owner AND c.type_name = t.type_name
+            WHERE t.typecode IN ('OBJECT', 'COLLECTION')
+                AND t.owner NOT IN <include refid="oracleMaintainedSchemas"/>
+                <if test="schemaList != null and schemaList.size() > 0">
+                    AND t.owner IN
+                    <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                        #{schema}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
+            schema_name AS "schemaName",
+            type_name AS "typeName",
+            type_category AS "typeCategory",
+            definition AS definition
+        FROM ora_types
+        ORDER BY schema_name, type_name
     </select>
 
 </mapper>

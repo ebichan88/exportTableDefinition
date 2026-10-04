@@ -1,0 +1,1 @@
+{"schema":"SAMPLE","name":"INVOICE_NO_SEQ","incrementBy":"1","minValue":"1000","maxValue":"999999","cacheSize":"5","cycle":true}
