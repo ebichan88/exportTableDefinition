@@ -29,8 +29,10 @@ import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
+import com.export_table_definition.domain.service.export.InsightExportSinkFactory;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
 import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
+import com.export_table_definition.domain.service.insight.InsightWriter;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriter;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiff;
 import com.export_table_definition.domain.service.target.ExportTargetConsistency;
@@ -278,6 +280,8 @@ public class ExportTableDefinitionUsecaseTest {
         new SnapshotDiff(fileRepository, pathResolver, serializer, new UnifiedDiffGenerator());
     final SnapshotExportSinkFactory snapshotSinkFactory =
         new SnapshotExportSinkFactory(snapshotWriter);
+    final InsightExportSinkFactory insightSinkFactory =
+        new InsightExportSinkFactory(new InsightWriter(fileRepository, pathResolver, serializer));
     final Function<LocalDate, SchemaExportPipeline> schemaExportPipelineAt =
         generatedDate ->
             new SchemaExportPipeline(
@@ -297,6 +301,7 @@ public class ExportTableDefinitionUsecaseTest {
                     new ViewpointWriter(fileRepository, pathResolver, pagedSectionWriter),
                     new ReadmeWriter(fileRepository, pathResolver)),
                 snapshotSinkFactory,
+                insightSinkFactory,
                 fileRepository,
                 pathResolver);
     checkUsecaseAt =
@@ -1281,5 +1286,68 @@ public class ExportTableDefinitionUsecaseTest {
             .noneMatch(path -> path.getFileName().toString().startsWith("viewpoint")));
     assertFalse(contentOf(dbFile(DEFAULT_OUT, "tableList_testdb.md")).contains("観点一覧"));
     assertFalse(contentOf(tableDefFile(DEFAULT_OUT, "public", "orders")).contains("## 所属する観点"));
+  }
+
+  private Path insightsFile(String fileName) {
+    return DEFAULT_OUT.resolve("insights").resolve("testdb").resolve(fileName);
+  }
+
+  @Test
+  @DisplayName("サイドカーの観点が、所属テーブルを含む参考情報（insights/{DB名}/viewpoints.json）としても出力される")
+  void testViewpointsAreExportedAsInsight() {
+    setUp();
+    repository.tables.add(table("public", "orders"));
+    repository.tables.add(table("public", "stock"));
+    viewpoints =
+        Viewpoints.of(
+            List.of(Viewpoint.of("order", "受注管理", "受注から出荷までを扱う", List.of("public.orders"))));
+
+    usecase.exportTableDefinition(
+        new ExportTableDefinitionRequest(
+            TargetSelection.of(List.of(), List.of(), List.of()),
+            "conf/annotations.yml",
+            null,
+            0,
+            80,
+            false));
+
+    assertEquals(
+        "{\"formatVersion\":1,\"viewpoints\":[{\"id\":\"order\",\"name\":\"受注管理\","
+            + "\"description\":\"受注から出荷までを扱う\","
+            + "\"tables\":[{\"schema\":\"public\",\"name\":\"orders\"}]}]}\n",
+        contentOf(insightsFile("viewpoints.json")));
+  }
+
+  @Test
+  @DisplayName("観点を宣言していない場合は、insights/viewpoints.jsonも出力されない")
+  void testViewpointsInsightNotWrittenWhenNotDeclared() {
+    setUp();
+    repository.tables.add(table("public", "orders"));
+
+    usecase.exportTableDefinition(
+        new ExportTableDefinitionRequest(
+            TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
+
+    assertFalse(fileExists(insightsFile("viewpoints.json")));
+  }
+
+  @Test
+  @DisplayName("checkDocumentDiff: insights配下には何も書き込まない")
+  void testCheckDocumentDiffDoesNotWriteInsights() {
+    setUp();
+    repository.tables.add(table("public", "orders"));
+    viewpoints =
+        Viewpoints.of(List.of(Viewpoint.of("order", "受注管理", "", List.of("public.orders"))));
+
+    checkUsecase.checkDocumentDiff(
+        new CheckDocumentDiffRequest(
+            TargetSelection.of(List.of(), List.of(), List.of()),
+            "conf/annotations.yml",
+            "committed",
+            0));
+
+    assertTrue(
+        fileRepository.writtenPaths.stream()
+            .noneMatch(path -> path.toString().contains("insights")));
   }
 }

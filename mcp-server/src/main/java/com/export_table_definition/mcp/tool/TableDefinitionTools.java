@@ -28,6 +28,7 @@ public final class TableDefinitionTools {
   public List<SyncToolSpecification> specifications() {
     return Stream.of(
             new SchemaTools(catalog).specifications(),
+            new ViewpointTools(catalog).specifications(),
             new TableTools(catalog).specifications(),
             new RelationTools(catalog).specifications(),
             new FunctionTools(catalog).specifications(),

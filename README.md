@@ -18,8 +18,9 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 | 観点ごとのページ・観点一覧 | サイドカーYAMLで宣言した業務ドメイン別の観点（「受注管理」等）ごとのER図と所属テーブル。[詳細](#観点viewpoints) |
 | 追加オブジェクトの一覧・個別ページ | 関数・プロシージャ、シーケンス、ユーザー定義型（ENUM等） |
 | スキーマのスナップショット | 上記と同じ情報を機械可読なJSON Lines形式で構造化したもの。[詳細](#スキーマのスナップショットjson-lines) |
+| 参考情報 | スキーマの事実ではないが、AIへ渡したい情報（観点等）。[詳細](#参考情報insights) |
 
-あわせて、出力したスナップショットをAI（Claude Code等）から検索できるようにするMCPサーバーを同梱しています。[詳細](#aiからテーブル定義を調べるmcpサーバー)
+あわせて、出力したスナップショット・参考情報をAI（Claude Code等）から検索できるようにするMCPサーバーを同梱しています。[詳細](#aiからテーブル定義を調べるmcpサーバー)
 
 出力サンプル: [README](./docs/sample/postgres/output/testdb/README.md) / [テーブル一覧](./docs/sample/postgres/output/testdb/tableList_testdb.md)
 
@@ -239,6 +240,7 @@ viewpoints:
 * 識別子が誤っている観点、`tables`の指定が誤っている観点、既出の識別子の観点は、警告を表示して読み飛ばします。
 * どのテーブルにも一致しないパターン（リネーム・削除の可能性）は、警告を表示します（スキーマ・テーブルの出力対象を絞り込んでいない場合のみ）。
 * 観点はスキーマの情報ではないため、スナップショットには含めません（観点を変更しても`--check`は差分として報告しません）。
+  その代わり、AIから引けるよう[参考情報（insights）](#参考情報insights)として出力します。
 
 ### mybatis.properties の記載内容
 
@@ -611,18 +613,33 @@ jq等で機械的に扱えます。
 * 被参照側の外部キーは、参照元テーブルの`foreignKeys`から導出できるため保持しません。
 * `schema`・`table`・`outputObjects`・`annotationPath`の設定はMarkdownと同様に適用されます。`chunkSize`・`erDiagramMaxNodes`はMarkdownの分割出力のための設定のため、スナップショットの内容には影響しません。
 
+### 参考情報（insights）
+
+スナップショットが「DBの構造から一意に決まる事実」であるのに対し、参考情報はそれ以外（観点のように見せ方の選択であるもの等）を
+AIへ渡すための出力です。観点（[`viewpoints`](#viewpoints観点)）を宣言している場合、所属テーブルを含めて出力します。
+
+```
+{outputPath}/insights/
+└─{DB名}
+   └─viewpoints.json     ・・・ 観点ごとの識別子・表示名・説明・所属テーブル
+```
+
+* 観点を1つも宣言していない場合は、ファイル自体を出力しません。
+* `--check`の比較対象には含まれません（参考情報を変更しても`--check`は差分として報告しません）。
+* [MCPサーバー](#aiからテーブル定義を調べるmcpサーバー)の`list_viewpoints`・`list_tables`・`search_tables`から参照されます。
+
 ## AIからテーブル定義を調べる（MCPサーバー）
 
-出力した[スキーマのスナップショット](#スキーマのスナップショットjson-lines)を、AIからMCP（Model Context Protocol）のツールで
-検索できるようにするサーバーです。テーブル定義書のリポジトリとは別のリポジトリでコードを書くとき、AIが正しいテーブル名・カラム・
-JOINの条件（外部キーと、サイドカーYAMLで宣言した論理リレーション）を調べられるようになります。
+出力した[スキーマのスナップショット](#スキーマのスナップショットjson-lines)と[参考情報](#参考情報insights)を、AIからMCP
+（Model Context Protocol）のツールで検索できるようにするサーバーです。テーブル定義書のリポジトリとは別のリポジトリでコードを書くとき、
+AIが正しいテーブル名・カラム・JOINの条件（外部キーと、サイドカーYAMLで宣言した論理リレーション）を調べられるようになります。
 
-* DBには接続しません。スナップショットのファイルを読むだけなので、DBの接続情報をAIに渡す必要はありません。
+* DBには接続しません。スナップショット・参考情報のファイルを読むだけなので、DBの接続情報をAIに渡す必要はありません。
 * 配布用zipの`mcp/exportTableDefinition-mcp.jar`がサーバー本体です。同梱のJava実行環境（`runtime`）で動くため、Javaのインストールは不要です。
 
 ### 準備
 
-1. このツールでテーブル定義書を出力し、`outputPath`配下の`snapshot/`をGit等で共有する（テーブル定義書と一緒にコミットしておく等）
+1. このツールでテーブル定義書を出力し、`outputPath`配下の`snapshot/`（観点を宣言している場合は`insights/`も）をGit等で共有する（テーブル定義書と一緒にコミットしておく等）
 2. AIを使う人が、そのリポジトリを手元にcloneし、zipを展開しておく
 
 ### 起動方法
@@ -674,8 +691,9 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 | ツール | 主な引数 | 内容 |
 |---|---|---|
 | `list_schemas` | なし | スナップショットに含まれるDB（DBMS種別）・スキーマと、スキーマごとのテーブル・ビュー・マテリアライズドビュー・関数・シーケンス・ユーザー定義型の数を返す |
-| `search_tables` | `query`（必須）、`schema`・`database`・`limit` | テーブル名・論理名・説明・カラム名・カラムの論理名を部分一致で検索し、一致の強い順に概要を返す。空白区切りの複数語はすべてを含むものだけを返す |
-| `list_tables` | `schema`・`database`・`type`（`table`／`view`／`materialized_view`）・`includeDescription`・`limit`（既定100、最大500）・`offset` | テーブル（ビューを含む）の名前・論理名・区分を名前の順に返す |
+| `list_viewpoints` | `database` | 観点（業務ドメイン別にテーブルをまとめる切り口。[参考情報](#参考情報insights)）の識別子・表示名・説明・所属テーブル数を返す |
+| `search_tables` | `query`（必須）、`schema`・`database`・`limit`・`viewpoint`（観点のid） | テーブル名・論理名・説明・カラム名・カラムの論理名を部分一致で検索し、一致の強い順に概要を返す。空白区切りの複数語はすべてを含むものだけを返す。`viewpoint`を指定すると、その観点の所属テーブルだけに絞り込む |
+| `list_tables` | `schema`・`database`・`type`（`table`／`view`／`materialized_view`）・`includeDescription`・`limit`（既定100、最大500）・`offset`・`viewpoint`（観点のid） | テーブル（ビューを含む）の名前・論理名・区分を名前の順に返す。`viewpoint`を指定すると、その観点の所属テーブルだけに絞り込む |
 | `get_table` | `table`（必須。配列で複数指定できる。最大10件）、`schema`・`database`・`sections`・`columns` | テーブル（ビューを含む）の定義を返す（スナップショットの1行）。`sections`（`columns`・`indexes`・`constraints`・`foreignKeys`・`logicalRelations`・`triggers`・`definition`）で返す項目を、`columns`で返すカラムを絞り込める。`table`に複数指定した場合は`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える） |
 | `find_columns` | `column`（必須）、`match`（`exact`／`partial`、既定`exact`）・`schema`・`database`・`limit`（既定50、最大500）・`offset` | カラムの物理名・論理名から、そのカラムを持つテーブルを逆引きする。型・PK・NOT NULL・デフォルト値と、外部キー・論理リレーションの参照先も返す |
 | `get_related_tables` | `table`（必須）、`schema`・`database`・`depth`（1〜3、既定1）・`direction`（`outgoing`／`incoming`／`both`、既定`both`） | 外部キーと論理リレーションをたどり、つながるテーブルと、どのカラム同士でつながるか・多重度を返す。参照される側（被参照）からもたどれる |
@@ -690,6 +708,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 
 * テーブル名は大文字小文字を区別しません。`スキーマ名.テーブル名`の形でも指定できます。
 * 同名のテーブルが複数のスキーマにある場合・見つからない場合は、候補を示すエラーを返します（AIが引数を直して呼び直します）。
+* `viewpoint`に存在しない観点のidを指定した場合は、宣言されている観点を示すエラーを返します。
 * 一覧を返すツールは、件数が`limit`を超える場合に続きの`offset`（`nextOffset`）を返します。
 * `outputObjects`で出力対象から外した種別は0件になります。
 * 関数・プロシージャの定義本体は、AIのコンテキストを圧迫するため既定では返しません（`get_function`の`includeDefinition`で返します）。

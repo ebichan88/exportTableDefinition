@@ -3,8 +3,10 @@ package com.export_table_definition.config.module;
 import com.export_table_definition.domain.repository.FileRepository;
 import com.export_table_definition.domain.repository.SidecarRepository;
 import com.export_table_definition.domain.service.UnifiedDiffGenerator;
+import com.export_table_definition.domain.service.export.InsightExportSinkFactory;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
 import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
+import com.export_table_definition.domain.service.insight.InsightWriter;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
 import com.export_table_definition.domain.service.snapshot.SchemaSnapshotWriter;
 import com.export_table_definition.domain.service.snapshot.SnapshotDiff;
@@ -51,7 +53,9 @@ public class ExportTableDefinitionModule extends AbstractModule {
     bind(SnapshotDiff.class);
     bind(UnifiedDiffGenerator.class);
     bind(ExportTargetConsistency.class);
+    bind(InsightWriter.class);
     bind(MarkdownExportSinkFactory.class);
     bind(SnapshotExportSinkFactory.class);
+    bind(InsightExportSinkFactory.class);
   }
 }

@@ -131,4 +131,16 @@ public interface OutputPathResolver {
    * @return スキーマ配下のオブジェクトのファイルでない場合（{@code database.json}等）は空
    */
   Optional<SnapshotKind> resolveSnapshotKind(Path snapshotFile);
+
+  /**
+   * 参考情報（{@code insights}）全体を置くディレクトリを返す。<br>
+   * スナップショットとは混在させず、専用のディレクトリ配下にまとめる。例: {base}/insights/
+   */
+  Path resolveInsightsDirectory(Path baseOutputDir);
+
+  /**
+   * 観点の参考情報の出力ファイルパスを返す。<br>
+   * 例: {base}/insights/{DB名}/viewpoints.json
+   */
+  Path resolveViewpointsInsightFile(OutputRoot root);
 }

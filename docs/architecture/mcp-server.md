@@ -8,15 +8,16 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 
 ## 構成と依存の向き
 
-依存の向きは`tool → catalog ← snapshot`。検索・関連のたどりは`catalog`に置き、MCPのSDKにもJSONにも依存させない
+依存の向きは`tool → catalog ← snapshot`・`catalog ← insight`。検索・関連のたどりは`catalog`に置き、MCPのSDKにもJSONにも依存させない
 （cliの`presentation → application → domain ← infrastructure`と同じ考え方で、中心のロジックを単体テストしやすくする）。
+`snapshot`と`insight`は互いに依存しない（読み込み元のディレクトリが異なる、独立した入力源）。
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
-| `mcp`（直下） | `McpServerMain` | エントリーポイント。起動引数の検証とスナップショットの読み込みの後、stdioのトランスポートでサーバーを起動する |
+| `mcp`（直下） | `McpServerMain` | エントリーポイント。起動引数の検証とスナップショット・参考情報の読み込みの後、stdioのトランスポートでサーバーを起動する |
 | | `ServerArguments` | 起動引数（`--snapshot=<ディレクトリ>`）の解釈と検証 |
 | | `UserCorrectableException` | 利用者が起動引数・スナップショットを見直せば解消する失敗。起動時に標準エラーへ出して終了コード2で終了する |
-| `mcp.catalog` | `SchemaCatalog` | 全オブジェクトを保持し、検索・一覧・名前の解決・カラムの逆引き・オブジェクト間の相互参照・関連のたどりを担う |
+| `mcp.catalog` | `SchemaCatalog` | 全オブジェクトを保持し、検索・一覧・名前の解決・カラムの逆引き・オブジェクト間の相互参照・関連のたどりを担う。観点（`ViewpointEntry`）は`withViewpoints`で組み立て後に合成する |
 | | `SearchQuery` | テーブルの検索語。空白区切りのAND、NFKC正規化＋小文字化した部分一致、項目ごとの点数（テーブル名＞論理名＞カラム＞説明・備考） |
 | | `ColumnQuery`・`ColumnHit` | カラムの逆引きの条件（物理名・論理名の完全一致／部分一致）と、当てはまったカラム（参照先を含む） |
 | | `ObjectReference`・`Lookup` | 名前で指定されたオブジェクト（`スキーマ名.名前`も可）と、その解決結果（1つに定まる・複数ある・見つからない）。テーブル以外の種類にも共通で使う |
@@ -24,11 +25,13 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `Relation`・`RelatedTables`・`JoinPath`・`JoinPaths` | テーブル間の関連と、幅優先でたどった結果・2つのテーブルをつなぐ最短経路 |
 | | `SqlNames`・`TableColumn` | カラムの型・デフォルト値（`nextval`）・トリガーの関数名に現れるオブジェクトの名前の判定（相互参照に使う）と、カラムとそれを持つテーブル |
 | | `TableEntry`・`ColumnEntry`・`RelationEntry`・`TriggerEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
+| | `ViewpointEntry` | 観点の参考情報1件（識別子・表示名・説明・所属テーブル）。スキーマを持たないため`SchemaObject`は実装しない |
 | | `FunctionEntry`・`FunctionOverloads`・`SequenceEntry`・`TypeEntry` | 関数・シーケンス・ユーザー定義型の1行。関数は同名のもの（オーバーロード）を`FunctionOverloads`にまとめて名前の解決の単位にする |
 | | `NameFilter` | 関数・シーケンス・型の一覧を、名前の部分一致で絞り込む条件 |
 | | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
 | `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリ（`tables.jsonl`・`functions.jsonl`・`sequences.jsonl`・`types.jsonl`）を読み込み`SchemaCatalog`を組み立てる。未知の項目は無視し、無いファイルは0件とする（cliの`outputObjects`で外せるため） |
-| `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
+| `mcp.insight` | `InsightsDirectoryReader` | 参考情報のディレクトリ（`{DB名}/viewpoints.json`）を読み込み`ViewpointEntry`のリストを組み立てる。渡されたスナップショットのディレクトリの親の兄弟を自前で求めるため、起動引数は増えない。ディレクトリ・ファイルが無い場合は0件とする |
+| `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`ViewpointTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
 | | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`） |
 | | `ToolArguments` | ツールの引数の読み取りと検証。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
 
@@ -37,8 +40,9 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | ツール | 主な引数 | 返すもの |
 |---|---|---|
 | `list_schemas` | なし | DB（DBMS種別）ごとのスキーマと、スキーマごとのオブジェクトの数 |
-| `search_tables` | `query`、`schema`・`database`・`limit`（任意） | 一致したテーブルの概要（名前・論理名・区分・説明）と、一致した項目（`matchedIn`） |
-| `list_tables` | `schema`・`database`・`type`・`includeDescription`・`limit`・`offset`（任意） | テーブルの概要（名前・論理名・区分）の一覧 |
+| `list_viewpoints` | `database`（任意） | 観点（業務ドメイン別にテーブルをまとめる切り口。参考情報）の識別子・表示名・説明・所属テーブル数 |
+| `search_tables` | `query`、`schema`・`database`・`limit`・`viewpoint`（任意） | 一致したテーブルの概要（名前・論理名・区分・説明）と、一致した項目（`matchedIn`）。`viewpoint`（観点のid）を指定すると所属テーブルだけに絞り込む |
+| `list_tables` | `schema`・`database`・`type`・`includeDescription`・`limit`・`offset`・`viewpoint`（任意） | テーブルの概要（名前・論理名・区分）の一覧。`viewpoint`で観点の所属テーブルだけに絞り込める |
 | `get_table` | `table`（配列も可。最大10件）、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）。`sections`・`columns`で項目・カラムを絞れる。`table`に配列を指定すると`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える） |
 | `find_columns` | `column`、`match`・`schema`・`database`・`limit`・`offset`（任意） | 当てはまったカラム（テーブル・型・PK・NOT NULL・デフォルト値・参照先） |
 | `get_related_tables` | `table`、`depth`（1〜3）・`direction`（outgoing/incoming/both）等（任意） | 関連（どのカラム同士か・外部キーか論理リレーションか・多重度・段数）と、関連に現れたテーブルの概要 |
@@ -96,12 +100,27 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 - 項目の追加は、未知の項目を無視するため互換。互換性の無い変更をした場合はcliの`DatabaseSnapshot.FORMAT_VERSION`を上げ、
   mcp-serverの`SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させる。
 
+## 参考情報（insights）の読み込み
+
+参考情報（観点等。cliの[参考情報（insights）](./overview.md#参考情報insights)を参照）はスナップショットとは別の
+ディレクトリに置かれるが、起動引数は`--snapshot`のみで増やさない。
+
+- `InsightsDirectoryReader`が、渡された`--snapshot`のディレクトリの**親の兄弟**（`{親}/insights/`）を自前で求めて読む。
+  cliの出力先（`outputPath`）配下で`snapshot/`と`insights/`が常に兄弟になる配置規則に依存する
+- `McpServerMain`が`SnapshotDirectoryReader`で組み立てた`SchemaCatalog`に、`withViewpoints`で観点を合成する
+- ディレクトリ・DBごとのファイルが無い場合は0件とする（観点を1つも宣言していない場合、cliの版が古く参考情報を
+  まだ出力しない場合等）。起動時の誤りにはしない（スナップショットが1つも無い場合とは扱いが異なる）
+- 互換性はスナップショットと同じ仕組み（`SampleInsightsContractTest`によるベースラインの確認、
+  cliの`ViewpointsInsight.FORMAT_VERSION`とmcp-serverの`InsightsDirectoryReader.SUPPORTED_FORMAT_VERSION`の追従）に乗せる
+
 ## テスト
 
 | テスト | 対象 |
 |---|---|
-| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、相互参照、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先）、JOIN経路の探索 |
+| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、相互参照、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先）、JOIN経路の探索、観点の一覧・解決・テーブルの絞り込み |
 | `SnapshotDirectoryReaderTest` | 読み込みと、起動時の誤り（ファイル名・行番号を含むメッセージ） |
 | `SampleSnapshotContractTest` | ベースラインとの契約（上記） |
+| `InsightsDirectoryReaderTest` | 読み込み（兄弟ディレクトリの解決を含む）と、起動時の誤り |
+| `SampleInsightsContractTest` | ベースラインとの契約（観点の所属テーブルを含む） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証 |
 | `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる。応答を待たずに続けてツールを呼び出しても止まらないこと（`immediateExecution`の回帰）も確かめる |

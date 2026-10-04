@@ -4,6 +4,7 @@ import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.repository.FileRepository;
+import com.export_table_definition.domain.service.export.InsightExportSinkFactory;
 import com.export_table_definition.domain.service.export.MarkdownExportSinkFactory;
 import com.export_table_definition.domain.service.export.SnapshotExportSinkFactory;
 import com.export_table_definition.domain.service.path.OutputPathResolver;
@@ -24,6 +25,7 @@ public class ExportTableDefinitionUsecase {
   private final SchemaExportPipeline schemaExportPipeline;
   private final MarkdownExportSinkFactory markdownSinkFactory;
   private final SnapshotExportSinkFactory snapshotSinkFactory;
+  private final InsightExportSinkFactory insightSinkFactory;
   private final FileRepository fileRepository;
   private final OutputPathResolver outputPathResolver;
 
@@ -32,11 +34,13 @@ public class ExportTableDefinitionUsecase {
       SchemaExportPipeline schemaExportPipeline,
       MarkdownExportSinkFactory markdownSinkFactory,
       SnapshotExportSinkFactory snapshotSinkFactory,
+      InsightExportSinkFactory insightSinkFactory,
       FileRepository fileRepository,
       OutputPathResolver outputPathResolver) {
     this.schemaExportPipeline = schemaExportPipeline;
     this.markdownSinkFactory = markdownSinkFactory;
     this.snapshotSinkFactory = snapshotSinkFactory;
+    this.insightSinkFactory = insightSinkFactory;
     this.fileRepository = fileRepository;
     this.outputPathResolver = outputPathResolver;
   }
@@ -58,7 +62,8 @@ public class ExportTableDefinitionUsecase {
         List.of(
             markdownSinkFactory.create(
                 outputBaseDir, NodeLimit.of(request.erDiagramMaxNodes()), diagramBoxes),
-            snapshotSinkFactory.create(outputBaseDir)),
+            snapshotSinkFactory.create(outputBaseDir),
+            insightSinkFactory.create(outputBaseDir)),
         request.chunkSize());
   }
 
