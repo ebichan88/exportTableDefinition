@@ -18,10 +18,6 @@ public final class SchemaCatalog {
   /** 名前が見つからないときに返す、似た名前の候補の上限 */
   private static final int MAX_SUGGESTIONS = 5;
 
-  private static final String TABLE = "table";
-  private static final String VIEW = "view";
-  private static final String MATERIALIZED_VIEW = "materialized_view";
-
   private static final Comparator<ObjectKey> KEY_ORDER =
       Comparator.comparing(ObjectKey::database)
           .thenComparing(ObjectKey::schema)
@@ -41,20 +37,13 @@ public final class SchemaCatalog {
   private SchemaCatalog(
       List<DatabaseEntry> databases,
       List<TableEntry> tables,
-      List<FunctionEntry> functions,
+      List<FunctionOverloads> functions,
       List<SequenceEntry> sequences,
       List<TypeEntry> types,
       List<ViewpointEntry> viewpoints) {
     this.databases = List.copyOf(databases);
     this.tables = List.copyOf(tables);
-    this.functions =
-        functions.stream()
-            .collect(
-                Collectors.groupingBy(FunctionEntry::key, LinkedHashMap::new, Collectors.toList()))
-            .entrySet()
-            .stream()
-            .map(entry -> new FunctionOverloads(entry.getKey(), entry.getValue()))
-            .toList();
+    this.functions = List.copyOf(functions);
     this.sequences = List.copyOf(sequences);
     this.types = List.copyOf(types);
     this.viewpoints = List.copyOf(viewpoints);
@@ -78,7 +67,15 @@ public final class SchemaCatalog {
       List<SequenceEntry> sequences,
       List<TypeEntry> types,
       List<ViewpointEntry> viewpoints) {
-    return new SchemaCatalog(databases, tables, functions, sequences, types, viewpoints);
+    final List<FunctionOverloads> overloads =
+        functions.stream()
+            .collect(
+                Collectors.groupingBy(FunctionEntry::key, LinkedHashMap::new, Collectors.toList()))
+            .entrySet()
+            .stream()
+            .map(entry -> new FunctionOverloads(entry.getKey(), entry.getValue()))
+            .toList();
+    return new SchemaCatalog(databases, tables, overloads, sequences, types, viewpoints);
   }
 
   /**
@@ -100,31 +97,7 @@ public final class SchemaCatalog {
    * スナップショットとは別の読み込み元（参考情報）の内容を、組み立て後に合成するために用いる
    */
   public SchemaCatalog withViewpoints(List<ViewpointEntry> viewpoints) {
-    return of(
-        databases,
-        tables,
-        functions.stream().flatMap(overloads -> overloads.overloads().stream()).toList(),
-        sequences,
-        types,
-        viewpoints);
-  }
-
-  /**
-   * テーブルの一覧だけから組み立てるメソッド（DBMS種別は不明として扱う）
-   *
-   * @param tables 全テーブル。キー（DB名・スキーマ名・テーブル名）が重複しないこと
-   */
-  public static SchemaCatalog of(List<TableEntry> tables) {
-    return of(
-        tables.stream()
-            .map(table -> table.key().database())
-            .distinct()
-            .map(name -> new DatabaseEntry(name, null))
-            .toList(),
-        tables,
-        List.of(),
-        List.of(),
-        List.of());
+    return new SchemaCatalog(databases, tables, functions, sequences, types, viewpoints);
   }
 
   /**
@@ -144,17 +117,19 @@ public final class SchemaCatalog {
   public List<SchemaSummary> schemas() {
     final Map<String, String> dbmsByDatabase = new HashMap<>();
     databases.forEach(database -> dbmsByDatabase.put(database.name(), database.dbms()));
-    final Map<List<String>, SchemaCounter> counters =
-        new TreeMap<>(
-            Comparator.comparing((List<String> id) -> id.get(0)).thenComparing(id -> id.get(1)));
+    final Map<SchemaId, SchemaCounter> counters =
+        new TreeMap<>(Comparator.comparing(SchemaId::database).thenComparing(SchemaId::schema));
     for (final TableEntry table : tables) {
       final SchemaCounter counter = counterOf(counters, table.key());
-      switch (table.type()) {
-        case TABLE -> counter.tables++;
-        case VIEW -> counter.views++;
-        case MATERIALIZED_VIEW -> counter.materializedViews++;
-        default -> {}
-      }
+      TableType.of(table.type())
+          .ifPresent(
+              type -> {
+                switch (type) {
+                  case TABLE -> counter.tables++;
+                  case VIEW -> counter.views++;
+                  case MATERIALIZED_VIEW -> counter.materializedViews++;
+                }
+              });
     }
     functions.forEach(
         function -> counterOf(counters, function.key()).functions += function.overloads().size());
@@ -163,12 +138,12 @@ public final class SchemaCatalog {
     return counters.entrySet().stream()
         .map(
             entry -> {
-              final String database = entry.getKey().get(0);
+              final String database = entry.getKey().database();
               final SchemaCounter counter = entry.getValue();
               return new SchemaSummary(
                   database,
                   dbmsByDatabase.getOrDefault(database, ""),
-                  entry.getKey().get(1),
+                  entry.getKey().schema(),
                   counter.tables,
                   counter.views,
                   counter.materializedViews,
@@ -182,28 +157,10 @@ public final class SchemaCatalog {
   /**
    * テーブルを一覧にするメソッド
    *
-   * @param type 区分（table/view/materialized_view）で絞り込む場合に指定する。空文字の場合は絞り込まない
    * @return DB名・スキーマ名・テーブル名の順
    */
-  public List<TableEntry> listTables(SearchScope scope, String type) {
-    return listTables(scope, type, Optional.empty());
-  }
-
-  /**
-   * テーブルを一覧にするメソッド（指定した観点の所属テーブルだけに絞り込める版）
-   *
-   * @param type 区分（table/view/materialized_view）で絞り込む場合に指定する。空文字の場合は絞り込まない
-   * @param viewpoint 指定した観点の所属テーブルだけに絞り込む場合に指定する
-   * @return DB名・スキーマ名・テーブル名の順
-   */
-  public List<TableEntry> listTables(
-      SearchScope scope, String type, Optional<ViewpointEntry> viewpoint) {
-    return tables.stream()
-        .filter(table -> scope.matches(table.key()))
-        .filter(table -> type.isEmpty() || type.equals(table.type()))
-        .filter(table -> viewpoint.isEmpty() || viewpoint.get().tables().contains(table.key()))
-        .sorted(BY_KEY)
-        .toList();
+  public List<TableEntry> listTables(TableFilter filter) {
+    return tables.stream().filter(filter::matches).sorted(BY_KEY).toList();
   }
 
   /**
@@ -277,29 +234,16 @@ public final class SchemaCatalog {
   }
 
   /**
-   * テーブルを検索するメソッド
+   * テーブルを検索するメソッド<br>
+   * 絞り込みは、総数・{@code limit}に正しく反映されるよう検索・並べ替えの前に適用する
    *
    * @param limit 返す件数の上限（1以上）
    * @return 一致の強い順（同点の場合はDB名・スキーマ名・テーブル名の順）の検索結果
    */
-  public SearchResult searchTables(SearchQuery query, SearchScope scope, int limit) {
-    return searchTables(query, scope, limit, Optional.empty());
-  }
-
-  /**
-   * テーブルを検索するメソッド（指定した観点の所属テーブルだけに絞り込める版）<br>
-   * 観点による絞り込みは、総数・{@code limit}に正しく反映されるよう検索・並べ替えの前に適用する
-   *
-   * @param limit 返す件数の上限（1以上）
-   * @param viewpoint 指定した観点の所属テーブルだけに絞り込む場合に指定する
-   * @return 一致の強い順（同点の場合はDB名・スキーマ名・テーブル名の順）の検索結果
-   */
-  public SearchResult searchTables(
-      SearchQuery query, SearchScope scope, int limit, Optional<ViewpointEntry> viewpoint) {
+  public SearchResult searchTables(SearchQuery query, TableFilter filter, int limit) {
     final List<TableHit> hits =
         tables.stream()
-            .filter(table -> scope.matches(table.key()))
-            .filter(table -> viewpoint.isEmpty() || viewpoint.get().tables().contains(table.key()))
+            .filter(filter::matches)
             .map(query::match)
             .flatMap(Optional::stream)
             .sorted(
@@ -318,21 +262,17 @@ public final class SchemaCatalog {
    */
   public List<ViewpointEntry> listViewpoints(SearchScope scope) {
     return viewpoints.stream()
-        .filter(
-            viewpoint ->
-                scope.database().isEmpty()
-                    || scope.database().equalsIgnoreCase(viewpoint.database()))
+        .filter(viewpoint -> scope.matchesDatabase(viewpoint.database()))
         .toList();
   }
 
   /**
-   * 識別子で観点を解決するメソッド（識別子は大文字小文字を区別しない）
-   *
-   * @param database DBで絞り込む場合に指定する。空文字の場合は絞り込まない
+   * 識別子で観点を解決するメソッド（識別子は大文字小文字を区別しない）<br>
+   * 観点はスキーマを持たないため、{@code scope}の{@code schema}は無視する
    */
-  public Optional<ViewpointEntry> findViewpoint(String database, String id) {
+  public Optional<ViewpointEntry> findViewpoint(SearchScope scope, String id) {
     return viewpoints.stream()
-        .filter(viewpoint -> database.isEmpty() || database.equalsIgnoreCase(viewpoint.database()))
+        .filter(viewpoint -> scope.matchesDatabase(viewpoint.database()))
         .filter(viewpoint -> viewpoint.id().equalsIgnoreCase(id))
         .findFirst();
   }
@@ -344,9 +284,7 @@ public final class SchemaCatalog {
    * @return 宣言順。所属する観点が無い場合は空のリスト
    */
   public List<ViewpointEntry> viewpointsOf(TableEntry table) {
-    return viewpoints.stream()
-        .filter(viewpoint -> viewpoint.tables().contains(table.key()))
-        .toList();
+    return viewpoints.stream().filter(viewpoint -> viewpoint.contains(table.key())).toList();
   }
 
   /**
@@ -480,9 +418,9 @@ public final class SchemaCatalog {
     return new Lookup.NotFound<>(suggestions.apply(reference));
   }
 
-  private static SchemaCounter counterOf(Map<List<String>, SchemaCounter> counters, ObjectKey key) {
+  private static SchemaCounter counterOf(Map<SchemaId, SchemaCounter> counters, ObjectKey key) {
     return counters.computeIfAbsent(
-        List.of(key.database(), key.schema()), id -> new SchemaCounter());
+        new SchemaId(key.database(), key.schema()), id -> new SchemaCounter());
   }
 
   private List<TableColumn> columnsWhere(BiPredicate<TableEntry, ColumnEntry> condition) {
@@ -520,12 +458,15 @@ public final class SchemaCatalog {
     if (reference.name().isBlank()) {
       return List.of();
     }
-    return searchTables(SearchQuery.of(reference.name()), SearchScope.ALL, MAX_SUGGESTIONS)
+    return searchTables(SearchQuery.of(reference.name()), TableFilter.ALL, MAX_SUGGESTIONS)
         .hits()
         .stream()
         .map(TableHit::table)
         .toList();
   }
+
+  /** スキーマごとの集計のキー */
+  private record SchemaId(String database, String schema) {}
 
   /** 逆引きで当てはまったカラムと、当てはまりの強さ */
   private record ScoredColumn(int score, ColumnHit hit) {}

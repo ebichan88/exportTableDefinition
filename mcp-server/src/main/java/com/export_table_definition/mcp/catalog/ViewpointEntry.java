@@ -23,4 +23,9 @@ public record ViewpointEntry(
     description = TextValues.orEmpty(description);
     tables = tables == null ? List.of() : List.copyOf(tables);
   }
+
+  /** テーブルがこの観点に所属するか判定するメソッド */
+  public boolean contains(ObjectKey table) {
+    return tables.contains(table);
+  }
 }

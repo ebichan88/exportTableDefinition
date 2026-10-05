@@ -143,7 +143,8 @@ final class ToolArguments {
   }
 
   /**
-   * 任意の、決まった値のいずれかを取る文字列の引数を読み取るメソッド（大文字小文字を区別しない）
+   * 任意の、決まった値のいずれかを取る文字列の引数を読み取るメソッド<br>
+   * 値は入力スキーマの{@code enum}でSDKが検証済みのため、完全一致で照合する
    *
    * @param choices 受け付ける値
    * @return {@code choices}のうち当てはまった値。未指定（null・空）の場合は空文字
@@ -155,13 +156,14 @@ final class ToolArguments {
       return value;
     }
     return choices.stream()
-        .filter(choice -> choice.equalsIgnoreCase(value))
+        .filter(choice -> choice.equals(value))
         .findFirst()
         .orElseThrow(() -> invalidChoice(name, choices, value));
   }
 
   /**
-   * 任意の列挙値の引数を読み取るメソッド（列挙定数名を小文字にした値で受け付ける）
+   * 任意の列挙値の引数を読み取るメソッド（列挙定数名を小文字にした値で受け付ける）<br>
+   * 値は入力スキーマの{@code enum}でSDKが検証済みのため、完全一致で照合する
    *
    * @return 引数の値。未指定（null）の場合は{@code defaultValue}
    * @throws InvalidToolArgumentException 列挙定数のいずれにも当てはまらない場合
@@ -172,7 +174,7 @@ final class ToolArguments {
       return defaultValue;
     }
     for (final E constant : type.getEnumConstants()) {
-      if (lowerName(constant).equals(value.toLowerCase(Locale.ROOT))) {
+      if (lowerName(constant).equals(value)) {
         return constant;
       }
     }

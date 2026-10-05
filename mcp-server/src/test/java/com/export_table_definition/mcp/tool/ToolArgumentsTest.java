@@ -49,11 +49,11 @@ class ToolArgumentsTest {
   }
 
   @Test
-  @DisplayName("列挙値は小文字の定数名を大文字小文字を区別せず受け付け、該当しない値は候補を示して失敗にする")
+  @DisplayName("列挙値は小文字の定数名を完全一致で受け付け、該当しない値は候補を示して失敗にする")
   void readsEnums() {
     assertEquals(
         Direction.INCOMING,
-        arguments(Map.of("direction", "Incoming"))
+        arguments(Map.of("direction", "incoming"))
             .optionalEnum("direction", Direction.class, Direction.BOTH));
     assertEquals(
         Direction.BOTH,
@@ -63,7 +63,7 @@ class ToolArgumentsTest {
         assertThrows(
             InvalidToolArgumentException.class,
             () ->
-                arguments(Map.of("direction", "up"))
+                arguments(Map.of("direction", "Incoming"))
                     .optionalEnum("direction", Direction.class, Direction.BOTH));
     assertTrue(e.getMessage().contains("outgoing, incoming, both"), e.getMessage());
   }
@@ -96,17 +96,17 @@ class ToolArgumentsTest {
   }
 
   @Test
-  @DisplayName("決まった値のいずれかを取る引数は、大文字小文字を区別せず受け付け、未指定は空文字にする")
+  @DisplayName("決まった値のいずれかを取る引数は、完全一致で受け付け、未指定は空文字にする")
   void readsChoices() {
     final List<String> choices = List.of("table", "view");
 
-    assertEquals("view", arguments(Map.of("type", "VIEW")).optionalChoice("type", choices));
+    assertEquals("view", arguments(Map.of("type", "view")).optionalChoice("type", choices));
     assertEquals("", arguments(Map.of()).optionalChoice("type", choices));
     final InvalidToolArgumentException e =
         assertThrows(
             InvalidToolArgumentException.class,
-            () -> arguments(Map.of("type", "index")).optionalChoice("type", choices));
-    assertEquals("引数typeにはtable, viewのいずれかを指定してください。 [value=index]", e.getMessage());
+            () -> arguments(Map.of("type", "VIEW")).optionalChoice("type", choices));
+    assertEquals("引数typeにはtable, viewのいずれかを指定してください。 [value=VIEW]", e.getMessage());
   }
 
   private static ToolArguments arguments(Map<String, Object> values) {

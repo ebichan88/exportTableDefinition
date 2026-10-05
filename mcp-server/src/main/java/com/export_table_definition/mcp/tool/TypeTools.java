@@ -23,9 +23,6 @@ final class TypeTools {
   static final String LIST_TYPES = "list_types";
   static final String GET_TYPE = "get_type";
 
-  private static final int DEFAULT_LIMIT = 100;
-  private static final int MAX_LIMIT = 500;
-
   /** PostgreSQLの種別（ENUM〜RANGE）とOracleの種別（OBJECT〜NESTED TABLE） */
   private static final List<String> CATEGORIES =
       List.of("ENUM", "COMPOSITE", "DOMAIN", "RANGE", "OBJECT", "VARRAY", "NESTED TABLE");
@@ -55,8 +52,8 @@ final class TypeTools {
                         SCHEMA_FILTER_PROPERTY,
                         "database",
                         DATABASE_PROPERTY),
-                    DEFAULT_LIMIT,
-                    MAX_LIMIT),
+                    Page.DEFAULT_LIMIT,
+                    Page.MAX_LIMIT),
                 List.of()),
             this::listTypes),
         readOnlyTool(
@@ -73,7 +70,7 @@ final class TypeTools {
   private CallToolResult listTypes(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
     final String category = arguments.optionalChoice("category", CATEGORIES);
-    final Page page = Page.read(arguments, DEFAULT_LIMIT);
+    final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
     final List<TypeEntry> types = catalog.listTypes(arguments.scope(), filter, category);
     return ToolResults.json(
         new ListTypesOutput(

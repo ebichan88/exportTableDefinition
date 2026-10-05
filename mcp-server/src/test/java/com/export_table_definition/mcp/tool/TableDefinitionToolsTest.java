@@ -461,7 +461,7 @@ class TableDefinitionToolsTest {
   @Test
   @DisplayName("list_types・get_typeは、ユーザー定義型の種別・定義と型を使うカラムを返し、種別で絞り込める")
   void types() throws Exception {
-    assertEquals(1, json(call("list_types", Map.of("category", "enum"))).get("total").asInt());
+    assertEquals(1, json(call("list_types", Map.of("category", "ENUM"))).get("total").asInt());
     assertEquals(0, json(call("list_types", Map.of("category", "DOMAIN"))).get("total").asInt());
     assertEquals(
         "{\"schema\":\"sample\",\"name\":\"status\",\"category\":\"ENUM\",\"definition\":\"A, B\","

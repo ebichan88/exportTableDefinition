@@ -28,12 +28,14 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `ViewpointEntry` | 観点の参考情報1件（識別子・表示名・説明・所属テーブル）。スキーマを持たないため`SchemaObject`は実装しない。テーブルから所属する観点は`SchemaCatalog#viewpointsOf`で逆引きする（読み込み済みの観点を引くだけで、索引は持たない） |
 | | `FunctionEntry`・`FunctionOverloads`・`SequenceEntry`・`TypeEntry` | 関数・シーケンス・ユーザー定義型の1行。関数は同名のもの（オーバーロード）を`FunctionOverloads`にまとめて名前の解決の単位にする |
 | | `NameFilter` | 関数・シーケンス・型の一覧を、名前の部分一致で絞り込む条件 |
+| | `TableFilter`・`TableType` | テーブルの一覧・検索の絞り込み（DB・スキーマ・区分・観点）を1回組み立てて`matches`で問い合わせる値オブジェクトと、テーブルの区分（table/view/materialized_view）。区分の値はツールの入力スキーマの`enum`にも使う |
 | | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
 | `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリ（`tables.jsonl`・`functions.jsonl`・`sequences.jsonl`・`types.jsonl`）を読み込み`SchemaCatalog`を組み立てる。未知の項目は無視し、無いファイルは0件とする（cliの`outputObjects`で外せるため） |
 | `mcp.insight` | `InsightsDirectoryReader` | 参考情報のディレクトリ（`{DB名}/viewpoints.json`）を読み込み`ViewpointEntry`のリストを組み立てる。渡されたスナップショットのディレクトリの親の兄弟を自前で求めるため、起動引数は増えない。ディレクトリ・ファイルが無い場合は0件とする |
 | `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`ViewpointTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
-| | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`） |
-| | `ToolArguments` | ツールの引数の読み取りと、入力スキーマで表せない検証（型・範囲・未知の引数はSDKが入力スキーマで検証する）。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
+| | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`と、一覧の件数の既定値・上限） |
+| | `TableOutputBuilder` | `get_table`の1テーブル分の結果の組み立て（スナップショットの1行に、`sections`・`columns`の絞り込みと所属する観点を反映する） |
+| | `ToolArguments` | ツールの引数の読み取りと、入力スキーマで表せない検証（型・範囲・`enum`・未知の引数はSDKが入力スキーマで検証するため、選択肢は完全一致で照合する）。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
 
 ## ツール
 

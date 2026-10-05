@@ -18,9 +18,6 @@ final class TriggerTools {
 
   static final String LIST_TRIGGERS = "list_triggers";
 
-  private static final int DEFAULT_LIMIT = 100;
-  private static final int MAX_LIMIT = 500;
-
   private final SchemaCatalog catalog;
 
   TriggerTools(SchemaCatalog catalog) {
@@ -38,14 +35,14 @@ final class TriggerTools {
             objectSchema(
                 withPageProperties(
                     Map.of("schema", SCHEMA_FILTER_PROPERTY, "database", DATABASE_PROPERTY),
-                    DEFAULT_LIMIT,
-                    MAX_LIMIT),
+                    Page.DEFAULT_LIMIT,
+                    Page.MAX_LIMIT),
                 List.of()),
             this::listTriggers));
   }
 
   private CallToolResult listTriggers(ToolArguments arguments) {
-    final Page page = Page.read(arguments, DEFAULT_LIMIT);
+    final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
     final List<TableTrigger> triggers = catalog.listTriggers(arguments.scope());
     return ToolResults.json(
         new ListTriggersOutput(

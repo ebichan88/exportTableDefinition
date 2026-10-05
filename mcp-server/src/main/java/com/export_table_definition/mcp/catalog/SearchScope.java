@@ -19,7 +19,12 @@ public record SearchScope(String database, String schema) {
 
   /** テーブルが絞り込みの条件に当てはまるか判定するメソッド（DB名・スキーマ名は大文字小文字を区別しない） */
   public boolean matches(ObjectKey key) {
-    return (database.isEmpty() || database.equalsIgnoreCase(key.database()))
+    return matchesDatabase(key.database())
         && (schema.isEmpty() || schema.equalsIgnoreCase(key.schema()));
+  }
+
+  /** DB名だけが絞り込みの条件に当てはまるか判定するメソッド（スキーマを持たない観点に使う） */
+  boolean matchesDatabase(String name) {
+    return database.isEmpty() || database.equalsIgnoreCase(name);
   }
 }
