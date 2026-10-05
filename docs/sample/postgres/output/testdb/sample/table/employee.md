@@ -65,6 +65,15 @@
 |2|employee_manager_id_fkey|manager_id|sample.employee|employee_id|0..1対多|
 |3|employee_parking_spot_id_fkey|parking_spot_id|sample.parking_spot|parking_spot_id|0..1対1|
 
+## 被参照情報
+
+| No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |
+|:---|:---|:---|:---|:---|:---|:---|
+|1|sample.attendance|employee_id|employee_id|attendance_employee_id_fkey|1対多|物理|
+|2|sample.employee_profile|employee_id|employee_id|employee_profile_employee_id_fkey|1対1|物理|
+|3|sample.project_assignment|employee_id|employee_id|project_assignment_employee_id_fkey|1対多|物理|
+|4|sample.audit_log|record_id|employee_id|record_id|0..1対多|論理|
+
 ## トリガー情報
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |

@@ -352,7 +352,7 @@ classDiagram
   除外が包含より優先される。**出力対象オブジェクト種別（`OutputObjectType`）**は、トリガー・関数等のうちどれを取得・出力するかを決める
 - **出力対象（`ExportTargets`）**は対象範囲全体を一括取得した軽量な情報の組。これとチャンク単位で取得した詳細情報
   （`TableDetail`）から、1テーブル分の出力内容（`TableDefinitionContent`）を組み立てる。`TableDefinitionContent`は
-  参照側の関連を由来ごと（`foreignKeys`＝物理／`logicalRelations`＝論理）に分けて持ち、被参照側（`incomingRelations`）は由来を分けない
+  参照側の関連を由来ごと（`foreignKeys`＝物理／`logicalRelations`＝論理）に分けて持ち、被参照側（`incomingRelations`）は由来を分けない（定義書の「被参照情報」セクションとER図に使い、由来は「区分」列・線種で示す）
 - **突き合わせの通知（`ConsistencyNotice`）**は、出力対象のテーブルと関連・付帯情報・観点を突き合わせた結果。
   ドメインサービス（`ExportTargetConsistency`）が値として返し、ログ等への出力は呼び出し側（アプリケーション層）が
   重要度（`Severity`）に応じて行う
@@ -409,7 +409,7 @@ classDiagram
 | 関連 | 外部キー・論理リレーション | `ForeignKeyEntity` / `ForeignKeys` | 外部キー（物理）と論理リレーション（論理）の総称。クラス名は歴史的経緯で`ForeignKey` |
 | 外部キー | 外部キー | `RelationType.PHYSICAL` | DBに実在する外部キー制約による関連 |
 | 論理リレーション | 論理リレーション（`relations`） | `RelationType.LOGICAL` | DBに制約が無く、サイドカーYAMLで宣言した関連 |
-| 被参照の関連 | ER図の参照元テーブル | `incomingRelations` / `ForeignKeys.referencingTo` | 自テーブルを参照している関連（物理・論理の双方） |
+| 被参照の関連 | 被参照情報・ER図の参照元テーブル | `incomingRelations` / `ForeignKeys.referencingTo` | 自テーブルを参照している関連（物理・論理の双方） |
 | 多重度 | 多重度（1対多 等） | `Cardinality` | 関連の両端の件数の関係 |
 | グループ | グループ（連結成分のまとまり） | `ForeignKeyGroup` / `ForeignKeyGroups` | 1枚のER図に描く関連の集合と、その分割 |
 | テーブルの箱 | ER図のテーブルの箱 | `DiagramBoxes` / `DiagramColumn` | ER図に描くテーブルの表示内容（`テーブル名（論理テーブル名）`の見出しと、表示するカラム） |

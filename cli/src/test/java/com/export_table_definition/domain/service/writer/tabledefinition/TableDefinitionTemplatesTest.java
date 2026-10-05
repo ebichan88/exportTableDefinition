@@ -608,6 +608,37 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
+  @DisplayName("incomingRelations: 参照元を物理・論理の区別付きで、セクション内で1から採番して出力する")
+  void testIncomingRelationsSection() {
+    var physical =
+        ForeignKeyFixtures.physical("public", "orders", "fk_orders_staff", "public", "staff");
+    var logical =
+        ForeignKeyFixtures.logical(
+            "audit",
+            "audit_log",
+            "staff_id",
+            List.of("staff_id"),
+            "public",
+            "staff",
+            List.of("id"),
+            Cardinality.OPTIONAL_ONE_TO_MANY);
+    String section = TableDefinitionTemplates.incomingRelations(List.of(physical, logical));
+
+    assertTrue(section.startsWith("## 被参照情報"));
+    assertTrue(section.contains("| No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |"));
+    assertTrue(section.contains("|1|public.orders|"));
+    assertTrue(section.contains("|fk_orders_staff|"));
+    assertTrue(section.contains("|物理|"));
+    assertTrue(section.contains("|2|audit.audit_log|staff_id|id|staff_id|0..1対多|論理|"));
+  }
+
+  @Test
+  @DisplayName("incomingRelations: 参照元が存在しない場合はセクションごと出力しない")
+  void testIncomingRelationsSectionOmittedWhenEmpty() {
+    assertEquals("", TableDefinitionTemplates.incomingRelations(List.of()));
+  }
+
+  @Test
   @DisplayName("erDiagram: 論理リレーションは破線、物理外部キーは実線で描画する")
   void testErDiagramDistinguishesRelationType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");

@@ -94,6 +94,7 @@ public class TableDefinitionWriter {
             TableDefinitionTemplates.constraints(content.constraints()), // 制約情報
             TableDefinitionTemplates.foreignKeys(content.foreignKeys()), // 外部キー情報
             TableDefinitionTemplates.logicalRelations(content.logicalRelations()), // 論理リレーション情報
+            TableDefinitionTemplates.incomingRelations(content.incomingRelations()), // 被参照情報
             TableDefinitionTemplates.triggers(content.triggers()), // トリガー情報
             TableDefinitionTemplates.erDiagram(
                 content.table(),

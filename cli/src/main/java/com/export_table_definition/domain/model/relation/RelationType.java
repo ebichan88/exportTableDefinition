@@ -8,15 +8,19 @@ package com.export_table_definition.domain.model.relation;
  */
 public enum RelationType {
   /** DBに実在する外部キー制約による関連。Mermaidでは実線で描画する */
-  PHYSICAL("--"),
+  PHYSICAL("--", "物理"),
   /** サイドカーYAMLで宣言された論理的な関連。Mermaidでは破線（非識別関連）で描画する */
-  LOGICAL("..");
+  LOGICAL("..", "論理");
 
   /** Mermaidの関連線の線種（実線／破線） */
   private final String lineNotation;
 
-  RelationType(String lineNotation) {
+  /** 定義書の表に掲載する由来の表記 */
+  private final String label;
+
+  RelationType(String lineNotation, String label) {
     this.lineNotation = lineNotation;
+    this.label = label;
   }
 
   /**
@@ -27,5 +31,14 @@ public enum RelationType {
    */
   public String getLineNotation() {
     return lineNotation;
+  }
+
+  /**
+   * 定義書の表に掲載する由来の表記を返却するメソッド
+   *
+   * @return 「物理」または「論理」
+   */
+  public String getLabel() {
+    return label;
   }
 }

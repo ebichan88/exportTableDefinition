@@ -57,6 +57,12 @@
 |:---|:---|:---|:---|:---|:---|
 |1|attendance_employee_id_fkey|employee_id|sample.employee|employee_id|1対多|
 
+## 被参照情報
+
+| No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |
+|:---|:---|:---|:---|:---|:---|:---|
+|1|sample.attendance_note|attendance_id,work_date|attendance_id,work_date|attendance_note_attendance_id_work_date_fkey|1対多|物理|
+
 ## トリガー情報
 
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
