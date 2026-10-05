@@ -52,9 +52,10 @@ jobs:
             cli/build/reports/jacoco/test/html/
             mcp-server/build/reports/jacoco/test/html/
 
-      # PRに単体テストのカバレッジをコメントする（forkからのPRはGITHUB_TOKENが読み取り専用のため投稿できない）
+      # PRに単体テストのカバレッジをコメントする。
+      # forkからのPRはGITHUB_TOKENが読み取り専用で投稿が失敗し、ジョブごと赤になるため実行しない（カバレッジはアーティファクトで見られる）
       - name: Comment coverage on PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         uses: madrapps/jacoco-report@v1.7.1
         with:
           paths: cli/build/reports/jacoco/test/jacocoTestReport.xml,mcp-server/build/reports/jacoco/test/jacocoTestReport.xml
