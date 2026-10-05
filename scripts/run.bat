@@ -21,7 +21,9 @@ if not defined JAR_FILE (
 
 rem 引数（--check・--output-path=... 等）はそのままツールへ渡す
 "%JAVA_EXE%" -jar "%JAR_FILE%" %*
+set "STATUS=%ERRORLEVEL%"
 
 echo.
 pause
-endlocal
+rem ツールの終了コード（1は--checkの差分あり、2以上は失敗）を呼び出し元へ返す。%STATUS%はendlocalより前に展開される
+endlocal & exit /b %STATUS%

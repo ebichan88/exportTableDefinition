@@ -79,6 +79,7 @@ exportTableDefinition-windows
 
 処理結果はコンソールの`[result]:SUCCESS`／`[result]:FAIL`で確認できます。
 スクリプトやCIから実行する場合は、終了コードで判定できます。
+`run.sh`・`run.bat`経由でも、ツールの終了コードをそのまま返します（`run.sh`は、標準入力が端末でない場合は終了前の一時停止を行いません）。
 
 | 終了コード | 意味 |
 |---|---|
