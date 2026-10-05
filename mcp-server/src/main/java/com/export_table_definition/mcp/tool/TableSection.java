@@ -30,13 +30,13 @@ enum TableSection {
   }
 
   /**
-   * 項目名から求めるメソッド
+   * 項目名から求めるメソッド（入力スキーマの{@code enum}でSDKが検証済みのため、完全一致で照合する）
    *
    * @throws InvalidToolArgumentException いずれの項目名でもない場合
    */
   static TableSection of(String argumentName, String fieldName) {
     return Arrays.stream(values())
-        .filter(section -> section.fieldName.equalsIgnoreCase(fieldName))
+        .filter(section -> section.fieldName.equals(fieldName))
         .findFirst()
         .orElseThrow(() -> ToolArguments.invalidChoice(argumentName, fieldNames(), fieldName));
   }

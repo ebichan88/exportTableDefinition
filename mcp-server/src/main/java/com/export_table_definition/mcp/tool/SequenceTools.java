@@ -22,9 +22,6 @@ final class SequenceTools {
   static final String LIST_SEQUENCES = "list_sequences";
   static final String GET_SEQUENCE = "get_sequence";
 
-  private static final int DEFAULT_LIMIT = 100;
-  private static final int MAX_LIMIT = 500;
-
   private final SchemaCatalog catalog;
 
   SequenceTools(SchemaCatalog catalog) {
@@ -44,8 +41,8 @@ final class SequenceTools {
                         "query", stringProperty("名前の一部で絞り込む場合に指定する（大文字小文字を区別しない）"),
                         "schema", SCHEMA_FILTER_PROPERTY,
                         "database", DATABASE_PROPERTY),
-                    DEFAULT_LIMIT,
-                    MAX_LIMIT),
+                    Page.DEFAULT_LIMIT,
+                    Page.MAX_LIMIT),
                 List.of()),
             this::listSequences),
         readOnlyTool(
@@ -62,7 +59,7 @@ final class SequenceTools {
 
   private CallToolResult listSequences(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
-    final Page page = Page.read(arguments, DEFAULT_LIMIT);
+    final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
     final List<SequenceEntry> sequences = catalog.listSequences(arguments.scope(), filter);
     return ToolResults.json(
         new ListSequencesOutput(

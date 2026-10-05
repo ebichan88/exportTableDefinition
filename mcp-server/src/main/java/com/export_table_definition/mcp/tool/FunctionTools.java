@@ -19,6 +19,7 @@ import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,9 +31,6 @@ final class FunctionTools {
 
   static final String LIST_FUNCTIONS = "list_functions";
   static final String GET_FUNCTION = "get_function";
-
-  private static final int DEFAULT_LIMIT = 100;
-  private static final int MAX_LIMIT = 500;
 
   /** 定義本体の項目名（スナップショットの項目名） */
   private static final String DEFINITION_FIELD = "definition";
@@ -59,8 +57,8 @@ final class FunctionTools {
                         "query", stringProperty("名前の一部で絞り込む場合に指定する（大文字小文字を区別しない）"),
                         "schema", SCHEMA_FILTER_PROPERTY,
                         "database", DATABASE_PROPERTY),
-                    DEFAULT_LIMIT,
-                    MAX_LIMIT),
+                    Page.DEFAULT_LIMIT,
+                    Page.MAX_LIMIT),
                 List.of()),
             this::listFunctions),
         readOnlyTool(
@@ -80,7 +78,7 @@ final class FunctionTools {
 
   private CallToolResult listFunctions(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
-    final Page page = Page.read(arguments, DEFAULT_LIMIT);
+    final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
     final List<FunctionEntry> functions = catalog.listFunctions(arguments.scope(), filter);
     return ToolResults.json(
         new ListFunctionsOutput(
@@ -96,12 +94,20 @@ final class FunctionTools {
             arguments, "function", "関数", LIST_FUNCTIONS, catalog::lookupFunction);
     final List<ObjectNode> overloads =
         function.overloads().stream().map(entry -> signature(entry, includeDefinition)).toList();
+    final Optional<String> sharedDefinition =
+        includeDefinition ? sharedDefinition(overloads) : Optional.empty();
+    if (sharedDefinition.isPresent()) {
+      // 全オーバーロードで同じ本体は重複して持たせず、結果の上位のdefinitionに1つだけ置く
+      overloads.forEach(node -> node.remove(DEFINITION_FIELD));
+    } else {
+      overloads.forEach(FunctionTools::truncateDefinitionOf);
+    }
     return ToolResults.json(
         new GetFunctionOutput(
             function.key().database(),
             function.key().schema(),
             function.key().name(),
-            includeDefinition ? extractSharedDefinition(overloads) : null,
+            sharedDefinition.map(FunctionTools::truncateDefinition).orElse(null),
             overloads,
             catalog.triggersCalling(function).stream().map(CallingTrigger::of).toList()));
   }
@@ -117,28 +123,25 @@ final class FunctionTools {
   }
 
   /**
-   * 全オーバーロードの定義本体が同じ場合（Oracleのパッケージ内サブプログラム等）、重複して持たせず1つにまとめるメソッド<br>
-   * 本体が異なる場合は{@code overloads}側にそれぞれ残したまま、長い場合だけ切り詰める
+   * 全オーバーロードの定義本体が同じ場合（Oracleのパッケージ内サブプログラム等）に、その本体を求めるメソッド
    *
-   * @return まとめた定義本体。本体が異なる場合・いずれも無い場合はnull
+   * @return 本体が異なる場合・いずれも本体を持たない場合は空
    */
-  private static String extractSharedDefinition(List<ObjectNode> overloads) {
+  private static Optional<String> sharedDefinition(List<ObjectNode> overloads) {
     final Set<String> definitions =
         overloads.stream()
             .map(node -> node.path(DEFINITION_FIELD).asText(""))
             .filter(text -> !text.isEmpty())
             .collect(Collectors.toSet());
-    if (definitions.size() != 1) {
-      for (final ObjectNode node : overloads) {
-        final String definition = node.path(DEFINITION_FIELD).asText(null);
-        if (definition != null && definition.length() > MAX_DEFINITION_LENGTH) {
-          node.put(DEFINITION_FIELD, truncateDefinition(definition));
-        }
-      }
-      return null;
+    return definitions.size() == 1 ? Optional.of(definitions.iterator().next()) : Optional.empty();
+  }
+
+  /** オーバーロードの定義本体が長い場合に切り詰める（本体を持たない場合は何もしない） */
+  private static void truncateDefinitionOf(ObjectNode overload) {
+    final String definition = overload.path(DEFINITION_FIELD).asText(null);
+    if (definition != null) {
+      overload.put(DEFINITION_FIELD, truncateDefinition(definition));
     }
-    overloads.forEach(node -> node.remove(DEFINITION_FIELD));
-    return truncateDefinition(definitions.iterator().next());
   }
 
   private static String truncateDefinition(String definition) {

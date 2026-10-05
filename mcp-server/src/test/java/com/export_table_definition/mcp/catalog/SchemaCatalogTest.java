@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,14 +21,14 @@ class SchemaCatalogTest {
     @DisplayName("一致の強い順に並べ、同点はDB名・スキーマ名・テーブル名の順にする")
     void ordersByScoreThenKey() {
       final SchemaCatalog catalog =
-          SchemaCatalog.of(
+          TestCatalogs.of(
               List.of(
                   table("b_user_log").build(),
                   table("user").build(),
                   table("a_user_log").build(),
                   table("department").build()));
 
-      final SearchResult result = catalog.searchTables(SearchQuery.of("user"), SearchScope.ALL, 10);
+      final SearchResult result = catalog.searchTables(SearchQuery.of("user"), TableFilter.ALL, 10);
 
       assertEquals(3, result.total());
       assertEquals(List.of("user", "a_user_log", "b_user_log"), names(result));
@@ -39,10 +38,10 @@ class SchemaCatalogTest {
     @DisplayName("件数の上限で切り捨てても、総数は切り捨てる前の数を返す")
     void limitsHitsButReportsTotal() {
       final SchemaCatalog catalog =
-          SchemaCatalog.of(
+          TestCatalogs.of(
               List.of(table("user_a").build(), table("user_b").build(), table("user_c").build()));
 
-      final SearchResult result = catalog.searchTables(SearchQuery.of("user"), SearchScope.ALL, 2);
+      final SearchResult result = catalog.searchTables(SearchQuery.of("user"), TableFilter.ALL, 2);
 
       assertEquals(3, result.total());
       assertEquals(List.of("user_a", "user_b"), names(result));
@@ -52,14 +51,15 @@ class SchemaCatalogTest {
     @DisplayName("DB名・スキーマ名で絞り込む（大文字小文字を区別しない）")
     void filtersByScope() {
       final SchemaCatalog catalog =
-          SchemaCatalog.of(
+          TestCatalogs.of(
               List.of(
                   table("db1", "sales", "user").build(),
                   table("db1", "hr", "user").build(),
                   table("db2", "sales", "user").build()));
 
       final SearchResult result =
-          catalog.searchTables(SearchQuery.of("user"), new SearchScope("DB1", "SALES"), 10);
+          catalog.searchTables(
+              SearchQuery.of("user"), TableFilter.of(new SearchScope("DB1", "SALES")), 10);
 
       assertEquals(List.of(new ObjectKey("db1", "sales", "user")), keys(result));
     }
@@ -98,10 +98,12 @@ class SchemaCatalogTest {
       assertEquals(
           List.of(
               "db1:hr.employee", "db1:sales.order_summary", "db1:sales.orders", "db2:hr.employee"),
-          catalog.listTables(SearchScope.ALL, "").stream().map(t -> describe(t.key())).toList());
+          catalog.listTables(TableFilter.ALL).stream().map(t -> describe(t.key())).toList());
       assertEquals(
           List.of("db1:sales.orders"),
-          catalog.listTables(new SearchScope(null, "SALES"), "table").stream()
+          catalog
+              .listTables(TableFilter.of(new SearchScope(null, "SALES")).withType(TableType.TABLE))
+              .stream()
               .map(t -> describe(t.key()))
               .toList());
     }
@@ -116,7 +118,7 @@ class SchemaCatalogTest {
   class FindColumns {
 
     private final SchemaCatalog catalog =
-        SchemaCatalog.of(
+        TestCatalogs.of(
             List.of(
                 table("department").column("department_id", "部署ID", null).build(),
                 table("employee")
@@ -389,7 +391,7 @@ class SchemaCatalogTest {
      * employee（論理）、orders → customer（スナップショットに無い）
      */
     private final SchemaCatalog catalog =
-        SchemaCatalog.of(
+        TestCatalogs.of(
             List.of(
                 table("department").build(),
                 table("employee")
@@ -461,7 +463,7 @@ class SchemaCatalogTest {
   class LookupTable {
 
     private final SchemaCatalog catalog =
-        SchemaCatalog.of(
+        TestCatalogs.of(
             List.of(
                 table("db1", "sales", "orders").build(),
                 table("db1", "hr", "employee").build(),
@@ -530,7 +532,7 @@ class SchemaCatalogTest {
      * employee（論理）、assignment → employee・project
      */
     private final SchemaCatalog catalog =
-        SchemaCatalog.of(
+        TestCatalogs.of(
             List.of(
                 table("department").build(),
                 table("parking_spot").build(),
@@ -598,7 +600,7 @@ class SchemaCatalogTest {
     @DisplayName("参照先がスナップショットに無いテーブルは、関連は返すがその先はたどらない")
     void reportsMissingTables() {
       final SchemaCatalog withMissing =
-          SchemaCatalog.of(
+          TestCatalogs.of(
               List.of(
                   table("orders").foreignKey("customer_id", "customer", "customer_id").build()));
       final TableEntry orders = withMissing.tables().get(0);
@@ -614,7 +616,7 @@ class SchemaCatalogTest {
     @DisplayName("参照先のスキーマが未設定の関連は、参照元と同じスキーマとみなす")
     void defaultsReferenceSchemaToOwnSchema() {
       final SchemaCatalog sameSchema =
-          SchemaCatalog.of(
+          TestCatalogs.of(
               List.of(
                   table("customer").build(),
                   table("orders")
@@ -659,7 +661,7 @@ class SchemaCatalogTest {
         new ViewpointEntry("otherdb", "order", "受注", "", List.of());
 
     private final SchemaCatalog catalog =
-        SchemaCatalog.of(
+        TestCatalogs.of(
                 List.of(
                     table("testdb", "sales", "orders").build(),
                     table("testdb", "sales", "stock").build(),
@@ -685,10 +687,12 @@ class SchemaCatalogTest {
     @Test
     @DisplayName("識別子を大文字小文字を区別せず解決し、DBで絞り込める")
     void findsViewpointIgnoringCase() {
-      assertEquals(order, catalog.findViewpoint("", "ORDER").orElseThrow());
-      assertEquals(otherDbOrder, catalog.findViewpoint("otherdb", "order").orElseThrow());
-      assertTrue(catalog.findViewpoint("nodb", "order").isEmpty());
-      assertTrue(catalog.findViewpoint("", "unknown").isEmpty());
+      assertEquals(order, catalog.findViewpoint(SearchScope.ALL, "ORDER").orElseThrow());
+      assertEquals(
+          otherDbOrder,
+          catalog.findViewpoint(new SearchScope("otherdb", ""), "order").orElseThrow());
+      assertTrue(catalog.findViewpoint(new SearchScope("nodb", ""), "order").isEmpty());
+      assertTrue(catalog.findViewpoint(SearchScope.ALL, "unknown").isEmpty());
     }
 
     @Test
@@ -696,7 +700,7 @@ class SchemaCatalogTest {
     void listTablesFiltersByViewpoint() {
       assertEquals(
           List.of("orders"),
-          catalog.listTables(SearchScope.ALL, "", Optional.of(order)).stream()
+          catalog.listTables(TableFilter.ALL.withViewpoint(order)).stream()
               .map(table -> table.key().name())
               .toList());
     }
@@ -738,11 +742,11 @@ class SchemaCatalogTest {
     @DisplayName("searchTablesは、観点による絞り込みをtotal・limitへ正しく反映する（絞り込みは件数算出より前に行う）")
     void searchTablesFiltersByViewpointBeforeCountingTotal() {
       final SearchResult withoutViewpoint =
-          catalog.searchTables(SearchQuery.of("st"), SearchScope.ALL, 10);
+          catalog.searchTables(SearchQuery.of("st"), TableFilter.ALL, 10);
       assertEquals(2, withoutViewpoint.total());
 
       final SearchResult withViewpoint =
-          catalog.searchTables(SearchQuery.of("st"), SearchScope.ALL, 10, Optional.of(inventory));
+          catalog.searchTables(SearchQuery.of("st"), TableFilter.ALL.withViewpoint(inventory), 10);
       assertEquals(1, withViewpoint.total());
       assertEquals(List.of("stock"), names(withViewpoint));
     }

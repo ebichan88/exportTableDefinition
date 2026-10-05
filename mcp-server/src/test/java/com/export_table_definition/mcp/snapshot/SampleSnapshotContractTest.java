@@ -21,6 +21,7 @@ import com.export_table_definition.mcp.catalog.SchemaSummary;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchScope;
 import com.export_table_definition.mcp.catalog.TableEntry;
+import com.export_table_definition.mcp.catalog.TableFilter;
 import com.export_table_definition.mcp.catalog.TriggerEntry;
 import java.nio.file.Path;
 import java.util.List;
@@ -71,11 +72,11 @@ class SampleSnapshotContractTest {
   void searchesSidecarText() {
     assertEquals(
         List.of("department"),
-        catalog.searchTables(SearchQuery.of("組織単位"), SearchScope.ALL, 10).hits().stream()
+        catalog.searchTables(SearchQuery.of("組織単位"), TableFilter.ALL, 10).hits().stream()
             .map(hit -> hit.table().key().name())
             .toList());
     assertTrue(
-        catalog.searchTables(SearchQuery.of("変更対象のテーブル名"), SearchScope.ALL, 10).hits().stream()
+        catalog.searchTables(SearchQuery.of("変更対象のテーブル名"), TableFilter.ALL, 10).hits().stream()
             .anyMatch(hit -> hit.matchedIn().contains("column:table_name")));
   }
 

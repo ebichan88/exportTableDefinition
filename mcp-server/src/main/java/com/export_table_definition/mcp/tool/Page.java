@@ -12,6 +12,12 @@ import java.util.Map;
  */
 record Page(int offset, int limit) {
 
+  /** 一覧を返すツールの{@code limit}の既定値（ツール固有の値を持たない場合） */
+  static final int DEFAULT_LIMIT = 100;
+
+  /** 一覧を返すツールの{@code limit}の上限（ツール固有の値を持たない場合） */
+  static final int MAX_LIMIT = 500;
+
   /**
    * 引数{@code offset}・{@code limit}を読み取るメソッド（範囲は入力スキーマで検証済み）
    *

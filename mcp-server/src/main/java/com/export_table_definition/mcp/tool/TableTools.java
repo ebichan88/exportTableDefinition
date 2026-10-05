@@ -14,7 +14,6 @@ import static com.export_table_definition.mcp.tool.ToolSpecifications.stringArra
 import static com.export_table_definition.mcp.tool.ToolSpecifications.stringOrArrayProperty;
 import static com.export_table_definition.mcp.tool.ToolSpecifications.stringProperty;
 
-import com.export_table_definition.mcp.catalog.ColumnEntry;
 import com.export_table_definition.mcp.catalog.ColumnHit;
 import com.export_table_definition.mcp.catalog.ColumnQuery;
 import com.export_table_definition.mcp.catalog.MatchMode;
@@ -23,24 +22,19 @@ import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchResult;
 import com.export_table_definition.mcp.catalog.TableEntry;
+import com.export_table_definition.mcp.catalog.TableFilter;
 import com.export_table_definition.mcp.catalog.TableHit;
+import com.export_table_definition.mcp.catalog.TableType;
 import com.export_table_definition.mcp.catalog.ViewpointEntry;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * テーブルを探す・定義を返すツール（{@code search_tables}・{@code list_tables}・{@code get_table}・{@code
@@ -62,15 +56,11 @@ final class TableTools {
 
   private static final int DEFAULT_SEARCH_LIMIT = 20;
   private static final int MAX_SEARCH_LIMIT = 100;
-  private static final int DEFAULT_LIST_LIMIT = 100;
-  private static final int MAX_LIST_LIMIT = 500;
   private static final int DEFAULT_COLUMN_LIMIT = 50;
   private static final int MAX_COLUMN_LIMIT = 500;
 
   /** {@code get_table}の{@code table}に配列で指定できる件数の上限 */
   private static final int MAX_TABLES = 10;
-
-  private static final List<String> TABLE_TYPES = List.of("table", "view", "materialized_view");
 
   private final SchemaCatalog catalog;
 
@@ -113,13 +103,13 @@ final class TableTools {
                         "database",
                         DATABASE_PROPERTY,
                         "type",
-                        enumProperty("区分で絞り込む場合に指定する", TABLE_TYPES),
+                        enumProperty("区分で絞り込む場合に指定する", TableType.allValues()),
                         "includeDescription",
                         booleanProperty("テーブルの説明も返す（既定false）"),
                         "viewpoint",
                         VIEWPOINT_PROPERTY),
-                    DEFAULT_LIST_LIMIT,
-                    MAX_LIST_LIMIT),
+                    Page.DEFAULT_LIMIT,
+                    Page.MAX_LIMIT),
                 List.of()),
             this::listTables),
         readOnlyTool(
@@ -175,19 +165,21 @@ final class TableTools {
   private CallToolResult searchTables(ToolArguments arguments) {
     final SearchQuery query = SearchQuery.of(arguments.requiredString("query"));
     final int limit = arguments.optionalInt("limit", DEFAULT_SEARCH_LIMIT);
-    final SearchResult result =
-        catalog.searchTables(query, arguments.scope(), limit, resolveViewpoint(arguments));
+    final SearchResult result = catalog.searchTables(query, tableFilter(arguments), limit);
     return ToolResults.json(
         new SearchTablesOutput(
             result.total(), result.hits().stream().map(SearchTablesOutput.Hit::of).toList()));
   }
 
   private CallToolResult listTables(ToolArguments arguments) {
-    final String type = arguments.optionalChoice("type", TABLE_TYPES);
+    final TableFilter scoped = tableFilter(arguments);
+    final TableFilter filter =
+        TableType.of(arguments.optionalChoice("type", TableType.allValues()))
+            .map(scoped::withType)
+            .orElse(scoped);
     final boolean includeDescription = arguments.optionalBoolean("includeDescription", false);
-    final Page page = Page.read(arguments, DEFAULT_LIST_LIMIT);
-    final List<TableEntry> tables =
-        catalog.listTables(arguments.scope(), type, resolveViewpoint(arguments));
+    final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
+    final List<TableEntry> tables = catalog.listTables(filter);
     return ToolResults.json(
         new ListTablesOutput(
             tables.size(),
@@ -195,6 +187,16 @@ final class TableTools {
             page.apply(tables).stream()
                 .map(table -> ListTablesOutput.Table.of(table, includeDescription))
                 .toList()));
+  }
+
+  /**
+   * 引数{@code database}・{@code schema}・{@code viewpoint}から、テーブルの絞り込みを組み立てるメソッド
+   *
+   * @throws InvalidToolArgumentException 指定した観点が見つからない場合
+   */
+  private TableFilter tableFilter(ToolArguments arguments) {
+    final TableFilter filter = TableFilter.of(arguments.scope());
+    return resolveViewpoint(arguments).map(filter::withViewpoint).orElse(filter);
   }
 
   /**
@@ -207,9 +209,10 @@ final class TableTools {
     if (id.isEmpty()) {
       return Optional.empty();
     }
-    final String database = arguments.optionalString("database");
     return Optional.of(
-        catalog.findViewpoint(database, id).orElseThrow(() -> viewpointNotFound(id, arguments)));
+        catalog
+            .findViewpoint(arguments.scope(), id)
+            .orElseThrow(() -> viewpointNotFound(id, arguments)));
   }
 
   private InvalidToolArgumentException viewpointNotFound(String id, ToolArguments arguments) {
@@ -228,15 +231,12 @@ final class TableTools {
     if (names.size() > 1 && !columns.isEmpty()) {
       throw new InvalidToolArgumentException("引数columnsは、tableを1件指定した場合だけ使えます。");
     }
-    final List<TableEntry> tables = resolveTables(arguments, names);
+    final TableOutputBuilder builder = new TableOutputBuilder(catalog, sections, columns);
     final List<ObjectNode> outputs =
-        tables.stream()
-            .map(table -> withViewpoints(buildTableOutput(table, sections, columns), table))
-            .toList();
-    if (outputs.size() == 1) {
-      return CallToolResult.builder().addTextContent(outputs.get(0).toString()).build();
-    }
-    return ToolResults.json(new GetTableOutput(outputs));
+        resolveTables(arguments, names).stream().map(builder::build).toList();
+    return outputs.size() == 1
+        ? ToolResults.json(outputs.get(0))
+        : ToolResults.json(new GetTableOutput(outputs));
   }
 
   /**
@@ -267,45 +267,6 @@ final class TableTools {
     return tables;
   }
 
-  /** 1テーブルの結果に、sections・columnsによる絞り込みを反映する */
-  private static ObjectNode buildTableOutput(
-      TableEntry table, Set<TableSection> sections, List<String> columns) {
-    final ObjectNode output = ToolResults.readObject(table.json());
-    if (!sections.isEmpty()) {
-      final Set<TableSection> effective = EnumSet.copyOf(sections);
-      if (!columns.isEmpty()) {
-        effective.add(TableSection.COLUMNS);
-      }
-      for (final TableSection section : TableSection.values()) {
-        if (!effective.contains(section)) {
-          output.remove(section.fieldName());
-        }
-      }
-    }
-    if (!columns.isEmpty()) {
-      output.set("columns", selectColumns(table, output.path("columns"), columns));
-    }
-    return output;
-  }
-
-  /**
-   * 1テーブルの結果に、所属する観点（{@code id}・{@code name}）を宣言順に加える<br>
-   * 観点はスナップショットの項目ではない（参考情報）ため{@code sections}では絞り込まず、所属する観点があれば常に加える
-   */
-  private ObjectNode withViewpoints(ObjectNode output, TableEntry table) {
-    final List<ViewpointEntry> viewpoints = catalog.viewpointsOf(table);
-    if (!viewpoints.isEmpty()) {
-      final ArrayNode entries = output.putArray("viewpoints");
-      for (final ViewpointEntry viewpoint : viewpoints) {
-        final ObjectNode entry = entries.addObject().put("id", viewpoint.id());
-        if (!viewpoint.name().isEmpty()) {
-          entry.put("name", viewpoint.name());
-        }
-      }
-    }
-    return output;
-  }
-
   private CallToolResult findColumns(ToolArguments arguments) {
     final ColumnQuery query =
         ColumnQuery.of(
@@ -326,39 +287,6 @@ final class TableTools {
       sections.add(TableSection.of("sections", name));
     }
     return sections;
-  }
-
-  /**
-   * カラムの項目を、指定された名前のカラムだけ（テーブル定義の並び順）に絞る
-   *
-   * @throws InvalidToolArgumentException テーブルに無いカラム名が含まれる場合
-   */
-  private static ArrayNode selectColumns(
-      TableEntry table, JsonNode allColumns, List<String> names) {
-    final Set<String> wanted =
-        names.stream().map(name -> name.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
-    final ArrayNode selected = JsonNodeFactory.instance.arrayNode();
-    final Set<String> found = new HashSet<>();
-    for (final Iterator<JsonNode> it = allColumns.elements(); it.hasNext(); ) {
-      final JsonNode column = it.next();
-      final String name = column.path("name").asText().toLowerCase(Locale.ROOT);
-      if (wanted.contains(name)) {
-        selected.add(column);
-        found.add(name);
-      }
-    }
-    final List<String> missing =
-        names.stream().filter(name -> !found.contains(name.toLowerCase(Locale.ROOT))).toList();
-    if (!missing.isEmpty()) {
-      throw new InvalidToolArgumentException(
-          "テーブル"
-              + table.key().qualifiedName()
-              + "にカラム"
-              + String.join(", ", missing)
-              + "がありません。カラム: "
-              + table.columns().stream().map(ColumnEntry::name).collect(Collectors.joining(", ")));
-    }
-    return selected;
   }
 
   /** {@code get_table}で{@code table}を複数指定した場合の結果（1件の場合はスナップショットの1行をそのまま返す） */
