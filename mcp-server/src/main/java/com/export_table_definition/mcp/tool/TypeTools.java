@@ -73,7 +73,7 @@ final class TypeTools {
   private CallToolResult listTypes(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
     final String category = arguments.optionalChoice("category", CATEGORIES);
-    final Page page = Page.read(arguments, DEFAULT_LIMIT, MAX_LIMIT);
+    final Page page = Page.read(arguments, DEFAULT_LIMIT);
     final List<TypeEntry> types = catalog.listTypes(arguments.scope(), filter, category);
     return ToolResults.json(
         new ListTypesOutput(

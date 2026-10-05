@@ -45,7 +45,7 @@ final class TriggerTools {
   }
 
   private CallToolResult listTriggers(ToolArguments arguments) {
-    final Page page = Page.read(arguments, DEFAULT_LIMIT, MAX_LIMIT);
+    final Page page = Page.read(arguments, DEFAULT_LIMIT);
     final List<TableTrigger> triggers = catalog.listTriggers(arguments.scope());
     return ToolResults.json(
         new ListTriggersOutput(

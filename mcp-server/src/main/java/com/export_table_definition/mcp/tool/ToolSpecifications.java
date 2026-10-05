@@ -7,7 +7,6 @@ import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 /** ツールの定義（入力スキーマ・引数の検証・エラーの返し方）の組み立て */
@@ -35,9 +34,6 @@ final class ToolSpecifications {
       String description,
       Map<String, Object> inputSchema,
       Function<ToolArguments, CallToolResult> handler) {
-    @SuppressWarnings("unchecked")
-    final Set<String> argumentNames =
-        ((Map<String, Object>) inputSchema.get("properties")).keySet();
     return SyncToolSpecification.builder()
         .tool(
             Tool.builder(name, inputSchema)
@@ -54,7 +50,7 @@ final class ToolSpecifications {
         .callHandler(
             (exchange, request) -> {
               try {
-                return handler.apply(new ToolArguments(request.arguments(), argumentNames));
+                return handler.apply(new ToolArguments(request.arguments()));
               } catch (InvalidToolArgumentException e) {
                 return CallToolResult.builder()
                     .addTextContent(e.getMessage())

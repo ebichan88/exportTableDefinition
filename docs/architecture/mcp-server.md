@@ -33,7 +33,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `mcp.insight` | `InsightsDirectoryReader` | 参考情報のディレクトリ（`{DB名}/viewpoints.json`）を読み込み`ViewpointEntry`のリストを組み立てる。渡されたスナップショットのディレクトリの親の兄弟を自前で求めるため、起動引数は増えない。ディレクトリ・ファイルが無い場合は0件とする |
 | `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`ViewpointTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
 | | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`） |
-| | `ToolArguments` | ツールの引数の読み取りと検証。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
+| | `ToolArguments` | ツールの引数の読み取りと、入力スキーマで表せない検証（型・範囲・未知の引数はSDKが入力スキーマで検証する）。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
 
 ## ツール
 
@@ -56,6 +56,9 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 - テーブル名は大文字小文字を区別しない。同名のテーブルが複数ある・見つからない場合は、候補を示すツールのエラーを返し、
   AIが引数を直して呼び直せるようにする。
 - 未知の引数・範囲外の値は、既定値へ黙って置き換えずにツールのエラーにする（cliの入力の検証と同じ方針）。
+  型・範囲・`enum`・未知の引数は、ハンドラを呼ぶ前にSDKが入力スキーマ（JSON Schema）で検証し、英語の文言でツールのエラー（`isError`）を返す
+  （`validateToolInputs`の既定）。これを正とし、`ToolArguments`は入力スキーマで表せない検証（空白の除去後の空・件数の上限・選択肢の照合・
+  名前の解決等）だけを行う。数字の文字列を整数として読む等の寛容な読み取りはしない（入力スキーマの型に合わない値はSDKが拒否するため）。
   `get_table`の`columns`にテーブルに無いカラムを指定した場合も、カラムの一覧を示すエラーにする。
 - 一覧を返すツールは`limit`・`offset`で範囲を指定し、続きがあれば`nextOffset`を返す。AIのコンテキストを圧迫しないよう、
   件数の上限を設ける。
@@ -63,8 +66,9 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 - オブジェクト間の相互参照（関数↔トリガー、シーケンス・型↔カラム）はスナップショットに無いため、
   呼び出しのたびに求める。名前の比較は大文字小文字を区別せず、スキーマ修飾の無い名前は参照元と同じスキーマとみなす。
 - ツールの使い分け（どれから呼ぶか）は、初期化時にサーバーからAIへ渡す説明（`instructions`）に書く。
-- 文字列のリストの引数は、JSONの配列のほかカンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）。
-  `get_table`の`table`のように、名前を1件・複数件のどちらでも指定できる引数もこれを使う（単一の文字列は1件の配列として読む）。
+- `get_table`の`table`のように入力スキーマの型を文字列・配列のどちらも許す引数（`stringOrArrayProperty`）は、JSONの配列のほか
+  カンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）。型が配列だけの引数（`sections`・`columns`）に
+  文字列を渡すと、SDKが入力スキーマの検証で拒否する。単一の文字列（カンマを含まない）は1件の配列として読む。
 - 全ツールに`title`（短い日本語の表示名）を付ける。MCPクライアントのツール一覧・許可の確認画面での表示に使われる。
 
 ## stdioでの動作
@@ -123,7 +127,7 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 | `InsightsDirectoryReaderTest` | 読み込み（兄弟ディレクトリの解決を含む）と、起動時の誤り |
 | `SampleInsightsContractTest` | ベースラインとの契約（観点の所属テーブルを含む。スナップショットのテーブルから所属する観点を逆引きできること＝両者のキーが一致すること） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証 |
-| `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる。応答を待たずに続けてツールを呼び出しても止まらないこと（`immediateExecution`の回帰）も確かめる |
+| `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる。応答を待たずに続けてツールを呼び出しても止まらないこと（`immediateExecution`の回帰）、型・範囲・未知の引数がSDKの入力スキーマの検証で拒否されること（ツールのテストはハンドラを直接呼ぶため通らない）も確かめる |
 
 `catalog`には単体テストのカバレッジの最低基準（line 95%・branch 85%）を設け、`./gradlew build`で検査する。
 検索・関連のたどりのルールを持つ中心のロジックのため（cliのドメイン層と同じ扱い）。E2Eテストは子プロセスで動くため計測の対象外。

@@ -62,7 +62,7 @@ final class SequenceTools {
 
   private CallToolResult listSequences(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
-    final Page page = Page.read(arguments, DEFAULT_LIMIT, MAX_LIMIT);
+    final Page page = Page.read(arguments, DEFAULT_LIMIT);
     final List<SequenceEntry> sequences = catalog.listSequences(arguments.scope(), filter);
     return ToolResults.json(
         new ListSequencesOutput(

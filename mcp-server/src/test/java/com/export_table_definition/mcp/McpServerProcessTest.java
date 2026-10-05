@@ -118,6 +118,63 @@ class McpServerProcessTest {
   }
 
   @Test
+  @DisplayName("型・範囲・未知の引数は、ハンドラを呼ぶ前にSDKが入力スキーマで検証してツールのエラーにする")
+  void validatesArgumentsWithInputSchema() throws Exception {
+    final StdioClientTransport transport =
+        new StdioClientTransport(
+            ServerParameters.builder(JAVA)
+                .args("-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT)
+                .build(),
+            new JacksonMcpJsonMapper(new ObjectMapper()));
+    try (McpSyncClient client =
+        McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build()) {
+      client.initialize();
+
+      final CallToolResult arrayAsString =
+          client.callTool(
+              CallToolRequest.builder("get_table")
+                  .arguments(Map.of("table", "employee", "sections", "foreignKeys,triggers"))
+                  .build());
+      assertTrue(arrayAsString.isError());
+      assertTrue(
+          text(arrayAsString).contains("/sections: string found, array expected"),
+          text(arrayAsString));
+
+      final CallToolResult numberAsString =
+          client.callTool(
+              CallToolRequest.builder("list_tables").arguments(Map.of("limit", "3")).build());
+      assertTrue(numberAsString.isError());
+      assertTrue(
+          text(numberAsString).contains("/limit: string found, integer expected"),
+          text(numberAsString));
+
+      final CallToolResult outOfRange =
+          client.callTool(
+              CallToolRequest.builder("get_related_tables")
+                  .arguments(Map.of("table", "employee", "depth", 4))
+                  .build());
+      assertTrue(outOfRange.isError());
+      assertTrue(text(outOfRange).contains("/depth"), text(outOfRange));
+
+      final CallToolResult unknown =
+          client.callTool(
+              CallToolRequest.builder("get_table")
+                  .arguments(Map.of("table", "employee", "verbose", true))
+                  .build());
+      assertTrue(unknown.isError());
+      assertTrue(text(unknown).contains("'verbose'"), text(unknown));
+
+      final CallToolResult commaSeparated =
+          client.callTool(
+              CallToolRequest.builder("get_table")
+                  .arguments(Map.of("table", "employee,department"))
+                  .build());
+      assertFalse(Boolean.TRUE.equals(commaSeparated.isError()), () -> text(commaSeparated));
+      assertTrue(text(commaSeparated).startsWith("{\"tables\":["), text(commaSeparated));
+    }
+  }
+
+  @Test
   @DisplayName("応答を待たずに続けてツールを呼び出しても、すべての応答が返る（並行呼び出しで応答が止まる不具合の回帰）")
   void respondsToPipelinedToolCalls() throws Exception {
     final int callCount = 8;

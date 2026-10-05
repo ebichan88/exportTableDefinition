@@ -196,7 +196,7 @@ class TableDefinitionToolsTest {
     assertEquals(List.of("employee", "project"), rest.get("tables").findValuesAsText("name"));
     assertFalse(rest.has("nextOffset"), "続きが無い場合はnextOffsetを返さない");
 
-    final JsonNode described = json(call("list_tables", Map.of("includeDescription", "true")));
+    final JsonNode described = json(call("list_tables", Map.of("includeDescription", true)));
     assertEquals("組織のマスタ", described.get("tables").get(2).get("description").asText());
   }
 
@@ -625,17 +625,6 @@ class TableDefinitionToolsTest {
     final CallToolResult missing = call("search_tables", Map.of());
     assertTrue(missing.isError());
     assertEquals("引数queryを指定してください。", text(missing));
-
-    final CallToolResult depth =
-        call("get_related_tables", Map.of("table", "department", "depth", 5));
-    assertTrue(depth.isError());
-    assertTrue(text(depth).contains("1〜3の整数"), text(depth));
-
-    final CallToolResult unknown =
-        call("get_table", Map.of("table", "department", "verbose", true));
-    assertTrue(unknown.isError());
-    assertEquals(
-        "未知の引数です: verbose。使える引数: columns, database, schema, sections, table", text(unknown));
   }
 
   private static FunctionEntry function(String name, String arguments, String json) {

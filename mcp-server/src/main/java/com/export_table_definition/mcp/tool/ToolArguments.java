@@ -7,26 +7,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
-/** ツールに渡された引数の読み取りと検証 */
+/**
+ * ツールに渡された引数の読み取りと検証<br>
+ * 型・範囲・未知の引数は、ハンドラを呼ぶ前にMCPのSDKが入力スキーマ（JSON Schema）で検証する。
+ * ここではスキーマで表せない検証（空白の除去後の空・件数の上限・選択肢の照合等）だけを行う
+ */
 final class ToolArguments {
 
   private final Map<String, Object> values;
 
   /**
    * @param values ツールに渡された引数。nullの場合は引数なしとみなす
-   * @param allowedNames ツールが受け付ける引数名
-   * @throws InvalidToolArgumentException 受け付けない引数名が含まれる場合
    */
-  ToolArguments(Map<String, Object> values, Set<String> allowedNames) {
+  ToolArguments(Map<String, Object> values) {
     this.values = values == null ? Map.of() : values;
-    for (final String name : this.values.keySet()) {
-      if (!allowedNames.contains(name)) {
-        throw new InvalidToolArgumentException(
-            "未知の引数です: " + name + "。使える引数: " + String.join(", ", new TreeSet<>(allowedNames)));
-      }
-    }
   }
 
   /**
@@ -61,49 +56,44 @@ final class ToolArguments {
   }
 
   /**
-   * 任意の整数の引数を読み取るメソッド
+   * 任意の整数の引数を読み取るメソッド（範囲は入力スキーマの{@code minimum}・{@code maximum}で検証済み）
    *
    * @return 引数の値。未指定（null）の場合は{@code defaultValue}
-   * @throws InvalidToolArgumentException 整数として解釈できない場合、{@code min}〜{@code max}の範囲外の場合
+   * @throws InvalidToolArgumentException 数値でない場合
    */
-  int optionalInt(String name, int defaultValue, int min, int max) {
+  int optionalInt(String name, int defaultValue) {
     final Object value = values.get(name);
     if (value == null) {
       return defaultValue;
     }
-    final Integer parsed = toInteger(value);
-    if (parsed == null || parsed < min || parsed > max) {
-      throw new InvalidToolArgumentException(
-          "引数" + name + "には" + min + "〜" + max + "の整数を指定してください。 [value=" + value + "]");
+    if (!(value instanceof Number number)) {
+      throw new InvalidToolArgumentException("引数" + name + "には整数を指定してください。 [value=" + value + "]");
     }
-    return parsed;
+    return number.intValue();
   }
 
   /**
-   * 任意の真偽値の引数を読み取るメソッド（JSONの真偽値と、{@code true}・{@code false}の文字列を受け付ける）
+   * 任意の真偽値の引数を読み取るメソッド
    *
    * @return 引数の値。未指定（null）の場合は{@code defaultValue}
-   * @throws InvalidToolArgumentException 真偽値として解釈できない場合
+   * @throws InvalidToolArgumentException 真偽値でない場合
    */
   boolean optionalBoolean(String name, boolean defaultValue) {
     final Object value = values.get(name);
     if (value == null) {
       return defaultValue;
     }
-    if (value instanceof Boolean bool) {
-      return bool;
+    if (!(value instanceof Boolean bool)) {
+      throw new InvalidToolArgumentException(
+          "引数" + name + "にはtrueまたはfalseを指定してください。 [value=" + value + "]");
     }
-    if (value instanceof String text
-        && (text.strip().equalsIgnoreCase("true") || text.strip().equalsIgnoreCase("false"))) {
-      return Boolean.parseBoolean(text.strip());
-    }
-    throw new InvalidToolArgumentException(
-        "引数" + name + "にはtrueまたはfalseを指定してください。 [value=" + value + "]");
+    return bool;
   }
 
   /**
    * 任意の文字列のリストの引数を読み取るメソッド<br>
-   * JSONの配列のほか、カンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）
+   * JSONの配列のほか、カンマ区切りの文字列も受け付ける（配列を文字列にして渡すMCPクライアントがあるため）。
+   * 文字列が届くのは、入力スキーマの型が文字列・配列のどちらも許す引数（{@link ToolSpecifications#stringOrArrayProperty}）だけ
    *
    * @return 前後の空白を除き、空の要素と重複を除いた値（指定順）。未指定（null）の場合は空リスト
    * @throws InvalidToolArgumentException 配列・文字列でない場合、文字列でない要素を含む場合
@@ -212,24 +202,5 @@ final class ToolArguments {
 
   private static String lowerName(Enum<?> constant) {
     return constant.name().toLowerCase(Locale.ROOT);
-  }
-
-  /** JSONの数値（Integer・Long・小数部が0のDouble）と、数字だけの文字列を整数として読む。読めない場合はnull */
-  private static Integer toInteger(Object value) {
-    if (value instanceof Number number) {
-      final double asDouble = number.doubleValue();
-      if (asDouble == Math.rint(asDouble) && Math.abs(asDouble) <= Integer.MAX_VALUE) {
-        return (int) asDouble;
-      }
-      return null;
-    }
-    if (value instanceof String text) {
-      try {
-        return Integer.valueOf(text.strip());
-      } catch (NumberFormatException e) {
-        return null;
-      }
-    }
-    return null;
   }
 }
