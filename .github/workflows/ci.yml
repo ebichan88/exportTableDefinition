@@ -28,11 +28,12 @@ jobs:
 
       # build（test含む）の中で、cliのドメイン層・mcp-serverのcatalogのカバレッジが各build.gradleに定めた基準を下回ると
       # jacocoTestCoverageVerificationが失敗し、buildごと失敗する。
-      # javadocは、doclintで壊れたJavadoc（タグの誤り・参照先の無いリンク等）を検知するために実行する
+      # javadocは、doclintで壊れたJavadoc（タグの誤り・参照先の無いリンク等）を検知するために実行する。
+      # generateLicenseReportは、release.ymlが配布物に入れるライセンスの一覧を作れなくなっていないかを、マージ前に確かめるために実行する
       - name: Build and run tests
         run: |
           chmod +x ./gradlew
-          ./gradlew build javadoc integrationTest --console=plain
+          ./gradlew build javadoc integrationTest generateLicenseReport --console=plain
 
       - name: Upload test reports
         if: failure()

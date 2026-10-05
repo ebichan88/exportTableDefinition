@@ -54,9 +54,12 @@ Java実行環境（runtimeフォルダ）を同梱しているため、Javaを�
 exportTableDefinition-windows
 │  run.bat／run.sh                             ・・・ ダブルクリックで実行する起動ファイル（Linux／macOSの場合は`run.sh`）
 │  exportTableDefinition-1.0-SNAPSHOT.jar      ・・・ 実行可能形式Jarファイル
+│  LICENSE                                     ・・・ このツールのライセンス（MIT）
+│  THIRD-PARTY-NOTICES.txt                     ・・・ Jarファイルに同梱した依存ライブラリのライセンス
 ├─mcp
 │     exportTableDefinition-mcp.jar             ・・・ MCPサーバー（「AIからテーブル定義を調べる」を参照）
-├─runtime                                       ・・・ 同梱のJava実行環境
+│     THIRD-PARTY-NOTICES.txt                   ・・・ MCPサーバーに同梱した依存ライブラリのライセンス
+├─runtime                                       ・・・ 同梱のJava実行環境（ライセンスは`runtime/legal`）
 └─conf
    ├─ExportTableDefinition.properties
    └─mybatis.properties.template
@@ -822,3 +825,5 @@ java -jar .\exportTableDefinition-1.0-SNAPSHOT.jar
 ## License
 
 [MIT License](./LICENSE)
+
+配布用zipに同梱している依存ライブラリのライセンスはzip内の`THIRD-PARTY-NOTICES.txt`（MCPサーバーは`mcp/THIRD-PARTY-NOTICES.txt`）を、Java実行環境のライセンスは`runtime/legal`を参照してください。
