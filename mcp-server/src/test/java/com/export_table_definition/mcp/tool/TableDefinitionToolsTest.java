@@ -271,11 +271,39 @@ class TableDefinitionToolsTest {
   }
 
   @Test
-  @DisplayName("get_tableは、スナップショットの1行をそのまま返す")
+  @DisplayName("get_tableは、観点に所属しないテーブルではスナップショットの1行をそのまま返す")
   void getTable() {
     assertEquals(
-        "{\"schema\":\"sample\",\"name\":\"department\"}",
+        "{\"schema\":\"sample\",\"name\":\"audit_log\"}",
+        text(call("get_table", Map.of("table", "audit_log"))));
+  }
+
+  @Test
+  @DisplayName("get_tableは、テーブルが所属する観点（id・表示名）をviewpointsで返す")
+  void getTableWithViewpoints() {
+    assertEquals(
+        "{\"schema\":\"sample\",\"name\":\"department\","
+            + "\"viewpoints\":[{\"id\":\"org\",\"name\":\"組織\"}]}",
         text(call("get_table", Map.of("table", "department"))));
+  }
+
+  @Test
+  @DisplayName("get_tableは、sectionsを指定しても所属する観点を返す")
+  void getTableWithViewpointsAndSections() throws Exception {
+    final JsonNode result =
+        json(call("get_table", Map.of("table", "department", "sections", List.of("indexes"))));
+
+    assertEquals("[{\"id\":\"org\",\"name\":\"組織\"}]", result.get("viewpoints").toString());
+  }
+
+  @Test
+  @DisplayName("get_tableでtableを複数指定した場合は、テーブルごとに所属する観点を返す（所属しないテーブルには付けない）")
+  void getTableMultipleWithViewpoints() throws Exception {
+    final JsonNode tables =
+        json(call("get_table", Map.of("table", List.of("department", "project")))).get("tables");
+
+    assertEquals("[{\"id\":\"org\",\"name\":\"組織\"}]", tables.get(0).get("viewpoints").toString());
+    assertFalse(tables.get(1).has("viewpoints"));
   }
 
   @Test

@@ -338,6 +338,18 @@ public final class SchemaCatalog {
   }
 
   /**
+   * テーブルが所属する観点を求めるメソッド<br>
+   * 1つのテーブルが複数の観点に所属することがある
+   *
+   * @return 宣言順。所属する観点が無い場合は空のリスト
+   */
+  public List<ViewpointEntry> viewpointsOf(TableEntry table) {
+    return viewpoints.stream()
+        .filter(viewpoint -> viewpoint.tables().contains(table.key()))
+        .toList();
+  }
+
+  /**
    * 名前で指定されたテーブルを解決するメソッド<br>
    * テーブル名は大文字小文字を区別せず完全一致で比べる。見つからない場合は、テーブル名を検索語にした検索の上位を候補として返す
    */

@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.export_table_definition.mcp.catalog.ObjectKey;
+import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.TableEntry;
 import com.export_table_definition.mcp.catalog.ViewpointEntry;
+import com.export_table_definition.mcp.snapshot.SnapshotDirectoryReader;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -67,6 +70,27 @@ class SampleInsightsContractTest {
 
     assertTrue(find("personnel").tables().contains(employee));
     assertTrue(find("project").tables().contains(employee));
+  }
+
+  @Test
+  @DisplayName("スナップショットのテーブルから所属する観点を逆引きできる（両者のキー（DB名・スキーマ名・テーブル名）が一致する）")
+  void looksUpViewpointsOfSnapshotTable() {
+    final SchemaCatalog catalog =
+        new SnapshotDirectoryReader()
+            .read(Path.of(System.getProperty("sampleSnapshotDir")))
+            .withViewpoints(viewpoints);
+
+    assertEquals(
+        List.of("personnel", "project"),
+        catalog.viewpointsOf(table(catalog, "employee")).stream().map(ViewpointEntry::id).toList());
+    assertEquals(List.of(), catalog.viewpointsOf(table(catalog, "audit_log")));
+  }
+
+  private static TableEntry table(SchemaCatalog catalog, String name) {
+    return catalog.tables().stream()
+        .filter(table -> table.key().name().equals(name))
+        .findFirst()
+        .orElseThrow();
   }
 
   private static ViewpointEntry find(String id) {
