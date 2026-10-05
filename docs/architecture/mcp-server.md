@@ -25,7 +25,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `Relation`・`RelatedTables`・`JoinPath`・`JoinPaths` | テーブル間の関連と、幅優先でたどった結果・2つのテーブルをつなぐ最短経路 |
 | | `SqlNames`・`TableColumn` | カラムの型・デフォルト値（`nextval`）・トリガーの関数名に現れるオブジェクトの名前の判定（相互参照に使う）と、カラムとそれを持つテーブル |
 | | `TableEntry`・`ColumnEntry`・`RelationEntry`・`TriggerEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
-| | `ViewpointEntry` | 観点の参考情報1件（識別子・表示名・説明・所属テーブル）。スキーマを持たないため`SchemaObject`は実装しない |
+| | `ViewpointEntry` | 観点の参考情報1件（識別子・表示名・説明・所属テーブル）。スキーマを持たないため`SchemaObject`は実装しない。テーブルから所属する観点は`SchemaCatalog#viewpointsOf`で逆引きする（読み込み済みの観点を引くだけで、索引は持たない） |
 | | `FunctionEntry`・`FunctionOverloads`・`SequenceEntry`・`TypeEntry` | 関数・シーケンス・ユーザー定義型の1行。関数は同名のもの（オーバーロード）を`FunctionOverloads`にまとめて名前の解決の単位にする |
 | | `NameFilter` | 関数・シーケンス・型の一覧を、名前の部分一致で絞り込む条件 |
 | | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
@@ -43,7 +43,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `list_viewpoints` | `database`（任意） | 観点（業務ドメイン別にテーブルをまとめる切り口。参考情報）の識別子・表示名・説明・所属テーブル数 |
 | `search_tables` | `query`、`schema`・`database`・`limit`・`viewpoint`（任意） | 一致したテーブルの概要（名前・論理名・区分・説明）と、一致した項目（`matchedIn`）。`viewpoint`（観点のid）を指定すると所属テーブルだけに絞り込む |
 | `list_tables` | `schema`・`database`・`type`・`includeDescription`・`limit`・`offset`・`viewpoint`（任意） | テーブルの概要（名前・論理名・区分）の一覧。`viewpoint`で観点の所属テーブルだけに絞り込める |
-| `get_table` | `table`（配列も可。最大10件）、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）。`sections`・`columns`で項目・カラムを絞れる。`table`に配列を指定すると`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える） |
+| `get_table` | `table`（配列も可。最大10件）、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る）に、テーブルが所属する観点（`viewpoints`。`id`・`name`を宣言順）を加えたもの。`sections`・`columns`で項目・カラムを絞れる（`viewpoints`は絞り込みの対象外で、所属する観点があれば常に返す）。`table`に配列を指定すると`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える） |
 | `find_columns` | `column`、`match`・`schema`・`database`・`limit`・`offset`（任意） | 当てはまったカラム（テーブル・型・PK・NOT NULL・デフォルト値・参照先） |
 | `get_related_tables` | `table`、`depth`（1〜3）・`direction`（outgoing/incoming/both）等（任意） | 関連（どのカラム同士か・外部キーか論理リレーションか・多重度・段数）と、関連に現れたテーブルの概要 |
 | `find_join_path` | `from`・`to`、`maxLength`（1〜6）・`limit`等（任意） | 2つのテーブルをつなぐ最短の経路（たどる順のテーブルと、各段の関連）。同じ長さの経路はすべて（`limit`まで）返す |
@@ -117,11 +117,11 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 
 | テスト | 対象 |
 |---|---|
-| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、相互参照、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先）、JOIN経路の探索、観点の一覧・解決・テーブルの絞り込み |
+| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、相互参照、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先）、JOIN経路の探索、観点の一覧・解決・テーブルの絞り込み・テーブルからの逆引き |
 | `SnapshotDirectoryReaderTest` | 読み込みと、起動時の誤り（ファイル名・行番号を含むメッセージ） |
 | `SampleSnapshotContractTest` | ベースラインとの契約（上記） |
 | `InsightsDirectoryReaderTest` | 読み込み（兄弟ディレクトリの解決を含む）と、起動時の誤り |
-| `SampleInsightsContractTest` | ベースラインとの契約（観点の所属テーブルを含む） |
+| `SampleInsightsContractTest` | ベースラインとの契約（観点の所属テーブルを含む。スナップショットのテーブルから所属する観点を逆引きできること＝両者のキーが一致すること） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証 |
 | `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる。応答を待たずに続けてツールを呼び出しても止まらないこと（`immediateExecution`の回帰）も確かめる |
 

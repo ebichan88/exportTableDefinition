@@ -29,7 +29,8 @@ final class ViewpointTools {
             LIST_VIEWPOINTS,
             "観点一覧",
             "観点（業務ドメイン別にテーブルをまとめる切り口。例: 受注管理）の識別子・表示名・説明・所属テーブル数を返す。"
-                + "観点の所属テーブルはlist_tables・search_tablesのviewpoint引数（この識別子を指定する）で絞り込める",
+                + "観点の所属テーブルはlist_tables・search_tablesのviewpoint引数（この識別子を指定する）で絞り込める。"
+                + "テーブルが所属する観点はget_tableで分かる",
             objectSchema(Map.of("database", DATABASE_PROPERTY), List.of()),
             this::listViewpoints));
   }

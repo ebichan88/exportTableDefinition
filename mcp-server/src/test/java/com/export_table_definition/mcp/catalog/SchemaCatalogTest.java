@@ -702,6 +702,39 @@ class SchemaCatalogTest {
     }
 
     @Test
+    @DisplayName("viewpointsOfは、テーブルが所属する観点を宣言順に返す。所属しない場合や、別DBの同名テーブルだけを含む観点は含めない")
+    void findsViewpointsOfTable() {
+      final ViewpointEntry audit =
+          new ViewpointEntry(
+              "testdb",
+              "audit",
+              "監査",
+              "",
+              List.of(
+                  new ObjectKey("testdb", "sales", "orders"),
+                  new ObjectKey("testdb", "sales", "stock")));
+      final ViewpointEntry otherDbOrders =
+          new ViewpointEntry(
+              "otherdb", "legacy", "旧受注", "", List.of(new ObjectKey("otherdb", "sales", "orders")));
+      final SchemaCatalog multiple =
+          catalog.withViewpoints(List.of(audit, order, inventory, otherDbOrders));
+
+      assertEquals(
+          List.of(audit, order),
+          multiple.viewpointsOf(
+              Lookups.found(
+                  multiple.lookupTable(ObjectReference.of("testdb", "sales", "orders")))));
+      assertEquals(
+          List.of(audit, inventory),
+          multiple.viewpointsOf(
+              Lookups.found(multiple.lookupTable(ObjectReference.of("testdb", "sales", "stock")))));
+      assertEquals(
+          List.of(),
+          multiple.viewpointsOf(
+              Lookups.found(multiple.lookupTable(ObjectReference.of("testdb", "sales", "store")))));
+    }
+
+    @Test
     @DisplayName("searchTablesは、観点による絞り込みをtotal・limitへ正しく反映する（絞り込みは件数算出より前に行う）")
     void searchTablesFiltersByViewpointBeforeCountingTotal() {
       final SearchResult withoutViewpoint =

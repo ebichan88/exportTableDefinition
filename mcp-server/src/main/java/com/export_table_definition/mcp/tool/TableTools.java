@@ -127,6 +127,7 @@ final class TableTools {
             "テーブル定義取得",
             "テーブル（ビューを含む）の定義を返す。カラム（型・PK・NOT NULL・デフォルト値・論理名・備考）、"
                 + "インデックス、制約、外部キー、論理リレーション、トリガー、説明・備考を含む。"
+                + "テーブルが観点（list_viewpoints）に所属する場合は、所属する観点（viewpoints。id・表示名）も返す。"
                 + "必要な項目だけをsections・columnsで指定すると結果が小さくなる。"
                 + "複数のテーブルをまとめて取得する場合はtableに配列を指定する（最大"
                 + MAX_TABLES
@@ -138,7 +139,8 @@ final class TableTools {
                     Map.of(
                         "sections",
                         enumArrayProperty(
-                            "返す項目（未指定の場合はすべて）。テーブル名・論理名・区分・説明・備考は常に返す", TableSection.fieldNames()),
+                            "返す項目（未指定の場合はすべて）。テーブル名・論理名・区分・説明・備考・所属する観点は常に返す",
+                            TableSection.fieldNames()),
                         "columns",
                         stringArrayProperty(
                             "返すカラムの名前（大文字小文字を区別しない）。指定するとcolumnsの項目はそのカラムだけになる。"
@@ -228,7 +230,9 @@ final class TableTools {
     }
     final List<TableEntry> tables = resolveTables(arguments, names);
     final List<ObjectNode> outputs =
-        tables.stream().map(table -> buildTableOutput(table, sections, columns)).toList();
+        tables.stream()
+            .map(table -> withViewpoints(buildTableOutput(table, sections, columns), table))
+            .toList();
     if (outputs.size() == 1) {
       return CallToolResult.builder().addTextContent(outputs.get(0).toString()).build();
     }
@@ -280,6 +284,24 @@ final class TableTools {
     }
     if (!columns.isEmpty()) {
       output.set("columns", selectColumns(table, output.path("columns"), columns));
+    }
+    return output;
+  }
+
+  /**
+   * 1テーブルの結果に、所属する観点（{@code id}・{@code name}）を宣言順に加える<br>
+   * 観点はスナップショットの項目ではない（参考情報）ため{@code sections}では絞り込まず、所属する観点があれば常に加える
+   */
+  private ObjectNode withViewpoints(ObjectNode output, TableEntry table) {
+    final List<ViewpointEntry> viewpoints = catalog.viewpointsOf(table);
+    if (!viewpoints.isEmpty()) {
+      final ArrayNode entries = output.putArray("viewpoints");
+      for (final ViewpointEntry viewpoint : viewpoints) {
+        final ObjectNode entry = entries.addObject().put("id", viewpoint.id());
+        if (!viewpoint.name().isEmpty()) {
+          entry.put("name", viewpoint.name());
+        }
+      }
     }
     return output;
   }

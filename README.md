@@ -627,7 +627,7 @@ AIへ渡すための出力です。観点（[`viewpoints`](#viewpoints観点)）
 
 * 観点を1つも宣言していない場合は、ファイル自体を出力しません。
 * `--check`の比較対象には含まれません（参考情報を変更しても`--check`は差分として報告しません）。
-* [MCPサーバー](#aiからテーブル定義を調べるmcpサーバー)の`list_viewpoints`・`list_tables`・`search_tables`から参照されます。
+* [MCPサーバー](#aiからテーブル定義を調べるmcpサーバー)の`list_viewpoints`・`list_tables`・`search_tables`・`get_table`から参照されます。
 
 ## AIからテーブル定義を調べる（MCPサーバー）
 
@@ -695,7 +695,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 | `list_viewpoints` | `database` | 観点（業務ドメイン別にテーブルをまとめる切り口。[参考情報](#参考情報insights)）の識別子・表示名・説明・所属テーブル数を返す |
 | `search_tables` | `query`（必須）、`schema`・`database`・`limit`・`viewpoint`（観点のid） | テーブル名・論理名・説明・カラム名・カラムの論理名を部分一致で検索し、一致の強い順に概要を返す。空白区切りの複数語はすべてを含むものだけを返す。`viewpoint`を指定すると、その観点の所属テーブルだけに絞り込む |
 | `list_tables` | `schema`・`database`・`type`（`table`／`view`／`materialized_view`）・`includeDescription`・`limit`（既定100、最大500）・`offset`・`viewpoint`（観点のid） | テーブル（ビューを含む）の名前・論理名・区分を名前の順に返す。`viewpoint`を指定すると、その観点の所属テーブルだけに絞り込む |
-| `get_table` | `table`（必須。配列で複数指定できる。最大10件）、`schema`・`database`・`sections`・`columns` | テーブル（ビューを含む）の定義を返す（スナップショットの1行）。`sections`（`columns`・`indexes`・`constraints`・`foreignKeys`・`logicalRelations`・`triggers`・`definition`）で返す項目を、`columns`で返すカラムを絞り込める。`table`に複数指定した場合は`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える） |
+| `get_table` | `table`（必須。配列で複数指定できる。最大10件）、`schema`・`database`・`sections`・`columns` | テーブル（ビューを含む）の定義を返す（スナップショットの1行）。`sections`（`columns`・`indexes`・`constraints`・`foreignKeys`・`logicalRelations`・`triggers`・`definition`）で返す項目を、`columns`で返すカラムを絞り込める。`table`に複数指定した場合は`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える）。テーブルが観点に所属する場合は、所属する観点（`viewpoints`。`id`・`name`を宣言順）も返す |
 | `find_columns` | `column`（必須）、`match`（`exact`／`partial`、既定`exact`）・`schema`・`database`・`limit`（既定50、最大500）・`offset` | カラムの物理名・論理名から、そのカラムを持つテーブルを逆引きする。型・PK・NOT NULL・デフォルト値と、外部キー・論理リレーションの参照先も返す |
 | `get_related_tables` | `table`（必須）、`schema`・`database`・`depth`（1〜3、既定1）・`direction`（`outgoing`／`incoming`／`both`、既定`both`） | 外部キーと論理リレーションをたどり、つながるテーブルと、どのカラム同士でつながるか・多重度を返す。参照される側（被参照）からもたどれる |
 | `find_join_path` | `from`・`to`（必須。`スキーマ名.テーブル名`も可）、`database`・`maxLength`（1〜6、既定4）・`limit`（1〜20、既定5） | 2つのテーブルをつなぐ最短のJOIN経路を、外部キーと論理リレーションを向きを問わずたどって返す。同じ長さの経路が複数ある場合はすべて（`limit`まで）返す |
@@ -713,7 +713,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 * 一覧を返すツールは、件数が`limit`を超える場合に続きの`offset`（`nextOffset`）を返します。
 * `outputObjects`で出力対象から外した種別は0件になります。
 * 関数・プロシージャの定義本体は、AIのコンテキストを圧迫するため既定では返しません（`get_function`の`includeDefinition`で返します）。
-* `get_table`の`sections`を指定しても、テーブル名・論理名・区分・説明・備考は常に返します。`columns`を指定した場合は、`sections`に関わらず指定したカラムを返します。
+* `get_table`の`sections`を指定しても、テーブル名・論理名・区分・説明・備考・所属する観点は常に返します。`columns`を指定した場合は、`sections`に関わらず指定したカラムを返します。
 
 ## 開発者向け（ソースからビルドする場合）
 

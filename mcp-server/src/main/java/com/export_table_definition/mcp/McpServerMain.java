@@ -38,7 +38,8 @@ public final class McpServerMain {
           + "（外部キーと、DBに制約の無い論理リレーション）、直接つながらないテーブル同士はfind_join_pathを使う。"
           + "関数・シーケンス・ユーザー定義型・トリガーは、list_*で探してget_*で取得する。"
           + "業務ドメインの単位（観点）で絞り込みたい場合は、list_viewpointsで一覧を確認し、"
-          + "list_tables・search_tablesのviewpoint引数を指定する。";
+          + "list_tables・search_tablesのviewpoint引数を指定する。"
+          + "テーブルがどの観点に所属するかは、get_tableの結果のviewpointsで分かる。";
 
   private McpServerMain() {}
 
