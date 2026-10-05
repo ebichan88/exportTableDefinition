@@ -96,7 +96,7 @@ final class RelationTools {
 
   private CallToolResult getRelatedTables(ToolArguments arguments) {
     final TableEntry table = resolveTable(arguments, "table");
-    final int depth = arguments.optionalInt("depth", 1, 1, MAX_DEPTH);
+    final int depth = arguments.optionalInt("depth", 1);
     final Direction direction =
         arguments.optionalEnum("direction", Direction.class, Direction.BOTH);
     return ToolResults.json(RelatedTablesOutput.of(catalog.relatedTables(table, depth, direction)));
@@ -108,8 +108,8 @@ final class RelationTools {
     if (from.key().equals(to.key())) {
       throw new InvalidToolArgumentException("fromとtoに同じテーブルが指定されています。");
     }
-    final int maxLength = arguments.optionalInt("maxLength", DEFAULT_MAX_LENGTH, 1, MAX_MAX_LENGTH);
-    final int limit = arguments.optionalInt("limit", DEFAULT_PATH_LIMIT, 1, MAX_PATH_LIMIT);
+    final int maxLength = arguments.optionalInt("maxLength", DEFAULT_MAX_LENGTH);
+    final int limit = arguments.optionalInt("limit", DEFAULT_PATH_LIMIT);
     final JoinPaths found = catalog.joinPaths(from, to, maxLength, limit);
     return ToolResults.json(
         new JoinPathOutput(

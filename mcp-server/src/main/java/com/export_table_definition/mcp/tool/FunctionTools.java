@@ -80,7 +80,7 @@ final class FunctionTools {
 
   private CallToolResult listFunctions(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
-    final Page page = Page.read(arguments, DEFAULT_LIMIT, MAX_LIMIT);
+    final Page page = Page.read(arguments, DEFAULT_LIMIT);
     final List<FunctionEntry> functions = catalog.listFunctions(arguments.scope(), filter);
     return ToolResults.json(
         new ListFunctionsOutput(

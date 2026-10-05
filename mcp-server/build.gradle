@@ -26,7 +26,7 @@ jar {
 shadowJar {
     // MCPクライアントの設定に書くパスが更新で変わらないよう、バージョンを含めない固定名にする
     archiveFileName = 'exportTableDefinition-mcp.jar'
-    // SDKはJSONマッパーをServiceLoaderで探すため、依存jarのMETA-INF/servicesを結合して残す
+    // SDKは入力スキーマの検証器（JsonSchemaValidator）をServiceLoaderで探す（JSONマッパーはMcpServerMainで明示的に渡す）ため、依存jarのMETA-INF/servicesを結合して残す
     mergeServiceFiles()
 }
 

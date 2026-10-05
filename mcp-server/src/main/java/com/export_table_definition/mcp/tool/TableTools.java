@@ -174,7 +174,7 @@ final class TableTools {
 
   private CallToolResult searchTables(ToolArguments arguments) {
     final SearchQuery query = SearchQuery.of(arguments.requiredString("query"));
-    final int limit = arguments.optionalInt("limit", DEFAULT_SEARCH_LIMIT, 1, MAX_SEARCH_LIMIT);
+    final int limit = arguments.optionalInt("limit", DEFAULT_SEARCH_LIMIT);
     final SearchResult result =
         catalog.searchTables(query, arguments.scope(), limit, resolveViewpoint(arguments));
     return ToolResults.json(
@@ -185,7 +185,7 @@ final class TableTools {
   private CallToolResult listTables(ToolArguments arguments) {
     final String type = arguments.optionalChoice("type", TABLE_TYPES);
     final boolean includeDescription = arguments.optionalBoolean("includeDescription", false);
-    final Page page = Page.read(arguments, DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT);
+    final Page page = Page.read(arguments, DEFAULT_LIST_LIMIT);
     final List<TableEntry> tables =
         catalog.listTables(arguments.scope(), type, resolveViewpoint(arguments));
     return ToolResults.json(
@@ -311,7 +311,7 @@ final class TableTools {
         ColumnQuery.of(
             arguments.requiredString("column"),
             arguments.optionalEnum("match", MatchMode.class, MatchMode.EXACT));
-    final Page page = Page.read(arguments, DEFAULT_COLUMN_LIMIT, MAX_COLUMN_LIMIT);
+    final Page page = Page.read(arguments, DEFAULT_COLUMN_LIMIT);
     final List<ColumnHit> hits = catalog.findColumns(query, arguments.scope());
     return ToolResults.json(
         new FindColumnsOutput(

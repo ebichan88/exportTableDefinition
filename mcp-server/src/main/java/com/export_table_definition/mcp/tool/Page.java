@@ -13,14 +13,13 @@ import java.util.Map;
 record Page(int offset, int limit) {
 
   /**
-   * 引数{@code offset}・{@code limit}を読み取るメソッド
+   * 引数{@code offset}・{@code limit}を読み取るメソッド（範囲は入力スキーマで検証済み）
    *
-   * @throws InvalidToolArgumentException 範囲外の値の場合
+   * @throws InvalidToolArgumentException 数値でない場合
    */
-  static Page read(ToolArguments arguments, int defaultLimit, int maxLimit) {
+  static Page read(ToolArguments arguments, int defaultLimit) {
     return new Page(
-        arguments.optionalInt("offset", 0, 0, Integer.MAX_VALUE),
-        arguments.optionalInt("limit", defaultLimit, 1, maxLimit));
+        arguments.optionalInt("offset", 0), arguments.optionalInt("limit", defaultLimit));
   }
 
   /** ツール固有の引数に、引数{@code offset}・{@code limit}の入力スキーマを加えたプロパティ */
