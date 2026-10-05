@@ -159,7 +159,7 @@ docker rm -f exporttabledefinition-verify-oracle
 
 ## 原因調査（`[result]:FAIL` になったら）
 
-まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectAllColumnInfo`等）と
+まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectColumnInfo`等）と
 `[cause]`（DBが返したエラー。PSQLExceptionのメッセージ等）を見る。スタックトレースは実行したディレクトリの
 `var/log/exportTableDefinition.log`（`cli/build/libs`で実行した場合は`cli/build/libs/var/log/`）に記録される
 （`FailureReporter`が想定外の失敗をスタックトレース付きでログへ出す）。
@@ -205,16 +205,16 @@ Javaの文字インデックスとズレる。位置を厳密に特定したい�
    `-- コメント` の直後に改行を入れると、そこでコメントは終わってしまい、次の行の文字列が
    （コメントのつもりでも）生のSQLとして解釈される。日本語コメントが長くなる場合は
    必ず `/* ... */` のブロックコメントを使う（複数行にまたがっても安全）。
-   実際にこれが原因で `selectAllForeignKeyInfo`（PostgreSQL）が
+   実際にこれが原因で `selectForeignKeyInfo`（PostgreSQL）が
    `syntax error at or near "pg_catalog"` で例外を吐き、外部キーを1つでも持つDBに対して
    **一切テーブル定義書を出力できなくなっていた**（本skill作成時に発見・修正済み）。
 2. **文字列リテラル（`'...'`）を複数の物理行にまたがせない。**
    `'PRIMARY\n        KEY'` のように改行を挟むと、値そのものに改行＋インデントの空白が
    混入し、生成されたMarkdownの表セルが壊れる（表の途中で改行されて別の行として見えてしまう）。
-   `selectAllConstraintInfo`の`'PRIMARY KEY'`がこれで壊れていた（修正済み）。
+   `selectConstraintInfo`の`'PRIMARY KEY'`がこれで壊れていた（修正済み）。
    同様の理由でOracle側マッパーの`'CREATE INDEX '`も修正済み。
 3. 上記1点目のパターンで、Oracle側マッパー（`mapper/oracle/tableDefinitionMapper.xml`）の
-   `selectAllForeignKeyInfo`にも同種の壊れたコメントが3箇所あり、目視で同様に修正した
+   `selectForeignKeyInfo`にも同種の壊れたコメントが3箇所あり、目視で同様に修正した
    （その後`oracleIntegrationTest`で実DBに対して確かめた）。
 
 4. **resultMapの`<arg javaType>`でプリミティブ型を指定するときは`_int`・`_boolean`のように`_`を付ける。**
@@ -223,7 +223,7 @@ Javaの文字インデックスとズレる。位置を厳密に特定したい�
    （関数のオーバーロード番号を追加した際に実際に踏んだ。単体テストはDTOを直接生成するため検知できない）。
 
 5. **OracleのLONG型の列（`ALL_IND_EXPRESSIONS.COLUMN_EXPRESSION`・`ALL_TAB_COLUMNS.DATA_DEFAULT`・`ALL_VIEWS.TEXT`等）には、
-   `SUBSTR`等の関数も`LISTAGG`も適用できない**（ORA-00932）。関数索引を持つDBで`selectAllIndexInfo`がこれで落ちていた。
+   `SUBSTR`等の関数も`LISTAGG`も適用できない**（ORA-00932）。関数索引を持つDBで`selectIndexInfo`がこれで落ちていた。
    `DBMS_XMLGEN`でXMLに書き出す方法は、LONGの値をエスケープしないため`&`や`<`を含むと壊れる（ORA-31011）。
    Oracle用mapperの`longValueFunction`（SQL内で定義するPL/SQLの関数）で読むか、`_VC`の付いたVARCHAR2版の列
    （`ALL_CONSTRAINTS.SEARCH_CONDITION_VC`等）があればそれを使う。
