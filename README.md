@@ -2,6 +2,9 @@
 
 [![build](https://github.com/ebichan88/exportTableDefinition/actions/workflows/ci.yml/badge.svg)](https://github.com/ebichan88/exportTableDefinition/actions/workflows/ci.yml)
 ![release](https://img.shields.io/github/v/release/ebichan88/exportTableDefinition)
+![Java](https://custom-icon-badges.herokuapp.com/badge/Java-b07219.svg?logo=Java&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-555.svg?logo=postgresql&style=flat)
+![Oracle](https://img.shields.io/badge/-Oracle-f80000.svg?logo=oracle&style=flat)
 
 ## Overview
 
@@ -259,7 +262,7 @@ username=ユーザ名
 
 * 各項目は、後述のCLI引数でも指定できます。`driver`・`url`がいずれの方法でも指定されていない場合は、DBへ接続する前に`[result]:FAIL`（終了コード`2`）で終了します。
 * 上記以外のキー（キー名の書き誤り等）を書いた場合は誤りとして扱います。
-* `password`は書けません（値が空でも誤りとして扱います）。以前のテンプレートから作ったファイルに`password=`の行が残っている場合は、行ごと削除してください。パスワードは次項の環境変数で渡します。
+* `password`は書けません（値が空でも誤りとして扱います）。
 
 ### パスワードの指定
 
@@ -277,7 +280,6 @@ run.bat
 
 * CLI引数`--db-password=値`でも指定でき、環境変数より優先します。
 * 環境変数・CLI引数のどちらも未指定（空を含む）の場合は、パスワードを空として接続します（DBの認証方式による）。
-* 設定ファイルに書けないのは、作業ディレクトリ内のファイルが、AIエージェント等のツールから読まれ得るためです。秘密をファイルに残さないようにしています。
 
 ### コマンドライン引数
 
