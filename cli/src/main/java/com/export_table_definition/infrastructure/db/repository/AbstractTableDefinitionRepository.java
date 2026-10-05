@@ -61,7 +61,7 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
   /** {@inheritDoc} */
   @Override
   public List<TableEntity> selectTableList(List<String> schemaList) {
-    return selectTableDefinition(schemaList, List.of(), "selectAllTableInfo", TableDto::toEntity);
+    return selectTableDefinition(schemaList, List.of(), "selectTableInfo", TableDto::toEntity);
   }
 
   /**
@@ -75,12 +75,12 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
     final List<String> tableList =
         tables.stream().map(TableEntity::physicalTableName).distinct().toList();
     final List<ColumnEntity> columns =
-        selectTableDefinition(schemaList, tableList, "selectAllColumnInfo", ColumnDto::toEntity);
+        selectTableDefinition(schemaList, tableList, "selectColumnInfo", ColumnDto::toEntity);
     final List<IndexEntity> indexes =
-        selectTableDefinition(schemaList, tableList, "selectAllIndexInfo", IndexDto::toEntity);
+        selectTableDefinition(schemaList, tableList, "selectIndexInfo", IndexDto::toEntity);
     final List<ConstraintEntity> constraints =
         selectTableDefinition(
-            schemaList, tableList, "selectAllConstraintInfo", ConstraintDto::toEntity);
+            schemaList, tableList, "selectConstraintInfo", ConstraintDto::toEntity);
     return TableDetail.assembleAll(tables, columns, indexes, constraints);
   }
 
@@ -97,7 +97,7 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
     final List<String> schemaList = tables.stream().map(TableKey::schema).distinct().toList();
     final List<String> tableList = tables.stream().map(TableKey::table).distinct().toList();
     final Set<TableKey> keys = Set.copyOf(tables);
-    return selectTableDefinition(schemaList, tableList, "selectAllColumnInfo", ColumnDto::toEntity)
+    return selectTableDefinition(schemaList, tableList, "selectColumnInfo", ColumnDto::toEntity)
         .stream()
         .filter(column -> keys.contains(column.tableKey()))
         .toList();
@@ -107,48 +107,47 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
   @Override
   public List<ForeignKeyEntity> selectForeignKeyList(List<String> schemaList) {
     return selectTableDefinition(
-        schemaList, List.of(), "selectAllForeignKeyInfo", ForeignKeyDto::toEntity);
+        schemaList, List.of(), "selectForeignKeyInfo", ForeignKeyDto::toEntity);
   }
 
   /** {@inheritDoc} */
   @Override
   public List<TriggerEntity> selectTriggerList(List<String> schemaList) {
-    return selectTableDefinition(
-        schemaList, List.of(), "selectAllTriggerInfo", TriggerDto::toEntity);
+    return selectTableDefinition(schemaList, List.of(), "selectTriggerInfo", TriggerDto::toEntity);
   }
 
   /** {@inheritDoc} */
   @Override
   public List<PartitionEntity> selectPartitionList(List<String> schemaList) {
     return selectTableDefinition(
-        schemaList, List.of(), "selectAllPartitionInfo", PartitionDto::toEntity);
+        schemaList, List.of(), "selectPartitionInfo", PartitionDto::toEntity);
   }
 
   /** {@inheritDoc} */
   @Override
   public List<FunctionEntity> selectFunctionList(List<String> schemaList) {
     return selectTableDefinition(
-        schemaList, List.of(), "selectAllFunctionInfo", FunctionDto::toEntity);
+        schemaList, List.of(), "selectFunctionInfo", FunctionDto::toEntity);
   }
 
   /** {@inheritDoc} */
   @Override
   public List<FunctionEntity> selectFunctionDefList(List<String> schemaList) {
     return selectTableDefinition(
-        schemaList, List.of(), "selectAllFunctionDefInfo", FunctionDto::toEntity);
+        schemaList, List.of(), "selectFunctionDefInfo", FunctionDto::toEntity);
   }
 
   /** {@inheritDoc} */
   @Override
   public List<SequenceEntity> selectSequenceList(List<String> schemaList) {
     return selectTableDefinition(
-        schemaList, List.of(), "selectAllSequenceInfo", SequenceDto::toEntity);
+        schemaList, List.of(), "selectSequenceInfo", SequenceDto::toEntity);
   }
 
   /** {@inheritDoc} */
   @Override
   public List<TypeEntity> selectTypeList(List<String> schemaList) {
-    return selectTableDefinition(schemaList, List.of(), "selectAllTypeInfo", TypeDto::toEntity);
+    return selectTableDefinition(schemaList, List.of(), "selectTypeInfo", TypeDto::toEntity);
   }
 
   private <D, E> List<E> selectTableDefinition(

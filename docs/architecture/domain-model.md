@@ -376,9 +376,9 @@ classDiagram
 | 「スキーマ.テーブル」形式のキーの解析 | `TableKey.parse` |
 | 出力対象の絞り込み（スキーマ名・テーブル名パターン。除外が包含より優先。テーブル名・スキーマ名の部分が空のパターンは設定誤り） | `TableScope` / `TableNamePatterns` |
 | 出力対象オブジェクト種別の解釈（未指定なら全種別。未知の種別名は設定誤り） | `OutputObjectType.parse` |
-| 子のパーティションはテーブルに含めない・親から複製された外部キー（`conparentid`）・トリガー（`tgparentid`）は取得しない（PostgreSQL 13以上） | `tableDefinitionMapper.xml`（PostgreSQL）の`selectAllTableInfo`・`selectAllConstraintInfo`・`selectAllForeignKeyInfo`・`selectAllTriggerInfo` |
+| 子のパーティションはテーブルに含めない・親から複製された外部キー（`conparentid`）・トリガー（`tgparentid`）は取得しない（PostgreSQL 13以上） | `tableDefinitionMapper.xml`（PostgreSQL）の`selectTableInfo`・`selectConstraintInfo`・`selectForeignKeyInfo`・`selectTriggerInfo` |
 | パーティション表の判定、パーティションの名前を根のスキーマからの相対で表す規則 | `TableEntity.isPartitioned` / `PartitionEntity.getDisplayName` |
-| パーティション表のパーティションを、親から子へ階層順に取得する | `tableDefinitionMapper.xml`（PostgreSQL）の`selectAllPartitionInfo`（再帰CTE） |
+| パーティション表のパーティションを、親から子へ階層順に取得する | `tableDefinitionMapper.xml`（PostgreSQL）の`selectPartitionInfo`（再帰CTE） |
 | 多重度の判定・論理リレーションの多重度の既定値 | `Cardinality.of` / `Cardinality.DEFAULT_FOR_LOGICAL_RELATION` |
 | 論理リレーションの関連名の自動生成（`{列名...}`） | `ForeignKeyEntity.resolveLogicalRelationName` |
 | 関連は参照元・参照先の双方が出力対象のときだけ合流させる（除外した物理外部キーは絞り込み時は通知しない。論理リレーションは常に通知する） | `ExportTargetConsistency.resolveForeignKeys` |

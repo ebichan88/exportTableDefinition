@@ -96,11 +96,11 @@ public class FailureReporterTest {
     final String report =
         report(
             new RuntimeException(
-                "Failed to select: selectAllTableInfo",
+                "Failed to select: selectTableInfo",
                 new SQLException("ERROR: permission denied for table pg_description")));
 
     assertTrue(report.startsWith("[result]:FAIL"));
-    assertTrue(report.contains(" [errmsg]:Failed to select: selectAllTableInfo"));
+    assertTrue(report.contains(" [errmsg]:Failed to select: selectTableInfo"));
     assertTrue(
         report.contains(
             " [cause]:java.sql.SQLException: ERROR: permission denied for table pg_description"));

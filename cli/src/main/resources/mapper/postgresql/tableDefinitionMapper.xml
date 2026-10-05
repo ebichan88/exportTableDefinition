@@ -9,7 +9,7 @@
         fetch first 1 rows only;
     </select>
 
-    <select id="selectAllTableInfo" resultType="TableDto">
+    <select id="selectTableInfo" resultType="TableDto">
         WITH all_tables AS (
             <!-- パーティションの子（relispartition）は一覧に載せず、親の「パーティション情報」へまとめる。
                  中間のパーティション表（多段パーティション）も子のため同様に除く -->
@@ -75,7 +75,7 @@
         ORDER BY schema_name, physical_table_name;
     </select>
 
-    <select id="selectAllColumnInfo" resultType="ColumnDto">
+    <select id="selectColumnInfo" resultType="ColumnDto">
         WITH all_columns AS (
             (
                 SELECT
@@ -215,7 +215,7 @@
         ORDER BY schema_name, table_name, column_num;
     </select>
 
-    <select id="selectAllIndexInfo" resultType="IndexDto">
+    <select id="selectIndexInfo" resultType="IndexDto">
         WITH all_indexes AS (
             SELECT
                 t5.nspname AS schema_name,
@@ -259,7 +259,7 @@
         ORDER BY schema_name, table_name, index_name;
     </select>
 
-    <select id="selectAllConstraintInfo" resultType="ConstraintDto">
+    <select id="selectConstraintInfo" resultType="ConstraintDto">
         WITH all_constraints AS (
             SELECT
                 t3.nspname AS schema_name,
@@ -304,7 +304,7 @@
         ORDER BY schema_name, table_name, constraints_type, constraints_name;
     </select>
 
-    <select id="selectAllForeignKeyInfo" resultType="ForeignKeyDto">
+    <select id="selectForeignKeyInfo" resultType="ForeignKeyDto">
         WITH all_foreignkeys AS (
             SELECT
                 t1.conname AS foreignkey_name,
@@ -360,7 +360,7 @@
         ORDER BY schema_name, table_name, foreignkey_name;
     </select>
 
-    <select id="selectAllTriggerInfo" resultType="TriggerDto">
+    <select id="selectTriggerInfo" resultType="TriggerDto">
         WITH all_triggers AS (
             SELECT
                 t3.nspname AS schema_name,
@@ -407,7 +407,7 @@
         ORDER BY schema_name, table_name, trigger_name;
     </select>
 
-    <select id="selectAllPartitionInfo" resultType="PartitionDto">
+    <select id="selectPartitionInfo" resultType="PartitionDto">
         WITH RECURSIVE all_partitions AS (
             <!-- パーティション表（自身はパーティションではない親）を根として、pg_inheritsをたどり下位のパーティションを集める。
                  子が別スキーマにあっても根のスキーマで絞り込めるよう、子ではなく根を基準にする。
@@ -462,7 +462,7 @@
         ORDER BY p.schema_name, p.table_name, p.path;
     </select>
 
-    <select id="selectAllFunctionInfo" resultType="FunctionDto">
+    <select id="selectFunctionInfo" resultType="FunctionDto">
         WITH all_functions AS (
             SELECT
                 current_database() AS db_name,
@@ -502,7 +502,7 @@
         ORDER BY schema_name, function_name, overload_index;
     </select>
 
-    <select id="selectAllFunctionDefInfo" resultType="FunctionDto">
+    <select id="selectFunctionDefInfo" resultType="FunctionDto">
         WITH all_functions AS (
             SELECT
                 current_database() AS db_name,
@@ -543,7 +543,7 @@
         ORDER BY schema_name, function_name, overload_index;
     </select>
 
-    <select id="selectAllSequenceInfo" resultType="SequenceDto">
+    <select id="selectSequenceInfo" resultType="SequenceDto">
         WITH all_sequences AS (
             SELECT
                 current_database() AS db_name,
@@ -590,7 +590,7 @@
         ORDER BY schema_name, sequence_name;
     </select>
 
-    <select id="selectAllTypeInfo" resultType="TypeDto">
+    <select id="selectTypeInfo" resultType="TypeDto">
         WITH all_types AS (
             SELECT
                 current_database() AS db_name,

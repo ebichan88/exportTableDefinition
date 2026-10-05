@@ -46,11 +46,11 @@ public class MyBatisSqlSessionFactoriesTest {
       for (final String sqlId :
           new String[] {
             "selectDatabaseInfo",
-            "selectAllTableInfo",
-            "selectAllColumnInfo",
-            "selectAllIndexInfo",
-            "selectAllConstraintInfo",
-            "selectAllForeignKeyInfo"
+            "selectTableInfo",
+            "selectColumnInfo",
+            "selectIndexInfo",
+            "selectConstraintInfo",
+            "selectForeignKeyInfo"
           }) {
         final String statementId = String.format(NAMESPACE_FORMAT, database, sqlId);
         assertTrue(configuration.hasStatement(statementId), statementId);

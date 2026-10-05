@@ -73,7 +73,7 @@
         END;
     </sql>
 
-    <select id="selectAllTableInfo" resultType="TableDto">
+    <select id="selectTableInfo" resultType="TableDto">
         WITH
         <include refid="longValueFunction"/>
         ora_all_tables AS (
@@ -145,7 +145,7 @@
         ORDER BY schema_name, physical_table_name
     </select>
 
-    <select id="selectAllColumnInfo" resultType="ColumnDto">
+    <select id="selectColumnInfo" resultType="ColumnDto">
         WITH
         <include refid="longValueFunction"/>
         ora_all_columns AS (
@@ -225,7 +225,7 @@
         ORDER BY schema_name, table_name, column_num
     </select>
 
-    <select id="selectAllIndexInfo" resultType="IndexDto">
+    <select id="selectIndexInfo" resultType="IndexDto">
         WITH
         <include refid="longValueFunction"/>
         ora_all_indexes AS (
@@ -285,7 +285,7 @@
         ORDER BY schema_name, table_name, index_name
     </select>
 
-    <select id="selectAllConstraintInfo" resultType="ConstraintDto">
+    <select id="selectConstraintInfo" resultType="ConstraintDto">
         WITH ora_all_constraints AS (
             SELECT
                 ac.owner AS schema_name,
@@ -341,7 +341,7 @@
         ORDER BY schema_name, table_name, constraints_type, constraints_name
     </select>
 
-    <select id="selectAllForeignKeyInfo" resultType="ForeignKeyDto">
+    <select id="selectForeignKeyInfo" resultType="ForeignKeyDto">
         WITH ora_fk_columns AS (
             /* 外部キーを構成する列。多重度の判定に用いる。
                参照元テーブルが出力対象であれば判定できればよいため、ora_all_foreignkeys
@@ -460,7 +460,7 @@
         ORDER BY schema_name, table_name, foreignkey_name
     </select>
 
-    <select id="selectAllTriggerInfo" resultType="TriggerDto">
+    <select id="selectTriggerInfo" resultType="TriggerDto">
         WITH ora_triggers AS (
             <!-- テーブル・ビューのトリガーだけを対象にする（スキーマ・データベースのイベントトリガーは対象外）。
                  本体のPL/SQLはトリガーの中に直接書かれ、PostgreSQLのように呼び出す関数が無いため、定義には宣言部だけを出す -->
@@ -504,7 +504,7 @@
         ORDER BY schema_name, table_name, trigger_name
     </select>
 
-    <select id="selectAllPartitionInfo" resultType="PartitionDto">
+    <select id="selectPartitionInfo" resultType="PartitionDto">
         WITH
         <include refid="longValueFunction"/>
         ora_partitions AS (
@@ -579,7 +579,7 @@
         ORDER BY schema_name, table_name, partition_position, subpartition_position
     </select>
 
-    <select id="selectAllFunctionInfo" resultType="FunctionDto">
+    <select id="selectFunctionInfo" resultType="FunctionDto">
         WITH
 
         ora_functions AS (
@@ -644,7 +644,7 @@
         ORDER BY schema_name, function_name, overload_index
     </select>
 
-    <select id="selectAllFunctionDefInfo" resultType="FunctionDto">
+    <select id="selectFunctionDefInfo" resultType="FunctionDto">
         WITH
         <include refid="sourceTextFunction"/>
         ora_functions AS (
@@ -712,7 +712,7 @@
         ORDER BY schema_name, function_name, overload_index
     </select>
 
-    <select id="selectAllSequenceInfo" resultType="SequenceDto">
+    <select id="selectSequenceInfo" resultType="SequenceDto">
         <!-- IDENTITY列が自動で作るシーケンス（ISEQ$$_...）は、名前が環境ごとに変わり、列のデフォルト値として出力するため除く。
              開始値はディクショナリに残らない（LAST_NUMBERは次に払い出す値）ため出力しない -->
         SELECT
@@ -741,7 +741,7 @@
         ORDER BY s.sequence_owner, s.sequence_name
     </select>
 
-    <select id="selectAllTypeInfo" resultType="TypeDto">
+    <select id="selectTypeInfo" resultType="TypeDto">
         WITH ora_types AS (
             SELECT
                 t.owner AS schema_name,
