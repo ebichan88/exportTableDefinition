@@ -42,14 +42,14 @@ jobs:
       - name: Build with Gradle (Windows)
         if: matrix.platform == 'windows'
         shell: cmd
-        run: gradlew.bat build
+        run: gradlew.bat build generateLicenseReport
 
       - name: Build with Gradle (Unix)
         if: matrix.platform != 'windows'
         shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew build
+          ./gradlew build generateLicenseReport
 
       # 依存ライブラリ（JDBCドライバ、log4j、Guice、MCPのSDK等）が実際に使用するJDKモジュールを検出する。
       # cliとMCPサーバーで同梱のJava実行環境（runtime）を共有するため、両方のjarを渡して必要なモジュールを合算する。
@@ -102,6 +102,8 @@ jobs:
             --strip-debug --no-header-files --no-man-pages --compress=2 \
             --output release/runtime
 
+      # MITの条件である著作権表示（LICENSE）と、jarに同梱した依存ライブラリのライセンス（本文・NOTICEを含む）を配布物に入れる。
+      # JDKのライセンスは、jlinkがruntime/legalに入れる
       - name: Assemble release package (Windows)
         if: matrix.platform == 'windows'
         shell: pwsh
@@ -109,9 +111,12 @@ jobs:
           Copy-Item cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
           Copy-Item -Recurse cli/build/libs/conf release/conf
           Copy-Item README.md release/
+          Copy-Item LICENSE release/
+          Copy-Item cli/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/
           Copy-Item scripts/run.bat release/
           New-Item -ItemType Directory -Force release/mcp | Out-Null
           Copy-Item mcp-server/build/libs/exportTableDefinition-mcp.jar release/mcp/
+          Copy-Item mcp-server/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/mcp/
 
       - name: Assemble release package (Unix)
         if: matrix.platform != 'windows'
@@ -120,9 +125,12 @@ jobs:
           cp cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar release/
           cp -r cli/build/libs/conf release/conf
           cp README.md release/
+          cp LICENSE release/
+          cp cli/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/
           cp scripts/run.sh release/
           mkdir -p release/mcp
           cp mcp-server/build/libs/exportTableDefinition-mcp.jar release/mcp/
+          cp mcp-server/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/mcp/
           chmod +x release/run.sh release/runtime/bin/java
 
       - name: Create ZIP (Windows)

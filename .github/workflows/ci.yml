@@ -28,11 +28,12 @@ jobs:
 
       # build（test含む）の中で、cliのドメイン層・mcp-serverのcatalogのカバレッジが各build.gradleに定めた基準を下回ると
       # jacocoTestCoverageVerificationが失敗し、buildごと失敗する。
-      # javadocは、doclintで壊れたJavadoc（タグの誤り・参照先の無いリンク等）を検知するために実行する
+      # javadocは、doclintで壊れたJavadoc（タグの誤り・参照先の無いリンク等）を検知するために実行する。
+      # generateLicenseReportは、release.ymlが配布物に入れるライセンスの一覧を作れなくなっていないかを、マージ前に確かめるために実行する
       - name: Build and run tests
         run: |
           chmod +x ./gradlew
-          ./gradlew build javadoc integrationTest --console=plain
+          ./gradlew build javadoc integrationTest generateLicenseReport --console=plain
 
       - name: Upload test reports
         if: failure()
@@ -52,9 +53,10 @@ jobs:
             cli/build/reports/jacoco/test/html/
             mcp-server/build/reports/jacoco/test/html/
 
-      # PRに単体テストのカバレッジをコメントする（forkからのPRはGITHUB_TOKENが読み取り専用のため投稿できない）
+      # PRに単体テストのカバレッジをコメントする。
+      # forkからのPRはGITHUB_TOKENが読み取り専用で投稿が失敗し、ジョブごと赤になるため実行しない（カバレッジはアーティファクトで見られる）
       - name: Comment coverage on PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         uses: madrapps/jacoco-report@v1.7.1
         with:
           paths: cli/build/reports/jacoco/test/jacocoTestReport.xml,mcp-server/build/reports/jacoco/test/jacocoTestReport.xml
