@@ -543,7 +543,7 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 * 各一覧への導線は`tableList_{DB名}.md`の「関連ドキュメント」セクションに集約しています（対象が存在するカテゴリのみ）
 * 上の内容はPostgreSQLの場合です。Oracleでの扱いは[Oracleの場合](#oracleの場合)を参照してください
 * スキーマ単位のオブジェクトのため、`table`による絞り込みは適用されません（`schema`のみ適用）
-* `outputObjects`（[こちら](#exporttabledefinitionproperties-の記載内容)）で種別ごとに出力有無を絞り込めます。トリガーを対象外にした場合は各テーブル定義書の「トリガー情報」セクションも出力されなくなります
+* `outputObjects`（[こちら](#exporttabledefinitionproperties-の記載内容)）で種別ごとに出力有無を絞り込めます。トリガーを対象外にした場合は各テーブル定義書の「トリガー情報」セクションは見出しと空の表だけになります
 
 ### PostgreSQLのパーティション表
 

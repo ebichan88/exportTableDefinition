@@ -82,7 +82,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 | | `BaseInfoEntity` | 各ドキュメントに掲載する基本情報（`DatabaseEntity`の情報＋生成日）のrecord |
 | `domain.model.sidecar` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション＋観点）を束ねるrecord |
 | | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブルキーごとの集合とその1件分） |
-| `domain.model.viewpoint` | `Viewpoint`, `Viewpoints` | 観点（業務ドメイン別にテーブルをまとめる切り口）とその集合。`Viewpoint.of()`が識別子の形式・所属テーブルの指定（`TableNamePatterns`）を検証し、`resolve()`で1観点分の出力内容を求める。`Viewpoints.of(TableEntity)`でテーブルから所属する観点を逆引きする |
+| `domain.model.viewpoint` | `Viewpoint`, `Viewpoints` | 観点（業務ドメイン別にテーブルをまとめる切り口）とその集合。`Viewpoint.of()`が識別子の形式・所属テーブルの指定（`TableNamePatterns`）を検証し、`resolve()`で1観点分の出力内容を求める。`Viewpoints.containing(TableEntity)`でテーブルから所属する観点を逆引きする |
 | | `ViewpointContent` | 1観点分の出力内容（所属テーブル・所属テーブル同士の関連・観点外のテーブルとの関連）のrecord |
 | `domain.model.target` | `TableScope` | テーブル定義出力対象の範囲（スキーマ名リスト＋テーブル名パターン）を表す値オブジェクト。実行設定から1回だけ生成し、`matches(TableEntity)`で各テーブルを判定する（パターンの判定は`TableNamePatterns`が行う） |
 | | `OutputObjectType` | 追加オブジェクト（テーブル以外）の出力対象の種別のenum。`parse()`で設定値を解釈する（未指定なら全種別、未知の種別名は例外） |
