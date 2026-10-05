@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mcp-server 読解ガイド</title>
+<meta name="description" content="exportTableDefinition の mcp-server サブプロジェクトを読むための事前知識・全体像・ソースごとの役割と繋がり">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap">
+<style>
+/* Layout: 幅の広い画面では左に目次を固定し、本文は約52remの1カラム。図・表・コードは各自の枠で横スクロールする */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --fg: #17202a;
+  --muted: #586474;
+  --line: #d5dbe3;
+  --accent: #0a6c73;
+  --accent-soft: #e2f1f1;
+  --warn: #b0491a;
+  --warn-soft: #fbeee6;
+  --code-bg: #edf0f4;
+  --font-display: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-body: "IBM Plex Sans JP", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151b; --surface: #171e26; --fg: #e2e7ed; --muted: #9ba7b6; --line: #2a3441;
+    --accent: #5ec4ca; --accent-soft: #15302f; --warn: #f08d58; --warn-soft: #36231a; --code-bg: #1c242e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151b; --surface: #171e26; --fg: #e2e7ed; --muted: #9ba7b6; --line: #2a3441;
+  --accent: #5ec4ca; --accent-soft: #15302f; --warn: #f08d58; --warn-soft: #36231a; --code-bg: #1c242e;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.85;
+  padding-inline: 16px;
+  padding-block: 0 4rem;
+}
+.shell {
+  max-width: 76rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.5rem;
+}
+@media (min-width: 1100px) {
+  .shell { grid-template-columns: 15rem minmax(0, 1fr); }
+}
+
+/* 目次 */
+.toc {
+  font-size: 0.86rem;
+  line-height: 1.6;
+  padding-block: 1.5rem 0;
+}
+.toc-inner { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 1rem 1.1rem; }
+@media (min-width: 1100px) {
+  .toc { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100vh; overflow-y: auto; padding-block: 2.5rem 2rem; }
+  .toc-inner { border: 0; background: transparent; padding: 0; }
+}
+.toc-title { font-size: 0.72rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; margin: 0 0 0.6rem; font-weight: 500; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem 1rem; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); }
+@media (min-width: 1100px) { .toc ol { grid-template-columns: minmax(0, 1fr); } }
+.toc a { color: var(--fg); text-decoration: none; display: grid; grid-template-columns: 1.8rem 1fr; padding: 0.2rem 0.4rem; border-radius: 4px; }
+.toc a:hover { background: var(--accent-soft); }
+.toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.toc .n { color: var(--muted); font-family: var(--font-mono); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+
+main { min-width: 0; max-width: 52rem; padding-block: 2.5rem 0; }
+
+/* 見出し・本文 */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-wrap: balance; line-height: 1.35; }
+h1 { font-size: 2.15rem; margin: 0.2rem 0 0.8rem; letter-spacing: 0.01em; }
+h2 { font-size: 1.5rem; margin: 4rem 0 1rem; padding-top: 1.2rem; border-top: 1px solid var(--line); display: flex; gap: 0.7rem; align-items: baseline; }
+h2 .n { font-family: var(--font-mono); font-size: 1rem; color: var(--accent); font-weight: 600; }
+h3 { font-size: 1.12rem; margin: 2.4rem 0 0.6rem; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+li { margin: 0.2rem 0; }
+a { color: var(--accent); }
+strong { font-weight: 700; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.06em; color: var(--accent); margin: 0; }
+.lead { font-size: 1.05rem; color: var(--fg); max-width: 44rem; }
+.muted { color: var(--muted); }
+.small { font-size: 0.86rem; }
+
+code, kbd { font-family: var(--font-mono); font-size: 0.88em; }
+:not(pre) > code { background: var(--code-bg); padding: 0.08em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  margin: 0 0 1.2rem;
+  tab-size: 2;
+}
+pre code { font-size: inherit; }
+.c { color: var(--muted); }
+.k { color: var(--accent); }
+
+/* 事実の一覧（ヘッダー） */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; margin: 1.6rem 0 0.5rem; padding: 0; list-style: none; }
+.facts li { margin: 0; border-top: 2px solid var(--fg); padding-top: 0.45rem; font-size: 0.86rem; line-height: 1.5; color: var(--muted); }
+.facts b { display: block; color: var(--fg); font-family: var(--font-mono); font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* 図 */
+figure { margin: 1.4rem 0 1.8rem; }
+.fig-scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1rem; color: var(--fg); }
+.fig-scroll svg { display: block; width: 100%; height: auto; }
+figcaption { font-size: 0.84rem; color: var(--muted); margin-top: 0.55rem; line-height: 1.65; }
+figcaption b { color: var(--fg); font-weight: 500; }
+svg text { font-family: var(--font-body); }
+.d-box { fill: var(--surface); stroke: currentColor; stroke-width: 1.2; }
+.d-box-acc { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.d-box-warn { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.3; }
+.d-box-soft { fill: var(--code-bg); stroke: var(--line); stroke-width: 1; }
+.d-box-dash { fill: var(--surface); stroke: var(--muted); stroke-width: 1.1; stroke-dasharray: 4 3; }
+.d-line { stroke: currentColor; stroke-width: 1.3; fill: none; }
+.d-line-acc { stroke: var(--accent); stroke-width: 2.2; fill: none; }
+.d-line-warn { stroke: var(--warn); stroke-width: 1.3; fill: none; }
+.d-line-muted { stroke: var(--muted); stroke-width: 1.1; fill: none; }
+.d-dash { stroke-dasharray: 5 4; }
+.d-life { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; }
+.d-sep { stroke: var(--line); stroke-width: 1; }
+.d-fill { fill: currentColor; }
+.d-fill-acc { fill: var(--accent); }
+.d-fill-warn { fill: var(--warn); }
+.d-fill-muted { fill: var(--muted); }
+.d-t { fill: currentColor; font-size: 12px; }
+.d-t-s { fill: var(--muted); font-size: 11px; }
+.d-t-b { fill: currentColor; font-size: 13px; font-weight: 700; }
+.d-t-m { fill: currentColor; font-size: 12px; font-family: var(--font-mono); }
+.d-t-ms { fill: currentColor; font-size: 11px; font-family: var(--font-mono); }
+.d-t-acc { fill: var(--accent); font-size: 12px; font-weight: 500; }
+.d-t-warn { fill: var(--warn); font-size: 12px; font-weight: 500; }
+.d-badge { fill: var(--surface); stroke: var(--muted); stroke-width: 1; }
+.d-badge-acc { fill: var(--accent); stroke: var(--accent); }
+.d-t-badge { fill: var(--muted); font-size: 10px; font-family: var(--font-mono); }
+.d-t-badge-acc { fill: var(--surface); font-size: 10px; font-family: var(--font-mono); font-weight: 600; }
+
+/* 表 */
+.table-wrap { overflow-x: auto; margin: 0 0 1.4rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; line-height: 1.6; }
+th, td { text-align: left; vertical-align: top; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-weight: 500; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.04em; background: var(--code-bg); white-space: nowrap; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; color: var(--muted); }
+td.file { font-family: var(--font-mono); font-size: 0.82rem; white-space: nowrap; }
+td.file .sub { display: block; font-family: var(--font-body); font-size: 0.74rem; color: var(--muted); white-space: normal; }
+tr.group td { background: var(--code-bg); font-size: 0.76rem; color: var(--muted); letter-spacing: 0.05em; padding-block: 0.3rem; }
+.wide-nowrap td:first-child { white-space: nowrap; }
+
+/* 注記ボックス */
+.note { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 0.9rem 1.1rem; margin: 0 0 1.4rem; }
+.note > :last-child { margin-bottom: 0; }
+.note-title { font-weight: 700; margin: 0 0 0.4rem; font-size: 0.95rem; }
+.note.finding { border-color: var(--warn); background: var(--warn-soft); }
+.note.finding .note-title { color: var(--warn); }
+.note.key { border-color: var(--accent); background: var(--accent-soft); }
+.note.key .note-title { color: var(--accent); }
+
+.tag { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; padding: 0.05rem 0.45rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.tag.sdk { border-color: var(--muted); }
+.tag.own { border-color: var(--accent); color: var(--accent); }
+.tag.err { border-color: var(--warn); color: var(--warn); }
+
+/* 2カラムの比較 */
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin: 0 0 1.4rem; }
+.pair > div { min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 0.9rem 1rem; }
+.pair h4 { margin: 0 0 0.4rem; font-size: 0.92rem; }
+.pair p, .pair ul { font-size: 0.88rem; margin-bottom: 0.4rem; }
+
+/* 読む順 */
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 0.5rem; margin: 0; align-items: baseline; }
+.steps li::before { content: counter(s); font-family: var(--font-mono); font-weight: 600; color: var(--accent); text-align: right; }
+
+/* フィルタ */
+.filter { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin: 0 0 1rem; }
+.filter label { font-size: 0.86rem; color: var(--muted); }
+.filter input {
+  font: inherit; font-size: 0.9rem; padding: 0.4rem 0.7rem; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); color: var(--fg); min-width: 0; width: 18rem; max-width: 100%;
+}
+.filter input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter output { font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty-row td { color: var(--muted); font-style: normal; }
+
+dl.glossary { display: grid; grid-template-columns: minmax(8rem, 13rem) minmax(0, 1fr); gap: 0.4rem 1.2rem; margin: 0 0 1.4rem; }
+dl.glossary dt { font-weight: 700; }
+dl.glossary dt code { font-weight: 400; }
+dl.glossary dd { margin: 0; }
+@media (max-width: 560px) {
+  dl.glossary { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  dl.glossary dd { margin-bottom: 0.7rem; }
+  h1 { font-size: 1.7rem; }
+  h2 { font-size: 1.3rem; }
+}
+footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+<nav class="toc" aria-label="目次">
+  <div class="toc-inner">
+    <p class="toc-title">目次</p>
+    <ol>
+      <li><a href="#mcp"><span class="n">1</span><span>MCPのしくみ</span></a></li>
+      <li><a href="#sdk"><span class="n">2</span><span>MCP Java SDK</span></a></li>
+      <li><a href="#overview"><span class="n">3</span><span>全体像と読む順</span></a></li>
+      <li><a href="#startup"><span class="n">4</span><span>起動の流れ</span></a></li>
+      <li><a href="#request"><span class="n">5</span><span>1回のツール呼び出し</span></a></li>
+      <li><a href="#data"><span class="n">6</span><span>データの持ち方</span></a></li>
+      <li><a href="#logic"><span class="n">7</span><span>catalogの中心ロジック</span></a></li>
+      <li><a href="#tools"><span class="n">8</span><span>ツールとソースの対応</span></a></li>
+      <li><a href="#files"><span class="n">9</span><span>ソースごとの役割</span></a></li>
+      <li><a href="#change"><span class="n">10</span><span>変更するときの道しるべ</span></a></li>
+      <li><a href="#glossary"><span class="n">11</span><span>用語集</span></a></li>
+    </ol>
+  </div>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">exportTableDefinition / mcp-server</p>
+  <h1>mcp-server 読解ガイド</h1>
+  <p class="lead">cliが出力したスキーマのスナップショット（JSON Lines）を起動時にメモリへ読み込み、AIから呼べる15個の読み取り専用ツールとして標準入出力で公開するサーバーです。DBには接続しません。このガイドは、MCPとSDKの事前知識から始めて、ソースごとの役割と繋がりまでを順に説明します。</p>
+  <ul class="facts">
+    <li><b>64 ファイル</b>main配下 4,266行（テスト14ファイル 2,848行）</li>
+    <li><b>15 ツール</b>すべて読み取り専用。結果はJSON文字列</li>
+    <li><b>mcp-core 2.0.1</b>MCP Java SDK。JSONはJackson 2系</li>
+    <li><b>stdio</b>MCPクライアントが子プロセスとして起動</li>
+  </ul>
+  <p class="small muted">mainブランチ（<code>5f664f2</code>。PR #83のリファクタリングまでを含む）を読んで作成。JSONの例は、ビルドしたjarに<code>docs/sample/postgres/output/snapshot</code>を読ませて実際に採取した応答です（長いものは省略）。</p>
+</header>
+
+<!-- ============================================================ -->
+<h2 id="mcp"><span class="n">1</span>事前知識：MCPのしくみ</h2>
+
+<p>MCP（Model Context Protocol）は、AIアプリケーション（Claude Code、Claude Desktop等）が外部の道具やデータに接続するための通信規約です。登場人物は3者います。</p>
+<ul>
+  <li><strong>ホスト</strong>：利用者が操作するAIアプリ。Claude Codeそのもの。</li>
+  <li><strong>クライアント</strong>：ホストの中で、1つのサーバーとの接続を受け持つ部品。サーバー1つにつき1つ。</li>
+  <li><strong>サーバー</strong>：道具を提供する側。このリポジトリの<code>mcp-server</code>はこれにあたります。</li>
+</ul>
+<p>やり取りするメッセージはすべて<strong>JSON-RPC 2.0</strong>です。<code>id</code>を持つ「要求」には必ず同じ<code>id</code>の「応答」（<code>result</code>か<code>error</code>）を返し、<code>id</code>を持たない「通知」には応答しません。</p>
+
+<h3>stdioトランスポート：標準出力はプロトコル専用</h3>
+<p>MCPにはメッセージの運び方（トランスポート）が2種類あり、このサーバーは<strong>stdio</strong>を使います。クライアントがサーバーを子プロセスとして起動し、標準入力に要求を書き込み、標準出力から応答を読みます。1行が1メッセージです。</p>
+
+<figure>
+  <div class="fig-scroll">
+    <svg viewBox="0 0 760 270" role="img" aria-label="MCPクライアントがサーバーを子プロセスとして起動し、stdinで要求を送り、stdoutで応答を受け取る。stderrはログとして扱われる。サーバーは起動時にスナップショットを1回だけ読む。" style="min-width: 640px">
+      <defs>
+        <marker id="f1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
+        <marker id="f1b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-acc"/></marker>
+        <marker id="f1c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-muted"/></marker>
+      </defs>
+      <rect x="20" y="50" width="200" height="120" rx="8" class="d-box"/>
+      <text x="120" y="102" text-anchor="middle" class="d-t-b">MCPクライアント</text>
+      <text x="120" y="124" text-anchor="middle" class="d-t-s">Claude Code など</text>
+
+      <rect x="540" y="30" width="200" height="160" rx="8" class="d-box-acc"/>
+      <text x="640" y="66" text-anchor="middle" class="d-t-b">MCPサーバー（子プロセス）</text>
+      <text x="640" y="94" text-anchor="middle" class="d-t-ms">java -jar</text>
+      <text x="640" y="112" text-anchor="middle" class="d-t-ms">exportTableDefinition-mcp.jar</text>
+      <text x="640" y="130" text-anchor="middle" class="d-t-ms">--snapshot=…/snapshot</text>
+      <text x="640" y="168" text-anchor="middle" class="d-t-s">McpServerMain.main()</text>
+
+      <line x1="222" y1="80" x2="536" y2="80" class="d-line" marker-end="url(#f1a)"/>
+      <text x="380" y="72" text-anchor="middle" class="d-t">stdin：要求・通知（1行に1件）</text>
+      <line x1="538" y1="118" x2="224" y2="118" class="d-line-acc" marker-end="url(#f1b)"/>
+      <text x="380" y="110" text-anchor="middle" class="d-t-acc">stdout：応答だけ（プロトコル専用）</text>
+      <line x1="538" y1="156" x2="224" y2="156" class="d-line-muted d-dash" marker-end="url(#f1c)"/>
+      <text x="380" y="148" text-anchor="middle" class="d-t-s">stderr：[info]・[error]・SDKのWARN（ログ扱い）</text>
+
+      <rect x="560" y="226" width="160" height="32" rx="5" class="d-box-soft"/>
+      <text x="640" y="247" text-anchor="middle" class="d-t-ms">snapshot/ ・ insights/</text>
+      <line x1="640" y1="224" x2="640" y2="194" class="d-line" marker-end="url(#f1a)"/>
+      <text x="530" y="214" text-anchor="end" class="d-t-s">起動時に1回だけ全件読む</text>
+    </svg>
+  </div>
+  <figcaption><b>図1 stdioの3本の流れ。</b>標準出力にプロトコル以外の文字が1つでも混ざると、クライアントはJSONとして読めず接続が壊れます。そのため<code>System.out</code>への出力は禁止で、利用者向けの表示とSDKのログ（slf4j-simple）はすべて標準エラーへ出します。終了はクライアントが標準入力を閉じたときです。</figcaption>
+</figure>
+
+<h3>1回の接続の流れ</h3>
+<p>接続は「初期化 → 発見 → 実行 → 終了」の順に進みます。サーバーが能動的に何かを送ることはなく、すべてクライアントからの要求への応答です。</p>
+
+<figure>
+  <div class="fig-scroll">
+    <svg viewBox="0 0 760 400" role="img" aria-label="initialize要求と応答、initialized通知、tools/listで15個のツール定義、tools/callで結果、最後にstdinを閉じて終了する流れのシーケンス図" style="min-width: 640px">
+      <defs>
+        <marker id="f2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
+        <marker id="f2b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-acc"/></marker>
+      </defs>
+      <rect x="40" y="12" width="160" height="34" rx="6" class="d-box"/>
+      <text x="120" y="34" text-anchor="middle" class="d-t-b">MCPクライアント</text>
+      <rect x="560" y="12" width="160" height="34" rx="6" class="d-box-acc"/>
+      <text x="640" y="34" text-anchor="middle" class="d-t-b">MCPサーバー</text>
+      <line x1="120" y1="46" x2="120" y2="365" class="d-life"/>
+      <line x1="640" y1="46" x2="640" y2="365" class="d-life"/>
+
+      <line x1="20" y1="164" x2="740" y2="164" class="d-sep"/>
+      <line x1="20" y1="242" x2="740" y2="242" class="d-sep"/>
+      <line x1="20" y1="322" x2="740" y2="322" class="d-sep"/>
+      <text x="652" y="108" class="d-t-s">初期化</text>
+      <text x="652" y="206" class="d-t-s">発見</text>
+      <text x="652" y="288" class="d-t-s">実行（繰り返し）</text>
+      <text x="652" y="352" class="d-t-s">終了</text>
+
+      <line x1="122" y1="80" x2="636" y2="80" class="d-line" marker-end="url(#f2a)"/>
+      <text x="380" y="72" text-anchor="middle" class="d-t">initialize（protocolVersion・clientInfo）</text>
+      <line x1="638" y1="112" x2="124" y2="112" class="d-line-acc d-dash" marker-end="url(#f2b)"/>
+      <text x="380" y="104" text-anchor="middle" class="d-t-acc">result：serverInfo・capabilities・instructions</text>
+      <line x1="122" y1="146" x2="636" y2="146" class="d-line-muted d-dash" marker-end="url(#f2a)"/>
+      <text x="380" y="138" text-anchor="middle" class="d-t-s">notifications/initialized（idが無い通知。応答しない）</text>
+
+      <line x1="122" y1="192" x2="636" y2="192" class="d-line" marker-end="url(#f2a)"/>
+      <text x="380" y="184" text-anchor="middle" class="d-t">tools/list</text>
+      <line x1="638" y1="224" x2="124" y2="224" class="d-line-acc d-dash" marker-end="url(#f2b)"/>
+      <text x="380" y="216" text-anchor="middle" class="d-t-acc">15個のツール定義（name・title・inputSchema・annotations）</text>
+
+      <line x1="122" y1="270" x2="636" y2="270" class="d-line" marker-end="url(#f2a)"/>
+      <text x="380" y="262" text-anchor="middle" class="d-t">tools/call {name, arguments}</text>
+      <line x1="638" y1="302" x2="124" y2="302" class="d-line-acc d-dash" marker-end="url(#f2b)"/>
+      <text x="380" y="294" text-anchor="middle" class="d-t-acc">CallToolResult {content: [text], isError}</text>
+
+      <line x1="122" y1="348" x2="636" y2="348" class="d-line-muted" marker-end="url(#f2a)"/>
+      <text x="380" y="340" text-anchor="middle" class="d-t-s">stdinを閉じる（EOF）→ サーバーのプロセスが終わる</text>
+    </svg>
+  </div>
+  <figcaption><b>図2 接続のライフサイクル。</b>実線が要求、破線が応答・通知です。<code>instructions</code>は「どのツールから呼ぶか」をAIへ伝える文章で、<code>McpServerMain.INSTRUCTIONS</code>に書かれています。</figcaption>
+</figure>
+
+<p>実際の初期化のやり取りです（<code>instructions</code>は途中で省略）。</p>
+<pre><code><span class="c">→ stdin</span>
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1.0"}}}
+<span class="c">← stdout</span>
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18",
+  "capabilities":{"logging":{},"tools":{"listChanged":false}},
+  "serverInfo":{"name":"exportTableDefinition","version":"1.0-SNAPSHOT"},
+  "instructions":"DBのテーブル定義（exportTableDefinitionが出力したスキーマのスナップショット）を調べるサーバー。全体像はlist_schemas、…"}}</code></pre>
+<p class="small muted"><code>tools.listChanged:false</code>は「起動後にツールの一覧は変わらない」という宣言です。<code>logging</code>はSDKが自動で付け加える能力で、このサーバーは使っていません。<code>version</code>はjarのマニフェストの<code>Implementation-Version</code>で、jar以外から起動すると<code>dev</code>になります。</p>
+
+<h3>ツール：定義・結果・2種類のエラー</h3>
+<p>MCPのサーバーが提供できるものは3種類（ツール・リソース・プロンプト）ありますが、このサーバーは<strong>ツールだけ</strong>を提供します。ツールは「AIが自分の判断で呼ぶ関数」です。</p>
+<div class="pair">
+  <div>
+    <h4>ツールの定義（tools/listで返る）</h4>
+    <ul>
+      <li><code>name</code>・<code>title</code>：呼び出し名と表示名</li>
+      <li><code>description</code>：AIが使い分けを判断するための説明文</li>
+      <li><code>inputSchema</code>：引数のJSON Schema</li>
+      <li><code>annotations</code>：<code>readOnlyHint</code>等。クライアントが許可の確認画面などで使うヒントで、保証ではありません</li>
+    </ul>
+  </div>
+  <div>
+    <h4>ツールの結果（tools/callで返る）</h4>
+    <ul>
+      <li><code>content</code>：結果の配列。このサーバーは常にテキスト1件で、中身はJSONの文字列です</li>
+      <li><code>isError</code>：ツールとして失敗したか</li>
+    </ul>
+    <p>JSONの中にJSONの文字列が入る二重構造になるのは、このためです。</p>
+  </div>
+</div>
+
+<div class="note key">
+  <p class="note-title">エラーには2つの経路がある</p>
+  <p><strong>ツールのエラー</strong>（<code>result</code>の中で<code>isError: true</code>）は、AI自身が読みます。「テーブルemployeが見つかりません。名前の似たテーブル: …」のように直し方を書いておけば、AIは引数を直して呼び直せます。このサーバーは、引数の誤りをすべてこちらで返します。</p>
+  <p><strong>プロトコルのエラー</strong>（JSON-RPCの<code>error</code>）は、存在しないツール名や不具合のときに返ります。AIに届くとは限りません。</p>
+</div>
+
+<pre><code><span class="c">→ 見つからない名前（ツールのエラー。ObjectResolverが文言を作る）</span>
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_table","arguments":{"table":"employe"}}}
+<span class="c">←</span>
+{"jsonrpc":"2.0","id":4,"result":{"isError":true,"content":[{"type":"text",
+  "text":"テーブルemployeが見つかりません。名前の似たテーブル: testdb:sample.employee, testdb:sample.employee_directory_view, …"}]}}
+
+<span class="c">→ 存在しないツール（プロトコルのエラー。SDKが返す）</span>
+{"jsonrpc":"2.0","id":22,"method":"tools/call","params":{"name":"no_such_tool","arguments":{}}}
+<span class="c">←</span>
+{"jsonrpc":"2.0","id":22,"error":{"code":-32602,"message":"Unknown tool: invalid_tool_name","data":"Tool not found: no_such_tool"}}</code></pre>
+
+<h3>MCPの概念と、このリポジトリでの実体</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>MCPの概念</th><th>このリポジトリでの実体</th></tr></thead>
+  <tbody>
+    <tr><td>トランスポート（stdio）</td><td>SDKの<code>StdioServerTransportProvider</code>。<code>McpServerMain.start</code>で生成</td></tr>
+    <tr><td><code>serverInfo</code>・<code>instructions</code></td><td><code>McpServerMain</code>の定数<code>SERVER_NAME</code>・<code>INSTRUCTIONS</code>と<code>version()</code></td></tr>
+    <tr><td><code>capabilities.tools</code></td><td><code>ServerCapabilities.builder().tools(false)</code>（<code>false</code>は<code>listChanged</code>）</td></tr>
+    <tr><td>ツールの定義</td><td><code>ToolSpecifications.readOnlyTool(name, title, description, inputSchema, handler)</code>。全ツールがこれを通る</td></tr>
+    <tr><td><code>inputSchema</code></td><td><code>ToolSpecifications.objectSchema</code>と<code>stringProperty</code>等の部品で、<code>Map&lt;String,Object&gt;</code>として組み立てる</td></tr>
+    <tr><td><code>annotations</code></td><td>全ツール共通で<code>readOnlyHint=true</code>・<code>destructiveHint=false</code>・<code>idempotentHint=true</code>・<code>openWorldHint=false</code></td></tr>
+    <tr><td>tools/callの処理</td><td>各<code>*Tools</code>クラスのprivateメソッド<code>CallToolResult xxx(ToolArguments)</code></td></tr>
+    <tr><td>結果の<code>content</code></td><td><code>ToolResults.json(出力record)</code>、またはスナップショットの1行そのもの</td></tr>
+    <tr><td><code>isError: true</code></td><td><code>InvalidToolArgumentException</code>を<code>readOnlyTool</code>が捕まえて変換</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sdk"><span class="n">2</span>事前知識：MCP Java SDK（mcp-core 2.0.1）</h2>
+
+<h3>使っているモジュールと、選んだ理由</h3>
+<div class="table-wrap">
+<table class="wide-nowrap">
+  <thead><tr><th>依存</th><th>役割</th><th>補足</th></tr></thead>
+  <tbody>
+    <tr><td><code>mcp-core</code></td><td>プロトコルの型（<code>McpSchema</code>）、サーバー・クライアント、トランスポート</td><td>内部はProject Reactor（<code>Mono</code>・<code>Flux</code>）で書かれた非同期実装</td></tr>
+    <tr><td><code>mcp-json-jackson2</code></td><td>Jackson 2によるJSONの変換（<code>JacksonMcpJsonMapper</code>）と、JSON Schemaの検証器</td><td>SDKの一括版<code>mcp</code>はJackson 3を同梱するため、cliと同じJackson 2系に揃えるこの組み合わせを選んでいる（<code>mcp-server/build.gradle</code>のコメント）</td></tr>
+    <tr><td><code>jackson-databind</code></td><td>スナップショットの読み込み、ツールの結果のJSON化</td><td>SDKとは別に、自前のコードが直接使う</td></tr>
+    <tr><td><code>slf4j-simple</code>（runtimeOnly）</td><td>SDKのログの出力先</td><td><code>simplelogger.properties</code>でWARN以上を標準エラーへ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>サーバーの組み立て方</h3>
+<p>SDKのサーバーはBuilderで組み立てます。このリポジトリでSDKのサーバーAPIに触るのは、<code>McpServerMain.start</code>のこの10行だけです。</p>
+<pre><code><span class="k">final</span> McpJsonMapper jsonMapper = <span class="k">new</span> JacksonMcpJsonMapper(<span class="k">new</span> ObjectMapper());
+McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMapper))   <span class="c">// 同期版のBuilder。stdioで1セッション</span>
+    .serverInfo(SERVER_NAME, version())
+    .instructions(INSTRUCTIONS)
+    .capabilities(ServerCapabilities.builder().tools(<span class="k">false</span>).build())
+    .jsonMapper(jsonMapper)
+    .tools(<span class="k">new</span> TableDefinitionTools(catalog).specifications())  <span class="c">// List&lt;SyncToolSpecification&gt;</span>
+    .immediateExecution(<span class="k">true</span>)                                   <span class="c">// 2.4節</span>
+    .build();                                                   <span class="c">// ここで標準入力の読み取りが始まる</span></code></pre>
+<p>ツール1つは<code>SyncToolSpecification</code>で表します。中身は「ツールの定義（<code>Tool</code>）」と「呼ばれたときの処理（<code>callHandler</code>）」の組です。<code>callHandler</code>の型は<code>(McpSyncServerExchange, CallToolRequest) → CallToolResult</code>で、<code>exchange</code>はクライアントへ逆に問い合わせるための窓口ですが、このサーバーは使いません。</p>
+
+<h3>SDKの中で起きること</h3>
+<ul>
+  <li><strong>同期APIは非同期実装の包み</strong>です。<code>McpServer.sync(...)</code>で作る<code>McpSyncServer</code>は内部で<code>McpAsyncServer</code>を持ち、同期のハンドラを<code>Mono.fromCallable(...)</code>で包んで登録します。</li>
+  <li><strong>stdioは専用スレッド2本</strong>で動きます。<code>StdioServerTransportProvider</code>は<code>build()</code>の時点でセッションを1つ作り、標準入力を1行ずつ読む<code>stdio-inbound</code>スレッドと、標準出力へ書く<code>stdio-outbound</code>スレッド（それぞれ単一スレッドのExecutor）を起動します。</li>
+  <li><strong><code>main()</code>はすぐ戻ります</strong>。<code>build()</code>の後に<code>main()</code>は終わりますが、上の2本はデーモンでないスレッドなのでJVMは動き続けます。標準入力がEOFになると読み取りが終わり、スレッドが片付いてプロセスが終了します。</li>
+  <li><strong>要求の振り分け</strong>はSDKの<code>McpServerSession</code>が<code>method</code>名で行います。<code>tools/call</code>なら、名前でツールを探し、2.5節の入力検証をしてから、登録した<code>callHandler</code>を呼びます。</li>
+</ul>
+
+<h3>immediateExecution(true) の理由</h3>
+<div class="pair">
+  <div>
+    <h4>既定（false）のとき</h4>
+    <p>ハンドラを<code>boundedElastic</code>の複数スレッドで並行に実行します。並行に終わった複数の応答が、別々のスレッドから同時に出力用のシンク（Reactorのunicastシンク）へ書き込まれます。unicastシンクは同時書き込みを受け付けず<code>tryEmitNext</code>が失敗し、その応答は送られません。クライアントは応答を待ち続けて止まります（<a href="https://github.com/modelcontextprotocol/java-sdk/issues/686">java-sdk#686</a>）。</p>
+  </div>
+  <div>
+    <h4>true にしたとき（このサーバー）</h4>
+    <p>ハンドラを<code>stdio-inbound</code>スレッドでそのまま1つずつ実行します。書き込みが重ならないため止まりません。ツールはメモリ上の検索だけで速いので、直列でも実用上の影響は小さい、という判断です。回帰は<code>McpServerProcessTest#respondsToPipelinedToolCalls</code>が、応答を待たずに8回続けて呼んで確かめています。</p>
+  </div>
+</div>
+<p class="small muted">修正はSDKのmainに入っていて未リリース（<code>docs/architecture/mcp-server.md</code>の記述）。修正版が出たら<code>immediateExecution</code>を残すかを判断する、とされています。</p>
+
+<h3>SDKが先に行う入力検証</h3>
+<p>SDKは<code>callHandler</code>を呼ぶ前に、<code>arguments</code>を<code>inputSchema</code>（JSON Schema）で検証します（<code>ToolInputValidator</code>。<code>validateToolInputs</code>の既定は<code>true</code>）。型・<code>enum</code>・<code>minimum</code>/<code>maximum</code>・<code>required</code>・<code>additionalProperties:false</code>に反すると、ハンドラは呼ばれず、SDKが英語の文言で<code>isError: true</code>を返します。</p>
+<pre><code><span class="c">→ get_related_tables の depth は inputSchema で maximum 3</span>
+{"name":"get_related_tables","arguments":{"table":"employee","depth":4}}
+<span class="c">← SDKが返す（ToolArgumentsの「1〜3の整数を指定してください」には届かない）</span>
+{"isError":true,"content":[{"type":"text","text":"Tool (get_related_tables) input validation failed: Validation failed: JSON schema validation errors: [/depth: must have a maximum value of 3]"}]}</code></pre>
+<p>引数の検証は<strong>役割分担</strong>です。型・範囲・<code>enum</code>・未知の引数はSDKが入力スキーマで検証し、これを正とします。自前の<code>ToolArguments</code>は、スキーマで表せない検証（空白を除いた後の空、件数の上限、大文字小文字を区別しない選択肢の照合など）だけを行います。</p>
+
+<h3>ServiceLoader と shadowJar</h3>
+<p>SDKは既定のJSON実装（<code>McpJsonMapper</code>と<code>JsonSchemaValidator</code>）を<code>java.util.ServiceLoader</code>で探します。マッパーは<code>McpServerMain</code>が明示的に渡していますが、入力検証器は渡していないため、<code>mcp-json-jackson2</code>のjarの<code>META-INF/services/…JsonSchemaValidatorSupplier</code>から見つけています。見つからなければ起動時に<code>ServiceConfigurationError</code>で失敗します。</p>
+<p>配布用の1つのjar（shadowJar）に依存を詰めると、同名の<code>META-INF/services</code>ファイルが上書きされて登録が消えることがあります。<code>build.gradle</code>の<code>mergeServiceFiles()</code>はそれを防ぐ設定で、<code>McpServerProcessTest</code>が実物のjarを子プロセスで起動して確かめています。</p>
+
+<!-- ============================================================ -->
+<h2 id="overview"><span class="n">3</span>全体像と読む順</h2>
+
+<p>パッケージは5つです。依存の向きは<code>tool → catalog ← snapshot</code>・<code>catalog ← insight</code>で、検索と関連のたどりを持つ<code>catalog</code>はSDKにもJSONライブラリにも依存しません。cliの<code>presentation → application → domain ← infrastructure</code>と同じ考え方で、中心のロジックを単体テストしやすくするためです。</p>
+
+<figure>
+  <div class="fig-scroll">
+    <svg viewBox="0 0 980 290" role="img" aria-label="McpServerMainが各部品を生成して配線する。snapshotとinsightの読み込み部品がファイルを読みcatalogを組み立てる。toolはcatalogに問い合わせ、SDKへツールを登録する。catalogは誰にも依存しない。" style="min-width: 780px">
+      <defs>
+        <marker id="f3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
+        <marker id="f3m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-muted"/></marker>
+      </defs>
+      <rect x="380" y="10" width="220" height="48" rx="6" class="d-box"/>
+      <text x="490" y="32" text-anchor="middle" class="d-t-m" font-weight="600">McpServerMain</text>
+      <text x="490" y="50" text-anchor="middle" class="d-t-s">main()：検証・読み込み・起動</text>
+      <polyline points="490,58 490,80" class="d-line-muted"/>
+      <line x1="285" y1="80" x2="920" y2="80" class="d-line-muted"/>
+      <line x1="285" y1="80" x2="285" y2="97" class="d-line-muted" marker-end="url(#f3m)"/>
+      <line x1="510" y1="80" x2="510" y2="97" class="d-line-muted" marker-end="url(#f3m)"/>
+      <line x1="740" y1="80" x2="740" y2="97" class="d-line-muted" marker-end="url(#f3m)"/>
+      <line x1="920" y1="80" x2="920" y2="97" class="d-line-muted" marker-end="url(#f3m)"/>
+      <text x="397" y="74" text-anchor="middle" class="d-t-s">生成して配線</text>
+
+      <rect x="10" y="100" width="140" height="84" rx="5" class="d-box-soft"/>
+      <text x="80" y="122" text-anchor="middle" class="d-t-ms">snapshot/{DB}/</text>
+      <text x="80" y="140" text-anchor="middle" class="d-t-ms">database.json</text>
+      <text x="80" y="158" text-anchor="middle" class="d-t-ms">{schema}/*.jsonl</text>
+      <text x="80" y="176" text-anchor="middle" class="d-t-s">cliが出力</text>
+      <rect x="10" y="200" width="140" height="60" rx="5" class="d-box-soft"/>
+      <text x="80" y="224" text-anchor="middle" class="d-t-ms">insights/{DB}/</text>
+      <text x="80" y="242" text-anchor="middle" class="d-t-ms">viewpoints.json</text>
+
+      <rect x="200" y="100" width="170" height="84" rx="6" class="d-box"/>
+      <text x="285" y="122" text-anchor="middle" class="d-t-s">mcp.snapshot</text>
+      <text x="285" y="144" text-anchor="middle" class="d-t-m">SnapshotDirectory</text>
+      <text x="285" y="162" text-anchor="middle" class="d-t-m">Reader</text>
+      <rect x="200" y="200" width="170" height="60" rx="6" class="d-box"/>
+      <text x="285" y="219" text-anchor="middle" class="d-t-s">mcp.insight</text>
+      <text x="285" y="237" text-anchor="middle" class="d-t-m">InsightsDirectory</text>
+      <text x="285" y="253" text-anchor="middle" class="d-t-m">Reader</text>
+
+      <rect x="420" y="100" width="180" height="160" rx="6" class="d-box-acc"/>
+      <text x="510" y="122" text-anchor="middle" class="d-t-s">mcp.catalog</text>
+      <text x="510" y="146" text-anchor="middle" class="d-t-m" font-weight="600">SchemaCatalog</text>
+      <text x="510" y="166" text-anchor="middle" class="d-t-m">RelationGraph</text>
+      <text x="510" y="186" text-anchor="middle" class="d-t-m">SearchQuery・Lookup</text>
+      <text x="510" y="206" text-anchor="middle" class="d-t">各種Entry（record）</text>
+      <text x="510" y="244" text-anchor="middle" class="d-t-acc">SDK・JSONに依存しない</text>
+
+      <rect x="660" y="100" width="160" height="160" rx="6" class="d-box"/>
+      <text x="740" y="122" text-anchor="middle" class="d-t-s">mcp.tool</text>
+      <text x="740" y="146" text-anchor="middle" class="d-t-ms" font-weight="600">TableDefinitionTools</text>
+      <text x="740" y="166" text-anchor="middle" class="d-t">8つの *Tools</text>
+      <text x="740" y="186" text-anchor="middle" class="d-t-m">ToolArguments</text>
+      <text x="740" y="206" text-anchor="middle" class="d-t">ObjectResolver ほか</text>
+
+      <rect x="870" y="100" width="100" height="160" rx="6" class="d-box-dash"/>
+      <text x="920" y="146" text-anchor="middle" class="d-t-b">MCP SDK</text>
+      <text x="920" y="168" text-anchor="middle" class="d-t-ms">mcp-core</text>
+      <text x="920" y="186" text-anchor="middle" class="d-t-ms">2.0.1</text>
+      <text x="920" y="214" text-anchor="middle" class="d-t-s">stdio</text>
+
+      <line x1="152" y1="142" x2="197" y2="142" class="d-line" marker-end="url(#f3a)"/>
+      <text x="174" y="134" text-anchor="middle" class="d-t-s">読む</text>
+      <line x1="152" y1="230" x2="197" y2="230" class="d-line" marker-end="url(#f3a)"/>
+      <text x="174" y="222" text-anchor="middle" class="d-t-s">読む</text>
+      <line x1="372" y1="142" x2="417" y2="142" class="d-line" marker-end="url(#f3a)"/>
+      <text x="394" y="134" text-anchor="middle" class="d-t-s">of(…)</text>
+      <line x1="372" y1="230" x2="417" y2="230" class="d-line" marker-end="url(#f3a)"/>
+      <text x="394" y="222" text-anchor="middle" class="d-t-s">観点</text>
+      <line x1="658" y1="180" x2="603" y2="180" class="d-line" marker-end="url(#f3a)"/>
+      <text x="631" y="172" text-anchor="middle" class="d-t-s">照会</text>
+      <line x1="822" y1="180" x2="867" y2="180" class="d-line" marker-end="url(#f3a)"/>
+      <text x="844" y="172" text-anchor="middle" class="d-t-s">登録</text>
+    </svg>
+  </div>
+  <figcaption><b>図3 パッケージと依存の向き。</b>矢印は「相手を知っている（importしている）」向きです。<code>catalog</code>には外へ向かう矢印がありません。<code>McpServerMain</code>は2つの読み込み部品・<code>withViewpoints</code>・<code>TableDefinitionTools</code>・SDKを順に呼んで配線します。<code>snapshot</code>と<code>insight</code>は互いを知りません。</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>パッケージ</th><th>ファイル数</th><th>行数</th><th>ひとことで</th></tr></thead>
+  <tbody>
+    <tr><td><code>mcp</code>（直下）</td><td class="num">4</td><td class="num">172</td><td>入口。起動引数の検証、読み込みの呼び出し、SDKの起動</td></tr>
+    <tr><td><code>mcp.snapshot</code></td><td class="num">2</td><td class="num">314</td><td><code>snapshot/</code>のJSON Linesを読み、<code>SchemaCatalog</code>を組み立てる</td></tr>
+    <tr><td><code>mcp.insight</code></td><td class="num">2</td><td class="num">143</td><td><code>insights/</code>の観点（viewpoints.json）を読む</td></tr>
+    <tr><td><code>mcp.catalog</code></td><td class="num">38</td><td class="num">1,587</td><td>メモリ上の全オブジェクトと、検索・名前の解決・関連のたどり・相互参照</td></tr>
+    <tr><td><code>mcp.tool</code></td><td class="num">18</td><td class="num">2,050</td><td>MCPのツール定義。引数を読み、catalogに聞き、結果をJSONにする</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>おすすめの読む順</h3>
+<p>上から順に読むと、外側（起動とMCP）から内側（ルール）へ進めます。</p>
+<ol class="steps">
+  <li><div><code>McpServerMain</code>（100行）：何をどの順で組み立てるか。<code>INSTRUCTIONS</code>でツールの全体像もつかめます。</div></li>
+  <li><div><code>TableDefinitionTools</code>（41行）：ツールクラス8つの並び＝クライアントに見える順。</div></li>
+  <li><div><code>ToolSpecifications.readOnlyTool</code>：全ツール共通の包み。引数の誤りが<code>isError</code>になる場所です。</div></li>
+  <li><div><code>SchemaTools</code>（89行）：一番小さいツールクラスで「型」をつかみ、続けて<code>TableTools</code>（404行）。<code>get_table</code>の結果の加工は<code>TableOutputBuilder</code>（121行）に分かれています。</div></li>
+  <li><div><code>ToolArguments</code>・<code>ObjectResolver</code>・<code>Page</code>：ツールクラスが共通で使う部品。</div></li>
+  <li><div><code>SchemaCatalog</code>（483行）：公開メソッドの一覧が、ツールから見たcatalogの全機能です。</div></li>
+  <li><div><code>TableFilter</code>・<code>SearchQuery</code>・<code>RelationGraph</code>：テーブルの絞り込み、点数づけ、幅優先探索。7章の図と合わせて読むと速いです。</div></li>
+  <li><div><code>SnapshotDirectoryReader</code>（312行）：ファイルからEntryができるまで。6章参照。</div></li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="startup"><span class="n">4</span>起動の流れ</h2>
+<p><code>McpServerMain.main</code>は次の順に進みます。利用者が直せる誤りはすべて<code>UserCorrectableException</code>で表し、<code>main</code>の1箇所で捕まえて終了コード2で終わります（cliと同じ方針。ただしcliのクラスとは別物で、<code>mcp</code>パッケージに自前で持っています）。</p>
+<ol class="steps">
+  <li><div><strong>標準エラーをUTF-8に固定</strong>：<code>System.setErr(new PrintStream(…, UTF_8))</code>。実行環境のロケールで日本語が化けないようにするためです。</div></li>
+  <li><div><strong>起動引数の解釈</strong>：<code>ServerArguments.parse</code>。受け付けるのは<code>--snapshot=&lt;ディレクトリ&gt;</code>1つだけで、未知の引数・重複・空・未指定はすべて誤りです。</div></li>
+  <li><div><strong>観点の読み込み</strong>：<code>InsightsDirectoryReader.readViewpoints</code>。<code>--snapshot</code>の<em>親の兄弟</em>の<code>insights/</code>を自分で求めて読みます。ディレクトリ・ファイルが無ければ0件で、誤りにはしません。</div></li>
+  <li><div><strong>スナップショットの読み込み</strong>：<code>SnapshotDirectoryReader.read</code>が<code>SchemaCatalog</code>を返します。ディレクトリが無い、<code>database.json</code>が1つも無い、新しすぎる<code>formatVersion</code>、JSONとして読めない行、<code>schema</code>・<code>name</code>の無い行は誤りです（メッセージにファイル名と行番号が入ります）。</div></li>
+  <li><div><strong>観点の合成</strong>：<code>catalog.withViewpoints(viewpoints)</code>。<code>SchemaCatalog</code>は不変なので、観点を加えた新しいインスタンスを作ります。</div></li>
+  <li><div><strong>読み込み件数の表示</strong>：標準エラーへ<code>[info]:13テーブルを読み込みました。 [snapshot=…]</code>。</div></li>
+  <li><div><strong>SDKの起動</strong>：<code>start(catalog)</code>。2章のBuilderで組み立て、<code>build()</code>した時点で標準入力の待ち受けが始まり、<code>main</code>は戻ります。</div></li>
+</ol>
+<p class="small muted">I/Oの失敗（<code>UncheckedIOException</code>）は利用者が直せる誤りではないため捕まえません。スタックトレースが標準エラーに出て、終了コードは1になります。</p>
+
+<!-- ============================================================ -->
+<h2 id="request"><span class="n">5</span>1回のツール呼び出しの流れ</h2>
+<p><code>get_table</code>を例に、標準入力の1行が標準出力の1行になるまでをたどります。灰色の枠がSDK、色の付いた枠がこのリポジトリのコードです。右側は途中で抜ける経路です。</p>
+
+<figure>
+  <div class="fig-scroll">
+    <svg viewBox="0 0 780 580" role="img" aria-label="tools/callの1行がSDKの読み取り、ツールの振り分け、入力スキーマの検証を経て、自前のreadOnlyTool、TableTools.getTable、SchemaCatalogへ進み、CallToolResultとして標準出力へ書かれる。途中で未知のツール、スキーマ違反、引数の誤り、想定外の例外の4つの抜け道がある。" style="min-width: 680px">
+      <defs>
+        <marker id="f4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
+        <marker id="f4w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-warn"/></marker>
+        <marker id="f4m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-muted"/></marker>
+      </defs>
+      <!-- 左列：処理 -->
+      <rect x="40" y="20" width="400" height="56" rx="6" class="d-box-soft"/>
+      <text x="56" y="43" class="d-t-ms">SDK ｜ StdioServerTransportProvider（stdio-inbound）</text>
+      <text x="56" y="63" class="d-t">標準入力を1行読み、JSON-RPCのメッセージにする</text>
+
+      <rect x="40" y="100" width="400" height="56" rx="6" class="d-box-soft"/>
+      <text x="56" y="123" class="d-t-ms">SDK ｜ McpServerSession → tools/call</text>
+      <text x="56" y="143" class="d-t">method名で振り分け、nameで登録済みのツールを探す</text>
+
+      <rect x="40" y="180" width="400" height="56" rx="6" class="d-box-soft"/>
+      <text x="56" y="203" class="d-t-ms">SDK ｜ ToolInputValidator</text>
+      <text x="56" y="223" class="d-t">argumentsをinputSchema（JSON Schema）で検証</text>
+
+      <rect x="40" y="260" width="400" height="56" rx="6" class="d-box-acc"/>
+      <text x="56" y="283" class="d-t-ms">ToolSpecifications.readOnlyTool のラムダ</text>
+      <text x="56" y="303" class="d-t">new ToolArguments(…)で包み、ハンドラを呼ぶ</text>
+
+      <rect x="40" y="340" width="400" height="56" rx="6" class="d-box-acc"/>
+      <text x="56" y="363" class="d-t-ms">TableTools.getTable → ObjectResolver.resolve</text>
+      <text x="56" y="383" class="d-t">スキーマで表せない検証をし、名前を1つに解決する</text>
+
+      <rect x="40" y="420" width="400" height="56" rx="6" class="d-box-acc"/>
+      <text x="56" y="443" class="d-t-ms">SchemaCatalog.lookupTable → TableOutputBuilder</text>
+      <text x="56" y="463" class="d-t">元の1行をObjectNodeにし、sections・columns・観点を反映</text>
+
+      <rect x="40" y="500" width="400" height="56" rx="6" class="d-box-soft"/>
+      <text x="56" y="523" class="d-t-ms">SDK ｜ CallToolResult → stdio-outbound</text>
+      <text x="56" y="543" class="d-t">id付きの応答を1行にして標準出力へ書く</text>
+
+      <line x1="240" y1="76" x2="240" y2="97" class="d-line" marker-end="url(#f4a)"/>
+      <line x1="240" y1="156" x2="240" y2="177" class="d-line" marker-end="url(#f4a)"/>
+      <line x1="240" y1="236" x2="240" y2="257" class="d-line" marker-end="url(#f4a)"/>
+      <line x1="240" y1="316" x2="240" y2="337" class="d-line" marker-end="url(#f4a)"/>
+      <line x1="240" y1="396" x2="240" y2="417" class="d-line" marker-end="url(#f4a)"/>
+      <line x1="240" y1="476" x2="240" y2="497" class="d-line" marker-end="url(#f4a)"/>
+
+      <!-- 右列：抜け道 -->
+      <rect x="510" y="100" width="250" height="56" rx="6" class="d-box-dash"/>
+      <text x="524" y="123" class="d-t">JSON-RPCのerror -32602</text>
+      <text x="524" y="143" class="d-t-s">未知のツール名（Unknown tool）</text>
+      <line x1="442" y1="128" x2="507" y2="128" class="d-line-muted" marker-end="url(#f4m)"/>
+
+      <rect x="510" y="180" width="250" height="56" rx="6" class="d-box-warn"/>
+      <text x="524" y="203" class="d-t-warn">isError: true（英語の文言）</text>
+      <text x="524" y="223" class="d-t-s">型・範囲・enum・未知の引数の違反</text>
+      <line x1="442" y1="208" x2="507" y2="208" class="d-line-warn" marker-end="url(#f4w)"/>
+
+      <rect x="510" y="300" width="250" height="56" rx="6" class="d-box-warn"/>
+      <text x="524" y="323" class="d-t-warn">isError: true（日本語の文言）</text>
+      <text x="524" y="343" class="d-t-s">InvalidToolArgumentException</text>
+      <line x1="442" y1="360" x2="507" y2="335" class="d-line-warn" marker-end="url(#f4w)"/>
+      <line x1="442" y1="432" x2="507" y2="349" class="d-line-warn" marker-end="url(#f4w)"/>
+
+      <rect x="510" y="420" width="250" height="56" rx="6" class="d-box-dash"/>
+      <text x="524" y="443" class="d-t">JSON-RPCのerror -32603</text>
+      <text x="524" y="463" class="d-t-s">想定外の例外（不具合・I/O）</text>
+      <line x1="442" y1="448" x2="507" y2="448" class="d-line-muted" marker-end="url(#f4m)"/>
+    </svg>
+  </div>
+  <figcaption><b>図4 tools/call の通り道と4つの抜け道。</b><code>immediateExecution(true)</code>のため、最後の書き込み以外はすべて<code>stdio-inbound</code>スレッドで直列に動きます。橙の2つはAIが読んで直せる「ツールのエラー」、灰色の破線の2つはプロトコルのエラーです。想定外の例外は自前のどの段からでも起こり得ます。</figcaption>
+</figure>
+
+<p>全ツールを包む<code>readOnlyTool</code>の核心はこの部分です。<code>InvalidToolArgumentException</code>だけを捕まえて<code>isError</code>に変え、それ以外の例外はSDKへそのまま投げます。</p>
+<pre><code>.callHandler((exchange, request) -&gt; {
+  <span class="k">try</span> {
+    <span class="k">return</span> handler.apply(<span class="k">new</span> ToolArguments(request.arguments()));
+  } <span class="k">catch</span> (InvalidToolArgumentException e) {
+    <span class="k">return</span> CallToolResult.builder().addTextContent(e.getMessage()).isError(<span class="k">true</span>).build();
+  }
+})</code></pre>
+
+<h3>どこで止まり、何が返るか</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>入力の例</th><th>止める場所</th><th>返り方と文言</th></tr></thead>
+  <tbody>
+    <tr><td><code>name: "no_such_tool"</code></td><td><span class="tag sdk">SDK</span> 振り分け</td><td>error -32602 <code>Unknown tool: invalid_tool_name</code></td></tr>
+    <tr><td><code>sections: "foreignKeys,triggers"</code>（型はarray）</td><td><span class="tag sdk">SDK</span> 型</td><td>isError <code>… /sections: string found, array expected</code></td></tr>
+    <tr><td><code>get_table</code>に<code>foo: 1</code></td><td><span class="tag sdk">SDK</span> <code>additionalProperties:false</code></td><td>isError <code>… property 'foo' is not defined in the schema …</code></td></tr>
+    <tr><td><code>get_related_tables</code>に<code>depth: 4</code></td><td><span class="tag sdk">SDK</span> <code>maximum: 3</code></td><td>isError <code>… /depth: must have a maximum value of 3</code></td></tr>
+    <tr><td><code>table: "employe"</code></td><td><span class="tag own">自前</span> <code>ObjectResolver</code></td><td>isError <code>テーブルemployeが見つかりません。名前の似たテーブル: …</code></td></tr>
+    <tr><td>同名テーブルが複数スキーマにある</td><td><span class="tag own">自前</span> <code>ObjectResolver</code></td><td>isError <code>テーブルxが複数あります。schema（DBが異なる場合はdatabase）を指定してください。候補: …</code></td></tr>
+    <tr><td><code>table</code>を2件＋<code>columns</code></td><td><span class="tag own">自前</span> <code>TableTools.getTable</code></td><td>isError <code>引数columnsは、tableを1件指定した場合だけ使えます。</code></td></tr>
+    <tr><td><code>columns</code>に存在しないカラム</td><td><span class="tag own">自前</span> <code>TableOutputBuilder</code></td><td>isError <code>テーブルsample.employeeにカラムxがありません。カラム: …</code></td></tr>
+    <tr><td><code>viewpoint</code>に未知のid</td><td><span class="tag own">自前</span> <code>TableTools.resolveViewpoint</code></td><td>isError <code>観点xが見つかりません。観点: personnel, project, …</code></td></tr>
+    <tr><td>不具合・I/Oの失敗</td><td><span class="tag sdk">SDK</span> セッション</td><td>error -32603（例外のメッセージ）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="data"><span class="n">6</span>データの持ち方</h2>
+
+<h3>1行を2通りに持つ</h3>
+<p>このサーバーを理解するうえで一番効く事実です。スナップショットの1行は、読み込み時に「検索に使う型付きの項目」と「元の1行の文字列（<code>json</code>）」の両方として保持されます。</p>
+
+<figure>
+  <div class="fig-scroll">
+    <svg viewBox="0 0 820 210" role="img" aria-label="tables.jsonlの1行はJacksonでTableLineに読まれ、型付きの項目としてTableEntryに入る。同じ行の文字列はそのままTableEntryのjsonに入る。型付きの項目は検索や関連のたどりに、jsonはget系ツールの結果に使われる。" style="min-width: 720px">
+      <defs>
+        <marker id="f5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
+        <marker id="f5c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-acc"/></marker>
+      </defs>
+      <rect x="10" y="70" width="170" height="60" rx="5" class="d-box-soft"/>
+      <text x="95" y="93" text-anchor="middle" class="d-t-ms">tables.jsonl の1行</text>
+      <text x="95" y="113" text-anchor="middle" class="d-t-ms">{"schema":…,"name":…}</text>
+
+      <rect x="220" y="38" width="150" height="54" rx="6" class="d-box"/>
+      <text x="295" y="60" text-anchor="middle" class="d-t-m">TableLine</text>
+      <text x="295" y="79" text-anchor="middle" class="d-t-s">Jackson。未知の項目は無視</text>
+
+      <rect x="430" y="30" width="180" height="160" rx="6" class="d-box-acc"/>
+      <text x="520" y="52" text-anchor="middle" class="d-t-m" font-weight="600">TableEntry</text>
+      <text x="520" y="74" text-anchor="middle" class="d-t">key・logicalName・type</text>
+      <text x="520" y="92" text-anchor="middle" class="d-t">columns・foreignKeys …</text>
+      <line x1="430" y1="110" x2="610" y2="110" class="d-line-muted d-dash"/>
+      <text x="520" y="138" text-anchor="middle" class="d-t-m">json</text>
+      <text x="520" y="158" text-anchor="middle" class="d-t">元の1行（文字列）</text>
+
+      <rect x="660" y="30" width="150" height="70" rx="6" class="d-box"/>
+      <text x="735" y="52" text-anchor="middle" class="d-t">検索・一覧・たどり</text>
+      <text x="735" y="70" text-anchor="middle" class="d-t-ms">search_tables</text>
+      <text x="735" y="87" text-anchor="middle" class="d-t-ms">find_columns・関連</text>
+      <rect x="660" y="120" width="150" height="70" rx="6" class="d-box"/>
+      <text x="735" y="142" text-anchor="middle" class="d-t">get_* の結果</text>
+      <text x="735" y="160" text-anchor="middle" class="d-t-s">ObjectNodeにして</text>
+      <text x="735" y="177" text-anchor="middle" class="d-t-s">削る・足すだけ</text>
+
+      <polyline points="180,88 200,88 200,65 217,65" class="d-line" marker-end="url(#f5a)"/>
+      <line x1="370" y1="65" x2="427" y2="65" class="d-line" marker-end="url(#f5a)"/>
+      <text x="399" y="57" text-anchor="middle" class="d-t-s">toEntry</text>
+      <polyline points="180,115 200,115 200,150 427,150" class="d-line-acc" marker-end="url(#f5c)"/>
+      <text x="314" y="142" text-anchor="middle" class="d-t-acc">文字列のまま</text>
+      <line x1="612" y1="65" x2="657" y2="65" class="d-line" marker-end="url(#f5a)"/>
+      <line x1="612" y1="150" x2="657" y2="155" class="d-line-acc" marker-end="url(#f5c)"/>
+    </svg>
+  </div>
+  <figcaption><b>図5 型付きの項目と元の1行。</b><code>TableLine</code>等の読み込み用recordは<code>SnapshotDirectoryReader</code>の中だけにあり、読む項目を絞っています。<code>get_table</code>・<code>get_sequence</code>・<code>get_type</code>・<code>get_function</code>は元の1行を返すため、cliがスナップショットに項目を足すと、mcp-serverを変えなくてもAIに届きます。</figcaption>
+</figure>
+
+<p>この設計から、次のことが言えます。</p>
+<ul>
+  <li><strong>検索に新しい項目を使いたいときだけ</strong>、<code>*Line</code>と<code>*Entry</code>の両方にフィールドを足します。</li>
+  <li><code>get_table</code>の<code>sections</code>で削れるのは<code>TableSection</code>のenumに並ぶ7項目（<code>columns</code>・<code>indexes</code>・<code>constraints</code>・<code>foreignKeys</code>・<code>logicalRelations</code>・<code>triggers</code>・<code>definition</code>）だけです。それ以外（<code>name</code>・<code>logicalName</code>・<code>partitionKey</code>や将来の項目）は常に残ります。</li>
+  <li>観点（<code>viewpoints</code>）はスナップショットの項目ではないため、<code>get_table</code>の結果に後から足されます。<code>sections</code>での絞り込みの対象外です。</li>
+</ul>
+
+<h3>catalogのrecord（Entry）一覧</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>record</th><th>元のファイル</th><th>持つもの</th><th>SchemaObject</th></tr></thead>
+  <tbody>
+    <tr><td><code>DatabaseEntry</code></td><td><code>database.json</code></td><td>DB名、DBMS種別</td><td class="muted">—</td></tr>
+    <tr><td><code>TableEntry</code></td><td><code>tables.jsonl</code></td><td><code>ObjectKey</code>、論理名・区分・説明・備考、カラム・外部キー・論理リレーション・トリガー、<code>json</code></td><td>○</td></tr>
+    <tr><td><code>ColumnEntry</code> / <code>RelationEntry</code> / <code>TriggerEntry</code></td><td>テーブルの中</td><td>カラム、関連（自テーブル→参照先）、トリガー</td><td class="muted">—</td></tr>
+    <tr><td><code>FunctionEntry</code></td><td><code>functions.jsonl</code></td><td>種別・引数・戻り値・言語、<code>json</code>（定義本体を含む）</td><td class="muted">—</td></tr>
+    <tr><td><code>FunctionOverloads</code></td><td>（組み立て時に生成）</td><td>同じキーの<code>FunctionEntry</code>の束。名前の解決の単位</td><td>○</td></tr>
+    <tr><td><code>SequenceEntry</code></td><td><code>sequences.jsonl</code></td><td>所有カラム（<code>テーブル名.カラム名</code>）、<code>json</code></td><td>○</td></tr>
+    <tr><td><code>TypeEntry</code></td><td><code>types.jsonl</code></td><td>種別（ENUM等）、<code>json</code></td><td>○</td></tr>
+    <tr><td><code>ViewpointEntry</code></td><td><code>insights/{DB}/viewpoints.json</code></td><td>id・表示名・説明・所属テーブル（<code>ObjectKey</code>のリスト）</td><td class="muted">—（スキーマを持たない）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note key">
+  <p class="note-title">nullを持たない約束</p>
+  <p>すべてのEntryは、コンパクトコンストラクタで<code>null</code>を空文字・空リストへ揃えます（<code>TextValues.orEmpty</code>）。結果をJSON化する<code>ToolResults</code>は<code>JsonInclude.Include.NON_EMPTY</code>で空の値を出力しないため、「値の無い項目は結果に出ない」という仕様は、この2つの組み合わせで成り立っています。<code>nextOffset</code>や<code>hasMore</code>を<code>Integer</code>・<code>Boolean</code>にして<code>null</code>を入れているのも、同じ理由で「無ければ出さない」ためです。</p>
+</div>
+
+<h3>出力のrecordはそのままAPI</h3>
+<p>各ツールクラスの中にある<code>ListTablesOutput</code>・<code>RelatedTablesOutput</code>等のrecordは、Jacksonがrecordのコンポーネント名をキーにしてJSON化します。<strong>コンポーネント名を変えると、AIから見える結果の項目名が変わります</strong>。リファクタリングで改名するときは、ツールのAPIを変えることと同じです。</p>
+
+<!-- ============================================================ -->
+<h2 id="logic"><span class="n">7</span>catalogの中心ロジック</h2>
+<p><code>SchemaCatalog</code>は全オブジェクトを<code>List</code>で持ち、要求のたびに先頭から絞り込みます。あらかじめ作る索引は、<code>RelationGraph</code>の「参照先・参照元」の2つの<code>Map</code>だけです。スナップショットは数百テーブル規模なので、線形の走査で十分という割り切りです。</p>
+
+<h3>7.1 名前の解決（get_* と関連ツールの入口）</h3>
+<ol class="steps">
+  <li><div><code>ObjectReference.of(database, schema, name)</code>：<code>schema</code>が未指定で名前が<code>sample.employee</code>の形なら、最初の<code>.</code>で分けてスキーマ修飾とみなします。</div></li>
+  <li><div><code>SchemaCatalog.lookup&lt;E extends SchemaObject&gt;</code>：DB・スキーマ・名前を<strong>大文字小文字を区別せず完全一致</strong>で比べます。テーブル・関数・シーケンス・型の4種類が<code>SchemaObject</code>を実装しているので、この1つの汎用メソッドを共有できます。</div></li>
+  <li><div>結果は封印インタフェース<code>Lookup</code>の3通り：<code>Found</code>（1件）・<code>Ambiguous</code>（複数。キー順）・<code>NotFound</code>（候補付き）。</div></li>
+  <li><div><code>ObjectResolver.resolve</code>が<code>switch</code>のパターンマッチで分岐し、<code>Found</code>以外は候補を含む文言で<code>InvalidToolArgumentException</code>を投げます。</div></li>
+</ol>
+<p>見つからないときの候補の求め方は、種類で違います。テーブルは「その名前で<code>search_tables</code>した上位5件」なので、カラム名の一致も候補に入ります（<code>employe</code>に<code>attendance</code>が出るのは<code>employee_id</code>カラムがあるため）。関数・シーケンス・型は「名前の部分一致の先頭5件」です。どちらもDB・スキーマの絞り込みを外して探します。</p>
+
+<h3>7.2 テーブル検索の点数（SearchQuery）</h3>
+<p>検索語をNFKC正規化と小文字化（<code>TextValues.normalize</code>）してから空白で区切ります。全角空白もNFKCで半角になるため区切りとして効きます。形態素解析はしません。</p>
+<ul>
+  <li><strong>AND</strong>：どの項目にも含まれない語が1つでもあれば、そのテーブルは一致しません。</li>
+  <li><strong>語ごとに最大点</strong>：1語について、一致した項目の点数の最大値を取り、語ごとの最大値を合計します。</li>
+  <li><strong>同点</strong>：DB名・スキーマ名・テーブル名の順。</li>
+</ul>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>一致した項目</th><th>完全一致</th><th>前方一致</th><th>部分一致</th><th><code>matchedIn</code>の表記</th></tr></thead>
+  <tbody>
+    <tr><td>テーブル名</td><td class="num">100</td><td class="num">60</td><td class="num">40</td><td><code>name</code></td></tr>
+    <tr><td>論理名</td><td class="num">80</td><td class="num muted">—</td><td class="num">30</td><td><code>logicalName</code></td></tr>
+    <tr><td>カラム名</td><td class="num">25</td><td class="num muted">—</td><td class="num">12</td><td><code>column:カラム名</code></td></tr>
+    <tr><td>カラムの論理名</td><td class="num muted">—</td><td class="num muted">—</td><td class="num">12</td><td><code>column:カラム名</code></td></tr>
+    <tr><td>説明</td><td class="num muted">—</td><td class="num muted">—</td><td class="num">8</td><td><code>description</code></td></tr>
+    <tr><td>備考</td><td class="num muted">—</td><td class="num muted">—</td><td class="num">5</td><td><code>remarks</code></td></tr>
+    <tr><td>カラムの備考</td><td class="num muted">—</td><td class="num muted">—</td><td class="num">4</td><td><code>column:カラム名</code></td></tr>
+  </tbody>
+</table>
+</div>
+<p>サンプルで<code>従業員</code>を検索すると、<code>employee</code>（論理名「従業員」の完全一致で80点）が先、<code>department</code>（説明に「従業員」を含み8点）が後になります。</p>
+<pre><code>{"total":2,"tables":[
+  {"database":"testdb","schema":"sample","name":"employee","logicalName":"従業員","type":"table",
+   "matchedIn":["logicalName","column:employee_id","column:employee_code","column:employee_name","column:manager_id"]},
+  {"database":"testdb","schema":"sample","name":"department","type":"table","description":"社内の組織単位を…","matchedIn":["description"]}]}</code></pre>
+<p class="small muted"><code>total</code>は<code>limit</code>で切る前の件数です。</p>
+<p>一覧・検索の対象の絞り込み（DB・スキーマ・区分・観点）は、ツール側で<code>TableFilter</code>として1回組み立ててから<code>SchemaCatalog</code>へ渡し、catalogは各テーブルを<code>matches</code>で問い合わせるだけです。絞り込みは検索と並べ替えより前に行うため、観点を指定しても総数と<code>limit</code>が正しくなります。区分の値（<code>table</code>・<code>view</code>・<code>materialized_view</code>）は<code>TableType</code>の1か所にあり、<code>list_tables</code>の入力スキーマの<code>enum</code>もここから作ります。</p>
+
+<h3>7.3 カラムの逆引き（ColumnQuery・find_columns）</h3>
+<p>強さは「物理名の完全一致 4 ＞ 論理名の完全一致 3 ＞ 物理名の前方一致 2 ＞ 物理名か論理名の部分一致 1」です。<code>match: exact</code>（既定）では3以上だけが残ります。各カラムには、そのカラムが外部キー・論理リレーションで指している先（複合キーなら同じ位置の相手カラム）を<code>references</code>として添えます。</p>
+
+<h3>7.4 関連のグラフ（RelationGraph）</h3>
+<p>テーブルを頂点、外部キーと論理リレーションを辺とするグラフです。スナップショットには「自分が参照している先」しか書かれていないため、組み立て時に全テーブルを1周して「自分を参照している元」（<code>incoming</code>）の索引を作ります。辺の向きは常に<strong>参照元（外部キーを持つ側）→ 参照先</strong>です。</p>
+
+<figure>
+  <div class="fig-scroll">
+    <svg viewBox="0 0 900 340" role="img" aria-label="サンプルのスナップショットの関連グラフ。attendance_noteからprojectへの最短経路は、attendance、employee、project_assignmentを通る4段で、employeeとproject_assignmentの間は矢印と逆向きにたどる。" style="min-width: 800px">
+      <defs>
+        <marker id="f6a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-muted"/></marker>
+        <marker id="f6c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-acc"/></marker>
+      </defs>
+      <!-- 経路以外の辺 -->
+      <line x1="400" y1="150" x2="292" y2="77" class="d-line-muted" marker-end="url(#f6a)"/>
+      <line x1="500" y1="150" x2="608" y2="77" class="d-line-muted" marker-end="url(#f6a)"/>
+      <path d="M 432 150 C 422 108, 478 108, 468 148" class="d-line-muted" marker-end="url(#f6a)"/>
+      <text x="450" y="104" text-anchor="middle" class="d-t-ms">manager_id</text>
+      <line x1="450" y1="270" x2="450" y2="188" class="d-line-muted d-dash" marker-end="url(#f6a)"/>
+      <text x="458" y="236" class="d-t-s">論理リレーション</text>
+      <line x1="610" y1="270" x2="508" y2="188" class="d-line-muted" marker-end="url(#f6a)"/>
+      <line x1="150" y1="287" x2="193" y2="287" class="d-line-muted" marker-end="url(#f6a)"/>
+      <!-- 経路の辺 -->
+      <line x1="150" y1="167" x2="192" y2="167" class="d-line-acc" marker-end="url(#f6c)"/>
+      <line x1="335" y1="167" x2="377" y2="167" class="d-line-acc" marker-end="url(#f6c)"/>
+      <line x1="565" y1="167" x2="523" y2="167" class="d-line-acc" marker-end="url(#f6c)"/>
+      <line x1="705" y1="167" x2="747" y2="167" class="d-line-acc" marker-end="url(#f6c)"/>
+      <text x="548" y="143" text-anchor="middle" class="d-t-acc">逆向き</text>
+
+      <!-- 頂点 -->
+      <rect x="10" y="150" width="140" height="34" rx="6" class="d-box-acc"/>
+      <text x="80" y="172" text-anchor="middle" class="d-t-m">attendance_note</text>
+      <rect x="195" y="150" width="140" height="34" rx="6" class="d-box-acc"/>
+      <text x="265" y="172" text-anchor="middle" class="d-t-m">attendance</text>
+      <rect x="380" y="150" width="140" height="34" rx="6" class="d-box-acc"/>
+      <text x="450" y="172" text-anchor="middle" class="d-t-m">employee</text>
+      <rect x="565" y="150" width="140" height="34" rx="6" class="d-box-acc"/>
+      <text x="635" y="172" text-anchor="middle" class="d-t-m">project_assignment</text>
+      <rect x="750" y="150" width="140" height="34" rx="6" class="d-box-acc"/>
+      <text x="820" y="172" text-anchor="middle" class="d-t-m">project</text>
+
+      <rect x="195" y="40" width="140" height="34" rx="6" class="d-box"/>
+      <text x="265" y="62" text-anchor="middle" class="d-t-m">department</text>
+      <rect x="565" y="40" width="140" height="34" rx="6" class="d-box"/>
+      <text x="635" y="62" text-anchor="middle" class="d-t-m">parking_spot</text>
+      <rect x="380" y="270" width="140" height="34" rx="6" class="d-box"/>
+      <text x="450" y="292" text-anchor="middle" class="d-t-m">audit_log</text>
+      <rect x="565" y="270" width="140" height="34" rx="6" class="d-box"/>
+      <text x="635" y="292" text-anchor="middle" class="d-t-m">employee_profile</text>
+      <rect x="10" y="270" width="140" height="34" rx="6" class="d-box-dash"/>
+      <text x="80" y="292" text-anchor="middle" class="d-t-m">shipment</text>
+      <rect x="195" y="270" width="140" height="34" rx="6" class="d-box-dash"/>
+      <text x="265" y="292" text-anchor="middle" class="d-t-m">warehouse_zone</text>
+      <text x="172" y="326" text-anchor="middle" class="d-t-s">別の連結成分（employeeからは届かない）</text>
+
+      <!-- 始点からの距離 -->
+      <circle cx="150" cy="150" r="9" class="d-badge-acc"/><text x="150" y="153.5" text-anchor="middle" class="d-t-badge-acc">0</text>
+      <circle cx="335" cy="150" r="9" class="d-badge-acc"/><text x="335" y="153.5" text-anchor="middle" class="d-t-badge-acc">1</text>
+      <circle cx="520" cy="150" r="9" class="d-badge-acc"/><text x="520" y="153.5" text-anchor="middle" class="d-t-badge-acc">2</text>
+      <circle cx="705" cy="150" r="9" class="d-badge-acc"/><text x="705" y="153.5" text-anchor="middle" class="d-t-badge-acc">3</text>
+      <circle cx="890" cy="150" r="9" class="d-badge-acc"/><text x="890" y="153.5" text-anchor="middle" class="d-t-badge-acc">4</text>
+      <circle cx="335" cy="40" r="9" class="d-badge"/><text x="335" y="43.5" text-anchor="middle" class="d-t-badge">3</text>
+      <circle cx="705" cy="40" r="9" class="d-badge"/><text x="705" y="43.5" text-anchor="middle" class="d-t-badge">3</text>
+      <circle cx="520" cy="270" r="9" class="d-badge"/><text x="520" y="273.5" text-anchor="middle" class="d-t-badge">3</text>
+      <circle cx="705" cy="270" r="9" class="d-badge"/><text x="705" y="273.5" text-anchor="middle" class="d-t-badge">3</text>
+    </svg>
+  </div>
+  <figcaption><b>図6 サンプル（docs/sample/postgres）の関連と、find_join_path(attendance_note → project) の結果。</b>矢印は参照元→参照先、破線は論理リレーションです。丸の数字は<code>attendance_note</code>からの距離（幅優先探索の段）。<code>find_join_path</code>は向きを問わずたどるため、3段目の<code>employee ← project_assignment</code>は矢印と逆に進みます。2つのビュー（<code>employee_directory_view</code>・<code>project_summary_mv</code>）は関連を持たないので描いていません。</figcaption>
+</figure>
+
+<div class="pair">
+  <div>
+    <h4><code>relatedTables</code>（get_related_tables）</h4>
+    <ul>
+      <li>幅優先で<code>depth</code>段まで広げる。<code>direction</code>で参照先だけ・参照元だけ・両方を選ぶ。</li>
+      <li>同じ関連は最初に見つけた段で1回だけ記録する（<code>putIfAbsent</code>）。</li>
+      <li>スナップショットに無い参照先は<code>missingTables</code>に分け、その先はたどらない。</li>
+      <li>自己参照（<code>manager_id</code>）は関連として返るが、訪問済みなので再訪しない。</li>
+    </ul>
+  </div>
+  <div>
+    <h4><code>joinPaths</code>（find_join_path）</h4>
+    <ul>
+      <li>向きを問わず幅優先。各頂点への「最短で来た手前の段」をすべて記録する（同じ段からの到達は複数残す）。</li>
+      <li>終点に届いた段を最後まで処理したら止め、終点から始点へ手前の段をたどり直して全最短経路を集める。</li>
+      <li><code>limit + 1</code>件まで集め、超えた分があれば<code>hasMore: true</code>。</li>
+      <li>自己参照とスナップショットに無いテーブルは経由しない。</li>
+    </ul>
+  </div>
+</div>
+<pre><code><span class="c">← find_join_path(from: attendance_note, to: project) の text（joinsは省略）</span>
+{"from":"sample.attendance_note","to":"sample.project","paths":[{
+  "tables":["sample.attendance_note","sample.attendance","sample.employee","sample.project_assignment","sample.project"],
+  "joins":[ {"from":"sample.attendance_note","fromColumns":["attendance_id","work_date"],"to":"sample.attendance",…}, … ]}]}</code></pre>
+<p class="small muted"><code>joins</code>の各要素の<code>from</code>・<code>to</code>は関連そのものの参照元・参照先で、たどる向きとは限りません。AIがJOINの条件を書くときは<code>fromColumns</code>と<code>toColumns</code>を同じ位置同士で結びます。グラフの頂点の照合は<code>ObjectKey</code>の<code>equals</code>（大文字小文字を区別する）で、cliが同じ表記で出力する前提に立っています。</p>
+
+<h3>7.5 オブジェクト間の相互参照（SqlNames）</h3>
+<p>スナップショットには「このシーケンスをどのカラムが使うか」のような逆向きの情報がありません。そこで呼び出しのたびに全カラム・全トリガーを走査し、文字列からオブジェクトの名前を取り出して比べます。手順はどれも同じ3段です。</p>
+<ol class="steps">
+  <li><div><strong>切り出す</strong>：カラムのデフォルト値・型、トリガーの関数名から、名前の部分だけを取り出す（種類ごとに方法が違う。下の表）。</div></li>
+  <li><div><strong>キーにする</strong>：<code>qualify</code>で<code>ObjectKey</code>にする。二重引用符を外し、スキーマ修飾が無ければ参照元テーブルのスキーマを補う。</div></li>
+  <li><div><strong>比べる</strong>：<code>sameObject</code>で、調べたいオブジェクトのキーと大文字小文字を区別せずに比べる。</div></li>
+</ol>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ツールの項目</th><th>見る文字列</th><th>サンプルの実データ</th><th>切り出した名前</th></tr></thead>
+  <tbody>
+    <tr><td><code>get_sequence</code>の<code>usedByColumns</code></td><td>カラムのデフォルト値。<code>nextval('…'</code>の引用符の中を正規表現で取る</td><td><code>employee.employee_id</code>：<code>nextval('sample.employee_employee_id_seq'::regclass)</code></td><td><code>sample.employee_employee_id_seq</code></td></tr>
+    <tr><td><code>get_type</code>の<code>usedByColumns</code></td><td>カラムの型。末尾の配列の印<code>[]</code>を除く（下で詳しく）</td><td><code>employee.status</code>：<code>sample.employee_status_enum</code></td><td><code>sample.employee_status_enum</code></td></tr>
+    <tr><td><code>get_function</code>の<code>calledByTriggers</code></td><td>トリガーの関数名。<code>(</code>があればそれ以降を除く</td><td><code>attendance</code>のトリガー：<code>sample.check_work_minutes</code></td><td><code>sample.check_work_minutes</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>型の切り出しの例。</strong>スナップショットのカラムの型（<code>type</code>）は、cliのmapperがPostgreSQLの<code>format_type</code>で取得した文字列です。ユーザー定義型を使うカラムには型名がそのまま入り、その型の<em>配列</em>を持つカラムには末尾に<code>[]</code>が付きます。<code>typeOfColumn</code>は末尾の<code>[…]</code>（正規表現<code>(\[\d*])+$</code>）を除いてから比べるので、配列のカラムも「その型を使うカラム」として<code>usedByColumns</code>に入ります。</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>カラムの型（<code>type</code>）</th><th>切り出した名前</th><th>結果</th></tr></thead>
+  <tbody>
+    <tr><td><code>sample.employee_status_enum</code><span class="small muted"><br>employee.status</span></td><td><code>sample.employee_status_enum</code></td><td>ENUM <code>employee_status_enum</code>に一致</td></tr>
+    <tr><td><code>sample.positive_numeric</code><span class="small muted"><br>project.budget</span></td><td><code>sample.positive_numeric</code></td><td>DOMAIN <code>positive_numeric</code>に一致</td></tr>
+    <tr><td><code>sample.employee_status_enum[]</code><span class="small muted"><br>仮の例：過去のステータスを配列で持つカラム</span></td><td><code>[]</code>を除いて<code>sample.employee_status_enum</code></td><td>ENUMに一致。<strong>配列のカラムも数える</strong></td></tr>
+    <tr><td><code>employee_status_enum</code><span class="small muted"><br>仮の例：型のスキーマが接続のsearch_pathに入っていて、修飾されずに出力された場合</span></td><td>テーブルのスキーマを補って<code>sample.employee_status_enum</code></td><td>ENUMに一致</td></tr>
+    <tr><td><code>character varying(50)</code><span class="small muted"><br>employee.employee_name</span></td><td><code>sample</code>.<code>character varying(50)</code></td><td>一致しない。組み込み型は<code>types.jsonl</code>に無いため、何もしなくても候補から外れる</td></tr>
+    <tr><td><code>integer[]</code></td><td><code>sample.integer</code></td><td>一致しない（同上）</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="small muted">PostgreSQLは配列の宣言時の大きさ（<code>integer[3]</code>）を保持せず、<code>format_type</code>も<code>integer[]</code>と表すため、数字入りの<code>[3]</code>は実際の出力には現れません。正規表現は<code>[3]</code>や多次元の<code>[][]</code>も除ける形で書かれています。サンプル（docs/sample/postgres）には配列のカラムが無いため、上の表の配列の行は仮の例です。</p>
+<p>サンプルで<code>get_type</code>を呼んだ実際の結果です。ビューの同名カラムも数えられています。</p>
+<pre><code>{"schema":"sample","name":"employee_status_enum","category":"ENUM","definition":"ACTIVE, ON_LEAVE, RETIRED",
+ "usedByColumns":["sample.employee.status","sample.employee_directory_view.status"]}</code></pre>
+
+<h3>7.6 関数のオーバーロードと定義本体</h3>
+<ul>
+  <li><code>SchemaCatalog</code>の組み立て時に、同じ<code>ObjectKey</code>の<code>FunctionEntry</code>を<code>FunctionOverloads</code>へ束ねます（出現順を保つ<code>LinkedHashMap</code>）。名前の解決はこの束が単位です。</li>
+  <li><code>get_function</code>は既定で定義本体（<code>definition</code>）を除きます。<code>includeDefinition: true</code>のとき、全オーバーロードの本体が同じなら（Oracleのパッケージ内サブプログラム等）1つにまとめて上位に置き、違えば各オーバーロードに残します。どちらも4,000文字を超えると切り詰め、全体の文字数を書き添えます。<code>getFunction</code>の中で、共通の本体を求める<code>sharedDefinition</code>と、各オーバーロードを切り詰める<code>truncateDefinitionOf</code>を順に呼んでいます。</li>
+</ul>
+
+<h3>7.7 一覧の範囲（Page）</h3>
+<p>一覧系のツールはまず全件を求めてから、<code>Page.apply</code>で<code>offset</code>から<code>limit</code>件を切り出します。<code>total</code>は全件数、続きがあれば<code>nextOffset = offset + limit</code>を返し、無ければ<code>null</code>（出力されない）です。<code>offset</code>が全件より大きくても例外にはならず、空のリストになります。件数の既定値100・上限500は<code>Page.DEFAULT_LIMIT</code>・<code>Page.MAX_LIMIT</code>にあり、固有の値を持つツール（<code>search_tables</code>・<code>find_columns</code>）以外はこれを使います。</p>
+
+<!-- ============================================================ -->
+<h2 id="tools"><span class="n">8</span>ツールとソースの対応</h2>
+
+<h3>ツールクラスの型</h3>
+<p>8つのツールクラスはすべて同じ形をしています。1つ読めば残りは差分を見るだけです。</p>
+<pre><code><span class="k">final class</span> XxxTools {
+  <span class="k">static final</span> String GET_XXX = <span class="k">"get_xxx"</span>;      <span class="c">// ツール名。他クラスの案内文からも参照される</span>
+  <span class="k">private final</span> SchemaCatalog catalog;
+
+  List&lt;SyncToolSpecification&gt; specifications() {
+    <span class="k">return</span> List.of(readOnlyTool(GET_XXX, <span class="k">"表示名"</span>, <span class="k">"AIが読む説明"</span>,
+        objectSchema(Map.of(<span class="c">/* 引数名 → JSON Schema */</span>), List.of(<span class="c">/* 必須の引数 */</span>)),
+        <span class="k">this</span>::getXxx));
+  }
+
+  <span class="k">private</span> CallToolResult getXxx(ToolArguments arguments) {
+    <span class="c">// 1. arguments から読む（一覧なら Page.read(arguments, Page.DEFAULT_LIMIT)。誤りは InvalidToolArgumentException）</span>
+    <span class="c">// 2. catalog に問い合わせる（名前なら ObjectResolver.resolve 経由）</span>
+    <span class="c">// 3. 出力 record を ToolResults.json(...) で返す</span>
+  }
+
+  <span class="k">record</span> GetXxxOutput(…) {}  <span class="c">// コンポーネント名がそのまま結果のJSONのキー</span>
+}</code></pre>
+
+<h3>15ツールの対応表</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ツール</th><th>ハンドラ</th><th>catalogへの問い合わせ</th><th>結果</th></tr></thead>
+  <tbody>
+    <tr><td><code>list_schemas</code></td><td><code>SchemaTools#listSchemas</code></td><td><code>schemas()</code> → <code>SchemaSummary</code></td><td><code>ListSchemasOutput</code></td></tr>
+    <tr><td><code>list_viewpoints</code></td><td><code>ViewpointTools#listViewpoints</code></td><td><code>listViewpoints(scope)</code></td><td><code>ListViewpointsOutput</code></td></tr>
+    <tr><td><code>search_tables</code></td><td><code>TableTools#searchTables</code></td><td><code>SearchQuery.of</code>・<code>TableFilter</code>（<code>findViewpoint</code>）→ <code>searchTables</code></td><td><code>SearchTablesOutput</code></td></tr>
+    <tr><td><code>list_tables</code></td><td><code>TableTools#listTables</code></td><td><code>TableFilter</code>（区分は<code>TableType</code>）→ <code>listTables</code></td><td><code>ListTablesOutput</code></td></tr>
+    <tr><td><code>get_table</code></td><td><code>TableTools#getTable</code></td><td><code>lookupTable</code>（件数分）→ <code>TableOutputBuilder</code>（<code>viewpointsOf</code>）</td><td>元の1行を加工（複数なら<code>GetTableOutput</code>）</td></tr>
+    <tr><td><code>find_columns</code></td><td><code>TableTools#findColumns</code></td><td><code>ColumnQuery.of</code> → <code>findColumns</code></td><td><code>FindColumnsOutput</code></td></tr>
+    <tr><td><code>get_related_tables</code></td><td><code>RelationTools#getRelatedTables</code></td><td><code>lookupTable</code> → <code>relatedTables</code></td><td><code>RelatedTablesOutput</code></td></tr>
+    <tr><td><code>find_join_path</code></td><td><code>RelationTools#findJoinPath</code></td><td><code>lookupTable</code>×2 → <code>joinPaths</code></td><td><code>JoinPathOutput</code></td></tr>
+    <tr><td><code>list_functions</code></td><td><code>FunctionTools#listFunctions</code></td><td><code>listFunctions(scope, NameFilter)</code></td><td><code>ListFunctionsOutput</code></td></tr>
+    <tr><td><code>get_function</code></td><td><code>FunctionTools#getFunction</code></td><td><code>lookupFunction</code> → <code>triggersCalling</code></td><td><code>GetFunctionOutput</code></td></tr>
+    <tr><td><code>list_sequences</code></td><td><code>SequenceTools#listSequences</code></td><td><code>listSequences</code></td><td><code>ListSequencesOutput</code></td></tr>
+    <tr><td><code>get_sequence</code></td><td><code>SequenceTools#getSequence</code></td><td><code>lookupSequence</code> → <code>columnsUsingSequence</code></td><td>元の1行＋<code>usedByColumns</code></td></tr>
+    <tr><td><code>list_types</code></td><td><code>TypeTools#listTypes</code></td><td><code>listTypes(scope, filter, category)</code></td><td><code>ListTypesOutput</code></td></tr>
+    <tr><td><code>get_type</code></td><td><code>TypeTools#getType</code></td><td><code>lookupType</code> → <code>columnsUsingType</code></td><td>元の1行＋<code>usedByColumns</code></td></tr>
+    <tr><td><code>list_triggers</code></td><td><code>TriggerTools#listTriggers</code></td><td><code>listTriggers(scope)</code></td><td><code>ListTriggersOutput</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>件数・段数の上限</h3>
+<p>どれもAIのコンテキストを圧迫しないための上限です。上限は<code>inputSchema</code>の<code>maximum</code>だけに書かれ、範囲外はSDKが止めます（<code>ToolArguments.optionalInt</code>は範囲を検査しません）。</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ツール・引数</th><th>既定</th><th>上限</th><th>定数の場所</th></tr></thead>
+  <tbody>
+    <tr><td><code>search_tables</code>の<code>limit</code></td><td class="num">20</td><td class="num">100</td><td><code>TableTools</code></td></tr>
+    <tr><td><code>list_tables</code>の<code>limit</code></td><td class="num">100</td><td class="num">500</td><td><code>Page.DEFAULT_LIMIT</code>・<code>MAX_LIMIT</code></td></tr>
+    <tr><td><code>find_columns</code>の<code>limit</code></td><td class="num">50</td><td class="num">500</td><td><code>TableTools</code></td></tr>
+    <tr><td><code>get_table</code>の<code>table</code>の件数</td><td class="num muted">—</td><td class="num">10</td><td><code>TableTools.MAX_TABLES</code></td></tr>
+    <tr><td><code>get_related_tables</code>の<code>depth</code></td><td class="num">1</td><td class="num">3</td><td><code>RelationTools.MAX_DEPTH</code></td></tr>
+    <tr><td><code>find_join_path</code>の<code>maxLength</code></td><td class="num">4</td><td class="num">6</td><td><code>RelationTools</code></td></tr>
+    <tr><td><code>find_join_path</code>の<code>limit</code></td><td class="num">5</td><td class="num">20</td><td><code>RelationTools</code></td></tr>
+    <tr><td><code>list_functions</code>・<code>list_sequences</code>・<code>list_types</code>・<code>list_triggers</code>の<code>limit</code></td><td class="num">100</td><td class="num">500</td><td><code>Page.DEFAULT_LIMIT</code>・<code>MAX_LIMIT</code></td></tr>
+    <tr><td><code>get_function</code>の定義本体</td><td class="num muted">—</td><td class="num">4,000字</td><td><code>FunctionTools.MAX_DEFINITION_LENGTH</code></td></tr>
+    <tr><td>見つからないときの候補</td><td class="num muted">—</td><td class="num">5</td><td><code>SchemaCatalog.MAX_SUGGESTIONS</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="files"><span class="n">9</span>ソースごとの役割</h2>
+<p>main配下の64ファイルと、テスト14ファイルの一覧です。行数は空行・コメントを含みます。</p>
+<div class="filter">
+  <label for="file-filter">クラス名・役割で絞り込む</label>
+  <input id="file-filter" type="search" placeholder="例: Lookup、関連、ToolArguments" autocomplete="off">
+  <output id="file-count" for="file-filter" aria-live="polite"></output>
+</div>
+
+<div class="table-wrap">
+<table data-filterable>
+  <thead><tr><th>ファイル</th><th>行</th><th>役割</th><th>使う相手・使われる相手</th></tr></thead>
+  <tbody>
+    <tr class="group"><td colspan="4">mcp（直下）：入口</td></tr>
+    <tr><td class="file">McpServerMain</td><td class="num">100</td><td>エントリーポイント。起動引数の検証→観点・スナップショットの読み込み→SDKの起動。標準エラーをUTF-8に固定し、<code>UserCorrectableException</code>なら終了コード2</td><td>→ <code>ServerArguments</code>・2つのReader・<code>TableDefinitionTools</code>・SDK</td></tr>
+    <tr><td class="file">ServerArguments</td><td class="num">43</td><td>起動引数（<code>--snapshot=</code>のみ）の解釈と検証</td><td>← <code>McpServerMain</code></td></tr>
+    <tr><td class="file">UserCorrectableException</td><td class="num">23</td><td>利用者が起動引数・スナップショットを直せば解消する失敗。メッセージに直し方を書く</td><td>← <code>ServerArguments</code>・2つのReader</td></tr>
+    <tr><td class="file">package-info</td><td class="num">6</td><td>依存の向き（<code>tool → catalog ← snapshot</code>・<code>catalog ← insight</code>）の宣言</td><td class="muted">—</td></tr>
+
+    <tr class="group"><td colspan="4">mcp.snapshot / mcp.insight：ファイルの読み込み</td></tr>
+    <tr><td class="file">SnapshotDirectoryReader</td><td class="num">312</td><td><code>snapshot/{DB}/database.json</code>と<code>{schema}/{tables,functions,sequences,types}.jsonl</code>を読み<code>SchemaCatalog</code>を作る。無いファイルは0件、未知の項目は無視、<code>formatVersion</code>の上限は1。読み込み用のrecord（<code>TableLine</code>等）を内部に持つ</td><td>← <code>McpServerMain</code>／→ <code>SchemaCatalog.of</code>・各Entry</td></tr>
+    <tr><td class="file">InsightsDirectoryReader</td><td class="num">141</td><td><code>--snapshot</code>の親の兄弟<code>insights/{DB}/viewpoints.json</code>を読む。DB名はディレクトリ名。無ければ0件</td><td>← <code>McpServerMain</code>／→ <code>ViewpointEntry</code>・<code>ObjectKey</code></td></tr>
+    <tr><td class="file">package-info ×2</td><td class="num">4</td><td>各パッケージの要旨</td><td class="muted">—</td></tr>
+
+    <tr class="group"><td colspan="4">mcp.catalog：中心のロジック</td></tr>
+    <tr><td class="file">SchemaCatalog</td><td class="num">483</td><td>全オブジェクトを保持する不変クラス。一覧・検索・カラムの逆引き・名前の解決・相互参照・関連のたどりの公開窓口。<code>withViewpoints</code>で観点を合成した新インスタンスを返す</td><td>← 全ツールクラス・Reader／→ ほぼ全catalogクラス</td></tr>
+    <tr><td class="file">RelationGraph</td><td class="num">164</td><td>関連のグラフ。<code>outgoing</code>・<code>incoming</code>の索引、幅優先の<code>relatedTables</code>、全最短経路の<code>joinPaths</code></td><td>← <code>SchemaCatalog</code>（パッケージプライベート）</td></tr>
+    <tr><td class="file">SearchQuery</td><td class="num">125</td><td>テーブル検索の検索語。空白区切りのAND、項目ごとの点数（7.2節）</td><td>← <code>TableTools</code>・<code>SchemaCatalog</code></td></tr>
+    <tr><td class="file">ColumnQuery</td><td class="num">55</td><td>カラムの逆引きの条件と強さ（7.3節）</td><td>← <code>TableTools</code>・<code>SchemaCatalog</code></td></tr>
+    <tr><td class="file">SqlNames</td><td class="num">66</td><td><code>nextval</code>・型名・トリガーの関数名から<code>ObjectKey</code>を取り出し、大文字小文字を区別せず比べる（7.5節）</td><td>← <code>SchemaCatalog</code></td></tr>
+    <tr><td class="file">TextValues</td><td class="num">23</td><td><code>null</code>→空文字、検索用の正規化（NFKC＋小文字）</td><td>← Entry・Query類</td></tr>
+    <tr><td class="file">SchemaObject</td><td class="num">12</td><td>名前で指定できるオブジェクトの共通インタフェース（<code>key()</code>）</td><td>← <code>TableEntry</code>・<code>FunctionOverloads</code>・<code>SequenceEntry</code>・<code>TypeEntry</code></td></tr>
+    <tr><td class="file">ObjectKey</td><td class="num">19</td><td>DB名・スキーマ名・名前の組。<code>qualifiedName()</code>で<code>スキーマ.名前</code></td><td>どこでも</td></tr>
+    <tr><td class="file">ObjectReference</td><td class="num">32</td><td>AIが渡した名前の指定。<code>スキーマ.名前</code>の分割</td><td>← <code>ObjectResolver</code>・<code>TableTools</code></td></tr>
+    <tr><td class="file">Lookup</td><td class="num">28</td><td>名前の解決結果の封印インタフェース（<code>Found</code>・<code>Ambiguous</code>・<code>NotFound</code>）</td><td>← <code>SchemaCatalog</code>／→ <code>ObjectResolver</code></td></tr>
+    <tr><td class="file">SearchScope</td><td class="num">30</td><td>DB・スキーマでの絞り込み（空文字＝絞らない、大文字小文字を区別しない）。観点用にDB名だけで比べる<code>matchesDatabase</code>も持つ</td><td>← <code>ToolArguments.scope()</code></td></tr>
+    <tr><td class="file">TableFilter</td><td class="num">47</td><td>テーブルの一覧・検索の絞り込み（DB・スキーマ・区分・観点）。1回組み立てて<code>matches</code>で問い合わせる</td><td>← <code>TableTools</code>／→ <code>SchemaCatalog.listTables</code>・<code>searchTables</code></td></tr>
+    <tr><td class="file">TableType</td><td class="num">37</td><td>テーブルの区分（table・view・materialized_view）。未知の値は空として扱う</td><td>← <code>TableFilter</code>・<code>SchemaCatalog.schemas</code>・<code>TableTools</code>の入力スキーマ</td></tr>
+    <tr><td class="file">NameFilter</td><td class="num">28</td><td>関数・シーケンス・型の一覧を名前の部分一致で絞る</td><td>← 関数・シーケンス・型のツール</td></tr>
+    <tr><td class="file">MatchMode</td><td class="num">9</td><td><code>EXACT</code>・<code>PARTIAL</code>（<code>find_columns</code>の<code>match</code>）</td><td>← <code>ColumnQuery</code></td></tr>
+    <tr><td class="file">DatabaseEntry</td><td class="num">14</td><td><code>database.json</code>（DB名・DBMS種別）</td><td>← <code>SnapshotDirectoryReader</code></td></tr>
+    <tr><td class="file">TableEntry</td><td class="num">40</td><td><code>tables.jsonl</code>の1行。型付きの項目と元の<code>json</code></td><td>どこでも</td></tr>
+    <tr><td class="file">ColumnEntry</td><td class="num">27</td><td>カラム（名前・論理名・型・PK・NOT NULL・デフォルト値・備考）</td><td>← <code>TableEntry</code></td></tr>
+    <tr><td class="file">RelationEntry</td><td class="num">28</td><td>外部キー・論理リレーション（自テーブル→参照先）。参照先スキーマが空なら自スキーマ</td><td>← <code>TableEntry</code>／→ <code>Relation.of</code></td></tr>
+    <tr><td class="file">TriggerEntry</td><td class="num">23</td><td>トリガー（タイミング・イベント・実行単位・関数名）</td><td>← <code>TableEntry</code></td></tr>
+    <tr><td class="file">FunctionEntry</td><td class="num">23</td><td><code>functions.jsonl</code>の1行（定義本体を含む<code>json</code>）</td><td>← <code>FunctionOverloads</code></td></tr>
+    <tr><td class="file">FunctionOverloads</td><td class="num">17</td><td>同名の関数の束。名前の解決の単位</td><td>← <code>SchemaCatalog</code>・<code>FunctionTools</code></td></tr>
+    <tr><td class="file">SequenceEntry</td><td class="num">15</td><td><code>sequences.jsonl</code>の1行（所有カラム）</td><td>← <code>SequenceTools</code></td></tr>
+    <tr><td class="file">TypeEntry</td><td class="num">16</td><td><code>types.jsonl</code>の1行（種別）</td><td>← <code>TypeTools</code></td></tr>
+    <tr><td class="file">ViewpointEntry</td><td class="num">31</td><td>観点（id・表示名・説明・所属テーブル）。<code>SchemaObject</code>ではない。所属の判定は<code>contains</code></td><td>← <code>InsightsDirectoryReader</code>・<code>TableTools</code>・<code>ViewpointTools</code></td></tr>
+    <tr><td class="file">Relation</td><td class="num">44</td><td>グラフの辺（参照元・参照先・カラム・由来・多重度・名前）。<code>otherSide</code>で反対側</td><td>← <code>RelationGraph</code>／→ 結果の<code>RelationOutput</code></td></tr>
+    <tr><td class="file">RelationKind</td><td class="num">9</td><td><code>FOREIGN_KEY</code>・<code>LOGICAL_RELATION</code></td><td>← <code>Relation</code>・<code>ColumnHit</code></td></tr>
+    <tr><td class="file">Direction</td><td class="num">19</td><td>たどる向き（<code>OUTGOING</code>・<code>INCOMING</code>・<code>BOTH</code>）</td><td>← <code>RelationTools</code>・<code>RelationGraph</code></td></tr>
+    <tr><td class="file">RelatedTables</td><td class="num">25</td><td>関連をたどった結果（段数付きの関連・現れたテーブル・無いテーブル）</td><td>← <code>RelationGraph</code></td></tr>
+    <tr><td class="file">JoinPath / JoinPaths</td><td class="num">29</td><td>1本の経路と、最短経路の集まり（<code>hasMore</code>付き）</td><td>← <code>RelationGraph</code></td></tr>
+    <tr><td class="file">SearchResult / TableHit</td><td class="num">23</td><td>検索の総数と、一致した1テーブル（点数・<code>matchedIn</code>）</td><td>← <code>SearchQuery</code>・<code>SchemaCatalog</code></td></tr>
+    <tr><td class="file">ColumnHit</td><td class="num">18</td><td>逆引きで当たったカラムと参照先（<code>ColumnReference</code>）</td><td>← <code>SchemaCatalog.findColumns</code></td></tr>
+    <tr><td class="file">TableColumn / TableTrigger</td><td class="num">8</td><td>カラム・トリガーと、それを持つテーブルの組</td><td>← 相互参照・<code>listTriggers</code></td></tr>
+    <tr><td class="file">SchemaSummary</td><td class="num">18</td><td>スキーマごとのオブジェクト数（<code>list_schemas</code>の元）</td><td>← <code>SchemaCatalog.schemas</code></td></tr>
+    <tr><td class="file">package-info</td><td class="num">2</td><td>パッケージの要旨</td><td class="muted">—</td></tr>
+
+    <tr class="group"><td colspan="4">mcp.tool：MCPのツール</td></tr>
+    <tr><td class="file">TableDefinitionTools</td><td class="num">41</td><td>8つのツールクラスの<code>specifications()</code>を並べてSDKへ渡す。並び順がクライアントに見える順</td><td>← <code>McpServerMain</code>／→ 各<code>*Tools</code></td></tr>
+    <tr><td class="file">ToolSpecifications</td><td class="num">146</td><td><code>readOnlyTool</code>（全ツールの包み・注釈・<code>isError</code>への変換）と、<code>inputSchema</code>の部品（<code>objectSchema</code>・<code>stringProperty</code>等）</td><td>← 全<code>*Tools</code></td></tr>
+    <tr><td class="file">ToolArguments</td><td class="num">208</td><td>引数の読み取りと、入力スキーマで表せない検証。文字列は前後の空白を除く、リストは配列を受ける（文字列も許す<code>table</code>ではカンマ区切りも）、選択肢は完全一致で照合する。型・範囲・<code>enum</code>・未知の引数はSDKに任せる</td><td>← 全<code>*Tools</code>・<code>Page</code>・<code>ObjectResolver</code></td></tr>
+    <tr><td class="file">InvalidToolArgumentException</td><td class="num">15</td><td>入力スキーマで表せない引数の誤り（空・件数・見つからない名前等）。メッセージはAIへの直し方の指示</td><td>→ <code>readOnlyTool</code>が<code>isError</code>に変換</td></tr>
+    <tr><td class="file">ObjectResolver</td><td class="num">72</td><td>名前→オブジェクト1つ。<code>Lookup</code>の3通りを文言に変える</td><td>← 名前を受けるツール／→ <code>SchemaCatalog.lookup*</code></td></tr>
+    <tr><td class="file">ToolResults</td><td class="num">60</td><td>結果のJSON化（<code>NON_EMPTY</code>）、元の1行の読み込み、<code>usedByColumns</code>の追加</td><td>← 全<code>*Tools</code></td></tr>
+    <tr><td class="file">Page</td><td class="num">61</td><td><code>offset</code>・<code>limit</code>の読み取り・スキーマ（上限は<code>maximum</code>）・切り出し・<code>nextOffset</code>。一覧の件数の既定値・上限の定数</td><td>← 一覧系のツール</td></tr>
+    <tr><td class="file">TableSection</td><td class="num">43</td><td><code>get_table</code>の<code>sections</code>で選べる7項目</td><td>← <code>TableTools</code>・<code>TableOutputBuilder</code></td></tr>
+    <tr><td class="file">SchemaTools</td><td class="num">89</td><td><code>list_schemas</code></td><td>→ <code>SchemaCatalog.schemas</code></td></tr>
+    <tr><td class="file">ViewpointTools</td><td class="num">57</td><td><code>list_viewpoints</code></td><td>→ <code>listViewpoints</code></td></tr>
+    <tr><td class="file">TableTools</td><td class="num">404</td><td><code>search_tables</code>・<code>list_tables</code>・<code>get_table</code>・<code>find_columns</code>。引数から<code>TableFilter</code>を組み立てる、<code>get_table</code>の複数件の名前をまとめて解決する</td><td>→ 検索・一覧・解決・観点のメソッド、<code>TableOutputBuilder</code></td></tr>
+    <tr><td class="file">TableOutputBuilder</td><td class="num">121</td><td><code>get_table</code>の1テーブル分の結果の組み立て。元の1行に<code>sections</code>・<code>columns</code>の絞り込みと所属する観点を反映する</td><td>← <code>TableTools</code>／→ <code>viewpointsOf</code></td></tr>
+    <tr><td class="file">RelationTools</td><td class="num">216</td><td><code>get_related_tables</code>・<code>find_join_path</code>。<code>kindName</code>で由来を<code>foreignKey</code>/<code>logicalRelation</code>に</td><td>→ <code>relatedTables</code>・<code>joinPaths</code></td></tr>
+    <tr><td class="file">FunctionTools</td><td class="num">220</td><td><code>list_functions</code>・<code>get_function</code>。定義本体の除去・集約（<code>sharedDefinition</code>）・切り詰め（<code>truncateDefinitionOf</code>）</td><td>→ <code>listFunctions</code>・<code>lookupFunction</code>・<code>triggersCalling</code></td></tr>
+    <tr><td class="file">SequenceTools</td><td class="num">101</td><td><code>list_sequences</code>・<code>get_sequence</code></td><td>→ <code>listSequences</code>・<code>columnsUsingSequence</code></td></tr>
+    <tr><td class="file">TypeTools</td><td class="num">104</td><td><code>list_types</code>・<code>get_type</code>。種別はPostgreSQLとOracleの7つ</td><td>→ <code>listTypes</code>・<code>columnsUsingType</code></td></tr>
+    <tr><td class="file">TriggerTools</td><td class="num">90</td><td><code>list_triggers</code>（テーブルをまたぐ一覧）</td><td>→ <code>listTriggers</code></td></tr>
+    <tr><td class="file">package-info</td><td class="num">2</td><td>パッケージの要旨</td><td class="muted">—</td></tr>
+
+    <tr class="group"><td colspan="4">テスト（src/test）</td></tr>
+    <tr><td class="file">McpServerProcessTest</td><td class="num">261</td><td>E2E。配布するjarを子プロセスで起動し、MCPクライアントから呼ぶ。ツールの並び、標準出力の汚れ、<code>immediateExecution</code>の回帰、SDKの入力スキーマの検証（型・範囲・未知の引数の拒否、<code>table</code>のカンマ区切り）、起動失敗時の終了コード2</td><td>→ shadowJar・サンプルのスナップショット</td></tr>
+    <tr><td class="file">ServerArgumentsTest</td><td class="num">43</td><td>起動引数の解釈と誤り</td><td>→ <code>ServerArguments</code></td></tr>
+    <tr><td class="file">SchemaCatalogTest</td><td class="num">779</td><td>検索・一覧・逆引き・解決・相互参照・関連・経路・観点</td><td>→ <code>SchemaCatalog</code></td></tr>
+    <tr><td class="file">SearchQueryTest / SqlNamesTest</td><td class="num">139</td><td>点数・AND・正規化／名前の取り出し</td><td>→ 各クラス</td></tr>
+    <tr><td class="file">TestTables / TestCatalogs / Lookups</td><td class="num">183</td><td>テスト用のテーブルのビルダー／テーブルだけから<code>SchemaCatalog</code>を組み立てる補助／<code>Lookup</code>から値を取り出す補助</td><td>← catalogのテスト</td></tr>
+    <tr><td class="file">SnapshotDirectoryReaderTest</td><td class="num">224</td><td>読み込みと起動時の誤り（ファイル名・行番号）</td><td>→ <code>SnapshotDirectoryReader</code></td></tr>
+    <tr><td class="file">SampleSnapshotContractTest</td><td class="num">225</td><td>cliのベースライン<code>docs/sample/postgres/output/snapshot</code>を読む契約テスト。cliの形式変更への追従漏れを検知</td><td>→ ベースライン</td></tr>
+    <tr><td class="file">InsightsDirectoryReaderTest</td><td class="num">121</td><td>観点の読み込みと兄弟ディレクトリの解決</td><td>→ <code>InsightsDirectoryReader</code></td></tr>
+    <tr><td class="file">SampleInsightsContractTest</td><td class="num">102</td><td>ベースラインの観点と、スナップショットのテーブルのキーが一致すること</td><td>→ ベースライン</td></tr>
+    <tr><td class="file">TableDefinitionToolsTest</td><td class="num">656</td><td>全ツールの結果のJSON・エラー。<code>callHandler().apply(null, …)</code>で直接呼ぶため、SDKの入力検証は通らない</td><td>→ <code>TableDefinitionTools</code></td></tr>
+    <tr><td class="file">ToolArgumentsTest</td><td class="num">115</td><td>引数の読み取り（空白・型・カンマ区切り・列挙）</td><td>→ <code>ToolArguments</code></td></tr>
+    <tr class="empty-row" hidden><td colspan="4">一致するファイルはありません。</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="small muted">catalogには単体テストのカバレッジの最低基準（line 95%・branch 85%）があり、<code>./gradlew build</code>で検査されます。E2Eは子プロセスで動くため計測の対象外です。</p>
+
+<!-- ============================================================ -->
+<!-- ============================================================ -->
+<h2 id="change"><span class="n">10</span>変更するときの道しるべ</h2>
+
+<h3>ツールを1つ足すとき</h3>
+<ol class="steps">
+  <li><div>関心が合う<code>*Tools</code>クラスに<code>readOnlyTool(…)</code>を足す。無ければクラスを作り、<code>TableDefinitionTools.specifications()</code>に並べる（並び順はクライアントに見える順）。</div></li>
+  <li><div>検索・たどりのルールは<code>catalog</code>に置き、<code>SchemaCatalogTest</code>で確かめる（カバレッジ基準の対象）。<code>catalog</code>にSDKやJacksonの型を持ち込まない。</div></li>
+  <li><div>型・範囲（<code>minimum</code>/<code>maximum</code>）・<code>enum</code>は<code>inputSchema</code>に書く。SDKがそれを検証するので、<code>ToolArguments</code>では同じ検査を重ねず、スキーマで表せない検証だけを書く。検証の挙動は<code>McpServerProcessTest</code>で確かめる（ハンドラを直接呼ぶテストではSDKの検証を通らない）。</div></li>
+  <li><div>結果は<code>*Output</code>のrecordにする。コンポーネント名がそのまま結果のキーになる。</div></li>
+  <li><div><code>McpServerMain.INSTRUCTIONS</code>に使い分けを書き足す。</div></li>
+  <li><div><code>McpServerProcessTest</code>のツール一覧、<code>TableDefinitionToolsTest</code>、<code>docs/architecture/mcp-server.md</code>とREADMEのツールの表を更新する。</div></li>
+</ol>
+
+<h3>スナップショットの形式が変わるとき</h3>
+<ul>
+  <li><strong>項目の追加</strong>は互換です。未知の項目は読み込みで無視され、<code>get_*</code>は元の1行を返すので、何もしなくてもAIに届きます。検索・逆引きに使うときだけ<code>*Line</code>と<code>*Entry</code>に足します。</li>
+  <li><strong>互換性の無い変更</strong>は、cliの<code>DatabaseSnapshot.FORMAT_VERSION</code>を上げ、<code>SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION</code>を追従させます。観点なら<code>ViewpointsInsight.FORMAT_VERSION</code>と<code>InsightsDirectoryReader.SUPPORTED_FORMAT_VERSION</code>です。</li>
+  <li>cliのベースラインを出し直すと、<code>SampleSnapshotContractTest</code>・<code>SampleInsightsContractTest</code>が追従漏れを検知します（<code>./gradlew :mcp-server:test</code>）。</li>
+</ul>
+
+<h3>やってはいけないこと</h3>
+<ul>
+  <li><code>System.out</code>への出力や、標準出力へ出すログ設定の追加。プロトコルが壊れます。</li>
+  <li><code>immediateExecution(true)</code>の削除。SDKの修正版が出るまでは、並行呼び出しで応答が止まります。</li>
+  <li>cliのコードへの依存。両者の接点はスナップショットの形式だけです。</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="glossary"><span class="n">11</span>用語集</h2>
+<dl class="glossary">
+  <dt>スナップショット</dt><dd>cliがDBから取得した定義を、機械可読なJSON Linesで出力したもの。<code>{outputPath}/snapshot/{DB名}/</code>に置かれる。mcp-serverの唯一の主な入力。</dd>
+  <dt>参考情報（insights）</dt><dd>スナップショットとは別に<code>{outputPath}/insights/</code>へ出力される補助情報。現在は観点のみ。</dd>
+  <dt>観点（viewpoint）</dt><dd>業務ドメイン別にテーブルをまとめる切り口（例：人事管理）。1つのテーブルが複数の観点に所属できる。DB単位でスキーマを持たない。</dd>
+  <dt>外部キー（foreignKey）</dt><dd>DBに実在する制約。関連の由来の1つ。</dd>
+  <dt>論理リレーション（logicalRelation）</dt><dd>DBに制約は無いが、サイドカーYAMLで宣言された関連。グラフでは外部キーと同じ辺として扱う。</dd>
+  <dt>多重度（cardinality）</dt><dd><code>ONE_TO_MANY</code>等。参照先（親）1行に対する参照元（子）の行数を表す。</dd>
+  <dt>オーバーロード</dt><dd>同じスキーマ・同じ名前で引数が異なる関数。<code>FunctionOverloads</code>に束ねる。</dd>
+  <dt><code>ObjectKey</code>・修飾名</dt><dd>DB名・スキーマ名・名前の組。結果では<code>スキーマ名.名前</code>（<code>qualifiedName</code>）、候補の文言では<code>DB名:スキーマ名.名前</code>で表す。</dd>
+  <dt>ホスト／クライアント／サーバー</dt><dd>MCPの3者。AIアプリ、その中の接続担当、道具の提供側。</dd>
+  <dt>トランスポート</dt><dd>メッセージの運び方。このサーバーはstdio（標準入出力）。</dd>
+  <dt><code>inputSchema</code></dt><dd>ツールの引数のJSON Schema。AIが引数を組み立てる手がかりであり、SDKの入力検証の基準でもある。</dd>
+  <dt><code>isError</code></dt><dd>ツールとしての失敗。AIが読んで直せる。JSON-RPCの<code>error</code>とは別物。</dd>
+  <dt><code>instructions</code></dt><dd>初期化の応答でサーバーがAIへ渡す使い方の説明。</dd>
+  <dt><code>immediateExecution</code></dt><dd>SDKのBuilderの設定。<code>true</code>でツールを受信スレッド上で直列に実行する。</dd>
+</dl>
+
+<footer>
+  <p>出典：<code>mcp-server/</code>のソース、<code>docs/architecture/mcp-server.md</code>、README「AIからテーブル定義を調べる（MCPサーバー）」、MCP Java SDK 2.0.1のソース（<code>mcp-core</code>・<code>mcp-json-jackson2</code>）。JSONの例はビルドしたjarに対する実際の応答。</p>
+</footer>
+</main>
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById('file-filter');
+  var count = document.getElementById('file-count');
+  var table = document.querySelector('table[data-filterable]');
+  if (!input || !table) return;
+  var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr:not(.group):not(.empty-row)'));
+  var groups = Array.prototype.slice.call(table.querySelectorAll('tbody tr.group'));
+  var empty = table.querySelector('tr.empty-row');
+  function apply() {
+    var q = input.value.trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (row) {
+      var hit = !q || row.textContent.toLowerCase().indexOf(q) >= 0;
+      row.hidden = !hit;
+      if (hit) shown++;
+    });
+    groups.forEach(function (group) {
+      var next = group.nextElementSibling, any = false;
+      while (next && !next.classList.contains('group') && !next.classList.contains('empty-row')) {
+        if (!next.hidden) { any = true; break; }
+        next = next.nextElementSibling;
+      }
+      group.hidden = !any;
+    });
+    if (empty) empty.hidden = shown !== 0;
+    count.textContent = q ? shown + ' / ' + rows.length + ' 行' : rows.length + ' 行';
+  }
+  input.addEventListener('input', apply);
+  apply();
+})();
+</script>
+</body>
+</html>

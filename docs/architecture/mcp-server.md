@@ -6,6 +6,10 @@ cliが出力したスキーマのスナップショット（JSON Lines）を、A
 
 cliのアーキテクチャ（[overview.md](./overview.md)）とは独立している。cliのコードには依存せず、両者の接点はスナップショットの形式だけ。
 
+初めてコードを読む人向けに、MCPとMCP Java SDKの事前知識、起動から1回のツール呼び出しまでの流れ、ソースごとの役割と繋がりを
+図でまとめた読解ガイド（[mcp-server-guide.html](./mcp-server-guide.html)。ブラウザで開く）がある。ガイドはある時点のコードを読んで
+書いたもので、クラス名・行数等が食い違う場合はこの文書とコードを正とする。
+
 ## 構成と依存の向き
 
 依存の向きは`tool → catalog ← snapshot`・`catalog ← insight`。検索・関連のたどりは`catalog`に置き、MCPのSDKにもJSONにも依存させない
