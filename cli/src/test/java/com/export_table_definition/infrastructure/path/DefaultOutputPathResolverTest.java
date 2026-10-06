@@ -92,6 +92,17 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
+  @DisplayName("resolveTableDefinitionFile: .だけからなるテーブル名・スキーマ名も、置き換えて出力先の配下に置く")
+  void testResolveTableDefinitionFileWithDotOnlyNames() {
+    assertEquals(
+        Path.of("output", "testdb", "~2E~2E", "table", "~2E~2E~2E.md"),
+        resolver.resolveTableDefinitionFile(root, table("..", "...", "table")));
+    assertEquals(
+        Path.of("output", "testdb", "~2E", "table", "~2E~2E.md"),
+        resolver.resolveTableDefinitionFile(root, table(".", "..", "table")));
+  }
+
+  @Test
   @DisplayName("resolveDatabaseDirectory: 出力先がカレントディレクトリ（.）でも解決できる")
   void testResolveDatabaseDirectoryUnderCurrentDirectory() {
     final OutputRoot currentRoot = new OutputRoot(Path.of("."), baseInfo);

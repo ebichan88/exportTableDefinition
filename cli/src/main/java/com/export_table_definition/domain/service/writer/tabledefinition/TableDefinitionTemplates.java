@@ -159,15 +159,15 @@ public class TableDefinitionTemplates {
       return "";
     }
     final String fence = MarkdownTemplateSupport.codeFence(table.definition());
-    return "## ソース\n\n"
-        + fence
-        + "sql\n"
-        + LINE_SEPARATOR
-        + table.definition()
-        + LINE_SEPARATOR
-        + "\n"
-        + fence
-        + "\n\n";
+    return """
+                ## ソース
+
+                %ssql
+                %s%s%s
+                %s
+
+                """
+        .formatted(fence, LINE_SEPARATOR, table.definition(), LINE_SEPARATOR, fence);
   }
 
   /**

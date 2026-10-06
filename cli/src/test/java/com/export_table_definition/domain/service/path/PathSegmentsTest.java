@@ -28,10 +28,11 @@ public class PathSegmentsTest {
   }
 
   @Test
-  @DisplayName("encode: .・..は置き換え、.を含むだけの名前は置き換えない")
+  @DisplayName("encode: .だけからなる名前（.・..・...）は置き換え、.を含むだけの名前は置き換えない")
   void testEncodeReplacesDotOnlyNames() {
     assertEquals("~2E", PathSegments.encode("."));
     assertEquals("~2E~2E", PathSegments.encode(".."));
+    assertEquals("~2E~2E~2E", PathSegments.encode("..."));
     assertEquals("a..b", PathSegments.encode("a..b"));
   }
 

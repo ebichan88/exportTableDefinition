@@ -31,6 +31,7 @@ public final class PathSegments {
     if (name == null || name.isEmpty()) {
       return EMPTY_NAME;
     }
+    // ...のように3個以上でも置き換える。Windowsはパスの要素の末尾の.を取り除くため、.・..と区別されないおそれがある
     final boolean onlyDots = name.chars().allMatch(c -> c == '.');
     final StringBuilder sb = new StringBuilder(name.length());
     name.chars()
