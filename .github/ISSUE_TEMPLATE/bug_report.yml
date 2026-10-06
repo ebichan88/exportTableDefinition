@@ -1,0 +1,109 @@
+name: バグ報告
+description: 想定と異なる動作・出力、想定外の失敗を報告する
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        報告ありがとうございます。再現に必要な情報を書いてください。
+        **パスワード・接続URLのホスト名など、公開できない情報は伏せてください。**
+        テーブル名・カラム名が社外秘の場合は、ダミーの名前に置き換えて構いません。
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 対象
+      description: 問題が起きたものを選んでください。
+      options:
+        - テーブル定義書・ER図の出力（cli）
+        - スナップショットの出力（cli）
+        - --check モード（差分検知）
+        - MCPサーバー
+        - 起動スクリプト（run.sh / run.bat）・配布zip
+        - その他・不明
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きたかを簡潔に書いてください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: |
+        実行したコマンド（CLI引数）と、関係する設定を書いてください。
+        `conf/ExportTableDefinition.properties`・`conf/mybatis.properties`は、関係する項目だけで構いません（パスワードは書かないでください）。
+        サイドカーYAMLが関係する場合は、その内容も添えてください。
+      placeholder: |
+        1. `conf/ExportTableDefinition.properties`に〜と設定する
+        2. `./run.sh --check`を実行する
+        3. 〜と表示される
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: |
+        出力の差異や、コンソールの`[result]`・`[errmsg]`・`[cause]`の内容を貼ってください。
+        想定外の失敗の場合は、実行したフォルダの`var/log/exportTableDefinition.log`のスタックトレースも貼ってください。
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dbms
+    attributes:
+      label: DBMS
+      options:
+        - PostgreSQL
+        - Oracle
+        - DBに依存しない・不明
+    validations:
+      required: true
+
+  - type: input
+    id: dbms-version
+    attributes:
+      label: DBMSのバージョン
+      placeholder: 例) PostgreSQL 16.4 / Oracle Database 23ai Free
+
+  - type: input
+    id: version
+    attributes:
+      label: ツールのバージョン
+      description: |
+        Releasesから入手した場合は、ダウンロードしたzipのリリース日時を書いてください。
+        ソースからビルドした場合は、コミットのハッシュ（`git rev-parse --short HEAD`）を書いてください。
+      placeholder: 例) Releasesのlatest（2026-10-01取得） / 7c8aaab
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: 例) Windows 11 / Ubuntu 24.04 / macOS 15
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 補足
+      description: 回避策、関連するIssue、原因の心当たりなどがあれば書いてください。
