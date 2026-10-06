@@ -13,7 +13,8 @@ public class CliUsageTest {
   void testHelpListsArguments() {
     String help = CliUsage.help();
 
-    for (String flag : new String[] {"--check", "--rm-dist", "--config=<path>", "--help", "--version"}) {
+    for (String flag :
+        new String[] {"--check", "--rm-dist", "--config=<path>", "--help", "--version"}) {
       assertTrue(help.contains(flag), flag);
     }
     for (String name : CliArguments.overrideArgumentNames()) {
