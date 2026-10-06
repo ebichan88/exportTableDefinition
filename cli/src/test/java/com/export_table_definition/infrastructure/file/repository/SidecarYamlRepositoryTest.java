@@ -13,16 +13,17 @@ import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.shared.exception.UserCorrectableException;
+import com.export_table_definition.testsupport.CapturedLogs;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.yaml.snakeyaml.error.YAMLException;
 
 /** SidecarYamlRepository のサイドカーYAML読み込みに関するテスト */
 public class SidecarYamlRepositoryTest {
@@ -351,15 +352,17 @@ public class SidecarYamlRepositoryTest {
   }
 
   @Test
-  @DisplayName("load: YAMLとして解釈できない場合は、ファイルのパスを添えた利用者が直せる誤りを投げ、解析の失敗箇所を原因に残す")
+  @DisplayName("load: YAMLとして解釈できない場合は、ファイルのパスと失敗箇所の行を添えた利用者が直せる誤りを投げ、ファイルの内容は含めない")
   void testLoadRejectsInvalidYaml(@TempDir Path dir) throws IOException {
-    Path file = writeYaml(dir, "tables:\n  public.users:\n    description: [unclosed\n");
+    Path file = writeYaml(dir, "tables:\n  public.users:\n    description: [unclosed-text\n");
 
     UserCorrectableException e =
         assertThrows(UserCorrectableException.class, () -> repository.load(file.toString()));
 
     assertTrue(e.getMessage().contains(file.toString()));
-    assertInstanceOf(YAMLException.class, e.getCause());
+    assertTrue(e.getMessage().contains("line 3"), e.getMessage());
+    assertFalse(e.getMessage().contains("unclosed-text"), e.getMessage());
+    assertNull(e.getCause());
   }
 
   @Test
@@ -506,5 +509,89 @@ public class SidecarYamlRepositoryTest {
 
     Path absent = writeYaml(dir, "tables: {}\n");
     assertTrue(repository.load(absent.toString()).viewpoints().isEmpty());
+  }
+
+  @Test
+  @DisplayName("load: 必須項目の欠けた論理リレーションは、何件目の定義か・欠けた項目を1件の警告にまとめ、形式の誤りとしては報告しない")
+  void testLoadWarnsMissingRelationKeysOnce(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+            relations:
+              - table: public.logs
+                columns: [user_id]
+                parentTable: public.users
+                parentColumns: [id]
+              - columns: [user_id]
+                parentColumns: [id]
+            """);
+
+    try (CapturedLogs logs = CapturedLogs.of(SidecarYamlRepository.class)) {
+      assertEquals(1, repository.load(file.toString()).logicalRelations().size());
+
+      assertEquals(
+          List.of(
+              "Ignoring relation missing required keys. [entry=relations #2, missing=table, parentTable, annotations="
+                  + file
+                  + "]"),
+          logs.messages(Level.WARN));
+    }
+  }
+
+  @Test
+  @DisplayName("load: 論理リレーションのテーブル名の形式の誤りは、何件目の定義のどの項目かを添えて警告する")
+  void testLoadWarnsInvalidRelationTableWithLocation(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+            relations:
+              - table: logs
+                columns: [user_id]
+                parentTable: public.users
+                parentColumns: [id]
+                form: x
+            """);
+
+    try (CapturedLogs logs = CapturedLogs.of(SidecarYamlRepository.class)) {
+      assertTrue(repository.load(file.toString()).logicalRelations().isEmpty());
+
+      assertEquals(
+          List.of(
+              "Ignoring unknown key in relations #1. [key=form, annotations=" + file + "]",
+              "Ignoring table name not in 'schema.table' format. "
+                  + "[table=logs, location=relations #1 table, annotations="
+                  + file
+                  + "]"),
+          logs.messages(Level.WARN));
+    }
+  }
+
+  @Test
+  @DisplayName("load: 観点として成り立たない定義は、何件目の定義かを添えて警告する")
+  void testLoadWarnsInvalidViewpointWithEntry(@TempDir Path dir) throws IOException {
+    Path file =
+        writeYaml(
+            dir,
+            """
+            viewpoints:
+              - name: 識別子なし
+                tables: [public.users]
+              - just-a-string
+            """);
+
+    try (CapturedLogs logs = CapturedLogs.of(SidecarYamlRepository.class)) {
+      assertTrue(repository.load(file.toString()).viewpoints().isEmpty());
+
+      List<String> warnings = logs.messages(Level.WARN);
+      assertEquals(2, warnings.size(), warnings.toString());
+      assertTrue(warnings.get(0).contains("[entry=viewpoints #1, id=,"), warnings.get(0));
+      assertEquals(
+          "Ignoring viewpoint because it is not a mapping. [entry=viewpoints #2, annotations="
+              + file
+              + "]",
+          warnings.get(1));
+    }
   }
 }

@@ -144,11 +144,13 @@ public final class ConfigFile {
     try {
       return new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);
     } catch (YAMLException e) {
+      // 原因の例外は渡さない。メッセージが誤りの行（パスワード等を含みうる）を引用するため
       throw new InvalidConfigurationException(
           "Failed to parse the configuration file. Check that it is valid YAML saved in UTF-8. [file="
               + path
-              + "]",
-          e);
+              + ", error="
+              + YamlSyntaxErrors.describe(e)
+              + "]");
     }
   }
 

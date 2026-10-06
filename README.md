@@ -102,6 +102,35 @@ exportTableDefinition-windows
 * 設定・入力・実行環境を見直せば解消する失敗（設定の誤り、DBに接続できない等）は、表示内容に従って見直してください
 * それ以外の想定外の失敗は、実行したフォルダの`var/log/exportTableDefinition.log`にスタックトレースが記録されます
 
+### ログ
+
+実行したフォルダの`var/log/exportTableDefinition.log`に記録されます（10MBごとに切り替え、過去3世代まで残します）。
+警告（`[warn]:`）は、ログファイルに加えて画面（標準エラー出力）にも表示されます。
+
+| レベル | 記録する内容 |
+|---|---|
+| ERROR | 失敗の報告（想定外の失敗はスタックトレース付き） |
+| WARN | 処理は続けたが確認が必要な事柄（サイドカーYAMLの誤り、孤児付帯情報、出力対象のテーブルが0件等） |
+| INFO（既定） | 接続先のDBMS・JDBCドライバの版、処理の開始・終了と処理時間、出力した件数、`--check`の差分の件数 |
+| DEBUG | 上記に加え、実行したSQLとバインドした値（スキーマ名・テーブル名）、書き出したファイル |
+| TRACE | 上記に加え、DBから取得した行（コメント・関数やビューの定義を含む） |
+
+調査のために詳しく記録する場合は、システムプロパティ`export-table-definition.log.level`でレベルを指定します
+（`run.sh`・`run.bat`経由の場合は、環境変数`JAVA_TOOL_OPTIONS`で渡します）。
+DEBUG以上のログには、DBのメタ情報がそのまま記録されます。共有する前に内容を確認してください。
+
+```bash
+# Linux／macOS
+JAVA_TOOL_OPTIONS=-Dexport-table-definition.log.level=debug ./run.sh
+
+# Windows（コマンドプロンプト）
+set JAVA_TOOL_OPTIONS=-Dexport-table-definition.log.level=debug
+run.bat
+```
+
+パスワードと接続URLは記録しません（DB・JDBCドライバが返したエラーに含まれるホスト名・ユーザー名は、失敗の原因としてそのまま記録します）。
+メッセージ中の改行は`\n`・`\r`と記録します（スタックトレースを除き、1行が1件のログです）。
+
 ## 設定ファイル
 
 設定は`conf/config.yml`（YAML。UTF-8で保存する）に書きます。別の場所のファイルを使う場合は、`--config=パス`で指定します（[コマンドライン引数](#コマンドライン引数)を参照）。
