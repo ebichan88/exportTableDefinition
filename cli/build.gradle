@@ -111,7 +111,9 @@ tasks.register('oracleIntegrationTest', Test) {
 jar {
     manifest {
         attributes(
-            'Main-Class': 'com.export_table_definition.ExportTableDefinition'
+            'Main-Class': 'com.export_table_definition.ExportTableDefinition',
+            // --versionの表示元（実行時にManifestから読む）。shadowJarもこのmanifestを引き継ぐ
+            'Implementation-Version': project.version
         )
     }
 }

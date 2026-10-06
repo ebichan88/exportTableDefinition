@@ -37,12 +37,23 @@ public class ExportTableDefinition {
 
   /**
    * テーブル定義出力処理のエントリーポイントメソッド<br>
+   * {@code --help}・{@code --version}は表示だけして終了する（設定ファイルの読み込みやDBへの接続は行わない）。<br>
    * 終了コードは、成功（{@code --check}で差分なしを含む）は0、{@code --check}で差分ありは1、失敗は2以上（現在は2のみ）
    *
    * @param args コマンドライン引数（CLI引数・フラグの解析は{@link CliArguments}を参照）
    */
   public static void main(String[] args) {
     final CliArguments cliArguments = CliArguments.parse(args);
+    if (cliArguments.isHelp()) {
+      System.out.println(CliUsage.help());
+      System.exit(ExitStatus.SUCCESS.code());
+      return;
+    }
+    if (cliArguments.isVersion()) {
+      System.out.println(CliUsage.version());
+      System.exit(ExitStatus.SUCCESS.code());
+      return;
+    }
     ExitStatus exitStatus;
     try {
       exitStatus = cliArguments.isCheck() ? runCheck(cliArguments) : run(cliArguments);
