@@ -155,6 +155,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
 | `config` | `ConfigFile` | 設定ファイル（YAML）を読み込み、最上位のキーと値の組として返す（ファイルの読み込みとYAMLとしての解析のみを担い、設定項目の仕様と検証は値を使う側が持つ）。設定ファイルが見つからない・YAMLとして読めない場合は`InvalidConfigurationException`をスローする |
+| | `YamlSyntaxErrors` | YAMLの解析の失敗を、ファイルの内容を引用せずに失敗の種類と位置だけで説明する文言へ変換する（`ConfigFile`と`SidecarYamlRepository`が使う） |
 | | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`ConfigFile`・`ExportTableDefinitionProperties`・`ConnectionSettings`が投げる |
 | `config.module` | `ExportTableDefinitionModule` | Guiceの束縛定義（IF→実装クラスの対応）のうち、DB種別に依存しないもの。DBへ接続する前に組み立て、入力の検証にも使う。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
 | | `DatabaseDependentModule` | DB種別が決まってから、`ExportTableDefinitionModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`と`SqlSessionFactory`をコンストラクタで受け取り、`SqlSessionFactory`を束縛して`TableDefinitionRepository`の実装を選ぶ。それに依存するユースケースも束縛する |

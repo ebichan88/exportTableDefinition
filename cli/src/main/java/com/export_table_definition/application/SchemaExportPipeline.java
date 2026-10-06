@@ -86,6 +86,14 @@ final class SchemaExportPipeline {
     final BaseInfoEntity baseInfoEntity =
         BaseInfoEntity.of(repository.selectDatabase(), LocalDate.now(clock));
     final Tables tables = fetchTables(tableScope.schemaNames(), tableScope);
+    if (tables.isEmpty()) {
+      // 0件でも失敗にはしない（テーブルの無いスキーマもありうる）が、パターンの書き誤りや権限不足で
+      // 何も出力されないまま成功と表示されるのに気付けるよう警告する
+      logger.warn(
+          "No table or view matched the output target. Check the schema and table patterns "
+              + "(target in the configuration file, --schema and --table) and that the database user "
+              + "can see the tables.");
+    }
     report(consistency.findOrphanTableAnnotations(annotations, tables, isFiltered));
     report(consistency.findUnmatchedViewpointPatterns(sidecar.viewpoints(), tables, isFiltered));
     final ForeignKeys foreignKeys =
@@ -245,6 +253,13 @@ final class SchemaExportPipeline {
             (schemaName, tablesInSchema) ->
                 exportSchemaTableDefinitions(
                     schemaName, tablesInSchema, targets, triggers, chunkSize, sinks));
+    logger.info(
+        "Exported schema objects. [tables={}, functions={}, sequences={}, types={}, triggers={}]",
+        targets.tables().asList().size(),
+        targets.functions().asList().size(),
+        targets.sequences().asList().size(),
+        targets.types().asList().size(),
+        triggers.asList().size());
   }
 
   /** 定義本体はスキーマ単位で取得・出力・破棄することで、同時にメモリ保持する定義本体を抑える */

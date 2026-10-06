@@ -12,6 +12,7 @@ import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import com.export_table_definition.presentation.type.ExitStatus;
+import java.time.Clock;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,8 @@ public class ExportTableDefinitionControllerTest {
               }
               return diffResultToReturn;
             }
-          });
+          },
+          Clock.systemUTC());
     }
   }
 

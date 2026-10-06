@@ -3,14 +3,19 @@ package com.export_table_definition.infrastructure.db;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import com.export_table_definition.shared.exception.UserCorrectableException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Locale;
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /** DBへ接続し、接続先のDB種別を判定するクラス */
 public final class DatabaseTypeDetector {
+
+  private static final Logger logger = LogManager.getLogger(DatabaseTypeDetector.class);
 
   private DatabaseTypeDetector() {}
 
@@ -22,7 +27,15 @@ public final class DatabaseTypeDetector {
    */
   public static DatabaseType detect(SqlSessionFactory sqlSessionFactory) {
     try (final SqlSession session = sqlSessionFactory.openSession()) {
-      return toDatabaseType(connect(session).getMetaData().getDatabaseProductName());
+      final DatabaseMetaData metaData = connect(session).getMetaData();
+      // DBMS・ドライバの版による取得結果の違いを調べられるよう残す。接続URL・ユーザー名は設定値のため出さない
+      logger.info(
+          "Connected to the database. [product={} {}, driver={} {}]",
+          metaData.getDatabaseProductName(),
+          metaData.getDatabaseProductVersion(),
+          metaData.getDriverName(),
+          metaData.getDriverVersion());
+      return toDatabaseType(metaData.getDatabaseProductName());
     } catch (SQLException e) {
       throw new IllegalStateException("Failed to get the database name.", e);
     }

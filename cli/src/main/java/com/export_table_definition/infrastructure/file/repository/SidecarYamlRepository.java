@@ -1,5 +1,6 @@
 package com.export_table_definition.infrastructure.file.repository;
 
+import com.export_table_definition.config.YamlSyntaxErrors;
 import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.sidecar.Annotations;
@@ -150,7 +151,7 @@ public class SidecarYamlRepository implements SidecarRepository {
 
   /**
    * YAMLとして解釈できないのは利用者が手で書いたファイルの誤りのため、どのファイルを直せばよいかを添えて {@link UserCorrectableException}として伝える
-   * （解析の失敗箇所は原因の例外のメッセージが示す）
+   * （解析の失敗箇所は{@link YamlSyntaxErrors}が示す）
    *
    * @throws UserCorrectableException YAMLとして解釈できない場合（構文誤り・UTF-8以外の文字コード等）
    */
@@ -158,12 +159,14 @@ public class SidecarYamlRepository implements SidecarRepository {
     try {
       return new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);
     } catch (YAMLException e) {
+      // 原因の例外は渡さない。メッセージが誤りの行をそのまま引用するため
       throw new UserCorrectableException(
           "Failed to parse the annotation file. Check that it is valid YAML saved in UTF-8. "
               + "[annotations="
               + path
-              + "]",
-          e);
+              + ", error="
+              + YamlSyntaxErrors.describe(e)
+              + "]");
     }
   }
 
@@ -211,13 +214,20 @@ public class SidecarYamlRepository implements SidecarRepository {
       return List.of();
     }
     final List<ForeignKeyEntity> result = new ArrayList<>();
-    relationList.forEach(
-        relation -> {
-          final ForeignKeyEntity entity = toLogicalRelation(asMap(relation), path);
-          if (entity != null) {
-            result.add(entity);
-          }
-        });
+    for (int i = 0; i < relationList.size(); i++) {
+      final String entry = entryLabel(KEY_RELATIONS, i);
+      if (!(relationList.get(i) instanceof Map)) {
+        logger.warn(
+            "Ignoring relation because it is not a mapping. [entry={}, annotations={}]",
+            entry,
+            path);
+        continue;
+      }
+      final ForeignKeyEntity entity = toLogicalRelation(asMap(relationList.get(i)), entry, path);
+      if (entity != null) {
+        result.add(entity);
+      }
+    }
     return List.copyOf(result);
   }
 
@@ -235,21 +245,29 @@ public class SidecarYamlRepository implements SidecarRepository {
       return Viewpoints.empty();
     }
     final Map<String, Viewpoint> byId = new LinkedHashMap<>();
-    viewpointList.forEach(
-        viewpointValue -> {
-          final Viewpoint viewpoint = toViewpoint(asMap(viewpointValue), path);
-          if (viewpoint == null) {
-            return;
-          }
-          if (byId.containsKey(viewpoint.id())) {
-            logger.warn(
-                "Ignoring viewpoint with a duplicate 'id'. [id={}, annotations={}]",
-                viewpoint.id(),
-                path);
-            return;
-          }
-          byId.put(viewpoint.id(), viewpoint);
-        });
+    for (int i = 0; i < viewpointList.size(); i++) {
+      final String entry = entryLabel(KEY_VIEWPOINTS, i);
+      if (!(viewpointList.get(i) instanceof Map)) {
+        logger.warn(
+            "Ignoring viewpoint because it is not a mapping. [entry={}, annotations={}]",
+            entry,
+            path);
+        continue;
+      }
+      final Viewpoint viewpoint = toViewpoint(asMap(viewpointList.get(i)), entry, path);
+      if (viewpoint == null) {
+        continue;
+      }
+      if (byId.containsKey(viewpoint.id())) {
+        logger.warn(
+            "Ignoring viewpoint with a duplicate 'id'. [entry={}, id={}, annotations={}]",
+            entry,
+            viewpoint.id(),
+            path);
+        continue;
+      }
+      byId.put(viewpoint.id(), viewpoint);
+    }
     return Viewpoints.of(List.copyOf(byId.values()));
   }
 
@@ -258,9 +276,9 @@ public class SidecarYamlRepository implements SidecarRepository {
    *
    * @return 変換した観点。観点として成り立たない場合はnull
    */
-  private Viewpoint toViewpoint(Map<String, Object> viewpointMap, Path path) {
+  private Viewpoint toViewpoint(Map<String, Object> viewpointMap, String entry, Path path) {
     final String id = asString(viewpointMap.get(KEY_ID));
-    warnUnknownKeys(viewpointMap, VIEWPOINT_KEYS, "'" + KEY_VIEWPOINTS + "' entry of " + id, path);
+    warnUnknownKeys(viewpointMap, VIEWPOINT_KEYS, entry, path);
     try {
       return Viewpoint.of(
           id,
@@ -268,37 +286,60 @@ public class SidecarYamlRepository implements SidecarRepository {
           asString(viewpointMap.get(KEY_DESCRIPTION)),
           asStringList(viewpointMap.get(KEY_TABLES)));
     } catch (IllegalArgumentException e) {
-      logger.warn("Ignoring viewpoint '{}'. {} [annotations={}]", id, e.getMessage(), path);
+      logger.warn(
+          "Ignoring viewpoint. {} [entry={}, id={}, annotations={}]",
+          e.getMessage(),
+          entry,
+          id,
+          path);
       return null;
     }
   }
 
   /**
-   * @return 変換した論理リレーション。必須項目が欠けている場合はnull
+   * 必須項目の欠落と、テーブルの形式の誤りは、それぞれ別の警告として出す（欠落した項目を形式の誤りとしても報告しない）
+   *
+   * @param entry 警告に添える、{@code relations}の何件目の定義か
+   * @return 変換した論理リレーション。必須項目が欠けている場合や、テーブルの形式が誤っている場合はnull
    */
-  private ForeignKeyEntity toLogicalRelation(Map<String, Object> relationMap, Path path) {
-    warnUnknownKeys(
-        relationMap,
-        RELATION_KEYS,
-        "'" + KEY_RELATIONS + "' entry of " + asString(relationMap.get(KEY_TABLE)),
-        path);
-    final TableKey child = toTableKey(asString(relationMap.get(KEY_TABLE)), KEY_RELATIONS, path);
-    final TableKey parent =
-        toTableKey(asString(relationMap.get(KEY_PARENT_TABLE)), KEY_RELATIONS, path);
+  private ForeignKeyEntity toLogicalRelation(
+      Map<String, Object> relationMap, String entry, Path path) {
+    warnUnknownKeys(relationMap, RELATION_KEYS, entry, path);
+    final String rawChild = asString(relationMap.get(KEY_TABLE));
+    final String rawParent = asString(relationMap.get(KEY_PARENT_TABLE));
     final List<String> childColumns = asStringList(relationMap.get(KEY_COLUMNS));
     final List<String> parentColumns = asStringList(relationMap.get(KEY_PARENT_COLUMNS));
-    if (child == null || parent == null || childColumns.isEmpty() || parentColumns.isEmpty()) {
+    final List<String> missingKeys = new ArrayList<>();
+    if (rawChild == null || rawChild.isBlank()) {
+      missingKeys.add(KEY_TABLE);
+    }
+    if (childColumns.isEmpty()) {
+      missingKeys.add(KEY_COLUMNS);
+    }
+    if (rawParent == null || rawParent.isBlank()) {
+      missingKeys.add(KEY_PARENT_TABLE);
+    }
+    if (parentColumns.isEmpty()) {
+      missingKeys.add(KEY_PARENT_COLUMNS);
+    }
+    if (!missingKeys.isEmpty()) {
       logger.warn(
-          "Ignoring relation missing required keys ('table', 'columns', 'parentTable', 'parentColumns'). "
-              + "[relation={}, annotations={}]",
-          relationMap,
+          "Ignoring relation missing required keys. [entry={}, missing={}, annotations={}]",
+          entry,
+          String.join(", ", missingKeys),
           path);
+      return null;
+    }
+    final TableKey child = toTableKey(rawChild, entry + " " + KEY_TABLE, path);
+    final TableKey parent = toTableKey(rawParent, entry + " " + KEY_PARENT_TABLE, path);
+    if (child == null || parent == null) {
       return null;
     }
     if (childColumns.size() != parentColumns.size()) {
       logger.warn(
           "Relation has a different number of 'columns' and 'parentColumns'. "
-              + "[table={}, parentTable={}, annotations={}]",
+              + "[entry={}, table={}, parentTable={}, annotations={}]",
+          entry,
           child.qualifiedName(),
           parent.qualifiedName(),
           path);
@@ -309,7 +350,7 @@ public class SidecarYamlRepository implements SidecarRepository {
         childColumns,
         parent,
         parentColumns,
-        resolveCardinality(asString(relationMap.get(KEY_CARDINALITY)), child, path));
+        resolveCardinality(asString(relationMap.get(KEY_CARDINALITY)), entry, path));
   }
 
   /**
@@ -317,9 +358,9 @@ public class SidecarYamlRepository implements SidecarRepository {
    * Cardinality#DEFAULT_FOR_LOGICAL_RELATION}）を用いる。未指定の場合は既定値へ黙って落とすが、不正な値が指定された場合は気付けるよう警告する
    *
    * @param label YAMLで指定された多重度のラベル（未指定可）
-   * @param child 警告ログにのみ使う参照元（子）テーブルのキー
+   * @param entry 警告に添える、{@code relations}の何件目の定義か
    */
-  private Cardinality resolveCardinality(String label, TableKey child, Path path) {
+  private Cardinality resolveCardinality(String label, String entry, Path path) {
     if (label == null || label.isBlank()) {
       return Cardinality.DEFAULT_FOR_LOGICAL_RELATION;
     }
@@ -328,10 +369,10 @@ public class SidecarYamlRepository implements SidecarRepository {
             () -> {
               logger.warn(
                   "Ignoring unknown 'cardinality' and falling back to the default. "
-                      + "[cardinality={}, default={}, table={}, annotations={}]",
+                      + "[entry={}, cardinality={}, default={}, annotations={}]",
+                  entry,
                   label,
                   Cardinality.DEFAULT_FOR_LOGICAL_RELATION.getLabel(),
-                  child.qualifiedName(),
                   path);
               return Cardinality.DEFAULT_FOR_LOGICAL_RELATION;
             });
@@ -340,16 +381,18 @@ public class SidecarYamlRepository implements SidecarRepository {
   /**
    * 解析自体は{@link TableKey#parse}に委ね、ここでは解析失敗時の警告ログのみを担う
    *
+   * @param location 警告に添える、どこに書かれたテーブル名か（例: {@code tables}・{@code relations #2 parentTable}）
    * @return 変換したテーブルキー。形式が不正な場合はnull
    */
-  private TableKey toTableKey(String rawKey, String sectionKey, Path path) {
+  private TableKey toTableKey(String rawKey, String location, Path path) {
     return TableKey.parse(rawKey)
         .orElseGet(
             () -> {
               logger.warn(
-                  "Ignoring key not in 'schema.table' format. [key={}, section={}, annotations={}]",
+                  "Ignoring table name not in 'schema.table' format. "
+                      + "[table={}, location={}, annotations={}]",
                   rawKey,
-                  sectionKey,
+                  location,
                   path);
               return null;
             });
@@ -379,6 +422,16 @@ public class SidecarYamlRepository implements SidecarRepository {
           }
         });
     return new TableAnnotation(description, remarks, columnRemarks);
+  }
+
+  /**
+   * 警告に添える、一覧の何件目の定義かを表す文字列を返すメソッド
+   *
+   * @param index 0始まりの位置
+   * @return 1始まりの番号を付けた文字列。例: {@code relations #2}
+   */
+  private static String entryLabel(String sectionKey, int index) {
+    return sectionKey + " #" + (index + 1);
   }
 
   /** 未知のキーは読み飛ばすが、キー名の書き誤り（{@code descripton}等）で付帯情報が黙って消えないよう警告する */
