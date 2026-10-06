@@ -195,4 +195,17 @@ public class CliArgumentsTest {
     assertTrue(e.getMessage().contains("--annotation-path=<value>"));
     assertTrue(e.getMessage().contains("--config=<path>"));
   }
+
+  @Test
+  @DisplayName("isHelp・isVersion: 指定が無ければfalse、指定されていればtrueで、解釈できる引数として受け入れる")
+  void testHelpAndVersionFlags() {
+    CliArguments none = CliArguments.parse(new String[] {});
+    assertFalse(none.isHelp());
+    assertFalse(none.isVersion());
+
+    CliArguments both = CliArguments.parse(new String[] {"--help", "--version"});
+    assertTrue(both.isHelp());
+    assertTrue(both.isVersion());
+    assertDoesNotThrow(both::requireKnownArguments);
+  }
 }

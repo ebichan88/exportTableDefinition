@@ -30,8 +30,15 @@ final class CliArguments {
   /** 書き込み前に出力先ディレクトリを事前に削除するCLIフラグ（値を持たないブールフラグ。{@code --check}指定時は無視される） */
   private static final String RM_DIST_FLAG = "--rm-dist";
 
+  /** 使い方を表示して終了するCLIフラグ（値を持たないブールフラグ。他の引数より優先する） */
+  private static final String HELP_FLAG = "--help";
+
+  /** バージョンを表示して終了するCLIフラグ（値を持たないブールフラグ。{@code --help}と同時に指定した場合は{@code --help}を優先する） */
+  private static final String VERSION_FLAG = "--version";
+
   /** 値を持たないフラグ */
-  private static final List<String> FLAGS = List.of(CHECK_FLAG, RM_DIST_FLAG);
+  private static final List<String> FLAGS =
+      List.of(CHECK_FLAG, RM_DIST_FLAG, HELP_FLAG, VERSION_FLAG);
 
   /** 設定ファイルのパスを指定するCLI引数 */
   private static final String CONFIG_ARG = "--config";
@@ -55,6 +62,8 @@ final class CliArguments {
 
   private final boolean check;
   private final boolean rmDist;
+  private final boolean help;
+  private final boolean version;
   private final String configPath;
   private final Properties connectionOverrides;
   private final Map<String, SettingOverride> settingOverrides;
@@ -63,12 +72,16 @@ final class CliArguments {
   private CliArguments(
       boolean check,
       boolean rmDist,
+      boolean help,
+      boolean version,
       String configPath,
       Properties connectionOverrides,
       Map<String, SettingOverride> settingOverrides,
       List<String> unknownArguments) {
     this.check = check;
     this.rmDist = rmDist;
+    this.help = help;
+    this.version = version;
     this.configPath = configPath;
     this.connectionOverrides = connectionOverrides;
     this.settingOverrides = settingOverrides;
@@ -88,6 +101,8 @@ final class CliArguments {
     return new CliArguments(
         argList.contains(CHECK_FLAG),
         argList.contains(RM_DIST_FLAG),
+        argList.contains(HELP_FLAG),
+        argList.contains(VERSION_FLAG),
         cliArgs.getOrDefault(CONFIG_ARG, "").strip(),
         resolveConnectionOverrides(cliArgs),
         resolveSettingOverrides(cliArgs),
@@ -102,6 +117,27 @@ final class CliArguments {
   /** {@code --rm-dist}（書き込み前の出力先の削除）が指定されたか */
   boolean isRmDist() {
     return rmDist;
+  }
+
+  /** {@code --help}（使い方の表示）が指定されたか */
+  boolean isHelp() {
+    return help;
+  }
+
+  /** {@code --version}（バージョンの表示）が指定されたか */
+  boolean isVersion() {
+    return version;
+  }
+
+  /**
+   * 使い方の表示に載せる、{@code --キー=値}形式で上書きできる引数名
+   *
+   * @return DB接続情報・実行時設定の上書きに使える引数名（READMEの記載順。{@code --config}は含まない）
+   */
+  static List<String> overrideArgumentNames() {
+    return Stream.concat(CONNECTION_ARGS.stream(), SETTING_ARGS.stream())
+        .map(OverrideArg::cliName)
+        .toList();
   }
 
   /**

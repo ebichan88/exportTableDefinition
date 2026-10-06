@@ -303,7 +303,7 @@ pre.tree { line-height: 1.55; }
       <text x="24" y="282" class="d-t-s">出力対象・出力先など7項目</text>
       <rect x="10" y="304" width="270" height="50" rx="6" class="d-box-soft"/>
       <text x="24" y="325" class="d-t-b">CLI引数</text>
-      <text x="24" y="344" class="d-t-s">--check・--rm-dist・--config・各設定の上書き</text>
+      <text x="24" y="344" class="d-t-s">--check・--rm-dist・--help・--version・--config・各設定の上書き</text>
 
       <rect x="340" y="110" width="220" height="180" rx="8" class="d-box-acc"/>
       <text x="450" y="138" text-anchor="middle" class="d-t-s">cli（このサブプロジェクト）</text>
@@ -1728,7 +1728,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
   <tbody>
     <tr class="group"><td colspan="4">com.export_table_definition（直下）：エントリーポイント</td></tr>
     <tr><td class="file">ExportTableDefinition</td><td class="num">139</td><td><code>main</code>。処理全体を1つの<code>try-catch</code>で囲み、通常実行（<code>run</code>）か差分検知（<code>runCheck</code>）を呼ぶ。DIコンテナを2段階で組み立て、失敗は<code>FailureReporter</code>で報告して終了コードに変える</td><td>→ <code>CliArguments</code>・<code>ExportTableDefinitionProperties</code>・<code>OutputDirectoryValidator</code>・<code>ConnectionSettings</code>・<code>MyBatisSqlSessionFactories</code>・<code>DatabaseTypeDetector</code>・2つのModule・Controller・<code>FailureReporter</code></td></tr>
-    <tr><td class="file">CliArguments<span class="sub">パッケージプライベート</span></td><td class="num">196</td><td>CLI引数の解析（<code>--check</code>・<code>--rm-dist</code>、接続情報と実行時設定の上書き値）。未知の引数は集めておき、<code>requireKnownArguments</code>で誤りにする。設定の引数名はキーから導く</td><td>← <code>ExportTableDefinition</code>／→ <code>ExportTableDefinitionProperties.KEYS</code></td></tr>
+    <tr><td class="file">CliArguments<span class="sub">パッケージプライベート</span></td><td class="num">196</td><td>CLI引数の解析（<code>--check</code>・<code>--rm-dist</code>・<code>--help</code>・<code>--version</code>、接続情報と実行時設定の上書き値）。未知の引数は集めておき、<code>requireKnownArguments</code>で誤りにする。設定の引数名はキーから導く</td><td>← <code>ExportTableDefinition</code>／→ <code>ExportTableDefinitionProperties.KEYS</code></td></tr>
     <tr><td class="file">ExportTableDefinitionProperties<span class="sub">パッケージプライベート</span></td><td class="num">334</td><td><code>conf/config.yml</code>のうち<code>database</code>以外の仕様（7項目の位置・CLI引数名・既定値・形式）と検証。CLI引数で上書きしてから検証し、誤りをまとめて<code>InvalidConfigurationException</code>にする。2種類のRequestへ変換</td><td>← <code>ExportTableDefinition</code>／→ <code>ConfigFile</code>・<code>TargetSelection</code></td></tr>
     <tr><td class="file">OutputDirectoryValidator<span class="sub">パッケージプライベート</span></td><td class="num">79</td><td>出力先の検証（既存のファイルを指していないか、<code>--rm-dist</code>で消してよいか）。DBへの接続前に、親のコンテナから取り出して使う</td><td>← <code>ExportTableDefinition</code>／→ <code>OutputPathResolver</code>・<code>FileRepository</code></td></tr>
 
