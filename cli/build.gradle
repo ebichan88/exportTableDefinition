@@ -1,6 +1,6 @@
 plugins {
     id 'jacoco'
-    id 'com.github.johnrengelman.shadow'
+    id 'com.gradleup.shadow'
 }
 
 // 結合テスト（Docker上の実DBに対してmapperのSQLと出力全体を検証する）は、Dockerが無い環境でも
