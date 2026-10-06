@@ -18,22 +18,22 @@ configurations {
 }
 
 dependencies {
-    implementation 'org.mybatis:mybatis:3.5.16'
+    implementation 'org.mybatis:mybatis:3.5.19'
     implementation 'org.postgresql:postgresql:42.7.13'
     // Java 11以降向けのojdbc11を使う。23系のドライバはDB 19c以上にしか対応せず、READMEの対象（Oracle 12c以上）を外れるため21系に留める
     implementation 'com.oracle.database.jdbc:ojdbc11:21.23.0.0'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.24.0'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.24.0'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.26.1'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.26.1'
     implementation group: 'com.google.inject', name: 'guice', version: '7.0.0'
     // Guice固有の@Injectではなく標準のjakarta.injectを用い、ドメイン層をDIコンテナ実装から切り離す
     implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
-    implementation 'org.yaml:snakeyaml:2.3'
+    implementation 'org.yaml:snakeyaml:2.7'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     // レイヤーの依存方向・命名等、AGENTS.mdの規約のうち機械的に判定できるものをArchitectureTestで検査する
     testImplementation 'com.tngtech.archunit:archunit:1.5.1'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.3'
 
     // 結合テスト（integrationTest・oracleIntegrationTest）だけが使う。Docker上に使い捨てのDBを起動する
     integrationTestImplementation platform('org.testcontainers:testcontainers-bom:2.0.5')

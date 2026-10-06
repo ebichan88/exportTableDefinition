@@ -44,6 +44,7 @@ import com.export_table_definition.domain.service.writer.tabledefinition.TableDe
 import com.export_table_definition.domain.service.writer.viewpoint.ViewpointWriter;
 import com.export_table_definition.infrastructure.path.DefaultOutputPathResolver;
 import com.export_table_definition.infrastructure.snapshot.JacksonSnapshotSerializer;
+import com.export_table_definition.testsupport.CapturedLogs;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
 import java.nio.file.Path;
@@ -58,6 +59,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -501,6 +503,39 @@ public class ExportTableDefinitionUsecaseTest {
     assertTrue(tableListContent.contains("シーケンス一覧"));
     assertFalse(fileExists(dbFile(DEFAULT_OUT, "erDiagramList_testdb.md")));
     assertTrue(fileExists(dbFile(DEFAULT_OUT, "sequenceList_testdb.md")));
+  }
+
+  @Test
+  @DisplayName("出力対象のテーブルが0件の場合は、パターンの誤りや権限不足に気付けるよう警告する")
+  void testNoTablesIsWarned() {
+    setUp();
+    try (CapturedLogs logs = CapturedLogs.of(SchemaExportPipeline.class)) {
+      usecase.exportTableDefinition(
+          new ExportTableDefinitionRequest(
+              TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
+
+      assertEquals(1, logs.messages(Level.WARN).size());
+      assertTrue(logs.messages(Level.WARN).get(0).startsWith("No table or view matched"));
+    }
+  }
+
+  @Test
+  @DisplayName("出力対象のテーブルがある場合は0件の警告を出さず、出力した件数を記録する")
+  void testExportedCountsAreLogged() {
+    setUp();
+    repository.tables.add(table("public", "t1"));
+    repository.tables.add(table("public", "t2"));
+    try (CapturedLogs logs = CapturedLogs.of(SchemaExportPipeline.class)) {
+      usecase.exportTableDefinition(
+          new ExportTableDefinitionRequest(
+              TargetSelection.of(List.of(), List.of(), List.of()), null, null, 0, 80, false));
+
+      assertEquals(List.of(), logs.messages(Level.WARN));
+      assertTrue(
+          logs.messages(Level.INFO).stream()
+              .anyMatch(message -> message.startsWith("Exported schema objects. [tables=2,")),
+          logs.messages(Level.INFO).toString());
+    }
   }
 
   @Test

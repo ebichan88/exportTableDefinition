@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.snapshot.DiffResult;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.presentation.dto.ResultDto;
 import jakarta.inject.Inject;
+import java.time.Clock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,20 +22,27 @@ public class ExportTableDefinitionController {
   private static final Logger logger = LogManager.getLogger(ExportTableDefinitionController.class);
   private final ExportTableDefinitionUsecase exportTableDefinitionUsecase;
   private final CheckDocumentDiffUsecase checkDocumentDiffUsecase;
+  private final Clock clock;
 
+  /**
+   * @param clock 処理時間を計る時計
+   */
   @Inject
   public ExportTableDefinitionController(
       ExportTableDefinitionUsecase exportTableDefinitionUsecase,
-      CheckDocumentDiffUsecase checkDocumentDiffUsecase) {
+      CheckDocumentDiffUsecase checkDocumentDiffUsecase,
+      Clock clock) {
     this.exportTableDefinitionUsecase = exportTableDefinitionUsecase;
     this.checkDocumentDiffUsecase = checkDocumentDiffUsecase;
+    this.clock = clock;
   }
 
   /** コントローラーメソッド */
   public ResultDto execute(ExportTableDefinitionRequest request) {
     logger.info("[START] exportTableDefinition");
+    final long startMillis = clock.millis();
     exportTableDefinitionUsecase.exportTableDefinition(request);
-    logger.info("[ END ] exportTableDefinition");
+    logger.info("[ END ] exportTableDefinition [elapsedMillis={}]", clock.millis() - startMillis);
     return new ResultDto("Table definition output is complete.");
   }
 
@@ -46,8 +54,16 @@ public class ExportTableDefinitionController {
    */
   public DiffCheckResultDto checkDiff(CheckDocumentDiffRequest request) {
     logger.info("[START] checkDocumentDiff");
+    final long startMillis = clock.millis();
     final DiffResult diffResult = checkDocumentDiffUsecase.checkDocumentDiff(request);
-    logger.info("[ END ] checkDocumentDiff");
+    // 差分の内容（unified diff）は画面にだけ出し、ログには規模だけを残す。ログが差分の大きさに比例して膨らまないようにするため
+    logger.info(
+        "[ END ] checkDocumentDiff [elapsedMillis={}, onlyInGenerated={}, onlyInCommitted={}, "
+            + "contentDiffer={}]",
+        clock.millis() - startMillis,
+        diffResult.onlyInGenerated().size(),
+        diffResult.onlyInCommitted().size(),
+        diffResult.contentDiffer().size());
     return new DiffCheckResultDto(
         DiffReportFormatter.format(diffResult), diffResult.hasDifference());
   }

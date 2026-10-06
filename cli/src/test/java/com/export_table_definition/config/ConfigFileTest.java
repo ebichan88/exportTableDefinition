@@ -70,7 +70,20 @@ public class ConfigFileTest {
 
     assertTrue(e.getMessage().startsWith("Failed to parse the configuration file."));
     assertTrue(e.getMessage().contains(PATH.toString()));
-    assertNotNull(e.getCause());
+    assertTrue(e.getMessage().contains("line 2"), e.getMessage());
+  }
+
+  @Test
+  @DisplayName("parse: YAMLとして解釈できない場合も、誤りの行の内容（書き誤ったパスワード等）は報告に含めない")
+  void testParseDoesNotQuoteInvalidLine() {
+    InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () -> ConfigFile.parse(PATH, "database:\n  password: \"secret-value\n"));
+
+    assertFalse(e.getMessage().contains("secret-value"), e.getMessage());
+    // FailureReporterは原因の例外のメッセージも表示するため、引用を含む原因も渡さない
+    assertNull(e.getCause());
   }
 
   @Test
