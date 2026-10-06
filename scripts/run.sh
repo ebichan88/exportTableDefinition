@@ -20,9 +20,9 @@ if [ ! -x "$JAVA_EXE" ]; then
     exit 2
 fi
 
-JAR_FILE=$(find . -maxdepth 1 -name '*.jar' | head -n 1)
-if [ -z "$JAR_FILE" ]; then
-    echo "[ERROR] 実行可能jarファイルが見つかりません。"
+JAR_FILE="./exportTableDefinition.jar"
+if [ ! -f "$JAR_FILE" ]; then
+    echo "[ERROR] 実行可能jarファイル（exportTableDefinition.jar）が見つかりません。"
     pause_if_interactive
     exit 2
 fi

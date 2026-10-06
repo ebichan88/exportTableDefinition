@@ -118,6 +118,12 @@ jar {
     }
 }
 
+// 依存ライブラリを含まないjarは単体では起動できない。shadowJarと名前が分かれた今は取り違えのもとになるため作らない
+// （manifestの設定はshadowJarが引き継ぐ）
+jar {
+    enabled = false
+}
+
 tasks.named('build').configure {
     dependsOn(tasks.named('shadowJar'))
 }
@@ -128,7 +134,8 @@ base {
 }
 
 shadowJar {
-    archiveClassifier.set('') // 実行可能JARを作成（デフォルトの「-all」サフィックスを削除）
+    // 起動スクリプト・CIのジョブ等に書くパスが版を上げるたびに変わらないよう、版を含めない固定名にする（版は--versionで確かめる）
+    archiveFileName = 'exportTableDefinition.jar'
 }
 
 task copyResources(type: Copy) {

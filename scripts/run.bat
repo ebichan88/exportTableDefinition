@@ -10,11 +10,9 @@ if not exist "%JAVA_EXE%" (
     exit /b 2
 )
 
-set "JAR_FILE="
-for %%f in ("%~dp0*.jar") do set "JAR_FILE=%%~ff"
-
-if not defined JAR_FILE (
-    echo [ERROR] 実行可能jarファイルが見つかりません。
+set "JAR_FILE=%~dp0exportTableDefinition.jar"
+if not exist "%JAR_FILE%" (
+    echo [ERROR] 実行可能jarファイル（exportTableDefinition.jar）が見つかりません。
     pause
     exit /b 2
 )

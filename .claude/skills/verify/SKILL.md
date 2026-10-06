@@ -56,7 +56,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 ./gradlew build --console=plain
 ```
 
-`cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar` と `cli/build/libs/conf/` 一式が作られる
+`cli/build/libs/exportTableDefinition.jar` と `cli/build/libs/conf/` 一式が作られる
 （`test`タスクも実行されるが数秒で終わる。ユニットテストが落ちたらそこで止めて直す）。
 
 ### 3. 設定ファイルを用意する
@@ -86,7 +86,7 @@ DB接続情報はCLI引数で渡す（設定ファイルの`database`は空で�
 全項目が未指定の配布用の設定＝全スキーマ対象を拾ってしまう）ため、必ず`--config`で手順3のファイルを指定する。
 
 ```bash
-java -jar cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar \
+java -jar cli/build/libs/exportTableDefinition.jar \
   --config=/tmp/verify-postgres.yml \
   --db-driver=org.postgresql.Driver \
   --db-url=jdbc:postgresql://localhost:15432/testdb \
@@ -148,7 +148,7 @@ EOF
 
 # 4. 実行（リポジトリ直下で）
 rm -rf docs/sample/oracle/output
-java -jar cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar \
+java -jar cli/build/libs/exportTableDefinition.jar \
   --config=/tmp/verify-oracle.yml \
   --db-driver=oracle.jdbc.OracleDriver \
   --db-url=jdbc:oracle:thin:@//localhost:11521/FREEPDB1 \
@@ -188,8 +188,8 @@ try (SqlSession session = factory.openSession()) {
 
 ```bash
 cd /tmp/repro
-javac -cp <リポジトリルート>/cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar Repro.java
-java -cp .:<リポジトリルート>/cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar Repro
+javac -cp <リポジトリルート>/cli/build/libs/exportTableDefinition.jar Repro.java
+java -cp .:<リポジトリルート>/cli/build/libs/exportTableDefinition.jar Repro
 ```
 
 PSQLExceptionの`Position:`はUTF-8バイトオフセットなので、日本語コメントが混じるSQLでは
