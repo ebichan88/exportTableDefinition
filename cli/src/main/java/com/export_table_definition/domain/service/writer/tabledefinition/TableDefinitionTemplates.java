@@ -34,7 +34,9 @@ public class TableDefinitionTemplates {
 
   /** テーブル定義ヘッダー */
   public static String fileHeader(TableEntity table) {
-    return "# " + table.getHeaderTableName() + LINE_SEPARATOR_DOUBLE;
+    return "# "
+        + MarkdownTemplateSupport.escapeInline(table.getHeaderTableName())
+        + LINE_SEPARATOR_DOUBLE;
   }
 
   /** 基本情報セクション */
@@ -127,9 +129,8 @@ public class TableDefinitionTemplates {
     final String keyLine =
         "## パーティション情報"
             + LINE_SEPARATOR_DOUBLE
-            + "パーティションキー: `"
-            + table.partitionKey()
-            + "`"
+            + "パーティションキー: "
+            + MarkdownTemplateSupport.codeSpan(table.partitionKey())
             + LINE_SEPARATOR_DOUBLE;
     if (partitions.isEmpty()) {
       return keyLine + "パーティションはありません。" + LINE_SEPARATOR_DOUBLE;
@@ -157,19 +158,16 @@ public class TableDefinitionTemplates {
     if (!table.isView()) {
       return "";
     }
-    return """
-                ## ソース
-
-                ```sql
-                """
+    final String fence = MarkdownTemplateSupport.codeFence(table.definition());
+    return "## ソース\n\n"
+        + fence
+        + "sql\n"
         + LINE_SEPARATOR
         + table.definition()
         + LINE_SEPARATOR
-        + """
-
-                ```
-
-                """;
+        + "\n"
+        + fence
+        + "\n\n";
   }
 
   /**
@@ -413,7 +411,7 @@ public class TableDefinitionTemplates {
             sb.append(
                     String.format(
                         "* [%s](%s)  ",
-                        viewpoint.name(),
+                        MarkdownTemplateSupport.escapeInline(viewpoint.name()),
                         DocumentLocations.linkFromDefinition(
                             DocumentLocations.viewpointFile(baseInfo.dbName(), viewpoint))))
                 .append(LINE_SEPARATOR));

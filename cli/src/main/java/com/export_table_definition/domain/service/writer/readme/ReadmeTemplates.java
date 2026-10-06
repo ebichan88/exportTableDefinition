@@ -14,7 +14,9 @@ public class ReadmeTemplates {
 
   /** READMEのファイルヘッダー */
   public static String fileHeader(BaseInfoEntity baseInfo) {
-    return "# " + String.format("%s ドキュメント一覧", baseInfo.dbName()) + LINE_SEPARATOR_DOUBLE;
+    return "# "
+        + MarkdownTemplateSupport.escapeInline(String.format("%s ドキュメント一覧", baseInfo.dbName()))
+        + LINE_SEPARATOR_DOUBLE;
   }
 
   /** 基本情報セクション */

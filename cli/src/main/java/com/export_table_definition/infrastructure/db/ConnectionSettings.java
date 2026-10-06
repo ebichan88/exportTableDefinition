@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +23,16 @@ public final class ConnectionSettings {
   private static final String PASSWORD_ENVIRONMENT_VARIABLE = "EXPORT_TABLE_DEFINITION_DB_PASSWORD";
 
   private static final String PASSWORD_KEY = "password";
+
+  private static final String URL_KEY = "url";
+
+  /**
+   * JDBC URLに埋め込んだパスワード<br>
+   * 接続プロパティ（{@code ?password=}・{@code ;password=}、{@code sslpassword=}等）と、Oracleの{@code
+   * jdbc:oracle:thin:ユーザー/パスワード@...}の形
+   */
+  private static final Pattern PASSWORD_IN_URL =
+      Pattern.compile("(?i)password\\s*=|^jdbc:oracle:[a-z0-9]+:[^@/]*/[^@]*@");
 
   /**
    * DB接続情報のキー（mybatis-config.xmlが参照する）<br>
@@ -74,13 +85,20 @@ public final class ConnectionSettings {
 
   /**
    * 未知のキーの一覧に紛れさせず、パスワードの渡し方を示して誤りとする<br>
-   * 値が空でも誤りとするのは、行が残っているとパスワードを書く場所だと誤解されるため
+   * 値が空でも誤りとするのは、行が残っているとパスワードを書く場所だと誤解されるため。 URLに埋め込んだパスワードも同じく誤りとする（誤りの報告にURLの値は含めない）
    */
   private static void requireNoPasswordInFile(Map<String, String> baseValues) {
     if (baseValues.containsKey(PASSWORD_KEY)) {
       throw new InvalidConfigurationException(
           "database.password cannot be set in the configuration file. Remove the password line, "
               + "and set the password with the "
+              + PASSWORD_ENVIRONMENT_VARIABLE
+              + " environment variable (or the --db-password argument).");
+    }
+    if (PASSWORD_IN_URL.matcher(baseValues.getOrDefault(URL_KEY, "")).find()) {
+      throw new InvalidConfigurationException(
+          "database.url in the configuration file must not contain a password. "
+              + "Remove the password from the URL, and set it with the "
               + PASSWORD_ENVIRONMENT_VARIABLE
               + " environment variable (or the --db-password argument).");
     }

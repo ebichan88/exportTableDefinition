@@ -17,7 +17,9 @@ import java.util.function.Predicate;
 /**
  * 出力パス解決のデフォルト実装<br>
  * Markdownドキュメントのファイル名・配置は{@link DocumentLocations}、スナップショットのそれは{@link SnapshotLocations}の規則に従い、
- * 出力ベースディレクトリを起点に解決する
+ * 出力ベースディレクトリを起点に解決する。<br>
+ * 解決したパスが起点のディレクトリの外を指さないことを確かめる（DB由来の名前は{@link
+ * com.export_table_definition.domain.service.path.PathSegments}で置き換え済みのため、外を指すのは規則の不具合）
  */
 public class DefaultOutputPathResolver implements OutputPathResolver {
 
@@ -38,13 +40,15 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
     final Path absolute = baseOutputDir.toAbsolutePath().normalize();
     final Path cwd = Path.of("").toAbsolutePath().normalize();
     final Path home = Path.of(System.getProperty("user.home")).toAbsolutePath().normalize();
-    return absolute.getParent() != null && !absolute.equals(cwd) && !absolute.equals(home);
+    // startsWithはPathの要素単位で比べるため、カレント・ホーム自体とその上位のディレクトリだけが一致する。
+    // 別のドライブのルート（Windows）はカレント・ホームの上位にならないため、ルートは別に判定する
+    return absolute.getParent() != null && !cwd.startsWith(absolute) && !home.startsWith(absolute);
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveDatabaseDirectory(OutputRoot root) {
-    return root.baseDir().resolve(root.baseInfo().dbName());
+    return within(root.baseDir(), DocumentLocations.databaseDirectory(root.baseInfo().dbName()));
   }
 
   /** {@inheritDoc} */
@@ -56,42 +60,44 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   /** {@inheritDoc} */
   @Override
   public Path resolveTableDefinitionFile(OutputRoot root, TableEntity table) {
-    return resolveDatabaseDirectory(root).resolve(DocumentLocations.tableDefinitionFile(table));
+    return within(resolveDatabaseDirectory(root), DocumentLocations.tableDefinitionFile(table));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveListFile(OutputRoot root, ListDocumentType type) {
-    return resolveDatabaseDirectory(root)
-        .resolve(DocumentLocations.listFile(type, root.baseInfo().dbName()));
+    return within(
+        resolveDatabaseDirectory(root), DocumentLocations.listFile(type, root.baseInfo().dbName()));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveErDiagramFile(OutputRoot root, String schemaName) {
-    return resolveDatabaseDirectory(root)
-        .resolve(DocumentLocations.erDiagramFile(root.baseInfo().dbName(), schemaName));
+    return within(
+        resolveDatabaseDirectory(root),
+        DocumentLocations.erDiagramFile(root.baseInfo().dbName(), schemaName));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveErDiagramGroupFile(OutputRoot root, String schemaName, int groupNo) {
-    return resolveDatabaseDirectory(root)
-        .resolve(
-            DocumentLocations.erDiagramGroupFile(root.baseInfo().dbName(), schemaName, groupNo));
+    return within(
+        resolveDatabaseDirectory(root),
+        DocumentLocations.erDiagramGroupFile(root.baseInfo().dbName(), schemaName, groupNo));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveViewpointFile(OutputRoot root, Viewpoint viewpoint) {
-    return resolveDatabaseDirectory(root)
-        .resolve(DocumentLocations.viewpointFile(root.baseInfo().dbName(), viewpoint));
+    return within(
+        resolveDatabaseDirectory(root),
+        DocumentLocations.viewpointFile(root.baseInfo().dbName(), viewpoint));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveReadmeFile(OutputRoot root) {
-    return resolveDatabaseDirectory(root).resolve(DocumentLocations.readmeFile());
+    return within(resolveDatabaseDirectory(root), DocumentLocations.readmeFile());
   }
 
   /** {@inheritDoc} */
@@ -105,16 +111,16 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   @Override
   public Path resolveSchemaObjectDirectory(
       OutputRoot root, String schemaName, ListDocumentType kind) {
-    return resolveDatabaseDirectory(root)
-        .resolve(DocumentLocations.schemaObjectDirectory(schemaName, kind));
+    return within(
+        resolveDatabaseDirectory(root), DocumentLocations.schemaObjectDirectory(schemaName, kind));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveSchemaObjectFile(
       OutputRoot root, String schemaName, ListDocumentType kind, String name) {
-    return resolveDatabaseDirectory(root)
-        .resolve(DocumentLocations.schemaObjectFile(schemaName, kind, name));
+    return within(
+        resolveDatabaseDirectory(root), DocumentLocations.schemaObjectFile(schemaName, kind, name));
   }
 
   /** {@inheritDoc} */
@@ -126,15 +132,17 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   /** {@inheritDoc} */
   @Override
   public Path resolveSnapshotDatabaseFile(OutputRoot root) {
-    return resolveSnapshotDirectory(root.baseDir())
-        .resolve(SnapshotLocations.databaseFile(root.baseInfo().dbName()));
+    return within(
+        resolveSnapshotDirectory(root.baseDir()),
+        SnapshotLocations.databaseFile(root.baseInfo().dbName()));
   }
 
   /** {@inheritDoc} */
   @Override
   public Path resolveSnapshotFile(OutputRoot root, String schemaName, SnapshotKind kind) {
-    return resolveSnapshotDirectory(root.baseDir())
-        .resolve(SnapshotLocations.objectFile(root.baseInfo().dbName(), schemaName, kind));
+    return within(
+        resolveSnapshotDirectory(root.baseDir()),
+        SnapshotLocations.objectFile(root.baseInfo().dbName(), schemaName, kind));
   }
 
   /** {@inheritDoc} */
@@ -152,7 +160,27 @@ public class DefaultOutputPathResolver implements OutputPathResolver {
   /** {@inheritDoc} */
   @Override
   public Path resolveViewpointsInsightFile(OutputRoot root) {
-    return resolveInsightsDirectory(root.baseDir())
-        .resolve(InsightLocations.viewpointsFile(root.baseInfo().dbName()));
+    return within(
+        resolveInsightsDirectory(root.baseDir()),
+        InsightLocations.viewpointsFile(root.baseInfo().dbName()));
+  }
+
+  /**
+   * 起点のディレクトリから相対パスを解決し、起点の外を指さないことを確かめるメソッド
+   *
+   * @throws IllegalStateException 解決したパスが起点のディレクトリの外を指す場合
+   */
+  private static Path within(Path directory, String relativePath) {
+    final Path resolved = directory.resolve(relativePath);
+    // 相対パスのままnormalizeすると、出力先が"."の場合に空のパスになり比べられないため、絶対パスで比べる
+    if (!resolved.toAbsolutePath().normalize().startsWith(directory.toAbsolutePath().normalize())) {
+      throw new IllegalStateException(
+          "Resolved path points outside of the output directory. [directory="
+              + directory
+              + ", path="
+              + resolved
+              + "]");
+    }
+    return resolved;
   }
 }

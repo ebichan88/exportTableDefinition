@@ -34,6 +34,19 @@ public class DocumentLocationsTest {
   }
 
   @Test
+  @DisplayName("ファイル名・相対パス・リンクに使う名前は、パスの区切り等を置き換える")
+  void testNamesAreEncoded() {
+    assertEquals("tableList_~2E~2E.md", DocumentLocations.listFile(ListDocumentType.TABLE, ".."));
+    assertEquals("erDiagram_db_a~2Fb.md", DocumentLocations.erDiagramFile("db", "a/b"));
+    var table = new TableEntity("db", "..", "", "../../x", TableType.TABLE, "");
+    assertEquals("~2E~2E/table/..~2F..~2Fx.md", DocumentLocations.tableDefinitionFile(table));
+    assertEquals(
+        "~2E~2E/function/a~5Cb.md",
+        DocumentLocations.schemaObjectFile("..", ListDocumentType.FUNCTION, "a\\b"));
+    assertEquals("~2E~2E", DocumentLocations.databaseDirectory(".."));
+  }
+
+  @Test
   @DisplayName("pageFile: 拡張子の前に_{ページ番号}を付ける")
   void testPageFile() {
     assertEquals("tableList_testdb_3.md", DocumentLocations.pageFile("tableList_testdb.md", 3));

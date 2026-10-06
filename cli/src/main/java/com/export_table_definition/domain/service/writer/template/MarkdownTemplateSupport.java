@@ -2,6 +2,8 @@ package com.export_table_definition.domain.service.writer.template;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * 各テンプレートクラスで共通して利用するMarkdownの定数・部品を集約したクラス<br>
@@ -40,10 +42,19 @@ public final class MarkdownTemplateSupport {
         + LINE_SEPARATOR_DOUBLE;
   }
 
+  /** 生のHTMLのタグ・コメントの開始になる{@code <}のうち、表のセルの改行に使う{@code <br>}以外 */
+  private static final Pattern HTML_START = Pattern.compile("<(?!br>)");
+
+  private static final Pattern LINE_BREAK = Pattern.compile("\\r\\n|\\r|\\n");
+
+  /** コードブロックの囲みの最短の長さ（CommonMarkの仕様） */
+  private static final int MIN_FENCE_LENGTH = 3;
+
   /**
    * Markdownの表の1行を組み立てるメソッド<br>
    * 各引数を{@code |}区切りで連結し、先頭・末尾にも{@code |}を付与する（末尾の改行は含まない）。 セルの値は{@link
-   * String#valueOf}相当で文字列化するため、エスケープが必要な自由記述文字列は 呼び出し側で{@link #escapeTableCell}等を適用した上で渡すこと
+   * String#valueOf}相当で文字列化し、行全体に{@link #escapeTableRow}を適用する。 {@code |}を含みうる自由記述文字列は、呼び出し側で{@link
+   * #escapeTableCell}等を適用した上で渡すこと
    *
    * @param cells セルの値（先頭から順に列として並ぶ）
    * @return {@code |cell1|cell2|...|} 形式の1行分の文字列
@@ -53,7 +64,16 @@ public final class MarkdownTemplateSupport {
     for (Object cell : cells) {
       sb.append('|').append(cell);
     }
-    return sb.append('|').toString();
+    return escapeTableRow(sb.append('|').toString());
+  }
+
+  /**
+   * 表の1行分の文字列（末尾の改行を含まない）に含まれるDB由来の文字列をエスケープするメソッド<br>
+   * 改行を{@code <br>}に置き換えたうえで{@link #escapeHtml}を適用する（DB由来の名前の改行で行が切れ、
+   * 次の行がMarkdownの構文として解釈されないようにするため）。{@link #row}を使わず書式で組み立てた行に適用する
+   */
+  public static String escapeTableRow(String line) {
+    return escapeHtml(LINE_BREAK.matcher(Objects.toString(line, "")).replaceAll("<br>"));
   }
 
   /**
@@ -71,7 +91,9 @@ public final class MarkdownTemplateSupport {
    * ER図一覧・オブジェクト一覧など、タイトルとDB名のみで組み立てられるヘッダーで共通利用する
    */
   public static String titledFileHeader(String title, BaseInfoEntity baseInfo) {
-    return "# " + String.format("%s（DB名：%s）", title, baseInfo.dbName()) + LINE_SEPARATOR_DOUBLE;
+    return "# "
+        + escapeInline(String.format("%s（DB名：%s）", title, baseInfo.dbName()))
+        + LINE_SEPARATOR_DOUBLE;
   }
 
   /**
@@ -85,7 +107,7 @@ public final class MarkdownTemplateSupport {
     if (value == null || value.isEmpty()) {
       return "";
     }
-    return value.replace("|", "\\|").replaceAll("\\r\\n|\\r|\\n", "<br>");
+    return LINE_BREAK.matcher(value.replace("|", "\\|")).replaceAll("<br>");
   }
 
   /**
@@ -101,6 +123,68 @@ public final class MarkdownTemplateSupport {
       return "";
     }
     return value.replace("|", "\\|");
+  }
+
+  /**
+   * DB由来の文字列が、Markdownのビューアで生のHTMLとして解釈されないようにするメソッド<br>
+   * DBのコメントやテーブル名には任意の文字列を書けるため、{@code <img onerror=...>}等がそのまま描画されると、
+   * HTMLを無害化しないビューアでスクリプトが動く。表のセルの改行（{@link #escapeTableCell}が出力する{@code <br>}）だけは残す。
+   * コードブロック・コードスパンの中身には適用しない（文字参照が文字どおり表示されるため）
+   *
+   * @param value エスケープ対象の文字列（nullの場合は空文字として扱う）
+   * @return {@code <br>}以外の{@code <}を{@code &lt;}に置き換えた文字列
+   */
+  public static String escapeHtml(String value) {
+    if (value == null || value.isEmpty()) {
+      return "";
+    }
+    return HTML_START.matcher(value).replaceAll("&lt;");
+  }
+
+  /**
+   * 見出し・リストの項目など、1行に収めるDB由来の文字列をエスケープするメソッド<br>
+   * 改行が残ると、次の行がMarkdownの構文（コードブロックの開始等）として解釈されるため空白に置き換える
+   *
+   * @param value エスケープ対象の文字列（nullの場合は空文字として扱う）
+   */
+  public static String escapeInline(String value) {
+    if (value == null || value.isEmpty()) {
+      return "";
+    }
+    return escapeHtml(LINE_BREAK.matcher(value).replaceAll(" "));
+  }
+
+  /**
+   * DB由来の文字列（関数・ビューの定義等）を囲むコードブロックの囲みを返すメソッド<br>
+   * 中身に{@code ```}の行があると、そこでコードブロックが閉じて以降がMarkdownとして解釈されるため、 中身に現れる最長のバッククォートの並びより長い囲みにする
+   *
+   * @return 通常は{@code ```}。中身に3個以上連続するバッククォートがある場合は、それより1個多いバッククォート
+   */
+  public static String codeFence(String content) {
+    return "`".repeat(Math.max(MIN_FENCE_LENGTH, longestBacktickRun(content) + 1));
+  }
+
+  /**
+   * DB由来の文字列（パーティションキー等）をコードスパンにするメソッド<br>
+   * 中身のバッククォートでコードスパンが閉じないよう、中身に現れる最長のバッククォートの並びより長い区切りで囲む。 改行は、次の行がMarkdownの構文として解釈されないよう空白に置き換える
+   *
+   * @return {@code `値`}（中身がバッククォートで始まる・終わる場合は、区切りとの間に空白を入れる）
+   */
+  public static String codeSpan(String content) {
+    final String value = LINE_BREAK.matcher(Objects.toString(content, "")).replaceAll(" ");
+    final String delimiter = "`".repeat(longestBacktickRun(value) + 1);
+    final String padding = value.startsWith("`") || value.endsWith("`") ? " " : "";
+    return delimiter + padding + value + padding + delimiter;
+  }
+
+  private static int longestBacktickRun(String value) {
+    int longest = 0;
+    int current = 0;
+    for (final char c : Objects.toString(value, "").toCharArray()) {
+      current = c == '`' ? current + 1 : 0;
+      longest = Math.max(longest, current);
+    }
+    return longest;
   }
 
   /**

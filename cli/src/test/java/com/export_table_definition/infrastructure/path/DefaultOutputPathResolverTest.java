@@ -64,6 +64,41 @@ public class DefaultOutputPathResolverTest {
   }
 
   @Test
+  @DisplayName("isRemovableOutputDir: カレント・ホームを含む上位のディレクトリは削除を認めない")
+  void testIsRemovableOutputDirRejectsAncestors() {
+    assertFalse(resolver.isRemovableOutputDir(Path.of("..")));
+    assertFalse(resolver.isRemovableOutputDir(Path.of("output", "..", "..")));
+    final Path home = Path.of(System.getProperty("user.home")).toAbsolutePath();
+    if (home.getParent() != null) {
+      assertFalse(resolver.isRemovableOutputDir(home.getParent()));
+    }
+  }
+
+  @Test
+  @DisplayName("isRemovableOutputDir: カレント・ホームと名前が前方一致するだけの兄弟ディレクトリは削除を認める")
+  void testIsRemovableOutputDirAllowsSiblingWithSamePrefix() {
+    final Path cwd = Path.of("").toAbsolutePath();
+    assertTrue(resolver.isRemovableOutputDir(cwd.resolveSibling(cwd.getFileName() + "_out")));
+  }
+
+  @Test
+  @DisplayName("resolveTableDefinitionFile: DB名・スキーマ名・テーブル名のパスの区切りは置き換える")
+  void testResolveTableDefinitionFileEncodesNames() {
+    final OutputRoot hostileRoot =
+        new OutputRoot(baseDir, new BaseInfoEntity("..", "unused", LocalDate.EPOCH));
+    Path result =
+        resolver.resolveTableDefinitionFile(hostileRoot, table("/tmp/evil", "../x", "table"));
+    assertEquals(Path.of("output", "~2E~2E", "~2Ftmp~2Fevil", "table", "..~2Fx.md"), result);
+  }
+
+  @Test
+  @DisplayName("resolveDatabaseDirectory: 出力先がカレントディレクトリ（.）でも解決できる")
+  void testResolveDatabaseDirectoryUnderCurrentDirectory() {
+    final OutputRoot currentRoot = new OutputRoot(Path.of("."), baseInfo);
+    assertEquals(Path.of(".", "testdb"), resolver.resolveDatabaseDirectory(currentRoot));
+  }
+
+  @Test
   @DisplayName("resolveDatabaseDirectory: {base}/{DB名}")
   void testResolveDatabaseDirectory() {
     Path result = resolver.resolveDatabaseDirectory(root);

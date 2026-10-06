@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -44,7 +43,8 @@ public class ErDiagramTemplates {
   /** スキーマ別ER図ページのファイルヘッダー */
   public static String schemaFileHeader(String schemaName, BaseInfoEntity baseInfo) {
     return "# "
-        + String.format("ER図（DB名：%s / スキーマ名：%s）", baseInfo.dbName(), schemaName)
+        + MarkdownTemplateSupport.escapeInline(
+            String.format("ER図（DB名：%s / スキーマ名：%s）", baseInfo.dbName(), schemaName))
         + LINE_SEPARATOR_DOUBLE;
   }
 
@@ -55,7 +55,9 @@ public class ErDiagramTemplates {
    */
   public static String groupFileHeader(String schemaName, int groupNo, BaseInfoEntity baseInfo) {
     return "# "
-        + String.format("ER図（DB名：%s / スキーマ名：%s / グループ%d）", baseInfo.dbName(), schemaName, groupNo)
+        + MarkdownTemplateSupport.escapeInline(
+            String.format(
+                "ER図（DB名：%s / スキーマ名：%s / グループ%d）", baseInfo.dbName(), schemaName, groupNo))
         + LINE_SEPARATOR_DOUBLE;
   }
 
@@ -78,14 +80,16 @@ public class ErDiagramTemplates {
     tablesBySchema.forEach(
         (schemaName, tables) ->
             sb.append(
-                    String.format(
-                        "| %d | %s | %d | %s |",
-                        ++no[0],
-                        schemaName,
-                        tables.size(),
-                        MarkdownTemplateSupport.linkCell(
-                            DocumentLocations.linkFromDatabaseRoot(
-                                DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName)))))
+                    MarkdownTemplateSupport.escapeTableRow(
+                        String.format(
+                            "| %d | %s | %d | %s |",
+                            ++no[0],
+                            schemaName,
+                            tables.size(),
+                            MarkdownTemplateSupport.linkCell(
+                                DocumentLocations.linkFromDatabaseRoot(
+                                    DocumentLocations.erDiagramFile(
+                                        baseInfo.dbName(), schemaName))))))
                 .append(LINE_SEPARATOR));
     return sb.append(LINE_SEPARATOR).toString();
   }
@@ -174,13 +178,14 @@ public class ErDiagramTemplates {
    */
   public static String groupIndexLine(
       int no, int tableCount, int fkCount, TableKey mainTable, String href) {
-    return String.format(
-            "| %d | %d | %d | %s | %s |",
-            no,
-            tableCount,
-            fkCount,
-            mainTable == null ? "" : mainTable.qualifiedName(),
-            MarkdownTemplateSupport.linkCell(href))
+    return MarkdownTemplateSupport.escapeTableRow(
+            String.format(
+                "| %d | %d | %d | %s | %s |",
+                no,
+                tableCount,
+                fkCount,
+                mainTable == null ? "" : mainTable.qualifiedName(),
+                MarkdownTemplateSupport.linkCell(href)))
         + LINE_SEPARATOR;
   }
 
@@ -221,19 +226,21 @@ public class ErDiagramTemplates {
   public static String diagramTableLine(int no, TableKey key, TableEntity table) {
     // 出力対象範囲外のテーブルを参照している場合、定義書が存在しないためリンクを張らない
     if (table == null) {
-      return String.format("| %d | %s | %s |  |  | - |", no, key.schema(), key.table())
+      return MarkdownTemplateSupport.escapeTableRow(
+              String.format("| %d | %s | %s |  |  | - |", no, key.schema(), key.table()))
           + LINE_SEPARATOR;
     }
-    return String.format(
-            "| %d | %s | %s | %s | %s | %s |",
-            no,
-            table.schemaName(),
-            table.physicalTableName(),
-            Objects.toString(table.logicalTableName(), ""),
-            table.tableType().getName(),
-            MarkdownTemplateSupport.linkCell(
-                DocumentLocations.linkFromDatabaseRoot(
-                    DocumentLocations.tableDefinitionFile(table))))
+    return MarkdownTemplateSupport.escapeTableRow(
+            String.format(
+                "| %d | %s | %s | %s | %s | %s |",
+                no,
+                table.schemaName(),
+                table.physicalTableName(),
+                MarkdownTemplateSupport.escapeTableCell(table.logicalTableName()),
+                table.tableType().getName(),
+                MarkdownTemplateSupport.linkCell(
+                    DocumentLocations.linkFromDatabaseRoot(
+                        DocumentLocations.tableDefinitionFile(table)))))
         + LINE_SEPARATOR;
   }
 
@@ -260,9 +267,10 @@ public class ErDiagramTemplates {
 
   /** 外部キー一覧セクションの1行分 */
   public static String foreignKeyTableLine(int no, ForeignKeyEntity fk) {
-    return String.format(
-            "| %d | %s | %s | %s |",
-            no, fk.getSchemaTableName(), fk.foreignKeyName(), fk.getReferenceSchemaTableName())
+    return MarkdownTemplateSupport.escapeTableRow(
+            String.format(
+                "| %d | %s | %s | %s |",
+                no, fk.getSchemaTableName(), fk.foreignKeyName(), fk.getReferenceSchemaTableName()))
         + LINE_SEPARATOR;
   }
 

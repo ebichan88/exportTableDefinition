@@ -12,7 +12,8 @@ import com.export_table_definition.domain.model.viewpoint.Viewpoint;
  * 複数のデータベースを同じ出力先へ出力してもドキュメントが混ざらないよう、DB1つ分のドキュメントはすべて {@code
  * {DB名}/}ディレクトリ配下にまとめる（このクラスが返す相対パスはこのディレクトリからの相対パスとし、 {@code {DB名}/}自体の付与は{@link
  * OutputPathResolver}が行う）。配置は次のとおり。一覧・ER図・観点ページ・READMEは {@code {DB名}/}直下に、テーブル定義書・関数等の個別定義書は{@code
- * {スキーマ名}/{区分}/}配下に置く
+ * {スキーマ名}/{区分}/}配下に置く。<br>
+ * パスに用いるDB由来の名前（DB名・スキーマ名・テーブル名等）は、出力先の外を指さないよう{@link PathSegments}で置き換える
  */
 public final class DocumentLocations {
 
@@ -42,7 +43,7 @@ public final class DocumentLocations {
    * @return {@code {接頭辞}List_{DB名}.md}
    */
   public static String listFile(ListDocumentType type, String dbName) {
-    return String.format(LIST_FILENAME_PATTERN, type.getPrefix(), dbName);
+    return String.format(LIST_FILENAME_PATTERN, type.getPrefix(), PathSegments.encode(dbName));
   }
 
   /**
@@ -51,7 +52,8 @@ public final class DocumentLocations {
    * @return {@code erDiagram_{DB名}_{スキーマ名}.md}
    */
   public static String erDiagramFile(String dbName, String schemaName) {
-    return String.format(ER_DIAGRAM_FILENAME_PATTERN, dbName, schemaName);
+    return String.format(
+        ER_DIAGRAM_FILENAME_PATTERN, PathSegments.encode(dbName), PathSegments.encode(schemaName));
   }
 
   /**
@@ -61,7 +63,11 @@ public final class DocumentLocations {
    * @return {@code erDiagram_{DB名}_{スキーマ名}_group{グループ番号}.md}
    */
   public static String erDiagramGroupFile(String dbName, String schemaName, int groupNo) {
-    return String.format(ER_DIAGRAM_GROUP_FILENAME_PATTERN, dbName, schemaName, groupNo);
+    return String.format(
+        ER_DIAGRAM_GROUP_FILENAME_PATTERN,
+        PathSegments.encode(dbName),
+        PathSegments.encode(schemaName),
+        groupNo);
   }
 
   /**
@@ -70,7 +76,7 @@ public final class DocumentLocations {
    * @return {@code viewpoint_{DB名}_{観点の識別子}.md}
    */
   public static String viewpointFile(String dbName, Viewpoint viewpoint) {
-    return String.format(VIEWPOINT_FILENAME_PATTERN, dbName, viewpoint.id());
+    return String.format(VIEWPOINT_FILENAME_PATTERN, PathSegments.encode(dbName), viewpoint.id());
   }
 
   /**
@@ -98,9 +104,9 @@ public final class DocumentLocations {
   public static String tableDefinitionFile(TableEntity table) {
     return String.join(
         PATH_SEPARATOR,
-        table.schemaName(),
+        PathSegments.encode(table.schemaName()),
         table.tableType().getName(),
-        table.physicalTableName() + MARKDOWN_EXTENSION);
+        PathSegments.encode(table.physicalTableName()) + MARKDOWN_EXTENSION);
   }
 
   /**
@@ -122,7 +128,7 @@ public final class DocumentLocations {
    * @return {@code {スキーマ名}/{区分}}
    */
   public static String schemaObjectDirectory(String schemaName, ListDocumentType kind) {
-    return String.join(PATH_SEPARATOR, schemaName, kind.getPrefix());
+    return String.join(PATH_SEPARATOR, PathSegments.encode(schemaName), kind.getPrefix());
   }
 
   /**
@@ -134,7 +140,19 @@ public final class DocumentLocations {
    * @return {@code {スキーマ名}/{区分}/{名前}.md}
    */
   public static String schemaObjectFile(String schemaName, ListDocumentType kind, String name) {
-    return schemaObjectDirectory(schemaName, kind) + PATH_SEPARATOR + name + MARKDOWN_EXTENSION;
+    return schemaObjectDirectory(schemaName, kind)
+        + PATH_SEPARATOR
+        + PathSegments.encode(name)
+        + MARKDOWN_EXTENSION;
+  }
+
+  /**
+   * データベース単位ディレクトリの、出力ベースディレクトリからの相対パス
+   *
+   * @return {@code {DB名}}
+   */
+  public static String databaseDirectory(String dbName) {
+    return PathSegments.encode(dbName);
   }
 
   /**

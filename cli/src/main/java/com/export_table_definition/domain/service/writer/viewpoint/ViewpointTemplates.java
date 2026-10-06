@@ -29,7 +29,8 @@ public class ViewpointTemplates {
   /** 観点ページのファイルヘッダー */
   public static String fileHeader(Viewpoint viewpoint, BaseInfoEntity baseInfo) {
     return "# "
-        + String.format("観点：%s（DB名：%s）", viewpoint.name(), baseInfo.dbName())
+        + MarkdownTemplateSupport.escapeInline(
+            String.format("観点：%s（DB名：%s）", viewpoint.name(), baseInfo.dbName()))
         + LINE_SEPARATOR_DOUBLE;
   }
 

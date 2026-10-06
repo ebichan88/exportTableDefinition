@@ -104,9 +104,12 @@ public final class MermaidSupport {
     return sb.append(LINE_SEPARATOR).toString();
   }
 
-  /** 二重引用符で囲む表示名・コメントは、二重引用符を含められないため単一引用符に置き換える */
+  /**
+   * 二重引用符で囲む表示名・コメントは、二重引用符を含められないため単一引用符に置き換える。 改行は、図の次の行（Mermaidの構文や、コードブロックを閉じる{@code
+   * ```}）として解釈されないよう空白に置き換える
+   */
   private static String quotable(String value) {
-    return value.replace('"', '\'');
+    return value.replace('"', '\'').replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
   }
 
   /**
@@ -126,7 +129,7 @@ public final class MermaidSupport {
         + ' '
         + childId
         + " : \""
-        + fk.foreignKeyName()
+        + quotable(fk.foreignKeyName())
         + '"'
         + LINE_SEPARATOR;
   }
