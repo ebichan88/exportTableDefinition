@@ -36,6 +36,7 @@
 - [ ] ドメインの概念を追加・改名・削除した場合、`docs/architecture/domain-model.md`を更新した
 - [ ] スナップショットの形式を互換性なく変えた場合、`DatabaseSnapshot.FORMAT_VERSION`を上げ、`SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させた
 - [ ] 新しいリポジトリ実装・ドメインサービスを追加した場合、Guiceの束縛を追加した
+- [ ] DB由来の文字列の出力・パス・秘密情報・ファイルの削除・依存ライブラリに触れた場合、AGENTS.mdの「セキュリティ」の項目を確認した
 
 ## 補足
 

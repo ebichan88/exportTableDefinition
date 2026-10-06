@@ -9,6 +9,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -90,6 +91,26 @@ public class ArchitectureTest {
         .should()
         .dependOnClassesThat()
         .belongToAnyOf(Files.class)
+        .check(MAIN_CLASSES);
+  }
+
+  @Test
+  @DisplayName("出力先の配下のパスは、出力先の外を指さないことを確かめるOutputPathResolverの実装でだけ組み立てる")
+  void testOutputPathsAreResolvedOnlyByOutputPathResolver() {
+    noClasses()
+        .that()
+        .resideOutsideOfPackage(ROOT + ".infrastructure.path")
+        .should()
+        .callMethod(Path.class, "resolve", String.class)
+        .orShould()
+        .callMethod(Path.class, "resolve", Path.class)
+        .orShould()
+        .callMethod(Path.class, "resolveSibling", String.class)
+        .orShould()
+        .callMethod(Path.class, "resolveSibling", Path.class)
+        .because(
+            "DB由来の名前を含むパスは、OutputPathContainmentTestが出力先の外を指さないことを検査する"
+                + "OutputPathResolver（DocumentLocations等の規則）を経由して組み立てる必要があるため")
         .check(MAIN_CLASSES);
   }
 
