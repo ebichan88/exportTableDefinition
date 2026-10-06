@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.application.CheckDocumentDiffRequest;
 import com.export_table_definition.application.ExportTableDefinitionRequest;
+import com.export_table_definition.config.ConfigFile;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.testsupport.ExportBaseline;
 import com.export_table_definition.testsupport.OracleSampleDatabase;
 import java.nio.file.Path;
-import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -52,13 +52,21 @@ class OracleSampleDatabaseExportIT {
   }
 
   /**
-   * verifyスキルの手順と同じ設定（{@code conf/ExportTableDefinition.properties}）を組み立てる
+   * verifyスキルの手順と同じ設定（{@code conf/config.yml}）を組み立てる
    *
    * @param outputPath 出力先
    * @return 検証済みの設定
    */
   private static ExportTableDefinitionProperties properties(Path outputPath) {
     return ExportTableDefinitionProperties.of(
-        Map.of("schema", OracleSampleDatabase.SCHEMA, "outputPath", outputPath.toString()));
+        ConfigFile.parse(
+            Path.of("config.yml"),
+            """
+            target:
+              schemas: [%s]
+            output:
+              path: '%s'
+            """
+                .formatted(OracleSampleDatabase.SCHEMA, outputPath)));
   }
 }

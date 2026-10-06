@@ -93,7 +93,7 @@ public class SidecarYamlRepository implements SidecarRepository {
       if (root != null && !(root instanceof Map)) {
         logger.warn(
             "Ignoring the annotation file because its top level is not a mapping of '{}', '{}' and '{}'. "
-                + "[annotationPath={}]",
+                + "[annotations={}]",
             KEY_TABLES,
             KEY_RELATIONS,
             KEY_VIEWPOINTS,
@@ -105,7 +105,7 @@ public class SidecarYamlRepository implements SidecarRepository {
       final List<ForeignKeyEntity> logicalRelations = parseRelations(root, path);
       final Viewpoints viewpoints = parseViewpoints(root, path);
       logger.info(
-          "Loaded sidecar. [annotationPath={}, tableCount={}, relationCount={}, viewpointCount={}]",
+          "Loaded sidecar. [annotations={}, tableCount={}, relationCount={}, viewpointCount={}]",
           path,
           annotations.tableKeys().size(),
           logicalRelations.size(),
@@ -113,7 +113,7 @@ public class SidecarYamlRepository implements SidecarRepository {
       return new Sidecar(annotations, logicalRelations, viewpoints);
     } catch (IOException e) {
       throw new UncheckedIOException(
-          "Failed to read the annotation file. [annotationPath=" + path + "]", e);
+          "Failed to read the annotation file. [annotations=" + path + "]", e);
     }
   }
 
@@ -129,19 +129,19 @@ public class SidecarYamlRepository implements SidecarRepository {
       path = Path.of(sidecarPath);
     } catch (InvalidPathException e) {
       throw new UserCorrectableException(
-          "annotationPath is not a valid path. [annotationPath=" + sidecarPath + "]", e);
+          "annotations is not a valid path. [annotations=" + sidecarPath + "]", e);
     }
     if (!Files.exists(path)) {
       throw new UserCorrectableException(
-          "Annotation file not found. Check annotationPath in ExportTableDefinition.properties "
+          "Annotation file not found. Check annotations in the configuration file "
               + "(or the --annotation-path argument). "
-              + "[annotationPath="
+              + "[annotations="
               + path.toAbsolutePath().normalize()
               + "]");
     }
     if (!Files.isRegularFile(path)) {
       throw new UserCorrectableException(
-          "annotationPath does not point to a file. [annotationPath="
+          "annotations does not point to a file. [annotations="
               + path.toAbsolutePath().normalize()
               + "]");
     }
@@ -160,7 +160,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     } catch (YAMLException e) {
       throw new UserCorrectableException(
           "Failed to parse the annotation file. Check that it is valid YAML saved in UTF-8. "
-              + "[annotationPath="
+              + "[annotations="
               + path
               + "]",
           e);
@@ -171,14 +171,13 @@ public class SidecarYamlRepository implements SidecarRepository {
   private Annotations parseAnnotations(Object root, Path path) {
     final Object tablesValue = mapValue(root, KEY_TABLES);
     if (tablesValue != null && !(tablesValue instanceof Map)) {
-      logger.warn(
-          "Ignoring '{}' because it is not a mapping. [annotationPath={}]", KEY_TABLES, path);
+      logger.warn("Ignoring '{}' because it is not a mapping. [annotations={}]", KEY_TABLES, path);
       return Annotations.empty();
     }
     final Map<String, Object> tables = asMap(tablesValue);
     if (tables.isEmpty()) {
       // 論理リレーションのみを記述したサイドカーも有効なため、tablesが無いことは異常ではない
-      logger.debug("Annotation file has no 'tables' entries. [annotationPath={}]", path);
+      logger.debug("Annotation file has no 'tables' entries. [annotations={}]", path);
       return Annotations.empty();
     }
     final Map<TableKey, TableAnnotation> byKey = new LinkedHashMap<>();
@@ -190,7 +189,7 @@ public class SidecarYamlRepository implements SidecarRepository {
           }
           if (value != null && !(value instanceof Map)) {
             logger.warn(
-                "Ignoring '{}' entry because it is not a mapping. [table={}, annotationPath={}]",
+                "Ignoring '{}' entry because it is not a mapping. [table={}, annotations={}]",
                 KEY_TABLES,
                 tableKey.qualifiedName(),
                 path);
@@ -208,7 +207,7 @@ public class SidecarYamlRepository implements SidecarRepository {
       return List.of();
     }
     if (!(relations instanceof List<?> relationList)) {
-      logger.warn("Ignoring 'relations' because it is not a list. [annotationPath={}]", path);
+      logger.warn("Ignoring 'relations' because it is not a list. [annotations={}]", path);
       return List.of();
     }
     final List<ForeignKeyEntity> result = new ArrayList<>();
@@ -232,8 +231,7 @@ public class SidecarYamlRepository implements SidecarRepository {
       return Viewpoints.empty();
     }
     if (!(viewpoints instanceof List<?> viewpointList)) {
-      logger.warn(
-          "Ignoring '{}' because it is not a list. [annotationPath={}]", KEY_VIEWPOINTS, path);
+      logger.warn("Ignoring '{}' because it is not a list. [annotations={}]", KEY_VIEWPOINTS, path);
       return Viewpoints.empty();
     }
     final Map<String, Viewpoint> byId = new LinkedHashMap<>();
@@ -245,7 +243,7 @@ public class SidecarYamlRepository implements SidecarRepository {
           }
           if (byId.containsKey(viewpoint.id())) {
             logger.warn(
-                "Ignoring viewpoint with a duplicate 'id'. [id={}, annotationPath={}]",
+                "Ignoring viewpoint with a duplicate 'id'. [id={}, annotations={}]",
                 viewpoint.id(),
                 path);
             return;
@@ -270,7 +268,7 @@ public class SidecarYamlRepository implements SidecarRepository {
           asString(viewpointMap.get(KEY_DESCRIPTION)),
           asStringList(viewpointMap.get(KEY_TABLES)));
     } catch (IllegalArgumentException e) {
-      logger.warn("Ignoring viewpoint '{}'. {} [annotationPath={}]", id, e.getMessage(), path);
+      logger.warn("Ignoring viewpoint '{}'. {} [annotations={}]", id, e.getMessage(), path);
       return null;
     }
   }
@@ -292,7 +290,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     if (child == null || parent == null || childColumns.isEmpty() || parentColumns.isEmpty()) {
       logger.warn(
           "Ignoring relation missing required keys ('table', 'columns', 'parentTable', 'parentColumns'). "
-              + "[relation={}, annotationPath={}]",
+              + "[relation={}, annotations={}]",
           relationMap,
           path);
       return null;
@@ -300,7 +298,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     if (childColumns.size() != parentColumns.size()) {
       logger.warn(
           "Relation has a different number of 'columns' and 'parentColumns'. "
-              + "[table={}, parentTable={}, annotationPath={}]",
+              + "[table={}, parentTable={}, annotations={}]",
           child.qualifiedName(),
           parent.qualifiedName(),
           path);
@@ -330,7 +328,7 @@ public class SidecarYamlRepository implements SidecarRepository {
             () -> {
               logger.warn(
                   "Ignoring unknown 'cardinality' and falling back to the default. "
-                      + "[cardinality={}, default={}, table={}, annotationPath={}]",
+                      + "[cardinality={}, default={}, table={}, annotations={}]",
                   label,
                   Cardinality.DEFAULT_FOR_LOGICAL_RELATION.getLabel(),
                   child.qualifiedName(),
@@ -349,7 +347,7 @@ public class SidecarYamlRepository implements SidecarRepository {
         .orElseGet(
             () -> {
               logger.warn(
-                  "Ignoring key not in 'schema.table' format. [key={}, section={}, annotationPath={}]",
+                  "Ignoring key not in 'schema.table' format. [key={}, section={}, annotations={}]",
                   rawKey,
                   sectionKey,
                   path);
@@ -367,7 +365,7 @@ public class SidecarYamlRepository implements SidecarRepository {
     if (columnsValue != null && !(columnsValue instanceof Map)) {
       logger.warn(
           "Ignoring '{}' because it is not a mapping of column names to remarks. "
-              + "[table={}, annotationPath={}]",
+              + "[table={}, annotations={}]",
           KEY_COLUMNS,
           tableKey.qualifiedName(),
           path);
@@ -391,10 +389,7 @@ public class SidecarYamlRepository implements SidecarRepository {
         .forEach(
             key ->
                 logger.warn(
-                    "Ignoring unknown key in {}. [key={}, annotationPath={}]",
-                    location,
-                    key,
-                    path));
+                    "Ignoring unknown key in {}. [key={}, annotations={}]", location, key, path));
   }
 
   private Object mapValue(Object obj, String key) {

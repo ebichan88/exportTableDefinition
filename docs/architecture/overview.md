@@ -42,7 +42,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 これらの依存の向きは`ArchitectureTest`（ArchUnit）が単体テストとして検査する。エントリーポイント（直下のパッケージ）と`config`は、
 全体を組み立てる役割のため全層に依存してよい。`config`に依存してよいのはエントリーポイントと`infrastructure`
-（`ConnectionSettings`が`PropertyLoader`・`InvalidConfigurationException`を使う）だけ。
+（`ConnectionSettings`が`InvalidConfigurationException`を使う）だけ。
 
 `domain.model` は概念ごとのサブパッケージ（`table`・`relation`・`sidecar`・`viewpoint`・`target` 等）に分かれている。
 ドメインの概念・用語・主なルールの置き場所は [domain-model.md](./domain-model.md)、
@@ -50,25 +50,26 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## 実行フロー
 
-1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・DB接続情報と実行時設定の
+1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・設定ファイルのパス（`--config`）とDB接続情報・実行時設定の
    上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を1つのtry-catchで囲んで実行する。
    例外の捕捉と終了コードへの変換はここで1箇所にまとめて行い、捕捉した例外は`presentation.FailureReporter`が報告する
    （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
 2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
    - `CliArguments.requireKnownArguments()`が、解釈できない引数（書き誤り等）が無いことを確かめる
-   - `ExportTableDefinitionProperties.load()`が `conf/ExportTableDefinition.properties` の設定値（出力対象スキーマ／テーブル、
-     出力先パス、chunkSize、erDiagramMaxNodes、outputObjects、annotationPath）を読み込み、CLI引数による上書き値
+   - `config.ConfigFile.load()`が設定ファイル（既定は`conf/config.yml`）を1回だけ読み込む。以降の検証はこの内容を使う
+   - `ExportTableDefinitionProperties.of()`が、設定ファイルの`database`以外の設定値（出力対象スキーマ／テーブル／オブジェクト種別、
+     出力先パス、chunkSize、erDiagramMaxNodes、サイドカーYAMLのパス）を、CLI引数による上書き値
      （`CliArguments.settingOverrides()`）で上書きしてから検証し、
      `ExportTableDefinitionRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDocumentDiffRequest`）へ変換する。
-     出力対象の絞り込み条件（スキーマ・テーブル・outputObjects）は、生の文字列のまま後続へ渡さず、
+     出力対象の絞り込み条件（`target`のスキーマ・テーブル・オブジェクト種別）は、生の文字列のまま後続へ渡さず、
      `TargetSelection.of()`が型（`TableScope`・`OutputObjectType`の集合）へ変換・検証する
    - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
      削除より前に`[result]:FAIL`として報告されるため、エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
    - DB種別に依存しない部品のDIコンテナ（`ExportTableDefinitionModule`）を組み立て、`OutputDirectoryValidator`が出力先
-     （`outputPath`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
+     （`output.path`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
      ディレクトリ・カレントディレクトリ自体）を指す場合は、DBへ接続する前に`[result]:FAIL`として報告する
-   - `ConnectionSettings.load()`（`infrastructure.db`）が`conf/mybatis.properties`を、環境変数のパスワード・CLI引数の値で
+   - `ConnectionSettings.merge()`（`infrastructure.db`）が設定ファイルの`database`の値を、環境変数のパスワード・CLI引数の値で
      上書きし、DB接続情報を検証する。パスワードは設定ファイルに書けない（秘密をファイルに残さないため）
 3. 入力の検証に成功した後、`MyBatisSqlSessionFactories.create()`で`SqlSessionFactory`を1回だけ生成し、
    `DatabaseTypeDetector.detect()`がDBへ接続して接続先のDB種別を判定する。
@@ -113,7 +114,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
   組み立てを含む処理全体を1つのtry-catchで囲むため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない。
   捕捉した例外は`presentation.FailureReporter`へ渡し、種類に応じた報告（画面・ログ）を任せる
 - 途中の層でcatchしてよいのは、(a) 検査例外を非検査例外で包む、(b) 下位の例外を利用者が直せる誤りへ置き換える、
-  (c) フォールバックする（`conf/mybatis.properties`が無い場合に、CLI引数の接続情報だけで続ける等）場合のみ。
+  (c) フォールバックする（サイドカーYAMLの誤った観点を、警告して読み飛ばす等）場合のみ。
   包むときは原因（`cause`）を必ず渡し、tryの範囲は置き換えたい呼び出しだけに絞る
   （例: `AbstractTableDefinitionRepository`はSQLの呼び出しだけを包み、DTO→エンティティの変換の失敗は包まない）。
   catchしてログを出してから再スローすることはしない（ログの出力も`FailureReporter`が行う）
@@ -138,7 +139,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 - 「必須」は値で決める。キーの省略と値が空は同じ「未指定」として扱い、既定値がある項目は未指定を許す。
   既定値が無いもの（DB接続情報の`driver`・`url`）だけを必須とする
 - 実行のしかたを決める入力（設定ファイル・CLI引数・DB接続情報）は、未知のキー・引数、値の形式の違反、指定した参照先
-  （`annotationPath`のファイル）が無いことを、すべて失敗にする。既定値へ黙って置き換えたり、警告で続行したりしない
+  （`annotations`のファイル）が無いことを、すべて失敗にする。既定値へ黙って置き換えたり、警告で続行したりしない
   （書き誤りに気付けないまま、意図しない出力やモードで実行されるのを防ぐため）。なお、指定したスキーマがDBに存在するかは検証しない
 - ドキュメントに載せる内容の入力（サイドカーYAML）は、ファイルとして読めない場合だけ失敗にし、個々の記述の誤り
   （キーの形式の誤り、必須項目の欠け、未知の多重度、未知のキー、マップであるべき箇所がマップでない等）は該当箇所を
@@ -151,9 +152,10 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | 入力 | 検証する場所 | 検証のタイミング |
 |---|---|---|
 | CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
-| 設定ファイルの形式（キー・整数。CLI引数で上書きした値を含む） | `ExportTableDefinitionProperties` | CLI引数の後（DBへの接続前） |
+| 設定ファイルの形式（YAMLとして読めるか・最上位がキーと値の組か） | `ConfigFile` | CLI引数の後（DBへの接続前） |
+| 設定ファイルの項目（キー・リスト・整数。CLI引数で上書きした値を含む） | `ExportTableDefinitionProperties` | 同上 |
 | 出力対象の絞り込み条件（テーブル名パターン・出力対象オブジェクト種別） | `TableNamePatterns.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
-| 出力先（`outputPath`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
+| 出力先（`output.path`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |
 | サイドカーYAML | `SidecarYamlRepository` | DBからの取得・`--rm-dist`の削除の前 |
 
@@ -252,7 +254,7 @@ Markdownドキュメントのファイル名・配置（一覧・ER図・観点�
 ## スキーマのスナップショット（中間表現）
 
 Markdownと同じ取得結果から、常にスキーマ情報を構造化したスナップショット（JSON Lines）を
-`{outputPath}/snapshot/{DB名}/`配下へ出力する。Markdownは最終成果物（表示形式）であり機械処理に向かないため、
+`{output.path}/snapshot/{DB名}/`配下へ出力する。Markdownは最終成果物（表示形式）であり機械処理に向かないため、
 差分検知・将来のlint/coverage等の土台となる機械可読な中間表現を別に持つ位置づけ。
 MCPサーバー（[mcp-server.md](./mcp-server.md)）もこのスナップショットを読むため、形式はcliの外部との契約でもある。
 
@@ -286,7 +288,7 @@ Oracleは`1`/`0`）、エンティティも`boolean`で保持する。表のセ�
 「見せ方」でありスキーマの事実ではないため[スナップショットには含めない](#サイドカーyaml手動付帯情報論理リレーション観点)が、
 MCPサーバーからAIが引けるよう、参考情報としては出力する。
 
-- 配置は`{outputPath}/insights/{DB名}/`で、スナップショット（`snapshot/`）の**兄弟**
+- 配置は`{output.path}/insights/{DB名}/`で、スナップショット（`snapshot/`）の**兄弟**
   （`domain.service.path.InsightLocations`）。`snapshot/`の中には置かない
 - `--check`（`CheckDocumentDiffUsecase`）は参考情報用の`ExportSink`（`InsightExportSinkFactory`）を
   一切使わないため、参考情報は生成されず、比較対象にもならない。「生成してから比較対象から除外する」のではなく
@@ -314,8 +316,8 @@ DBからの取得と出力は`SchemaExportPipeline`が以下のように分け�
   関数の定義本体をスキーマ単位で、テーブルの詳細情報をスキーマ・チャンク単位で取得し、各`ExportSink`へ渡す。
   出力形式ごとの違い（何をどのファイルへ書くか）は`ExportSink`の実装が持ち、`SchemaExportPipeline`は出力形式を意識しない
 
-`checkDocumentDiff()`は、`outputPath`（比較先）には手を入れず、スナップショットの`ExportSink`のみで一時ディレクトリへ向けて
-`export()`を呼び出した上で（Markdownの描画・ER図の生成は行わない）、生成結果と`outputPath`配下の`snapshot/`を
+`checkDocumentDiff()`は、`output.path`（比較先）には手を入れず、スナップショットの`ExportSink`のみで一時ディレクトリへ向けて
+`export()`を呼び出した上で（Markdownの描画・ER図の生成は行わない）、生成結果と`output.path`配下の`snapshot/`を
 `SnapshotDiff.compare()`で比較する。JSON Linesの行をオブジェクト（`SnapshotKind.identify()`:
 `スキーマ名.名前`、関数は引数を含む）で突き合わせ、追加/削除/内容不一致をオブジェクト単位で報告する。
 `database.json`等それ以外のファイルはファイル単位で比較する。
@@ -340,7 +342,7 @@ Writer層・SQL層は出力先パスに一切依存しないため無改修で�
 
 ## サイドカーYAML（手動付帯情報・論理リレーション・観点）
 
-DBのメタ情報だけでは表現できない情報を、サイドカーYAML（プロパティ`annotationPath`で指定。コード上は`sidecarPath`と呼ぶ）として
+DBのメタ情報だけでは表現できない情報を、サイドカーYAML（設定ファイルの`annotations`で指定。コード上は`sidecarPath`と呼ぶ）として
 マージできる。読み込みは `SidecarRepository`（実装: `infrastructure.file.repository.SidecarYamlRepository`）が一括で行い、
 `domain.model.sidecar.Sidecar` として返す。`Sidecar` は性質の異なる3種類の情報を束ねる。
 指定したファイルが無い・YAMLとして読めない場合は`UserCorrectableException`とし、個々の記述の誤りは読み飛ばして警告する
@@ -397,9 +399,11 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 ## 設定・DI
 
-- `config.PropertyLoader`: `conf`ディレクトリのプロパティファイルを探して読み込み、キーと値の組として返す（ファイルの探索・読み込みのみを担う）
-- `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: 読み込みは`PropertyLoader`に委ね、`conf/ExportTableDefinition.properties`の
-  設定項目の仕様（キー・既定値・値の形式）と検証を1箇所に持つ（カンマ区切りの値は各要素の前後の空白を除去し、空要素を除く）
+- `config.ConfigFile`: 設定ファイル（YAML）を読み込み、最上位のキーと値の組として返す（ファイルの読み込みとYAMLとしての解析のみを担う）。
+  ファイルは`--config`で指定でき、未指定なら実行したディレクトリの`conf/config.yml`を読む
+- `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: 読み込みは`ConfigFile`に委ね、設定ファイルの`database`以外の
+  設定項目の仕様（位置・CLI引数名・既定値・値の形式）と検証を1箇所に持つ（リストの値は各要素の前後の空白を除去し、空要素を除く）。
+  `database`の仕様と検証は`ConnectionSettings`が持つ
 - `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）のうち、DB種別に依存しないもの
 - `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`SqlSessionFactory`・`TableDefinitionRepository`と、それに依存するユースケース）
 

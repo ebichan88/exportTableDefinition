@@ -5,7 +5,7 @@ import java.nio.file.Path;
 /**
  * MCPサーバーの起動引数
  *
- * @param snapshotDirectory cliの出力先（outputPath）配下の{@code snapshot}ディレクトリ
+ * @param snapshotDirectory cliの出力先（output.path）配下の{@code snapshot}ディレクトリ
  */
 public record ServerArguments(Path snapshotDirectory) {
 

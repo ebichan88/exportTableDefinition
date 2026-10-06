@@ -3,7 +3,9 @@ package com.export_table_definition;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.ExportTableDefinitionProperties.SettingOverride;
+import com.export_table_definition.config.ConfigFile;
 import com.export_table_definition.shared.exception.UserCorrectableException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -109,7 +111,7 @@ public class CliArgumentsTest {
   }
 
   @Test
-  @DisplayName("settingOverrides: 設定ファイルのキーごとに、キーから導いたCLI引数名で上書き値を取り込む（READMEの記載順）")
+  @DisplayName("settingOverrides: 設定項目ごとのCLI引数名で上書き値を取り込み、項目の位置をキーにする（READMEの記載順）")
   void testSettingOverridesFromCliArgs() {
     Map<String, SettingOverride> overrides =
         CliArguments.parse(
@@ -126,26 +128,45 @@ public class CliArgumentsTest {
 
     assertEquals(
         List.of(
-            "schema",
-            "table",
-            "outputPath",
-            "chunkSize",
-            "erDiagramMaxNodes",
-            "outputObjects",
-            "annotationPath"),
+            "target.schemas",
+            "target.tables",
+            "target.objects",
+            "output.path",
+            "output.chunkSize",
+            "output.erDiagramMaxNodes",
+            "annotations"),
         List.copyOf(overrides.keySet()));
-    assertEquals(new SettingOverride("sample", "--schema"), overrides.get("schema"));
+    assertEquals(new SettingOverride("sample", "--schema"), overrides.get("target.schemas"));
     assertEquals(
-        new SettingOverride("!flyway_schema_history,*_bk", "--table"), overrides.get("table"));
-    assertEquals(new SettingOverride("./docs/db", "--output-path"), overrides.get("outputPath"));
-    assertEquals(new SettingOverride("100", "--chunk-size"), overrides.get("chunkSize"));
+        new SettingOverride("!flyway_schema_history,*_bk", "--table"),
+        overrides.get("target.tables"));
     assertEquals(
-        new SettingOverride("0", "--er-diagram-max-nodes"), overrides.get("erDiagramMaxNodes"));
+        new SettingOverride("trigger", "--output-objects"), overrides.get("target.objects"));
+    assertEquals(new SettingOverride("./docs/db", "--output-path"), overrides.get("output.path"));
+    assertEquals(new SettingOverride("100", "--chunk-size"), overrides.get("output.chunkSize"));
     assertEquals(
-        new SettingOverride("trigger", "--output-objects"), overrides.get("outputObjects"));
+        new SettingOverride("0", "--er-diagram-max-nodes"),
+        overrides.get("output.erDiagramMaxNodes"));
     assertEquals(
         new SettingOverride("conf/annotations.yml", "--annotation-path"),
-        overrides.get("annotationPath"));
+        overrides.get("annotations"));
+  }
+
+  @Test
+  @DisplayName("configPath: --configが無い場合・値が空の場合は既定のconf/config.ymlを返す")
+  void testConfigPathDefaultsToConfConfigYml() {
+    assertEquals(ConfigFile.DEFAULT_PATH, CliArguments.parse(new String[] {}).configPath());
+    assertEquals(
+        ConfigFile.DEFAULT_PATH, CliArguments.parse(new String[] {"--config= "}).configPath());
+  }
+
+  @Test
+  @DisplayName("configPath: --configで指定したパスを返し、--configは解釈できる引数として受け入れる")
+  void testConfigPathFromCliArgs() {
+    CliArguments args = CliArguments.parse(new String[] {"--config=/work/prod.yml", "--check"});
+
+    assertEquals(Path.of("/work/prod.yml"), args.configPath());
+    assertDoesNotThrow(args::requireKnownArguments);
   }
 
   @Test
@@ -172,5 +193,6 @@ public class CliArgumentsTest {
     assertTrue(e.getMessage().contains("Unknown argument: --outputPath=./docs"));
     assertTrue(e.getMessage().contains("--output-path=<value>"));
     assertTrue(e.getMessage().contains("--annotation-path=<value>"));
+    assertTrue(e.getMessage().contains("--config=<path>"));
   }
 }

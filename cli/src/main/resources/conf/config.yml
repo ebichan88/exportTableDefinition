@@ -1,0 +1,24 @@
+# exportTableDefinition の設定ファイル
+# 各項目の意味・既定値はREADMEの「config.yml の記載内容」を参照。値を書かない項目は既定値になる
+
+# 接続先のDB
+# パスワードはここに書けない。環境変数 EXPORT_TABLE_DEFINITION_DB_PASSWORD（または --db-password）で渡す
+database:
+  driver:     # 例: org.postgresql.Driver ／ oracle.jdbc.OracleDriver
+  url:        # 例: jdbc:postgresql://localhost:5432/testdb ／ jdbc:oracle:thin:@//localhost:1521/orclpdb
+  username:
+
+# 出力の対象（未指定の場合は全スキーマ・全テーブル・全種別）
+target:
+  schemas: []   # 例: [public, sample]
+  tables: []    # 例: ["!flyway_schema_history", "*_bk"]
+  objects: []   # 例: [trigger, function, sequence, type]
+
+# 出力先と出力の方法
+output:
+  path:               # 未指定の場合は ./output
+  chunkSize:          # 未指定の場合は 3000
+  erDiagramMaxNodes:  # 未指定の場合は 80
+
+# 手動付帯情報・論理リレーション・観点を記述したサイドカーYAMLのパス（未指定の場合はマージしない）
+annotations:

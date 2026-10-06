@@ -1,20 +1,17 @@
 package com.export_table_definition.infrastructure.db;
 
 import com.export_table_definition.config.InvalidConfigurationException;
-import com.export_table_definition.config.PropertyLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * 検証済みのDB接続情報を表すクラス<br>
- * {@code conf/mybatis.properties}の値に、環境変数のパスワード・CLI引数の値を重ねたもの。組み立てる時に検証するため、
- * インスタンスがあれば必須の項目がそろい、未知のキーを含まないことが保証される
+ * 設定ファイル（{@code conf/config.yml}）の{@code database}の値に、環境変数のパスワード・CLI引数の値を重ねたもの。
+ * 組み立てる時に検証するため、インスタンスがあれば必須の項目がそろい、未知のキーを含まないことが保証される
  */
 public final class ConnectionSettings {
 
@@ -24,13 +21,11 @@ public final class ConnectionSettings {
    */
   private static final String PASSWORD_ENVIRONMENT_VARIABLE = "EXPORT_TABLE_DEFINITION_DB_PASSWORD";
 
-  private static final Logger logger = LogManager.getLogger(ConnectionSettings.class);
-  private static final String PROPERTY_BUNDLE_NAME = "mybatis";
   private static final String PASSWORD_KEY = "password";
 
   /**
    * DB接続情報のキー（mybatis-config.xmlが参照する）<br>
-   * passwordは環境変数・CLI引数でのみ指定でき、conf/mybatis.propertiesには書けない
+   * passwordは環境変数・CLI引数でのみ指定でき、設定ファイルには書けない
    */
   private static final List<String> CONNECTION_KEYS =
       List.of("driver", "url", "username", PASSWORD_KEY);
@@ -45,20 +40,6 @@ public final class ConnectionSettings {
   }
 
   /**
-   * {@code conf/mybatis.properties}を読み込み、環境変数のパスワード・CLI引数の値で上書きしたDB接続情報を組み立てるメソッド<br>
-   * {@code conf/mybatis.properties}が存在しない場合は、上書きする値だけで組み立てる（CLI引数のみで接続情報を賄うケースを許容するため）
-   *
-   * @param overrides 上書きする接続情報（CLI引数由来。未指定のキーは含まない）
-   * @param environment 環境変数（{@link #PASSWORD_ENVIRONMENT_VARIABLE}だけを参照する）
-   * @return 検証済みのDB接続情報
-   * @throws InvalidConfigurationException 未知のキーがある場合（{@code conf/mybatis.properties}の{@code
-   *     password}を含む）や、必須の項目が未指定の場合
-   */
-  public static ConnectionSettings load(Properties overrides, Map<String, String> environment) {
-    return merge(loadBaseProperties(), overrides, environment);
-  }
-
-  /**
    * DB接続情報を組み立てるメソッド
    *
    * @return 検証済みのDB接続情報
@@ -70,16 +51,16 @@ public final class ConnectionSettings {
   }
 
   /**
-   * {@code conf/mybatis.properties}の値を、環境変数のパスワード・上書きする値の順に上書きしてDB接続情報を組み立てるメソッド<br>
+   * 設定ファイルの{@code database}の値を、環境変数のパスワード・上書きする値の順に上書きしてDB接続情報を組み立てるメソッド<br>
    * 環境変数の値が空（空白のみを含む）の場合は、指定しなかったものとして扱う
    *
-   * @param baseValues {@code conf/mybatis.properties}の値
+   * @param baseValues 設定ファイルの{@code database}の値（書いていない場合は空）
+   * @param overrides 上書きする接続情報（CLI引数由来。未指定のキーは含まない）
    * @param environment 環境変数（{@link #PASSWORD_ENVIRONMENT_VARIABLE}だけを参照する）
    * @return 検証済みのDB接続情報
-   * @throws InvalidConfigurationException 未知のキーがある場合（{@code conf/mybatis.properties}の{@code
-   *     password}を含む）や、必須の項目が未指定の場合
+   * @throws InvalidConfigurationException 未知のキーがある場合（設定ファイルの{@code password}を含む）や、必須の項目が未指定の場合
    */
-  static ConnectionSettings merge(
+  public static ConnectionSettings merge(
       Map<String, String> baseValues, Properties overrides, Map<String, String> environment) {
     requireNoPasswordInFile(baseValues);
     final Map<String, String> values = new HashMap<>(baseValues);
@@ -98,9 +79,8 @@ public final class ConnectionSettings {
   private static void requireNoPasswordInFile(Map<String, String> baseValues) {
     if (baseValues.containsKey(PASSWORD_KEY)) {
       throw new InvalidConfigurationException(
-          "password cannot be set in conf/"
-              + PROPERTY_BUNDLE_NAME
-              + ".properties. Remove the password line, and set the password with the "
+          "database.password cannot be set in the configuration file. Remove the password line, "
+              + "and set the password with the "
               + PASSWORD_ENVIRONMENT_VARIABLE
               + " environment variable (or the --db-password argument).");
     }
@@ -122,13 +102,20 @@ public final class ConnectionSettings {
   private static void requireValid(Map<String, String> values) {
     final List<String> errors = new ArrayList<>();
     final List<String> unknownKeys =
-        values.keySet().stream().filter(key -> !CONNECTION_KEYS.contains(key)).sorted().toList();
+        values.keySet().stream()
+            .filter(key -> !CONNECTION_KEYS.contains(key))
+            .map(key -> "database." + key)
+            .sorted()
+            .toList();
     if (!unknownKeys.isEmpty()) {
       errors.add(
           "Unknown key: "
               + String.join(", ", unknownKeys)
               + " (available keys: "
-              + String.join(", ", CONNECTION_KEYS)
+              + CONNECTION_KEYS.stream()
+                  .filter(key -> !key.equals(PASSWORD_KEY))
+                  .map(key -> "database." + key)
+                  .collect(Collectors.joining(", "))
               + ")");
     }
     REQUIRED_CONNECTION_KEYS.stream()
@@ -136,31 +123,17 @@ public final class ConnectionSettings {
         .forEach(
             key ->
                 errors.add(
-                    key
-                        + " is not set. Set it in conf/"
-                        + PROPERTY_BUNDLE_NAME
-                        + ".properties, or with the --db-* argument."));
+                    "database."
+                        + key
+                        + " is not set. Set it in the configuration file, or use the --db-"
+                        + key
+                        + " argument."));
     if (!errors.isEmpty()) {
       throw new InvalidConfigurationException(
           "Invalid database connection settings."
               + errors.stream()
                   .map(error -> System.lineSeparator() + "  - " + error)
                   .collect(Collectors.joining()));
-    }
-  }
-
-  /**
-   * conf/mybatis.propertiesを読み込む<br>
-   * ファイルが存在しない場合は空を返す（CLI引数のみで接続情報を賄うケースを許容するため）
-   *
-   * @return 読み込んだキーと値の組（ファイルが存在しない場合は空）
-   */
-  private static Map<String, String> loadBaseProperties() {
-    try {
-      return PropertyLoader.load(PROPERTY_BUNDLE_NAME);
-    } catch (InvalidConfigurationException e) {
-      logger.info("conf/mybatis.properties not found. Relying on the --db-* arguments only.");
-      return Map.of();
     }
   }
 }

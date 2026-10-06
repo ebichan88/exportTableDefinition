@@ -59,21 +59,21 @@ export PATH=$JAVA_HOME/bin:$PATH
 `cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar` と `cli/build/libs/conf/` 一式が作られる
 （`test`タスクも実行されるが数秒で終わる。ユニットテストが落ちたらそこで止めて直す）。
 
-### 3. 設定ファイルを書き換える（ビルドの後に行うこと）
+### 3. 設定ファイルを用意する
 
 `build.dependsOn(copyResources)`（`cli/build.gradle`）により、ビルドのたびに `cli/src/main/resources/conf/` の内容で
-`cli/build/libs/conf/` が**上書きされる**。設定編集は必ずビルドの後に行うこと（先に編集すると消える）。
+`cli/build/libs/conf/` が**上書きされる**。設定はビルドの影響を受けない場所に別のファイルとして書き、`--config`で渡す。
 
-`cli/build/libs/conf/ExportTableDefinition.properties` を編集:
+`/tmp/verify-postgres.yml` を作成する（パスはリポジトリの絶対パスで書く）:
 
-```properties
-schema=sample
-table=
-outputPath=<リポジトリの絶対パス>/docs/sample/postgres/output
-chunkSize=
-erDiagramMaxNodes=
-outputObjects=
-annotationPath=<リポジトリの絶対パス>/docs/sample/postgres/annotations.sample.yml
+```bash
+cat > /tmp/verify-postgres.yml <<EOF
+target:
+  schemas: [sample]
+output:
+  path: $PWD/docs/sample/postgres/output
+annotations: $PWD/docs/sample/postgres/annotations.sample.yml
+EOF
 ```
 
 Markdownに加えて、常に`docs/sample/postgres/output/snapshot/`配下へスキーマのスナップショット
@@ -81,23 +81,18 @@ Markdownに加えて、常に`docs/sample/postgres/output/snapshot/`配下へス
 
 ### 4. 実行する
 
-DB接続情報はCLI引数で渡せる（`conf/mybatis.properties` を用意しなくてよい）。
-`PropertyLoader`はカレントディレクトリ相対の`./conf`→`./src/main/resources/conf`の順で探すため、
-**`cli/build/libs` に `cd` してから実行する**こと（`cli`に`cd`して実行すると `src/main/resources/conf`
-側の設定＝schema空白＝全スキーマ対象を拾ってしまう。リポジトリ直下では`conf`が見つからず失敗する）。
+DB接続情報はCLI引数で渡す（設定ファイルの`database`は空でよい）。
+`--config`を付けない場合は、カレントディレクトリの`conf/config.yml`を読む（`cli/build/libs`で実行すると、
+全項目が未指定の配布用の設定＝全スキーマ対象を拾ってしまう）ため、必ず`--config`で手順3のファイルを指定する。
 
 ```bash
-cd cli/build/libs
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar \
+java -jar cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar \
+  --config=/tmp/verify-postgres.yml \
   --db-driver=org.postgresql.Driver \
   --db-url=jdbc:postgresql://localhost:15432/testdb \
   --db-username=postgres \
   --db-password=postgres
 ```
-
-手順3の設定ファイルの編集の代わりに、`--schema=sample --output-path=<リポジトリの絶対パス>/docs/sample/postgres/output
---annotation-path=<リポジトリの絶対パス>/docs/sample/postgres/annotations.sample.yml` を付けて実行してもよい
-（CLI引数は設定ファイルの値より優先される）。
 
 `[result]:SUCCESS` が出れば成功。`[result]:FAIL` の場合は次の「原因調査」を参照。
 
@@ -129,7 +124,7 @@ docker rm -f exporttabledefinition-verify-db
 
 Oracle用mapper（`mapper/oracle/tableDefinitionMapper.xml`）を変えた場合は、まず`./gradlew oracleIntegrationTest`を実行する
 （`docs/sample/oracle/ddl.sql`を流し込んだOracle Database Freeに対して、取得結果とベースライン`docs/sample/oracle/output`との一致を確かめる）。
-ベースラインを出力し直す場合は、PostgreSQLの手順1・4・6を次のように読み替える（手順2・3・5は同じ）。
+ベースラインを出力し直す場合は、PostgreSQLの手順1・3・4・6を次のように読み替える（手順2・5は同じ）。
 
 ```bash
 # 1. 起動とDDLの流し込み。イメージは初期化スクリプトをCDBのルートで実行するため、PDBへ切り替えてからDDLを流す
@@ -143,25 +138,31 @@ docker run -d --name exporttabledefinition-verify-oracle \
 # 起動待ち（数十秒）。DDLが失敗するとコンテナが終了するので、その場合はdocker logsでORA-を確認する
 for i in $(seq 1 90); do docker logs exporttabledefinition-verify-oracle 2>&1 | grep -q 'DATABASE IS READY TO USE' && break; sleep 2; done
 
-# 4. 実行（cli/build/libsで）。Oracleのスキーマ名は大文字
-rm -rf <リポジトリの絶対パス>/docs/sample/oracle/output
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar \
+# 3. 設定ファイル（Oracleのスキーマ名は大文字。ベースラインはサイドカー無しで出力しているためannotationsは書かない）
+cat > /tmp/verify-oracle.yml <<EOF
+target:
+  schemas: [SAMPLE]
+output:
+  path: $PWD/docs/sample/oracle/output
+EOF
+
+# 4. 実行（リポジトリ直下で）
+rm -rf docs/sample/oracle/output
+java -jar cli/build/libs/exportTableDefinition-1.0-SNAPSHOT.jar \
+  --config=/tmp/verify-oracle.yml \
   --db-driver=oracle.jdbc.OracleDriver \
   --db-url=jdbc:oracle:thin:@//localhost:11521/FREEPDB1 \
-  --db-username=sample --db-password=sample \
-  --schema=SAMPLE --output-path=<リポジトリの絶対パス>/docs/sample/oracle/output --annotation-path=
+  --db-username=sample --db-password=sample
 
 # 6. 後片付け
 docker rm -f exporttabledefinition-verify-oracle
 ```
 
-`--annotation-path=`を空で指定するのは、手順3で書き換えた設定ファイルのPostgreSQL用サイドカーを拾わないため（Oracleのベースラインはサイドカー無しで出力している）。
-
 ## 原因調査（`[result]:FAIL` になったら）
 
 まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectColumnInfo`等）と
 `[cause]`（DBが返したエラー。PSQLExceptionのメッセージ等）を見る。スタックトレースは実行したディレクトリの
-`var/log/exportTableDefinition.log`（`cli/build/libs`で実行した場合は`cli/build/libs/var/log/`）に記録される
+`var/log/exportTableDefinition.log`（リポジトリ直下で実行した場合は`var/log/`）に記録される
 （`FailureReporter`が想定外の失敗をスタックトレース付きでログへ出す）。
 実際に組み立てられたSQL文と合わせて調べたい場合は、該当のMyBatisステートメントを直接叩く
 使い捨てJavaプログラムを書くのが早い。

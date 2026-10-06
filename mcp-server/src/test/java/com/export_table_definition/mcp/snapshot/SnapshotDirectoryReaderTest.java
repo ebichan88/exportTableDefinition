@@ -147,7 +147,7 @@ class SnapshotDirectoryReaderTest {
   }
 
   @Test
-  @DisplayName("database.jsonが1つも無い場合（outputPathそのものを指定した等）は、snapshotディレクトリを指定するよう伝える")
+  @DisplayName("database.jsonが1つも無い場合（output.pathそのものを指定した等）は、snapshotディレクトリを指定するよう伝える")
   void failsWhenNoDatabaseFound() throws IOException {
     write("testdb/sample/table/employee.md", "# employee");
 

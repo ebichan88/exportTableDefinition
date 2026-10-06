@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 /**
  * スナップショットのディレクトリを読み込み、{@link SchemaCatalog}を組み立てるクラス<br>
  * 配置はcliの出力と同じく{@code {DB名}/database.json}・{@code {DB名}/{スキーマ名}/tables.jsonl}等。
- * 種類ごとのファイルは出力対象から外せる（cliの{@code outputObjects}）ため、無いファイルは0件として扱う。
+ * 種類ごとのファイルは出力対象から外せる（cliの{@code target.objects}）ため、無いファイルは0件として扱う。
  * 項目の追加に追従できるよう未知の項目は無視し、形式を互換性なく変えた場合は{@code formatVersion}で検知する
  */
 public final class SnapshotDirectoryReader {
@@ -46,13 +46,13 @@ public final class SnapshotDirectoryReader {
   /**
    * スナップショットのディレクトリを読み込むメソッド
    *
-   * @param snapshotDirectory cliの{@code outputPath}配下の{@code snapshot}ディレクトリ
+   * @param snapshotDirectory cliの{@code output.path}配下の{@code snapshot}ディレクトリ
    * @throws UserCorrectableException ディレクトリが無い・スナップショットが1つも無い・対応していない形式のバージョン・JSONとして読めない行がある場合
    */
   public SchemaCatalog read(Path snapshotDirectory) {
     if (!Files.isDirectory(snapshotDirectory)) {
       throw new UserCorrectableException(
-          "スナップショットのディレクトリが見つかりません。--snapshotにはcliの出力先（outputPath）配下のsnapshotディレクトリを指定してください。 [path="
+          "スナップショットのディレクトリが見つかりません。--snapshotにはcliの出力先（output.path）配下のsnapshotディレクトリを指定してください。 [path="
               + snapshotDirectory
               + "]");
     }
@@ -64,7 +64,7 @@ public final class SnapshotDirectoryReader {
       throw new UserCorrectableException(
           "スナップショットが見つかりません（{DB名}/"
               + DATABASE_FILE_NAME
-              + "がありません）。--snapshotにはcliの出力先（outputPath）配下のsnapshotディレクトリを指定してください。 [path="
+              + "がありません）。--snapshotにはcliの出力先（output.path）配下のsnapshotディレクトリを指定してください。 [path="
               + snapshotDirectory
               + "]");
     }

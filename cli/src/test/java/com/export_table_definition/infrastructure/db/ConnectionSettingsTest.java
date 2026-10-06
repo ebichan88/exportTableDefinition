@@ -9,7 +9,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ConnectionSettings のDB接続情報の組み立て・検証（READMEに記載したmybatis.properties・パスワードの環境変数の仕様）に関するテスト */
+/** ConnectionSettings のDB接続情報の組み立て・検証（READMEに記載したconfig.ymlのdatabase・パスワードの環境変数の仕様）に関するテスト */
 public class ConnectionSettingsTest {
 
   /** READMEに記載した環境変数名（実装の定数を参照せず、仕様として固定する） */
@@ -50,12 +50,14 @@ public class ConnectionSettingsTest {
             InvalidConfigurationException.class,
             () -> ConnectionSettings.of(Map.of("url", " ", "username", "user")));
 
-    assertTrue(e.getMessage().contains("driver is not set"));
-    assertTrue(e.getMessage().contains("url is not set"));
+    assertTrue(e.getMessage().contains("database.driver is not set"));
+    assertTrue(e.getMessage().contains("--db-driver"));
+    assertTrue(e.getMessage().contains("database.url is not set"));
+    assertTrue(e.getMessage().contains("--db-url"));
   }
 
   @Test
-  @DisplayName("of: 未知のキー（キー名の書き誤り等）は、書けるキーを添えて誤りとする")
+  @DisplayName("of: 未知のキー（キー名の書き誤り等）は、設定ファイルでの位置で示し、書けるキーを添えて誤りとする")
   void testRejectsUnknownKey() {
     InvalidConfigurationException e =
         assertThrows(
@@ -67,8 +69,9 @@ public class ConnectionSettingsTest {
                         "url", "jdbc:postgresql://localhost:5432/testdb",
                         "usrname", "user")));
 
-    assertTrue(e.getMessage().contains("Unknown key: usrname"));
-    assertTrue(e.getMessage().contains("username"));
+    assertTrue(e.getMessage().contains("Unknown key: database.usrname"));
+    assertTrue(e.getMessage().contains("database.username"));
+    assertFalse(e.getMessage().contains("database.password"));
   }
 
   @Test
@@ -90,7 +93,7 @@ public class ConnectionSettingsTest {
   }
 
   @Test
-  @DisplayName("merge: 設定ファイルが無くても、上書きする値だけで必須の項目がそろえば組み立てられる")
+  @DisplayName("merge: 設定ファイルにdatabaseを書いていなくても、上書きする値だけで必須の項目がそろえば組み立てられる")
   void testBuildsFromOverridesOnly() {
     final ConnectionSettings settings =
         ConnectionSettings.merge(
@@ -156,7 +159,8 @@ public class ConnectionSettingsTest {
                     properties("password", "clipass"),
                     Map.of(PASSWORD_ENVIRONMENT_VARIABLE, "envpass")));
 
-    assertTrue(e.getMessage().contains("password cannot be set in conf/mybatis.properties"));
+    assertTrue(
+        e.getMessage().contains("database.password cannot be set in the configuration file"));
     assertTrue(e.getMessage().contains(PASSWORD_ENVIRONMENT_VARIABLE));
   }
 }

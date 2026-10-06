@@ -18,7 +18,7 @@
 --     RANGE型 → コレクション型（VARRAY）
 --
 -- SQL*PlusにSYSDBA等の権限を持つユーザーでPDBへ接続して流し込みます（ユーザーの作成から行うため）。
--- 実行後、SAMPLEユーザーで接続し、conf/ExportTableDefinition.properties の schema に "SAMPLE" を指定して
+-- 実行後、SAMPLEユーザーで接続し、conf/config.yml の target.schemas に [SAMPLE] を指定して
 -- 実行すると出力結果を確認できます。
 -- ============================================================================
 

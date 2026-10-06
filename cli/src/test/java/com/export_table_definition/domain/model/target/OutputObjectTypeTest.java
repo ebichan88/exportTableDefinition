@@ -42,7 +42,7 @@ public class OutputObjectTypeTest {
   @Test
   @DisplayName("parse: 前後の空白を除去して解釈し、空要素は無視する")
   void testParseStripsNames() {
-    // 「outputObjects=trigger, function」のようにカンマの後へ空白を入れた場合を想定する
+    // 「--output-objects=trigger, function」のようにカンマの後へ空白を入れた場合を想定する
     final Set<OutputObjectType> result =
         OutputObjectType.parse(List.of("trigger", " function ", ""));
     assertEquals(Set.of(OutputObjectType.TRIGGER, OutputObjectType.FUNCTION), result);

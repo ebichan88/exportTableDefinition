@@ -112,7 +112,7 @@ public class OutputDirectoryValidatorTest {
           assertThrows(
               UserCorrectableException.class,
               () -> validator.validate(exportRequest("./README.md", rmDist)));
-      assertTrue(e.getMessage().startsWith("outputPath points to an existing file"));
+      assertTrue(e.getMessage().startsWith("output.path points to an existing file"));
       assertTrue(
           e.getMessage().contains(Path.of("./README.md").toAbsolutePath().normalize().toString()));
     }
