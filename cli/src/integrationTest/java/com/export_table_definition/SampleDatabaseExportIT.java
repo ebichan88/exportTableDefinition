@@ -4,13 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.application.CheckDocumentDiffRequest;
 import com.export_table_definition.application.ExportTableDefinitionRequest;
+import com.export_table_definition.config.ConfigFile;
 import com.export_table_definition.presentation.ExportTableDefinitionController;
 import com.export_table_definition.presentation.dto.DiffCheckResultDto;
 import com.export_table_definition.testsupport.ExportBaseline;
 import com.export_table_definition.testsupport.SampleDatabase;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -36,7 +35,7 @@ class SampleDatabaseExportIT {
   @DisplayName("通常実行: 出力がベースラインと一致する（詳細情報の分割取得の単位を変えても出力は変わらない）")
   void testExportMatchesBaseline(String chunkSize, @TempDir Path outputDir) {
     final ExportTableDefinitionRequest request =
-        properties(outputDir, Map.of("chunkSize", chunkSize)).toExportTableDefinitionRequest(false);
+        properties(outputDir, chunkSize).toExportTableDefinitionRequest(false);
 
     controller().execute(request);
 
@@ -46,8 +45,7 @@ class SampleDatabaseExportIT {
   @Test
   @DisplayName("差分検知（--check）: DBとベースラインのスナップショットに差分が無い")
   void testCheckFindsNoDifferenceFromBaseline() {
-    final CheckDocumentDiffRequest request =
-        properties(BASELINE, Map.of()).toCheckDocumentDiffRequest();
+    final CheckDocumentDiffRequest request = properties(BASELINE, "").toCheckDocumentDiffRequest();
 
     final DiffCheckResultDto result = controller().checkDiff(request);
 
@@ -59,19 +57,24 @@ class SampleDatabaseExportIT {
   }
 
   /**
-   * verifyスキルの手順と同じ設定（{@code conf/ExportTableDefinition.properties}）を組み立てる
+   * verifyスキルの手順と同じ設定（{@code conf/config.yml}）を組み立てる
    *
    * @param outputPath 出力先
-   * @param overrides 上書きする設定
+   * @param chunkSize {@code output.chunkSize}の値（空の場合は既定値）
    * @return 検証済みの設定
    */
-  private static ExportTableDefinitionProperties properties(
-      Path outputPath, Map<String, String> overrides) {
-    final Map<String, String> values = new HashMap<>();
-    values.put("schema", "sample");
-    values.put("outputPath", outputPath.toString());
-    values.put("annotationPath", ANNOTATION_PATH);
-    values.putAll(overrides);
-    return ExportTableDefinitionProperties.of(values);
+  private static ExportTableDefinitionProperties properties(Path outputPath, String chunkSize) {
+    return ExportTableDefinitionProperties.of(
+        ConfigFile.parse(
+            Path.of("config.yml"),
+            """
+            target:
+              schemas: [sample]
+            output:
+              path: '%s'
+              chunkSize: %s
+            annotations: '%s'
+            """
+                .formatted(outputPath, chunkSize, ANNOTATION_PATH)));
   }
 }

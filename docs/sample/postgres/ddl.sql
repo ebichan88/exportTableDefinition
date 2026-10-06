@@ -8,8 +8,8 @@
 -- （1対1・0..1対1・1対多・0..1対多・多対多・自己参照・複合外部キー・関連なし）
 -- を一通り含めています。
 --
--- 実行後、conf/ExportTableDefinition.properties の schema に "sample" を、
--- annotationPath に annotations.sample.yml のパスを指定して実行すると
+-- 実行後、conf/config.yml の target.schemas に [sample] を、
+-- annotations に annotations.sample.yml のパスを指定して実行すると
 -- 出力結果を確認できます。
 -- ============================================================================
 

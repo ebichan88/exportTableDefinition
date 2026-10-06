@@ -5,10 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.export_table_definition.ExportTableDefinitionProperties.SettingOverride;
 import com.export_table_definition.application.CheckDocumentDiffRequest;
 import com.export_table_definition.application.ExportTableDefinitionRequest;
+import com.export_table_definition.config.ConfigFile;
 import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.target.OutputObjectType;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -19,15 +21,30 @@ import org.junit.jupiter.api.Test;
 /** ExportTableDefinitionProperties の設定ファイルの読み込み・検証（READMEに記載した設定項目の仕様）に関するテスト */
 public class ExportTableDefinitionPropertiesTest {
 
+  private static final Path CONFIG_PATH = Path.of("conf", "config.yml");
+
   private static TableEntity table(String schema, String physical) {
     return new TableEntity("testdb", schema, "", physical, TableType.TABLE, "");
+  }
+
+  private static ConfigFile config(String yaml) {
+    return ConfigFile.parse(CONFIG_PATH, yaml);
+  }
+
+  private static ExportTableDefinitionRequest request(String yaml) {
+    return ExportTableDefinitionProperties.of(config(yaml)).toExportTableDefinitionRequest(false);
+  }
+
+  private static InvalidConfigurationException error(String yaml) {
+    return assertThrows(
+        InvalidConfigurationException.class,
+        () -> ExportTableDefinitionProperties.of(config(yaml)));
   }
 
   @Test
   @DisplayName("of: すべての項目が未指定の場合は既定値を用いる")
   void testOfUsesDefaultsWhenNothingSpecified() {
-    ExportTableDefinitionRequest request =
-        ExportTableDefinitionProperties.of(Map.of()).toExportTableDefinitionRequest(false);
+    ExportTableDefinitionRequest request = request("");
 
     assertEquals(List.of(), request.targetSelection().tableScope().schemaNames());
     assertFalse(request.targetSelection().tableScope().isFiltered());
@@ -40,21 +57,22 @@ public class ExportTableDefinitionPropertiesTest {
   }
 
   @Test
-  @DisplayName("of: キーを書かない場合と値を空白にした場合は、同じ「未指定」として扱う")
+  @DisplayName("of: キーを書かない場合と、キーだけ書いた場合・空のリスト・空白の値は、同じ「未指定」として扱う")
   void testOfTreatsBlankValueAsUnspecified() {
-    ExportTableDefinitionRequest omitted =
-        ExportTableDefinitionProperties.of(Map.of()).toExportTableDefinitionRequest(false);
+    ExportTableDefinitionRequest omitted = request("");
     ExportTableDefinitionRequest blank =
-        ExportTableDefinitionProperties.of(
-                Map.of(
-                    "schema", "",
-                    "table", " ",
-                    "outputPath", "",
-                    "chunkSize", "",
-                    "erDiagramMaxNodes", "  ",
-                    "outputObjects", "",
-                    "annotationPath", ""))
-            .toExportTableDefinitionRequest(false);
+        request(
+            """
+            target:
+              schemas: []
+              tables:
+              objects: []
+            output:
+              path: ""
+              chunkSize:
+              erDiagramMaxNodes: "  "
+            annotations:
+            """);
 
     assertEquals(
         omitted.targetSelection().tableScope().schemaNames(),
@@ -73,14 +91,18 @@ public class ExportTableDefinitionPropertiesTest {
   void testOfParsesSpecifiedValues() {
     ExportTableDefinitionRequest request =
         ExportTableDefinitionProperties.of(
-                Map.of(
-                    "schema", " sample ",
-                    "table", "!tmp_*",
-                    "outputPath", " ./docs/db ",
-                    "chunkSize", " 100 ",
-                    "erDiagramMaxNodes", "0",
-                    "outputObjects", "trigger, function",
-                    "annotationPath", " conf/annotations.yml "))
+                config(
+                    """
+                    target:
+                      schemas: [" sample "]
+                      tables: ["!tmp_*"]
+                      objects: [trigger, " function"]
+                    output:
+                      path: " ./docs/db "
+                      chunkSize: 100
+                      erDiagramMaxNodes: " 0 "
+                    annotations: " conf/annotations.yml "
+                    """))
             .toExportTableDefinitionRequest(true);
 
     assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
@@ -96,50 +118,110 @@ public class ExportTableDefinitionPropertiesTest {
   }
 
   @Test
-  @DisplayName("of: カンマ区切りの値は分割し、各要素の前後の空白を除去して空要素を除く")
-  void testOfSplitsCommaSeparatedValues() {
+  @DisplayName("of: リストの項目は、YAMLのブロック形式でも書け、空要素を除く")
+  void testOfReadsBlockStyleListAndSkipsEmptyElements() {
     ExportTableDefinitionRequest request =
-        ExportTableDefinitionProperties.of(Map.of("schema", "alpha,beta, gamma ,,delta"))
-            .toExportTableDefinitionRequest(false);
+        request(
+            """
+            target:
+              schemas:
+                - alpha
+                - ""
+                -
+                - beta
+            """);
 
-    assertEquals(
-        List.of("alpha", "beta", "gamma", "delta"),
-        request.targetSelection().tableScope().schemaNames());
+    assertEquals(List.of("alpha", "beta"), request.targetSelection().tableScope().schemaNames());
   }
 
   @Test
-  @DisplayName("of: 未知のキー（キー名の書き誤り等）は、書けるキーを添えて誤りとする")
+  @DisplayName("of: リストの項目に1つの値を書いた場合（カンマ区切りを含む）は、1つの名前として黙って扱わずに誤りとする")
+  void testOfRejectsScalarForListSetting() {
+    InvalidConfigurationException e =
+        error(
+            """
+            target:
+              schemas: public, sample
+            """);
+
+    assertTrue(e.getMessage().contains("target.schemas must be a list"));
+  }
+
+  @Test
+  @DisplayName("of: 1つの値の項目にリストやキーと値の組を書いた場合は誤りとする")
+  void testOfRejectsListForSingleValueSetting() {
+    InvalidConfigurationException e =
+        error(
+            """
+            output:
+              path: [./a, ./b]
+            annotations:
+              file: conf/annotations.yml
+            """);
+
+    assertTrue(e.getMessage().contains("output.path must be a single value."));
+    assertTrue(e.getMessage().contains("annotations must be a single value."));
+  }
+
+  @Test
+  @DisplayName("of: セクションにキーと値の組でない値を書いた場合は誤りとする")
+  void testOfRejectsSectionThatIsNotMapping() {
+    InvalidConfigurationException e = error("output: ./docs\n");
+
+    assertTrue(e.getMessage().contains("output must be a mapping of keys and values."));
+  }
+
+  @Test
+  @DisplayName("of: 未知のキー（セクション内・最上位の書き誤り等）は、項目の位置で示し、書けるキーを添えて誤りとする")
   void testOfRejectsUnknownKey() {
     InvalidConfigurationException e =
-        assertThrows(
-            InvalidConfigurationException.class,
-            () -> ExportTableDefinitionProperties.of(Map.of("outputpath", "./docs")));
+        error(
+            """
+            output:
+              paht: ./docs
+            targets:
+              schemas: [sample]
+            """);
 
-    assertTrue(e.getMessage().contains("ExportTableDefinition.properties"));
-    assertTrue(e.getMessage().contains("Unknown key: outputpath"));
-    assertTrue(e.getMessage().contains("outputPath"));
+    assertTrue(e.getMessage().contains("conf"));
+    assertTrue(e.getMessage().contains("config.yml"));
+    assertTrue(e.getMessage().contains("Unknown key: output.paht, targets"));
+    assertTrue(e.getMessage().contains("output.path"));
+    assertTrue(e.getMessage().contains("target.schemas"));
+  }
+
+  @Test
+  @DisplayName("of: databaseの中身は検証しない（DB接続情報の検証はConnectionSettingsが行う）")
+  void testOfIgnoresDatabaseSection() {
+    ExportTableDefinitionRequest request =
+        request(
+            """
+            database:
+              url: jdbc:postgresql://localhost:5432/testdb
+              unknown: value
+            """);
+
+    assertEquals(3000, request.chunkSize());
   }
 
   @Test
   @DisplayName("of: 整数として解釈できない値は、既定値へ置き換えずに誤りとする")
   void testOfRejectsNonIntegerValues() {
-    InvalidConfigurationException e =
-        assertThrows(
-            InvalidConfigurationException.class,
-            () -> ExportTableDefinitionProperties.of(Map.of("chunkSize", "abc")));
+    InvalidConfigurationException e = error("output:\n  chunkSize: abc\n");
 
-    assertTrue(e.getMessage().contains("chunkSize must be an integer: abc"));
+    assertTrue(e.getMessage().contains("output.chunkSize must be an integer: abc"));
   }
 
   @Test
   @DisplayName("of: 出力対象の条件として解釈できない値（未知の種別名・空のテーブル名）は誤りとする")
   void testOfRejectsInvalidTargetSelection() {
     InvalidConfigurationException e =
-        assertThrows(
-            InvalidConfigurationException.class,
-            () ->
-                ExportTableDefinitionProperties.of(
-                    Map.of("outputObjects", "trigers", "table", "sample.")));
+        error(
+            """
+            target:
+              tables: [sample.]
+              objects: [trigers]
+            """);
 
     assertTrue(e.getMessage().contains("trigers"));
     assertTrue(e.getMessage().contains("sample."));
@@ -149,17 +231,17 @@ public class ExportTableDefinitionPropertiesTest {
   @DisplayName("of: 複数の誤りは1件ずつではなく、まとめて報告する")
   void testOfReportsAllErrorsAtOnce() {
     InvalidConfigurationException e =
-        assertThrows(
-            InvalidConfigurationException.class,
-            () ->
-                ExportTableDefinitionProperties.of(
-                    Map.of(
-                        "chunksize", "100",
-                        "erDiagramMaxNodes", "1.5",
-                        "outputObjects", "trigers")));
+        error(
+            """
+            target:
+              objects: [trigers]
+            output:
+              chunksize: 100
+              erDiagramMaxNodes: 1.5
+            """);
 
-    assertTrue(e.getMessage().contains("Unknown key: chunksize"));
-    assertTrue(e.getMessage().contains("erDiagramMaxNodes must be an integer: 1.5"));
+    assertTrue(e.getMessage().contains("Unknown key: output.chunksize"));
+    assertTrue(e.getMessage().contains("output.erDiagramMaxNodes must be an integer: 1.5"));
     assertTrue(e.getMessage().contains("trigers"));
   }
 
@@ -168,7 +250,14 @@ public class ExportTableDefinitionPropertiesTest {
   void testToCheckDocumentDiffRequest() {
     ExportTableDefinitionProperties properties =
         ExportTableDefinitionProperties.of(
-            Map.of("schema", "sample", "outputPath", "./docs/db", "chunkSize", "50"));
+            config(
+                """
+                target:
+                  schemas: [sample]
+                output:
+                  path: ./docs/db
+                  chunkSize: 50
+                """));
 
     CheckDocumentDiffRequest request = properties.toCheckDocumentDiffRequest();
 
@@ -178,31 +267,57 @@ public class ExportTableDefinitionPropertiesTest {
   }
 
   @Test
-  @DisplayName("load: 配布する設定ファイル（全項目が未指定）は、誤りなく既定値で読み込める")
-  void testLoadDistributedTemplate() {
+  @DisplayName("of: 配布する設定ファイル（全項目が未指定）は、誤りなく既定値で読み込める")
+  void testDistributedConfigFile() {
     ExportTableDefinitionRequest request =
-        ExportTableDefinitionProperties.load(Map.of()).toExportTableDefinitionRequest(false);
+        ExportTableDefinitionProperties.of(
+                ConfigFile.load(Path.of("src", "main", "resources", "conf", "config.yml")))
+            .toExportTableDefinitionRequest(false);
 
     assertEquals(3000, request.chunkSize());
     assertEquals(80, request.erDiagramMaxNodes());
+    assertEquals("", request.outputPath());
+    assertEquals("", request.sidecarPath());
     assertFalse(request.targetSelection().tableScope().isFiltered());
   }
 
   @Test
-  @DisplayName("of: CLI引数による上書き値は設定ファイルの値より優先し、上書きしないキーは設定ファイルの値を用いる")
+  @DisplayName("of: CLI引数による上書き値は設定ファイルの値より優先し、上書きしない項目は設定ファイルの値を用いる")
   void testOfAppliesOverrides() {
     ExportTableDefinitionRequest request =
         ExportTableDefinitionProperties.of(
-                Map.of("schema", "sample", "outputPath", "./docs/db", "chunkSize", "100"),
+                config(
+                    """
+                    target:
+                      schemas: [sample]
+                    output:
+                      path: ./docs/db
+                      chunkSize: 100
+                    """),
                 Map.of(
-                    "outputPath", new SettingOverride("./docs/prod", "--output-path"),
-                    "table", new SettingOverride("!tmp_*", "--table")))
+                    "output.path", new SettingOverride("./docs/prod", "--output-path"),
+                    "target.tables", new SettingOverride("!tmp_*", "--table")))
             .toExportTableDefinitionRequest(false);
 
     assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
     assertFalse(request.targetSelection().tableScope().matches(table("sample", "tmp_work")));
     assertEquals("./docs/prod", request.outputPath());
     assertEquals(100, request.chunkSize());
+  }
+
+  @Test
+  @DisplayName("of: CLI引数でリストの項目を上書きする場合はカンマで区切り、各要素の前後の空白を除去して空要素を除く")
+  void testOfSplitsCommaSeparatedOverride() {
+    ExportTableDefinitionRequest request =
+        ExportTableDefinitionProperties.of(
+                config("target:\n  schemas: [other]\n"),
+                Map.of(
+                    "target.schemas", new SettingOverride("alpha,beta, gamma ,,delta", "--schema")))
+            .toExportTableDefinitionRequest(false);
+
+    assertEquals(
+        List.of("alpha", "beta", "gamma", "delta"),
+        request.targetSelection().tableScope().schemaNames());
   }
 
   @Test
@@ -213,12 +328,12 @@ public class ExportTableDefinitionPropertiesTest {
             InvalidConfigurationException.class,
             () ->
                 ExportTableDefinitionProperties.of(
-                    Map.of("chunkSize", "100"),
+                    config("output:\n  chunkSize: 100\n"),
                     Map.of(
-                        "chunkSize", new SettingOverride("abc", "--chunk-size"),
-                        "outputObjects", new SettingOverride("trigers", "--output-objects"))));
+                        "output.chunkSize", new SettingOverride("abc", "--chunk-size"),
+                        "target.objects", new SettingOverride("trigers", "--output-objects"))));
 
-    assertTrue(e.getMessage().contains("chunkSize must be an integer: abc"));
+    assertTrue(e.getMessage().contains("output.chunkSize must be an integer: abc"));
     assertTrue(e.getMessage().contains("trigers"));
     assertTrue(e.getMessage().contains("overridden by "));
     assertTrue(e.getMessage().contains("--chunk-size"));
@@ -228,13 +343,25 @@ public class ExportTableDefinitionPropertiesTest {
   @Test
   @DisplayName("of: 上書きしていない場合は、誤りの報告に上書きの指定元を添えない")
   void testOfDoesNotMentionOverridesWhenNothingOverridden() {
-    InvalidConfigurationException e =
-        assertThrows(
-            InvalidConfigurationException.class,
-            () -> ExportTableDefinitionProperties.of(Map.of("chunkSize", "abc"), Map.of()));
+    InvalidConfigurationException e = error("output:\n  chunkSize: abc\n");
 
-    assertTrue(
-        e.getMessage().startsWith("Invalid configuration in ExportTableDefinition.properties."));
+    assertTrue(e.getMessage().startsWith("Invalid configuration in " + CONFIG_PATH + "."));
     assertFalse(e.getMessage().contains("overridden by"));
+  }
+
+  @Test
+  @DisplayName("SETTINGS: CLI引数名は項目ごとに一意で、項目の位置も一意")
+  void testSettingsHaveUniqueNames() {
+    List<String> cliNames =
+        ExportTableDefinitionProperties.SETTINGS.stream()
+            .map(ExportTableDefinitionProperties.Setting::cliName)
+            .toList();
+    List<String> paths =
+        ExportTableDefinitionProperties.SETTINGS.stream()
+            .map(ExportTableDefinitionProperties.Setting::path)
+            .toList();
+
+    assertEquals(cliNames.size(), Set.copyOf(cliNames).size());
+    assertEquals(paths.size(), Set.copyOf(paths).size());
   }
 }

@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * 参考情報（{@code insights}）のディレクトリを読み込むクラス<br>
  * 配置はcliの出力と同じく{@code insights/{DB名}/viewpoints.json}。起動引数は{@code --snapshot}のみのため、
  * 参考情報のディレクトリは渡されたスナップショットのディレクトリの**親の兄弟**として自前で求める。 ディレクトリ・DB・ファイルが無ければ0件として扱う（cliの{@code
- * outputObjects}で出力されない場合や、 観点を宣言していない場合があるため）。項目の追加に追従できるよう未知の項目は無視する
+ * target.objects}で出力されない場合や、 観点を宣言していない場合があるため）。項目の追加に追従できるよう未知の項目は無視する
  */
 public final class InsightsDirectoryReader {
 

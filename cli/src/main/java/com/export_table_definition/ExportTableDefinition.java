@@ -2,6 +2,8 @@ package com.export_table_definition;
 
 import com.export_table_definition.application.CheckDocumentDiffRequest;
 import com.export_table_definition.application.ExportTableDefinitionRequest;
+import com.export_table_definition.config.ConfigFile;
+import com.export_table_definition.config.InvalidConfigurationException;
 import com.export_table_definition.config.module.DatabaseDependentModule;
 import com.export_table_definition.config.module.ExportTableDefinitionModule;
 import com.export_table_definition.infrastructure.db.ConnectionSettings;
@@ -64,13 +66,13 @@ public class ExportTableDefinition {
                 Please wait a moment ...
                 """);
     cliArguments.requireKnownArguments();
+    final ConfigFile configFile = ConfigFile.load(cliArguments.configPath());
     final ExportTableDefinitionRequest request =
-        ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
+        ExportTableDefinitionProperties.of(configFile, cliArguments.settingOverrides())
             .toExportTableDefinitionRequest(cliArguments.isRmDist());
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
-    final ConnectionSettings connectionSettings =
-        ConnectionSettings.load(cliArguments.connectionOverrides(), System.getenv());
+    final ConnectionSettings connectionSettings = connectionSettings(configFile, cliArguments);
     final ResultDto resultDto = createController(injector, connectionSettings).execute(request);
     System.out.println(resultDto.getResultMessage());
     return ExitStatus.SUCCESS;
@@ -91,17 +93,30 @@ public class ExportTableDefinition {
                 Please wait a moment ...
                 """);
     cliArguments.requireKnownArguments();
+    final ConfigFile configFile = ConfigFile.load(cliArguments.configPath());
     final CheckDocumentDiffRequest request =
-        ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
+        ExportTableDefinitionProperties.of(configFile, cliArguments.settingOverrides())
             .toCheckDocumentDiffRequest();
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
-    final ConnectionSettings connectionSettings =
-        ConnectionSettings.load(cliArguments.connectionOverrides(), System.getenv());
+    final ConnectionSettings connectionSettings = connectionSettings(configFile, cliArguments);
     final DiffCheckResultDto diffCheckResultDto =
         createController(injector, connectionSettings).checkDiff(request);
     System.out.println(diffCheckResultDto.getResultMessage());
     return diffCheckResultDto.exitStatus();
+  }
+
+  /**
+   * 設定ファイルの{@code database}に、環境変数のパスワード・CLI引数の値を重ねたDB接続情報を組み立てるメソッド
+   *
+   * @throws InvalidConfigurationException DB接続情報に誤りがある場合
+   */
+  private static ConnectionSettings connectionSettings(
+      ConfigFile configFile, CliArguments cliArguments) {
+    return ConnectionSettings.merge(
+        configFile.scalarSection(ExportTableDefinitionProperties.DATABASE_SECTION),
+        cliArguments.connectionOverrides(),
+        System.getenv());
   }
 
   /**

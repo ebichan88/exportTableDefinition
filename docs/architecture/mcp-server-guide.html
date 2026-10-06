@@ -1165,8 +1165,8 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 <!-- ============================================================ -->
 <h2 id="glossary"><span class="n">11</span>用語集</h2>
 <dl class="glossary">
-  <dt>スナップショット</dt><dd>cliがDBから取得した定義を、機械可読なJSON Linesで出力したもの。<code>{outputPath}/snapshot/{DB名}/</code>に置かれる。mcp-serverの唯一の主な入力。</dd>
-  <dt>参考情報（insights）</dt><dd>スナップショットとは別に<code>{outputPath}/insights/</code>へ出力される補助情報。現在は観点のみ。</dd>
+  <dt>スナップショット</dt><dd>cliがDBから取得した定義を、機械可読なJSON Linesで出力したもの。<code>{output.path}/snapshot/{DB名}/</code>に置かれる。mcp-serverの唯一の主な入力。</dd>
+  <dt>参考情報（insights）</dt><dd>スナップショットとは別に<code>{output.path}/insights/</code>へ出力される補助情報。現在は観点のみ。</dd>
   <dt>観点（viewpoint）</dt><dd>業務ドメイン別にテーブルをまとめる切り口（例：人事管理）。1つのテーブルが複数の観点に所属できる。DB単位でスキーマを持たない。</dd>
   <dt>外部キー（foreignKey）</dt><dd>DBに実在する制約。関連の由来の1つ。</dd>
   <dt>論理リレーション（logicalRelation）</dt><dd>DBに制約は無いが、サイドカーYAMLで宣言された関連。グラフでは外部キーと同じ辺として扱う。</dd>

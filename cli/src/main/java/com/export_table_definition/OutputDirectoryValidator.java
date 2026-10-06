@@ -9,7 +9,7 @@ import jakarta.inject.Inject;
 import java.nio.file.Path;
 
 /**
- * 設定された出力先ディレクトリ（{@code outputPath}）を、DBへ接続する前に検証するクラス<br>
+ * 設定された出力先ディレクトリ（設定ファイルの{@code output.path}）を、DBへ接続する前に検証するクラス<br>
  * 出力先の誤りは、DBからの取得を待った後の書き込みや、{@code --rm-dist}による削除の時点ではなく、入口で報告する。
  *
  * <ul>
@@ -41,8 +41,8 @@ class OutputDirectoryValidator {
     final Path outputBaseDir = requireDirectoryOrAbsent(request.outputPath());
     if (request.rmDist() && !outputPathResolver.isRemovableOutputDir(outputBaseDir)) {
       throw new UserCorrectableException(
-          "Refusing to run --rm-dist because outputPath resolves to an unsafe directory. "
-              + "Specify a dedicated output directory in outputPath. [outputBaseDir="
+          "Refusing to run --rm-dist because output.path resolves to an unsafe directory. "
+              + "Specify a dedicated output directory in output.path. [outputBaseDir="
               + outputBaseDir.toAbsolutePath().normalize()
               + "]");
     }
@@ -68,8 +68,8 @@ class OutputDirectoryValidator {
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(outputPath);
     if (fileRepository.exists(outputBaseDir) && !fileRepository.isDirectory(outputBaseDir)) {
       throw new UserCorrectableException(
-          "outputPath points to an existing file, not a directory. "
-              + "Specify a directory (or a path that does not exist yet) in outputPath. "
+          "output.path points to an existing file, not a directory. "
+              + "Specify a directory (or a path that does not exist yet) in output.path. "
               + "[outputBaseDir="
               + outputBaseDir.toAbsolutePath().normalize()
               + "]");

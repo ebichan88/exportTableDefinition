@@ -61,22 +61,21 @@ exportTableDefinition-windows
 │     THIRD-PARTY-NOTICES.txt                   ・・・ MCPサーバーに同梱した依存ライブラリのライセンス
 ├─runtime                                       ・・・ 同梱のJava実行環境（ライセンスは`runtime/legal`）
 └─conf
-   ├─ExportTableDefinition.properties
-   └─mybatis.properties.template
+   └─config.yml                                ・・・ 設定ファイル
 ```
 
 ### 設定
 
-1. `conf/mybatis.properties.template`を`conf/mybatis.properties`にリネームし、接続先DBの情報を記載する（[mybatis.propertiesの記載内容](#mybatisproperties-の記載内容)を参照）
-   * パスワードは`conf/mybatis.properties`には書けません。環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡してください（[パスワードの指定](#パスワードの指定)を参照）
-2. 必要に応じて`conf/ExportTableDefinition.properties`を編集する（[ExportTableDefinition.propertiesの記載内容](#exporttabledefinitionproperties-の記載内容)を参照。未編集でも全スキーマ・全テーブルが`./output`配下に出力される）
+1. `conf/config.yml`の`database`に、接続先DBの情報を記載する（[config.ymlの記載内容](#configyml-の記載内容)を参照）
+   * パスワードは`conf/config.yml`には書けません。環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡してください（[パスワードの指定](#パスワードの指定)を参照）
+2. 必要に応じて、同じファイルの出力の対象（`target`）・出力先（`output`）等を編集する（未編集でも全スキーマ・全テーブルが`./output`配下に出力される）
 
 ### 実行
 
 * Windows: `run.bat`をダブルクリックする
 * Linux／macOS: ターミナルから`./run.sh`を実行する（`chmod +x run.sh`が必要な場合があります）
 
-コンソール画面が開いて処理が進み、完了すると`conf/ExportTableDefinition.properties`の`outputPath`（未指定の場合は実行フォルダ直下の`output`フォルダ）にMarkdown形式のテーブル定義書が出力される。
+コンソール画面が開いて処理が進み、完了すると`conf/config.yml`の`output.path`（未指定の場合は実行フォルダ直下の`output`フォルダ）にMarkdown形式のテーブル定義書が出力される。
 
 ### 終了コード・失敗時の表示
 
@@ -98,37 +97,60 @@ exportTableDefinition-windows
 
 ## 設定ファイル
 
-### ExportTableDefinition.properties の記載内容
+設定は`conf/config.yml`（YAML。UTF-8で保存する）に書きます。別の場所のファイルを使う場合は、`--config=パス`で指定します（[コマンドライン引数](#コマンドライン引数)を参照）。
 
-```
-schema=sample
-table=!flyway_schema_history
-outputPath=./docs/db
-annotationPath=./conf/annotations.yml
+### config.yml の記載内容
+
+```yaml
+database:
+  driver: org.postgresql.Driver
+  url: jdbc:postgresql://localhost:5432/testdb
+  username: app
+target:
+  schemas: [sample]
+  tables: ["!flyway_schema_history"]
+output:
+  path: ./docs/db
+annotations: ./conf/annotations.yml
 ```
 
 各項目の値と、未指定の場合・誤りとして扱う値は以下のとおりです。
 
+DB接続情報（`database`）:
+
+| キー | 値 | 未指定の場合 |
+|---|---|---|
+| `database.driver` | JDBCドライバーのクラス名（PostgreSQLは`org.postgresql.Driver`、Oracleは`oracle.jdbc.OracleDriver`） | 誤り |
+| `database.url` | 接続先のJDBC URL | 誤り |
+| `database.username` | ユーザ名 | 空（DBの認証方式による） |
+
+* `driver`・`url`が設定ファイル・CLI引数のいずれでも指定されていない場合は、DBへ接続する前に`[result]:FAIL`（終了コード`2`）で終了します。
+* `password`は書けません（値が空でも誤りとして扱います）。パスワードの渡し方は[パスワードの指定](#パスワードの指定)を参照してください。
+
+出力の対象・出力先（`target`・`output`・`annotations`）:
+
 | キー | 値 | 未指定の場合 | 誤りとして扱う値 |
 |---|---|---|---|
-| `schema` | 出力対象のスキーマ名（カンマ区切りで複数指定可） | information_schema／pg_catalogを除く全スキーマ | なし（存在しないスキーマは、テーブルが無いものとして扱う） |
-| `table` | 出力対象のテーブル名のパターン（カンマ区切りで複数指定可。記法は後述） | 全テーブル | テーブル名の部分が空のもの（`!`のみ、`sample.`等）、スキーマ名の部分が空のもの（`.employee`等） |
-| `outputPath` | テーブル定義の出力先ディレクトリのパス（存在しない場合は作成する） | `./output` | 既存のファイル（ディレクトリではないもの）を指すパス（`--check`でも誤りとする）。このほか、書き込めない場合は実行時に失敗する |
-| `chunkSize` | 詳細情報をまとめて取得・出力するテーブル数の上限（整数。0以下を指定するとスキーマ単位で分割しない） | `3000` | 整数として解釈できない値 |
-| `erDiagramMaxNodes` | スキーマ別ER図1枚に描画するテーブル数の上限（整数。0以下を指定すると上限なし） | `80` | 整数として解釈できない値 |
-| `outputObjects` | 出力対象とする追加オブジェクトの種別（`trigger`・`function`・`sequence`・`type`。カンマ区切りで複数指定可。後述） | 全種別 | 左記以外の値 |
-| `annotationPath` | 手動付帯情報・論理リレーション・観点を記述したサイドカーYAMLのパス（後述） | マージしない | 存在しないファイル、YAMLとして読めないファイル |
+| `target.schemas` | 出力対象のスキーマ名（リスト） | information_schema／pg_catalogを除く全スキーマ | なし（存在しないスキーマは、テーブルが無いものとして扱う） |
+| `target.tables` | 出力対象のテーブル名のパターン（リスト。記法は後述） | 全テーブル | テーブル名の部分が空のもの（`!`のみ、`sample.`等）、スキーマ名の部分が空のもの（`.employee`等） |
+| `target.objects` | 出力対象とする追加オブジェクトの種別（リスト。`trigger`・`function`・`sequence`・`type`。後述） | 全種別 | 左記以外の値 |
+| `output.path` | テーブル定義の出力先ディレクトリのパス（存在しない場合は作成する） | `./output` | 既存のファイル（ディレクトリではないもの）を指すパス（`--check`でも誤りとする）。このほか、書き込めない場合は実行時に失敗する |
+| `output.chunkSize` | 詳細情報をまとめて取得・出力するテーブル数の上限（整数。0以下を指定するとスキーマ単位で分割しない） | `3000` | 整数として解釈できない値 |
+| `output.erDiagramMaxNodes` | スキーマ別ER図1枚に描画するテーブル数の上限（整数。0以下を指定すると上限なし） | `80` | 整数として解釈できない値 |
+| `annotations` | 手動付帯情報・論理リレーション・観点を記述したサイドカーYAMLのパス（後述） | マージしない | 存在しないファイル、YAMLとして読めないファイル |
 
-* すべての項目は省略できます。キーを書かない場合と値を空白にした場合は、同じ「未指定」として扱います。
+* すべての項目は省略できます。キーを書かない場合と、キーだけを書いた場合・空のリスト（`[]`）・空白の値は、同じ「未指定」として扱います。
 * すべての項目は、CLI引数で上書きできます（[CLI引数による上書き](#cli引数による上書き)を参照）。
-* 上記以外のキー（キー名の書き誤り等）を書いた場合は誤りとして扱います。
-* カンマ区切りで複数指定する項目（`schema`・`table`・`outputObjects`）は、各値の前後の空白を無視します（`schema=public, sample`のように記述できます）。
-* 誤りがある場合は、見つかった誤りをまとめて表示し、`[result]:FAIL`（終了コード`2`）で終了します。設定ファイルの誤り（`conf`ディレクトリ・設定ファイル自体が見つからない場合を含む）と`outputPath`の誤りはDBへ接続する前に、`annotationPath`のファイルの誤りはDBからの取得・出力先の削除（`--rm-dist`）より前に検知します。
+* 上記以外のキー（キー名の書き誤り等）を書いた場合は、`output.paht`のようにどの位置のキーかを示して誤りとして扱います。
+* リストの項目（`target.schemas`・`target.tables`・`target.objects`）は、`[public, sample]`のように（または1行に1つずつ`- public`のように）リストで書きます。`schemas: public, sample`のように1つの値として書いた場合は誤りとして扱います（カンマを含む1つの名前として扱われ、対象から黙って外れるのを防ぐため）。各値の前後の空白は無視します。
+* `!`・`*`で始まる値は、YAMLの記号として解釈されないよう引用符で囲んでください（例: `tables: ["!flyway_schema_history", "*_bk"]`）。
+* 誤りがある場合は、見つかった誤りをまとめて表示し、`[result]:FAIL`（終了コード`2`）で終了します。設定ファイルの誤り（設定ファイル自体が見つからない場合を含む）と`output.path`の誤りはDBへ接続する前に、`annotations`のファイルの誤りはDBからの取得・出力先の削除（`--rm-dist`）より前に検知します。
+* 設定ファイル自体は、CLI引数ですべての項目を指定する場合でも必要です（実行するディレクトリを誤った場合に、既定の出力先へ黙って出力しないようにするため）。配布物に同梱の、全項目が未指定の`conf/config.yml`をそのまま使えます。
 
 Markdownのドキュメントに加えて、同じ取得結果から構造化したスキーマのスナップショット（JSON Lines）を、常に
-`outputPath`配下の`snapshot/`へ出力します。詳細・用途は[スキーマのスナップショット（JSON Lines）](#スキーマのスナップショットjson-lines)を参照してください。
+`output.path`配下の`snapshot/`へ出力します。詳細・用途は[スキーマのスナップショット（JSON Lines）](#スキーマのスナップショットjson-lines)を参照してください。
 
-`outputObjects`は、追加オブジェクト（トリガー・関数/プロシージャ・シーケンス・ユーザー定義型）のうち出力したい種別を指定する設定です。`table`（テーブル定義書・ER図）は常に出力されるため対象外です。
+`target.objects`は、追加オブジェクト（トリガー・関数/プロシージャ・シーケンス・ユーザー定義型）のうち出力したい種別を指定する設定です。テーブル定義書・ER図は常に出力されるため対象外です。
 
 | 値 | 出力対象 |
 |---|---|
@@ -137,9 +159,9 @@ Markdownのドキュメントに加えて、同じ取得結果から構造化し
 | `sequence` | シーケンス（`sequenceList_{DB名}.md` + 個別ファイル） |
 | `type` | ユーザー定義型（`typeList_{DB名}.md` + 個別ファイル） |
 
-例: 関数・プロシージャだけ不要なら`outputObjects=trigger,sequence,type`。
+例: 関数・プロシージャだけ不要なら`objects: [trigger, sequence, type]`。
 
-`table`には完全一致のテーブル名だけでなく、以下の記法も指定できます（`schema`はスキーマ名の完全一致のみ対応）。
+`target.tables`には完全一致のテーブル名だけでなく、以下の記法も指定できます（`target.schemas`はスキーマ名の完全一致のみ対応）。
 
 | 記法 | 例 | 意味 |
 |---|---|---|
@@ -147,12 +169,12 @@ Markdownのドキュメントに加えて、同じ取得結果から構造化し
 | 除外（先頭に`!`） | `!flyway_schema_history` | パターンに一致するテーブルを常に対象外にする（包含パターンより優先） |
 | スキーマ修飾 | `sample.employee` | 指定したスキーマのテーブルのみを対象にする（スキーマ修飾がない場合は全スキーマが対象） |
 
-* 除外パターンのみの指定も可能です（例: `!flyway_schema_history,!*_bk,!*_20240101`）。マイグレーション管理・バックアップ用の一時テーブルを除外する用途を想定しています
-* `table`による絞り込みはアプリケーション側で行うため、`schema`のみで絞り込む場合よりDBへの問い合わせ量が増えます
-* `chunkSize`はスキーマ内をさらに指定件数ごとに分割して取得・出力する設定で、テーブル数が非常に多い場合のピークメモリを抑えます（小さくするほどメモリは減り、DBへの問い合わせ回数は増えます。出力内容は変わりません）
-* `erDiagramMaxNodes`はER図1枚に描画するテーブル数の上限です（Mermaidは大きすぎると描画できなくなるため）。上限超の扱いは[ER図の出し分け](#er図の出し分け)を参照してください。適切な値はDBの構造次第のため出力結果を見ながら調整してください。0以下で上限なし
+* 除外パターンのみの指定も可能です（例: `["!flyway_schema_history", "!*_bk", "!*_20240101"]`）。マイグレーション管理・バックアップ用の一時テーブルを除外する用途を想定しています
+* `target.tables`による絞り込みはアプリケーション側で行うため、`target.schemas`のみで絞り込む場合よりDBへの問い合わせ量が増えます
+* `output.chunkSize`はスキーマ内をさらに指定件数ごとに分割して取得・出力する設定で、テーブル数が非常に多い場合のピークメモリを抑えます（小さくするほどメモリは減り、DBへの問い合わせ回数は増えます。出力内容は変わりません）
+* `output.erDiagramMaxNodes`はER図1枚に描画するテーブル数の上限です（Mermaidは大きすぎると描画できなくなるため）。上限超の扱いは[ER図の出し分け](#er図の出し分け)を参照してください。適切な値はDBの構造次第のため出力結果を見ながら調整してください。0以下で上限なし
 
-`annotationPath`は、DBから取得できない情報を定義書の再生成時にマージするサイドカーYAMLのパスです。定義書は毎回全上書きのため、Markdownへの直接編集は次回生成で失われます（サイドカーに書けば保持されます）。
+`annotations`は、DBから取得できない情報を定義書の再生成時にマージするサイドカーYAMLのパスです。定義書は毎回全上書きのため、Markdownへの直接編集は次回生成で失われます（サイドカーに書けば保持されます）。
 
 * ファイル自体が存在しない、またはYAMLとして読めない場合は`[result]:FAIL`（終了コード`2`）
 * 個々の記述の誤り（キーの形式・必須項目の欠け・未知の多重度・未知のキー等）は警告を表示して読み飛ばし、処理を続けます（一部の誤りで定義書全体の再生成を止めないため）
@@ -227,7 +249,7 @@ viewpoints:
     name: 受注管理             # 表示名（省略時は識別子）
     description: |           # 観点ページの「説明」セクションへ出力（複数行可。観点一覧には1行目のみ）
       受注から出荷指示までを扱うテーブル群。
-    tables:                  # 所属テーブル（table= と同じ記法）
+    tables:                  # 所属テーブル（target.tables と同じ記法）
       - sales.order*
       - sales.customer
       - "!sales.order_bk"
@@ -238,7 +260,7 @@ viewpoints:
 | `id` | 識別子。観点ページのファイル名（`viewpoint_{DB名}_{id}.md`）に使うため、英数字・`-`・`_`のみ | 誤り（その観点を読み飛ばす） |
 | `name` | 表示名 | 識別子を表示名とする |
 | `description` | 説明（複数行可） | 説明を出力しない |
-| `tables` | 所属テーブルのパターン（リスト。1件の場合はスカラーでも可）。[`table`](#exporttabledefinitionproperties-の記載内容)と同じ記法（ワイルドカード・除外・スキーマ修飾） | 誤り（その観点を読み飛ばす） |
+| `tables` | 所属テーブルのパターン（リスト。1件の場合はスカラーでも可）。[`target.tables`](#configyml-の記載内容)と同じ記法（ワイルドカード・除外・スキーマ修飾） | 誤り（その観点を読み飛ばす） |
 
 補足事項:
 
@@ -249,24 +271,6 @@ viewpoints:
 * どのテーブルにも一致しないパターン（リネーム・削除の可能性）は、警告を表示します（スキーマ・テーブルの出力対象を絞り込んでいない場合のみ）。
 * 観点はスキーマの情報ではないため、スナップショットには含めません（観点を変更しても`--check`は差分として報告しません）。
   その代わり、AIから引けるよう[参考情報（insights）](#参考情報insights)として出力します。
-
-### mybatis.properties の記載内容
-
-```
-driver=ドライバーの名称
-url=データベース接続先のURL
-username=ユーザ名
-```
-
-| キー | 値 | 未指定の場合 |
-|---|---|---|
-| `driver` | JDBCドライバーのクラス名 | 誤り |
-| `url` | 接続先のJDBC URL | 誤り |
-| `username` | ユーザ名 | 空（DBの認証方式による） |
-
-* 各項目は、後述のCLI引数でも指定できます。`driver`・`url`がいずれの方法でも指定されていない場合は、DBへ接続する前に`[result]:FAIL`（終了コード`2`）で終了します。
-* 上記以外のキー（キー名の書き誤り等）を書いた場合は誤りとして扱います。
-* `password`は書けません（値が空でも誤りとして扱います）。
 
 ### パスワードの指定
 
@@ -291,9 +295,10 @@ run.bat
 |---|---|
 | `--check` | DB vs ドキュメントの差分検知モードで実行する（[後述](#db-vs-ドキュメントの差分検知--checkモード)） |
 | `--rm-dist` | 書き込み前に出力先ディレクトリを削除する（[後述](#出力先ディレクトリの事前クリーンアップ--rm-distオプション)） |
+| `--config=パス` | 読み込む設定ファイルを指定する（未指定の場合は、実行したディレクトリの`conf/config.yml`） |
 | `--db-driver=値`・`--db-url=値`・`--db-username=値` | DB接続情報を上書きする（次項） |
 | `--db-password=値` | パスワードを指定する（[パスワードの指定](#パスワードの指定)を参照） |
-| `--schema=値`・`--table=値`・`--output-path=値`・`--chunk-size=値`・`--er-diagram-max-nodes=値`・`--output-objects=値`・`--annotation-path=値` | `conf/ExportTableDefinition.properties`の設定を上書きする（次項） |
+| `--schema=値`・`--table=値`・`--output-objects=値`・`--output-path=値`・`--chunk-size=値`・`--er-diagram-max-nodes=値`・`--annotation-path=値` | 設定ファイルの出力の対象・出力先等を上書きする（次項） |
 
 上記以外の引数（`--chek`のような書き誤り等）を指定した場合は、何も処理せずに`[result]:FAIL`（終了コード`2`）で終了します。書き誤りによって、意図しないモードで実行されないようにするためです。
 
@@ -301,67 +306,66 @@ run.bat
 
 ### CLI引数による上書き
 
-設定ファイル（`conf/mybatis.properties`・`conf/ExportTableDefinition.properties`）の各項目は、CLI引数で上書きできます。
+設定ファイル（`conf/config.yml`）の各項目は、CLI引数で上書きできます。
 CI等で接続情報をファイルに残したくない場合や、出力先・出力対象をジョブごとに切り替えたい場合に利用してください。
 
 優先順位は `CLI引数 > 設定ファイルの値` です。CLI引数の値を空にした場合は、指定しなかったものとして設定ファイルの値を使います。
 
-DB接続情報（`conf/mybatis.properties`）:
+DB接続情報（`database`）:
 
 | 項目 | CLI引数 |
 |---|---|
-| driver | `--db-driver=値` |
-| url | `--db-url=値` |
-| username | `--db-username=値` |
-| password | `--db-password=値`（優先順位は[パスワードの指定](#パスワードの指定)を参照） |
+| `database.driver` | `--db-driver=値` |
+| `database.url` | `--db-url=値` |
+| `database.username` | `--db-username=値` |
+| パスワード | `--db-password=値`（優先順位は[パスワードの指定](#パスワードの指定)を参照） |
 
 ```
 java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://localhost:5432/testdb --db-username=user
 ```
 
-CLI引数で `driver`/`url`/`username` の3項目すべてを指定する場合（パスワードは環境変数またはCLI引数）、`conf/mybatis.properties`自体が存在しなくても起動できます。
-
-実行時設定（`conf/ExportTableDefinition.properties`）:
+出力の対象・出力先（`target`・`output`・`annotations`）:
 
 | 項目 | CLI引数 |
 |---|---|
-| schema | `--schema=値` |
-| table | `--table=値` |
-| outputPath | `--output-path=値` |
-| chunkSize | `--chunk-size=値` |
-| erDiagramMaxNodes | `--er-diagram-max-nodes=値` |
-| outputObjects | `--output-objects=値` |
-| annotationPath | `--annotation-path=値` |
+| `target.schemas` | `--schema=値` |
+| `target.tables` | `--table=値` |
+| `target.objects` | `--output-objects=値` |
+| `output.path` | `--output-path=値` |
+| `output.chunkSize` | `--chunk-size=値` |
+| `output.erDiagramMaxNodes` | `--er-diagram-max-nodes=値` |
+| `annotations` | `--annotation-path=値` |
 
 ```
 java -jar exportTableDefinition-1.0-SNAPSHOT.jar --output-path=./docs/db/prod --schema=sample --table='!flyway_schema_history,*_bk'
 ```
 
-* 値の形式・未指定の場合・誤りとして扱う値は、設定ファイルに書いた場合と同じです（[ExportTableDefinition.propertiesの記載内容](#exporttabledefinitionproperties-の記載内容)を参照）。誤りがある場合は、どの項目をCLI引数で上書きしたかを添えて表示します。
+* リストの項目（`--schema`・`--table`・`--output-objects`）は、カンマ区切りで複数指定します（各値の前後の空白は無視します）。
+* 値の形式・未指定の場合・誤りとして扱う値は、設定ファイルに書いた場合と同じです（[config.ymlの記載内容](#configyml-の記載内容)を参照）。誤りがある場合は、どの項目をCLI引数で上書きしたかを添えて表示します。
 * `--output-path`で指定した出力先にも、`--rm-dist`で削除してよいディレクトリかの検証（[後述](#出力先ディレクトリの事前クリーンアップ--rm-distオプション)）が同じく適用されます。
-* すべての項目を上書きする場合でも、`conf/ExportTableDefinition.properties`自体は必要です（実行するディレクトリを誤った場合に、既定の出力先へ黙って出力しないようにするため）。配布物に同梱の、全項目が未指定の設定ファイルをそのまま使えます。
+* すべての項目を上書きする場合でも、設定ファイル自体は必要です（実行するディレクトリを誤った場合に、既定の出力先へ黙って出力しないようにするため）。配布物に同梱の、全項目が未指定の`conf/config.yml`をそのまま使えます。
 * 環境変数の値を使いたい場合は、`--db-url="$DB_URL"`のようにシェルで展開して渡してください（[GitHub Actionsでの利用例](#db-vs-ドキュメントの差分検知--checkモード)も参照）。
-* `table`の除外（`!`）・ワイルドカード（`*`）は、シェルに解釈されないよう引用符で囲んでください（bashでは`'...'`）。
+* `--table`の除外（`!`）・ワイルドカード（`*`）は、シェルに解釈されないよう引用符で囲んでください（bashでは`'...'`）。
 * 複数のユーザーが使うマシンでは、コマンドラインの引数が他のユーザーからプロセスの一覧で見える場合があります。パスワードはCLI引数ではなく、環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡してください。
 
 ### 出力先ディレクトリの事前クリーンアップ（`--rm-dist`オプション）
 
-テーブル定義書は、生成対象のファイルのみを新規作成・上書きする方式のため、DBからテーブルやスキーマを削除した後に再実行しても、削除されたテーブルに対応する`.md`ファイルは`outputPath`配下に残り続けます。`--rm-dist`を付けて実行すると、書き込みを開始する前に`outputPath`のベースディレクトリを再帰的に削除してから生成するため、常に現在のDBの状態のみが出力先に反映されます。
+テーブル定義書は、生成対象のファイルのみを新規作成・上書きする方式のため、DBからテーブルやスキーマを削除した後に再実行しても、削除されたテーブルに対応する`.md`ファイルは`output.path`配下に残り続けます。`--rm-dist`を付けて実行すると、書き込みを開始する前に`output.path`のベースディレクトリを再帰的に削除してから生成するため、常に現在のDBの状態のみが出力先に反映されます。
 
 ```
 java -jar exportTableDefinition-1.0-SNAPSHOT.jar --rm-dist
 ```
 
 * CI上で定義書を自動生成・コミットする運用（マイグレーション後に再生成してコミットする等）で、削除されたテーブルの残骸ファイルが蓄積するのを防ぐ用途を想定しています。
-* `outputPath`が未作成の場合（初回実行など）は何もせず、通常どおり生成します。
-* 誤設定による被害を防ぐため、`outputPath`の解決結果がルートディレクトリ・ホームディレクトリ・カレントディレクトリ自体になる場合は削除を拒否し、`[result]:FAIL`（終了コード`2`）で終了します。既存のファイル（ディレクトリではないもの）を指す場合の拒否も、通常実行と同じ検証です（[ExportTableDefinition.propertiesの記載内容](#exporttabledefinitionproperties-の記載内容)を参照）。これらはDBへ接続する前に検知します。
-* 削除は、設定ファイルの検証（`outputObjects`の種別名等）と、テーブル一覧等の一括取得・サイドカーYAMLの読み込みに成功した後に行います。これらの段階で失敗した場合、既存の出力は削除されません。
+* `output.path`が未作成の場合（初回実行など）は何もせず、通常どおり生成します。
+* 誤設定による被害を防ぐため、`output.path`の解決結果がルートディレクトリ・ホームディレクトリ・カレントディレクトリ自体になる場合は削除を拒否し、`[result]:FAIL`（終了コード`2`）で終了します。既存のファイル（ディレクトリではないもの）を指す場合の拒否も、通常実行と同じ検証です（[config.ymlの記載内容](#configyml-の記載内容)を参照）。これらはDBへ接続する前に検知します。
+* 削除は、設定ファイルの検証（`target.objects`の種別名等）と、テーブル一覧等の一括取得・サイドカーYAMLの読み込みに成功した後に行います。これらの段階で失敗した場合、既存の出力は削除されません。
 * `--check`モードでは出力先ディレクトリへ直接書き込まない（一時ディレクトリへ生成して比較するのみの）ため、`--check`と同時に指定した場合`--rm-dist`は無視されます。
-* `outputPath`配下の`snapshot/`も削除・再生成の対象になります。
+* `output.path`配下の`snapshot/`も削除・再生成の対象になります。
 
 ### DB vs ドキュメントの差分検知（`--check`モード）
 
-`--check`を付けて実行すると、DBの現状のスナップショットと`outputPath`配下にコミット済みのスナップショットを比較し、差分（例: `table sample.employee`、`function sample.calculate_bonus(p_salary numeric)`）をオブジェクト単位で検知します。マイグレーション後にドキュメントの再生成・コミットを忘れていないかをCIで機械的に検知する用途のため、CIで利用する場合はスナップショットもコミットしておいてください。
+`--check`を付けて実行すると、DBの現状のスナップショットと`output.path`配下にコミット済みのスナップショットを比較し、差分（例: `table sample.employee`、`function sample.calculate_bonus(p_salary numeric)`）をオブジェクト単位で検知します。マイグレーション後にドキュメントの再生成・コミットを忘れていないかをCIで機械的に検知する用途のため、CIで利用する場合はスナップショットもコミットしておいてください。
 
 ```
 java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
@@ -372,12 +376,12 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
     * コミット側にのみ存在するもの（削除されたテーブル等の残骸の可能性）
     * 両方に存在するが内容が一致しないもの（unified diff形式で変更箇所を表示。詳細は次項）
 * 終了コードは[終了コード・失敗時の表示](#終了コード失敗時の表示)のとおりです。CIのジョブをそのまま失敗させられるほか、「差分あり」と「比較自体の失敗」を終了コードで区別できます。
-* `outputPath`配下の`snapshot/`がまだ作成されていない場合（初回実行など）は、生成される全オブジェクトが「生成側にのみ存在するもの」として扱われ、差分ありと判定されます。
+* `output.path`配下の`snapshot/`がまだ作成されていない場合（初回実行など）は、生成される全オブジェクトが「生成側にのみ存在するもの」として扱われ、差分ありと判定されます。
 * スナップショットは実行のたびに変わる「作成日」を含まないため、ドキュメントを生成した日と別の日に`--check`を実行しても、DBに変更が無ければ差分なしと判定されます。
 * スナップショットのみを生成して比較し、Markdownの描画・ER図の生成は行いません。そのため、**Markdownのみに生じた差分（手作業での編集・削除、ツールのバージョンアップによる出力形式の変更等）は検知しません**。削除されたテーブルのMarkdownの残骸ファイルが気になる場合は`--rm-dist`と組み合わせて通常実行してください。
 * 関数・プロシージャは同名のもの（オーバーロード）を引数で区別するため、引数（デフォルト値を含む）を変更した場合は、変更前の関数の削除と変更後の関数の追加として報告されます。
 * DBからの取得は通常実行と同じく1回です。取得結果を一時ディレクトリへ出力して比較するため、比較対象のスナップショットの書き込み・読み込みの分だけ通常実行より処理が増えます。
-* `schema`/`table`/`chunkSize`/`erDiagramMaxNodes`/`outputObjects`/`annotationPath`といった設定は、通常実行と同様に適用されます。
+* `target`・`output`・`annotations`の設定は、通常実行と同様に適用されます。
 
 「両方に存在するが内容が一致しないもの」は、以下のように変更箇所をunified diff形式（`diff -u`やgitと同じ表記）で表示します。
 比較の前にJSONを1項目1行・配列は1要素1行へ整形しているため、行番号はファイル上のものではなく整形後のものです。
@@ -417,11 +421,11 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
 
 ### 出力先ディレクトリの構成
 
-生成されるすべてのドキュメントは、出力先（`outputPath`）の直下に作成される`{DB名}/`ディレクトリにまとめて出力されます。
+生成されるすべてのドキュメントは、出力先（`output.path`）の直下に作成される`{DB名}/`ディレクトリにまとめて出力されます。
 同じ出力先へ複数のデータベースを出力しても、データベースごとに`{DB名}/`ディレクトリが分かれるため、ドキュメントが混ざりません。
 
 ```
-{outputPath}/
+{output.path}/
 └─{DB名}/
    ├─README.md                       ・・・ このデータベースの全ドキュメントへのリンクをまとめた索引（自動生成）
    ├─tableList_{DB名}.md
@@ -477,7 +481,7 @@ ER図のテーブルの箱には、次の内容を表示します。
 
 ER図の描画・分割・フォールバックの規則は、このセクションに集約しています（他の節からはここへリンクしています）。
 判定に使う「ノード数」は、**外部キーまたは論理リレーションによる関連を持つテーブルの数**です。関連を持たないテーブルは図に描画されずノード数にも数えず、各ページには載りません（全テーブルは`tableList_{DB名}.md`に載っています）。
-上限は`erDiagramMaxNodes`（[こちら](#exporttabledefinitionproperties-の記載内容)。0以下は上限なし）で、以下の表の「上限超」はノード数がこの値を超えることを指します。上限なしの場合は常に「上限以内」の行になります。
+上限は`output.erDiagramMaxNodes`（[こちら](#configyml-の記載内容)。0以下は上限なし）で、以下の表の「上限超」はノード数がこの値を超えることを指します。上限なしの場合は常に「上限以内」の行になります。
 
 | ページ | 関連なし（ノード数0） | 上限以内 | 上限超 |
 |---|---|---|---|
@@ -530,7 +534,7 @@ ER図の描画・分割・フォールバックの規則は、このセクショ
 | 所属テーブルの定義書の「所属する観点」セクション | 当該テーブルが所属する観点のページへのリンク。所属する観点が無いテーブルには出力しない |
 
 * ER図には、所属テーブル同士の関連（外部キー・論理リレーション）のみを描画します。所属テーブルと観点外のテーブルとの関連は、「観点外のテーブルとの関連」に一覧で掲載します。
-* 観点のER図は上限（`erDiagramMaxNodes`）を超えてもグループ分割はしません。超えた場合の扱いは[ER図の出し分け](#er図の出し分け)を参照してください。
+* 観点のER図は上限（`output.erDiagramMaxNodes`）を超えてもグループ分割はしません。超えた場合の扱いは[ER図の出し分け](#er図の出し分け)を参照してください。
 * 所属テーブルの一覧が3000行を超える場合は、テーブル一覧と同様に別ファイルへ分割します。
 
 ### 追加の出力対象（トリガー・関数等）
@@ -546,8 +550,8 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 
 * 各一覧への導線は`tableList_{DB名}.md`の「関連ドキュメント」セクションに集約しています（対象が存在するカテゴリのみ）
 * 上の内容はPostgreSQLの場合です。Oracleでの扱いは[Oracleの場合](#oracleの場合)を参照してください
-* スキーマ単位のオブジェクトのため、`table`による絞り込みは適用されません（`schema`のみ適用）
-* `outputObjects`（[こちら](#exporttabledefinitionproperties-の記載内容)）で種別ごとに出力有無を絞り込めます。トリガーを対象外にした場合は各テーブル定義書の「トリガー情報」セクションは見出しと空の表だけになります
+* スキーマ単位のオブジェクトのため、`target.tables`による絞り込みは適用されません（`target.schemas`のみ適用）
+* `target.objects`（[こちら](#configyml-の記載内容)）で種別ごとに出力有無を絞り込めます。トリガーを対象外にした場合は各テーブル定義書の「トリガー情報」セクションは見出しと空の表だけになります
 
 ### PostgreSQLのパーティション表
 
@@ -562,7 +566,7 @@ PostgreSQLの場合は、テーブル定義に加えて以下のオブジェク�
 | 外部キー・トリガー | 親から子のパーティションへDB内で複製されたものは出さず、親に定義したものだけを1つ出力します。パーティション表を参照するテーブルの外部キーも、参照先のパーティションごとに複製されたものは出しません。 |
 
 * 子のパーティションにだけ付けたインデックス・制約・外部キーは出力されません（子の定義書を持たないため）。子にだけ付けたトリガーは、`triggerList_{DB名}.md`にのみ載ります。
-* `table`に子のパーティションの名前を指定しても、出力対象になりません。親が出力対象であれば、子は親の「パーティション情報」に載ります。
+* `target.tables`に子のパーティションの名前を指定しても、出力対象になりません。親が出力対象であれば、子は親の「パーティション情報」に載ります。
 * スナップショットには、パーティションキー（`partitionKey`）だけを含め、個々のパーティションは含めません。`pg_partman`等でパーティションを自動的に追加する運用でも、`--check`が追加のたびに差分を報告しないようにするためです。パーティションの追加で変わるのは、親の「パーティション情報」（Markdown）だけです。
 * 旧来の継承（`INHERITS`）は対象外で、親子とも通常のテーブルとして出力します。
 
@@ -586,7 +590,7 @@ Markdownでは1つの表セルにまとめて表示している情報（NOT NULL
 jq等で機械的に扱えます。
 
 ```
-{outputPath}/snapshot/
+{output.path}/snapshot/
 └─{DB名}
    ├─database.json       ・・・ DB名・DBMS種別・スナップショットの形式バージョン
    └─{スキーマ名}
@@ -618,7 +622,7 @@ jq等で機械的に扱えます。
 * 実行のたびに変わる「作成日」は含めません。DBに変更が無ければ、何度実行しても同じ内容になります。
 * 値はMarkdown向けのエスケープ（`|`→`\|`等）をしない、DBのカタログ・サイドカーYAMLから取得したままの値です。
 * 被参照側の外部キーは、参照元テーブルの`foreignKeys`から導出できるため保持しません。
-* `schema`・`table`・`outputObjects`・`annotationPath`の設定はMarkdownと同様に適用されます。`chunkSize`・`erDiagramMaxNodes`はMarkdownの分割出力のための設定のため、スナップショットの内容には影響しません。
+* `target`・`annotations`の設定はMarkdownと同様に適用されます。`output.chunkSize`・`output.erDiagramMaxNodes`はMarkdownの分割出力のための設定のため、スナップショットの内容には影響しません。
 
 ### 参考情報（insights）
 
@@ -626,7 +630,7 @@ jq等で機械的に扱えます。
 AIへ渡すための出力です。観点（[`viewpoints`](#viewpoints観点)）を宣言している場合、所属テーブルを含めて出力します。
 
 ```
-{outputPath}/insights/
+{output.path}/insights/
 └─{DB名}
    └─viewpoints.json     ・・・ 観点ごとの識別子・表示名・説明・所属テーブル
 ```
@@ -646,7 +650,7 @@ AIが正しいテーブル名・カラム・JOINの条件（外部キーと、�
 
 ### 準備
 
-1. このツールでテーブル定義書を出力し、`outputPath`配下の`snapshot/`（観点を宣言している場合は`insights/`も）をGit等で共有する（テーブル定義書と一緒にコミットしておく等）
+1. このツールでテーブル定義書を出力し、`output.path`配下の`snapshot/`（観点を宣言している場合は`insights/`も）をGit等で共有する（テーブル定義書と一緒にコミットしておく等）
 2. AIを使う人が、そのリポジトリを手元にcloneし、zipを展開しておく
 
 ### 起動方法
@@ -654,17 +658,17 @@ AIが正しいテーブル名・カラム・JOINの条件（外部キーと、�
 MCPクライアント（Claude Code・Claude Desktop等）が、標準入出力で通信するサーバーとして起動します。自分で起動しておく必要はありません。
 
 ```
-<展開先>/runtime/bin/java -jar <展開先>/mcp/exportTableDefinition-mcp.jar --snapshot=<outputPath配下のsnapshotディレクトリ>
+<展開先>/runtime/bin/java -jar <展開先>/mcp/exportTableDefinition-mcp.jar --snapshot=<output.path配下のsnapshotディレクトリ>
 ```
 
 Windowsでは`<展開先>\runtime\bin\java.exe`を指定します。
 
 | 引数 | 必須 | 内容 |
 |---|---|---|
-| `--snapshot=<ディレクトリ>` | ○ | このツールの出力先（`outputPath`）配下の`snapshot`ディレクトリ。複数のDBのスナップショットを含んでいてもよい |
+| `--snapshot=<ディレクトリ>` | ○ | このツールの出力先（`output.path`）配下の`snapshot`ディレクトリ。複数のDBのスナップショットを含んでいてもよい |
 
 * 上記以外の引数・`--snapshot`の重複は誤りとして扱います。
-* 引数・スナップショットに誤りがある場合（ディレクトリが無い、`outputPath`そのものを指定した、新しい形式のスナップショット、
+* 引数・スナップショットに誤りがある場合（ディレクトリが無い、`output.path`そのものを指定した、新しい形式のスナップショット、
   マージの衝突等でJSONとして読めない行がある等）は、何を直せばよいか（ファイル名・行番号を含む）を標準エラーに出し、終了コード`2`で終了します。
   MCPクライアントでサーバーの起動に失敗した場合は、クライアントのログで確認してください。
 * スナップショットは起動時に読み込みます。スナップショットを更新（`git pull`等）した場合は、MCPクライアントからサーバーに再接続してください。
@@ -717,7 +721,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 * 同名のテーブルが複数のスキーマにある場合・見つからない場合は、候補を示すエラーを返します（AIが引数を直して呼び直します）。
 * `viewpoint`に存在しない観点のidを指定した場合は、宣言されている観点を示すエラーを返します。
 * 一覧を返すツールは、件数が`limit`を超える場合に続きの`offset`（`nextOffset`）を返します。
-* `outputObjects`で出力対象から外した種別は0件になります。
+* `target.objects`で出力対象から外した種別は0件になります。
 * 関数・プロシージャの定義本体は、AIのコンテキストを圧迫するため既定では返しません（`get_function`の`includeDefinition`で返します）。
 * `get_table`の`sections`を指定しても、テーブル名・論理名・区分・説明・備考・所属する観点は常に返します。`columns`を指定した場合は、`sections`に関わらず指定したカラムを返します。
 
@@ -731,8 +735,7 @@ exportTableDefinition
 │  ├─build
 │  │  └─libs
 │  │      ├─conf  ・・・ 設定ファイルが格納されているフォルダ
-│  │      │  ├─ExportTableDefinition.properties
-│  │      │  └─mybatis.properties
+│  │      │  └─config.yml
 │  │      ├─output
 │  │      └─exportTableDefinition-1.0-SNAPSHOT.jar ・・・ 実行可能形式Jarファイル
 │  └─src
@@ -814,13 +817,11 @@ gradlew javadoc
 
 ### 実行方法
 
-`conf/ExportTableDefinition.properties`（※）及び`conf/mybatis.properties`に必要な設定値を記載した状態で以下のコマンドを実行する
+`cli/build/libs/conf/config.yml`に必要な設定値を記載した状態で、`cli/build/libs`で以下のコマンドを実行する（`gradlew build`のたびに`cli/src/main/resources/conf`の内容で上書きされるため、手元の設定を残したい場合は別の場所に置いて`--config`で指定する）
 
 ```
 java -jar .\exportTableDefinition-1.0-SNAPSHOT.jar
 ```
-
-※`conf/mybatis.properties.template`を`conf/mybatis.properties`にリネームしてください
 
 ## License
 

@@ -415,16 +415,16 @@ classDiagram
 | テーブルの箱 | ER図のテーブルの箱 | `DiagramBoxes` / `DiagramColumn` | ER図に描くテーブルの表示内容（`テーブル名（論理テーブル名）`の見出しと、表示するカラム） |
 | 関連カラム | 関連をつなぐカラム | `DiagramBoxes.relationColumnsOf` | 関連の参照元・参照先として使われるカラム。ER図の箱に表示する |
 | スキーマ跨ぎの関連 | スキーマ跨ぎの外部キー | `ForeignKeys.crossSchema` | 参照元と参照先のスキーマが異なる関連 |
-| サイドカー | サイドカーYAML（`annotationPath`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション＋観点）。コード上のパスは`sidecarPath` |
+| サイドカー | サイドカーYAML（`annotations`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション＋観点）。コード上のパスは`sidecarPath` |
 | 手動付帯情報 | 手動付帯情報（`tables`） | `Annotations` / `TableAnnotation` | テーブル説明・テーブル備考・カラム備考 |
 | 孤児付帯情報 | 実在しないテーブル・カラムに対する付帯情報 | `ConsistencyNotice.Kind.ORPHAN_*` | リネーム・削除によりDBと乖離した付帯情報 |
-| 出力対象の絞り込み条件 | `schema`・`table`・`outputObjects` | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲（`TableScope`）＋出力対象オブジェクト種別（`OutputObjectType`）。サイドカーYAMLのパスは条件ではなく入力元のため含めず、要求（`ExportTableDefinitionRequest`・`CheckDocumentDiffRequest`）が別に持つ |
+| 出力対象の絞り込み条件 | `target`（`schemas`・`tables`・`objects`） | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲（`TableScope`）＋出力対象オブジェクト種別（`OutputObjectType`）。サイドカーYAMLのパスは条件ではなく入力元のため含めず、要求（`ExportTableDefinitionRequest`・`CheckDocumentDiffRequest`）が別に持つ |
 | 出力対象の範囲 | `schema`・`table` | `TableScope` | 出力対象の絞り込み条件のうち、テーブルを対象とするもの（スキーマ名＋テーブル名パターン） |
 | テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableNamePatterns` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法 |
 | 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |
 | 所属テーブル | 観点の所属テーブル | `ViewpointContent.tables` / `Viewpoint.contains` | 観点に含まれるテーブル |
 | 観点外のテーブルとの関連 | 観点外のテーブルとの関連 | `ViewpointContent.outsideRelations` / `ForeignKeys.crossingTableSetBoundary` | 片端だけが所属テーブルの関連 |
-| 出力対象オブジェクト種別 | `outputObjects` | `OutputObjectType` | 出力対象の絞り込み条件のうち、テーブル以外の追加オブジェクトを対象とするもの。トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（トリガーはテーブルに属するため、スキーマ直下のオブジェクトとは範囲が異なる） |
+| 出力対象オブジェクト種別 | `target.objects` | `OutputObjectType` | 出力対象の絞り込み条件のうち、テーブル以外の追加オブジェクトを対象とするもの。トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（トリガーはテーブルに属するため、スキーマ直下のオブジェクトとは範囲が異なる） |
 | 出力対象 | － | `ExportTargets` | 出力対象の絞り込み条件を適用して取得した、出力するもの（条件ではなくデータ）。コード上は対象範囲全体を一括取得する軽量な情報の組を指す |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |
 | 突き合わせの通知 | 警告ログ | `ConsistencyNotice` | 出力対象と関連・付帯情報・観点を突き合わせた結果（孤児付帯情報・除外した関連・一致しない観点のパターン等） |

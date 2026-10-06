@@ -34,7 +34,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `NameFilter` | 関数・シーケンス・型の一覧を、名前の部分一致で絞り込む条件 |
 | | `TableFilter`・`TableType` | テーブルの一覧・検索の絞り込み（DB・スキーマ・区分・観点）を1回組み立てて`matches`で問い合わせる値オブジェクトと、テーブルの区分（table/view/materialized_view）。区分の値はツールの入力スキーマの`enum`にも使う |
 | | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
-| `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリ（`tables.jsonl`・`functions.jsonl`・`sequences.jsonl`・`types.jsonl`）を読み込み`SchemaCatalog`を組み立てる。未知の項目は無視し、無いファイルは0件とする（cliの`outputObjects`で外せるため） |
+| `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリ（`tables.jsonl`・`functions.jsonl`・`sequences.jsonl`・`types.jsonl`）を読み込み`SchemaCatalog`を組み立てる。未知の項目は無視し、無いファイルは0件とする（cliの`target.objects`で外せるため） |
 | `mcp.insight` | `InsightsDirectoryReader` | 参考情報のディレクトリ（`{DB名}/viewpoints.json`）を読み込み`ViewpointEntry`のリストを組み立てる。渡されたスナップショットのディレクトリの親の兄弟を自前で求めるため、起動引数は増えない。ディレクトリ・ファイルが無い場合は0件とする |
 | `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`ViewpointTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
 | | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`と、一覧の件数の既定値・上限） |
@@ -116,7 +116,7 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 ディレクトリに置かれるが、起動引数は`--snapshot`のみで増やさない。
 
 - `InsightsDirectoryReader`が、渡された`--snapshot`のディレクトリの**親の兄弟**（`{親}/insights/`）を自前で求めて読む。
-  cliの出力先（`outputPath`）配下で`snapshot/`と`insights/`が常に兄弟になる配置規則に依存する
+  cliの出力先（`output.path`）配下で`snapshot/`と`insights/`が常に兄弟になる配置規則に依存する
 - `McpServerMain`が`SnapshotDirectoryReader`で組み立てた`SchemaCatalog`に、`withViewpoints`で観点を合成する
 - ディレクトリ・DBごとのファイルが無い場合は0件とする（観点を1つも宣言していない場合、cliの版が古く参考情報を
   まだ出力しない場合等）。起動時の誤りにはしない（スナップショットが1つも無い場合とは扱いが異なる）

@@ -1,7 +1,0 @@
-driver=org.postgresql.Driver
-url=jdbc:postgresql://localhost:5432/testdb
-username=
-
-#driver=oracle.jdbc.driver.OracleDriver
-#url=jdbc:oracle:thin:@localhost:1521/orclpdb
-#username=
