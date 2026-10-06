@@ -60,6 +60,9 @@ final class CliArguments {
   /** {@code --キー=値}形式の引数のキーと値の区切り文字 */
   private static final char KEY_VALUE_SEPARATOR = '=';
 
+  /** 解釈できない引数を報告するときに、値の代わりに示す文字列 */
+  private static final String HIDDEN_VALUE = "<hidden>";
+
   private final boolean check;
   private final boolean rmDist;
   private final boolean help;
@@ -180,7 +183,7 @@ final class CliArguments {
    * {@code --chek}のような書き誤りを黙って無視すると、差分検知のつもりで通常実行（{@code --rm-dist}なら出力先の削除）が
    * 行われてしまうため、処理を始める前に誤りとして報告する
    *
-   * @throws UserCorrectableException 解釈できない引数が指定されている場合（該当する引数をすべて示す）
+   * @throws UserCorrectableException 解釈できない引数が指定されている場合（該当する引数をすべて、値を伏せて示す）
    */
   void requireKnownArguments() {
     if (unknownArguments.isEmpty()) {
@@ -188,7 +191,8 @@ final class CliArguments {
     }
     throw new UserCorrectableException(
         "Unknown argument: "
-            + String.join(", ", unknownArguments)
+            + unknownArguments.stream().map(CliArguments::masked).collect(Collectors.joining(", "))
+            + " (values are not shown; specify a value as --name=value)"
             + " (available arguments: "
             + Stream.of(
                     FLAGS.stream(),
@@ -198,6 +202,19 @@ final class CliArguments {
                 .flatMap(Function.identity())
                 .collect(Collectors.joining(", "))
             + ")");
+  }
+
+  /**
+   * 誤りの報告は画面とログファイルに残るため、引数の値を伏せる<br>
+   * {@code --db-pasword=秘密}のような書き誤りや、{@code --db-password 秘密}のように{@code =}の代わりに空白で区切った
+   * 値（名前の無い引数になる）にパスワードが含まれうる
+   */
+  private static String masked(String arg) {
+    if (!arg.startsWith("-")) {
+      return HIDDEN_VALUE;
+    }
+    final int separatorIndex = arg.indexOf(KEY_VALUE_SEPARATOR);
+    return separatorIndex < 0 ? arg : arg.substring(0, separatorIndex + 1) + HIDDEN_VALUE;
   }
 
   private static boolean isKnown(String arg) {

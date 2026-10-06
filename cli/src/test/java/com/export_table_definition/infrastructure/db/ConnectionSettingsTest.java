@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Properties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /** ConnectionSettings のDB接続情報の組み立て・検証（READMEに記載したconfig.ymlのdatabase・パスワードの環境変数の仕様）に関するテスト */
 public class ConnectionSettingsTest {
@@ -162,5 +164,42 @@ public class ConnectionSettingsTest {
     assertTrue(
         e.getMessage().contains("database.password cannot be set in the configuration file"));
     assertTrue(e.getMessage().contains(PASSWORD_ENVIRONMENT_VARIABLE));
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "jdbc:postgresql://localhost:5432/testdb?user=app&password=s3cret",
+        "jdbc:postgresql://localhost:5432/testdb?sslpassword=s3cret",
+        "jdbc:oracle:thin:scott/s3cret@//localhost:1521/orclpdb",
+        "jdbc:oracle:thin:@//localhost:1521/orclpdb;PASSWORD = s3cret"
+      })
+  @DisplayName("merge: 設定ファイルのurlに埋め込んだパスワードは、値を示さずに誤りとする")
+  void testRejectsPasswordInFileUrl(String url) {
+    final Map<String, String> baseValues = new HashMap<>(BASE_VALUES);
+    baseValues.put("url", url);
+
+    InvalidConfigurationException e =
+        assertThrows(
+            InvalidConfigurationException.class,
+            () -> ConnectionSettings.merge(baseValues, new Properties(), Map.of()));
+
+    assertTrue(e.getMessage().contains("database.url in the configuration file"));
+    assertFalse(e.getMessage().contains("s3cret"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "jdbc:postgresql://localhost:5432/testdb?sslmode=require",
+        "jdbc:oracle:thin:@//localhost:1521/orclpdb",
+        "jdbc:oracle:thin:@localhost:1521:orcl"
+      })
+  @DisplayName("merge: パスワードを含まないurlは受け入れる")
+  void testAcceptsUrlWithoutPassword(String url) {
+    final Map<String, String> baseValues = new HashMap<>(BASE_VALUES);
+    baseValues.put("url", url);
+
+    assertDoesNotThrow(() -> ConnectionSettings.merge(baseValues, new Properties(), Map.of()));
   }
 }

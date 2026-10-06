@@ -55,4 +55,44 @@ public class MarkdownTemplateSupportTest {
     assertEquals("○", MarkdownTemplateSupport.marker(true));
     assertEquals("", MarkdownTemplateSupport.marker(false));
   }
+
+  @Test
+  @DisplayName("escapeHtml: <を文字参照にし、表のセルの改行の<br>だけは残す")
+  void testEscapeHtml() {
+    assertEquals(
+        "&lt;img src=x onerror=alert(1)>a<br>b &lt;!-- c --> x &lt; 1",
+        MarkdownTemplateSupport.escapeHtml("<img src=x onerror=alert(1)>a<br>b <!-- c --> x < 1"));
+    assertEquals("", MarkdownTemplateSupport.escapeHtml(null));
+  }
+
+  @Test
+  @DisplayName("escapeInline: 改行を空白にし、HTMLをエスケープする")
+  void testEscapeInline() {
+    assertEquals("a ``` &lt;b>", MarkdownTemplateSupport.escapeInline("a\n```\r\n<b>"));
+  }
+
+  @Test
+  @DisplayName("row: セルの改行を<br>にし、HTMLをエスケープする")
+  void testRowEscapesCells() {
+    assertEquals("|1|a<br>```|&lt;b>|", MarkdownTemplateSupport.row(1, "a\n```", "<b>"));
+  }
+
+  @Test
+  @DisplayName("codeFence: 中身の最長のバッククォートの並びより長い囲みにする（最短3個）")
+  void testCodeFence() {
+    assertEquals("```", MarkdownTemplateSupport.codeFence("select 1"));
+    assertEquals("```", MarkdownTemplateSupport.codeFence("a `b` ``c``"));
+    assertEquals("````", MarkdownTemplateSupport.codeFence("a\n```\nb"));
+    assertEquals("``````", MarkdownTemplateSupport.codeFence("`````"));
+    assertEquals("```", MarkdownTemplateSupport.codeFence(null));
+  }
+
+  @Test
+  @DisplayName("codeSpan: 中身のバッククォートより長い区切りで囲み、改行は空白にする")
+  void testCodeSpan() {
+    assertEquals("`range (a)`", MarkdownTemplateSupport.codeSpan("range (a)"));
+    assertEquals("``a`b``", MarkdownTemplateSupport.codeSpan("a`b"));
+    assertEquals("`` `a ``", MarkdownTemplateSupport.codeSpan("`a"));
+    assertEquals("```` a ``` ````", MarkdownTemplateSupport.codeSpan("a\n```"));
+  }
 }

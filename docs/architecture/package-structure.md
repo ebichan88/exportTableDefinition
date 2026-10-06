@@ -114,6 +114,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 | `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF。データベース単位ディレクトリ（`{base}/{DB名}/`）の解決（`resolveDatabaseDirectory`）を起点に、分割ページのパスは本体ページのパスから`resolvePageFile`で求める。`--rm-dist`で削除してよい出力先かの判定（`isRemovableOutputDir`）も持つ |
 | | `DocumentLocations` | Markdownドキュメントのファイル名とデータベース単位ディレクトリからの相対パス、ドキュメント間の相対リンクの規則を一元的に定める（関数・プロシージャのオーバーロードのファイル名、READMEのファイル名を含む）。`OutputPathResolver`の実装とテンプレートの双方がこの規則を参照する |
 | | `SnapshotLocations` | スナップショットのディレクトリ名・ファイル名と相対パスの規則を一元的に定める。`OutputPathResolver`の実装と、比較時のファイル種別の判定の双方がこの規則を参照する |
+| | `PathSegments` | DB由来の名前（DB名・スキーマ名・テーブル名等）を、パスの1要素として安全な形（区切り・`..`・Windowsで使えない文字を`~2F`等に置き換えたもの）にする。`*Locations`がパスに名前を使うときは必ず通す |
 | | `OutputRoot` | 出力先ベースディレクトリと基本情報の組を表す値オブジェクト（Writer・`OutputPathResolver`へそのまま渡す） |
 | `domain.service.snapshot` | `SchemaSnapshotWriter` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
 | | `SnapshotDiff` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`--check`モードで使用）。内容が一致しないものは、`SnapshotSerializer.formatForDiff`で整形した上で`UnifiedDiffGenerator`によりunified diffを付ける |
@@ -146,7 +147,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
 | | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）・`relations`（論理リレーション）・`viewpoints`（観点）を解釈する。ファイルが無い・YAMLとして解釈できない場合は`UserCorrectableException`を投げ、個々の記述の誤り（未知のキー等）は読み飛ばして警告する |
-| `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装 |
+| `infrastructure.path` | `DefaultOutputPathResolver` | `OutputPathResolver`のデフォルト実装。解決したパスが起点のディレクトリ（出力先・データベース単位ディレクトリ等）の外を指さないことを確かめる |
 | `infrastructure.snapshot` | `JacksonSnapshotSerializer` | `SnapshotSerializer`のJackson実装 |
 
 ## config層

@@ -1,0 +1,25 @@
+# 依存ライブラリ・GitHub Actionsの更新を、Dependabotが月1回PRで提案する。
+# 脆弱性が公表された依存の更新（セキュリティアップデート）は、この周期を待たずに提案される
+# （リポジトリの Settings > Code security で Dependabot alerts / security updates を有効にしておくこと）
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      # パッチ・マイナーの更新は1つのPRにまとめる（メジャーの更新は互換性を確かめるため個別のPRにする）
+      gradle-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Oracle 12c以上に対応する21系に留めている（cli/build.gradleのコメントを参照）
+      - dependency-name: com.oracle.database.jdbc:ojdbc11
+        update-types: [version-update:semver-major]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ['*']

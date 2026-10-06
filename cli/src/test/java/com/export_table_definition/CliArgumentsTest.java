@@ -97,8 +97,24 @@ public class CliArgumentsTest {
 
     UserCorrectableException e =
         assertThrows(UserCorrectableException.class, args::requireKnownArguments);
-    assertTrue(e.getMessage().contains("Unknown argument: --chek, --db-url, --check=true, x"));
+    assertTrue(
+        e.getMessage().contains("Unknown argument: --chek, --db-url, --check=<hidden>, <hidden>"));
     assertTrue(e.getMessage().contains("--db-url=<value>"));
+  }
+
+  @Test
+  @DisplayName("requireKnownArguments: 書き誤った引数や空白で区切った値に含まれるパスワードを、誤りの報告に含めない")
+  void testRequireKnownArgumentsDoesNotShowValues() {
+    CliArguments args =
+        CliArguments.parse(new String[] {"--db-pasword=s3cret", "--db-password", "t0psecret"});
+
+    UserCorrectableException e =
+        assertThrows(UserCorrectableException.class, args::requireKnownArguments);
+    assertFalse(e.getMessage().contains("s3cret"));
+    assertFalse(e.getMessage().contains("t0psecret"));
+    assertTrue(
+        e.getMessage()
+            .contains("Unknown argument: --db-pasword=<hidden>, --db-password, <hidden>"));
   }
 
   @Test
@@ -190,7 +206,7 @@ public class CliArgumentsTest {
         assertThrows(
             UserCorrectableException.class,
             CliArguments.parse(new String[] {"--outputPath=./docs"})::requireKnownArguments);
-    assertTrue(e.getMessage().contains("Unknown argument: --outputPath=./docs"));
+    assertTrue(e.getMessage().contains("Unknown argument: --outputPath=<hidden>"));
     assertTrue(e.getMessage().contains("--output-path=<value>"));
     assertTrue(e.getMessage().contains("--annotation-path=<value>"));
     assertTrue(e.getMessage().contains("--config=<path>"));

@@ -3,7 +3,10 @@ package com.export_table_definition.domain.service.writer.template;
 import static com.export_table_definition.testsupport.MarkdownAssert.assertMarkdownEquals;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.export_table_definition.domain.model.relation.Cardinality;
 import com.export_table_definition.domain.model.relation.DiagramColumn;
+import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
+import com.export_table_definition.domain.model.relation.RelationType;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
@@ -89,6 +92,33 @@ public class MermaidSupportTest {
 
     assertEquals("orders（受注）", labels.get(orders));
     assertEquals("customers", labels.get(customers));
+  }
+
+  @Test
+  @DisplayName("aliasLine: ラベル中の改行は、図の次の行として解釈されないよう空白に置き換える")
+  void testAliasLineReplacesLineBreaks() {
+    assertEquals(
+        "    public_orders[\"orders ``` x\"]" + System.lineSeparator(),
+        MermaidSupport.aliasLine("public_orders", "orders\r\n```\nx"));
+  }
+
+  @Test
+  @DisplayName("relationLine: 外部キー名の二重引用符・改行も置き換える")
+  void testRelationLineQuotesForeignKeyName() {
+    final ForeignKeyEntity fk =
+        new ForeignKeyEntity(
+            "public",
+            "orders",
+            "fk\"x\n```",
+            List.of("customer_id"),
+            "public",
+            "customers",
+            List.of("id"),
+            Cardinality.ONE_TO_MANY,
+            RelationType.PHYSICAL);
+    assertEquals(
+        "    a ||--o{ b : \"fk'x ```\"" + System.lineSeparator(),
+        MermaidSupport.relationLine("a", fk, "b"));
   }
 
   @Test

@@ -121,6 +121,31 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
     組み立ては必ず`domain.service.writer`配下のテンプレートクラス（`*Templates`。種別ごとのサブパッケージにWriterと同居する）に委ね、Writerは
     「何を・どの順で・どのファイルに書くか」の段取りに専念する。
 
+## セキュリティ
+
+DBのメタ情報（DB名・スキーマ名・テーブル名・コメント・関数やビューの定義等）は、ツールを実行する人とは別の人
+（DBでCREATE・COMMENTの権限を持つ人）が書ける、信頼できない入力として扱う。サイドカーYAMLは利用者自身が書くファイルのため、
+説明文（`description`）はMarkdownとしてそのまま出力してよい。出力・ログ・ファイル操作に触れる変更では、次を確認する。
+
+- **パス**：DB由来の名前をファイル名・ディレクトリ名に使うときは、`*Locations`（`domain.service.path`）の規則に
+  `PathSegments.encode`を通して組み立て、絶対パスは`OutputPathResolver`の実装（`within`で出力先の外を指さないことを確かめる）で解決する。
+  `Path.resolve`等をそれ以外の場所で呼ぶと`ArchitectureTest`が失敗する。`OutputPathResolver`にメソッドを足すと、
+  `OutputPathContainmentTest`が危険な名前（`..`・絶対パス・`\`・`C:`等）で自動的に検査する
+  （引数の型が新しい場合は、テストの`ARGUMENTS`に危険な値を足す）。
+- **Markdown・Mermaid**：DB由来の文字列は、表の行なら`MarkdownTemplateSupport.row`（書式で組み立てた行は`escapeTableRow`）、
+  見出し・リストの項目なら`escapeInline`、コードブロックは`codeFence`、コードスパンは`codeSpan`を通し、Mermaidの図は
+  `MermaidSupport`のメソッドで組み立てる（生のHTMLやコードブロックを閉じる行が出力されないようにするため）。
+  DB由来の文字列を受け取るテンプレートを足したら、`MarkdownInjectionTest`の`renderedDocuments`にも足す。
+- **秘密情報**：パスワードは環境変数（または`--db-password`）でだけ受け取り、設定ファイルには書かせない（`url`への埋め込みも誤りにする）。
+  例外のメッセージ・ログ・画面の表示に、CLI引数・設定値・接続URL等の**値**をそのまま含めない（書き誤りの引数にパスワードが入りうる。
+  誤りの報告は`FailureReporter`がログファイルにも残す）。
+- **削除**：ディレクトリの削除は`--rm-dist`の出力先だけで行い、削除してよいかは`OutputPathResolver.isRemovableOutputDir`で判定する。
+  削除の対象を広げる変更をしない。
+- **依存ライブラリ**：更新はDependabot（`.github/dependabot.yml`）が提案する。依存を足す・上げるときは、既知の脆弱性
+  （GitHub Advisory Database等）が無い版を選ぶ。YAMLは`SafeConstructor`で読み、JSONのデシリアライズで型情報からクラスを生成する設定
+  （デフォルトタイピング）を使わない。mapperのSQLは`#{}`でバインドし、`${}`で文字列を埋め込まない。
+- 上記に触れる変更では、PRを作る前に`/security-review`を実行し、指摘を確認する。
+
 ## コメントスタイル
 
 コードを書いた・変更した直後に、書いたコメント1つずつについて「これを消したら読み手は何を失うか」を自問する。

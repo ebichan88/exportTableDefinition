@@ -9,7 +9,7 @@ import java.util.Optional;
  * Markdownドキュメントの配置を定める{@link DocumentLocations}と対になり、出力先の絶対パスの解決（{@link
  * OutputPathResolver}）はこのクラスの規則を参照する。<br>
  * 配置は次のとおり。DB全体の情報は{@code snapshot/{DB名}/database.json}、 スキーマ配下のオブジェクトは種別ごとに{@code
- * snapshot/{DB名}/{スキーマ名}/{種別のファイル名}.jsonl}に置く
+ * snapshot/{DB名}/{スキーマ名}/{種別のファイル名}.jsonl}に置く（DB名・スキーマ名は{@link PathSegments}で置き換える）
  */
 public final class SnapshotLocations {
 
@@ -41,7 +41,7 @@ public final class SnapshotLocations {
    * @return {@code {DB名}/database.json}
    */
   public static String databaseFile(String dbName) {
-    return dbName + PATH_SEPARATOR + DATABASE_FILE_NAME;
+    return PathSegments.encode(dbName) + PATH_SEPARATOR + DATABASE_FILE_NAME;
   }
 
   /**
@@ -50,7 +50,11 @@ public final class SnapshotLocations {
    * @return {@code {DB名}/{スキーマ名}/{種別のファイル名}.jsonl}
    */
   public static String objectFile(String dbName, String schemaName, SnapshotKind kind) {
-    return String.join(PATH_SEPARATOR, dbName, schemaName, objectFileName(kind));
+    return String.join(
+        PATH_SEPARATOR,
+        PathSegments.encode(dbName),
+        PathSegments.encode(schemaName),
+        objectFileName(kind));
   }
 
   /**

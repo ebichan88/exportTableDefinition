@@ -30,17 +30,19 @@ public class ObjectDefinitionTemplates {
 
   /** 関数・プロシージャの個別定義ファイル内容 */
   public static String functionFile(FunctionEntity function, BaseInfoEntity baseInfo) {
+    final String fence = MarkdownTemplateSupport.codeFence(function.definition());
     return "# "
-        + function.getHeaderName()
+        + MarkdownTemplateSupport.escapeInline(function.getHeaderName())
         + LINE_SEPARATOR_DOUBLE
         + baseInfo(baseInfo)
         + "## 定義"
         + LINE_SEPARATOR_DOUBLE
-        + "```sql"
+        + fence
+        + "sql"
         + LINE_SEPARATOR
         + function.definition()
         + LINE_SEPARATOR
-        + "```"
+        + fence
         + LINE_SEPARATOR_DOUBLE
         + footer(ListDocumentType.FUNCTION, baseInfo);
   }
@@ -54,24 +56,17 @@ public class ObjectDefinitionTemplates {
                 | 増分 | 最小値 | 最大値 | キャッシュ | 開始値 | 循環 | 所有カラム |
                 |:---|:---|:---|:---|:---|:---|:---|
                 """
-            + "|"
-            + sequence.incrementBy()
-            + "|"
-            + sequence.minValue()
-            + "|"
-            + sequence.maxValue()
-            + "|"
-            + sequence.cacheSize()
-            + "|"
-            + sequence.startValue()
-            + "|"
-            + MarkdownTemplateSupport.marker(sequence.cycle())
-            + "|"
-            + sequence.ownedBy()
-            + "|"
+            + MarkdownTemplateSupport.row(
+                sequence.incrementBy(),
+                sequence.minValue(),
+                sequence.maxValue(),
+                sequence.cacheSize(),
+                sequence.startValue(),
+                MarkdownTemplateSupport.marker(sequence.cycle()),
+                sequence.ownedBy())
             + LINE_SEPARATOR_DOUBLE;
     return "# "
-        + sequence.sequenceName()
+        + MarkdownTemplateSupport.escapeInline(sequence.sequenceName())
         + LINE_SEPARATOR_DOUBLE
         + baseInfo(baseInfo)
         + properties
@@ -87,14 +82,11 @@ public class ObjectDefinitionTemplates {
                 | 種別 | 定義 |
                 |:---|:---|
                 """
-            + "|"
-            + type.typeCategory()
-            + "|"
-            + MarkdownTemplateSupport.escapePipe(type.definition())
-            + "|"
+            + MarkdownTemplateSupport.row(
+                type.typeCategory(), MarkdownTemplateSupport.escapePipe(type.definition()))
             + LINE_SEPARATOR_DOUBLE;
     return "# "
-        + type.typeName()
+        + MarkdownTemplateSupport.escapeInline(type.typeName())
         + LINE_SEPARATOR_DOUBLE
         + baseInfo(baseInfo)
         + definition
