@@ -89,6 +89,8 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
 - スナップショットの形式（`domain.model.snapshot`のrecord）を変えた場合は、MCPサーバーの`./gradlew :mcp-server:test`も実行する
   （`SampleSnapshotContractTest`がベースラインを読む）。互換性の無い変更なら`DatabaseSnapshot.FORMAT_VERSION`を上げ、
   `SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させる。
+- 変更が[CONTRIBUTING.mdの「互換性を約束する範囲」](./CONTRIBUTING.md#互換性を約束する範囲)を壊す場合は、PRに`breaking`ラベルを付け、
+  PRの本文に移行の手順を書く。`build.gradle`の`version`は、リリースのときにだけ上げる（手順はCONTRIBUTING.mdの「リリースの手順」）。
 - MCPサーバーは標準出力をMCPのプロトコルに使う。`System.out`への出力や、標準出力へ出すログの設定を追加しない（表示は標準エラーへ）。
 - 新規ロジックを書く前・既存クラスに数行足す前に、以下のような「小さな責務の混在」が
   再発していないか確認する（過去に実際に見つかった逸脱パターン）。

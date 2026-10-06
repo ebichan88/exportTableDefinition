@@ -96,7 +96,8 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 配布用zip（`.github/workflows/release.yml`）の`mcp/exportTableDefinition-mcp.jar`として、cliと同じzipに同梱する。
 
 - Java実行環境（`runtime`）はcliと共有する。jlinkに含めるモジュールは、cliとMCPサーバーの両方のjarを`jdeps`に渡して合算する。
-- jarはzipの直下ではなく`mcp/`に置く。cliの起動スクリプト（`run.bat`/`run.sh`）は直下の`*.jar`を起動するため。
+- jarはzipの直下ではなく`mcp/`に置き、同梱した依存ライブラリのライセンスの一覧もcliと分ける。
+  jarのパスはMCPクライアントの設定に書かれるため、互換性を約束する範囲に含める（CONTRIBUTING.mdの「互換性を約束する範囲」）。
 - MCPクライアントからは同梱のjavaを直接起動してもらう（起動スクリプトは`pause`や画面表示をするためMCPには使えない）。
   利用手順はREADMEの「AIからテーブル定義を調べる（MCPサーバー）」に書く。
 

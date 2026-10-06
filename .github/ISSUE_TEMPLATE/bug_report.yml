@@ -39,10 +39,10 @@ body:
       label: 再現手順
       description: |
         実行したコマンド（CLI引数）と、関係する設定を書いてください。
-        `conf/ExportTableDefinition.properties`・`conf/mybatis.properties`は、関係する項目だけで構いません（パスワードは書かないでください）。
+        `conf/config.yml`は、関係する項目だけで構いません（パスワードは書かないでください）。
         サイドカーYAMLが関係する場合は、その内容も添えてください。
       placeholder: |
-        1. `conf/ExportTableDefinition.properties`に〜と設定する
+        1. `conf/config.yml`に〜と設定する
         2. `./run.sh --check`を実行する
         3. 〜と表示される
     validations:
@@ -88,9 +88,10 @@ body:
     attributes:
       label: ツールのバージョン
       description: |
-        Releasesから入手した場合は、ダウンロードしたzipのリリース日時を書いてください。
-        ソースからビルドした場合は、コミットのハッシュ（`git rev-parse --short HEAD`）を書いてください。
-      placeholder: 例) Releasesのlatest（2026-10-01取得） / 7c8aaab
+        `--version`の出力（`./run.sh --version`・`run.bat --version`・`java -jar exportTableDefinition.jar --version`）を書いてください。
+        MCPサーバーの場合は、zipを入手したリリースの版を書いてください。
+        ソースからビルドした場合は、あわせてコミットのハッシュ（`git rev-parse --short HEAD`）も書いてください。
+      placeholder: 例) exportTableDefinition 0.1.0 / exportTableDefinition 0.1.0（7c8aaab）
     validations:
       required: true
 

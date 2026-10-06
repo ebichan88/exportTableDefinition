@@ -1,11 +1,13 @@
 name: CI
 
 # PRごとに、単体テスト・フォーマットの検査（build）と、Docker上の実DBに対する結合テスト（integrationTest・oracleIntegrationTest）を行う。
-# docs/sample配下（DDL・ベースライン）は結合テストの入力のため、docsの変更でも実行する
+# docs/sample配下（DDL・ベースライン）は結合テストの入力のため、docsの変更でも実行する。
+# release.ymlも、リリースの前にこのワークフローを呼び出し、テストに通った場合だけ配布物を作る
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_call: {}
 
 permissions:
   contents: read

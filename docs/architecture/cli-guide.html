@@ -308,8 +308,7 @@ pre.tree { line-height: 1.55; }
       <rect x="340" y="110" width="220" height="180" rx="8" class="d-box-acc"/>
       <text x="450" y="138" text-anchor="middle" class="d-t-s">cli（このサブプロジェクト）</text>
       <text x="450" y="164" text-anchor="middle" class="d-t-ms">java -jar</text>
-      <text x="450" y="182" text-anchor="middle" class="d-t-ms">exportTableDefinition-</text>
-      <text x="450" y="200" text-anchor="middle" class="d-t-ms">1.0-SNAPSHOT.jar</text>
+      <text x="450" y="191" text-anchor="middle" class="d-t-ms">exportTableDefinition.jar</text>
       <text x="450" y="232" text-anchor="middle" class="d-t-ms">ExportTableDefinition.main()</text>
       <text x="450" y="266" text-anchor="middle" class="d-t-acc">DBは読むだけ</text>
 
@@ -990,7 +989,7 @@ System.out.println(resultDto.getResultMessage());
 
 <h3>FailureReporter の報告の形</h3>
 <p><code>[errmsg]</code>に例外のメッセージを、<code>[cause]</code>に原因の連鎖のうち表示に含まれていないものを浅い順に並べます。原因のメッセージを繰り返しているだけの例外（MyBatisの例外等）は省くため、包んだ箇所でDBが返したエラーが失われず、かつ重複もしません。以下は実際の出力です。</p>
-<pre><code><span class="c">$ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --chek</span>
+<pre><code><span class="c">$ java -jar exportTableDefinition.jar --chek</span>
 Starting output of table definition document.
 Please wait a moment ...
 

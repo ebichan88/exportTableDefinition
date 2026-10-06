@@ -357,7 +357,7 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line);
 <span class="c">← stdout</span>
 {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18",
   "capabilities":{"logging":{},"tools":{"listChanged":false}},
-  "serverInfo":{"name":"exportTableDefinition","version":"1.0-SNAPSHOT"},
+  "serverInfo":{"name":"exportTableDefinition","version":"0.1.0"},
   "instructions":"DBのテーブル定義（exportTableDefinitionが出力したスキーマのスナップショット）を調べるサーバー。全体像はlist_schemas、…"}}</code></pre>
 <p class="small muted"><code>tools.listChanged:false</code>は「起動後にツールの一覧は変わらない」という宣言です。<code>logging</code>はSDKが自動で付け加える能力で、このサーバーは使っていません。<code>version</code>はjarのマニフェストの<code>Implementation-Version</code>で、jar以外から起動すると<code>dev</code>になります。</p>
 

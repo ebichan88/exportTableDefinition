@@ -1,0 +1,26 @@
+# GitHub Releaseのリリースノートの自動生成（release.ymlワークフローの--generate-notes）で、
+# 前の版からマージしたPRをラベルごとに分類する。1つのPRは、上から順に最初に当てはまった分類にだけ載る。
+# 何を破壊的変更とするかはCONTRIBUTING.mdの「互換性を約束する範囲」を参照
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: 破壊的変更
+      labels:
+        - breaking
+    - title: 機能追加・改善
+      labels:
+        - enhancement
+    - title: 不具合の修正
+      labels:
+        - bug
+    - title: ドキュメント
+      labels:
+        - documentation
+    - title: 依存ライブラリの更新
+      labels:
+        - dependencies
+    - title: その他
+      labels:
+        - "*"

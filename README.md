@@ -36,24 +36,31 @@ DBに接続し、テーブル一覧・各テーブルの定義書・ER図など�
 
 ## Getting Started
 
-[Releases](../../releases/tag/latest)から実行可能な形式一式をダウンロードしてすぐに使えます。
+[Releases](../../releases/latest)から実行可能な形式一式をダウンロードしてすぐに使えます。
 
 Java実行環境（runtimeフォルダ）を同梱しているため、Javaを未インストールの状態で実行できます。
 
 ### 入手方法
 
-1. [Releases](../../releases/tag/latest)からOSに合ったzipをダウンロードする
-    * Windows: `exportTableDefinition-windows.zip`
-    * Linux: `exportTableDefinition-linux.zip`
-    * macOS: `exportTableDefinition-macos.zip`
-2. 好きな場所に展開する
+1. [Releases](../../releases/latest)からOSに合ったzipをダウンロードする（過去の版は[リリースの一覧](../../releases)から入手できます）
+    * Windows（x64）: `exportTableDefinition-windows.zip`
+    * Linux（x64）: `exportTableDefinition-linux.zip`
+    * macOS（Apple Silicon）: `exportTableDefinition-macos.zip`
+2. （任意）同じリリースの`SHA256SUMS`で、ダウンロードしたzipが壊れていない・改ざんされていないことを確かめる
+    * Linux／macOS: `sha256sum -c SHA256SUMS --ignore-missing`（macOSで`sha256sum`が無い場合は`shasum -a 256 -c SHA256SUMS --ignore-missing`）
+    * Windows（PowerShell）: `Get-FileHash exportTableDefinition-windows.zip`の値が、`SHA256SUMS`の該当行と一致することを確かめる
+3. 好きな場所に展開する
+    * macOS: 同梱のJava実行環境は署名していないため、そのままではGatekeeperに実行を止められます。展開したフォルダで`xattr -dr com.apple.quarantine .`を実行してから起動してください
+
+バージョンの付け方（どの変更で版が上がるか）は、[CONTRIBUTING.md](./CONTRIBUTING.md#バージョンとリリース)を参照してください。
+使っている版は`--version`で確かめられます（[コマンドライン引数](#コマンドライン引数)を参照）。
 
 ### zipファイルの構成
 
 ```
 exportTableDefinition-windows
 │  run.bat／run.sh                             ・・・ ダブルクリックで実行する起動ファイル（Linux／macOSの場合は`run.sh`）
-│  exportTableDefinition-1.0-SNAPSHOT.jar      ・・・ 実行可能形式Jarファイル
+│  exportTableDefinition.jar                   ・・・ 実行可能形式Jarファイル
 │  LICENSE                                     ・・・ このツールのライセンス（MIT）
 │  THIRD-PARTY-NOTICES.txt                     ・・・ Jarファイルに同梱した依存ライブラリのライセンス
 ├─mcp
@@ -296,7 +303,7 @@ run.bat
 | `--check` | DB vs ドキュメントの差分検知モードで実行する（[後述](#db-vs-ドキュメントの差分検知--checkモード)） |
 | `--rm-dist` | 書き込み前に出力先ディレクトリを削除する（[後述](#出力先ディレクトリの事前クリーンアップ--rm-distオプション)） |
 | `--help` | 使い方を表示して終了する（設定ファイルの読み込み・DBへの接続は行わない。終了コード`0`） |
-| `--version` | バージョンを表示して終了する（`exportTableDefinition 1.0-SNAPSHOT`のように表示。`--help`と同時に指定した場合は`--help`を優先する。終了コード`0`） |
+| `--version` | バージョンを表示して終了する（`exportTableDefinition 0.1.0`のように表示。`--help`と同時に指定した場合は`--help`を優先する。終了コード`0`） |
 | `--config=パス` | 読み込む設定ファイルを指定する（未指定の場合は、実行したディレクトリの`conf/config.yml`） |
 | `--db-driver=値`・`--db-url=値`・`--db-username=値` | DB接続情報を上書きする（次項） |
 | `--db-password=値` | パスワードを指定する（[パスワードの指定](#パスワードの指定)を参照） |
@@ -323,7 +330,7 @@ DB接続情報（`database`）:
 | パスワード | `--db-password=値`（優先順位は[パスワードの指定](#パスワードの指定)を参照） |
 
 ```
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://localhost:5432/testdb --db-username=user
+java -jar exportTableDefinition.jar --db-url=jdbc:postgresql://localhost:5432/testdb --db-username=user
 ```
 
 出力の対象・出力先（`target`・`output`・`annotations`）:
@@ -339,7 +346,7 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --db-url=jdbc:postgresql://loca
 | `annotations` | `--annotation-path=値` |
 
 ```
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar --output-path=./docs/db/prod --schema=sample --table='!flyway_schema_history,*_bk'
+java -jar exportTableDefinition.jar --output-path=./docs/db/prod --schema=sample --table='!flyway_schema_history,*_bk'
 ```
 
 * リストの項目（`--schema`・`--table`・`--output-objects`）は、カンマ区切りで複数指定します（各値の前後の空白は無視します）。
@@ -355,7 +362,7 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --output-path=./docs/db/prod --
 テーブル定義書は、生成対象のファイルのみを新規作成・上書きする方式のため、DBからテーブルやスキーマを削除した後に再実行しても、削除されたテーブルに対応する`.md`ファイルは`output.path`配下に残り続けます。`--rm-dist`を付けて実行すると、書き込みを開始する前に`output.path`のベースディレクトリを再帰的に削除してから生成するため、常に現在のDBの状態のみが出力先に反映されます。
 
 ```
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar --rm-dist
+java -jar exportTableDefinition.jar --rm-dist
 ```
 
 * CI上で定義書を自動生成・コミットする運用（マイグレーション後に再生成してコミットする等）で、削除されたテーブルの残骸ファイルが蓄積するのを防ぐ用途を想定しています。
@@ -370,7 +377,7 @@ java -jar exportTableDefinition-1.0-SNAPSHOT.jar --rm-dist
 `--check`を付けて実行すると、DBの現状のスナップショットと`output.path`配下にコミット済みのスナップショットを比較し、差分（例: `table sample.employee`、`function sample.calculate_bonus(p_salary numeric)`）をオブジェクト単位で検知します。マイグレーション後にドキュメントの再生成・コミットを忘れていないかをCIで機械的に検知する用途のため、CIで利用する場合はスナップショットもコミットしておいてください。
 
 ```
-java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
+java -jar exportTableDefinition.jar --check
 ```
 
 * 以下の3区分で報告します。
@@ -410,7 +417,7 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
 ```yaml
 - name: Check table definition document diff
   run: >-
-    java -jar exportTableDefinition-1.0-SNAPSHOT.jar --check
+    java -jar exportTableDefinition.jar --check
     --db-url="$DB_URL" --db-username="$DB_USERNAME"
     --output-path=./docs/db/prod --table='!flyway_schema_history'
   env:
@@ -739,7 +746,7 @@ exportTableDefinition
 │  │      ├─conf  ・・・ 設定ファイルが格納されているフォルダ
 │  │      │  └─config.yml
 │  │      ├─output
-│  │      └─exportTableDefinition-1.0-SNAPSHOT.jar ・・・ 実行可能形式Jarファイル
+│  │      └─exportTableDefinition.jar ・・・ 実行可能形式Jarファイル
 │  └─src
 │      ├─ main     ・・・ javaソースコードが格納されているフォルダ
 │      │   └─ java
@@ -762,7 +769,7 @@ exportTableDefinition
 
 ### ビルド
 
-以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition-1.0-SNAPSHOT.jar`が、
+以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition.jar`が、
 `exportTableDefinition/mcp-server/build/libs`フォルダ配下にMCPサーバーの`exportTableDefinition-mcp.jar`が作成される
 
 ```
@@ -822,8 +829,12 @@ gradlew javadoc
 `cli/build/libs/conf/config.yml`に必要な設定値を記載した状態で、`cli/build/libs`で以下のコマンドを実行する（`gradlew build`のたびに`cli/src/main/resources/conf`の内容で上書きされるため、手元の設定を残したい場合は別の場所に置いて`--config`で指定する）
 
 ```
-java -jar .\exportTableDefinition-1.0-SNAPSHOT.jar
+java -jar .\exportTableDefinition.jar
 ```
+
+### リリース
+
+リリースの手順は[CONTRIBUTING.md](./CONTRIBUTING.md#リリースの手順)を参照。
 
 ## License
 
