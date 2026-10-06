@@ -9,7 +9,7 @@ dependencies {
     implementation 'io.modelcontextprotocol.sdk:mcp-json-jackson2:2.0.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
     // SDKのログ（SLF4J）の出力先。標準出力はMCPのプロトコルが使うため、標準エラーへ出すsimpleを使う
-    runtimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+    runtimeOnly 'org.slf4j:slf4j-simple:2.0.20'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
