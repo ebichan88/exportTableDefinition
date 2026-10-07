@@ -45,7 +45,7 @@ final class CliUsage {
           1  Differences found (--check only)
           2  Failure
 
-        See README.md for details of each option.
+        See docs/usage/cli.md for details of each option.
         """
         .formatted(
             CliArguments.overrideArgumentNames().stream()

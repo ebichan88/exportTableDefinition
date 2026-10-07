@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ExitStatus の終了コードに関するテスト（READMEに記載した終了コードの仕様） */
+/** ExitStatus の終了コードに関するテスト（docs/usage/cli.mdに記載した終了コードの仕様） */
 public class ExitStatusTest {
 
   @Test

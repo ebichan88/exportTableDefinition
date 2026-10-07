@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 /**
  * 設定ファイル（{@code conf/config.yml}）のうち、DB接続情報（{@code database}）以外の設定項目の仕様を持ち、設定値を検証・変換するクラス<br>
- * 設定項目の仕様（キー・既定値・値の形式。READMEの「config.ymlの記載内容」）をこのクラスに集める。 ファイルの読み込みは{@link
+ * 設定項目の仕様（キー・既定値・値の形式。docs/usage/cli.mdの「config.ymlの記載内容」）をこのクラスに集める。 ファイルの読み込みは{@link
  * ConfigFile}に委ね、このクラスは読み込んだ値を、CLI引数による上書き値 （{@link CliArguments}が解決する）で上書きしたうえで仕様に照らして検証し、型へ変換する。
  *
  * <ul>
@@ -47,7 +47,7 @@ final class ExportTableDefinitionProperties {
       new Setting(null, "annotations", "--annotation-path", Kind.TEXT);
 
   /**
-   * 設定ファイルに書ける項目（READMEの記載順）<br>
+   * 設定ファイルに書ける項目（docs/usage/cli.mdの記載順）<br>
    * CLI引数による上書きも、この一覧から引数名を引く（{@link CliArguments}）ため、項目を追加すれば上書きにも自動で対応する
    */
   static final List<Setting> SETTINGS =

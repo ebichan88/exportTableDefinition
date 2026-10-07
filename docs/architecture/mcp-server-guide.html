@@ -1145,7 +1145,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
   <li><div>型・範囲（<code>minimum</code>/<code>maximum</code>）・<code>enum</code>は<code>inputSchema</code>に書く。SDKがそれを検証するので、<code>ToolArguments</code>では同じ検査を重ねず、スキーマで表せない検証だけを書く。検証の挙動は<code>McpServerProcessTest</code>で確かめる（ハンドラを直接呼ぶテストではSDKの検証を通らない）。</div></li>
   <li><div>結果は<code>*Output</code>のrecordにする。コンポーネント名がそのまま結果のキーになる。</div></li>
   <li><div><code>McpServerMain.INSTRUCTIONS</code>に使い分けを書き足す。</div></li>
-  <li><div><code>McpServerProcessTest</code>のツール一覧、<code>TableDefinitionToolsTest</code>、<code>docs/architecture/mcp-server.md</code>とREADMEのツールの表を更新する。</div></li>
+  <li><div><code>McpServerProcessTest</code>のツール一覧、<code>TableDefinitionToolsTest</code>、<code>docs/architecture/mcp-server.md</code>と<code>docs/usage/mcp-server.md</code>のツールの表を更新する。</div></li>
 </ol>
 
 <h3>スナップショットの形式が変わるとき</h3>
@@ -1182,7 +1182,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 </dl>
 
 <footer>
-  <p>出典：<code>mcp-server/</code>のソース、<code>docs/architecture/mcp-server.md</code>、README「AIからテーブル定義を調べる（MCPサーバー）」、MCP Java SDK 2.0.1のソース（<code>mcp-core</code>・<code>mcp-json-jackson2</code>）。JSONの例はビルドしたjarに対する実際の応答。</p>
+  <p>出典：<code>mcp-server/</code>のソース、<code>docs/architecture/mcp-server.md</code>、<code>docs/usage/mcp-server.md</code>、MCP Java SDK 2.0.1のソース（<code>mcp-core</code>・<code>mcp-json-jackson2</code>）。JSONの例はビルドしたjarに対する実際の応答。</p>
 </footer>
 </main>
 </div>

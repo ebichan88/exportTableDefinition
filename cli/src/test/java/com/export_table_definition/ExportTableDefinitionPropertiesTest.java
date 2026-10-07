@@ -18,7 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ExportTableDefinitionProperties の設定ファイルの読み込み・検証（READMEに記載した設定項目の仕様）に関するテスト */
+/** ExportTableDefinitionProperties の設定ファイルの読み込み・検証（docs/usage/cli.mdに記載した設定項目の仕様）に関するテスト */
 public class ExportTableDefinitionPropertiesTest {
 
   private static final Path CONFIG_PATH = Path.of("conf", "config.yml");

@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/** ConnectionSettings のDB接続情報の組み立て・検証（READMEに記載したconfig.ymlのdatabase・パスワードの環境変数の仕様）に関するテスト */
+/** ConnectionSettings のDB接続情報の組み立て・検証（docs/usage/cli.mdに書いたdatabase・パスワードの環境変数の仕様）に関するテスト */
 public class ConnectionSettingsTest {
 
-  /** READMEに記載した環境変数名（実装の定数を参照せず、仕様として固定する） */
+  /** docs/usage/cli.mdに記載した環境変数名（実装の定数を参照せず、仕様として固定する） */
   private static final String PASSWORD_ENVIRONMENT_VARIABLE = "EXPORT_TABLE_DEFINITION_DB_PASSWORD";
 
   private static final Map<String, String> BASE_VALUES =

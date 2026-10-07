@@ -43,7 +43,7 @@ final class CliArguments {
   /** 設定ファイルのパスを指定するCLI引数 */
   private static final String CONFIG_ARG = "--config";
 
-  /** DB接続情報の上書きに対応するプロパティキーと、対応するCLI引数名（READMEの記載順） */
+  /** DB接続情報の上書きに対応するプロパティキーと、対応するCLI引数名（docs/usage/cli.mdの記載順） */
   private static final List<OverrideArg> CONNECTION_ARGS =
       List.of(
           new OverrideArg("driver", "--db-driver"),
@@ -51,7 +51,7 @@ final class CliArguments {
           new OverrideArg("username", "--db-username"),
           new OverrideArg("password", "--db-password"));
 
-  /** 実行時設定の上書きに対応する項目のパスと、対応するCLI引数名（READMEの記載順） */
+  /** 実行時設定の上書きに対応する項目のパスと、対応するCLI引数名（docs/usage/cli.mdの記載順） */
   private static final List<OverrideArg> SETTING_ARGS =
       ExportTableDefinitionProperties.SETTINGS.stream()
           .map(setting -> new OverrideArg(setting.path(), setting.cliName()))
@@ -135,7 +135,7 @@ final class CliArguments {
   /**
    * 使い方の表示に載せる、{@code --キー=値}形式で上書きできる引数名
    *
-   * @return DB接続情報・実行時設定の上書きに使える引数名（READMEの記載順。{@code --config}は含まない）
+   * @return DB接続情報・実行時設定の上書きに使える引数名（docs/usage/cli.mdの記載順。{@code --config}は含まない）
    */
   static List<String> overrideArgumentNames() {
     return Stream.concat(CONNECTION_ARGS.stream(), SETTING_ARGS.stream())
@@ -173,7 +173,8 @@ final class CliArguments {
   /**
    * CLI引数で指定された実行時設定の上書き値
    *
-   * @return 項目のパス（例: {@code output.path}）をキー、上書きする値とその指定元を値とするマップ（未指定の項目は含まれない。READMEの記載順）
+   * @return 項目のパス（例: {@code output.path}）をキー、上書きする値とその指定元を値とするマップ。
+   *     未指定の項目は含まれず、docs/usage/cli.mdの記載順に並ぶ
    */
   Map<String, SettingOverride> settingOverrides() {
     return settingOverrides;

@@ -795,7 +795,7 @@ erDiagram
   </tbody>
 </table>
 </div>
-<p class="small muted">クラス名の本体（何についてのクラスか）は、READMEの呼び方に揃えた用語集（<a href="./domain-model.md">domain-model.md</a>）に従います。ただし<code>ForeignKeyEntity</code>・<code>ForeignKeys</code>は歴史的経緯による名前で、外部キーだけでなく論理リレーションも含む「関連」を表します。</p>
+<p class="small muted">クラス名の本体（何についてのクラスか）は、利用者向けのドキュメントの呼び方に揃えた用語集（<a href="./domain-model.md">domain-model.md</a>）に従います。ただし<code>ForeignKeyEntity</code>・<code>ForeignKeys</code>は歴史的経緯による名前で、外部キーだけでなく論理リレーションも含む「関連」を表します。</p>
 
 <h3>おすすめの読む順</h3>
 <p>上から順に読むと、外側（起動と入口）から内側（ルール）へ進めます。</p>
@@ -1898,7 +1898,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 <ol class="steps">
   <li><div><code>ExportTableDefinitionProperties</code>の<code>SETTINGS</code>に項目（設定ファイルでの位置・CLI引数名・値の形式）を足し、既定値と変換を書く。上書きのCLI引数は<code>CliArguments</code>がこの表から引く。</div></li>
   <li><div>値をrequest（<code>ExportTableDefinitionRequest</code>・必要なら<code>CheckDocumentDiffRequest</code>）に足し、使う層まで同じrecordで運ぶ。文字列のまま深い層へ渡さず、入口で型にする。</div></li>
-  <li><div>配布する<code>conf/config.yml</code>（全項目が未指定）に項目を並べ、READMEの設定の表とCLI引数の表を更新する。</div></li>
+  <li><div>配布する<code>conf/config.yml</code>（全項目が未指定）に項目を並べ、<code>docs/usage/cli.md</code>の設定の表（CLI引数の列を含む）を更新する。</div></li>
   <li><div><code>ExportTableDefinitionPropertiesTest</code>・<code>CliArgumentsTest</code>に、未指定・誤った値・上書きのテストを足す。</div></li>
 </ol>
 
@@ -1959,7 +1959,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 
 <!-- ============================================================ -->
 <h2 id="glossary"><span class="n">13</span>用語集</h2>
-<p>READMEでの呼び方とコード上の名前の対応です。全体は<a href="./domain-model.md">domain-model.md</a>の用語集にあります。</p>
+<p>利用者向けのドキュメントでの呼び方とコード上の名前の対応です。全体は<a href="./domain-model.md">domain-model.md</a>の用語集にあります。</p>
 <dl class="glossary">
   <dt>テーブルキー</dt><dd><code>TableKey</code>。スキーマ名＋物理テーブル名。テーブルの識別子で、カラム・関連・付帯情報とテーブルを結ぶ。</dd>
   <dt>テーブル</dt><dd><code>TableEntity</code>。テーブル・ビュー・マテリアライズドビューの総称（区分は<code>TableType</code>）。</dd>
@@ -1990,7 +1990,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 </dl>
 
 <footer>
-  <p>出典：<code>cli/</code>のソース（main 181ファイル・テスト83ファイル）、<code>docs/architecture/overview.md</code>・<code>domain-model.md</code>・<code>package-structure.md</code>、README、<code>AGENTS.md</code>。コンソールの出力例はビルドしたjarをサンプルDBに対して実行して採取したもの、Markdown・JSONの例は<code>docs/sample/postgres/output</code>から引用。このガイドはある時点のコードを読んで書いたもので、クラス名・行数等が食い違う場合はコードとアーキテクチャの各文書を正とします。</p>
+  <p>出典：<code>cli/</code>のソース（main 181ファイル・テスト83ファイル）、<code>docs/architecture/overview.md</code>・<code>domain-model.md</code>・<code>package-structure.md</code>、README・<code>docs/usage/cli.md</code>、<code>AGENTS.md</code>。コンソールの出力例はビルドしたjarをサンプルDBに対して実行して採取したもの、Markdown・JSONの例は<code>docs/sample/postgres/output</code>から引用。このガイドはある時点のコードを読んで書いたもので、クラス名・行数等が食い違う場合はコードとアーキテクチャの各文書を正とします。</p>
 </footer>
 </main>
 </div>

@@ -127,7 +127,7 @@ public class CliArgumentsTest {
   }
 
   @Test
-  @DisplayName("settingOverrides: 設定項目ごとのCLI引数名で上書き値を取り込み、項目の位置をキーにする（READMEの記載順）")
+  @DisplayName("settingOverrides: 設定項目ごとのCLI引数名で上書き値を取り込み、項目の位置をキーにする（docs/usage/cli.mdの記載順）")
   void testSettingOverridesFromCliArgs() {
     Map<String, SettingOverride> overrides =
         CliArguments.parse(
