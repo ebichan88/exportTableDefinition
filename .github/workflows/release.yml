@@ -147,6 +147,8 @@ jobs:
           Copy-Item cli/build/libs/exportTableDefinition.jar release/
           Copy-Item -Recurse cli/build/libs/conf release/conf
           Copy-Item README.md release/
+          New-Item -ItemType Directory -Force release/docs | Out-Null
+          Copy-Item -Recurse docs/usage release/docs/usage
           Copy-Item LICENSE release/
           Copy-Item cli/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/
           Copy-Item scripts/run.bat release/
@@ -161,6 +163,8 @@ jobs:
           cp cli/build/libs/exportTableDefinition.jar release/
           cp -r cli/build/libs/conf release/conf
           cp README.md release/
+          mkdir -p release/docs
+          cp -r docs/usage release/docs/usage
           cp LICENSE release/
           cp cli/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/
           cp scripts/run.sh release/

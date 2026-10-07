@@ -184,7 +184,7 @@ classDiagram
   （`ForeignKeyGroups.compose`が`PageComposition.Single`／`Grouped`を決める）
 - **描画するか省くか（`RenderingPlan`）**は、1つのまとまりを上限（`NodeLimit`。0以下は上限なし）と比べて
   `Draw`（図を描く）／`Omit`（描画を省略し外部キー一覧にフォールバック）のどちらにするかを表す描き方の計画。
-  `ForeignKeyGroup.planRendering`が1回だけ立て、Writer・テンプレートはその結果に従う。規則の全体像はREADMEの「ER図の出し分け」を参照
+  `ForeignKeyGroup.planRendering`が1回だけ立て、Writer・テンプレートはその結果に従う。規則の全体像は[docs/usage/cli.mdの「ER図の出し分け」](../usage/cli.md#er図の出し分け)を参照
 - **テーブルの箱（`DiagramBoxes`）**は、ER図の箱に表示する論理テーブル名と**関連カラム**（関連の参照元・参照先として使われるカラム）を引く。
   カラムはチャンク単位で取得するが、ER図はチャンクより先に書き出すため、関連を持つテーブルのカラムを別途取得し、
   関連カラムだけを残す（`DiagramBoxes.Builder`）。1枚の図の箱には、その図に描く関連で使われるカラムだけを表示し、
@@ -399,7 +399,7 @@ classDiagram
 
 「出力対象」は取得した出力するもの（データ。`ExportTargets`）を指し、何を出力するかの条件は「出力対象の絞り込み条件」と呼んで区別する。
 
-| 用語 | READMEでの呼び方・設定項目 | コード上の名前 | 説明 |
+| 用語 | 利用者向けのドキュメントでの呼び方・設定項目 | コード上の名前 | 説明 |
 |---|---|---|---|
 | テーブル | テーブル | `TableEntity` | テーブル・ビュー・マテリアライズドビュー（区分は`TableType`） |
 | テーブルキー | スキーマ名.テーブル名 | `TableKey` | テーブルの識別子（スキーマ名＋物理テーブル名） |

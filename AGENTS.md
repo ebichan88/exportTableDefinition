@@ -7,8 +7,9 @@
 DBに接続し、Markdown形式のテーブル定義書・ER図を出力するJava(21)製CLIツール。
 同じ取得結果から機械可読なスキーマのスナップショット（JSON Lines）も出力し、`--check`モードではDBとの差分を検知する。
 スナップショットをAIからMCPのツールで検索できるようにするMCPサーバーも同じリポジトリにある。
-機能仕様（出力されるドキュメントの種類、ER図の分割・多重度判定ルール、対応DBMS等）は
-[README.md](./README.md) に詳しい。実装に手を入れる前に該当箇所を確認すること。
+機能仕様（出力されるドキュメントの種類、ER図の分割・多重度判定ルール、対応DBMS等）は、利用者向けのドキュメント
+（入口の[README.md](./README.md)と、そこから辿る[docs/usage/cli.md](./docs/usage/cli.md)・[docs/usage/mcp-server.md](./docs/usage/mcp-server.md)）に詳しい。
+実装に手を入れる前に該当箇所を確認すること。
 
 ## ディレクトリ構成
 
@@ -30,7 +31,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
 - [docs/architecture/overview.md](./docs/architecture/overview.md) — レイヤー構成、実行フロー、DB切り替え、
   メモリ効率のための分割取得、サイドカーYAML等、アーキテクチャ全体の設計意図
 - [docs/architecture/domain-model.md](./docs/architecture/domain-model.md) — ドメインの概念（テーブル・関連・
-  サイドカー・出力対象等）同士の関係図、主なルールを持つ場所、用語集（README・コード・会話で使う呼び方の対応）
+  サイドカー・出力対象等）同士の関係図、主なルールを持つ場所、用語集（利用者向けのドキュメント・コード・会話で使う呼び方の対応）
 - [docs/architecture/package-structure.md](./docs/architecture/package-structure.md) — 全パッケージ・主要クラスの
   役割一覧（リファレンス）
 - [docs/architecture/mcp-server.md](./docs/architecture/mcp-server.md) — MCPサーバー（`mcp-server/`）の構成・ツール・
@@ -45,7 +46,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   違反したら、テストを緩めずに依存や置き場所のほうを直す。規約の意図は[overview.md](./docs/architecture/overview.md#レイヤー構成)を参照。
 - ドメインの概念（`domain.model` のクラス）を追加・改名・削除した場合や、ルールを持つ場所を移した場合は、
   `docs/architecture/domain-model.md` の図・ルール表・用語集も同じ変更で更新する。
-  新しいクラス・メソッドの名前は用語集の用語（READMEで使っている呼び方）に揃え、同じものに別の名前を付けない。
+  新しいクラス・メソッドの名前は用語集の用語（利用者向けのドキュメントで使っている呼び方）に揃え、同じものに別の名前を付けない。
 - DB種別（Oracle/PostgreSQL）固有のSQLは
   `cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` に分離されている。
   両DBで挙動を揃える変更は両方のmapperを確認・修正すること。
@@ -74,7 +75,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
     利用者が直せる誤りへ置き換える・フォールバックする場合だけ。包むときは`cause`を渡し（原因のメッセージがファイルの内容を引用する場合を除く。[ログ](#ログ)を参照）、tryの範囲は置き換えたい呼び出しだけに絞る
     （`catch (Exception e)`で広く包むと、別の失敗まで同じ文言になり原因も表示から消える）。catchしてログを出してから再スローしない。
 - 入力（設定ファイル・CLI引数・DB接続情報・サイドカーYAML）の検証は [overview.md の「入力の検証」](./docs/architecture/overview.md#入力の検証) に従い、
-  仕様はREADMEの各節に記載する。設定項目・引数を追加・変更した場合は、READMEの仕様の表と、検証する場所
+  仕様は`docs/usage/cli.md`の各節に記載する。設定項目・引数を追加・変更した場合は、`docs/usage/cli.md`の仕様の表と、検証する場所
   （`ExportTableDefinitionProperties`・`CliArguments`等）を同じ変更で更新する。
   - 未指定（キーの省略・空）は既定値。未知のキー・引数や解釈できない値は、既定値へ黙って置き換えずに失敗にする。
   - サイドカーYAMLの個々の記述の誤りは、読み飛ばして警告する（WARNログはコンソールにも出る）。
@@ -142,7 +143,7 @@ cliのログの設計（レベルごとの用途・設定・出力先）は[over
   （TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定を下げるとログが大きくなるうえ機密を含みうる。
   調査用の詳細は、利用者が`export-table-definition.log.level`で明示的に上げる。
 - **テスト**：利用者に知らせる警告を足したら、`testsupport.CapturedLogs`でメッセージを確かめるテストを書く。
-- ログの仕様（レベル・記録する内容・調査時の上げ方）を変えたら、READMEの「ログ」の節も同じ変更で更新する。
+- ログの仕様（レベル・記録する内容・調査時の上げ方）を変えたら、`docs/usage/cli.md`の「ログ」の節も同じ変更で更新する。
 
 ## セキュリティ
 

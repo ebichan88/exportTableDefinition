@@ -1,8 +1,94 @@
 # Contributing
 
 不具合の報告は[Issue](../../issues/new/choose)のテンプレートから、変更の提案はPRでお願いします。
-ビルド・テストの方法は[READMEの「開発者向け」](./README.md#開発者向けソースからビルドする場合)、
+ビルド・テストの方法は[ビルド・テスト](#ビルドテスト)、
 コードの構成と規約は[AGENTS.md](./AGENTS.md)と[docs/architecture](./docs/architecture/overview.md)を参照してください。
+
+## ビルド・テスト
+
+### 主なディレクトリ構成
+
+```
+exportTableDefinition
+├─cli              ・・・ このツール本体（Gradleのサブプロジェクト）
+│  └─src
+│      ├─main            ・・・ javaソースコード（com.export_table_definition）
+│      ├─test            ・・・ 単体テスト（DB不要）
+│      └─integrationTest ・・・ 結合テスト（Docker上のPostgreSQL・Oracleを使う）
+├─mcp-server       ・・・ スナップショットをAIから検索するMCPサーバー（Gradleのサブプロジェクト）
+├─docs
+│  ├─usage         ・・・ 利用者向けのドキュメント（READMEから辿るCLIリファレンス・MCPサーバーの使い方）
+│  ├─architecture  ・・・ 設計のドキュメント
+│  └─sample        ・・・ サンプルDBのDDLと出力のベースライン（結合テストの入力）
+├─scripts          ・・・ 配布用zipに同梱する起動スクリプト
+├─build.gradle     ・・・ サブプロジェクト共通のビルド設定
+└─settings.gradle
+```
+
+### ビルド
+
+以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition.jar`が、
+`exportTableDefinition/mcp-server/build/libs`フォルダ配下にMCPサーバーの`exportTableDefinition-mcp.jar`が作成される
+
+```
+gradlew build
+```
+
+### テスト
+
+`gradlew build`（`gradlew test`）で実行される単体テストはDBを使わない。MCPサーバー（`mcp-server`）のテストもここに含まれ、
+ビルドしたjarを子プロセスで起動してMCPクライアントから呼び出すE2Eテストまでを行う。
+mapperのSQLを実DBに対して確かめる結合テストは、Dockerで使い捨てのPostgreSQLを起動するため別のタスクに分けてある（Dockerが必要）。
+
+```
+gradlew integrationTest
+```
+
+結合テストは`docs/sample/postgres/ddl.sql`を流し込んだDBに対して、各SQLの取得結果と、出力全体がコミット済みのベースライン
+（`docs/sample/postgres/output`）と一致することを確かめる（基本情報の作成日は比較しない）。出力仕様を意図して変えた場合は、
+ベースラインを出力し直してコミットする。
+
+Oracle用のmapperは、Docker上の使い捨てのOracle Database Free（`gvenzl/oracle-free`。イメージ約1.3GB・メモリ2GB程度）に対して確かめる。
+PostgreSQLより重いため、さらに別のタスクに分けてある。
+
+```
+gradlew oracleIntegrationTest
+```
+
+`docs/sample/oracle/ddl.sql`（PostgreSQL版と同じスキーマ構成をOracleで作るDDL）を流し込んだDBに対して、各SQLの取得結果と、
+出力全体がベースライン（`docs/sample/oracle/output`）と一致することを確かめる。
+PRではGitHub Actions（`.github/workflows/ci.yml`）でこれらのテストがすべて実行される。
+
+#### カバレッジ
+
+`gradlew build`（`gradlew test`）を実行すると、単体テストのカバレッジ計測（JaCoCo）も行われる。
+
+```
+gradlew jacocoTestReport
+```
+
+でHTMLレポート（`cli/build/reports/jacoco/test/html/index.html`・`mcp-server/build/reports/jacoco/test/html/index.html`）を生成できる。
+また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、cliのドメイン層
+（`com.export_table_definition.domain`配下）とMCPサーバーの`catalog`（`com.export_table_definition.mcp.catalog`配下）の
+単体テストカバレッジが、それぞれline 95%・branch 85%を下回るとビルドが失敗する
+（結合テスト・MCPサーバーのE2Eテストは対象外。基準は各サブプロジェクトの`build.gradle`の`jacocoTestCoverageVerification`で定義）。
+PRではGitHub ActionsがカバレッジレポートをArtifactとしてアップロードし、PRへの概要コメントも投稿する。
+
+### Javadoc
+
+以下のコマンドを実行することで、`exportTableDefinition/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
+
+```
+gradlew javadoc
+```
+
+### 実行方法
+
+`cli/build/libs/conf/config.yml`に必要な設定値を記載した状態で、`cli/build/libs`で以下のコマンドを実行する（`gradlew build`のたびに`cli/src/main/resources/conf`の内容で上書きされるため、手元の設定を残したい場合は別の場所に置いて`--config`で指定する）
+
+```
+java -jar .\exportTableDefinition.jar
+```
 
 ## バージョンとリリース
 

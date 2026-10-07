@@ -32,7 +32,7 @@
 
 - [ ] 出力が変わる場合、`verify`スキルの手順で結果を確認し、ベースライン（`docs/sample/{postgres,oracle}/output`）を出力し直した
 - [ ] mapperのSQLを変えた場合、PostgreSQL・Oracleの両方のmapperを確認し、取得結果を確かめるテストを`*TableDefinitionRepositoryIT`に足した
-- [ ] 設定項目・CLI引数を変えた場合、READMEの仕様と入力の検証（`ExportTableDefinitionProperties`・`CliArguments`等）を更新した
+- [ ] 設定項目・CLI引数を変えた場合、`docs/usage/cli.md`の仕様と入力の検証（`ExportTableDefinitionProperties`・`CliArguments`等）を更新した
 - [ ] ドメインの概念を追加・改名・削除した場合、`docs/architecture/domain-model.md`を更新した
 - [ ] スナップショットの形式を互換性なく変えた場合、`DatabaseSnapshot.FORMAT_VERSION`を上げ、`SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させた
 - [ ] 新しいリポジトリ実装・ドメインサービスを追加した場合、Guiceの束縛を追加した
