@@ -132,7 +132,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
   「検査して見つかった」という結果は、将来ほかのモードで増えても1を共通で使う
 - JVMのエラー（`Error`）も`main()`で捕捉するのは、捕捉しないとJVMが終了コード1で終わり、差分ありと区別できなくなるため。
   ただし、JVMが起動できない場合（jarが見つからない・Javaのバージョンが古い・JVMオプションの誤り等）や`main()`に入る前の失敗は、
-  このツールが捕捉する前にJavaの仕様で1になる（READMEに注記している）。同梱の`run.sh`・`run.bat`自体のエラーは2で返す
+  このツールが捕捉する前にJavaの仕様で1になる。同梱の`run.sh`・`run.bat`自体のエラーは2で返す
 
 ## ログ
 
@@ -159,7 +159,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## 入力の検証
 
-入力ごとの仕様（必須・値の形式・未指定の場合・誤りとして扱う値）はREADMEの各節に記載し、以下の方針で扱う。
+入力ごとの仕様（必須・値の形式・未指定の場合・誤りとして扱う値）は[docs/usage/cli.md](../usage/cli.md)の各節に記載し、以下の方針で扱う。
 
 - 「必須」は値で決める。キーの省略と値が空は同じ「未指定」として扱い、既定値がある項目は未指定を許す。
   既定値が無いもの（DB接続情報の`driver`・`url`）だけを必須とする
@@ -247,8 +247,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## ER図生成
 
-ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）はREADME
-（[../../README.md](../../README.md) の「ER図」節・「ER図の出し分け」）に詳しい。実装は
+ER図生成のアルゴリズム（連結成分によるグループ分割、多重度判定ロジックなど）は
+[docs/usage/cli.md](../usage/cli.md#er図)の「ER図」節・「ER図の出し分け」に詳しい。実装は
 `ErDiagramWriter`（書き込みの段取り）と `domain.model.relation.ForeignKeyGroup`
 （1枚の図のノード算出・上限超過の判定・描画するか省くかの計画`planRendering`）、`ForeignKeyGroups`（連結成分の算出と、1枚に収まる範囲での
 まとめ直し。`compose()`がページ構成（`PageComposition`）を1回で決める）、`domain.model.relation.Cardinality`（多重度判定）が中心。
