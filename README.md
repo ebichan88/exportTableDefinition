@@ -696,6 +696,10 @@ AIが正しいテーブル名・カラム・JOINの条件（外部キーと、�
 * DBには接続しません。スナップショット・参考情報のファイルを読むだけなので、DBの接続情報をAIに渡す必要はありません。
 * 配布用zipの`mcp/exportTableDefinition-mcp.jar`がサーバー本体です。同梱のJava実行環境（`runtime`）で動くため、Javaのインストールは不要です。
 
+### MCPサーバー動作イメージ
+
+<img width="1348" height="772" alt="MCPサーバー動作イメージ" src="https://github.com/user-attachments/assets/4cb1a424-ec1b-4a2f-9965-1863b39e0a21" />
+
 ### 準備
 
 1. このツールでテーブル定義書を出力し、`output.path`配下の`snapshot/`（観点を宣言している場合は`insights/`も）をGit等で共有する（テーブル定義書と一緒にコミットしておく等）
