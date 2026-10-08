@@ -32,7 +32,8 @@ public final class McpServerMain {
   /** ツールの使い分け。ツールが多いため、AIが最初の手を選べるよう探し方の順を示す */
   private static final String INSTRUCTIONS =
       "DBのテーブル定義（exportTableDefinitionが出力したスキーマのスナップショット）を調べるサーバー。"
-          + "全体像はlist_schemas、テーブルはキーワードならsearch_tables・一覧ならlist_tablesで探し、"
+          + "全体像はlist_schemas、テーブルはキーワードならsearch_tables・一覧ならlist_tablesで探し"
+          + "（どこから読むか迷う場合は、list_tablesのorderByで関連の多い中心のテーブルから並べる）、"
           + "get_tableで定義を取得する（必要な項目だけをsections・columnsで指定すると結果が小さくなる）。"
           + "カラム名からテーブルを探すときはfind_columns、JOINの条件はget_related_tables"
           + "（外部キーと、DBに制約の無い論理リレーション）、直接つながらないテーブル同士はfind_join_pathを使う。"

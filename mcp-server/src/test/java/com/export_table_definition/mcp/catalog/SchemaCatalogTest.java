@@ -98,11 +98,15 @@ class SchemaCatalogTest {
       assertEquals(
           List.of(
               "db1:hr.employee", "db1:sales.order_summary", "db1:sales.orders", "db2:hr.employee"),
-          catalog.listTables(TableFilter.ALL).stream().map(t -> describe(t.key())).toList());
+          catalog.listTables(TableFilter.ALL, TableOrder.NAME).stream()
+              .map(t -> describe(t.key()))
+              .toList());
       assertEquals(
           List.of("db1:sales.orders"),
           catalog
-              .listTables(TableFilter.of(new SearchScope(null, "SALES")).withType(TableType.TABLE))
+              .listTables(
+                  TableFilter.of(new SearchScope(null, "SALES")).withType(TableType.TABLE),
+                  TableOrder.NAME)
               .stream()
               .map(t -> describe(t.key()))
               .toList());
@@ -644,6 +648,97 @@ class SchemaCatalogTest {
   }
 
   @Nested
+  @DisplayName("関連の数")
+  class RelationCountsTest {
+
+    /**
+     * department ← employee → parking_spot、employee → employee（自己参照）、audit_log ⇢
+     * employee（論理）、assignment → employee（2つの外部キー）・project、employee → other.outside（スナップショットに無い）
+     */
+    private final SchemaCatalog catalog =
+        TestCatalogs.of(
+            List.of(
+                table("department").build(),
+                table("parking_spot").build(),
+                table("employee")
+                    .foreignKey("department_id", "department", "department_id")
+                    .foreignKey("manager_id", "employee", "employee_id")
+                    .foreignKey("parking_spot_id", "parking_spot", "parking_spot_id")
+                    .foreignKey(
+                        new RelationEntry(
+                            "employee_outside_fkey",
+                            List.of("outside_id"),
+                            "other",
+                            "outside",
+                            List.of("outside_id"),
+                            "ONE_TO_MANY"))
+                    .build(),
+                table("audit_log").logicalRelation("record_id", "employee", "employee_id").build(),
+                table("project").build(),
+                table("assignment")
+                    .foreignKey("employee_id", "employee", "employee_id")
+                    .foreignKey("approver_id", "employee", "employee_id")
+                    .foreignKey("project_id", "project", "project_id")
+                    .build()));
+
+    @Test
+    @DisplayName("参照元・参照先をテーブル単位で数え、自己参照とスナップショットに無いテーブルは数えない")
+    void countsDistinctTablesExcludingSelfAndMissing() {
+      assertEquals(new RelationCounts(2, 2, 2), countsOf(catalog, "employee"));
+      assertEquals(new RelationCounts(0, 2, 0), countsOf(catalog, "assignment"));
+      assertEquals(new RelationCounts(0, 1, 0), countsOf(catalog, "audit_log"));
+    }
+
+    @Test
+    @DisplayName("影響範囲は、参照元を間接的にたどって届くテーブルも数える")
+    void impactFollowsIncomingTransitively() {
+      assertEquals(new RelationCounts(1, 0, 3), countsOf(catalog, "department"));
+    }
+
+    @Test
+    @DisplayName("影響範囲は、参照元を3段までしかたどらない")
+    void impactStopsAtDepthLimit() {
+      final SchemaCatalog chain =
+          TestCatalogs.of(
+              List.of(
+                  table("t0").build(),
+                  table("t1").foreignKey("t0_id", "t0", "id").build(),
+                  table("t2").foreignKey("t1_id", "t1", "id").build(),
+                  table("t3").foreignKey("t2_id", "t2", "id").build(),
+                  table("t4").foreignKey("t3_id", "t3", "id").build()));
+
+      assertEquals(3, countsOf(chain, "t0").impact());
+      assertEquals(3, countsOf(chain, "t1").impact());
+    }
+
+    @Test
+    @DisplayName("関連の数の多い順に並べ、同数はテーブル名の順にする。関連の無いテーブルも末尾に含める")
+    void listsTablesByCounts() {
+      assertEquals(
+          List.of("department", "parking_spot", "employee", "project", "assignment", "audit_log"),
+          names(catalog.listTables(TableFilter.ALL, TableOrder.IMPACT)));
+      assertEquals(
+          List.of("employee", "department", "parking_spot", "project", "assignment", "audit_log"),
+          names(catalog.listTables(TableFilter.ALL, TableOrder.INCOMING)));
+      assertEquals(
+          List.of("assignment", "employee", "audit_log", "department", "parking_spot", "project"),
+          names(catalog.listTables(TableFilter.ALL, TableOrder.OUTGOING)));
+    }
+
+    private static RelationCounts countsOf(SchemaCatalog catalog, String name) {
+      return catalog.relationCountsOf(
+          catalog.tables().stream()
+              .filter(t -> t.key().name().equals(name))
+              .findFirst()
+              .orElseThrow());
+    }
+
+    private static List<String> names(List<TableEntry> tables) {
+      return tables.stream().map(table -> table.key().name()).toList();
+    }
+  }
+
+  @Nested
   @DisplayName("観点")
   class ViewpointsTest {
 
@@ -700,7 +795,7 @@ class SchemaCatalogTest {
     void listTablesFiltersByViewpoint() {
       assertEquals(
           List.of("orders"),
-          catalog.listTables(TableFilter.ALL.withViewpoint(order)).stream()
+          catalog.listTables(TableFilter.ALL.withViewpoint(order), TableOrder.NAME).stream()
               .map(table -> table.key().name())
               .toList());
     }

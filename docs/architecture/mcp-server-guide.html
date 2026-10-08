@@ -563,11 +563,11 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 <table>
   <thead><tr><th>パッケージ</th><th>ファイル数</th><th>行数</th><th>ひとことで</th></tr></thead>
   <tbody>
-    <tr><td><code>mcp</code>（直下）</td><td class="num">4</td><td class="num">172</td><td>入口。起動引数の検証、読み込みの呼び出し、SDKの起動</td></tr>
+    <tr><td><code>mcp</code>（直下）</td><td class="num">4</td><td class="num">173</td><td>入口。起動引数の検証、読み込みの呼び出し、SDKの起動</td></tr>
     <tr><td><code>mcp.snapshot</code></td><td class="num">2</td><td class="num">314</td><td><code>snapshot/</code>のJSON Linesを読み、<code>SchemaCatalog</code>を組み立てる</td></tr>
     <tr><td><code>mcp.insight</code></td><td class="num">2</td><td class="num">143</td><td><code>insights/</code>の観点（viewpoints.json）を読む</td></tr>
-    <tr><td><code>mcp.catalog</code></td><td class="num">38</td><td class="num">1,587</td><td>メモリ上の全オブジェクトと、検索・名前の解決・関連のたどり・相互参照</td></tr>
-    <tr><td><code>mcp.tool</code></td><td class="num">18</td><td class="num">2,050</td><td>MCPのツール定義。引数を読み、catalogに聞き、結果をJSONにする</td></tr>
+    <tr><td><code>mcp.catalog</code></td><td class="num">40</td><td class="num">1,677</td><td>メモリ上の全オブジェクトと、検索・名前の解決・関連のたどり・相互参照</td></tr>
+    <tr><td><code>mcp.tool</code></td><td class="num">18</td><td class="num">2,077</td><td>MCPのツール定義。引数を読み、catalogに聞き、結果をJSONにする</td></tr>
   </tbody>
 </table>
 </div>
@@ -575,7 +575,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 <h3>おすすめの読む順</h3>
 <p>上から順に読むと、外側（起動とMCP）から内側（ルール）へ進めます。</p>
 <ol class="steps">
-  <li><div><code>McpServerMain</code>（100行）：何をどの順で組み立てるか。<code>INSTRUCTIONS</code>でツールの全体像もつかめます。</div></li>
+  <li><div><code>McpServerMain</code>（101行）：何をどの順で組み立てるか。<code>INSTRUCTIONS</code>でツールの全体像もつかめます。</div></li>
   <li><div><code>TableDefinitionTools</code>（41行）：ツールクラス8つの並び＝クライアントに見える順。</div></li>
   <li><div><code>ToolSpecifications.readOnlyTool</code>：全ツール共通の包み。引数の誤りが<code>isError</code>になる場所です。</div></li>
   <li><div><code>SchemaTools</code>（89行）：一番小さいツールクラスで「型」をつかみ、続けて<code>TableTools</code>（404行）。<code>get_table</code>の結果の加工は<code>TableOutputBuilder</code>（121行）に分かれています。</div></li>
@@ -785,7 +785,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 
 <!-- ============================================================ -->
 <h2 id="logic"><span class="n">7</span>catalogの中心ロジック</h2>
-<p><code>SchemaCatalog</code>は全オブジェクトを<code>List</code>で持ち、要求のたびに先頭から絞り込みます。あらかじめ作る索引は、<code>RelationGraph</code>の「参照先・参照元」の2つの<code>Map</code>だけです。スナップショットは数百テーブル規模なので、線形の走査で十分という割り切りです。</p>
+<p><code>SchemaCatalog</code>は全オブジェクトを<code>List</code>で持ち、要求のたびに先頭から絞り込みます。あらかじめ作る索引は、<code>RelationGraph</code>の「参照先・参照元」の2つの<code>Map</code>と、そこから求めたテーブルごとの関連の数（<code>RelationCounts</code>）だけです。スナップショットは数百テーブル規模なので、線形の走査で十分という割り切りです。</p>
 
 <h3>7.1 名前の解決（get_* と関連ツールの入口）</h3>
 <ol class="steps">
@@ -919,6 +919,12 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 {"from":"sample.attendance_note","to":"sample.project","paths":[{
   "tables":["sample.attendance_note","sample.attendance","sample.employee","sample.project_assignment","sample.project"],
   "joins":[ {"from":"sample.attendance_note","fromColumns":["attendance_id","work_date"],"to":"sample.attendance",…}, … ]}]}</code></pre>
+<p>組み立て時には、テーブルごとの関連の数（<code>RelationCounts</code>）も1回だけ求めます。<code>list_tables</code>が各行に添え、<code>orderBy</code>での並べ替えに使います。どれも自己参照とスナップショットに無いテーブルを除き、同じテーブルとの複数の関連は1つと数えます。</p>
+<ul>
+  <li><code>incoming</code>：自テーブルを参照しているテーブルの数。多いほど中心のマスタ（サンプルの<code>employee</code>は4）。</li>
+  <li><code>outgoing</code>：自テーブルが参照しているテーブルの数。多いほどトランザクションや中間テーブル（<code>project_assignment</code>は2）。</li>
+  <li><code>impact</code>：参照元を<code>RelationCounts.IMPACT_DEPTH</code>（3）段まで幅優先でたどって届くテーブルの数（変更の影響範囲）。被参照の少ない根っこのマスタも拾える（<code>department</code>は被参照1だが<code>employee</code>経由で6）。段数を無制限にすると、大きなDBでは共通のマスタ経由で大半のテーブルに届いて差が出なくなるため打ち切る。</li>
+</ul>
 <p class="small muted"><code>joins</code>の各要素の<code>from</code>・<code>to</code>は関連そのものの参照元・参照先で、たどる向きとは限りません。AIがJOINの条件を書くときは<code>fromColumns</code>と<code>toColumns</code>を同じ位置同士で結びます。グラフの頂点の照合は<code>ObjectKey</code>の<code>equals</code>（大文字小文字を区別する）で、cliが同じ表記で出力する前提に立っています。</p>
 
 <h3>7.5 オブジェクト間の相互参照（SqlNames）</h3>
@@ -999,7 +1005,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
     <tr><td><code>list_schemas</code></td><td><code>SchemaTools#listSchemas</code></td><td><code>schemas()</code> → <code>SchemaSummary</code></td><td><code>ListSchemasOutput</code></td></tr>
     <tr><td><code>list_viewpoints</code></td><td><code>ViewpointTools#listViewpoints</code></td><td><code>listViewpoints(scope)</code></td><td><code>ListViewpointsOutput</code></td></tr>
     <tr><td><code>search_tables</code></td><td><code>TableTools#searchTables</code></td><td><code>SearchQuery.of</code>・<code>TableFilter</code>（<code>findViewpoint</code>）→ <code>searchTables</code></td><td><code>SearchTablesOutput</code></td></tr>
-    <tr><td><code>list_tables</code></td><td><code>TableTools#listTables</code></td><td><code>TableFilter</code>（区分は<code>TableType</code>）→ <code>listTables</code></td><td><code>ListTablesOutput</code></td></tr>
+    <tr><td><code>list_tables</code></td><td><code>TableTools#listTables</code></td><td><code>TableFilter</code>（区分は<code>TableType</code>）・<code>TableOrder</code> → <code>listTables</code>・<code>relationCountsOf</code></td><td><code>ListTablesOutput</code></td></tr>
     <tr><td><code>get_table</code></td><td><code>TableTools#getTable</code></td><td><code>lookupTable</code>（件数分）→ <code>TableOutputBuilder</code>（<code>viewpointsOf</code>）</td><td>元の1行を加工（複数なら<code>GetTableOutput</code>）</td></tr>
     <tr><td><code>find_columns</code></td><td><code>TableTools#findColumns</code></td><td><code>ColumnQuery.of</code> → <code>findColumns</code></td><td><code>FindColumnsOutput</code></td></tr>
     <tr><td><code>get_related_tables</code></td><td><code>RelationTools#getRelatedTables</code></td><td><code>lookupTable</code> → <code>relatedTables</code></td><td><code>RelatedTablesOutput</code></td></tr>
@@ -1037,7 +1043,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 
 <!-- ============================================================ -->
 <h2 id="files"><span class="n">9</span>ソースごとの役割</h2>
-<p>main配下の64ファイルと、テスト14ファイルの一覧です。行数は空行・コメントを含みます。</p>
+<p>main配下の66ファイルと、テスト14ファイルの一覧です。行数は空行・コメントを含みます。</p>
 <div class="filter">
   <label for="file-filter">クラス名・役割で絞り込む</label>
   <input id="file-filter" type="search" placeholder="例: Lookup、関連、ToolArguments" autocomplete="off">
@@ -1049,7 +1055,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
   <thead><tr><th>ファイル</th><th>行</th><th>役割</th><th>使う相手・使われる相手</th></tr></thead>
   <tbody>
     <tr class="group"><td colspan="4">mcp（直下）：入口</td></tr>
-    <tr><td class="file">McpServerMain</td><td class="num">100</td><td>エントリーポイント。起動引数の検証→観点・スナップショットの読み込み→SDKの起動。標準エラーをUTF-8に固定し、<code>UserCorrectableException</code>なら終了コード2</td><td>→ <code>ServerArguments</code>・2つのReader・<code>TableDefinitionTools</code>・SDK</td></tr>
+    <tr><td class="file">McpServerMain</td><td class="num">101</td><td>エントリーポイント。起動引数の検証→観点・スナップショットの読み込み→SDKの起動。標準エラーをUTF-8に固定し、<code>UserCorrectableException</code>なら終了コード2</td><td>→ <code>ServerArguments</code>・2つのReader・<code>TableDefinitionTools</code>・SDK</td></tr>
     <tr><td class="file">ServerArguments</td><td class="num">43</td><td>起動引数（<code>--snapshot=</code>のみ）の解釈と検証</td><td>← <code>McpServerMain</code></td></tr>
     <tr><td class="file">UserCorrectableException</td><td class="num">23</td><td>利用者が起動引数・スナップショットを直せば解消する失敗。メッセージに直し方を書く</td><td>← <code>ServerArguments</code>・2つのReader</td></tr>
     <tr><td class="file">package-info</td><td class="num">6</td><td>依存の向き（<code>tool → catalog ← snapshot</code>・<code>catalog ← insight</code>）の宣言</td><td class="muted">—</td></tr>
@@ -1060,8 +1066,8 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
     <tr><td class="file">package-info ×2</td><td class="num">4</td><td>各パッケージの要旨</td><td class="muted">—</td></tr>
 
     <tr class="group"><td colspan="4">mcp.catalog：中心のロジック</td></tr>
-    <tr><td class="file">SchemaCatalog</td><td class="num">483</td><td>全オブジェクトを保持する不変クラス。一覧・検索・カラムの逆引き・名前の解決・相互参照・関連のたどりの公開窓口。<code>withViewpoints</code>で観点を合成した新インスタンスを返す</td><td>← 全ツールクラス・Reader／→ ほぼ全catalogクラス</td></tr>
-    <tr><td class="file">RelationGraph</td><td class="num">164</td><td>関連のグラフ。<code>outgoing</code>・<code>incoming</code>の索引、幅優先の<code>relatedTables</code>、全最短経路の<code>joinPaths</code></td><td>← <code>SchemaCatalog</code>（パッケージプライベート）</td></tr>
+    <tr><td class="file">SchemaCatalog</td><td class="num">498</td><td>全オブジェクトを保持する不変クラス。一覧（関連の数での並べ替えを含む）・検索・カラムの逆引き・名前の解決・相互参照・関連のたどりの公開窓口。<code>withViewpoints</code>で観点を合成した新インスタンスを返す</td><td>← 全ツールクラス・Reader／→ ほぼ全catalogクラス</td></tr>
+    <tr><td class="file">RelationGraph</td><td class="num">211</td><td>関連のグラフ。<code>outgoing</code>・<code>incoming</code>の索引、テーブルごとの関連の数（<code>counts</code>）、幅優先の<code>relatedTables</code>、全最短経路の<code>joinPaths</code></td><td>← <code>SchemaCatalog</code>（パッケージプライベート）</td></tr>
     <tr><td class="file">SearchQuery</td><td class="num">125</td><td>テーブル検索の検索語。空白区切りのAND、項目ごとの点数（7.2節）</td><td>← <code>TableTools</code>・<code>SchemaCatalog</code></td></tr>
     <tr><td class="file">ColumnQuery</td><td class="num">55</td><td>カラムの逆引きの条件と強さ（7.3節）</td><td>← <code>TableTools</code>・<code>SchemaCatalog</code></td></tr>
     <tr><td class="file">SqlNames</td><td class="num">66</td><td><code>nextval</code>・型名・トリガーの関数名から<code>ObjectKey</code>を取り出し、大文字小文字を区別せず比べる（7.5節）</td><td>← <code>SchemaCatalog</code></td></tr>
@@ -1088,6 +1094,8 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
     <tr><td class="file">Relation</td><td class="num">44</td><td>グラフの辺（参照元・参照先・カラム・由来・多重度・名前）。<code>otherSide</code>で反対側</td><td>← <code>RelationGraph</code>／→ 結果の<code>RelationOutput</code></td></tr>
     <tr><td class="file">RelationKind</td><td class="num">9</td><td><code>FOREIGN_KEY</code>・<code>LOGICAL_RELATION</code></td><td>← <code>Relation</code>・<code>ColumnHit</code></td></tr>
     <tr><td class="file">Direction</td><td class="num">19</td><td>たどる向き（<code>OUTGOING</code>・<code>INCOMING</code>・<code>BOTH</code>）</td><td>← <code>RelationTools</code>・<code>RelationGraph</code></td></tr>
+    <tr><td class="file">RelationCounts</td><td class="num">15</td><td>テーブルの関連の数（<code>incoming</code>・<code>outgoing</code>・<code>impact</code>）と、影響範囲をたどる段数の上限<code>IMPACT_DEPTH</code></td><td>← <code>RelationGraph</code>／→ <code>TableTools</code>の<code>ListTablesOutput</code></td></tr>
+    <tr><td class="file">TableOrder</td><td class="num">13</td><td><code>list_tables</code>の並べ方（<code>NAME</code>・<code>INCOMING</code>・<code>OUTGOING</code>・<code>IMPACT</code>）</td><td>← <code>TableTools</code>／→ <code>SchemaCatalog.listTables</code></td></tr>
     <tr><td class="file">RelatedTables</td><td class="num">25</td><td>関連をたどった結果（段数付きの関連・現れたテーブル・無いテーブル）</td><td>← <code>RelationGraph</code></td></tr>
     <tr><td class="file">JoinPath / JoinPaths</td><td class="num">29</td><td>1本の経路と、最短経路の集まり（<code>hasMore</code>付き）</td><td>← <code>RelationGraph</code></td></tr>
     <tr><td class="file">SearchResult / TableHit</td><td class="num">23</td><td>検索の総数と、一致した1テーブル（点数・<code>matchedIn</code>）</td><td>← <code>SearchQuery</code>・<code>SchemaCatalog</code></td></tr>
@@ -1107,7 +1115,7 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
     <tr><td class="file">TableSection</td><td class="num">43</td><td><code>get_table</code>の<code>sections</code>で選べる7項目</td><td>← <code>TableTools</code>・<code>TableOutputBuilder</code></td></tr>
     <tr><td class="file">SchemaTools</td><td class="num">89</td><td><code>list_schemas</code></td><td>→ <code>SchemaCatalog.schemas</code></td></tr>
     <tr><td class="file">ViewpointTools</td><td class="num">57</td><td><code>list_viewpoints</code></td><td>→ <code>listViewpoints</code></td></tr>
-    <tr><td class="file">TableTools</td><td class="num">404</td><td><code>search_tables</code>・<code>list_tables</code>・<code>get_table</code>・<code>find_columns</code>。引数から<code>TableFilter</code>を組み立てる、<code>get_table</code>の複数件の名前をまとめて解決する</td><td>→ 検索・一覧・解決・観点のメソッド、<code>TableOutputBuilder</code></td></tr>
+    <tr><td class="file">TableTools</td><td class="num">431</td><td><code>search_tables</code>・<code>list_tables</code>・<code>get_table</code>・<code>find_columns</code>。引数から<code>TableFilter</code>・<code>TableOrder</code>を組み立てる、<code>get_table</code>の複数件の名前をまとめて解決する</td><td>→ 検索・一覧・解決・観点のメソッド、<code>TableOutputBuilder</code></td></tr>
     <tr><td class="file">TableOutputBuilder</td><td class="num">121</td><td><code>get_table</code>の1テーブル分の結果の組み立て。元の1行に<code>sections</code>・<code>columns</code>の絞り込みと所属する観点を反映する</td><td>← <code>TableTools</code>／→ <code>viewpointsOf</code></td></tr>
     <tr><td class="file">RelationTools</td><td class="num">216</td><td><code>get_related_tables</code>・<code>find_join_path</code>。<code>kindName</code>で由来を<code>foreignKey</code>/<code>logicalRelation</code>に</td><td>→ <code>relatedTables</code>・<code>joinPaths</code></td></tr>
     <tr><td class="file">FunctionTools</td><td class="num">220</td><td><code>list_functions</code>・<code>get_function</code>。定義本体の除去・集約（<code>sharedDefinition</code>）・切り詰め（<code>truncateDefinitionOf</code>）</td><td>→ <code>listFunctions</code>・<code>lookupFunction</code>・<code>triggersCalling</code></td></tr>
@@ -1119,14 +1127,14 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
     <tr class="group"><td colspan="4">テスト（src/test）</td></tr>
     <tr><td class="file">McpServerProcessTest</td><td class="num">261</td><td>E2E。配布するjarを子プロセスで起動し、MCPクライアントから呼ぶ。ツールの並び、標準出力の汚れ、<code>immediateExecution</code>の回帰、SDKの入力スキーマの検証（型・範囲・未知の引数の拒否、<code>table</code>のカンマ区切り）、起動失敗時の終了コード2</td><td>→ shadowJar・サンプルのスナップショット</td></tr>
     <tr><td class="file">ServerArgumentsTest</td><td class="num">43</td><td>起動引数の解釈と誤り</td><td>→ <code>ServerArguments</code></td></tr>
-    <tr><td class="file">SchemaCatalogTest</td><td class="num">779</td><td>検索・一覧・逆引き・解決・相互参照・関連・経路・観点</td><td>→ <code>SchemaCatalog</code></td></tr>
+    <tr><td class="file">SchemaCatalogTest</td><td class="num">874</td><td>検索・一覧・逆引き・解決・相互参照・関連・経路・関連の数・観点</td><td>→ <code>SchemaCatalog</code></td></tr>
     <tr><td class="file">SearchQueryTest / SqlNamesTest</td><td class="num">139</td><td>点数・AND・正規化／名前の取り出し</td><td>→ 各クラス</td></tr>
     <tr><td class="file">TestTables / TestCatalogs / Lookups</td><td class="num">183</td><td>テスト用のテーブルのビルダー／テーブルだけから<code>SchemaCatalog</code>を組み立てる補助／<code>Lookup</code>から値を取り出す補助</td><td>← catalogのテスト</td></tr>
     <tr><td class="file">SnapshotDirectoryReaderTest</td><td class="num">224</td><td>読み込みと起動時の誤り（ファイル名・行番号）</td><td>→ <code>SnapshotDirectoryReader</code></td></tr>
     <tr><td class="file">SampleSnapshotContractTest</td><td class="num">225</td><td>cliのベースライン<code>docs/sample/postgres/output/snapshot</code>を読む契約テスト。cliの形式変更への追従漏れを検知</td><td>→ ベースライン</td></tr>
     <tr><td class="file">InsightsDirectoryReaderTest</td><td class="num">121</td><td>観点の読み込みと兄弟ディレクトリの解決</td><td>→ <code>InsightsDirectoryReader</code></td></tr>
     <tr><td class="file">SampleInsightsContractTest</td><td class="num">102</td><td>ベースラインの観点と、スナップショットのテーブルのキーが一致すること</td><td>→ ベースライン</td></tr>
-    <tr><td class="file">TableDefinitionToolsTest</td><td class="num">656</td><td>全ツールの結果のJSON・エラー。<code>callHandler().apply(null, …)</code>で直接呼ぶため、SDKの入力検証は通らない</td><td>→ <code>TableDefinitionTools</code></td></tr>
+    <tr><td class="file">TableDefinitionToolsTest</td><td class="num">677</td><td>全ツールの結果のJSON・エラー。<code>callHandler().apply(null, …)</code>で直接呼ぶため、SDKの入力検証は通らない</td><td>→ <code>TableDefinitionTools</code></td></tr>
     <tr><td class="file">ToolArgumentsTest</td><td class="num">115</td><td>引数の読み取り（空白・型・カンマ区切り・列挙）</td><td>→ <code>ToolArguments</code></td></tr>
     <tr class="empty-row" hidden><td colspan="4">一致するファイルはありません。</td></tr>
   </tbody>
