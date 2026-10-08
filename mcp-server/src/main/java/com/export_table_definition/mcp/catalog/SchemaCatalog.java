@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 /** スナップショットから読み込んだ全オブジェクトと、その検索・名前の解決・関連のたどりを担うクラス */
@@ -154,13 +155,27 @@ public final class SchemaCatalog {
         .toList();
   }
 
-  /**
-   * テーブルを一覧にするメソッド
-   *
-   * @return DB名・スキーマ名・テーブル名の順
-   */
-  public List<TableEntry> listTables(TableFilter filter) {
-    return tables.stream().filter(filter::matches).sorted(BY_KEY).toList();
+  /** テーブルを一覧にするメソッド */
+  public List<TableEntry> listTables(TableFilter filter, TableOrder order) {
+    final Comparator<TableEntry> comparator =
+        switch (order) {
+          case NAME -> BY_KEY;
+          case INCOMING -> byCountDescending(RelationCounts::incoming);
+          case OUTGOING -> byCountDescending(RelationCounts::outgoing);
+          case IMPACT -> byCountDescending(RelationCounts::impact);
+        };
+    return tables.stream().filter(filter::matches).sorted(comparator).toList();
+  }
+
+  /** テーブルの関連の数を返すメソッド */
+  public RelationCounts relationCountsOf(TableEntry table) {
+    return relations.counts(table.key());
+  }
+
+  private Comparator<TableEntry> byCountDescending(ToIntFunction<RelationCounts> count) {
+    return Comparator.comparingInt((TableEntry table) -> count.applyAsInt(relationCountsOf(table)))
+        .reversed()
+        .thenComparing(BY_KEY);
   }
 
   /**

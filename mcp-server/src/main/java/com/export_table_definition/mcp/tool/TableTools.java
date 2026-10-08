@@ -18,12 +18,14 @@ import com.export_table_definition.mcp.catalog.ColumnHit;
 import com.export_table_definition.mcp.catalog.ColumnQuery;
 import com.export_table_definition.mcp.catalog.MatchMode;
 import com.export_table_definition.mcp.catalog.ObjectReference;
+import com.export_table_definition.mcp.catalog.RelationCounts;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchResult;
 import com.export_table_definition.mcp.catalog.TableEntry;
 import com.export_table_definition.mcp.catalog.TableFilter;
 import com.export_table_definition.mcp.catalog.TableHit;
+import com.export_table_definition.mcp.catalog.TableOrder;
 import com.export_table_definition.mcp.catalog.TableType;
 import com.export_table_definition.mcp.catalog.ViewpointEntry;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -93,8 +95,14 @@ final class TableTools {
         readOnlyTool(
             LIST_TABLES,
             "テーブル一覧",
-            "テーブル（ビューを含む）の名前・論理名・区分を、DB名・スキーマ名・テーブル名の順に一覧で返す。"
-                + "スキーマにどんなテーブルがあるか眺めるときに使う。キーワードで探す場合はsearch_tablesを使う",
+            "テーブル（ビューを含む）の名前・論理名・区分と関連の数を一覧で返す。"
+                + "関連の数は、外部キー・論理リレーションで自テーブルを参照しているテーブルの数（incoming）、"
+                + "自テーブルが参照しているテーブルの数（outgoing）、参照元を"
+                + RelationCounts.IMPACT_DEPTH
+                + "段までたどって届くテーブルの数（impact。変更の影響範囲）。"
+                + "スキーマにどんなテーブルがあるか眺めるときに使い、どこから読むか迷う場合はorderByで"
+                + "関連の多い（中心となる）テーブルから並べる。関連の無いテーブルも0として一覧に含める。"
+                + "キーワードで探す場合はsearch_tablesを使う",
             objectSchema(
                 withPageProperties(
                     Map.of(
@@ -107,7 +115,12 @@ final class TableTools {
                         "includeDescription",
                         booleanProperty("テーブルの説明も返す（既定false）"),
                         "viewpoint",
-                        VIEWPOINT_PROPERTY),
+                        VIEWPOINT_PROPERTY,
+                        "orderBy",
+                        enumProperty(
+                            "並べ方。name: DB名・スキーマ名・テーブル名の順（既定）、incoming・outgoing・impact: "
+                                + "その数の多い順（同数は名前の順）",
+                            ToolArguments.lowerNames(TableOrder.class))),
                     Page.DEFAULT_LIMIT,
                     Page.MAX_LIMIT),
                 List.of()),
@@ -178,14 +191,18 @@ final class TableTools {
             .map(scoped::withType)
             .orElse(scoped);
     final boolean includeDescription = arguments.optionalBoolean("includeDescription", false);
+    final TableOrder order = arguments.optionalEnum("orderBy", TableOrder.class, TableOrder.NAME);
     final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
-    final List<TableEntry> tables = catalog.listTables(filter);
+    final List<TableEntry> tables = catalog.listTables(filter, order);
     return ToolResults.json(
         new ListTablesOutput(
             tables.size(),
             page.nextOffset(tables.size()),
             page.apply(tables).stream()
-                .map(table -> ListTablesOutput.Table.of(table, includeDescription))
+                .map(
+                    table ->
+                        ListTablesOutput.Table.of(
+                            table, catalog.relationCountsOf(table), includeDescription))
                 .toList()));
   }
 
@@ -326,23 +343,33 @@ final class TableTools {
    */
   record ListTablesOutput(int total, Integer nextOffset, List<Table> tables) {
 
-    /** 1テーブルの概要 */
+    /**
+     * 1テーブルの概要
+     *
+     * @see RelationCounts incoming・outgoing・impactの数え方
+     */
     record Table(
         String database,
         String schema,
         String name,
         String logicalName,
         String type,
-        String description) {
+        String description,
+        int incoming,
+        int outgoing,
+        int impact) {
 
-      static Table of(TableEntry table, boolean includeDescription) {
+      static Table of(TableEntry table, RelationCounts counts, boolean includeDescription) {
         return new Table(
             table.key().database(),
             table.key().schema(),
             table.key().name(),
             table.logicalName(),
             table.type(),
-            includeDescription ? table.description() : null);
+            includeDescription ? table.description() : null,
+            counts.incoming(),
+            counts.outgoing(),
+            counts.impact());
       }
     }
   }

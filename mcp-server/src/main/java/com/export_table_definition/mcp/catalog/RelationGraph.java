@@ -2,6 +2,7 @@ package com.export_table_definition.mcp.catalog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,6 +19,7 @@ final class RelationGraph {
   private final Map<ObjectKey, TableEntry> tablesByKey = new HashMap<>();
   private final Map<ObjectKey, List<Relation>> outgoing = new HashMap<>();
   private final Map<ObjectKey, List<Relation>> incoming = new HashMap<>();
+  private final Map<ObjectKey, RelationCounts> counts = new HashMap<>();
 
   RelationGraph(List<TableEntry> tables) {
     for (final TableEntry table : tables) {
@@ -34,6 +36,21 @@ final class RelationGraph {
         incoming.computeIfAbsent(relation.to(), key -> new ArrayList<>()).add(relation);
       }
     }
+    for (final ObjectKey table : tablesByKey.keySet()) {
+      counts.put(
+          table,
+          new RelationCounts(
+              neighbors(table, Direction.INCOMING).size(),
+              neighbors(table, Direction.OUTGOING).size(),
+              impactOf(table)));
+    }
+  }
+
+  /**
+   * @see SchemaCatalog#relationCountsOf(TableEntry)
+   */
+  RelationCounts counts(ObjectKey table) {
+    return counts.getOrDefault(table, new RelationCounts(0, 0, 0));
   }
 
   /** テーブルが持つ（参照先へ向かう）関連を、外部キー・論理リレーションの順に返す */
@@ -145,6 +162,36 @@ final class RelationGraph {
       collectPaths(step.previous(), start, previousSteps, reversedSteps, paths, max);
       reversedSteps.remove(reversedSteps.size() - 1);
     }
+  }
+
+  /** 参照元を{@link RelationCounts#IMPACT_DEPTH}段までたどって届くテーブルを数える */
+  private int impactOf(ObjectKey table) {
+    final Set<ObjectKey> reached = new HashSet<>(Set.of(table));
+    List<ObjectKey> frontier = List.of(table);
+    for (int level = 1; level <= RelationCounts.IMPACT_DEPTH && !frontier.isEmpty(); level++) {
+      final List<ObjectKey> next = new ArrayList<>();
+      for (final ObjectKey current : frontier) {
+        for (final ObjectKey neighbor : neighbors(current, Direction.INCOMING)) {
+          if (reached.add(neighbor)) {
+            next.add(neighbor);
+          }
+        }
+      }
+      frontier = next;
+    }
+    return reached.size() - 1;
+  }
+
+  /** 関連でつながる、自テーブル以外のスナップショットに含まれるテーブル（重複なし） */
+  private Set<ObjectKey> neighbors(ObjectKey table, Direction direction) {
+    final Set<ObjectKey> neighbors = new LinkedHashSet<>();
+    for (final Relation relation : relationsOf(table, direction)) {
+      final ObjectKey neighbor = relation.otherSide(table);
+      if (!neighbor.equals(table) && tablesByKey.containsKey(neighbor)) {
+        neighbors.add(neighbor);
+      }
+    }
+    return neighbors;
   }
 
   /** 指定した向きの関連を、参照先へ向かうもの・参照元から来るものの順に返す */

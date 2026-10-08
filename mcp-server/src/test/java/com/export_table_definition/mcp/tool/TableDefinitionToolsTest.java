@@ -212,6 +212,27 @@ class TableDefinitionToolsTest {
   }
 
   @Test
+  @DisplayName("list_tablesは、関連の数を返し、orderByで関連の数の多い順に並べられる")
+  void listTablesOrderedByRelations() throws Exception {
+    final JsonNode byName = json(call("list_tables", Map.of("schema", "sample")));
+    assertEquals(
+        "{\"database\":\"testdb\",\"schema\":\"sample\",\"name\":\"department\","
+            + "\"logicalName\":\"部署\",\"type\":\"table\",\"incoming\":1,\"outgoing\":0,\"impact\":2}",
+        byName.get("tables").get(1).toString());
+
+    final JsonNode byImpact =
+        json(call("list_tables", Map.of("schema", "sample", "orderBy", "impact")));
+    assertEquals(
+        List.of("department", "employee", "audit_log", "project"),
+        byImpact.get("tables").findValuesAsText("name"));
+
+    final CallToolResult invalid = call("list_tables", Map.of("orderBy", "size"));
+    assertTrue(invalid.isError());
+    assertEquals(
+        "引数orderByにはname, incoming, outgoing, impactのいずれかを指定してください。 [value=size]", text(invalid));
+  }
+
+  @Test
   @DisplayName("search_tablesは、一致したテーブルの概要と一致した項目を、値の無い項目を省いて返す")
   void searchTables() throws Exception {
     final JsonNode result = json(call("search_tables", Map.of("query", "部署")));
