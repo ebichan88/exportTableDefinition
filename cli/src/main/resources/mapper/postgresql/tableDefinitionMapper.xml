@@ -3,9 +3,11 @@
 <mapper namespace="com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository">
 
     <select id="selectDatabaseInfo" resultType="DatabaseDto">
+        <!-- server_version_numは10以降、メジャーバージョン×10000＋マイナーバージョン（例: 160004） -->
         SELECT
             current_database() AS "dbName",
-            'PostgreSQL' AS "dbmsName"
+            'PostgreSQL' AS "dbmsName",
+            current_setting('server_version_num')::integer / 10000 AS "majorVersion"
         fetch first 1 rows only;
     </select>
 
@@ -460,6 +462,36 @@
         INNER JOIN pg_catalog.pg_class c ON c.oid = p.partition_oid
         WHERE p.depth > 0
         ORDER BY p.schema_name, p.table_name, p.path;
+    </select>
+
+    <select id="selectViewReferenceInfo" resultType="ViewReferenceDto">
+        <!-- ビュー・マテリアライズドビューのSQLは書き換えルール（pg_rewrite）として格納され、ルールが参照するテーブルが
+             pg_dependに記録される（カラム単位でも記録されるため、テーブルごとに1件へまとめる）。
+             ルールはビュー自身にも依存するため除く。パーティションへの参照は、パーティション表（根）への参照とする -->
+        SELECT DISTINCT
+            vn.nspname AS "schemaName",
+            v.relname AS "viewName",
+            CASE v.relkind WHEN 'm' THEN 'materialized_view' ELSE 'view' END AS "viewType",
+            rn.nspname AS "referenceSchemaName",
+            r.relname AS "referenceTableName",
+            CASE r.relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized_view' ELSE 'table' END AS "referenceTableType"
+        FROM pg_catalog.pg_class v
+        INNER JOIN pg_catalog.pg_namespace vn ON vn.oid = v.relnamespace
+        INNER JOIN pg_catalog.pg_rewrite rw ON rw.ev_class = v.oid
+        INNER JOIN pg_catalog.pg_depend d ON d.classid = 'pg_catalog.pg_rewrite'::regclass AND d.objid = rw.oid
+            AND d.refclassid = 'pg_catalog.pg_class'::regclass
+        INNER JOIN pg_catalog.pg_class r ON r.oid = coalesce(pg_catalog.pg_partition_root(d.refobjid), d.refobjid)
+        INNER JOIN pg_catalog.pg_namespace rn ON rn.oid = r.relnamespace
+        WHERE v.relkind IN ('v', 'm') AND r.oid &lt;&gt; v.oid AND r.relkind IN ('r', 'p', 'f', 'v', 'm')
+            AND vn.nspname NOT IN ('pg_catalog', 'information_schema')
+            AND rn.nspname NOT IN ('pg_catalog', 'information_schema')
+            <if test="schemaList != null and schemaList.size() > 0">
+                AND vn.nspname IN
+                <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                    #{schema}
+                </foreach>
+            </if>
+        ORDER BY "schemaName", "viewName", "referenceSchemaName", "referenceTableName";
     </select>
 
     <select id="selectFunctionInfo" resultType="FunctionDto">

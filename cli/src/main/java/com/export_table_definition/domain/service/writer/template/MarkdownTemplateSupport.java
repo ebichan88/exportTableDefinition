@@ -36,7 +36,7 @@ public final class MarkdownTemplateSupport {
                 |:---|:---|:---|
                 """
         + row(
-            baseInfo.dbmsName(),
+            baseInfo.dbmsName() + " " + baseInfo.majorVersion(),
             baseInfo.dbName(),
             baseInfo.generatedDate().format(GENERATED_DATE_FORMAT))
         + LINE_SEPARATOR_DOUBLE;

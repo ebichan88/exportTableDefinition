@@ -8,8 +8,9 @@ import com.export_table_definition.domain.model.database.BaseInfoEntity;
  *
  * @param formatVersion スナップショットの形式のバージョン（形式を互換性なく変更した場合に上げる）
  * @param dbms DBMS種別（PostgreSQL/Oracle）
+ * @param majorVersion DBMSのメジャーバージョン（例: 16）。書けるSQLの判断に使う。マイナー版の更新で差分にならないよう、メジャーバージョンだけを持つ
  */
-public record DatabaseSnapshot(int formatVersion, String name, String dbms) {
+public record DatabaseSnapshot(int formatVersion, String name, String dbms, int majorVersion) {
 
   /** 現行のスナップショットの形式のバージョン */
   public static final int FORMAT_VERSION = 1;
@@ -20,6 +21,7 @@ public record DatabaseSnapshot(int formatVersion, String name, String dbms) {
    * @return DB全体の情報のスナップショット
    */
   public static DatabaseSnapshot of(BaseInfoEntity baseInfo) {
-    return new DatabaseSnapshot(FORMAT_VERSION, baseInfo.dbName(), baseInfo.dbmsName());
+    return new DatabaseSnapshot(
+        FORMAT_VERSION, baseInfo.dbName(), baseInfo.dbmsName(), baseInfo.majorVersion());
   }
 }

@@ -15,6 +15,7 @@ public final class TestTables {
   private final List<RelationEntry> foreignKeys = new ArrayList<>();
   private final List<RelationEntry> logicalRelations = new ArrayList<>();
   private final List<TriggerEntry> triggers = new ArrayList<>();
+  private final List<ObjectKey> referencedTables = new ArrayList<>();
   private String json;
 
   private TestTables(String database, String schema, String name) {
@@ -101,6 +102,12 @@ public final class TestTables {
     return this;
   }
 
+  /** ビューが参照する、同じDB・スキーマのテーブル */
+  public TestTables referencedTable(String name) {
+    referencedTables.add(new ObjectKey(key.database(), key.schema(), name));
+    return this;
+  }
+
   /** スナップショットの1行（未指定の場合はschema・nameだけの行） */
   public TestTables json(String value) {
     this.json = value;
@@ -118,6 +125,7 @@ public final class TestTables {
         foreignKeys,
         logicalRelations,
         triggers,
+        referencedTables,
         json != null
             ? json
             : "{\"schema\":\"" + key.schema() + "\",\"name\":\"" + key.name() + "\"}");

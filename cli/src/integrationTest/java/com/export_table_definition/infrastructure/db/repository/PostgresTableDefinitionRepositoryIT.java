@@ -17,6 +17,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.testsupport.SampleDatabase;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +44,10 @@ class PostgresTableDefinitionRepositoryIT {
   }
 
   @Test
-  @DisplayName("selectDatabase: DB名とRDBMS名を取得する")
+  @DisplayName("selectDatabase: DB名・RDBMS名・メジャーバージョンを取得する")
   void testSelectDatabase() {
     assertEquals(
-        new DatabaseEntity(SampleDatabase.DATABASE_NAME, "PostgreSQL"),
+        new DatabaseEntity(SampleDatabase.DATABASE_NAME, "PostgreSQL", 16),
         repository.selectDatabase());
   }
 
@@ -58,6 +59,7 @@ class PostgresTableDefinitionRepositoryIT {
     assertEquals(
         List.of(
             "attendance",
+            "attendance_monthly_view",
             "attendance_note",
             "audit_log",
             "department",
@@ -145,6 +147,65 @@ class PostgresTableDefinitionRepositoryIT {
   void testSelectPartitionsFiltersByRootSchema() {
     assertEquals(List.of(), repository.selectPartitionList(List.of("sample_archive")));
     assertEquals(7, repository.selectPartitionList(List.of()).size());
+  }
+
+  @Test
+  @DisplayName(
+      "selectViewReferenceList: ビューが参照するテーブルを1件ずつ取得し、パーティションへの参照は親のパーティション表へまとめる（別スキーマのテーブル・ビューを含む）")
+  void testSelectViewReferenceList() {
+    assertEquals(
+        List.of(
+            new ViewReferenceEntity(
+                "sample",
+                "attendance_monthly_view",
+                TableType.VIEW,
+                "sample",
+                "attendance",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "sample",
+                "attendance_monthly_view",
+                TableType.VIEW,
+                "sample",
+                "employee_directory_view",
+                TableType.VIEW),
+            new ViewReferenceEntity(
+                "sample",
+                "attendance_monthly_view",
+                TableType.VIEW,
+                "sample_archive",
+                "department",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "sample",
+                "employee_directory_view",
+                TableType.VIEW,
+                "sample",
+                "department",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "sample",
+                "employee_directory_view",
+                TableType.VIEW,
+                "sample",
+                "employee",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "sample",
+                "project_summary_mv",
+                TableType.MATERIALIZED_VIEW,
+                "sample",
+                "project",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "sample",
+                "project_summary_mv",
+                TableType.MATERIALIZED_VIEW,
+                "sample",
+                "project_assignment",
+                TableType.TABLE)),
+        repository.selectViewReferenceList(SAMPLE_SCHEMA));
+    assertEquals(List.of(), repository.selectViewReferenceList(List.of("sample_archive")));
   }
 
   @Test

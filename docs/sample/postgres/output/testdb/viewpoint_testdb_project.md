@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/04|
+|PostgreSQL 16|testdb|2026/10/08|
 
 ## 説明
 

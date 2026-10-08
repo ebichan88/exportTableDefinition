@@ -12,7 +12,11 @@ enum TableSection {
   LOGICAL_RELATIONS("logicalRelations"),
   TRIGGERS("triggers"),
   /** ビュー・マテリアライズドビューのソース定義 */
-  DEFINITION("definition");
+  DEFINITION("definition"),
+  /** ビュー・マテリアライズドビューが参照するテーブル */
+  REFERENCED_TABLES("referencedTables"),
+  /** テーブルを参照しているビュー。スナップショットの項目ではなく、ビューの{@code referencedTables}から逆引きする */
+  REFERENCED_BY_VIEWS("referencedByViews");
 
   private final String fieldName;
 

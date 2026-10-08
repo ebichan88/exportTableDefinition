@@ -71,7 +71,8 @@ class SchemaCatalogTest {
 
     private final SchemaCatalog catalog =
         SchemaCatalog.of(
-            List.of(new DatabaseEntry("db1", "PostgreSQL"), new DatabaseEntry("db2", "Oracle")),
+            List.of(
+                new DatabaseEntry("db1", "PostgreSQL", 16), new DatabaseEntry("db2", "Oracle", 23)),
             List.of(
                 table("db1", "sales", "orders").build(),
                 table("db1", "sales", "order_summary").type("view").build(),
@@ -86,9 +87,9 @@ class SchemaCatalogTest {
     void summarizesSchemas() {
       assertEquals(
           List.of(
-              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 0, 0, 0, 0, 0),
-              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 1, 0, 0, 0, 0),
-              new SchemaSummary("db2", "Oracle", "hr", 1, 0, 0, 0, 0, 0)),
+              new SchemaSummary("db1", "PostgreSQL", 16, "hr", 1, 0, 0, 0, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", 16, "sales", 1, 1, 0, 0, 0, 0),
+              new SchemaSummary("db2", "Oracle", 23, "hr", 1, 0, 0, 0, 0, 0)),
           catalog.schemas());
     }
 
@@ -199,7 +200,7 @@ class SchemaCatalogTest {
 
     private final SchemaCatalog catalog =
         SchemaCatalog.of(
-            List.of(new DatabaseEntry("db1", "PostgreSQL")),
+            List.of(new DatabaseEntry("db1", "PostgreSQL", 16)),
             List.of(
                 table("db1", "sales", "orders")
                     .trigger("trg_orders_audit", "sales.audit")
@@ -225,8 +226,8 @@ class SchemaCatalogTest {
     void summarizesAllKinds() {
       assertEquals(
           List.of(
-              new SchemaSummary("db1", "PostgreSQL", "hr", 1, 1, 0, 1, 0, 0),
-              new SchemaSummary("db1", "PostgreSQL", "sales", 1, 0, 0, 3, 2, 2)),
+              new SchemaSummary("db1", "PostgreSQL", 16, "hr", 1, 1, 0, 1, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", 16, "sales", 1, 0, 0, 3, 2, 2)),
           catalog.schemas());
     }
 
@@ -309,9 +310,31 @@ class SchemaCatalogTest {
   @DisplayName("オブジェクト間の相互参照")
   class CrossReferences {
 
+    @Test
+    @DisplayName("viewsReferencingは、テーブルを参照しているビューを名前の順に返し、別DBの同名テーブルを参照するビューは含めない")
+    void findsViewsReferencingTable() {
+      final SchemaCatalog views =
+          TestCatalogs.of(
+              List.of(
+                  table("db1", "sales", "orders").build(),
+                  table("db1", "sales", "v_orders").type("view").referencedTable("orders").build(),
+                  table("db1", "sales", "a_mv")
+                      .type("materialized_view")
+                      .referencedTable("orders")
+                      .referencedTable("v_orders")
+                      .build(),
+                  table("db2", "sales", "v_other").type("view").referencedTable("orders").build()));
+      final TableEntry orders = views.tables().get(0);
+
+      assertEquals(
+          List.of("a_mv", "v_orders"),
+          views.viewsReferencing(orders).stream().map(view -> view.key().name()).toList());
+      assertEquals(List.of(), views.viewsReferencing(views.tables().get(2)));
+    }
+
     private final SchemaCatalog catalog =
         SchemaCatalog.of(
-            List.of(new DatabaseEntry("db1", "PostgreSQL")),
+            List.of(new DatabaseEntry("db1", "PostgreSQL", 16)),
             List.of(
                 table("db1", "sales", "orders")
                     .column(

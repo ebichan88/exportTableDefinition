@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/02|
+|PostgreSQL 16|testdb|2026/10/08|
 
 ## テーブル説明
 
@@ -47,6 +47,12 @@
 |:---|:---|:---|:---|:---|:---|
 |1|project_assignment_employee_id_fkey|employee_id|sample.employee|employee_id|1対多|
 |2|project_assignment_project_id_fkey|project_id|sample.project|project_id|1対多|
+
+## 参照しているビュー
+
+| No. | 参照元 | 区分 |
+|:---|:---|:---|
+|1|sample.project_summary_mv|materialized_view|
 
 ## トリガー情報
 

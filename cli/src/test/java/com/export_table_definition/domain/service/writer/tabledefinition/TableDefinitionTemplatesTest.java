@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.DiagramNeighborhood;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.RelationType;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
@@ -15,6 +16,7 @@ import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.testsupport.DiagramBoxesFixtures;
 import com.export_table_definition.testsupport.EntityFixtures;
@@ -48,14 +50,14 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("baseInfo: RDBMS・DB名・作成日の表を出力する")
   void testBaseInfo() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    var base = new BaseInfoEntity("TEST_DB", "pg", 16, LocalDate.of(2025, 1, 1));
     assertMarkdownEquals(
         """
         ## 基本情報
 
         | RDBMS | データベース名 | 作成日 |
         |:---|:---|:---|
-        |pg|TEST_DB|2025/01/01|
+        |pg 16|TEST_DB|2025/01/01|
 
         """,
         TableDefinitionTemplates.baseInfo(base));
@@ -366,7 +368,7 @@ public class TableDefinitionTemplatesTest {
 
         """,
         TableDefinitionTemplates.erDiagram(
-            table, List.of(), List.of(), List.of(), DiagramBoxesFixtures.none()));
+            table, List.of(), neighborhood(List.of(), List.of()), DiagramBoxesFixtures.none()));
   }
 
   @Test
@@ -401,8 +403,41 @@ public class TableDefinitionTemplatesTest {
         TableDefinitionTemplates.erDiagram(
             table,
             List.of(column),
-            List.of(outgoing),
-            List.of(incoming),
+            neighborhood(List.of(outgoing), List.of(incoming)),
+            DiagramBoxesFixtures.none()));
+  }
+
+  @Test
+  @DisplayName("erDiagram: 描画距離を縮めた場合は、その旨を図の前に書き、関連先のテーブル同士の関連も描く")
+  void testErDiagramWithShortenedNeighborhood() {
+    TableEntity table = newTable("public", "orders", "受注", "table", "");
+    var outgoing =
+        ForeignKeyFixtures.physical(
+            "public", "orders", "fk_orders_customer", "public", "customers");
+    var secondHop =
+        ForeignKeyFixtures.physical(
+            "public", "customers", "fk_customers_region", "public", "region");
+
+    assertMarkdownEquals(
+        """
+        ## ER図
+
+        関連するテーブルが多く、3段先までを描画するとテーブル数が上限（erDiagramMaxNodes）を超えるため、2段先までを描画しています。
+
+        ```mermaid
+        erDiagram
+            public_orders["orders"]
+            public_customers["customers"]
+            public_region["region"]
+            public_customers ||--o{ public_orders : "fk_orders_customer"
+            public_region ||--o{ public_customers : "fk_customers_region"
+        ```
+
+        """,
+        TableDefinitionTemplates.erDiagram(
+            table,
+            List.of(),
+            new DiagramNeighborhood(List.of(outgoing, secondHop), 2, 3),
             DiagramBoxesFixtures.none()));
   }
 
@@ -421,8 +456,7 @@ public class TableDefinitionTemplatesTest {
         TableDefinitionTemplates.erDiagram(
             table,
             List.of(column),
-            List.of(outgoing),
-            List.of(incoming),
+            neighborhood(List.of(outgoing), List.of(incoming)),
             DiagramBoxesFixtures.none());
     assertTrue(section.contains("sales_customers[\"sales.customers\"]"));
     assertTrue(section.contains("master_customers[\"master.customers\"]"));
@@ -456,8 +490,7 @@ public class TableDefinitionTemplatesTest {
         TableDefinitionTemplates.erDiagram(
             table,
             List.of(column),
-            List.of(outgoing),
-            List.of(incoming),
+            neighborhood(List.of(outgoing), List.of(incoming)),
             DiagramBoxesFixtures.none());
     assertTrue(section.contains("public_coupons |o--o{ public_orders : \"fk_orders_coupon\""));
     assertTrue(
@@ -531,7 +564,10 @@ public class TableDefinitionTemplatesTest {
 
         """,
         TableDefinitionTemplates.erDiagram(
-            table, List.of(id, customerId), List.of(outgoing), List.of(incoming), boxes));
+            table,
+            List.of(id, customerId),
+            neighborhood(List.of(outgoing), List.of(incoming)),
+            boxes));
   }
 
   @Test
@@ -544,7 +580,10 @@ public class TableDefinitionTemplatesTest {
             "public", "orders", "fk_orders_customer", "public", "customers");
     String section =
         TableDefinitionTemplates.erDiagram(
-            table, List.of(column), List.of(outgoing), List.of(), DiagramBoxesFixtures.none());
+            table,
+            List.of(column),
+            neighborhood(List.of(outgoing), List.of()),
+            DiagramBoxesFixtures.none());
     assertTrue(section.contains("numeric amount"));
     assertFalse(section.contains("(10,2)"));
   }
@@ -552,7 +591,7 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("footer: 区切り線とテーブル一覧へのリンクを出力する")
   void testFooter() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    var base = new BaseInfoEntity("TEST_DB", "pg", 16, LocalDate.of(2025, 1, 1));
     assertMarkdownEquals(
         """
         ___
@@ -639,6 +678,63 @@ public class TableDefinitionTemplatesTest {
   }
 
   @Test
+  @DisplayName("referencedTables: ビューが参照するテーブルを、区分付きでセクション内で1から採番して出力する")
+  void testReferencedTablesSection() {
+    String section =
+        TableDefinitionTemplates.referencedTables(
+            List.of(
+                new ViewReferenceEntity(
+                    "public", "v", TableType.VIEW, "public", "orders", TableType.TABLE),
+                new ViewReferenceEntity(
+                    "public", "v", TableType.VIEW, "archive", "orders_v", TableType.VIEW)));
+
+    assertMarkdownEquals(
+        """
+        ## 参照するテーブル
+
+        | No. | 参照先 | 区分 |
+        |:---|:---|:---|
+        |1|public.orders|table|
+        |2|archive.orders_v|view|
+
+        """,
+        section);
+  }
+
+  @Test
+  @DisplayName("referencingViews: テーブルを参照しているビューを、ビューの区分付きで出力する")
+  void testReferencingViewsSection() {
+    String section =
+        TableDefinitionTemplates.referencingViews(
+            List.of(
+                new ViewReferenceEntity(
+                    "public",
+                    "orders_mv",
+                    TableType.MATERIALIZED_VIEW,
+                    "public",
+                    "orders",
+                    TableType.TABLE)));
+
+    assertMarkdownEquals(
+        """
+        ## 参照しているビュー
+
+        | No. | 参照元 | 区分 |
+        |:---|:---|:---|
+        |1|public.orders_mv|materialized_view|
+
+        """,
+        section);
+  }
+
+  @Test
+  @DisplayName("referencedTables・referencingViews: 対象が存在しない場合はセクションごと出力しない")
+  void testViewReferenceSectionsOmittedWhenEmpty() {
+    assertEquals("", TableDefinitionTemplates.referencedTables(List.of()));
+    assertEquals("", TableDefinitionTemplates.referencingViews(List.of()));
+  }
+
+  @Test
   @DisplayName("erDiagram: 論理リレーションは破線、物理外部キーは実線で描画する")
   void testErDiagramDistinguishesRelationType() {
     TableEntity table = newTable("public", "orders", "受注", "table", "");
@@ -652,8 +748,7 @@ public class TableDefinitionTemplatesTest {
         TableDefinitionTemplates.erDiagram(
             table,
             List.of(column),
-            List.of(physical, logical),
-            List.of(),
+            neighborhood(List.of(physical, logical), List.of()),
             DiagramBoxesFixtures.none());
 
     assertTrue(section.contains("public_customers ||--o{ public_orders : \"fk_orders_customer\""));
@@ -669,7 +764,10 @@ public class TableDefinitionTemplatesTest {
         ForeignKeyFixtures.logical("public", "audit_log", "rel_audit_orders", "public", "orders");
     String section =
         TableDefinitionTemplates.erDiagram(
-            table, List.of(column), List.of(), List.of(incoming), DiagramBoxesFixtures.none());
+            table,
+            List.of(column),
+            neighborhood(List.of(), List.of(incoming)),
+            DiagramBoxesFixtures.none());
 
     assertTrue(section.contains("public_orders ||..o{ public_audit_log : \"rel_audit_orders\""));
   }
@@ -677,14 +775,14 @@ public class TableDefinitionTemplatesTest {
   @Test
   @DisplayName("viewpoints: 所属する観点が無い場合はセクションごと出力しない（観点を導入しても定義書は変わらない）")
   void testViewpointsEmpty() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    var base = new BaseInfoEntity("TEST_DB", "pg", 16, LocalDate.of(2025, 1, 1));
     assertEquals("", TableDefinitionTemplates.viewpoints(List.of(), base));
   }
 
   @Test
   @DisplayName("viewpoints: 所属する観点の表示名と、観点ページへの相対リンクを宣言順に出力する")
   void testViewpoints() {
-    var base = new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    var base = new BaseInfoEntity("TEST_DB", "pg", 16, LocalDate.of(2025, 1, 1));
     assertMarkdownEquals(
         """
         ## 所属する観点
@@ -802,5 +900,12 @@ public class TableDefinitionTemplatesTest {
 
         """,
         TableDefinitionTemplates.partitions(partitionedTable("LIST (region)"), List.of(archived)));
+  }
+
+  /** 自テーブルの関連だけを描く（描画距離1の）ER図の関連 */
+  private static DiagramNeighborhood neighborhood(
+      List<ForeignKeyEntity> outgoing, List<ForeignKeyEntity> incoming) {
+    return new DiagramNeighborhood(
+        java.util.stream.Stream.concat(outgoing.stream(), incoming.stream()).toList(), 1, 1);
   }
 }

@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/04|
+|PostgreSQL 16|testdb|2026/10/08|
 
 ## テーブル説明
 
@@ -73,6 +73,12 @@
 |2|sample.employee_profile|employee_id|employee_id|employee_profile_employee_id_fkey|1対1|物理|
 |3|sample.project_assignment|employee_id|employee_id|project_assignment_employee_id_fkey|1対多|物理|
 |4|sample.audit_log|record_id|employee_id|record_id|0..1対多|論理|
+
+## 参照しているビュー
+
+| No. | 参照元 | 区分 |
+|:---|:---|:---|
+|1|sample.employee_directory_view|view|
 
 ## トリガー情報
 

@@ -2,6 +2,7 @@ package com.export_table_definition.domain.service.writer.tabledefinition;
 
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
+import com.export_table_definition.domain.model.relation.DiagramNeighborhood;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
@@ -71,10 +72,14 @@ public class TableDefinitionWriter {
    * テーブル定義の書き込み処理を行うメソッド
    *
    * @param content テーブル定義出力に必要な情報をまとめたレコード
+   * @param neighborhood ER図に描く関連（描画距離以内のテーブルが持つ関連）
    * @param boxes ER図のテーブルの箱に表示する内容（関連テーブルの論理テーブル名・関連カラム）
    */
   public void writeTableDefinition(
-      TableDefinitionContent content, DiagramBoxes boxes, Path outputDirectoryPath) {
+      TableDefinitionContent content,
+      DiagramNeighborhood neighborhood,
+      DiagramBoxes boxes,
+      Path outputDirectoryPath) {
     final OutputRoot outputRoot = new OutputRoot(outputDirectoryPath, content.baseInfo());
     final Path directoryPath =
         outputPathResolver.resolveTableDefinitionDirectory(outputRoot, content.table());
@@ -90,18 +95,16 @@ public class TableDefinitionWriter {
             TableDefinitionTemplates.columns(content.columns(), content.annotation()), // カラム情報
             TableDefinitionTemplates.partitions(content.table(), content.partitions()), // パーティション情報
             TableDefinitionTemplates.view(content.table()), // View情報
+            TableDefinitionTemplates.referencedTables(content.referencedTables()), // 参照するテーブル
             TableDefinitionTemplates.indexes(content.indexes()), // インデックス情報
             TableDefinitionTemplates.constraints(content.constraints()), // 制約情報
             TableDefinitionTemplates.foreignKeys(content.foreignKeys()), // 外部キー情報
             TableDefinitionTemplates.logicalRelations(content.logicalRelations()), // 論理リレーション情報
             TableDefinitionTemplates.incomingRelations(content.incomingRelations()), // 被参照情報
+            TableDefinitionTemplates.referencingViews(content.referencingViews()), // 参照しているビュー
             TableDefinitionTemplates.triggers(content.triggers()), // トリガー情報
             TableDefinitionTemplates.erDiagram(
-                content.table(),
-                content.columns(),
-                content.outgoingRelations(),
-                content.incomingRelations(),
-                boxes), // ER図
+                content.table(), content.columns(), neighborhood, boxes), // ER図
             TableDefinitionTemplates.footer(content.baseInfo()) // フッター
             );
     fileRepository.createDirectory(directoryPath);

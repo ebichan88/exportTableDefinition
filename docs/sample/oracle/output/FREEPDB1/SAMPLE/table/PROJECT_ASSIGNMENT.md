@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle|FREEPDB1|2026/10/04|
+|Oracle 23|FREEPDB1|2026/10/08|
 
 ## テーブル説明
 
@@ -43,6 +43,12 @@
 |:---|:---|:---|:---|:---|:---|
 |1|PROJECT_ASSIGNMENT_EMPLOYEE_ID_FKEY|EMPLOYEE_ID|SAMPLE.EMPLOYEE|EMPLOYEE_ID|1対多|
 |2|PROJECT_ASSIGNMENT_PROJECT_ID_FKEY|PROJECT_ID|SAMPLE.PROJECT|PROJECT_ID|1対多|
+
+## 参照しているビュー
+
+| No. | 参照元 | 区分 |
+|:---|:---|:---|
+|1|SAMPLE.PROJECT_SUMMARY_MV|materialized_view|
 
 ## トリガー情報
 

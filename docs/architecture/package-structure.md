@@ -69,16 +69,18 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 | | `Tables` | 出力対象のテーブル一覧のファーストクラスコレクション（テーブルキーでの存在判定・検索、スキーマ単位の分割） |
 | | `TableDetail` | 1テーブル分の詳細情報（カラム・インデックス・制約）のrecord。`assembleAll()`で複数テーブル分の取得結果をテーブルごとに振り分ける |
 | | `Triggers`, `Partitions`, `AbstractEntities` | エンティティのリストをテーブルキーで引けるようにしたコレクションとその基底クラス（`Partitions`は所属するパーティション表のキーで引く）（`Columns`・`Indexes`・`Constraints`は`TableDetail`の組み立て専用のためパッケージプライベート） |
+| | `ViewReferenceEntity`, `ViewReferences` | ビュー・マテリアライズドビューが参照するテーブル（ビューを含む）1件のrecordと、ビューから参照先（`belongingTo`）・テーブルから参照しているビュー（`referencingTo`）の両方向で引けるコレクション |
 | | `TableNamePatterns` | テーブル名パターン（`table=`の記法。ワイルドカード・除外・スキーマ修飾）のリストを判定する値オブジェクト。出力対象の範囲（`TableScope`）と観点の所属テーブルの指定で共通に使う。テーブル名・スキーマ名の部分が空のパターンは誤り |
 | `domain.model.relation` | `ForeignKeyEntity` | 関連（DBの外部キー制約＝物理、サイドカーで宣言した論理リレーション＝論理）のrecord。参照先の`referenceTableKey()`、論理リレーションの関連名の自動生成（`resolveLogicalRelationName`）を持つ |
-| | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalBelongingTo`/`logicalBelongingTo`で由来ごとに、`referencingTo`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`withinTables`/`crossingTableSetBoundary`でテーブルの集合の内側・境界の関連を抽出する |
+| | `ForeignKeys` | 物理外部キーと論理リレーションを同一集合として保持するコレクション。`physicalBelongingTo`/`logicalBelongingTo`で由来ごとに、`referencingTo`で被参照側を取り出せ、`crossSchema`でスキーマ跨ぎの関連を、`withinTables`/`crossingTableSetBoundary`でテーブルの集合の内側・境界の関連を、`neighborhoodOf`でテーブル定義書のER図に描く描画距離以内の関連を抽出する |
+| | `DiagramNeighborhood` | テーブル定義書のER図に描く関連と、描いた距離（上限を超えないよう指定より縮めた場合がある）のrecord |
 | | `ForeignKeyGroup`, `ForeignKeyGroups` | ER図1枚分の関連のまとまり（ノード算出・上限超過の判定・主なテーブル）と、その分割（連結成分の算出・1枚に収まる範囲でのまとめ直し。`compose()`がページ構成`PageComposition`を決める） |
 | | `NodeLimit`, `RenderingPlan` | ER図1枚に描画するノード数の上限（0以下は上限なしへ正規化）と、上限との比較で決まる「描く（`Draw`）／描画を省略して一覧にフォールバック（`Omit`）」の描き方の計画 |
 | | `DiagramBoxes`, `DiagramColumn` | ER図のテーブルの箱に表示する内容。論理テーブル名と、取得したカラムから関連カラム（関連の参照元・参照先として使われるカラム）だけを集めて保持し（`Builder`）、図に描く関連で使われるカラムを`FK`の有無とともに返す |
 | | `Cardinality`, `RelationType` | 多重度（1対1／1対多等。判定と、論理リレーションの既定値を持つ）、関連の由来（物理／論理）のenum |
 | `domain.model.schemaobject` | `FunctionEntity`, `SequenceEntity`, `TypeEntity` | テーブルに属さないスキーマ直下のオブジェクト（関数・プロシージャ／シーケンス／ユーザー定義型）のrecord。`FunctionEntity`は同名関数（オーバーロード）内の番号を持つ |
 | | `Functions`, `Sequences`, `Types` | 上記エンティティのファーストクラスコレクション（取得順のリストを保持する。テーブルキーでは引かない） |
-| `domain.model.database` | `DatabaseEntity` | DBのカタログから取得するデータベースの情報（DB名・DBMS種別）のrecord |
+| `domain.model.database` | `DatabaseEntity` | DBのカタログから取得するデータベースの情報（DB名・DBMS種別・メジャーバージョン）のrecord |
 | | `BaseInfoEntity` | 各ドキュメントに掲載する基本情報（`DatabaseEntity`の情報＋生成日）のrecord |
 | `domain.model.sidecar` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション＋観点）を束ねるrecord |
 | | `Annotations`, `TableAnnotation` | サイドカーYAML由来の手動付帯情報（テーブルキーごとの集合とその1件分） |
@@ -109,7 +111,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 |---|---|---|
 | `domain.service` | `UnifiedDiffGenerator` | 2つの行リストからunified diff形式の差分を生成する。Myers法による自前実装（外部ライブラリに依存しない） |
 | `domain.service.export` | `ExportSink` | 取得したスキーマ情報を1つの出力形式で書き出すIF（一括取得分・関数定義・テーブル定義の書き出し） |
-| | `MarkdownExportSinkFactory`, `SnapshotExportSinkFactory` | 出力先（とER図のノード上限）を受け取り、Markdown／スナップショットの`ExportSink`を生成する |
+| | `MarkdownExportSinkFactory`, `SnapshotExportSinkFactory` | 出力先（とER図のノード上限・テーブル定義書のER図の描画距離）を受け取り、Markdown／スナップショットの`ExportSink`を生成する |
 | `domain.service.target` | `ExportTargetConsistency` | 出力対象のテーブルと、外部キー・サイドカー（論理リレーション／付帯情報／観点）を突き合わせる。片側が出力対象外の外部キー・論理リレーションの除外と、実在しないテーブル・カラムへの付帯情報（孤児付帯情報）・どのテーブルにも一致しない観点のパターンの検出を行う。結果は通知（`ConsistencyNotice`）として返し、ログへの出力は呼び出し側が行う |
 | `domain.service.path` | `OutputPathResolver` | テーブル定義・一覧・スナップショットの出力パス生成戦略IF。データベース単位ディレクトリ（`{base}/{DB名}/`）の解決（`resolveDatabaseDirectory`）を起点に、分割ページのパスは本体ページのパスから`resolvePageFile`で求める。`--rm-dist`で削除してよい出力先かの判定（`isRemovableOutputDir`）も持つ |
 | | `DocumentLocations` | Markdownドキュメントのファイル名とデータベース単位ディレクトリからの相対パス、ドキュメント間の相対リンクの規則を一元的に定める（関数・プロシージャのオーバーロードのファイル名、READMEのファイル名を含む）。`OutputPathResolver`の実装とテンプレートの双方がこの規則を参照する |
@@ -143,7 +145,7 @@ MCPサーバー（`mcp-server/`。`com.export_table_definition.mcp`配下）の�
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
 | `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。`SqlSessionFactory`をコンストラクタで受け取る。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
 | | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
-| `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `PartitionDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
+| `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `PartitionDto`, `ViewReferenceDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
 | | `SidecarYamlRepository` | `SidecarRepository`実装（サイドカーYAML読み込み、SnakeYAML使用）。`tables`（付帯情報）・`relations`（論理リレーション）・`viewpoints`（観点）を解釈する。ファイルが無い・YAMLとして解釈できない場合は`UserCorrectableException`を投げ、個々の記述の誤り（未知のキー等）は読み飛ばして警告する |

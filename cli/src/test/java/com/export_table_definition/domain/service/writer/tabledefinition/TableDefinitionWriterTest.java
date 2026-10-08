@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
+import com.export_table_definition.domain.model.relation.DiagramNeighborhood;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
 import com.export_table_definition.domain.model.table.ConstraintEntity;
@@ -92,7 +93,7 @@ public class TableDefinitionWriterTest {
   private TableDefinitionWriter writer;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 24));
+    return new BaseInfoEntity("testdb", "pg", 16, LocalDate.of(2026, 9, 24));
   }
 
   private OutputRoot outputRoot() {
@@ -123,7 +124,7 @@ public class TableDefinitionWriterTest {
     assertTrue(fileRepository.files.containsKey(file));
     String content = fileRepository.files.get(file);
     assertTrue(content.contains("# テーブル一覧（DB名：testdb）"));
-    assertTrue(content.contains("|pg|testdb|2026/09/24|"));
+    assertTrue(content.contains("|pg 16|testdb|2026/09/24|"));
     assertTrue(content.contains("## 関連ドキュメント"));
     assertTrue(content.contains("[ER図一覧](./erDiagramList_testdb.md)"));
     assertTrue(content.contains("|public|受注|orders|table|"));
@@ -195,12 +196,23 @@ public class TableDefinitionWriterTest {
             List.of(outgoingFk),
             List.of(),
             List.of(incomingFk),
+            List.of(),
+            List.of(),
             List.of(trigger),
             List.of(),
             annotation,
             List.of());
 
-    writer.writeTableDefinition(content, DiagramBoxesFixtures.none(), OUT);
+    writer.writeTableDefinition(
+        content,
+        new DiagramNeighborhood(
+            java.util.stream.Stream.concat(
+                    content.foreignKeys().stream(), content.incomingRelations().stream())
+                .toList(),
+            1,
+            1),
+        DiagramBoxesFixtures.none(),
+        OUT);
 
     Path expectedFile =
         OUT.resolve("testdb").resolve("public").resolve("table").resolve("orders.md");
@@ -262,9 +274,12 @@ public class TableDefinitionWriterTest {
             List.of(),
             List.of(),
             List.of(),
+            List.of(),
+            List.of(),
             List.of(partition),
             TableAnnotation.EMPTY,
             List.of()),
+        new DiagramNeighborhood(List.of(), 1, 1),
         DiagramBoxesFixtures.none(),
         OUT);
     writer.writeTableDefinition(
@@ -279,8 +294,11 @@ public class TableDefinitionWriterTest {
             List.of(),
             List.of(),
             List.of(),
+            List.of(),
+            List.of(),
             TableAnnotation.EMPTY,
             List.of()),
+        new DiagramNeighborhood(List.of(), 1, 1),
         DiagramBoxesFixtures.none(),
         OUT);
 

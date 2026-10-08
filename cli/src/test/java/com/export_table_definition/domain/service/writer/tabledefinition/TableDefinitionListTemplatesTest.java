@@ -19,7 +19,7 @@ public class TableDefinitionListTemplatesTest {
   private static final String NL2 = NL + NL;
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    return new BaseInfoEntity("TEST_DB", "pg", 16, LocalDate.of(2025, 1, 1));
   }
 
   private TableEntity newEntity(String schema, String physical, String logical) {
@@ -45,7 +45,7 @@ public class TableDefinitionListTemplatesTest {
             + NL
             + "|:---|:---|:---|"
             + NL
-            + "|pg|TEST_DB|2025/01/01|"
+            + "|pg 16|TEST_DB|2025/01/01|"
             + NL
             + NL;
     String actual = TableDefinitionListTemplates.baseInfo(baseInfo());

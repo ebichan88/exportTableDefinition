@@ -13,7 +13,7 @@ public final class TestCatalogs {
         tables.stream()
             .map(table -> table.key().database())
             .distinct()
-            .map(name -> new DatabaseEntry(name, null))
+            .map(name -> new DatabaseEntry(name, null, null))
             .toList(),
         tables,
         List.of(),

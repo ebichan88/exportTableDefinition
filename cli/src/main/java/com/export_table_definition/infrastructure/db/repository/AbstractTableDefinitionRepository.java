@@ -13,6 +13,7 @@ import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.domain.repository.TableDefinitionRepository;
 import com.export_table_definition.infrastructure.db.repository.dto.ColumnDto;
 import com.export_table_definition.infrastructure.db.repository.dto.ConstraintDto;
@@ -25,6 +26,7 @@ import com.export_table_definition.infrastructure.db.repository.dto.SequenceDto;
 import com.export_table_definition.infrastructure.db.repository.dto.TableDto;
 import com.export_table_definition.infrastructure.db.repository.dto.TriggerDto;
 import com.export_table_definition.infrastructure.db.repository.dto.TypeDto;
+import com.export_table_definition.infrastructure.db.repository.dto.ViewReferenceDto;
 import com.export_table_definition.infrastructure.db.type.DatabaseType;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +123,13 @@ public abstract class AbstractTableDefinitionRepository implements TableDefiniti
   public List<PartitionEntity> selectPartitionList(List<String> schemaList) {
     return selectTableDefinition(
         schemaList, List.of(), "selectPartitionInfo", PartitionDto::toEntity);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<ViewReferenceEntity> selectViewReferenceList(List<String> schemaList) {
+    return selectTableDefinition(
+        schemaList, List.of(), "selectViewReferenceInfo", ViewReferenceDto::toEntity);
   }
 
   /** {@inheritDoc} */

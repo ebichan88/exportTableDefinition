@@ -4,13 +4,13 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/04|
+|PostgreSQL 16|testdb|2026/10/08|
 
 ## スキーマ別ER図
 
 | No. | スキーマ名 | テーブル数 | Link |
 |:---|:---|:---|:---|
-| 1 | sample | 13 | [■](./erDiagram_testdb_sample.md) |
+| 1 | sample | 14 | [■](./erDiagram_testdb_sample.md) |
 
 ___
 

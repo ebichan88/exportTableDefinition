@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 public class ViewpointTemplatesTest {
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("TEST_DB", "pg", LocalDate.of(2025, 1, 1));
+    return new BaseInfoEntity("TEST_DB", "pg", 16, LocalDate.of(2025, 1, 1));
   }
 
   private TableEntity newTable(String schema, String physical, String logical) {

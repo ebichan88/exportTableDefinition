@@ -5,7 +5,9 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,6 +110,61 @@ public final class ForeignKeys extends AbstractEntities<ForeignKeyEntity> {
    */
   public List<ForeignKeyEntity> crossSchema() {
     return stream().filter(fk -> !fk.schemaName().equals(fk.referenceSchemaName())).toList();
+  }
+
+  /**
+   * テーブル定義書のER図に描く、テーブルの周りの関連を求めるメソッド<br>
+   * テーブルから関連を向きを問わずたどり、{@code requestedDistance}段以内のテーブルが持つ関連を返す（1段なら自テーブルの関連だけ）。
+   * 図のテーブル数が上限を超える場合は、超えなくなるまで距離を縮める。1段でも超える場合は1段で描く （自テーブルの関連は省かない）
+   *
+   * @param requestedDistance 描画距離（1以上）
+   * @param limit 1枚のER図に描くテーブル数の上限
+   */
+  public DiagramNeighborhood neighborhoodOf(
+      TableEntity table, int requestedDistance, NodeLimit limit) {
+    final TableKey self = TableKey.of(table);
+    for (int distance = requestedDistance; distance > 1; distance--) {
+      final List<ForeignKeyEntity> relations = relationsWithin(self, distance);
+      if (!limit.isExceededBy(tablesOf(self, relations).size())) {
+        return new DiagramNeighborhood(relations, distance, requestedDistance);
+      }
+    }
+    return new DiagramNeighborhood(relationsWithin(self, 1), 1, requestedDistance);
+  }
+
+  /** 幅優先でたどり、{@code distance}段目までに到達したテーブル（最後の段を除く）が持つ関連を、たどった順に集める */
+  private List<ForeignKeyEntity> relationsWithin(TableKey self, int distance) {
+    final Set<ForeignKeyEntity> relations = new LinkedHashSet<>();
+    final Set<TableKey> reached = new HashSet<>(Set.of(self));
+    List<TableKey> frontier = List.of(self);
+    for (int level = 1; level <= distance && !frontier.isEmpty(); level++) {
+      final List<TableKey> next = new ArrayList<>();
+      for (final TableKey current : frontier) {
+        final List<ForeignKeyEntity> touching =
+            new ArrayList<>(byKey.getOrDefault(current, List.of()));
+        touching.addAll(incomingByKey.getOrDefault(current, List.of()));
+        for (final ForeignKeyEntity relation : touching) {
+          relations.add(relation);
+          for (final TableKey end : List.of(relation.referenceTableKey(), relation.tableKey())) {
+            if (reached.add(end)) {
+              next.add(end);
+            }
+          }
+        }
+      }
+      frontier = next;
+    }
+    return List.copyOf(relations);
+  }
+
+  private static Set<TableKey> tablesOf(TableKey self, List<ForeignKeyEntity> relations) {
+    final Set<TableKey> tables = new HashSet<>(Set.of(self));
+    relations.forEach(
+        relation -> {
+          tables.add(relation.tableKey());
+          tables.add(relation.referenceTableKey());
+        });
+    return tables;
   }
 
   /**

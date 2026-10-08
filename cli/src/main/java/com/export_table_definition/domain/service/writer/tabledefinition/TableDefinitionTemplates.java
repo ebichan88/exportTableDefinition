@@ -8,6 +8,7 @@ import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
 import com.export_table_definition.domain.model.relation.DiagramColumn;
+import com.export_table_definition.domain.model.relation.DiagramNeighborhood;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.sidecar.TableAnnotation;
 import com.export_table_definition.domain.model.table.ColumnEntity;
@@ -17,6 +18,7 @@ import com.export_table_definition.domain.model.table.PartitionEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.domain.model.viewpoint.Viewpoint;
 import com.export_table_definition.domain.service.path.DocumentLocations;
 import com.export_table_definition.domain.service.writer.template.MarkdownTemplateSupport;
@@ -27,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 /** テーブル定義書き込みに利用するMarkdownのテンプレートを扱うクラス */
 public class TableDefinitionTemplates {
@@ -291,6 +292,59 @@ public class TableDefinitionTemplates {
   }
 
   /**
+   * 参照するテーブルセクション<br>
+   * ビューが参照するテーブル（ビューを含む）を掲載する。出力対象外のテーブルも、ビューが参照する事実として掲載する
+   *
+   * @param referencedTables ビューが参照するテーブル（スキーマ名・テーブル名の順）
+   * @return 対象が存在しない場合（ビューでない場合を含む）は空文字
+   */
+  public static String referencedTables(List<ViewReferenceEntity> referencedTables) {
+    if (referencedTables.isEmpty()) {
+      return "";
+    }
+    final String header =
+        """
+                ## 参照するテーブル
+
+                | No. | 参照先 | 区分 |
+                |:---|:---|:---|
+                """;
+    return tableSection(
+        referencedTables,
+        header,
+        (no, reference) ->
+            row(
+                no,
+                reference.referenceTableKey().qualifiedName(),
+                reference.referenceTableType().getName()));
+  }
+
+  /**
+   * 参照しているビューセクション<br>
+   * 自テーブル（ビューを含む）を参照している出力対象のビューを掲載する。テーブルを変更したときに影響を受けるビューを知るため
+   *
+   * @param referencingViews 自テーブルを参照しているビュー
+   * @return 対象が存在しない場合は空文字
+   */
+  public static String referencingViews(List<ViewReferenceEntity> referencingViews) {
+    if (referencingViews.isEmpty()) {
+      return "";
+    }
+    final String header =
+        """
+                ## 参照しているビュー
+
+                | No. | 参照元 | 区分 |
+                |:---|:---|:---|
+                """;
+    return tableSection(
+        referencingViews,
+        header,
+        (no, reference) ->
+            row(no, reference.tableKey().qualifiedName(), reference.tableType().getName()));
+  }
+
+  /**
    * 多重度のラベル表記は{@link com.export_table_definition.domain.model.relation.Cardinality}に集約している
    *
    * @return 1行分の文字列（改行を含まない）
@@ -344,40 +398,45 @@ public class TableDefinitionTemplates {
    * 自テーブルは全カラムを、関連テーブル（参照元・参照先）は描画する関連をつなぐカラムだけを箱に表示する。 関連テーブルのカラムはチャンク単位の分割取得の対象外のため、{@code
    * boxes}が別途取得した関連カラムを用いる
    *
-   * @param outgoingFks 自テーブルが参照している外部キー（自テーブル → 参照先）のリスト
-   * @param incomingFks 自テーブルを参照している外部キー（参照元 → 自テーブル）のリスト
+   * @param neighborhood 描く関連（描画距離以内のテーブルが持つ関連）
    */
   public static String erDiagram(
       TableEntity table,
       List<ColumnEntity> columns,
-      List<ForeignKeyEntity> outgoingFks,
-      List<ForeignKeyEntity> incomingFks,
+      DiagramNeighborhood neighborhood,
       DiagramBoxes boxes) {
     StringBuilder sb = new StringBuilder("## ER図").append(LINE_SEPARATOR_DOUBLE);
-    if (outgoingFks.isEmpty() && incomingFks.isEmpty()) {
+    final List<ForeignKeyEntity> drawnRelations = neighborhood.relations();
+    if (drawnRelations.isEmpty()) {
       return sb.append("関連するテーブルはありません。").append(LINE_SEPARATOR_DOUBLE).toString();
+    }
+    if (neighborhood.isShortened()) {
+      sb.append(
+              String.format(
+                  "関連するテーブルが多く、%d段先までを描画するとテーブル数が上限（erDiagramMaxNodes）を超えるため、%d段先までを描画しています。",
+                  neighborhood.requestedDistance(), neighborhood.distance()))
+          .append(LINE_SEPARATOR_DOUBLE);
     }
     final TableKey selfKey = TableKey.of(table);
     final String selfId = MermaidSupport.mermaidId(selfKey);
     final Set<TableKey> nodeKeys = new LinkedHashSet<>();
     nodeKeys.add(selfKey);
-    outgoingFks.forEach(fk -> nodeKeys.add(fk.referenceTableKey()));
-    incomingFks.forEach(fk -> nodeKeys.add(fk.tableKey()));
-    final List<ForeignKeyEntity> drawnRelations =
-        Stream.concat(outgoingFks.stream(), incomingFks.stream()).toList();
+    drawnRelations.forEach(
+        fk -> {
+          nodeKeys.add(fk.referenceTableKey());
+          nodeKeys.add(fk.tableKey());
+        });
     final Map<TableKey, String> labels = MermaidSupport.assignLabels(nodeKeys, boxes);
     sb.append("```mermaid").append(LINE_SEPARATOR).append("erDiagram").append(LINE_SEPARATOR);
     nodeKeys.forEach(
         key -> sb.append(MermaidSupport.aliasLine(MermaidSupport.mermaidId(key), labels.get(key))));
-    outgoingFks.forEach(
+    drawnRelations.forEach(
         fk ->
             sb.append(
                 MermaidSupport.relationLine(
-                    MermaidSupport.mermaidId(fk.referenceTableKey()), fk, selfId)));
-    incomingFks.forEach(
-        fk ->
-            sb.append(
-                MermaidSupport.relationLine(selfId, fk, MermaidSupport.mermaidId(fk.tableKey()))));
+                    MermaidSupport.mermaidId(fk.referenceTableKey()),
+                    fk,
+                    MermaidSupport.mermaidId(fk.tableKey()))));
     sb.append(
         MermaidSupport.attributeBlock(selfId, DiagramColumn.of(selfKey, columns, drawnRelations)));
     final Map<TableKey, List<DiagramColumn>> relationColumns =

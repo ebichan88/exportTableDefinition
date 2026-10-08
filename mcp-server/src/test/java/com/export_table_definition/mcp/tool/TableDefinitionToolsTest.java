@@ -11,6 +11,7 @@ import com.export_table_definition.mcp.catalog.FunctionEntry;
 import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SequenceEntry;
+import com.export_table_definition.mcp.catalog.TestCatalogs;
 import com.export_table_definition.mcp.catalog.TypeEntry;
 import com.export_table_definition.mcp.catalog.ViewpointEntry;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,7 +32,7 @@ class TableDefinitionToolsTest {
   private final TableDefinitionTools tools =
       new TableDefinitionTools(
           SchemaCatalog.of(
-                  List.of(new DatabaseEntry("testdb", "PostgreSQL")),
+                  List.of(new DatabaseEntry("testdb", "PostgreSQL", 16)),
                   List.of(
                       table("department").logicalName("部署").description("組織のマスタ").build(),
                       table("employee")
@@ -159,10 +160,10 @@ class TableDefinitionToolsTest {
   }
 
   @Test
-  @DisplayName("list_schemasは、DBごとにスキーマと、スキーマごとのオブジェクトの数を返す")
+  @DisplayName("list_schemasは、DBごとにDBMS種別・メジャーバージョン・スキーマと、スキーマごとのオブジェクトの数を返す")
   void listSchemas() throws Exception {
     assertEquals(
-        "{\"databases\":[{\"name\":\"testdb\",\"dbms\":\"PostgreSQL\",\"schemas\":["
+        "{\"databases\":[{\"name\":\"testdb\",\"dbms\":\"PostgreSQL\",\"majorVersion\":16,\"schemas\":["
             + "{\"name\":\"archive\",\"tables\":1,\"views\":0,\"materializedViews\":0,"
             + "\"functions\":0,\"sequences\":0,\"types\":0},"
             + "{\"name\":\"sample\",\"tables\":4,\"views\":0,\"materializedViews\":0,"
@@ -306,6 +307,64 @@ class TableDefinitionToolsTest {
         "{\"schema\":\"sample\",\"name\":\"department\","
             + "\"viewpoints\":[{\"id\":\"org\",\"name\":\"組織\"}]}",
         text(call("get_table", Map.of("table", "department"))));
+  }
+
+  @Test
+  @DisplayName("get_tableは、ビューの参照するテーブルに加え、テーブルを参照しているビューをreferencedByViewsで返す。sectionsで絞り込める")
+  void getTableWithViewReferences() throws Exception {
+    final TableDefinitionTools viewTools =
+        new TableDefinitionTools(
+            TestCatalogs.of(
+                List.of(
+                    table("orders").build(),
+                    table("v_orders")
+                        .type("view")
+                        .referencedTable("orders")
+                        .json(
+                            "{\"schema\":\"sample\",\"name\":\"v_orders\",\"type\":\"view\","
+                                + "\"referencedTables\":[{\"schema\":\"sample\",\"name\":\"orders\",\"type\":\"table\"}]}")
+                        .build())));
+    final SyncToolSpecification getTable =
+        viewTools.specifications().stream()
+            .filter(candidate -> candidate.tool().name().equals("get_table"))
+            .findFirst()
+            .orElseThrow();
+
+    assertEquals(
+        "{\"schema\":\"sample\",\"name\":\"orders\","
+            + "\"referencedByViews\":[{\"schema\":\"sample\",\"name\":\"v_orders\",\"type\":\"view\"}]}",
+        text(
+            getTable
+                .callHandler()
+                .apply(
+                    null,
+                    CallToolRequest.builder("get_table")
+                        .arguments(Map.of("table", "orders"))
+                        .build())));
+    assertEquals(
+        "{\"schema\":\"sample\",\"name\":\"orders\"}",
+        text(
+            getTable
+                .callHandler()
+                .apply(
+                    null,
+                    CallToolRequest.builder("get_table")
+                        .arguments(Map.of("table", "orders", "sections", List.of("columns")))
+                        .build())));
+    assertEquals(
+        "[{\"schema\":\"sample\",\"name\":\"orders\",\"type\":\"table\"}]",
+        objectMapper
+            .readTree(
+                text(
+                    getTable
+                        .callHandler()
+                        .apply(
+                            null,
+                            CallToolRequest.builder("get_table")
+                                .arguments(Map.of("table", "v_orders"))
+                                .build())))
+            .get("referencedTables")
+            .toString());
   }
 
   @Test

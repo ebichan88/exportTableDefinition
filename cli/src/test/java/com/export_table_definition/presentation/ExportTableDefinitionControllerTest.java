@@ -70,6 +70,7 @@ public class ExportTableDefinitionControllerTest {
         outputPath,
         chunkSize,
         erDiagramMaxNodes,
+        1,
         rmDist);
   }
 

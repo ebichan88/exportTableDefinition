@@ -61,7 +61,11 @@ public class ExportTableDefinitionUsecase {
         targets,
         List.of(
             markdownSinkFactory.create(
-                outputBaseDir, NodeLimit.of(request.erDiagramMaxNodes()), diagramBoxes),
+                outputBaseDir,
+                NodeLimit.of(request.erDiagramMaxNodes()),
+                request.erDiagramDistance(),
+                diagramBoxes,
+                targets.foreignKeys()),
             snapshotSinkFactory.create(outputBaseDir),
             insightSinkFactory.create(outputBaseDir)),
         request.chunkSize());

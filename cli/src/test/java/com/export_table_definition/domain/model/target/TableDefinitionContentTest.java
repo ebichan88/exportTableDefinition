@@ -15,6 +15,8 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.Triggers;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
+import com.export_table_definition.domain.model.table.ViewReferences;
 import com.export_table_definition.domain.model.viewpoint.Viewpoints;
 import com.export_table_definition.testsupport.EntityFixtures;
 import com.export_table_definition.testsupport.ForeignKeyFixtures;
@@ -36,7 +38,7 @@ public class TableDefinitionContentTest {
   @Test
   @DisplayName("assemble: 対象テーブルに属する情報のみを抽出し、他テーブルの情報は含まれない")
   void testAssembleExtractsOnlyTargetTableInformation() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH);
+    var baseInfo = new BaseInfoEntity("testdb", "unused", 16, LocalDate.EPOCH);
     var target = newTable("public", "orders");
 
     var ownColumn = EntityFixtures.column("public", "orders", "id", "int", true);
@@ -71,6 +73,13 @@ public class TableDefinitionContentTest {
                 TableKey.of("public", "customers"),
                 new TableAnnotation("顧客テーブル", "", java.util.Map.of())));
 
+    var viewToOrders =
+        new ViewReferenceEntity(
+            "public", "v_orders", TableType.VIEW, "public", "orders", TableType.TABLE);
+    var viewToCustomers =
+        new ViewReferenceEntity(
+            "public", "v_orders", TableType.VIEW, "public", "customers", TableType.TABLE);
+
     TableDefinitionContent content =
         TableDefinitionContent.assemble(
             baseInfo,
@@ -78,6 +87,7 @@ public class TableDefinitionContentTest {
             foreignKeys,
             triggers,
             Partitions.of(List.of()),
+            ViewReferences.of(List.of(viewToOrders, viewToCustomers)),
             annotations,
             Viewpoints.empty());
 
@@ -90,6 +100,8 @@ public class TableDefinitionContentTest {
     assertEquals(List.of(outgoingFk), content.foreignKeys());
     assertEquals(List.of(incomingFk), content.incomingRelations());
     assertEquals(List.of(ownTrigger), content.triggers());
+    assertEquals(List.of(viewToOrders), content.referencingViews());
+    assertEquals(List.of(), content.referencedTables());
 
     // otherテーブルの情報が紛れ込んでいないことの確認
     assertFalse(content.columns().contains(otherColumn));
@@ -98,7 +110,7 @@ public class TableDefinitionContentTest {
   @Test
   @DisplayName("assemble: 関連する情報が存在しない場合は空リストになる")
   void testAssembleWithNoRelatedInformationReturnsEmptyLists() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH);
+    var baseInfo = new BaseInfoEntity("testdb", "unused", 16, LocalDate.EPOCH);
     var target = newTable("public", "empty_table");
 
     TableDefinitionContent content =
@@ -108,6 +120,7 @@ public class TableDefinitionContentTest {
             ForeignKeys.of(List.of()),
             Triggers.of(List.of()),
             Partitions.of(List.of()),
+            ViewReferences.of(List.of()),
             Annotations.empty(),
             Viewpoints.empty());
 
@@ -134,11 +147,12 @@ public class TableDefinitionContentTest {
 
     var content =
         TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH),
+            new BaseInfoEntity("testdb", "unused", 16, LocalDate.EPOCH),
             new TableDetail(table, List.of(), List.of(), List.of()),
             foreignKeys,
             Triggers.of(List.of()),
             Partitions.of(List.of()),
+            ViewReferences.of(List.of()),
             Annotations.empty(),
             Viewpoints.empty());
 
@@ -147,33 +161,9 @@ public class TableDefinitionContentTest {
   }
 
   @Test
-  @DisplayName("outgoingRelations: ER図用に物理外部キーと論理リレーションを結合して返す")
-  void testOutgoingRelationsCombinesBothTypes() {
-    var table = newTable("public", "orders");
-    var physical =
-        ForeignKeyFixtures.physical(
-            "public", "orders", "fk_orders_customer", "public", "customers");
-    var logical =
-        ForeignKeyFixtures.logical("public", "orders", "rel_orders_staff", "public", "staff");
-    var foreignKeys = ForeignKeys.of(List.of(physical, logical));
-
-    var content =
-        TableDefinitionContent.assemble(
-            new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH),
-            new TableDetail(table, List.of(), List.of(), List.of()),
-            foreignKeys,
-            Triggers.of(List.of()),
-            Partitions.of(List.of()),
-            Annotations.empty(),
-            Viewpoints.empty());
-
-    assertEquals(List.of(physical, logical), content.outgoingRelations());
-  }
-
-  @Test
   @DisplayName("assemble: パーティション表には自テーブルのパーティションのみが設定される")
   void testAssembleExtractsOwnPartitions() {
-    var baseInfo = new BaseInfoEntity("testdb", "unused", LocalDate.EPOCH);
+    var baseInfo = new BaseInfoEntity("testdb", "unused", 16, LocalDate.EPOCH);
     var sales =
         new TableEntity("testdb", "public", "", "sales", TableType.TABLE, "", "RANGE (sold_on)");
     var own =
@@ -190,6 +180,7 @@ public class TableDefinitionContentTest {
             ForeignKeys.of(List.of()),
             Triggers.of(List.of()),
             Partitions.of(List.of(own, other)),
+            ViewReferences.of(List.of()),
             Annotations.empty(),
             Viewpoints.empty());
 

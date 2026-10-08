@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/10/04|
+|PostgreSQL 16|testdb|2026/10/08|
 
 ## テーブル説明
 
@@ -54,6 +54,12 @@
 | No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |
 |:---|:---|:---|:---|:---|:---|:---|
 |1|sample.employee|department_id|department_id|employee_department_id_fkey|1対多|物理|
+
+## 参照しているビュー
+
+| No. | 参照元 | 区分 |
+|:---|:---|:---|
+|1|sample.employee_directory_view|view|
 
 ## トリガー情報
 

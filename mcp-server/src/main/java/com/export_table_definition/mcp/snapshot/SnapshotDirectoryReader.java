@@ -75,7 +75,8 @@ public final class SnapshotDirectoryReader {
     final List<TypeEntry> types = new ArrayList<>();
     for (final Path databaseDirectory : databaseDirectories) {
       final DatabaseLine databaseLine = readDatabase(databaseDirectory.resolve(DATABASE_FILE_NAME));
-      databases.add(new DatabaseEntry(databaseLine.name(), databaseLine.dbms()));
+      databases.add(
+          new DatabaseEntry(databaseLine.name(), databaseLine.dbms(), databaseLine.majorVersion()));
       final String database = databaseLine.name();
       for (final Path schemaDirectory : subdirectories(databaseDirectory)) {
         tables.addAll(
@@ -195,7 +196,7 @@ public final class SnapshotDirectoryReader {
 
   /** {@code database.json}のうち、読み込みに使う項目 */
   @JsonIgnoreProperties(ignoreUnknown = true)
-  record DatabaseLine(Integer formatVersion, String name, String dbms) {}
+  record DatabaseLine(Integer formatVersion, String name, String dbms, Integer majorVersion) {}
 
   /** スキーマに属するオブジェクトの1行。schema・nameは必須 */
   interface NamedLine {
@@ -216,7 +217,8 @@ public final class SnapshotDirectoryReader {
       List<ColumnLine> columns,
       List<RelationLine> foreignKeys,
       List<RelationLine> logicalRelations,
-      List<TriggerLine> triggers)
+      List<TriggerLine> triggers,
+      List<ViewReferenceLine> referencedTables)
       implements NamedLine {
 
     TableEntry toEntry(String database, String json) {
@@ -230,11 +232,23 @@ public final class SnapshotDirectoryReader {
           relations(foreignKeys),
           relations(logicalRelations),
           triggers == null ? null : triggers.stream().map(TriggerLine::toEntry).toList(),
+          referencedTables == null
+              ? null
+              : referencedTables.stream().map(line -> line.toKey(database)).toList(),
           json);
     }
 
     private static List<RelationEntry> relations(List<RelationLine> lines) {
       return lines == null ? null : lines.stream().map(RelationLine::toEntry).toList();
+    }
+  }
+
+  /** ビューが参照するテーブルのうち、参照しているビューの逆引きに使う項目 */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  record ViewReferenceLine(String schema, String name) {
+
+    ObjectKey toKey(String database) {
+      return new ObjectKey(database, schema, name);
     }
   }
 
