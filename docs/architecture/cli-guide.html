@@ -253,12 +253,12 @@ pre.tree { line-height: 1.55; }
   <h1>cli 読解ガイド</h1>
   <p class="lead">DBのカタログ（テーブル・カラム・制約・外部キー等のメタ情報）を読み、人が読むMarkdownのテーブル定義書・ER図と、機械が読むスキーマのスナップショット（JSON Lines）を出力するコマンドラインツールです。<code>--check</code>を付けると、DBとコミット済みのスナップショットの差分を検知します。このガイドは、入出力と使っている技術の事前知識から始めて、実行の流れ、データの持ち方、中心のロジック、ソースごとの役割と繋がりまでを順に説明します。</p>
   <ul class="facts">
-    <li><b>181 ファイル</b>main配下 11,240行（package-info 43を含む）</li>
+    <li><b>188 ファイル</b>main配下 12,285行（package-info 43を含む）</li>
     <li><b>4層＋2</b>presentation・application・domain・infrastructure と層の外のconfig・shared</li>
     <li><b>3 出力形式</b>Markdown・スナップショット・参考情報（insights）</li>
     <li><b>2 DBMS</b>PostgreSQL・Oracle。SQLはmapper XMLに分離</li>
   </ul>
-  <p class="small muted">mainブランチ（<code>57f43c8</code>。PR #86まで）を読んで作成。コンソールの出力例は、ビルドしたjarを、<code>docs/sample/postgres/ddl.sql</code>を流し込んだPostgreSQL 16に対して実行して採取したものです（長いパスは短く書き換えています）。Markdown・JSONの例は、コミット済みのベースライン<code>docs/sample/postgres/output</code>から引用しています。テストは単体76ファイル 11,482行、結合7ファイル 1,525行です。</p>
+  <p class="small muted">mainブランチ（<code>5af8e5f</code>。PR #109まで）を読んで作成。コンソールの出力例は、ビルドしたjarを、<code>docs/sample/postgres/ddl.sql</code>を流し込んだPostgreSQL 16に対して実行して採取したものです（長いパスは短く書き換えています）。Markdown・JSONの例は、コミット済みのベースライン<code>docs/sample/postgres/output</code>から引用しています。テストは単体82ファイル 12,958行、結合7ファイル 1,658行です。</p>
 </header>
 
 <div class="note key">
@@ -300,7 +300,7 @@ pre.tree { line-height: 1.55; }
       <text x="24" y="226" class="d-t-s">database：接続情報</text>
       <text x="24" y="244" class="d-t-s">（パスワードは環境変数で渡す）</text>
       <text x="24" y="264" class="d-t-s">target・output・annotations：</text>
-      <text x="24" y="282" class="d-t-s">出力対象・出力先など7項目</text>
+      <text x="24" y="282" class="d-t-s">出力対象・出力先など8項目</text>
       <rect x="10" y="304" width="270" height="50" rx="6" class="d-box-soft"/>
       <text x="24" y="325" class="d-t-b">CLI引数</text>
       <text x="24" y="344" class="d-t-s">--check・--rm-dist・--help・--version・--config・各設定の上書き</text>
@@ -433,11 +433,11 @@ viewpoints:
     <tr><td>Java 21</td><td>record・sealed interface・パターンマッチ・テキストブロック</td><td>コード全体</td></tr>
     <tr><td>Google Guice 7</td><td>DIコンテナ。2段階で組み立てる。<code>@Inject</code>は<code>jakarta.inject</code>のもの</td><td><code>config.module</code>・<code>ExportTableDefinition</code></td></tr>
     <tr><td>MyBatis 3.5</td><td>SQLをXMLに書き、結果をDTO（record）に詰める</td><td><code>resources/mapper</code>・<code>infrastructure.db</code></td></tr>
-    <tr><td>SnakeYAML 2.3</td><td>サイドカーYAMLの読み込み</td><td><code>SidecarYamlRepository</code></td></tr>
+    <tr><td>SnakeYAML 2.7</td><td>サイドカーYAMLの読み込み</td><td><code>SidecarYamlRepository</code></td></tr>
     <tr><td>Jackson 2</td><td>スナップショット・参考情報のJSON化</td><td><code>JacksonSnapshotSerializer</code></td></tr>
     <tr><td>Mermaid</td><td>ER図の記法。GitHubがMarkdownの中で図に描く</td><td><code>ErDiagramTemplates</code>・<code>MermaidSupport</code></td></tr>
     <tr><td>log4j2</td><td>ログファイルと、警告のコンソール出力</td><td><code>log4j2.xml</code></td></tr>
-    <tr><td>JUnit 5・ArchUnit・Testcontainers</td><td>単体テスト・構造の規約の検査・Docker上の実DBでの結合テスト</td><td><code>cli/src/test</code>・<code>cli/src/integrationTest</code></td></tr>
+    <tr><td>JUnit 6・ArchUnit・Testcontainers</td><td>単体テスト・構造の規約の検査・Docker上の実DBでの結合テスト</td><td><code>cli/src/test</code>・<code>cli/src/integrationTest</code></td></tr>
   </tbody>
 </table>
 </div>
@@ -578,7 +578,7 @@ viewpoints:
       <text x="400" y="182" text-anchor="middle" class="d-t-acc">List&lt;TableEntity&gt; を返す</text>
     </svg>
   </div>
-  <figcaption><b>図3 1回の取得の通り道。</b>リポジトリの11個のメソッドは、どれもこの形で1つ以上のSQLを実行します（<code>selectDatabase</code>だけは1行を返す<code>selectOne</code>）。DTOからエンティティへの変換で、値が無いことを空文字へ、カンマ区切りの列名をリストへ、という具合に値の形をドメインの表現へ揃えます（8.3節）。</figcaption>
+  <figcaption><b>図3 1回の取得の通り道。</b>リポジトリの12個のメソッドは、どれもこの形で1つ以上のSQLを実行します（<code>selectDatabase</code>だけは1行を返す<code>selectOne</code>）。DTOからエンティティへの変換で、値が無いことを空文字へ、カンマ区切りの列名をリストへ、という具合に値の形をドメインの表現へ揃えます（8.3節）。</figcaption>
 </figure>
 
 <p>読むときに戸惑いやすい点が4つあります。</p>
@@ -601,11 +601,12 @@ baseSqlPath = <span class="k">"com.export_table_definition.domain.repository."</
 <table>
   <thead><tr><th>リポジトリのメソッド</th><th>SQLのID</th><th>DTO → エンティティ</th><th>呼ぶ場所</th></tr></thead>
   <tbody>
-    <tr><td><code>selectDatabase</code></td><td><code>selectDatabaseInfo</code></td><td><code>DatabaseDto</code> → <code>DatabaseEntity</code></td><td><code>fetchTargets</code></td></tr>
+    <tr><td><code>selectDatabase</code></td><td><code>selectDatabaseInfo</code></td><td><code>DatabaseDto</code> → <code>DatabaseEntity</code>（メジャーバージョンを含む）</td><td><code>fetchTargets</code></td></tr>
     <tr><td><code>selectTableList</code></td><td><code>selectTableInfo</code></td><td><code>TableDto</code> → <code>TableEntity</code>（区分をenumへ）</td><td><code>fetchTargets</code></td></tr>
     <tr><td><code>selectForeignKeyList</code></td><td><code>selectForeignKeyInfo</code></td><td><code>ForeignKeyDto</code> → <code>ForeignKeyEntity</code>（多重度を判定）</td><td><code>fetchTargets</code></td></tr>
     <tr><td><code>selectTriggerList</code></td><td><code>selectTriggerInfo</code></td><td><code>TriggerDto</code> → <code>TriggerEntity</code>（イベントを分解）</td><td><code>fetchTargets</code>（target.objectsにtrigger）</td></tr>
     <tr><td><code>selectPartitionList</code></td><td><code>selectPartitionInfo</code></td><td><code>PartitionDto</code> → <code>PartitionEntity</code></td><td><code>fetchTargets</code></td></tr>
+    <tr><td><code>selectViewReferenceList</code></td><td><code>selectViewReferenceInfo</code></td><td><code>ViewReferenceDto</code> → <code>ViewReferenceEntity</code>（区分をenumへ）</td><td><code>fetchTargets</code>（出力対象のビューの分へ絞る）</td></tr>
     <tr><td><code>selectFunctionList</code></td><td><code>selectFunctionInfo</code></td><td><code>FunctionDto</code> → <code>FunctionEntity</code>（本体なし）</td><td><code>fetchTargets</code>（function）</td></tr>
     <tr><td><code>selectSequenceList</code></td><td><code>selectSequenceInfo</code></td><td><code>SequenceDto</code> → <code>SequenceEntity</code></td><td><code>fetchTargets</code>（sequence）</td></tr>
     <tr><td><code>selectTypeList</code></td><td><code>selectTypeInfo</code></td><td><code>TypeDto</code> → <code>TypeEntity</code></td><td><code>fetchTargets</code>（type）</td></tr>
@@ -615,7 +616,7 @@ baseSqlPath = <span class="k">"com.export_table_definition.domain.repository."</
   </tbody>
 </table>
 </div>
-<p class="small muted">実行したSQLとその結果の行は、log4j2の設定でログファイル（<code>var/log/exportTableDefinition.log</code>）にすべて残ります。Oracle用のmapper（794行）は、LONG型の列（ビューのソース等）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（636行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
+<p class="small muted">実行したSQL（DEBUG）と取得した行（TRACE）は、MyBatisがmapperの名前空間（このツールのパッケージ配下）のロガーへ出します。既定のレベルはINFOなのでログには残らず、調べるときだけ<code>-Dexport-table-definition.log.level=debug</code>で上げます（2.6節）。Oracle用のmapper（833行）は、LONG型の列（ビューのソース等）やDBのバージョン（<code>DBMS_DB_VERSION</code>）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（668行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
 
 <h3>2.4 Mermaid の erDiagram</h3>
 <p>ER図は、Markdownの中に書くMermaid記法のテキストです。GitHubは<code>```mermaid</code>のコードブロックを図として描画します。サンプルの<code>department</code>の定義書に出力されたER図をそのまま示します。</p>
@@ -653,14 +654,27 @@ erDiagram
   <li><strong>日本語はそのまま</strong>：非ASCII文字をエスケープしない（git diffで読めるように）。</li>
 </ul>
 <pre><code><span class="c">// snapshot/testdb/database.json</span>
-{"formatVersion":1,"name":"testdb","dbms":"PostgreSQL"}</code></pre>
+{"formatVersion":1,"name":"testdb","dbms":"PostgreSQL","majorVersion":16}</code></pre>
+<p class="small muted">DBの版はメジャーバージョンだけを持ちます（<code>DatabaseEntity.majorVersion</code>）。マイナー版を更新したときに、<code>--check</code>が差分を報告しないようにするためです。</p>
 <p class="small muted">domain層はJacksonに依存しません。変換のインタフェース<code>SnapshotSerializer</code>をdomainに置き、Jacksonを使う実装をinfrastructureに置いています。</p>
 
 <h3>2.6 log4j2 と ArchUnit</h3>
 <ul>
-  <li><strong>log4j2</strong>（<code>log4j2.xml</code>）：すべてのログを、実行したディレクトリからの相対の<code>var/log/exportTableDefinition.log</code>へTRACEまで書く。このツール（<code>com.export_table_definition</code>）のWARNだけは、標準エラーへも<code>[warn]:</code>付きで出す。処理結果の<code>[result]:</code>はロガーを通さず<code>System.out</code>へ直接出す。</li>
+  <li><strong>log4j2</strong>（<code>log4j2.xml</code>）：ログを、実行したディレクトリからの相対の<code>var/log/exportTableDefinition.log</code>へ書く。既定のレベルは、このツール（<code>com.export_table_definition</code>）がINFO、ライブラリがWARN。INFOには、接続先のDBMS・ドライバの版、件数、処理時間のような、1回の実行で数件に収まる調査の起点だけを出す。MyBatisは実行したSQL（DEBUG）と取得した行（TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定では残さず、調べるときに<code>-Dexport-table-definition.log.level=debug</code>（または<code>trace</code>）で上げる。このツールのWARNだけは、標準エラーへも<code>[warn]:</code>付きで出す。処理結果の<code>[result]:</code>はロガーを通さず<code>System.out</code>へ直接出す。</li>
+  <li><strong>ログに出さないもの</strong>：パスワード、接続URL、CLI引数・設定値の値、設定ファイル・サイドカーYAMLの内容を引用するライブラリの例外メッセージ。メッセージの改行は<code>%enc{%m}{CRLF}</code>で<code>\n</code>・<code>\r</code>へ置き換え、DB由来の文字列（関数の定義等）で偽のログ行を作らせない。</li>
   <li><strong>ArchUnit</strong>（<code>ArchitectureTest</code>）：レイヤーの依存方向や置き場所などの規約を、単体テストとして検査する。違反するとビルドが失敗する。規約の一覧は3章。</li>
 </ul>
+<p>サンプルDBに対して通常実行したときの、既定のレベルのログファイルの全体です（日時とスレッド名を省き、長いパスを短くしています）。</p>
+<pre><code>INFO  MyBatisSqlSessionFactories Initializing SqlSessionFactory from mybatis-config.xml
+INFO  MyBatisSqlSessionFactories SqlSessionFactory initialization completed.
+INFO  DatabaseTypeDetector Connected to the database. [product=PostgreSQL 16.15 (…), driver=PostgreSQL JDBC Driver 42.7.13]
+INFO  ExportTableDefinitionController [START] exportTableDefinition
+INFO  SidecarYamlRepository Loaded sidecar. [annotations=…/annotations.sample.yml, tableCount=2, relationCount=1, viewpointCount=3]
+INFO  SchemaExportPipeline Skipping orphan table annotation check because the output target is filtered.
+INFO  SchemaExportPipeline Merged logical relations declared in the sidecar. [relationCount=1]
+INFO  SchemaExportPipeline Exported schema objects. [tables=14, functions=8, sequences=8, types=3, triggers=5]
+INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMillis=498]</code></pre>
+<p class="small muted">メッセージは英語で要旨を先に書き、値は末尾の<code>[key=value, …]</code>にまとめる、というのがこのリポジトリのログの書式です（<code>AGENTS.md</code>の「ログ」）。</p>
 
 <!-- ============================================================ -->
 <h2 id="overview"><span class="n">3</span>全体像と読む順</h2>
@@ -674,7 +688,7 @@ erDiagram
         <marker id="g4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
       </defs>
       <rect x="300" y="10" width="320" height="60" rx="6" class="d-box"/>
-      <text x="460" y="34" text-anchor="middle" class="d-t-b">エントリーポイント（直下・5ファイル）</text>
+      <text x="460" y="34" text-anchor="middle" class="d-t-b">エントリーポイント（直下・6ファイル）</text>
       <text x="460" y="56" text-anchor="middle" class="d-t-s">main・CLI引数・設定・出力先の検証</text>
 
       <rect x="30" y="110" width="250" height="88" rx="6" class="d-box"/>
@@ -690,13 +704,13 @@ erDiagram
       <text x="46" y="312" class="d-t-ms">SchemaExportPipeline</text>
 
       <rect x="30" y="362" width="250" height="96" rx="6" class="d-box-soft"/>
-      <text x="46" y="384" class="d-t-s">config（6ファイル）</text>
+      <text x="46" y="384" class="d-t-s">config（7ファイル）</text>
       <text x="46" y="406" class="d-t-ms">ConfigFile</text>
       <text x="46" y="424" class="d-t-ms">ExportTableDefinitionModule</text>
       <text x="46" y="442" class="d-t-ms">DatabaseDependentModule</text>
 
       <rect x="340" y="100" width="360" height="360" rx="8" class="d-box-acc"/>
-      <text x="356" y="122" class="d-t-s">domain（119ファイル・7,606行）</text>
+      <text x="356" y="122" class="d-t-s">domain（123ファイル・8,034行）</text>
       <rect x="356" y="134" width="328" height="110" rx="5" class="d-box"/>
       <text x="370" y="156" class="d-t-b">domain.model（10パッケージ）</text>
       <text x="370" y="176" class="d-t-s">table・relation・target・sidecar</text>
@@ -714,7 +728,7 @@ erDiagram
       <text x="370" y="430" class="d-t-acc">writer：Markdownの段取りとテンプレート</text>
 
       <rect x="740" y="100" width="170" height="250" rx="6" class="d-box"/>
-      <text x="754" y="122" class="d-t-s">infrastructure（32）</text>
+      <text x="754" y="122" class="d-t-s">infrastructure（33）</text>
       <text x="754" y="150" class="d-t-b">db</text>
       <text x="754" y="168" class="d-t-s">MyBatis・DTO・接続</text>
       <text x="754" y="196" class="d-t-b">file</text>
@@ -744,20 +758,20 @@ erDiagram
 <table>
   <thead><tr><th>層・パッケージ</th><th>ファイル数</th><th>行数</th><th>ひとことで</th></tr></thead>
   <tbody>
-    <tr><td>エントリーポイント（直下）</td><td class="num">5</td><td class="num">651</td><td><code>main</code>。CLI引数・設定・出力先の検証と、DIコンテナの組み立て</td></tr>
-    <tr><td><code>presentation</code>（<code>.dto</code>・<code>.type</code>）</td><td class="num">10</td><td class="num">422</td><td>ユースケースを呼んで結果を文面にする。失敗の報告、終了コード</td></tr>
-    <tr><td><code>application</code></td><td class="num">7</td><td class="num">551</td><td>2つのユースケースと、両者が共有する取得・書き出しの段取り</td></tr>
-    <tr><td><code>domain.model</code>（10パッケージ）</td><td class="num">70</td><td class="num">3,217</td><td>エンティティ・集合・値オブジェクトと、それらが持つルール</td></tr>
-    <tr><td><code>domain.repository</code></td><td class="num">4</td><td class="num">149</td><td>DB・サイドカーYAML・ファイルとのやり取りのインタフェース</td></tr>
-    <tr><td><code>domain.service</code>（writer以外）</td><td class="num">21</td><td class="num">1,708</td><td>出力形式ごとのSink、突き合わせ、配置の規則、スナップショットの書き込み・比較</td></tr>
-    <tr><td><code>domain.service.writer</code></td><td class="num">23</td><td class="num">2,530</td><td>Markdownの段取り（Writer）と組み立て（Templates）</td></tr>
-    <tr><td><code>infrastructure</code></td><td class="num">32</td><td class="num">1,755</td><td>MyBatis・DTO・接続、ファイル、サイドカーYAML、パス、Jackson</td></tr>
-    <tr><td><code>config</code>（<code>.module</code>）</td><td class="num">6</td><td class="num">215</td><td>設定ファイルの読み込みと、Guiceのモジュール</td></tr>
+    <tr><td>エントリーポイント（直下）</td><td class="num">6</td><td class="num">959</td><td><code>main</code>。CLI引数・設定・出力先の検証と、DIコンテナの組み立て。<code>--help</code>・<code>--version</code>の表示</td></tr>
+    <tr><td><code>presentation</code>（<code>.dto</code>・<code>.type</code>）</td><td class="num">10</td><td class="num">438</td><td>ユースケースを呼んで結果を文面にする。失敗の報告、終了コード</td></tr>
+    <tr><td><code>application</code></td><td class="num">7</td><td class="num">589</td><td>2つのユースケースと、両者が共有する取得・書き出しの段取り</td></tr>
+    <tr><td><code>domain.model</code>（10パッケージ）</td><td class="num">73</td><td class="num">3,387</td><td>エンティティ・集合・値オブジェクトと、それらが持つルール</td></tr>
+    <tr><td><code>domain.repository</code></td><td class="num">4</td><td class="num">160</td><td>DB・サイドカーYAML・ファイルとのやり取りのインタフェース</td></tr>
+    <tr><td><code>domain.service</code>（writer以外）</td><td class="num">22</td><td class="num">1,805</td><td>出力形式ごとのSink、突き合わせ、配置の規則（DB由来の名前を安全なパスにする）、スナップショットの書き込み・比較</td></tr>
+    <tr><td><code>domain.service.writer</code></td><td class="num">23</td><td class="num">2,680</td><td>Markdownの段取り（Writer）と組み立て（Templates）</td></tr>
+    <tr><td><code>infrastructure</code></td><td class="num">33</td><td class="num">1,880</td><td>MyBatis・DTO・接続、ファイル、サイドカーYAML、パス、Jackson</td></tr>
+    <tr><td><code>config</code>（<code>.module</code>）</td><td class="num">7</td><td class="num">345</td><td>設定ファイルの読み込み（YAMLの構文誤りの文言を含む）と、Guiceのモジュール</td></tr>
     <tr><td><code>shared.exception</code></td><td class="num">2</td><td class="num">40</td><td>利用者が直せる誤りを表す例外</td></tr>
   </tbody>
 </table>
 </div>
-<p class="small muted">行数は空行・コメントを含みます。表の合計は180ファイルで、<code>domain</code>直下のpackage-info（1ファイル・2行）を含めると181ファイル・11,240行です。コードの3分の2がdomainで、その3分の1（2,530行）がMarkdownの組み立てです。</p>
+<p class="small muted">行数は空行・コメントを含みます。表の合計は187ファイルで、<code>domain</code>直下のpackage-info（1ファイル・2行）を含めると188ファイル・12,285行です。コードの3分の2がdomainで、その3分の1（2,680行）がMarkdownの組み立てです。</p>
 
 <h3>構造の規約（ArchitectureTestが検査するもの）</h3>
 <p>次の規約はArchUnitの単体テストで検査され、破るとビルドが失敗します。違反したら、テストを緩めずに依存や置き場所のほうを直す、というのがこのリポジトリの方針です（<code>AGENTS.md</code>）。</p>
@@ -769,6 +783,7 @@ erDiagram
     <tr><td><code>domain.model</code>の循環</td><td>概念ごとのパッケージ同士が循環して依存しない（向きは<a href="./domain-model.md">domain-model.md</a>の図）</td></tr>
     <tr><td><code>shared</code></td><td>例外だけを置き、JDK以外に依存しない</td></tr>
     <tr><td>ファイルI/O</td><td>application・domainは<code>java.nio.file.Files</code>を直接使わない（<code>FileRepository</code>を通す）</td></tr>
+    <tr><td>出力先のパス</td><td><code>Path.resolve</code>・<code>resolveSibling</code>を呼ぶのは<code>infrastructure.path</code>だけ（DB由来の名前を含むパスを、出力先の外を指さないことを確かめる<code>OutputPathResolver</code>の実装でだけ組み立てる。10章）</td></tr>
     <tr><td>現在日時</td><td>引数なしの<code>now()</code>を呼ばない（DIで受け取る<code>Clock</code>から求める。テストで日付を固定するため）</td></tr>
     <tr><td>Guice</td><td><code>@Inject</code>は<code>jakarta.inject</code>のもの。Guiceに依存するのはエントリーポイントとconfigだけ</td></tr>
     <tr><td>接尾辞と置き場所</td><td><code>…Entity</code>→<code>domain.model</code>、<code>…Dto</code>→<code>infrastructure.db.repository.dto</code>か<code>presentation.dto</code>、<code>…Templates</code>→<code>domain.service.writer</code>、<code>…Writer</code>→<code>domain.service</code>、<code>…Locations</code>→<code>domain.service.path</code>、<code>…Usecase</code>・<code>…Request</code>→<code>application</code></td></tr>
@@ -800,14 +815,14 @@ erDiagram
 <h3>おすすめの読む順</h3>
 <p>上から順に読むと、外側（起動と入口）から内側（ルール）へ進めます。</p>
 <ol class="steps">
-  <li><div><code>ExportTableDefinition</code>（139行）：<code>main</code>→<code>run</code>→<code>createInjector</code>→<code>createController</code>。処理全体の骨格です（4章）。</div></li>
-  <li><div><code>ExportTableDefinitionController</code>（54行）と2つのユースケース（81行・64行）：2つのモードの違いが「どのSinkを渡すか」だけだと分かります。</div></li>
-  <li><div><code>SchemaExportPipeline</code>（304行）：取得の順序と、スキーマ・チャンク単位の分割。6章の図と合わせて読むと速いです。</div></li>
+  <li><div><code>ExportTableDefinition</code>（165行）：<code>main</code>→<code>run</code>→<code>createInjector</code>→<code>createController</code>。処理全体の骨格です（4章）。</div></li>
+  <li><div><code>ExportTableDefinitionController</code>（70行）と2つのユースケース（85行・64行）：2つのモードの違いが「どのSinkを渡すか」だけだと分かります。</div></li>
+  <li><div><code>SchemaExportPipeline</code>（335行）：取得の順序と、スキーマ・チャンク単位の分割。6章の図と合わせて読むと速いです。</div></li>
   <li><div><code>ExportSink</code>（47行）と3つの<code>…SinkFactory</code>：出力形式ごとに「いつ何を書くか」（6章の表）。</div></li>
   <li><div><code>domain.model.target</code>：<code>ExportTargets</code>・<code>TableDefinitionContent</code>・<code>TableScope</code>。取得したデータを組み立てる単位です（8章）。</div></li>
   <li><div><code>domain.model.table</code>・<code>relation</code>：<code>TableKey</code>・<code>ForeignKeys</code>・<code>ForeignKeyGroups</code>・<code>Cardinality</code>。関連とER図のルールです（9章）。</div></li>
-  <li><div>気になる出力のWriter→Templates：たとえば<code>TableDefinitionWriter</code>（111行。セクションの順）→<code>TableDefinitionTemplates</code>（446行。各セクションの組み立て）。</div></li>
-  <li><div>infrastructure：<code>AbstractTableDefinitionRepository</code>（182行）とmapper XML、<code>SidecarYamlRepository</code>（444行）。</div></li>
+  <li><div>気になる出力のWriter→Templates：たとえば<code>TableDefinitionWriter</code>（114行。セクションの順）→<code>TableDefinitionTemplates</code>（503行。各セクションの組み立て）。</div></li>
+  <li><div>infrastructure：<code>AbstractTableDefinitionRepository</code>（191行）とmapper XML、<code>SidecarYamlRepository</code>（492行）。</div></li>
   <li><div>入口の検証：<code>CliArguments</code>・<code>ExportTableDefinitionProperties</code>・<code>ConnectionSettings</code>・<code>FailureReporter</code>（5章）。</div></li>
 </ol>
 
@@ -851,7 +866,7 @@ erDiagram
       <text x="44" y="458" class="d-t-s">SqlSessionFactoryを1回だけ作る（まだ接続しない）</text>
       <rect x="20" y="478" width="440" height="46" rx="6" class="d-box-acc"/>
       <text x="44" y="498" class="d-t-ms">DatabaseTypeDetector.detect(…)</text>
-      <text x="44" y="516" class="d-t-s">接続し、製品名からPostgreSQL／Oracleを判定する</text>
+      <text x="44" y="516" class="d-t-s">接続し、製品名から種別を判定する（版をログへ）</text>
       <rect x="20" y="536" width="440" height="46" rx="6" class="d-box-acc"/>
       <text x="44" y="556" class="d-t-ms">createChildInjector(DatabaseDependentModule)</text>
       <text x="44" y="574" class="d-t-s">子のコンテナからコントローラーを取り出す</text>
@@ -930,13 +945,13 @@ erDiagram
 <pre><code><span class="c">// ExportTableDefinition.run（通常実行。runCheckも同じ形）</span>
 System.out.println(<span class="k">"Starting output of table definition document. …"</span>);
 cliArguments.requireKnownArguments();
+<span class="k">final</span> ConfigFile configFile = ConfigFile.load(cliArguments.configPath());   <span class="c">// 設定ファイルは1回だけ読む</span>
 <span class="k">final</span> ExportTableDefinitionRequest request =
-    ExportTableDefinitionProperties.load(cliArguments.settingOverrides())
+    ExportTableDefinitionProperties.of(configFile, cliArguments.settingOverrides())
         .toExportTableDefinitionRequest(cliArguments.isRmDist());
 <span class="k">final</span> Injector injector = createInjector();
 injector.getInstance(OutputDirectoryValidator.<span class="k">class</span>).validate(request);
-<span class="k">final</span> ConnectionSettings connectionSettings =
-    ConnectionSettings.load(cliArguments.connectionOverrides(), System.getenv());
+<span class="k">final</span> ConnectionSettings connectionSettings = connectionSettings(configFile, cliArguments);   <span class="c">// ConnectionSettings.merge</span>
 <span class="k">final</span> ResultDto resultDto = createController(injector, connectionSettings).execute(request);
 System.out.println(resultDto.getResultMessage());
 <span class="k">return</span> ExitStatus.SUCCESS;</code></pre>
@@ -947,8 +962,8 @@ System.out.println(resultDto.getResultMessage());
 <table>
   <thead><tr><th>record</th><th>持つもの</th><th>使う場所</th></tr></thead>
   <tbody>
-    <tr><td><code>ExportTableDefinitionRequest</code></td><td><code>targetSelection</code>・<code>sidecarPath</code>・<code>outputPath</code>・<code>chunkSize</code>・<code>erDiagramMaxNodes</code>・<code>rmDist</code></td><td>通常実行</td></tr>
-    <tr><td><code>CheckDocumentDiffRequest</code></td><td>上から<code>erDiagramMaxNodes</code>・<code>rmDist</code>を除いたもの（Markdownを描かず、出力先も消さないため）</td><td><code>--check</code></td></tr>
+    <tr><td><code>ExportTableDefinitionRequest</code></td><td><code>targetSelection</code>・<code>sidecarPath</code>・<code>outputPath</code>・<code>chunkSize</code>・<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code></td><td>通常実行</td></tr>
+    <tr><td><code>CheckDocumentDiffRequest</code></td><td>上から<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を除いたもの（Markdownを描かず、出力先も消さないため）</td><td><code>--check</code></td></tr>
     <tr><td><code>TargetSelection</code></td><td><code>TableScope</code>（スキーマ名＋テーブル名パターン）と<code>Set&lt;OutputObjectType&gt;</code></td><td>両方のrequestの中</td></tr>
   </tbody>
 </table>
@@ -956,7 +971,7 @@ System.out.println(resultDto.getResultMessage());
 <ul>
   <li><strong>設定ファイルの探し方</strong>：<code>ConfigFile</code>は、<code>--config</code>で指定したファイル、無ければ実行したディレクトリの<code>conf/config.yml</code>を読みます。jarの場所ではなくカレントディレクトリが基準で、配布用の<code>run.sh</code>・<code>run.bat</code>は自分のディレクトリへ移動してから起動します。全項目をCLI引数で上書きする場合でも、設定ファイル自体は必要です（実行するディレクトリを誤ったときに、既定の出力先へ黙って出力しないため）。</li>
   <li><strong>設定項目の仕様は1つの表に持つ</strong>：<code>ExportTableDefinitionProperties.SETTINGS</code>が、項目ごとに設定ファイルでの位置（<code>output.path</code>等）・上書きするCLI引数名（<code>--output-path</code>等）・値の形式（1つの値・整数・リスト）を持ちます。<code>CliArguments</code>はこの表から上書きの引数を引くため、設定項目を足せば上書きの引数も増えます。</li>
-  <li><strong>接続情報</strong>：<code>ConnectionSettings</code>は設定ファイルの<code>database</code>に、環境変数<code>EXPORT_TABLE_DEFINITION_DB_PASSWORD</code>のパスワード、CLI引数の順で値を重ねて検証します。ファイルに<code>password</code>を書くと誤りです（作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない）。</li>
+  <li><strong>接続情報</strong>：<code>ConnectionSettings</code>は設定ファイルの<code>database</code>に、環境変数<code>EXPORT_TABLE_DEFINITION_DB_PASSWORD</code>のパスワード、CLI引数の順で値を重ねて検証します。ファイルに<code>password</code>を書くと誤りです（作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない）。<code>url</code>にパスワードを埋め込む書き方（<code>?password=</code>・<code>sslpassword=</code>・Oracleの<code>user/pass@</code>）も、同じ理由で誤りにします。</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -980,12 +995,12 @@ System.out.println(resultDto.getResultMessage());
   <thead><tr><th>目的</th><th>実例</th></tr></thead>
   <tbody>
     <tr><td>検査例外を非検査例外で包む</td><td><code>LocalFileRepository</code>（<code>IOException</code>→<code>UncheckedIOException</code>）、<code>AbstractTableDefinitionRepository.select</code>（どのSQLかを添えて<code>RuntimeException</code>で包む）</td></tr>
-    <tr><td>下位の例外を利用者が直せる誤りへ置き換える</td><td><code>DatabaseTypeDetector</code>（接続の失敗）、<code>SidecarYamlRepository</code>（YAMLの構文誤り）、<code>ExportTableDefinitionProperties</code>（<code>TargetSelection</code>の<code>IllegalArgumentException</code>）、<code>ConfigFile</code>（YAMLの構文誤り）</td></tr>
+    <tr><td>下位の例外を利用者が直せる誤りへ置き換える</td><td><code>DatabaseTypeDetector</code>（接続の失敗）、<code>SidecarYamlRepository</code>（YAMLの構文誤り）、<code>ExportTableDefinitionProperties</code>（<code>TargetSelection</code>の<code>IllegalArgumentException</code>）、<code>ConfigFile</code>（YAMLの構文誤り。文言は<code>YamlSyntaxErrors</code>）</td></tr>
     <tr><td>フォールバックする</td><td><code>SidecarYamlRepository</code>（誤った観点を、警告して読み飛ばす）</td></tr>
   </tbody>
 </table>
 </div>
-<p>包むときは原因（<code>cause</code>）を必ず渡し、<code>try</code>の範囲は置き換えたい呼び出しだけに絞ります。<code>UserCorrectableException</code>を投げるのは、入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ（DBへの接続・サイドカーYAMLの読み込み）だけで、domain・applicationでは投げません。</p>
+<p>包むときは原因（<code>cause</code>）を渡し、<code>try</code>の範囲は置き換えたい呼び出しだけに絞ります。例外はYAMLの構文誤りで、SnakeYAMLの例外のメッセージは誤りの行をそのまま引用するため（設定ファイルに誤って書いたパスワードが画面とログに出得る）、<code>YamlSyntaxErrors</code>で種類と位置だけの文言にし、原因は渡しません。<code>UserCorrectableException</code>を投げるのは、入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ（DBへの接続・サイドカーYAMLの読み込み）だけで、domain・applicationでは投げません。</p>
 
 <h3>FailureReporter の報告の形</h3>
 <p><code>[errmsg]</code>に例外のメッセージを、<code>[cause]</code>に原因の連鎖のうち表示に含まれていないものを浅い順に並べます。原因のメッセージを繰り返しているだけの例外（MyBatisの例外等）は省くため、包んだ箇所でDBが返したエラーが失われず、かつ重複もしません。以下は実際の出力です。</p>
@@ -995,7 +1010,7 @@ Please wait a moment ...
 
 [result]:FAIL
 Failed to output table definition document.
- [errmsg]:Unknown argument: --chek (values are not shown; specify a value as --name=value) (available arguments: --check, --rm-dist, --config=&lt;path&gt;, --db-driver=&lt;value&gt;, …, --annotation-path=&lt;value&gt;)</code></pre>
+ [errmsg]:Unknown argument: --chek (values are not shown; specify a value as --name=value) (available arguments: --check, --rm-dist, --help, --version, --config=&lt;path&gt;, --db-driver=&lt;value&gt;, …, --annotation-path=&lt;value&gt;)</code></pre>
 <pre><code><span class="c">$ java -jar … --chunk-size=abc --output-objects=trigger,view --table='sample.,!'</span>
 [result]:FAIL
 Failed to output table definition document.
@@ -1009,16 +1024,16 @@ Failed to output table definition document.
  [errmsg]:Could not connect to the database. Check the connection settings (database in the configuration file, --db-* arguments and the EXPORT_TABLE_DEFINITION_DB_PASSWORD environment variable) and that the database is running.
  [cause]:org.postgresql.util.PSQLException: Connection to localhost:5999 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
  [cause]:java.net.ConnectException: Connection refused</code></pre>
-<p class="small muted">2つ目は、3つの誤りがまとめて1回で報告されている例です。<code>(overridden by …)</code>は、誤った値がCLI引数から来ている可能性を示します。想定外の失敗では、最後に<code>An unexpected error occurred. See the log file for details. [logFile=./var/log/exportTableDefinition.log]</code>が付きます。</p>
+<p class="small muted">1つ目の<code>(values are not shown; …)</code>は、解釈できない引数の値を伏せている印です（<code>--db-pasword=…</code>のような書き誤りで、パスワードが画面とログファイルに残らないように）。2つ目は、3つの誤りがまとめて1回で報告されている例です。<code>(overridden by …)</code>は、誤った値がCLI引数から来ている可能性を示します。想定外の失敗では、最後に<code>An unexpected error occurred. See the log file for details. [logFile=./var/log/exportTableDefinition.log]</code>が付きます。</p>
 
 <h3>警告：処理は続けるが知らせる</h3>
 <p>サイドカーYAMLの個々の記述の誤りや、DBと付帯情報の乖離は、読み飛ばして警告します（付帯情報の一部の書き誤りで、定義書全体の再生成を止めないため）。警告はWARNのログで、<code>log4j2.xml</code>がログファイルに加えて標準エラーへ<code>[warn]:</code>付きで出します。以下は、誤りを含むサイドカーYAMLで実行したときの標準エラーです（終了コードは0）。</p>
 <pre><code>[warn]:Ignoring unknown key in 'tables' entry of sample.department. [key=descripton, annotations=warn.yml]
-[warn]:Ignoring unknown 'cardinality' and falling back to the default. [cardinality=多対多, default=1対多, table=sample.audit_log, annotations=warn.yml]
-[warn]:Ignoring viewpoint '人事'. Invalid viewpoint id: '人事' (use only letters, digits, '-' and '_', because it is used as a file name) [annotations=warn.yml]
+[warn]:Ignoring unknown 'cardinality' and falling back to the default. [entry=relations #1, cardinality=多対多, default=1対多, annotations=warn.yml]
+[warn]:Ignoring viewpoint. Invalid viewpoint id: '人事' (use only letters, digits, '-' and '_', because it is used as a file name) [entry=viewpoints #1, id=人事, annotations=warn.yml]
 [warn]:Annotation exists for a table that was not found (renamed or dropped?). [table=sample.employe]
 [warn]:Column annotation exists for a column that was not found (renamed or dropped?). [table=sample.department, column=department_cd]</code></pre>
-<p>上の3行はYAMLを読む<code>SidecarYamlRepository</code>が直接ログへ出したもの、下の2行は<code>ExportTargetConsistency</code>が通知（<code>ConsistencyNotice</code>）として値で返し、<code>SchemaExportPipeline.report</code>が重要度に応じてログへ出したものです。判定をするドメインサービスは、結果をどこへ出すかを知りません。</p>
+<p>上の3行はYAMLを読む<code>SidecarYamlRepository</code>が直接ログへ出したもの（<code>entry=relations #1</code>は何件目の定義かを示す）、下の2行は<code>ExportTargetConsistency</code>が通知（<code>ConsistencyNotice</code>）として値で返し、<code>SchemaExportPipeline.report</code>が重要度に応じてログへ出したものです。判定をするドメインサービスは、結果をどこへ出すかを知りません。</p>
 
 <h3>終了コード</h3>
 <div class="table-wrap">
@@ -1048,7 +1063,12 @@ Failed to output table definition document.
 schemaExportPipeline.export(
     targets,
     List.of(
-        markdownSinkFactory.create(outputBaseDir, NodeLimit.of(request.erDiagramMaxNodes()), diagramBoxes),
+        markdownSinkFactory.create(
+            outputBaseDir,
+            NodeLimit.of(request.erDiagramMaxNodes()),
+            request.erDiagramDistance(),     <span class="c">// テーブル定義書のER図の描画距離（9.7節）</span>
+            diagramBoxes,
+            targets.foreignKeys()),
         snapshotSinkFactory.create(outputBaseDir),
         insightSinkFactory.create(outputBaseDir)),
     request.chunkSize());</code></pre>
@@ -1069,7 +1089,7 @@ schemaExportPipeline.export(
       <text x="36" y="108" class="d-t-s">③ selectTableInfo → TableScope.matches で絞り込み → Tables</text>
       <text x="36" y="128" class="d-t-s">④ 付帯情報・観点のパターンを、テーブルと突き合わせる（通知）</text>
       <text x="36" y="148" class="d-t-s">⑤ selectForeignKeyInfo＋論理リレーション → resolveForeignKeys → ForeignKeys</text>
-      <text x="36" y="168" class="d-t-s">⑥ selectTriggerInfo・selectPartitionInfo・selectFunction/Sequence/TypeInfo</text>
+      <text x="36" y="168" class="d-t-s">⑥ selectTrigger/Partition/ViewReferenceInfo・selectFunction/Sequence/TypeInfo</text>
       <!-- B -->
       <rect x="20" y="208" width="580" height="64" rx="6" class="d-box"/>
       <text x="36" y="232" class="d-t-ms" font-weight="600">fetchDiagramBoxes(targets, chunkSize)</text>
@@ -1100,8 +1120,8 @@ schemaExportPipeline.export(
       <rect x="640" y="20" width="250" height="168" rx="6" class="d-box-soft"/>
       <text x="654" y="44" class="d-t-b">ExportTargets</text>
       <text x="654" y="66" class="d-t-s">テーブル一覧・関連・トリガー・</text>
-      <text x="654" y="84" class="d-t-s">パーティション・関数等の一覧・</text>
-      <text x="654" y="102" class="d-t-s">付帯情報・観点・基本情報</text>
+      <text x="654" y="84" class="d-t-s">パーティション・ビューの参照・</text>
+      <text x="654" y="102" class="d-t-s">関数等の一覧・付帯情報・観点 等</text>
       <text x="654" y="130" class="d-t-acc">最後まで持ち続ける</text>
       <text x="654" y="150" class="d-t-s">ER図・被参照はスキーマ・チャンクを</text>
       <text x="654" y="168" class="d-t-s">またぐため、全件が要る</text>
@@ -1125,29 +1145,30 @@ schemaExportPipeline.export(
   <figcaption><b>図6 SchemaExportPipelineの段取り。</b>破線の枠はループです。ER図は、テーブル一覧・関連・関連カラム（<code>DiagramBoxes</code>）だけで描けるので、詳細をチャンク単位で取得する前の<code>writeOverview</code>で書き出せます。<code>chunkSize</code>を小さくするとメモリは減り、DBへの問い合わせは増えます。出力の内容は変わりません（結合テストが<code>chunkSize</code>を変えて同じ出力になることを確かめています）。</figcaption>
 </figure>
 
-<p>サンプルDB（ビューを含む13テーブル、<code>schema=sample</code>）で通常実行したときに発行されたSQLの順序です（ログファイルから抜き出したもの）。</p>
+<p>サンプルDB（ビューを含む14テーブル、<code>schema=sample</code>）で通常実行したときに発行されたSQLの順序です（<code>-Dexport-table-definition.log.level=debug</code>で実行したログファイルから抜き出したもの）。</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>順</th><th>段階</th><th>SQLのID</th><th>行数</th></tr></thead>
   <tbody>
     <tr><td class="num">—</td><td><code>fetchTargets</code></td><td>（サイドカーYAMLを読む。SQLではない）</td><td class="num muted">—</td></tr>
     <tr><td class="num">1</td><td></td><td><code>selectDatabaseInfo</code></td><td class="num">1</td></tr>
-    <tr><td class="num">2</td><td></td><td><code>selectTableInfo</code></td><td class="num">13</td></tr>
+    <tr><td class="num">2</td><td></td><td><code>selectTableInfo</code></td><td class="num">14</td></tr>
     <tr><td class="num">3</td><td></td><td><code>selectForeignKeyInfo</code></td><td class="num">9</td></tr>
     <tr><td class="num">4</td><td></td><td><code>selectTriggerInfo</code></td><td class="num">5</td></tr>
     <tr><td class="num">5</td><td></td><td><code>selectPartitionInfo</code></td><td class="num">7</td></tr>
-    <tr><td class="num">6</td><td></td><td><code>selectFunctionInfo</code></td><td class="num">8</td></tr>
-    <tr><td class="num">7</td><td></td><td><code>selectSequenceInfo</code></td><td class="num">8</td></tr>
-    <tr><td class="num">8</td><td></td><td><code>selectTypeInfo</code></td><td class="num">3</td></tr>
-    <tr><td class="num">9</td><td><code>fetchDiagramBoxes</code></td><td><code>selectColumnInfo</code>（関連を持つ11テーブル分）</td><td class="num">49</td></tr>
-    <tr><td class="num">10</td><td><code>export</code>：関数（スキーマごと）</td><td><code>selectFunctionDefInfo</code></td><td class="num">8</td></tr>
-    <tr><td class="num">11</td><td><code>export</code>：テーブル（チャンクごと）</td><td><code>selectColumnInfo</code></td><td class="num">57</td></tr>
-    <tr><td class="num">12</td><td></td><td><code>selectIndexInfo</code></td><td class="num">19</td></tr>
-    <tr><td class="num">13</td><td></td><td><code>selectConstraintInfo</code></td><td class="num">27</td></tr>
+    <tr><td class="num">6</td><td></td><td><code>selectViewReferenceInfo</code></td><td class="num">7</td></tr>
+    <tr><td class="num">7</td><td></td><td><code>selectFunctionInfo</code></td><td class="num">8</td></tr>
+    <tr><td class="num">8</td><td></td><td><code>selectSequenceInfo</code></td><td class="num">8</td></tr>
+    <tr><td class="num">9</td><td></td><td><code>selectTypeInfo</code></td><td class="num">3</td></tr>
+    <tr><td class="num">10</td><td><code>fetchDiagramBoxes</code></td><td><code>selectColumnInfo</code>（関連を持つ11テーブル分）</td><td class="num">49</td></tr>
+    <tr><td class="num">11</td><td><code>export</code>：関数（スキーマごと）</td><td><code>selectFunctionDefInfo</code></td><td class="num">8</td></tr>
+    <tr><td class="num">12</td><td><code>export</code>：テーブル（チャンクごと）</td><td><code>selectColumnInfo</code></td><td class="num">61</td></tr>
+    <tr><td class="num">13</td><td></td><td><code>selectIndexInfo</code></td><td class="num">19</td></tr>
+    <tr><td class="num">14</td><td></td><td><code>selectConstraintInfo</code></td><td class="num">27</td></tr>
   </tbody>
 </table>
 </div>
-<p class="small muted">13テーブルが既定の<code>chunkSize</code>（3000）に収まるため、11〜13は1回ずつです。<code>chunkSize=1</code>なら11〜13がテーブルの数だけ繰り返されます。<code>--check</code>では9（ER図の箱）を発行しません。</p>
+<p class="small muted">14テーブルが既定の<code>chunkSize</code>（3000）に収まるため、12〜14は1回ずつです。<code>chunkSize=1</code>なら12〜14がテーブルの数だけ繰り返されます。<code>--check</code>では10（ER図の箱）を発行しません。6の7行は、サンプルの3つのビューが参照するテーブルの数の合計です（9.8節）。</p>
 
 <h3>出力形式ごとのSink</h3>
 <p><code>ExportSink</code>は「取得した情報を1つの出力形式で書き出す」インタフェースで、4つのメソッドを持ちます。パイプラインは取得した順にこれを呼ぶだけで、何をどのファイルへ書くかは実装（<code>…SinkFactory</code>の内部クラス）が決めます。出力先は、Sinkを作るときに渡します。</p>
@@ -1270,6 +1291,7 @@ Content differs:
   <li><strong>生成日</strong>：スナップショットに含めないため、生成した日と別の日に実行しても差分になりません。</li>
   <li><strong>観点（参考情報）</strong>：<code>--check</code>では参考情報のSinkを使わず、最初から生成しません。「生成してから除外する」方式ではないので、参考情報の種類が増えても除外リストを保守する必要がありません。</li>
   <li><strong>個々のパーティション</strong>：スナップショットはパーティションキーだけを持ち、パーティションを持ちません。パーティションを自動で追加する運用でも、追加のたびに差分になりません。</li>
+  <li><strong>DBのマイナー版の更新</strong>：<code>database.json</code>はメジャーバージョンだけを持つため、マイナー版を上げても差分になりません。</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -1324,9 +1346,9 @@ Content differs:
       <line x1="628" y1="298" x2="550" y2="210" class="d-line-muted"/>
     </svg>
   </div>
-  <figcaption><b>図8 テーブルキーで結び付くもの。</b><code>ColumnEntity</code>は<code>TableEntity</code>への参照を持たず、スキーマ名・テーブル名だけを持ちます。集合のクラス（<code>Triggers</code>・<code>Partitions</code>・<code>ForeignKeys</code>等）は<code>AbstractEntities</code>を継承し、テーブルキーで引ける索引を作って<code>belongingTo(table)</code>で返します。関数・シーケンス・型はテーブルに属さないため、テーブルキーを持ちません。</figcaption>
+  <figcaption><b>図8 テーブルキーで結び付くもの。</b><code>ColumnEntity</code>は<code>TableEntity</code>への参照を持たず、スキーマ名・テーブル名だけを持ちます。集合のクラス（<code>Triggers</code>・<code>Partitions</code>・<code>ForeignKeys</code>・<code>ViewReferences</code>等）は<code>AbstractEntities</code>を継承し、テーブルキーで引ける索引を作って<code>belongingTo(table)</code>で返します。関数・シーケンス・型はテーブルに属さないため、テーブルキーを持ちません。</figcaption>
 </figure>
-<p><code>ForeignKeys</code>だけは索引を2つ持ちます。参照元のテーブルキーで引く索引（自分が参照している関連）と、参照先のテーブルキーで引く索引（自分を参照している関連＝被参照）です。被参照の索引からは自己参照を除きます（定義書の「外部キー情報」と「被参照情報」に二重に載らないように）。</p>
+<p><code>ForeignKeys</code>と<code>ViewReferences</code>は索引を2つ持ちます。<code>ForeignKeys</code>は、参照元のテーブルキーで引く索引（自分が参照している関連）と、参照先のテーブルキーで引く索引（自分を参照している関連＝被参照）です。被参照の索引からは自己参照を除きます（定義書の「外部キー情報」と「被参照情報」に二重に載らないように）。<code>ViewReferences</code>も同じ形で、ビューのテーブルキーで引く索引（<code>belongingTo</code>。ビューが参照するテーブル）と、参照されるテーブルのテーブルキーで引く索引（<code>referencingTo</code>。そのテーブルを参照しているビュー）を持ちます（9.8節）。</p>
 
 <h3>8.2 取得の単位と、1テーブル分の組み立て</h3>
 <p>一括取得した<code>ExportTargets</code>と、チャンク単位で取得した<code>TableDetail</code>から、テーブルごとに<code>TableDefinitionContent.assemble</code>で「1テーブル分の出力内容」を組み立てます。これがテーブル定義書1ファイル、スナップショット1行に対応する書き出しの単位です。</p>
@@ -1338,11 +1360,12 @@ Content differs:
         <marker id="g9a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
         <marker id="g9b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-acc"/></marker>
       </defs>
-      <rect x="10" y="20" width="270" height="100" rx="6" class="d-box-soft"/>
+      <rect x="10" y="20" width="270" height="108" rx="6" class="d-box-soft"/>
       <text x="24" y="42" class="d-t-b">ExportTargets（一括取得）</text>
-      <text x="24" y="64" class="d-t-ms">baseInfo・foreignKeys・triggers</text>
-      <text x="24" y="82" class="d-t-ms">partitions・annotations・viewpoints</text>
-      <text x="24" y="106" class="d-t-acc">対象範囲全体の集合</text>
+      <text x="24" y="62" class="d-t-ms">baseInfo・foreignKeys・triggers</text>
+      <text x="24" y="78" class="d-t-ms">partitions・viewReferences</text>
+      <text x="24" y="94" class="d-t-ms">annotations・viewpoints</text>
+      <text x="24" y="116" class="d-t-acc">対象範囲全体の集合</text>
       <rect x="10" y="140" width="270" height="90" rx="6" class="d-box-soft"/>
       <text x="24" y="162" class="d-t-b">TableDetail（チャンク単位）</text>
       <text x="24" y="184" class="d-t-ms">table・columns・indexes・constraints</text>
@@ -1378,16 +1401,18 @@ Content differs:
     <tr><td><code>table</code>・<code>columns</code>・<code>indexes</code>・<code>constraints</code></td><td><code>TableDetail</code>（チャンク単位で取得）</td><td>テーブル情報・カラム情報・インデックス情報・制約情報</td></tr>
     <tr><td><code>foreignKeys</code></td><td><code>ForeignKeys.physicalBelongingTo(table)</code></td><td>外部キー情報（DBに実在する制約だけ）</td></tr>
     <tr><td><code>logicalRelations</code></td><td><code>ForeignKeys.logicalBelongingTo(table)</code></td><td>論理リレーション情報</td></tr>
-    <tr><td><code>incomingRelations</code></td><td><code>ForeignKeys.referencingTo(table)</code>（物理・論理の両方。自己参照を除く）</td><td>被参照情報、ER図</td></tr>
+    <tr><td><code>incomingRelations</code></td><td><code>ForeignKeys.referencingTo(table)</code>（物理・論理の両方。自己参照を除く）</td><td>被参照情報</td></tr>
+    <tr><td><code>referencedTables</code></td><td><code>ViewReferences.belongingTo(table)</code>（ビューのときだけ）</td><td>参照するテーブル</td></tr>
+    <tr><td><code>referencingViews</code></td><td><code>ViewReferences.referencingTo(table)</code>（出力対象のビューだけ）</td><td>参照しているビュー</td></tr>
     <tr><td><code>triggers</code></td><td><code>Triggers.belongingTo(table)</code></td><td>トリガー情報</td></tr>
     <tr><td><code>partitions</code></td><td><code>Partitions.belongingTo(table)</code>（パーティション表のときだけ）</td><td>パーティション情報</td></tr>
     <tr><td><code>annotation</code></td><td><code>Annotations.belongingTo(table)</code>（無ければ<code>TableAnnotation.EMPTY</code>）</td><td>テーブル説明・備考・カラム備考</td></tr>
     <tr><td><code>viewpoints</code></td><td><code>Viewpoints.containing(table)</code>（宣言順）</td><td>所属する観点</td></tr>
-    <tr><td><code>baseInfo</code></td><td><code>ExportTargets.baseInfo()</code>（DB名・DBMS種別・生成日）</td><td>基本情報</td></tr>
+    <tr><td><code>baseInfo</code></td><td><code>ExportTargets.baseInfo()</code>（DB名・DBMS種別・メジャーバージョン・生成日）</td><td>基本情報</td></tr>
   </tbody>
 </table>
 </div>
-<p class="small muted"><code>outgoingRelations()</code>は<code>foreignKeys</code>と<code>logicalRelations</code>をつないだリストで、ER図に描く「自分が参照している関連」です。由来（物理・論理）は線種で描き分けます。</p>
+<p class="small muted">テーブル定義書のER図は、この項目の関連からではなく、<code>MarkdownExportSink</code>が対象範囲全体の<code>ForeignKeys</code>から求める<code>DiagramNeighborhood</code>で描きます（9.7節）。描画距離が2以上だと、関連先のテーブルが持つ関連まで要るためです。<code>TableDefinitionContent</code>はスナップショットと共有するため、Markdownだけが使う図の範囲は持ちません。</p>
 
 <h3>8.3 「値が無い」の表し方</h3>
 <p>値が無いことの表し方は、段階ごとに決まっています。これを知っていると、<code>null</code>チェックがほとんど無い理由と、どこで変換すべきかが分かります。</p>
@@ -1599,13 +1624,13 @@ Content differs:
       <text x="730" y="348" class="d-t-acc">→ Draw（図を描く）</text>
     </svg>
   </div>
-  <figcaption><b>図11 スキーマ別ER図のページ構成と描き方。</b>右は、サンプルDBを<code>--er-diagram-max-nodes=5</code>で出力した実際の結果です。2つのビューは関連を持たないのでノードに数えません。</figcaption>
+  <figcaption><b>図11 スキーマ別ER図のページ構成と描き方。</b>右は、サンプルDBを<code>--er-diagram-max-nodes=5</code>で出力した実際の結果です。3つのビュー（マテリアライズドビューを含む）は関連を持たないのでノードに数えません。</figcaption>
 </figure>
 <ul>
   <li><strong>連結成分</strong>（<code>connectedComponents</code>）：外部キーの両端を同じまとまりとして併合するUnion-Find（経路圧縮付き）。<code>a→b</code>と<code>b→c</code>は1つの成分になります。並びはノード数の降順、同数なら先頭のテーブル名の昇順で、何度実行しても同じです。</li>
   <li><strong>まとめ直し</strong>（<code>pack</code>）：成分ごとに1ページにすると2テーブルだけの図が大量にできるため、上限に収まる限り複数の成分を同じページに入れます（先頭から空きのあるグループに入れる貪欲法）。同じページの成分同士は線で繋がらないので、関連を誤読するおそれはありません。</li>
   <li><strong>分けても1つにしかならない</strong>場合は、スキーマのページと同じ内容のグループページができるだけなので、分けずに<code>Single</code>にします。この場合は上限を超えているので<code>Omit</code>になり、図の代わりに外部キー一覧を載せます。</li>
-  <li><strong>観点ページ</strong>は人が選んだまとまりなので分けません（<code>ViewpointContent.relations</code>に<code>planRendering</code>だけを使う）。<strong>テーブル定義書のER図</strong>（自分と直接の相手だけ）は上限の対象外です。</li>
+  <li><strong>観点ページ</strong>は人が選んだまとまりなので分けません（<code>ViewpointContent.relations</code>に<code>planRendering</code>だけを使う）。<strong>テーブル定義書のER図</strong>は分割せず、上限は描画距離を縮めるかの判断にだけ使います（9.7節）。</li>
 </ul>
 <pre><code><span class="c">// 上限5で出力したスキーマ別ER図（erDiagram_testdb_sample.md）の本文</span>
 ## ER図
@@ -1632,6 +1657,40 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 
 <h3>9.6 長い表のページ分割（PagedSectionWriter）</h3>
 <p>GitHubで表として表示できる行数には限りがあるため、行が多くなり得る一覧はすべて<code>PagedSectionWriter</code>を通して書きます。3,000行以下なら本体ページに表を埋め込み、超えるなら<code>{本体のファイル名}_{n}.md</code>へ分けて本体にはリンクだけを載せます。行の文字列はページ単位で作り、全行分を同時にメモリに持ちません。対象は、テーブル一覧、ER図の掲載テーブル・外部キー一覧、スキーマ跨ぎの外部キー、トリガー/関数/シーケンス/型の一覧、観点の所属テーブル・観点一覧です。</p>
+
+<h3>9.7 テーブル定義書のER図の描画距離（DiagramNeighborhood）</h3>
+<p>テーブル定義書のER図は、既定では自テーブルの関連だけを描きます。設定の<code>output.erDiagramDistance</code>（<code>--er-diagram-distance</code>。1〜3、既定1）を上げると、関連先のテーブルが持つ関連まで描きます。どこまで描くかは<code>ForeignKeys.neighborhoodOf</code>が決め、結果を<code>DiagramNeighborhood</code>（描く関連・描いた距離・指定された距離）で返します。</p>
+<ol class="steps">
+  <li><div><strong>たどる</strong>：自テーブルから関連を向きを問わず幅優先でたどります（参照先の索引と被参照の索引の両方を見る）。距離<var>n</var>なら、<var>n</var>−1段目までに到達したテーブルが持つ関連を、近い順に集めます。距離1は自テーブルの関連だけで、従来の出力と同じです。</div></li>
+  <li><div><strong>縮める</strong>：図のテーブル数が<code>erDiagramMaxNodes</code>（<code>NodeLimit</code>）を超えるなら、超えなくなるまで距離を1つずつ縮めます。1でも超える場合は1で描きます（自テーブルの関連は省かない）。</div></li>
+  <li><div><strong>知らせる</strong>：縮めた場合（<code>isShortened</code>）は、<code>TableDefinitionTemplates.erDiagram</code>が図の前にその旨を書きます。</div></li>
+</ol>
+<p>サンプルの<code>department</code>を距離2で出力すると、関連先の<code>employee</code>が持つ関連（自己参照・<code>attendance</code>・<code>employee_profile</code>等）まで描かれ、図のテーブルは2から7に増えます。距離3と上限5を指定すると、上限を超えるため1段で描き、次の1文が付きます。</p>
+<pre><code>## ER図
+
+関連するテーブルが多く、3段先までを描画するとテーブル数が上限（erDiagramMaxNodes）を超えるため、1段先までを描画しています。
+
+```mermaid
+erDiagram
+    sample_department["department"]
+    sample_employee["employee（従業員）"]
+    sample_department ||--o{ sample_employee : "employee_department_id_fkey"
+    …</code></pre>
+<p class="small muted">上限を3にしているのは、関連の多いDBでは段数を増やすと図がすぐに大きくなり読めなくなるためです（<code>ExportTableDefinitionProperties.MAX_ER_DIAGRAM_DISTANCE</code>）。範囲外の値は既定値に置き換えず、設定の誤りにします。図の関連線は、どの段の関連も「参照先 → 参照元」の向きで同じ<code>MermaidSupport.relationLine</code>で描きます。</p>
+
+<h3>9.8 ビューが参照するテーブル（ViewReferences）</h3>
+<p>ビュー・マテリアライズドビューが参照するテーブル（ビューを含む）は、ビューのSQLを解析せず、DBが保持する依存関係から取得します（PostgreSQLは<code>pg_depend</code>・<code>pg_rewrite</code>、Oracleは<code>ALL_DEPENDENCIES</code>）。1件が<code>ViewReferenceEntity</code>（参照する側のビューと、参照されるテーブル）で、集合が<code>ViewReferences</code>です。</p>
+<ul>
+  <li><strong>取得の範囲</strong>：外部キーと同じく対象範囲全体を一括で取得し（<code>SchemaExportPipeline.fetchViewReferences</code>）、参照する側が出力対象のビューのものだけを残します。参照される側は、出力対象外のスキーマのテーブルも事実として残します（サンプルの<code>attendance_monthly_view</code>は<code>sample_archive.department</code>を参照）。</li>
+  <li><strong>SQLで揃えること</strong>：同じテーブルへの参照は1件にまとめ、自身への参照とDBMSが管理するスキーマのテーブルへの参照は含めません。パーティションへの参照は、パーティション表（根）への参照とします。</li>
+  <li><strong>両方向で使う</strong>：ビューの定義書の「参照するテーブル」とスナップショットの<code>referencedTables</code>（<code>belongingTo</code>）、テーブルの定義書の「参照しているビュー」（<code>referencingTo</code>。テーブルを変えたときに影響を受けるビューを知るため）。逆向きはスナップショットに持たせず、mcp-serverが<code>referencedTables</code>から逆引きします（<code>get_table</code>の<code>referencedByViews</code>）。</li>
+</ul>
+<pre><code><span class="c">// view/attendance_monthly_view.md の「参照するテーブル」</span>
+| No. | 参照先 | 区分 |
+|:---|:---|:---|
+|1|sample.attendance|table|
+|2|sample.employee_directory_view|view|
+|3|sample_archive.department|table|</code></pre>
 
 <!-- ============================================================ -->
 <h2 id="outputs"><span class="n">10</span>出力物とソースの対応</h2>
@@ -1670,21 +1729,23 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
   <thead><tr><th>順</th><th>セクション</th><th><code>TableDefinitionTemplates</code>のメソッド</th><th>出す条件</th></tr></thead>
   <tbody>
     <tr><td class="num">1</td><td>見出し「テーブル名（論理名）」</td><td><code>fileHeader</code></td><td>常に</td></tr>
-    <tr><td class="num">2</td><td>基本情報（RDBMS・DB名・作成日）</td><td><code>baseInfo</code></td><td>常に</td></tr>
+    <tr><td class="num">2</td><td>基本情報（RDBMSとメジャーバージョン・DB名・作成日）</td><td><code>baseInfo</code></td><td>常に</td></tr>
     <tr><td class="num">3</td><td>テーブル説明</td><td><code>tableExplanation</code></td><td>常に。本文はサイドカーに説明があるときだけ</td></tr>
     <tr><td class="num">4</td><td>テーブル情報</td><td><code>tableInfo</code></td><td>常に（備考はサイドカー）</td></tr>
     <tr><td class="num">5</td><td>所属する観点</td><td><code>viewpoints</code></td><td>所属する観点があるとき</td></tr>
     <tr><td class="num">6</td><td>カラム情報</td><td><code>columns</code></td><td>常に（備考はサイドカー）</td></tr>
     <tr><td class="num">7</td><td>パーティション情報</td><td><code>partitions</code></td><td>パーティション表のとき</td></tr>
     <tr><td class="num">8</td><td>ソース</td><td><code>view</code></td><td>ビュー・マテリアライズドビューのとき</td></tr>
-    <tr><td class="num">9</td><td>インデックス情報</td><td><code>indexes</code></td><td>常に（0件なら見出しと表の頭だけ）</td></tr>
-    <tr><td class="num">10</td><td>制約情報</td><td><code>constraints</code></td><td>常に（同上）</td></tr>
-    <tr><td class="num">11</td><td>外部キー情報（物理）</td><td><code>foreignKeys</code></td><td>常に（同上）</td></tr>
-    <tr><td class="num">12</td><td>論理リレーション情報</td><td><code>logicalRelations</code></td><td>論理リレーションがあるとき</td></tr>
-    <tr><td class="num">13</td><td>被参照情報</td><td><code>incomingRelations</code></td><td>参照されているとき</td></tr>
-    <tr><td class="num">14</td><td>トリガー情報</td><td><code>triggers</code></td><td>常に（同上。<code>target.objects</code>でtriggerを外すと行が無くなる）</td></tr>
-    <tr><td class="num">15</td><td>ER図</td><td><code>erDiagram</code></td><td>常に（関連が無ければ「関連するテーブルはありません。」）</td></tr>
-    <tr><td class="num">16</td><td>フッター（テーブル一覧へ）</td><td><code>footer</code></td><td>常に</td></tr>
+    <tr><td class="num">9</td><td>参照するテーブル</td><td><code>referencedTables</code></td><td>ビューが参照するテーブルがあるとき</td></tr>
+    <tr><td class="num">10</td><td>インデックス情報</td><td><code>indexes</code></td><td>常に（0件なら見出しと表の頭だけ）</td></tr>
+    <tr><td class="num">11</td><td>制約情報</td><td><code>constraints</code></td><td>常に（同上）</td></tr>
+    <tr><td class="num">12</td><td>外部キー情報（物理）</td><td><code>foreignKeys</code></td><td>常に（同上）</td></tr>
+    <tr><td class="num">13</td><td>論理リレーション情報</td><td><code>logicalRelations</code></td><td>論理リレーションがあるとき</td></tr>
+    <tr><td class="num">14</td><td>被参照情報</td><td><code>incomingRelations</code></td><td>参照されているとき</td></tr>
+    <tr><td class="num">15</td><td>参照しているビュー</td><td><code>referencingViews</code></td><td>出力対象のビューから参照されているとき</td></tr>
+    <tr><td class="num">16</td><td>トリガー情報</td><td><code>triggers</code></td><td>常に（同上。<code>target.objects</code>でtriggerを外すと行が無くなる）</td></tr>
+    <tr><td class="num">17</td><td>ER図</td><td><code>erDiagram</code></td><td>常に（関連が無ければ「関連するテーブルはありません。」。描画距離は9.7節）</td></tr>
+    <tr><td class="num">18</td><td>フッター（テーブル一覧へ）</td><td><code>footer</code></td><td>常に</td></tr>
   </tbody>
 </table>
 </div>
@@ -1693,7 +1754,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 <ul>
   <li><strong>Writer</strong>は「何を・どの順で・どのファイルに書くか」の段取りだけを持ちます。Markdownの文字列を自分で組み立てません。</li>
   <li><strong>Templates</strong>は副作用の無いstaticメソッドで、行・セクションの文字列を組み立てます。絞り込みやグラフの計算などのロジックは持ちません（それはdomain.modelの仕事）。</li>
-  <li>種別をまたいで使う部品は<code>writer.template</code>にあります。<code>MarkdownTemplateSupport</code>（基本情報のセクション、表の1行<code>row</code>、リンクのセル<code>[■](…)</code>、エスケープ<code>escapeTableCell</code>・<code>escapePipe</code>、真偽値の<code>marker</code>）、<code>MermaidSupport</code>（識別子・表示名・属性・関連線）、<code>PagedSectionTemplates</code>（見出し・ページ送り・戻るリンク）です。</li>
+  <li>種別をまたいで使う部品は<code>writer.template</code>にあります。<code>MarkdownTemplateSupport</code>（基本情報のセクション、表の1行<code>row</code>、リンクのセル<code>[■](…)</code>、エスケープ<code>escapeTableCell</code>・<code>escapePipe</code>・<code>escapeHtml</code>・<code>escapeInline</code>、コードブロック・コードスパンの囲み<code>codeFence</code>・<code>codeSpan</code>、真偽値の<code>marker</code>）、<code>MermaidSupport</code>（識別子・表示名・属性・関連線）、<code>PagedSectionTemplates</code>（見出し・ページ送り・戻るリンク）です。</li>
 </ul>
 
 <h3>ファイル名と相対リンクの規則</h3>
@@ -1702,8 +1763,8 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 <table>
   <thead><tr><th>クラス</th><th>決めること</th><th>例</th></tr></thead>
   <tbody>
-    <tr><td><code>DocumentLocations</code></td><td>Markdownのファイル名と、<code>{DB名}/</code>からの相対パス。ドキュメント間の相対リンク。関数のオーバーロードは<code>{名前}_{番号}</code>、観点ページは識別子から</td><td><code>sample/table/department.md</code>、<code>calculate_bonus_1.md</code></td></tr>
-    <tr><td><code>OutputPathResolver</code>（実装<code>DefaultOutputPathResolver</code>）</td><td>出力先の絶対パス。未指定なら<code>./output</code>、<code>{DB名}/</code>を付ける。分割ページのパス。<code>--rm-dist</code>で消してよいか（ルート・ホーム・カレントは拒否）</td><td><code>./output/testdb/sample/table/department.md</code></td></tr>
+    <tr><td><code>DocumentLocations</code></td><td>Markdownのファイル名と、<code>{DB名}/</code>からの相対パス。ドキュメント間の相対リンク。関数のオーバーロードは<code>{名前}_{番号}</code>、観点ページは識別子から。DB由来の名前は<code>PathSegments.encode</code>でパスの1要素にする</td><td><code>sample/table/department.md</code>、<code>calculate_bonus_1.md</code></td></tr>
+    <tr><td><code>OutputPathResolver</code>（実装<code>DefaultOutputPathResolver</code>）</td><td>出力先の絶対パス。未指定なら<code>./output</code>、<code>{DB名}/</code>を付ける。分割ページのパス。解決したパスが起点のディレクトリの外を指さないことを確かめる（<code>within</code>）。<code>--rm-dist</code>で消してよいか（ルート、カレント・ホームとその上位のディレクトリは拒否）</td><td><code>./output/testdb/sample/table/department.md</code></td></tr>
     <tr><td><code>SnapshotLocations</code></td><td><code>snapshot/</code>の下の配置と、ファイル名から種別への逆引き（<code>kindOf</code>。比較で使う）</td><td><code>snapshot/testdb/sample/tables.jsonl</code></td></tr>
     <tr><td><code>InsightLocations</code></td><td><code>insights/</code>の下の配置（<code>snapshot/</code>の兄弟）</td><td><code>insights/testdb/viewpoints.json</code></td></tr>
     <tr><td><code>ListDocumentType</code></td><td>一覧の種類ごとのファイル名の接頭辞とタイトル</td><td><code>FUNCTION</code> → <code>functionList_testdb.md</code>「関数・プロシージャ一覧」</td></tr>
@@ -1711,6 +1772,23 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 </table>
 </div>
 <p>相対リンクは、リンク元が<code>{DB名}/</code>直下なら<code>linkFromDatabaseRoot</code>（<code>./</code>を付ける）、<code>{スキーマ}/{区分}/</code>の下の個別定義書なら<code>linkFromDefinition</code>（<code>../../</code>を付ける）で作ります。サンプルの<code>department.md</code>には<code>[人事管理](../../viewpoint_testdb_personnel.md)</code>・<code>[テーブル一覧へ](../../tableList_testdb.md)</code>が出力されています。</p>
+
+<h3>DB由来の文字列を信頼しない</h3>
+<p>DB名・スキーマ名・テーブル名・コメント・関数やビューの定義は、ツールを実行する人とは別の人（DBでCREATE・COMMENTの権限を持つ人）が書ける入力です。引用符で囲んだ識別子には<code>/</code>・<code>..</code>・改行・HTMLも書けるため、出力・パスに使う箇所はすべて決まった部品を通します（<code>AGENTS.md</code>の「セキュリティ」）。サイドカーYAMLは利用者自身が書くため、説明文はMarkdownとしてそのまま出力します。</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>使い道</th><th>通す部品</th><th>防ぐこと</th><th>検査するテスト</th></tr></thead>
+  <tbody>
+    <tr><td>ファイル名・ディレクトリ名</td><td><code>PathSegments.encode</code>（<code>/ \ : * ? " &lt; &gt; |</code>・<code>~</code>・制御文字を<code>~</code>＋16進2桁に、<code>.</code>だけの名前と空の名前も置き換える。例：<code>a/b</code> → <code>a~2Fb</code>）と、<code>DefaultOutputPathResolver</code>の<code>within</code></td><td>出力先の外への書き込み（パストラバーサル）</td><td><code>OutputPathContainmentTest</code>（<code>OutputPathResolver</code>の全メソッドを危険な名前で呼ぶ）、<code>ArchitectureTest</code>（<code>Path.resolve</code>の呼び出し場所）</td></tr>
+    <tr><td>表の行</td><td><code>row</code>（書式で組み立てた行は<code>escapeTableRow</code>）。改行を<code>&lt;br&gt;</code>に、それ以外の<code>&lt;</code>を<code>&amp;lt;</code>に</td><td>生のHTMLの描画、行の分断</td><td rowspan="3"><code>MarkdownInjectionTest</code>（各テンプレートにHTML・<code>```</code>・見出しを混ぜた文字列を渡す）</td></tr>
+    <tr><td>見出し・リストの項目</td><td><code>escapeInline</code>（改行を空白に）</td><td>次の行がMarkdownの構文になること</td></tr>
+    <tr><td>関数・ビューの定義、パーティションキー</td><td><code>codeFence</code>・<code>codeSpan</code>（中身の最長のバッククォートより長い囲み）</td><td>コードブロックが途中で閉じること</td></tr>
+    <tr><td>Mermaidの図</td><td><code>MermaidSupport</code>（識別子は記号を<code>_</code>に、表示名・関連名の二重引用符と改行を置き換える）</td><td>図の構文の破壊、コードブロックを閉じる行</td><td><code>MermaidSupportTest</code></td></tr>
+    <tr><td>ログ</td><td><code>log4j2.xml</code>の<code>%enc{%m}{CRLF}</code></td><td>改行による偽のログ行</td><td class="muted">—</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="small muted">名前に上の文字を含まない限り、ファイル名は名前のままです。DB由来の文字列を受け取るテンプレートを足したら、<code>MarkdownInjectionTest</code>の<code>renderedDocuments</code>にも足します。</p>
 
 <!-- ============================================================ -->
 <h2 id="files"><span class="n">11</span>ソースごとの役割</h2>
@@ -1726,13 +1804,14 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
   <thead><tr><th>ファイル</th><th>行</th><th>役割</th><th>使う相手・使われる相手</th></tr></thead>
   <tbody>
     <tr class="group"><td colspan="4">com.export_table_definition（直下）：エントリーポイント</td></tr>
-    <tr><td class="file">ExportTableDefinition</td><td class="num">139</td><td><code>main</code>。処理全体を1つの<code>try-catch</code>で囲み、通常実行（<code>run</code>）か差分検知（<code>runCheck</code>）を呼ぶ。DIコンテナを2段階で組み立て、失敗は<code>FailureReporter</code>で報告して終了コードに変える</td><td>→ <code>CliArguments</code>・<code>ExportTableDefinitionProperties</code>・<code>OutputDirectoryValidator</code>・<code>ConnectionSettings</code>・<code>MyBatisSqlSessionFactories</code>・<code>DatabaseTypeDetector</code>・2つのModule・Controller・<code>FailureReporter</code></td></tr>
-    <tr><td class="file">CliArguments<span class="sub">パッケージプライベート</span></td><td class="num">196</td><td>CLI引数の解析（<code>--check</code>・<code>--rm-dist</code>・<code>--help</code>・<code>--version</code>、接続情報と実行時設定の上書き値）。未知の引数は集めておき、<code>requireKnownArguments</code>で誤りにする。設定の引数名はキーから導く</td><td>← <code>ExportTableDefinition</code>／→ <code>ExportTableDefinitionProperties.KEYS</code></td></tr>
-    <tr><td class="file">ExportTableDefinitionProperties<span class="sub">パッケージプライベート</span></td><td class="num">334</td><td><code>conf/config.yml</code>のうち<code>database</code>以外の仕様（7項目の位置・CLI引数名・既定値・形式）と検証。CLI引数で上書きしてから検証し、誤りをまとめて<code>InvalidConfigurationException</code>にする。2種類のRequestへ変換</td><td>← <code>ExportTableDefinition</code>／→ <code>ConfigFile</code>・<code>TargetSelection</code></td></tr>
+    <tr><td class="file">ExportTableDefinition</td><td class="num">165</td><td><code>main</code>。処理全体を1つの<code>try-catch</code>で囲み、通常実行（<code>run</code>）か差分検知（<code>runCheck</code>）を呼ぶ。DIコンテナを2段階で組み立て、失敗は<code>FailureReporter</code>で報告して終了コードに変える</td><td>→ <code>CliArguments</code>・<code>ExportTableDefinitionProperties</code>・<code>OutputDirectoryValidator</code>・<code>ConnectionSettings</code>・<code>MyBatisSqlSessionFactories</code>・<code>DatabaseTypeDetector</code>・2つのModule・Controller・<code>FailureReporter</code></td></tr>
+    <tr><td class="file">CliArguments<span class="sub">パッケージプライベート</span></td><td class="num">275</td><td>CLI引数の解析（<code>--check</code>・<code>--rm-dist</code>・<code>--help</code>・<code>--version</code>、接続情報と実行時設定の上書き値）。未知の引数は集めておき、<code>requireKnownArguments</code>で誤りにする（値は伏せて報告）。設定の引数名は<code>SETTINGS</code>から引く</td><td>← <code>ExportTableDefinition</code>／→ <code>ExportTableDefinitionProperties.KEYS</code></td></tr>
+    <tr><td class="file">ExportTableDefinitionProperties<span class="sub">パッケージプライベート</span></td><td class="num">383</td><td><code>conf/config.yml</code>のうち<code>database</code>以外の仕様（8項目の位置・CLI引数名・既定値・形式・範囲）と検証。CLI引数で上書きしてから検証し、誤りをまとめて<code>InvalidConfigurationException</code>にする。2種類のRequestへ変換</td><td>← <code>ExportTableDefinition</code>／→ <code>ConfigFile</code>・<code>TargetSelection</code></td></tr>
     <tr><td class="file">OutputDirectoryValidator<span class="sub">パッケージプライベート</span></td><td class="num">79</td><td>出力先の検証（既存のファイルを指していないか、<code>--rm-dist</code>で消してよいか）。DBへの接続前に、親のコンテナから取り出して使う</td><td>← <code>ExportTableDefinition</code>／→ <code>OutputPathResolver</code>・<code>FileRepository</code></td></tr>
+    <tr><td class="file">CliUsage<span class="sub">パッケージプライベート</span></td><td class="num">55</td><td><code>--help</code>・<code>--version</code>の文言。版はjarのマニフェスト（<code>Implementation-Version</code>）から</td><td>← <code>ExportTableDefinition</code></td></tr>
 
     <tr class="group"><td colspan="4">presentation（.dto・.type）：コントローラーと報告</td></tr>
-    <tr><td class="file">ExportTableDefinitionController</td><td class="num">54</td><td>ユースケースを呼び、結果を<code>ResultDto</code>・<code>DiffCheckResultDto</code>にする。例外は捕まえない</td><td>← <code>ExportTableDefinition</code>／→ 2つのUsecase・<code>DiffReportFormatter</code></td></tr>
+    <tr><td class="file">ExportTableDefinitionController</td><td class="num">70</td><td>ユースケースを呼び、結果を<code>ResultDto</code>・<code>DiffCheckResultDto</code>にする。例外は捕まえない</td><td>← <code>ExportTableDefinition</code>／→ 2つのUsecase・<code>DiffReportFormatter</code></td></tr>
     <tr><td class="file">FailureReporter</td><td class="num">153</td><td>失敗の報告。<code>[errmsg]</code>と、表示に含まれない原因を<code>[cause]</code>で並べる。想定外の失敗はスタックトレースをログへ出し、画面にログの場所を示す</td><td>← <code>ExportTableDefinition.main</code>／→ <code>ProcessResult</code></td></tr>
     <tr><td class="file">DiffReportFormatter<span class="sub">パッケージプライベート</span></td><td class="num">101</td><td><code>--check</code>の結果を文面にする。3区分の一覧と、unified diff（1件200行・全体2000行まで）</td><td>← Controller／→ <code>DiffResult</code>・<code>ContentDiff</code></td></tr>
     <tr><td class="file">ResultDto<br>DiffCheckResultDto</td><td class="num">52</td><td>処理結果のrecord。<code>DiffCheckResultDto</code>は差分の有無から終了状態（<code>exitStatus</code>）を返す</td><td>← Controller・<code>ExportTableDefinition</code></td></tr>
@@ -1740,15 +1819,15 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
     <tr><td class="file">ExitStatus</td><td class="num">38</td><td>終了状態と終了コード（0成功・1差分あり・2失敗）</td><td>← <code>ExportTableDefinition</code>・<code>DiffCheckResultDto</code></td></tr>
 
     <tr class="group"><td colspan="4">application：ユースケース</td></tr>
-    <tr><td class="file">ExportTableDefinitionUsecase</td><td class="num">81</td><td>通常実行。一括取得→ER図の箱→（<code>--rm-dist</code>なら削除）→3つのSinkで書き出し</td><td>← Controller／→ <code>SchemaExportPipeline</code>・3つの<code>…SinkFactory</code></td></tr>
+    <tr><td class="file">ExportTableDefinitionUsecase</td><td class="num">85</td><td>通常実行。一括取得→ER図の箱→（<code>--rm-dist</code>なら削除）→3つのSinkで書き出し</td><td>← Controller／→ <code>SchemaExportPipeline</code>・3つの<code>…SinkFactory</code></td></tr>
     <tr><td class="file">CheckDocumentDiffUsecase</td><td class="num">64</td><td><code>--check</code>。スナップショットのSinkだけで一時ディレクトリへ書き、<code>SnapshotDiff</code>で比べる。一時ディレクトリは必ず消す</td><td>← Controller／→ <code>SchemaExportPipeline</code>・<code>SnapshotExportSinkFactory</code>・<code>SnapshotDiff</code></td></tr>
-    <tr><td class="file">SchemaExportPipeline<span class="sub">パッケージプライベート</span></td><td class="num">304</td><td>両ユースケースが共有する取得と書き出しの段取り（<code>fetchTargets</code>・<code>fetchDiagramBoxes</code>・<code>export</code>）。通知をログへ出し、生成日を<code>Clock</code>から求める</td><td>← 2つのUsecase／→ <code>TableDefinitionRepository</code>・<code>SidecarRepository</code>・<code>ExportTargetConsistency</code>・<code>ExportSink</code></td></tr>
-    <tr><td class="file">ExportTableDefinitionRequest<br>CheckDocumentDiffRequest</td><td class="num">37</td><td>ユースケースへの入力のrecord。3層を同じrecordのまま通る。<code>--check</code>用は<code>erDiagramMaxNodes</code>・<code>rmDist</code>を持たない</td><td>← <code>ExportTableDefinitionProperties</code> → Controller → Usecase</td></tr>
+    <tr><td class="file">SchemaExportPipeline<span class="sub">パッケージプライベート</span></td><td class="num">335</td><td>両ユースケースが共有する取得と書き出しの段取り（<code>fetchTargets</code>・<code>fetchDiagramBoxes</code>・<code>export</code>）。通知と件数をログへ出し、生成日を<code>Clock</code>から求める</td><td>← 2つのUsecase／→ <code>TableDefinitionRepository</code>・<code>SidecarRepository</code>・<code>ExportTargetConsistency</code>・<code>ExportSink</code></td></tr>
+    <tr><td class="file">ExportTableDefinitionRequest<br>CheckDocumentDiffRequest</td><td class="num">40</td><td>ユースケースへの入力のrecord。3層を同じrecordのまま通る。<code>--check</code>用は<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を持たない</td><td>← <code>ExportTableDefinitionProperties</code> → Controller → Usecase</td></tr>
     <tr><td class="file">TargetSelection</td><td class="num">63</td><td>出力対象の絞り込み条件（<code>TableScope</code>＋<code>OutputObjectType</code>の集合）。<code>of</code>で文字列を型に変え、2種類の誤りをまとめる</td><td>← <code>ExportTableDefinitionProperties</code>・<code>SchemaExportPipeline</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.model.target：出力対象</td></tr>
-    <tr><td class="file">ExportTargets</td><td class="num">36</td><td>一括取得した出力対象の組（基本情報・テーブル・関連・トリガー・パーティション・関数/シーケンス/型・付帯情報・観点）</td><td>← <code>SchemaExportPipeline</code> → 各Sink</td></tr>
-    <tr><td class="file">TableDefinitionContent</td><td class="num">94</td><td>1テーブル分の出力内容。<code>assemble</code>で組み立てる。定義書1ファイル・スナップショット1行に対応</td><td>← <code>SchemaExportPipeline</code>／→ <code>TableDefinitionWriter</code>・<code>TableSnapshot</code></td></tr>
+    <tr><td class="file">ExportTargets</td><td class="num">39</td><td>一括取得した出力対象の組（基本情報・テーブル・関連・トリガー・パーティション・ビューの参照・関数/シーケンス/型・付帯情報・観点）</td><td>← <code>SchemaExportPipeline</code> → 各Sink</td></tr>
+    <tr><td class="file">TableDefinitionContent</td><td class="num">93</td><td>1テーブル分の出力内容。<code>assemble</code>で組み立てる。定義書1ファイル・スナップショット1行に対応</td><td>← <code>SchemaExportPipeline</code>／→ <code>TableDefinitionWriter</code>・<code>TableSnapshot</code></td></tr>
     <tr><td class="file">TableScope</td><td class="num">96</td><td>出力対象の範囲（スキーマ名リスト＋テーブル名パターン）。<code>matches</code>・<code>isFiltered</code>・<code>schemaNames</code></td><td>← <code>TargetSelection</code>・<code>SchemaExportPipeline</code>／→ <code>TableNamePatterns</code></td></tr>
     <tr><td class="file">OutputObjectType</td><td class="num">67</td><td>trigger・function・sequence・type。<code>parse</code>（空なら全種別、未知の名前は例外）</td><td>← <code>TargetSelection</code>・<code>SchemaExportPipeline</code></td></tr>
     <tr><td class="file">ConsistencyNotice</td><td class="num">52</td><td>突き合わせの通知（種類・文言）。重要度（INFO・WARN）は種類が決める</td><td>← <code>ExportTargetConsistency</code> → <code>SchemaExportPipeline.report</code></td></tr>
@@ -1763,13 +1842,14 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
     <tr><td class="file">Columns<br>Indexes<br>Constraints<span class="sub">パッケージプライベート</span></td><td class="num">48</td><td><code>TableDetail.assembleAll</code>専用の、テーブルキーで引ける集合</td><td>← <code>TableDetail</code></td></tr>
     <tr><td class="file">TriggerEntity<br>Triggers</td><td class="num">66</td><td>トリガー1件と集合。イベントはリスト</td><td>← <code>SchemaExportPipeline</code>・<code>TableDefinitionContent</code>・<code>ObjectListWriter</code></td></tr>
     <tr><td class="file">PartitionEntity<br>Partitions</td><td class="num">67</td><td>パーティション表の下位のパーティション1件と集合。根のテーブルキーで引く。名前は根のスキーマからの相対（<code>getDisplayName</code>）</td><td>← <code>TableDefinitionContent</code>・<code>TableDefinitionTemplates</code></td></tr>
+    <tr><td class="file">ViewReferenceEntity<br>ViewReferences</td><td class="num">60</td><td>ビューが参照するテーブル1件と集合。ビューと参照されるテーブルの両方のテーブルキーで引く（<code>belongingTo</code>・<code>referencingTo</code>）</td><td>← <code>SchemaExportPipeline</code>・<code>TableDefinitionContent</code>・<code>TableSnapshot</code></td></tr>
     <tr><td class="file">SchemaTableKeyed</td><td class="num">25</td><td>スキーマ名・テーブル名を持つエンティティのインタフェース。<code>tableKey()</code>の既定実装</td><td>← 各Entity・<code>AbstractEntities</code></td></tr>
     <tr><td class="file">AbstractEntities</td><td class="num">49</td><td>エンティティのリストをテーブルキーで索引する集合の基底。<code>belongingTo(table)</code></td><td>← <code>Triggers</code>・<code>Partitions</code>・<code>ForeignKeys</code>・<code>Columns</code>等</td></tr>
     <tr><td class="file">TableNamePatterns</td><td class="num">140</td><td>テーブル名パターン（ワイルドカード・除外・スキーマ修飾）。出力対象の範囲と観点の所属テーブルで共有</td><td>← <code>TableScope</code>・<code>Viewpoint</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.model.relation：関連とER図のまとまり</td></tr>
     <tr><td class="file">ForeignKeyEntity</td><td class="num">100</td><td>関連1件（物理の外部キーと論理リレーションの総称）。参照元・参照先・列・多重度・由来。<code>logical</code>・<code>resolveLogicalRelationName</code></td><td>どこでも</td></tr>
-    <tr><td class="file">ForeignKeys</td><td class="num">138</td><td>関連の集合。参照元・参照先の2つの索引。<code>physicalBelongingTo</code>・<code>logicalBelongingTo</code>・<code>referencingTo</code>・<code>groupBySchema</code>・<code>crossSchema</code>・<code>withinTables</code>・<code>crossingTableSetBoundary</code></td><td>← <code>ExportTargetConsistency</code>・<code>TableDefinitionContent</code>・<code>ErDiagramWriter</code>・<code>Viewpoint</code></td></tr>
+    <tr><td class="file">ForeignKeys</td><td class="num">195</td><td>関連の集合。参照元・参照先の2つの索引。<code>physicalBelongingTo</code>・<code>logicalBelongingTo</code>・<code>referencingTo</code>・<code>groupBySchema</code>・<code>crossSchema</code>・<code>withinTables</code>・<code>crossingTableSetBoundary</code>、テーブル定義書のER図の範囲（<code>neighborhoodOf</code>）</td><td>← <code>ExportTargetConsistency</code>・<code>TableDefinitionContent</code>・<code>MarkdownExportSinkFactory</code>・<code>ErDiagramWriter</code>・<code>Viewpoint</code></td></tr>
     <tr><td class="file">RelationType</td><td class="num">44</td><td>由来。<code>PHYSICAL</code>（実線<code>--</code>・物理）と<code>LOGICAL</code>（破線<code>..</code>・論理）</td><td>← <code>ForeignKeyEntity</code>・<code>Cardinality</code></td></tr>
     <tr><td class="file">Cardinality</td><td class="num">99</td><td>多重度。<code>of(unique, mandatory)</code>での判定、Mermaidの端点、日本語のラベル、論理リレーションの既定値</td><td>← <code>ForeignKeyDto</code>・<code>SidecarYamlRepository</code>・<code>TableSnapshot</code></td></tr>
     <tr><td class="file">ForeignKeyGroup</td><td class="num">110</td><td>1枚のER図に描く関連の集まり。ノード（スキーマ名・テーブル名順）、上限との比較、<code>planRendering</code>、<code>mainTable</code></td><td>← <code>ErDiagramWriter</code>・<code>Viewpoint</code></td></tr>
@@ -1778,6 +1858,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
     <tr><td class="file">RenderingPlan</td><td class="num">26</td><td>描く（<code>Draw</code>）か省く（<code>Omit</code>）かの計画（sealed interface）</td><td>← <code>ErDiagramWriter</code>・<code>ErDiagramTemplates</code>・<code>ViewpointWriter</code></td></tr>
     <tr><td class="file">DiagramBoxes</td><td class="num">152</td><td>ER図の箱の表示内容（論理テーブル名・関連カラム）。<code>Builder</code>が取得したカラムから関連カラムだけを残す</td><td>← <code>SchemaExportPipeline</code>・ER図のWriter・テンプレート</td></tr>
     <tr><td class="file">DiagramColumn</td><td class="num">46</td><td>箱に表示するカラムと、FKか</td><td>← <code>DiagramBoxes</code>・<code>MermaidSupport</code>・<code>TableDefinitionTemplates</code></td></tr>
+    <tr><td class="file">DiagramNeighborhood</td><td class="num">25</td><td>テーブル定義書のER図に描く関連と、描いた距離・指定された距離。<code>isShortened</code>で上限のため縮めたかを判定</td><td>← <code>ForeignKeys.neighborhoodOf</code> → <code>TableDefinitionTemplates.erDiagram</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.model.sidecar・viewpoint：サイドカーと観点</td></tr>
     <tr><td class="file">Sidecar</td><td class="num">40</td><td>サイドカーYAMLの内容（付帯情報・論理リレーション・観点）。<code>null</code>を空へ揃える</td><td>← <code>SidecarYamlRepository</code> → <code>SchemaExportPipeline</code></td></tr>
@@ -1791,12 +1872,12 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
     <tr><td class="file">FunctionEntity<br>Functions</td><td class="num">86</td><td>関数・プロシージャ1件と集合。オーバーロードの番号・数、定義本体（一覧の取得では空）。<code>schemaNames</code>は定義本体を取る単位</td><td>← <code>SchemaExportPipeline</code>・<code>ObjectListWriter</code>・<code>FunctionSnapshot</code>・<code>DocumentLocations</code></td></tr>
     <tr><td class="file">SequenceEntity<br>Sequences</td><td class="num">62</td><td>シーケンス1件と集合。数値は桁あふれしないよう文字列のまま</td><td>← <code>ObjectListWriter</code>・<code>SchemaSnapshotWriter</code></td></tr>
     <tr><td class="file">TypeEntity<br>Types</td><td class="num">52</td><td>ユーザー定義型1件と集合</td><td>← <code>ObjectListWriter</code>・<code>SchemaSnapshotWriter</code></td></tr>
-    <tr><td class="file">DatabaseEntity<br>BaseInfoEntity</td><td class="num">29</td><td>DB名・DBMS種別（カタログから）と、それに生成日を足した基本情報</td><td>← <code>AbstractTableDefinitionRepository</code>・<code>SchemaExportPipeline</code>／→ テンプレート</td></tr>
+    <tr><td class="file">DatabaseEntity<br>BaseInfoEntity</td><td class="num">33</td><td>DB名・DBMS種別・メジャーバージョン（カタログから）と、それに生成日を足した基本情報</td><td>← <code>AbstractTableDefinitionRepository</code>・<code>SchemaExportPipeline</code>／→ テンプレート</td></tr>
     <tr><td class="file">ListDocumentType</td><td class="num">60</td><td>一覧ドキュメントの種類（7つ）。ファイル名の接頭辞とタイトル</td><td>← <code>MarkdownExportSinkFactory</code>・<code>DocumentLocations</code>・テンプレート</td></tr>
 
     <tr class="group"><td colspan="4">domain.model.snapshot・insight：機械が読む形</td></tr>
-    <tr><td class="file">DatabaseSnapshot</td><td class="num">25</td><td><code>database.json</code>（形式バージョン・DB名・DBMS）。<code>FORMAT_VERSION</code>はmcp-serverとの契約</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
-    <tr><td class="file">TableSnapshot</td><td class="num">186</td><td><code>tables.jsonl</code>の1行。カラム・インデックス・制約・外部キー・論理リレーション・トリガー・付帯情報を項目として持つ。被参照は持たない（参照元から導ける）</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
+    <tr><td class="file">DatabaseSnapshot</td><td class="num">27</td><td><code>database.json</code>（形式バージョン・DB名・DBMS・メジャーバージョン）。<code>FORMAT_VERSION</code>はmcp-serverとの契約</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
+    <tr><td class="file">TableSnapshot</td><td class="num">206</td><td><code>tables.jsonl</code>の1行。カラム・インデックス・制約・外部キー・論理リレーション・トリガー・付帯情報・ビューが参照するテーブル（<code>referencedTables</code>。項目の並びを変えないよう末尾）を項目として持つ。被参照と参照しているビューは持たない（参照元から導ける）</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
     <tr><td class="file">FunctionSnapshot<br>SequenceSnapshot<br>TypeSnapshot</td><td class="num">104</td><td><code>functions</code>・<code>sequences</code>・<code>types.jsonl</code>の1行</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
     <tr><td class="file">SnapshotValues<span class="sub">パッケージプライベート</span></td><td class="num">19</td><td>空文字を<code>null</code>にする（JSONで項目ごと省略させる）</td><td>← 各Snapshot</td></tr>
     <tr><td class="file">SnapshotKind</td><td class="num">61</td><td>tables・functions・sequences・types。<code>identify</code>で行の表示名（関数は引数を含む）</td><td>← <code>SnapshotLocations</code>・<code>SnapshotDiff</code></td></tr>
@@ -1804,13 +1885,13 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
     <tr><td class="file">ViewpointsInsight<br>ViewpointInsight</td><td class="num">57</td><td><code>viewpoints.json</code>（形式バージョン・観点・所属テーブル）。<code>ViewpointContent</code>から作る</td><td>← <code>InsightWriter</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.repository：外部とのやり取りのインタフェース</td></tr>
-    <tr><td class="file">TableDefinitionRepository</td><td class="num">69</td><td>DBからの取得（11メソッド）。実装はDB種別ごと</td><td>← <code>SchemaExportPipeline</code>／実装 <code>AbstractTableDefinitionRepository</code></td></tr>
+    <tr><td class="file">TableDefinitionRepository</td><td class="num">80</td><td>DBからの取得（12メソッド）。実装はDB種別ごと</td><td>← <code>SchemaExportPipeline</code>／実装 <code>AbstractTableDefinitionRepository</code></td></tr>
     <tr><td class="file">SidecarRepository</td><td class="num">18</td><td>サイドカーYAMLの読み込み。パスが空なら空の<code>Sidecar</code></td><td>← <code>SchemaExportPipeline</code>／実装 <code>SidecarYamlRepository</code></td></tr>
     <tr><td class="file">FileRepository</td><td class="num">60</td><td>ファイル操作（書く・追記・ディレクトリ作成・存在・一覧・読む・一時ディレクトリ・再帰削除）</td><td>← Writer・Usecase・<code>SnapshotDiff</code>・<code>OutputDirectoryValidator</code>／実装 <code>LocalFileRepository</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.service（export・target・snapshot・insight・path・直下）</td></tr>
     <tr><td class="file">ExportSink</td><td class="num">47</td><td>1つの出力形式で書き出すインタフェース（<code>writeOverview</code>・<code>writeFunctionDefinitions</code>・<code>beginSchemaTables</code>・<code>writeTableDefinition</code>）</td><td>← <code>SchemaExportPipeline</code></td></tr>
-    <tr><td class="file">MarkdownExportSinkFactory</td><td class="num">170</td><td>MarkdownのSinkを作る。出力する一覧の決定（<code>listDocuments</code>）と、5つのWriterの呼び出し</td><td>← <code>ExportTableDefinitionUsecase</code>／→ 5つのWriter</td></tr>
+    <tr><td class="file">MarkdownExportSinkFactory</td><td class="num">191</td><td>MarkdownのSinkを作る。出力する一覧の決定（<code>listDocuments</code>）、テーブル定義書のER図の範囲（<code>neighborhoodOf</code>）の決定と、5つのWriterの呼び出し</td><td>← <code>ExportTableDefinitionUsecase</code>／→ 5つのWriter</td></tr>
     <tr><td class="file">SnapshotExportSinkFactory</td><td class="num">76</td><td>スナップショットのSinkを作る</td><td>← 2つのUsecase／→ <code>SchemaSnapshotWriter</code></td></tr>
     <tr><td class="file">InsightExportSinkFactory</td><td class="num">72</td><td>参考情報のSinkを作る。<code>writeOverview</code>だけで観点を書く</td><td>← <code>ExportTableDefinitionUsecase</code>／→ <code>InsightWriter</code></td></tr>
     <tr><td class="file">ExportTargetConsistency</td><td class="num">222</td><td>出力対象と関連・付帯情報・観点の突き合わせ。関連の合流（<code>resolveForeignKeys</code>）と、孤児・不一致の検出。結果は通知で返す</td><td>← <code>SchemaExportPipeline</code></td></tr>
@@ -1820,44 +1901,46 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
     <tr><td class="file">UnifiedDiffGenerator</td><td class="num">292</td><td>2つの行リストからunified diffを作る（Myers法、前後3行、外部ライブラリに依存しない）</td><td>← <code>SnapshotDiff</code></td></tr>
     <tr><td class="file">InsightWriter</td><td class="num">58</td><td><code>viewpoints.json</code>の書き込み（観点が無ければ書かない）</td><td>← <code>InsightExportSinkFactory</code></td></tr>
     <tr><td class="file">OutputPathResolver</td><td class="num">146</td><td>出力先パスのインタフェース（ベース・<code>{DB名}/</code>・各ドキュメント・分割ページ・<code>snapshot/</code>・<code>insights/</code>）。<code>--rm-dist</code>で消してよいか</td><td>実装 <code>DefaultOutputPathResolver</code></td></tr>
-    <tr><td class="file">DocumentLocations</td><td class="num">166</td><td>Markdownのファイル名・<code>{DB名}/</code>からの相対パス・相対リンクの規則</td><td>← <code>DefaultOutputPathResolver</code>・各テンプレート</td></tr>
-    <tr><td class="file">SnapshotLocations<br>InsightLocations</td><td class="num">114</td><td><code>snapshot/</code>・<code>insights/</code>の配置。ファイル名から種別を逆引き（<code>kindOf</code>）</td><td>← <code>DefaultOutputPathResolver</code></td></tr>
+    <tr><td class="file">DocumentLocations</td><td class="num">184</td><td>Markdownのファイル名・<code>{DB名}/</code>からの相対パス・相対リンクの規則。名前は<code>PathSegments</code>を通す</td><td>← <code>DefaultOutputPathResolver</code>・各テンプレート</td></tr>
+    <tr><td class="file">SnapshotLocations<br>InsightLocations</td><td class="num">118</td><td><code>snapshot/</code>・<code>insights/</code>の配置。ファイル名から種別を逆引き（<code>kindOf</code>）</td><td>← <code>DefaultOutputPathResolver</code></td></tr>
+    <tr><td class="file">PathSegments</td><td class="num">54</td><td>DB由来の名前をパスの1要素として安全な形にする（<code>encode</code>。区切り・Windowsで使えない文字・制御文字・<code>~</code>を<code>~</code>＋16進2桁に）</td><td>← <code>DocumentLocations</code>・<code>SnapshotLocations</code>・<code>InsightLocations</code>・<code>DefaultOutputPathResolver</code></td></tr>
     <tr><td class="file">OutputRoot</td><td class="num">13</td><td>出力先ベースディレクトリと基本情報の組。常に対で使うため1つの値にしている</td><td>← 各Sink・Writer・<code>OutputPathResolver</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.service.writer：Markdownの段取りとテンプレート</td></tr>
     <tr><td class="file">PagedSectionWriter</td><td class="num">125</td><td>3,000行を超える表を別ページへ分ける</td><td>← 4つのWriter</td></tr>
-    <tr><td class="file">TableDefinitionWriter</td><td class="num">111</td><td>テーブル一覧と定義書の段取り（セクションの順）</td><td>← <code>MarkdownExportSinkFactory</code></td></tr>
-    <tr><td class="file">TableDefinitionTemplates</td><td class="num">446</td><td>定義書の各セクション（エスケープ・○・テーブル単位のER図を含む）</td><td>← <code>TableDefinitionWriter</code>／→ <code>MermaidSupport</code></td></tr>
+    <tr><td class="file">TableDefinitionWriter</td><td class="num">114</td><td>テーブル一覧と定義書の段取り（セクションの順）</td><td>← <code>MarkdownExportSinkFactory</code></td></tr>
+    <tr><td class="file">TableDefinitionTemplates</td><td class="num">503</td><td>定義書の各セクション（エスケープ・○・参照するテーブル／参照しているビュー・描画距離に応じたテーブル単位のER図を含む）</td><td>← <code>TableDefinitionWriter</code>／→ <code>MermaidSupport</code></td></tr>
     <tr><td class="file">TableDefinitionListTemplates</td><td class="num">93</td><td>テーブル一覧（関連ドキュメントへのリンクを含む）</td><td>← <code>TableDefinitionWriter</code></td></tr>
     <tr><td class="file">ErDiagramWriter</td><td class="num">258</td><td>スキーマ別ER図・グループ別ER図・索引の段取り。<code>compose</code>の結果で振り分け、<code>planRendering</code>に従う</td><td>← <code>MarkdownExportSinkFactory</code>／→ <code>ForeignKeyGroups</code></td></tr>
-    <tr><td class="file">ErDiagramTemplates</td><td class="num">318</td><td>Mermaidの図、省略・分割の文言、掲載テーブル・外部キー一覧の表、ノードの識別子の重複回避</td><td>← <code>ErDiagramWriter</code>・<code>ViewpointTemplates</code></td></tr>
+    <tr><td class="file">ErDiagramTemplates</td><td class="num">326</td><td>Mermaidの図、省略・分割の文言、掲載テーブル・外部キー一覧の表、ノードの識別子の重複回避</td><td>← <code>ErDiagramWriter</code>・<code>ViewpointTemplates</code></td></tr>
     <tr><td class="file">ViewpointWriter</td><td class="num">143</td><td>観点ページと観点一覧の段取り。観点ごとに<code>resolve</code>を1回だけ</td><td>← <code>MarkdownExportSinkFactory</code></td></tr>
-    <tr><td class="file">ViewpointTemplates</td><td class="num">190</td><td>観点ページの各セクション。図と表は<code>ErDiagramTemplates</code>を再利用</td><td>← <code>ViewpointWriter</code></td></tr>
+    <tr><td class="file">ViewpointTemplates</td><td class="num">191</td><td>観点ページの各セクション。図と表は<code>ErDiagramTemplates</code>を再利用</td><td>← <code>ViewpointWriter</code></td></tr>
     <tr><td class="file">ObjectListWriter</td><td class="num">151</td><td>トリガー・関数・シーケンス・型の一覧と個別定義</td><td>← <code>MarkdownExportSinkFactory</code></td></tr>
-    <tr><td class="file">ObjectListTemplates<br>ObjectDefinitionTemplates</td><td class="num">262</td><td>一覧の表／個別定義のページ</td><td>← <code>ObjectListWriter</code></td></tr>
-    <tr><td class="file">ReadmeWriter<br>ReadmeTemplates</td><td class="num">89</td><td><code>{DB名}/README.md</code>（出力する一覧へのリンク）</td><td>← <code>MarkdownExportSinkFactory</code></td></tr>
-    <tr><td class="file">MarkdownTemplateSupport</td><td class="num">114</td><td>共通部品（基本情報・表の行・リンクのセル・エスケープ・○）</td><td>← 全テンプレート</td></tr>
-    <tr><td class="file">MermaidSupport</td><td class="num">148</td><td>Mermaid記法の部品（識別子・表示名・別名・属性・関連線）</td><td>← <code>ErDiagramTemplates</code>・<code>TableDefinitionTemplates</code></td></tr>
+    <tr><td class="file">ObjectListTemplates<br>ObjectDefinitionTemplates</td><td class="num">254</td><td>一覧の表／個別定義のページ</td><td>← <code>ObjectListWriter</code></td></tr>
+    <tr><td class="file">ReadmeWriter<br>ReadmeTemplates</td><td class="num">91</td><td><code>{DB名}/README.md</code>（出力する一覧へのリンク）</td><td>← <code>MarkdownExportSinkFactory</code></td></tr>
+    <tr><td class="file">MarkdownTemplateSupport</td><td class="num">198</td><td>共通部品（基本情報・表の行・リンクのセル・エスケープ・HTMLの無害化・コードブロック／コードスパンの囲み・○）</td><td>← 全テンプレート</td></tr>
+    <tr><td class="file">MermaidSupport</td><td class="num">151</td><td>Mermaid記法の部品（識別子・表示名・別名・属性・関連線）。二重引用符・改行を置き換える</td><td>← <code>ErDiagramTemplates</code>・<code>TableDefinitionTemplates</code></td></tr>
     <tr><td class="file">PagedSectionTemplates</td><td class="num">68</td><td>見出し・分割ページへのリンク・ページ送り・戻るリンク</td><td>← <code>PagedSectionWriter</code>・テンプレート</td></tr>
 
     <tr class="group"><td colspan="4">infrastructure.db：DBへの接続と取得</td></tr>
-    <tr><td class="file">ConnectionSettings</td><td class="num">139</td><td>検証済みの接続情報。<code>config.yml</code>の<code>database</code>＋環境変数のパスワード＋CLI引数。<code>driver</code>・<code>url</code>必須、ファイルの<code>password</code>は誤り</td><td>← <code>ExportTableDefinition</code></td></tr>
+    <tr><td class="file">ConnectionSettings</td><td class="num">157</td><td>検証済みの接続情報。<code>config.yml</code>の<code>database</code>＋環境変数のパスワード＋CLI引数。<code>driver</code>・<code>url</code>必須、ファイルの<code>password</code>と<code>url</code>へのパスワードの埋め込みは誤り</td><td>← <code>ExportTableDefinition</code></td></tr>
     <tr><td class="file">MyBatisSqlSessionFactories</td><td class="num">40</td><td><code>mybatis-config.xml</code>から<code>SqlSessionFactory</code>を作る（接続はしない）</td><td>← <code>ExportTableDefinition</code></td></tr>
-    <tr><td class="file">DatabaseTypeDetector</td><td class="num">65</td><td>接続して製品名から<code>DatabaseType</code>を判定。接続できない・非対応のDBは<code>UserCorrectableException</code></td><td>← <code>ExportTableDefinition</code></td></tr>
+    <tr><td class="file">DatabaseTypeDetector</td><td class="num">78</td><td>接続して製品名から<code>DatabaseType</code>を判定し、DBMS・ドライバの版をログへ残す。接続できない・非対応のDBは<code>UserCorrectableException</code></td><td>← <code>ExportTableDefinition</code></td></tr>
     <tr><td class="file">DatabaseType</td><td class="num">54</td><td>postgresql・oracleと、リポジトリの実装クラスの対応。名前はSQLの名前空間にも使う</td><td>← <code>DatabaseDependentModule</code>・<code>AbstractTableDefinitionRepository</code></td></tr>
-    <tr><td class="file">AbstractTableDefinitionRepository</td><td class="num">182</td><td><code>TableDefinitionRepository</code>の共通実装。SQLのIDを組み立てて実行し、DTO→エンティティ。SQLの失敗はどのSQLかを添えて包む</td><td>← 2つの実装／→ 11のDTO</td></tr>
+    <tr><td class="file">AbstractTableDefinitionRepository</td><td class="num">191</td><td><code>TableDefinitionRepository</code>の共通実装。SQLのIDを組み立てて実行し、DTO→エンティティ。SQLの失敗はどのSQLかを添えて包む</td><td>← 2つの実装／→ 12のDTO</td></tr>
     <tr><td class="file">PostgresTableDefinitionRepository<br>OracleTableDefinitionRepository</td><td class="num">28</td><td>DB種別を渡すだけの実装</td><td>← <code>DatabaseType</code></td></tr>
-    <tr><td class="file">TableDto 等 11個のDTO</td><td class="num">338</td><td><code>TableDto</code>・<code>ColumnDto</code>・<code>IndexDto</code>・<code>ConstraintDto</code>・<code>ForeignKeyDto</code>・<code>TriggerDto</code>・<code>PartitionDto</code>・<code>FunctionDto</code>・<code>SequenceDto</code>・<code>TypeDto</code>・<code>DatabaseDto</code>。SQLの結果の受け皿（record）で、<code>toEntity()</code>で値の形を揃える。<code>ForeignKeyDto</code>は多重度を判定し、<code>TriggerDto</code>はイベントを分解する</td><td>← <code>AbstractTableDefinitionRepository</code></td></tr>
+    <tr><td class="file">TableDto 等 12個のDTO</td><td class="num">374</td><td><code>TableDto</code>・<code>ColumnDto</code>・<code>IndexDto</code>・<code>ConstraintDto</code>・<code>ForeignKeyDto</code>・<code>TriggerDto</code>・<code>PartitionDto</code>・<code>ViewReferenceDto</code>・<code>FunctionDto</code>・<code>SequenceDto</code>・<code>TypeDto</code>・<code>DatabaseDto</code>。SQLの結果の受け皿（record）で、<code>toEntity()</code>で値の形を揃える。<code>ForeignKeyDto</code>は多重度を判定し、<code>TriggerDto</code>はイベントを分解する</td><td>← <code>AbstractTableDefinitionRepository</code></td></tr>
     <tr><td class="file">DtoValues<span class="sub">パッケージプライベート</span></td><td class="num">41</td><td><code>null</code>・空白を空文字へ、区切り文字で連結された値をリストへ</td><td>← 各DTO</td></tr>
 
     <tr class="group"><td colspan="4">infrastructure.file・path・snapshot</td></tr>
     <tr><td class="file">LocalFileRepository</td><td class="num">127</td><td><code>FileRepository</code>の実装（UTF-8で書く・追記・再帰削除等）</td><td>← <code>ExportTableDefinitionModule</code></td></tr>
-    <tr><td class="file">SidecarYamlRepository</td><td class="num">444</td><td>サイドカーYAMLの読み込み（SnakeYAMLの<code>SafeConstructor</code>）。ファイルが無い・YAMLとして読めないのは誤り、個々の記述の誤りは警告して読み飛ばす</td><td>← <code>ExportTableDefinitionModule</code>／→ <code>TableKey.parse</code>・<code>Viewpoint.of</code>・<code>Cardinality</code></td></tr>
-    <tr><td class="file">DefaultOutputPathResolver</td><td class="num">158</td><td><code>OutputPathResolver</code>の実装。既定の出力先<code>./output</code>。<code>--rm-dist</code>でルート・ホーム・カレントを拒否</td><td>→ <code>DocumentLocations</code>・<code>SnapshotLocations</code>・<code>InsightLocations</code></td></tr>
+    <tr><td class="file">SidecarYamlRepository</td><td class="num">492</td><td>サイドカーYAMLの読み込み（SnakeYAMLの<code>SafeConstructor</code>）。ファイルが無い・YAMLとして読めないのは誤り（文言は<code>YamlSyntaxErrors</code>）、個々の記述の誤りは何件目の定義かを添えて警告し、読み飛ばす</td><td>← <code>ExportTableDefinitionModule</code>／→ <code>TableKey.parse</code>・<code>Viewpoint.of</code>・<code>Cardinality</code></td></tr>
+    <tr><td class="file">DefaultOutputPathResolver</td><td class="num">186</td><td><code>OutputPathResolver</code>の実装。既定の出力先<code>./output</code>。解決したパスが起点の外を指さないことを<code>within</code>で確かめる。<code>--rm-dist</code>でルート、カレント・ホームとその上位を拒否</td><td>→ <code>DocumentLocations</code>・<code>SnapshotLocations</code>・<code>InsightLocations</code></td></tr>
     <tr><td class="file">JacksonSnapshotSerializer</td><td class="num">94</td><td><code>SnapshotSerializer</code>の実装（<code>NON_EMPTY</code>、差分表示用の整形）</td><td>← <code>ExportTableDefinitionModule</code></td></tr>
 
     <tr class="group"><td colspan="4">config・shared.exception</td></tr>
-    <tr><td class="file">ConfigFile</td><td class="num">161</td><td>設定ファイル（<code>--config</code>、無ければ<code>conf/config.yml</code>）をYAMLとして読む。仕様と検証は値を使う側が持つ</td><td>← <code>ExportTableDefinition</code>・<code>ExportTableDefinitionProperties</code>・<code>CliArguments</code></td></tr>
+    <tr><td class="file">ConfigFile</td><td class="num">163</td><td>設定ファイル（<code>--config</code>、無ければ<code>conf/config.yml</code>）をYAMLとして読む。仕様と検証は値を使う側が持つ</td><td>← <code>ExportTableDefinition</code>・<code>ExportTableDefinitionProperties</code>・<code>CliArguments</code></td></tr>
+    <tr><td class="file">YamlSyntaxErrors</td><td class="num">51</td><td>SnakeYAMLの構文誤りを、ファイルの内容を引用しない文言（種類と位置）へ変える</td><td>← <code>ConfigFile</code>・<code>SidecarYamlRepository</code></td></tr>
     <tr><td class="file">InvalidConfigurationException</td><td class="num">28</td><td>設定の誤り（<code>UserCorrectableException</code>の派生）</td><td>← <code>ConfigFile</code>・<code>ExportTableDefinitionProperties</code>・<code>ConnectionSettings</code></td></tr>
     <tr><td class="file">ExportTableDefinitionModule</td><td class="num">61</td><td>DB種別に依存しない束縛（親のコンテナ）</td><td>← <code>ExportTableDefinition</code></td></tr>
     <tr><td class="file">DatabaseDependentModule</td><td class="num">38</td><td><code>SqlSessionFactory</code>と<code>TableDefinitionRepository</code>の束縛（子のコンテナ）</td><td>← <code>ExportTableDefinition</code></td></tr>
@@ -1865,24 +1948,24 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
     <tr><td class="file">package-info（43ファイル）</td><td class="num">90</td><td>各パッケージの要旨。<code>shared.exception</code>だけは置いてよいものの規約も書く</td><td class="muted">—</td></tr>
 
     <tr class="group"><td colspan="4">リソース（cli/src/main/resources）</td></tr>
-    <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">636</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む12の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
-    <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">794</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む12の<code>SELECT</code>。LONG型の列は<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
-    <tr><td class="file">mybatis-config.xml</td><td class="num">38</td><td>DTOの型の別名、接続（POOLED。<code>${driver}</code>等）、2つのmapper</td><td>← <code>MyBatisSqlSessionFactories</code></td></tr>
-    <tr><td class="file">log4j2.xml</td><td class="num">50</td><td>ログファイル（TRACE）と、このツールのWARNの標準エラー出力</td><td class="muted">—</td></tr>
-    <tr><td class="file">conf/config.yml</td><td class="num">24</td><td>配布する設定（全項目が未指定。各項目の例をコメントで示す）</td><td>← <code>ConfigFile</code></td></tr>
+    <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">668</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
+    <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">833</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
+    <tr><td class="file">mybatis-config.xml</td><td class="num">39</td><td>DTOの型の別名、接続（POOLED。<code>${driver}</code>等）、2つのmapper</td><td>← <code>MyBatisSqlSessionFactories</code></td></tr>
+    <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>export-table-definition.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
+    <tr><td class="file">conf/config.yml</td><td class="num">25</td><td>配布する設定（全項目が未指定。各項目の例をコメントで示す）</td><td>← <code>ConfigFile</code></td></tr>
 
     <tr class="group"><td colspan="4">テスト（cli/src/test・cli/src/integrationTest）</td></tr>
-    <tr><td class="file">ArchitectureTest</td><td class="num">193</td><td>構造の規約（3章の表）をArchUnitで検査</td><td>→ main配下の全クラス</td></tr>
+    <tr><td class="file">ArchitectureTest</td><td class="num">214</td><td>構造の規約（3章の表）をArchUnitで検査</td><td>→ main配下の全クラス</td></tr>
     <tr><td class="file">ExportTableDefinitionModuleTest</td><td class="num">91</td><td>本番と同じ2段階でDIコンテナを組み立て、コントローラーまで解決できるか（DBには接続しない）</td><td>→ 2つのModule</td></tr>
-    <tr><td class="file">ExportTableDefinitionUsecaseTest</td><td class="num">1,353</td><td>通常実行・<code>--check</code>の流れ全体。Writerは本物、ファイルはメモリ上（<code>InMemoryFileRepository</code>）、DBは呼び出しを記録するスタブ</td><td>→ 2つのUsecase</td></tr>
-    <tr><td class="file">入口のテスト（4ファイル）</td><td class="num">645</td><td><code>CliArgumentsTest</code>・<code>ExportTableDefinitionPropertiesTest</code>・<code>OutputDirectoryValidatorTest</code>・<code>TargetSelectionTest</code></td><td>→ 入口の各クラス</td></tr>
-    <tr><td class="file">presentationのテスト（4ファイル）</td><td class="num">513</td><td>Controller・<code>FailureReporter</code>（原因の併記）・<code>DiffReportFormatter</code>（行数の上限）・<code>ExitStatus</code></td><td>→ presentation</td></tr>
-    <tr><td class="file">domain.modelのテスト（30ファイル）</td><td class="num">2,664</td><td>多重度・グループ分割・関連の集合・テーブル名パターン・<code>TableScope</code>・観点・<code>TableDefinitionContent</code>・<code>TableSnapshot</code>等</td><td>→ domain.model</td></tr>
-    <tr><td class="file">domain.serviceのテスト（21ファイル）</td><td class="num">4,314</td><td>突き合わせ・スナップショットの書き込みと比較・unified diff・配置の規則・全Writer・全テンプレート（<code>TableDefinitionTemplatesTest</code>は806行）</td><td>→ domain.service</td></tr>
-    <tr><td class="file">infrastructureのテスト（9ファイル）</td><td class="num">1,427</td><td>接続情報・DB種別・DTOの変換・ファイル・サイドカーYAML（510行）・パス・JSON</td><td>→ infrastructure</td></tr>
-    <tr><td class="file">ConfigFileTest<br>testsupport（4ファイル）</td><td class="num">375</td><td>設定ファイルの読み込みと、テスト用の部品（<code>EntityFixtures</code>・<code>ForeignKeyFixtures</code>・<code>DiagramBoxesFixtures</code>・<code>MarkdownAssert</code>）</td><td>← 各テスト</td></tr>
-    <tr><td class="file">SampleDatabaseExportIT<br>OracleSampleDatabaseExportIT</td><td class="num">141</td><td>結合テスト。サンプルDBに対して全体を通し、出力をベースライン（<code>docs/sample/*/output</code>）とファイル単位で完全一致させる。<code>--check</code>で差分が無いことも確かめる</td><td>→ <code>ExportBaseline</code></td></tr>
-    <tr><td class="file">PostgresTableDefinitionRepositoryIT<br>OracleTableDefinitionRepositoryIT</td><td class="num">1,160</td><td>mapperの各SQLの取得結果（パーティション・多重度・オーバーロード等）</td><td>→ 2つのmapper</td></tr>
+    <tr><td class="file">ExportTableDefinitionUsecaseTest</td><td class="num">1,509</td><td>通常実行・<code>--check</code>の流れ全体。Writerは本物、ファイルはメモリ上（<code>InMemoryFileRepository</code>）、DBは呼び出しを記録するスタブ</td><td>→ 2つのUsecase</td></tr>
+    <tr><td class="file">入口のテスト（5ファイル）</td><td class="num">875</td><td><code>CliArgumentsTest</code>・<code>CliUsageTest</code>・<code>ExportTableDefinitionPropertiesTest</code>・<code>OutputDirectoryValidatorTest</code>・<code>TargetSelectionTest</code></td><td>→ 入口の各クラス</td></tr>
+    <tr><td class="file">presentationのテスト（4ファイル）</td><td class="num">516</td><td>Controller・<code>FailureReporter</code>（原因の併記）・<code>DiffReportFormatter</code>（行数の上限）・<code>ExitStatus</code></td><td>→ presentation</td></tr>
+    <tr><td class="file">domain.modelのテスト（31ファイル）</td><td class="num">2,794</td><td>多重度・グループ分割・関連の集合（描画距離を含む）・ビューの参照・テーブル名パターン・<code>TableScope</code>・観点・<code>TableDefinitionContent</code>・<code>TableSnapshot</code>等</td><td>→ domain.model</td></tr>
+    <tr><td class="file">domain.serviceのテスト（23ファイル）</td><td class="num">4,781</td><td>突き合わせ・スナップショットの書き込みと比較・unified diff・配置の規則（<code>PathSegmentsTest</code>）・全Writer・全テンプレート（<code>TableDefinitionTemplatesTest</code>は911行）・DB由来の文字列の注入（<code>MarkdownInjectionTest</code>）</td><td>→ domain.service</td></tr>
+    <tr><td class="file">infrastructureのテスト（10ファイル）</td><td class="num">1,734</td><td>接続情報・DB種別・DTOの変換・ファイル・サイドカーYAML（597行）・パス（出力先の外を指さないことの網羅的な検査<code>OutputPathContainmentTest</code>を含む）・JSON</td><td>→ infrastructure</td></tr>
+    <tr><td class="file">ConfigFileTest<br>testsupport（5ファイル）</td><td class="num">444</td><td>設定ファイルの読み込みと、テスト用の部品（<code>EntityFixtures</code>・<code>ForeignKeyFixtures</code>・<code>DiagramBoxesFixtures</code>・<code>MarkdownAssert</code>・ログの警告を確かめる<code>CapturedLogs</code>）</td><td>← 各テスト</td></tr>
+    <tr><td class="file">SampleDatabaseExportIT<br>OracleSampleDatabaseExportIT</td><td class="num">152</td><td>結合テスト。サンプルDBに対して全体を通し、出力をベースライン（<code>docs/sample/*/output</code>）とファイル単位で完全一致させる。<code>--check</code>で差分が無いことも確かめる</td><td>→ <code>ExportBaseline</code></td></tr>
+    <tr><td class="file">PostgresTableDefinitionRepositoryIT<br>OracleTableDefinitionRepositoryIT</td><td class="num">1,282</td><td>mapperの各SQLの取得結果（パーティション・多重度・オーバーロード・ビューの参照・メジャーバージョン等）</td><td>→ 2つのmapper</td></tr>
     <tr><td class="file">ExportBaseline<br>SampleDatabase<br>OracleSampleDatabase</td><td class="num">224</td><td>Testcontainersで<code>ddl.sql</code>を流したDBを起動し、本番と同じ2段階でコントローラーを作る（時計は固定、作成日は比較の前に置き換える）</td><td>← 結合テスト</td></tr>
     <tr class="empty-row" hidden><td colspan="4">一致するファイルはありません。</td></tr>
   </tbody>
@@ -1955,6 +2038,8 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
   <li>SQLでMarkdown向けのエスケープや表示用の連結をする（スナップショットにMarkdownの記法が混ざる）。</li>
   <li>判定をするドメインサービスが、警告をログへ直接出す（通知を値で返し、出力は呼び出し側に任せる）。</li>
   <li>ループの中で毎回<code>TableNamePatterns.of(…)</code>のような値オブジェクトを組み立て直す（入口で1回組み立てて使い回す）。</li>
+  <li>DB由来の名前を<code>Path.resolve</code>や<code>String.format</code>で直接パス・Markdownにつなぐ（<code>…Locations</code>・<code>OutputPathResolver</code>と、エスケープの部品を通す。10章の「DB由来の文字列を信頼しない」）。</li>
+  <li>CLI引数・設定値・接続URLの値を、例外のメッセージやログにそのまま含める（書き誤りの引数にパスワードが入り得る）。</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -1973,6 +2058,8 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
   <dt>論理リレーション</dt><dd>DBに制約が無く、サイドカーYAMLの<code>relations</code>で宣言した関連。ER図では破線。</dd>
   <dt>被参照の関連</dt><dd><code>incomingRelations</code>・<code>ForeignKeys.referencingTo</code>。自分を参照している関連（自己参照を除く）。</dd>
   <dt>多重度</dt><dd><code>Cardinality</code>。参照元の外部キー列の一意性とNOT NULLから決まる、関連の両端の件数の関係。</dd>
+  <dt>描画距離</dt><dd><code>output.erDiagramDistance</code>・<code>DiagramNeighborhood</code>。テーブル定義書のER図に描く関連の段数。1は自テーブルの関連だけ。図が上限を超える場合は縮める。</dd>
+  <dt>ビューが参照するテーブル／参照しているビュー</dt><dd><code>ViewReferenceEntity</code>・<code>ViewReferences</code>。ビュー・マテリアライズドビューが参照するテーブル（<code>referencedTables</code>）と、その逆向き（<code>referencingViews</code>。MCPでは<code>referencedByViews</code>）。DBの依存関係から取得する。</dd>
   <dt>ノード</dt><dd>ER図に描くテーブル。関連を持つテーブルだけを数える。</dd>
   <dt>グループ</dt><dd><code>ForeignKeyGroup</code>。1枚のER図に描く関連のまとまり。上限を超えると連結成分ごとにまとめ直す（<code>ForeignKeyGroups</code>）。</dd>
   <dt>関連カラム</dt><dd>関連の参照元・参照先として使われるカラム。ER図の箱（<code>DiagramBoxes</code>）に表示する。</dd>
@@ -1981,7 +2068,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
   <dt>孤児付帯情報</dt><dd>実在しないテーブル・カラムに対する付帯情報。リネーム・削除の見落としとして警告する。</dd>
   <dt>観点</dt><dd><code>Viewpoint</code>。業務ドメイン別にテーブルをまとめる切り口。観点ページと観点一覧になり、スナップショットには含めない。</dd>
   <dt>突き合わせの通知</dt><dd><code>ConsistencyNotice</code>。出力対象と関連・付帯情報・観点を突き合わせた結果。重要度に応じてログへ出す。</dd>
-  <dt>基本情報</dt><dd><code>BaseInfoEntity</code>。各ドキュメントの先頭に載せるRDBMS・DB名・作成日。作成日はDBではなく<code>Clock</code>から。</dd>
+  <dt>基本情報</dt><dd><code>BaseInfoEntity</code>。各ドキュメントの先頭に載せるRDBMS（メジャーバージョンを添える）・DB名・作成日。作成日はDBではなく<code>Clock</code>から。</dd>
   <dt>チャンク</dt><dd>詳細情報をまとめて取得・出力するテーブルの塊。大きさは設定の<code>chunkSize</code>（既定3000、0以下でスキーマ全体）。</dd>
   <dt>Sink</dt><dd><code>ExportSink</code>。取得した情報を1つの出力形式で書き出すもの。Markdown・スナップショット・参考情報の3つ。</dd>
   <dt>スナップショット</dt><dd><code>domain.model.snapshot</code>。取得結果を構造化したJSON Lines。生成日を含まず、<code>--check</code>の比較対象で、mcp-serverの入力。</dd>
@@ -1990,7 +2077,7 @@ ER図に描画するテーブル数が11件となり、上限（erDiagramMaxNode
 </dl>
 
 <footer>
-  <p>出典：<code>cli/</code>のソース（main 181ファイル・テスト83ファイル）、<code>docs/architecture/overview.md</code>・<code>domain-model.md</code>・<code>package-structure.md</code>、README・<code>docs/usage/cli.md</code>、<code>AGENTS.md</code>。コンソールの出力例はビルドしたjarをサンプルDBに対して実行して採取したもの、Markdown・JSONの例は<code>docs/sample/postgres/output</code>から引用。このガイドはある時点のコードを読んで書いたもので、クラス名・行数等が食い違う場合はコードとアーキテクチャの各文書を正とします。</p>
+  <p>出典：<code>cli/</code>のソース（main 188ファイル・テスト89ファイル）、<code>docs/architecture/overview.md</code>・<code>domain-model.md</code>・<code>package-structure.md</code>、README・<code>docs/usage/cli.md</code>、<code>AGENTS.md</code>。コンソールの出力例はビルドしたjarをサンプルDBに対して実行して採取したもの、Markdown・JSONの例は<code>docs/sample/postgres/output</code>から引用。このガイドはある時点のコードを読んで書いたもので、クラス名・行数等が食い違う場合はコードとアーキテクチャの各文書を正とします。</p>
 </footer>
 </main>
 </div>
