@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle|FREEPDB1|2026/10/04|
+|Oracle 23|FREEPDB1|2026/10/08|
 
 ## テーブル説明
 
@@ -60,6 +60,12 @@
 | No. | 参照元 | 参照元カラムリスト | 参照されるカラムリスト | 関連名 | 多重度 | 区分 |
 |:---|:---|:---|:---|:---|:---|:---|
 |1|SAMPLE.ATTENDANCE_NOTE|ATTENDANCE_ID,WORK_DATE|ATTENDANCE_ID,WORK_DATE|ATTENDANCE_NOTE_ATTENDANCE_ID_WORK_DATE_FKEY|1対多|物理|
+
+## 参照しているビュー
+
+| No. | 参照元 | 区分 |
+|:---|:---|:---|
+|1|SAMPLE.ATTENDANCE_MONTHLY_VIEW|view|
 
 ## トリガー情報
 

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.relation.Cardinality;
+import com.export_table_definition.domain.model.relation.DiagramNeighborhood;
 import com.export_table_definition.domain.model.relation.ForeignKeyEntity;
 import com.export_table_definition.domain.model.relation.RelationType;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
@@ -17,6 +18,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.domain.service.writer.erdiagram.ErDiagramTemplates;
 import com.export_table_definition.domain.service.writer.objectlist.ObjectDefinitionTemplates;
 import com.export_table_definition.domain.service.writer.objectlist.ObjectListTemplates;
@@ -49,7 +51,7 @@ public class MarkdownInjectionTest {
       "x<img src=x onerror=alert(1)>\n```\n<script>alert(2)</script>\n# h|z";
 
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity(HOSTILE, "PostgreSQL", LocalDate.EPOCH);
+      new BaseInfoEntity(HOSTILE, "PostgreSQL", 16, LocalDate.EPOCH);
 
   /** 表のセルの改行（{@code <br>}）以外の、生のHTMLの開始 */
   private static final Pattern RAW_HTML = Pattern.compile("<(?!br>)");
@@ -104,6 +106,15 @@ public class MarkdownInjectionTest {
     documents.put(
         "table.columns", () -> TableDefinitionTemplates.columns(List.of(column), annotation));
     documents.put("table.view", () -> TableDefinitionTemplates.view(table));
+    final ViewReferenceEntity viewReference =
+        new ViewReferenceEntity(
+            HOSTILE, HOSTILE, TableType.VIEW, HOSTILE, HOSTILE, TableType.MATERIALIZED_VIEW);
+    documents.put(
+        "table.referencedTables",
+        () -> TableDefinitionTemplates.referencedTables(List.of(viewReference)));
+    documents.put(
+        "table.referencingViews",
+        () -> TableDefinitionTemplates.referencingViews(List.of(viewReference)));
     documents.put(
         "table.indexes",
         () ->
@@ -125,7 +136,10 @@ public class MarkdownInjectionTest {
         "table.erDiagram",
         () ->
             TableDefinitionTemplates.erDiagram(
-                table, List.of(column), List.of(fk), List.of(), DiagramBoxesFixtures.none()));
+                table,
+                List.of(column),
+                neighborhood(List.of(fk), List.of()),
+                DiagramBoxesFixtures.none()));
     documents.put(
         "tableList.tableListLine", () -> TableDefinitionListTemplates.tableListLine(1, table));
     documents.put(
@@ -185,5 +199,12 @@ public class MarkdownInjectionTest {
         line ->
             assertFalse(
                 RAW_HTML.matcher(line).find(), name + ": raw HTML outside code blocks: " + line));
+  }
+
+  /** 自テーブルの関連だけを描く（描画距離1の）ER図の関連 */
+  private static DiagramNeighborhood neighborhood(
+      List<ForeignKeyEntity> outgoing, List<ForeignKeyEntity> incoming) {
+    return new DiagramNeighborhood(
+        java.util.stream.Stream.concat(outgoing.stream(), incoming.stream()).toList(), 1, 1);
   }
 }

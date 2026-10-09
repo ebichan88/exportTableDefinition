@@ -17,6 +17,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.testsupport.OracleSampleDatabase;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -53,10 +54,10 @@ class OracleTableDefinitionRepositoryIT {
   }
 
   @Test
-  @DisplayName("selectDatabase: DB名（接続先のPDB名）とRDBMS名を取得する")
+  @DisplayName("selectDatabase: DB名（接続先のPDB名）・RDBMS名・メジャーバージョンを取得する")
   void testSelectDatabase() {
     assertEquals(
-        new DatabaseEntity(OracleSampleDatabase.DATABASE_NAME, "Oracle"),
+        new DatabaseEntity(OracleSampleDatabase.DATABASE_NAME, "Oracle", 23),
         repository.selectDatabase());
   }
 
@@ -68,6 +69,7 @@ class OracleTableDefinitionRepositoryIT {
     assertEquals(
         List.of(
             "ATTENDANCE",
+            "ATTENDANCE_MONTHLY_VIEW",
             "ATTENDANCE_NOTE",
             "AUDIT_LOG",
             "DEPARTMENT",
@@ -100,6 +102,7 @@ class OracleTableDefinitionRepositoryIT {
   void testSelectPartitionedTable() {
     final List<TableEntity> attendances =
         tables().stream()
+            .filter(table -> table.tableType() == TableType.TABLE)
             .filter(table -> table.physicalTableName().startsWith("ATTENDANCE"))
             .toList();
 
@@ -437,6 +440,64 @@ class OracleTableDefinitionRepositoryIT {
         partitions.get(0).bound());
     assertEquals("VALUES LESS THAN (MAXVALUE)", partitions.get(4).bound());
     assertEquals(List.of(), repository.selectPartitionList(List.of("SAMPLE_ARCHIVE")));
+  }
+
+  @Test
+  @DisplayName(
+      "selectViewReferenceList: ビューが参照するテーブルを1件ずつ取得する。マテリアライズドビューのコンテナ表（自身）は含めない（別スキーマのテーブル・ビューを含む）")
+  void testSelectViewReferenceList() {
+    assertEquals(
+        List.of(
+            new ViewReferenceEntity(
+                "SAMPLE",
+                "ATTENDANCE_MONTHLY_VIEW",
+                TableType.VIEW,
+                "SAMPLE",
+                "ATTENDANCE",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "SAMPLE",
+                "ATTENDANCE_MONTHLY_VIEW",
+                TableType.VIEW,
+                "SAMPLE",
+                "EMPLOYEE_DIRECTORY_VIEW",
+                TableType.VIEW),
+            new ViewReferenceEntity(
+                "SAMPLE",
+                "ATTENDANCE_MONTHLY_VIEW",
+                TableType.VIEW,
+                "SAMPLE_ARCHIVE",
+                "DEPARTMENT",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "SAMPLE",
+                "EMPLOYEE_DIRECTORY_VIEW",
+                TableType.VIEW,
+                "SAMPLE",
+                "DEPARTMENT",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "SAMPLE",
+                "EMPLOYEE_DIRECTORY_VIEW",
+                TableType.VIEW,
+                "SAMPLE",
+                "EMPLOYEE",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "SAMPLE",
+                "PROJECT_SUMMARY_MV",
+                TableType.MATERIALIZED_VIEW,
+                "SAMPLE",
+                "PROJECT",
+                TableType.TABLE),
+            new ViewReferenceEntity(
+                "SAMPLE",
+                "PROJECT_SUMMARY_MV",
+                TableType.MATERIALIZED_VIEW,
+                "SAMPLE",
+                "PROJECT_ASSIGNMENT",
+                TableType.TABLE)),
+        repository.selectViewReferenceList(SAMPLE_SCHEMA));
   }
 
   @Test

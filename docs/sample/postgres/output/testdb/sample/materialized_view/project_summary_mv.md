@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|PostgreSQL|testdb|2026/09/29|
+|PostgreSQL 16|testdb|2026/10/08|
 
 ## テーブル説明
 
@@ -38,6 +38,13 @@
   GROUP BY p.project_id, p.project_name;
 
 ```
+
+## 参照するテーブル
+
+| No. | 参照先 | 区分 |
+|:---|:---|:---|
+|1|sample.project|table|
+|2|sample.project_assignment|table|
 
 ## インデックス情報
 

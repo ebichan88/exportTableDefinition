@@ -37,7 +37,7 @@ public class JacksonSnapshotSerializerTest {
     var table =
         new TableSnapshot(
             "public", "t1", null, "table", null, null, null, null, List.of(), List.of(), List.of(),
-            List.of(), List.of(), List.of());
+            List.of(), List.of(), List.of(), List.of());
     assertEquals(
         "{\"schema\":\"public\",\"name\":\"t1\",\"type\":\"table\"}", serializer.serialize(table));
   }
@@ -122,6 +122,7 @@ public class JacksonSnapshotSerializerTest {
                     "fk1", List.of("customer_id"), "public", "customers", List.of("id"), null),
                 new TableSnapshot.Relation(
                     "fk2", List.of("owner_id"), "public", "owners", List.of("id"), null)),
+            List.of(),
             List.of(),
             List.of());
 

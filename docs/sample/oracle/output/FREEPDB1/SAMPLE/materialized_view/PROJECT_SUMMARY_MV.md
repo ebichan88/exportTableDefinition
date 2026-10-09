@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle|FREEPDB1|2026/10/04|
+|Oracle 23|FREEPDB1|2026/10/08|
 
 ## テーブル説明
 
@@ -35,6 +35,13 @@ select
     group by p.project_id, p.project_name
 
 ```
+
+## 参照するテーブル
+
+| No. | 参照先 | 区分 |
+|:---|:---|:---|
+|1|SAMPLE.PROJECT|table|
+|2|SAMPLE.PROJECT_ASSIGNMENT|table|
 
 ## インデックス情報
 

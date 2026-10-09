@@ -90,6 +90,15 @@ classDiagram
     getDisplayName()
   }
   class Partitions
+  class ViewReferenceEntity {
+    TableType tableType
+    TableType referenceTableType
+    referenceTableKey()
+  }
+  class ViewReferences {
+    belongingTo(view)
+    referencingTo(table)
+  }
   class ForeignKeyEntity {
     String foreignKeyName
     List~String~ columnNames
@@ -116,6 +125,13 @@ classDiagram
     crossSchema()
     withinTables(tableKeys)
     crossingTableSetBoundary(tableKeys)
+    neighborhoodOf(table, distance, limit)
+  }
+  class DiagramNeighborhood {
+    <<record>>
+    int distance
+    int requestedDistance
+    isShortened()
   }
   class ForeignKeyGroup {
     nodes()
@@ -156,11 +172,17 @@ classDiagram
   TriggerEntity "0..*" ..> "1" TableKey : 所属するテーブル
   PartitionEntity "0..*" ..> "1" TableKey : 所属するパーティション表（根）
   Partitions "1" o-- "0..*" PartitionEntity
+  ViewReferenceEntity "0..*" ..> "1" TableKey : 参照する側のビュー
+  ViewReferenceEntity "0..*" ..> "1" TableKey : 参照されるテーブル
+  ViewReferences "1" o-- "0..*" ViewReferenceEntity
   ForeignKeyEntity "0..*" ..> "1" TableKey : 参照元（子）
   ForeignKeyEntity "0..*" ..> "1" TableKey : 参照先（親）
   ForeignKeyEntity --> "1" RelationType : 由来
   ForeignKeyEntity --> "1" Cardinality : 多重度
   ForeignKeys "1" o-- "0..*" ForeignKeyEntity
+  ForeignKeys ..> DiagramNeighborhood : テーブル定義書のER図に描く関連
+  DiagramNeighborhood "1" o-- "0..*" ForeignKeyEntity
+  DiagramNeighborhood ..> NodeLimit : 上限に収まる距離
   ForeignKeyGroup "1" o-- "0..*" ForeignKeyEntity
   PageComposition "1" o-- "1..*" ForeignKeyGroup : Single／Grouped
   ForeignKeyGroup ..> NodeLimit : 上限との比較
@@ -196,6 +218,13 @@ classDiagram
   パーティション表のパーティションキーは`TableEntity.partitionKey`が持つ（パーティション表でなければ空文字）。
   親から子へ複製された外部キー・トリガーは取得時に除き、親に定義されたものだけを関連・トリガーとして扱う
 - 自己参照の関連は、被参照側（`referencingTo`）には含めない（参照側と重複して掲載されるため）
+- **テーブル定義書のER図に描く関連（`DiagramNeighborhood`）**は、テーブルから関連を向きを問わずたどり、描画距離
+  （`erDiagramDistance`）以内のテーブルが持つ関連（`ForeignKeys.neighborhoodOf`）。図のテーブル数が上限（`NodeLimit`）を
+  超える場合は、超えない距離まで縮める。1段でも超える場合は1段で描く（自テーブルの関連は省かない）
+- **ビューの参照（`ViewReferenceEntity`）**は、ビュー・マテリアライズドビューが参照するテーブル（ビューを含む）1件。
+  DBが保持する依存関係から取得し、ビューのSQLは解析しない。所属するテーブル（`tableKey`）は参照する側のビューで、
+  `ViewReferences`はビューから参照先（`belongingTo`）、テーブルから参照しているビュー（`referencingTo`）の両方向で引く。
+  外部キーと同じく対象範囲全体を一括取得し、出力対象外のビューの参照は除く。参照されるテーブルは出力対象外のものも残す
 - カラム・インデックス・制約の集合（`Columns`・`Indexes`・`Constraints`）は`TableDetail`の組み立てでのみ使うため
   パッケージプライベートにしている
 
@@ -307,10 +336,11 @@ classDiagram
     List~ForeignKeyEntity~ foreignKeys
     List~ForeignKeyEntity~ logicalRelations
     List~ForeignKeyEntity~ incomingRelations
+    List~ViewReferenceEntity~ referencedTables
+    List~ViewReferenceEntity~ referencingViews
     List~PartitionEntity~ partitions
     List~Viewpoint~ viewpoints
-    outgoingRelations()
-    assemble(baseInfo, detail, foreignKeys, triggers, partitions, annotations, viewpoints)$
+    assemble(baseInfo, detail, foreignKeys, triggers, partitions, viewReferences, annotations, viewpoints)$
   }
   class BaseInfoEntity {
     LocalDate generatedDate
@@ -319,6 +349,7 @@ classDiagram
   class DatabaseEntity {
     String dbName
     String dbmsName
+    int majorVersion
   }
   class ConsistencyNotice {
     Kind kind
@@ -334,6 +365,7 @@ classDiagram
   ExportTargets "1" *-- "1" Viewpoints
   ExportTargets "1" *-- "1" Triggers
   ExportTargets "1" *-- "1" Partitions
+  ExportTargets "1" *-- "1" ViewReferences
   ExportTargets "1" *-- "1" Functions
   ExportTargets "1" *-- "1" Sequences
   ExportTargets "1" *-- "1" Types
@@ -352,12 +384,14 @@ classDiagram
   除外が包含より優先される。**出力対象オブジェクト種別（`OutputObjectType`）**は、トリガー・関数等のうちどれを取得・出力するかを決める
 - **出力対象（`ExportTargets`）**は対象範囲全体を一括取得した軽量な情報の組。これとチャンク単位で取得した詳細情報
   （`TableDetail`）から、1テーブル分の出力内容（`TableDefinitionContent`）を組み立てる。`TableDefinitionContent`は
-  参照側の関連を由来ごと（`foreignKeys`＝物理／`logicalRelations`＝論理）に分けて持ち、被参照側（`incomingRelations`）は由来を分けない（定義書の「被参照情報」セクションとER図に使い、由来は「区分」列・線種で示す）
+  参照側の関連を由来ごと（`foreignKeys`＝物理／`logicalRelations`＝論理）に分けて持ち、被参照側（`incomingRelations`）は由来を分けない（定義書の「被参照情報」セクションとER図に使い、由来は「区分」列・線種で示す）。
+  ビューの参照は、ビューとして参照するテーブル（`referencedTables`）と、自テーブルを参照しているビュー（`referencingViews`）を持つ
 - **突き合わせの通知（`ConsistencyNotice`）**は、出力対象のテーブルと関連・付帯情報・観点を突き合わせた結果。
   ドメインサービス（`ExportTargetConsistency`）が値として返し、ログ等への出力は呼び出し側（アプリケーション層）が
   重要度（`Severity`）に応じて行う
-- **基本情報（`BaseInfoEntity`）**は、DBのカタログから取得するデータベースの情報（`DatabaseEntity`）にドキュメントの生成日を
-  加えたもの。生成日はDBではなくアプリケーションの時計（`Clock`）で決まる
+- **基本情報（`BaseInfoEntity`）**は、DBのカタログから取得するデータベースの情報（`DatabaseEntity`。DB名・DBMS種別・メジャーバージョン）に
+  ドキュメントの生成日を加えたもの。生成日はDBではなくアプリケーションの時計（`Clock`）で決まる。DBMSの版はマイナー版の更新で
+  出力が変わらないよう、メジャーバージョンだけを持つ
 
 `FunctionEntity`・`SequenceEntity`・`TypeEntity`（`schemaobject`）はテーブルに属さないため、テーブルキーを持たない。
 そのため、それぞれの集合（`Functions`・`Sequences`・`Types`）はテーブルキーでの索引を持たず、取得順のリストだけを保持する
@@ -389,6 +423,9 @@ classDiagram
 | ER図のページ構成（上限に収まらなければ連結成分ごとにまとめ直す） | `ForeignKeyGroups.compose` |
 | ER図を描くか、描画を省略して外部キー一覧にフォールバックするか | `ForeignKeyGroup.planRendering` / `NodeLimit.isExceededBy` |
 | ER図の箱に表示するカラム（図に描く関連で使われる関連カラムのみ。参照元のカラムは`FK`） | `DiagramBoxes.relationColumnsOf` / `DiagramColumn.of` |
+| テーブル定義書のER図に描く関連（描画距離以内。上限を超える場合は距離を縮める） | `ForeignKeys.neighborhoodOf` |
+| ビューが参照するテーブルの取得（パーティションへの参照は根へまとめる、自身・DBMSが管理するスキーマへの参照は含めない） | `tableDefinitionMapper.xml`の`selectViewReferenceInfo` |
+| ビューの参照のうち、出力対象外のビューのものを除く | `SchemaExportPipeline.fetchViewReferences` |
 | 一覧ドキュメント（観点一覧を含む）は対象が1件以上あるときだけ出力し、関連ドキュメントとしてリンクする（テーブル一覧は常に出力） | `MarkdownExportSinkFactory.listDocuments` |
 | Markdownのファイル名・配置・相対リンク（関数・プロシージャのオーバーロードは`{名前}_{番号}`、観点ページは識別子から`viewpoint_{DB名}_{識別子}`） | `DocumentLocations` |
 | スナップショットのファイル名・配置 | `SnapshotLocations` |
@@ -410,6 +447,9 @@ classDiagram
 | 外部キー | 外部キー | `RelationType.PHYSICAL` | DBに実在する外部キー制約による関連 |
 | 論理リレーション | 論理リレーション（`relations`） | `RelationType.LOGICAL` | DBに制約が無く、サイドカーYAMLで宣言した関連 |
 | 被参照の関連 | 被参照情報・ER図の参照元テーブル | `incomingRelations` / `ForeignKeys.referencingTo` | 自テーブルを参照している関連（物理・論理の双方） |
+| 描画距離 | `output.erDiagramDistance` | `DiagramNeighborhood` / `ForeignKeys.neighborhoodOf` | テーブル定義書のER図に描く関連の段数。1は自テーブルの関連だけ |
+| ビューが参照するテーブル | 参照するテーブル（`referencedTables`） | `ViewReferenceEntity` / `ViewReferences.belongingTo` / `TableDefinitionContent.referencedTables` | ビュー・マテリアライズドビューが参照するテーブル（ビューを含む） |
+| 参照しているビュー | 参照しているビュー（MCPの`referencedByViews`） | `ViewReferences.referencingTo` / `TableDefinitionContent.referencingViews` | テーブル（ビューを含む）を参照しているビュー。ビューが参照するテーブルの逆引き |
 | 多重度 | 多重度（1対多 等） | `Cardinality` | 関連の両端の件数の関係 |
 | グループ | グループ（連結成分のまとまり） | `ForeignKeyGroup` / `ForeignKeyGroups` | 1枚のER図に描く関連の集合と、その分割 |
 | テーブルの箱 | ER図のテーブルの箱 | `DiagramBoxes` / `DiagramColumn` | ER図に描くテーブルの表示内容（`テーブル名（論理テーブル名）`の見出しと、表示するカラム） |
@@ -428,7 +468,7 @@ classDiagram
 | 出力対象 | － | `ExportTargets` | 出力対象の絞り込み条件を適用して取得した、出力するもの（条件ではなくデータ）。コード上は対象範囲全体を一括取得する軽量な情報の組を指す |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |
 | 突き合わせの通知 | 警告ログ | `ConsistencyNotice` | 出力対象と関連・付帯情報・観点を突き合わせた結果（孤児付帯情報・除外した関連・一致しない観点のパターン等） |
-| 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`）＋生成日 |
+| 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`。RDBMSの欄にはメジャーバージョンを添える）＋生成日 |
 | スキーマ直下のオブジェクト | 関数・プロシージャ／シーケンス／ユーザー定義型 | `FunctionEntity` / `SequenceEntity` / `TypeEntity` | テーブルに属さないオブジェクト |
 | オーバーロード | 同名の関数・プロシージャ | `FunctionEntity.isOverloaded` | 同じスキーマの同名の関数・プロシージャ。個別定義のファイル名に番号を付ける |
 | 一覧ドキュメント | テーブル一覧・ER図一覧・観点一覧 等 | `ListDocumentType` | 種別ごとの一覧ページ |

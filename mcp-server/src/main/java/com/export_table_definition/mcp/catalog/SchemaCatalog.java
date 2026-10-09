@@ -116,8 +116,8 @@ public final class SchemaCatalog {
    * @return DB名・スキーマ名の順。オブジェクトを1つも持たないスキーマは含まない
    */
   public List<SchemaSummary> schemas() {
-    final Map<String, String> dbmsByDatabase = new HashMap<>();
-    databases.forEach(database -> dbmsByDatabase.put(database.name(), database.dbms()));
+    final Map<String, DatabaseEntry> databaseByName = new HashMap<>();
+    databases.forEach(database -> databaseByName.put(database.name(), database));
     final Map<SchemaId, SchemaCounter> counters =
         new TreeMap<>(Comparator.comparing(SchemaId::database).thenComparing(SchemaId::schema));
     for (final TableEntry table : tables) {
@@ -141,9 +141,12 @@ public final class SchemaCatalog {
             entry -> {
               final String database = entry.getKey().database();
               final SchemaCounter counter = entry.getValue();
+              final DatabaseEntry databaseEntry =
+                  databaseByName.getOrDefault(database, new DatabaseEntry(database, "", null));
               return new SchemaSummary(
                   database,
-                  dbmsByDatabase.getOrDefault(database, ""),
+                  databaseEntry.dbms(),
+                  databaseEntry.majorVersion(),
                   entry.getKey().schema(),
                   counter.tables,
                   counter.views,
@@ -308,6 +311,18 @@ public final class SchemaCatalog {
    */
   public Lookup<TableEntry> lookupTable(ObjectReference reference) {
     return lookup(tables, reference, this::tableSuggestionsFor);
+  }
+
+  /**
+   * テーブル（ビューを含む）を参照しているビューを求めるメソッド
+   *
+   * @return DB名・スキーマ名・テーブル名の順
+   */
+  public List<TableEntry> viewsReferencing(TableEntry table) {
+    return tables.stream()
+        .filter(view -> view.referencedTables().contains(table.key()))
+        .sorted(BY_KEY)
+        .toList();
   }
 
   /**

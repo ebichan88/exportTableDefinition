@@ -1,6 +1,7 @@
 package com.export_table_definition.mcp.snapshot;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,6 +11,7 @@ import com.export_table_definition.mcp.catalog.NameFilter;
 import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.RelationEntry;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
+import com.export_table_definition.mcp.catalog.SchemaSummary;
 import com.export_table_definition.mcp.catalog.SearchScope;
 import com.export_table_definition.mcp.catalog.SequenceEntry;
 import com.export_table_definition.mcp.catalog.TableEntry;
@@ -66,6 +68,39 @@ class SnapshotDirectoryReaderTest {
             "fk", List.of("customer_id"), "sales", "customer", List.of("id"), "ONE_TO_MANY"),
         orders.foreignKeys().get(0));
     assertEquals(order, orders.json());
+  }
+
+  @Test
+  @DisplayName("database.jsonのメジャーバージョンを読み込み、項目の無い古いスナップショットでは不明（null）とする")
+  void readsMajorVersion() throws IOException {
+    write(
+        "newdb/database.json",
+        "{\"formatVersion\":1,\"name\":\"newdb\",\"dbms\":\"Oracle\",\"majorVersion\":23}");
+    write("newdb/s/tables.jsonl", "{\"schema\":\"s\",\"name\":\"t\"}\n");
+    write("olddb/database.json", DATABASE_JSON.replace("testdb", "olddb"));
+    write("olddb/s/tables.jsonl", "{\"schema\":\"s\",\"name\":\"t\"}\n");
+
+    final List<SchemaSummary> schemas = reader.read(snapshot).schemas();
+
+    assertEquals(23, schemas.get(0).majorVersion());
+    assertNull(schemas.get(1).majorVersion());
+  }
+
+  @Test
+  @DisplayName("ビューのreferencedTablesを、同じDBのテーブルのキーとして読み込む")
+  void readsReferencedTablesOfView() throws IOException {
+    write("testdb/database.json", DATABASE_JSON);
+    write(
+        "testdb/sales/tables.jsonl",
+        "{\"schema\":\"sales\",\"name\":\"v\",\"type\":\"view\",\"referencedTables\":["
+            + "{\"schema\":\"sales\",\"name\":\"orders\",\"type\":\"table\"},"
+            + "{\"schema\":\"archive\",\"name\":\"orders\",\"type\":\"table\"}]}\n");
+
+    assertEquals(
+        List.of(
+            new ObjectKey("testdb", "sales", "orders"),
+            new ObjectKey("testdb", "archive", "orders")),
+        reader.read(snapshot).tables().get(0).referencedTables());
   }
 
   @Test

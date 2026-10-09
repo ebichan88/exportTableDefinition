@@ -19,6 +19,7 @@ output:
   path:               # 未指定の場合は ./output
   chunkSize:          # 未指定の場合は 3000
   erDiagramMaxNodes:  # 未指定の場合は 80
+  erDiagramDistance:  # 未指定の場合は 1（テーブル定義書のER図に描く関連の段数。1〜3）
 
 # 手動付帯情報・論理リレーション・観点を記述したサイドカーYAMLのパス（未指定の場合はマージしない）
 annotations:

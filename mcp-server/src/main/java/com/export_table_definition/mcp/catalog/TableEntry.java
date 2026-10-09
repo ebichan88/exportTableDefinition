@@ -11,6 +11,7 @@ import java.util.List;
  * @param foreignKeys DBに実在する外部キー制約
  * @param logicalRelations サイドカーYAMLで宣言された論理リレーション
  * @param triggers トリガー
+ * @param referencedTables ビューの場合の、参照するテーブル（ビューを含む）。スナップショットに含まれないテーブルの場合もある
  * @param json スナップショットの1行そのもの。テーブル定義の全項目を返すときに使う
  */
 public record TableEntry(
@@ -23,6 +24,7 @@ public record TableEntry(
     List<RelationEntry> foreignKeys,
     List<RelationEntry> logicalRelations,
     List<TriggerEntry> triggers,
+    List<ObjectKey> referencedTables,
     String json)
     implements SchemaObject {
 
@@ -36,5 +38,6 @@ public record TableEntry(
     foreignKeys = foreignKeys == null ? List.of() : List.copyOf(foreignKeys);
     logicalRelations = logicalRelations == null ? List.of() : List.copyOf(logicalRelations);
     triggers = triggers == null ? List.of() : List.copyOf(triggers);
+    referencedTables = referencedTables == null ? List.of() : List.copyOf(referencedTables);
   }
 }

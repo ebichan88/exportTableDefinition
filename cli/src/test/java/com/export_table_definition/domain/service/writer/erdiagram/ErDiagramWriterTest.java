@@ -98,7 +98,7 @@ public class ErDiagramWriterTest {
   }
 
   private BaseInfoEntity baseInfo() {
-    return new BaseInfoEntity("testdb", "pg", LocalDate.of(2026, 9, 23));
+    return new BaseInfoEntity("testdb", "pg", 16, LocalDate.of(2026, 9, 23));
   }
 
   private OutputRoot outputRoot() {

@@ -10,13 +10,14 @@ import com.export_table_definition.domain.model.table.ConstraintEntity;
 import com.export_table_definition.domain.model.table.IndexEntity;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import java.util.List;
 
 /**
  * スキーマのスナップショットのうち、1テーブル分の情報を表すrecordクラス<br>
  * テーブル定義書1ファイル分と同じ情報（カラム・インデックス・制約・外部キー・論理リレーション・トリガー・ 手動付帯情報）を、Markdownの表示形式ではなく個別の項目として保持する。
- * 被参照側の外部キーは、参照元テーブルの{@code foreignKeys}から導出できるため保持しない
+ * 被参照側の外部キーと、テーブルを参照しているビューは、参照元の{@code foreignKeys}・{@code referencedTables}から導出できるため保持しない
  *
  * @param type 区分（table/view/materialized_view）
  * @param description テーブル説明（サイドカーYAML由来）
@@ -26,6 +27,7 @@ import java.util.List;
  *     （パーティションを自動で追加する運用で、{@code --check}が追加のたびに差分を報告しないようにするため）
  * @param foreignKeys DBに実在する外部キー制約のリスト
  * @param logicalRelations サイドカーYAMLで宣言された論理リレーションのリスト
+ * @param referencedTables view/materialized viewが参照するテーブル（ビューを含む）のリスト。項目の追加で既存の項目の並びが変わらないよう末尾に置く
  */
 public record TableSnapshot(
     String schema,
@@ -41,7 +43,8 @@ public record TableSnapshot(
     List<Constraint> constraints,
     List<Relation> foreignKeys,
     List<Relation> logicalRelations,
-    List<Trigger> triggers) {
+    List<Trigger> triggers,
+    List<ViewReference> referencedTables) {
 
   /** テーブル定義書1ファイル分の内容からスナップショットを生成する */
   public static TableSnapshot of(TableDefinitionContent content) {
@@ -61,7 +64,24 @@ public record TableSnapshot(
         content.constraints().stream().map(Constraint::of).toList(),
         content.foreignKeys().stream().map(Relation::of).toList(),
         content.logicalRelations().stream().map(Relation::of).toList(),
-        content.triggers().stream().map(Trigger::of).toList());
+        content.triggers().stream().map(Trigger::of).toList(),
+        content.referencedTables().stream().map(ViewReference::of).toList());
+  }
+
+  /**
+   * ビューが参照するテーブル
+   *
+   * @param type 区分（table/view/materialized_view）
+   */
+  public record ViewReference(String schema, String name, String type) {
+
+    /** ビューの参照から生成する */
+    static ViewReference of(ViewReferenceEntity reference) {
+      return new ViewReference(
+          reference.referenceSchemaName(),
+          reference.referenceTableName(),
+          reference.referenceTableType().getName());
+    }
   }
 
   /**

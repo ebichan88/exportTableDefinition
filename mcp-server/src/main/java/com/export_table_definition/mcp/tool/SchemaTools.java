@@ -29,7 +29,8 @@ final class SchemaTools {
         readOnlyTool(
             LIST_SCHEMAS,
             "スキーマ一覧",
-            "スナップショットに含まれるDB（DBMS種別）とスキーマの一覧を、スキーマごとのオブジェクトの数とともに返す。"
+            "スナップショットに含まれるDB（DBMS種別・メジャーバージョン）とスキーマの一覧を、スキーマごとのオブジェクトの数とともに返す。"
+                + "メジャーバージョンは、書けるSQL（構文・関数）を判断するときに使う。"
                 + "どのDB・スキーマがあるか、全体像をつかむときに最初に使う",
             objectSchema(Map.of(), List.of()),
             this::listSchemas));
@@ -49,13 +50,18 @@ final class SchemaTools {
   /** {@code list_schemas}の結果 */
   record ListSchemasOutput(List<Database> databases) {
 
-    /** 1DB */
-    record Database(String name, String dbms, List<Schema> schemas) {
+    /**
+     * 1DB
+     *
+     * @param majorVersion DBMSのメジャーバージョン。古いcliのスナップショットで不明な場合はnull（項目ごと省く）
+     */
+    record Database(String name, String dbms, Integer majorVersion, List<Schema> schemas) {
 
       static Database of(List<SchemaSummary> schemas) {
         return new Database(
             schemas.get(0).database(),
             schemas.get(0).dbms(),
+            schemas.get(0).majorVersion(),
             schemas.stream().map(Schema::of).toList());
       }
     }

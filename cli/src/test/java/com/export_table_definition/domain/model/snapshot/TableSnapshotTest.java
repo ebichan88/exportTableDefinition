@@ -14,6 +14,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TableType;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import com.export_table_definition.domain.model.target.TableDefinitionContent;
 import java.time.LocalDate;
 import java.util.List;
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test;
 public class TableSnapshotTest {
 
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2026, 9, 25));
+      new BaseInfoEntity("testdb", "PostgreSQL", 16, LocalDate.of(2026, 9, 25));
 
   private TableDefinitionContent content(
       TableEntity table,
@@ -44,6 +45,8 @@ public class TableSnapshotTest {
         constraints,
         foreignKeys,
         logicalRelations,
+        List.of(),
+        List.of(),
         List.of(),
         triggers,
         List.of(),
@@ -204,6 +207,38 @@ public class TableSnapshotTest {
 
     assertEquals("view", snapshot.type());
     assertEquals(" SELECT id FROM orders;", snapshot.definition());
+  }
+
+  @Test
+  @DisplayName("of: ビューが参照するテーブルを、スキーマ名・テーブル名・区分で保持する。参照しているビューは保持しない")
+  void testOfKeepsReferencedTables() {
+    var view = new TableEntity("testdb", "public", "", "v_orders", TableType.VIEW, "SELECT 1");
+    var toOrders =
+        new ViewReferenceEntity(
+            "public", "v_orders", TableType.VIEW, "public", "orders", TableType.TABLE);
+    var fromMv =
+        new ViewReferenceEntity(
+            "public", "mv", TableType.MATERIALIZED_VIEW, "public", "v_orders", TableType.VIEW);
+    var content =
+        new TableDefinitionContent(
+            BASE_INFO,
+            view,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(toOrders),
+            List.of(fromMv),
+            List.of(),
+            List.of(),
+            TableAnnotation.EMPTY,
+            List.of());
+
+    assertEquals(
+        List.of(new TableSnapshot.ViewReference("public", "orders", "table")),
+        TableSnapshot.of(content).referencedTables());
   }
 
   @Test

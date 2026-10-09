@@ -54,6 +54,7 @@ public class ExportTableDefinitionPropertiesTest {
     assertEquals("", request.outputPath());
     assertEquals(3000, request.chunkSize());
     assertEquals(80, request.erDiagramMaxNodes());
+    assertEquals(1, request.erDiagramDistance());
   }
 
   @Test
@@ -101,6 +102,7 @@ public class ExportTableDefinitionPropertiesTest {
                       path: " ./docs/db "
                       chunkSize: 100
                       erDiagramMaxNodes: " 0 "
+                      erDiagramDistance: 2
                     annotations: " conf/annotations.yml "
                     """))
             .toExportTableDefinitionRequest(true);
@@ -110,6 +112,7 @@ public class ExportTableDefinitionPropertiesTest {
     assertEquals("./docs/db", request.outputPath());
     assertEquals(100, request.chunkSize());
     assertEquals(0, request.erDiagramMaxNodes());
+    assertEquals(2, request.erDiagramDistance());
     assertEquals(
         Set.of(OutputObjectType.TRIGGER, OutputObjectType.FUNCTION),
         request.targetSelection().outputObjectTypes());
@@ -225,6 +228,24 @@ public class ExportTableDefinitionPropertiesTest {
 
     assertTrue(e.getMessage().contains("trigers"));
     assertTrue(e.getMessage().contains("sample."));
+  }
+
+  @Test
+  @DisplayName("of: erDiagramDistanceは1〜3の整数だけを受け付け、範囲外は既定値へ置き換えずに誤りとする")
+  void testOfRejectsErDiagramDistanceOutOfRange() {
+    assertTrue(
+        error("output:\n  erDiagramDistance: 0\n")
+            .getMessage()
+            .contains("output.erDiagramDistance must be between 1 and 3."));
+    assertTrue(
+        error("output:\n  erDiagramDistance: 4\n")
+            .getMessage()
+            .contains("output.erDiagramDistance must be between 1 and 3."));
+    assertTrue(
+        error("output:\n  erDiagramDistance: two\n")
+            .getMessage()
+            .contains("output.erDiagramDistance must be an integer"));
+    assertEquals(3, request("output:\n  erDiagramDistance: 3\n").erDiagramDistance());
   }
 
   @Test

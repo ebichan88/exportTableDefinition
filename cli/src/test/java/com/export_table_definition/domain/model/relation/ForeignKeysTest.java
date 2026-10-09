@@ -186,4 +186,61 @@ public class ForeignKeysTest {
     assertEquals(List.of(inside), foreignKeys.withinTables(tableKeys));
     assertEquals(List.of(outgoing, incoming), foreignKeys.crossingTableSetBoundary(tableKeys));
   }
+
+  @Test
+  @DisplayName("neighborhoodOf: 描画距離1は自テーブルの関連だけを、参照先へ向かう関連・参照元から来る関連の順に返す")
+  void testNeighborhoodOfDistanceOne() {
+    var neighborhood =
+        chain().neighborhoodOf(newTable("public", "employee"), 1, NodeLimit.UNLIMITED);
+
+    assertEquals(List.of(EMPLOYEE_DEPARTMENT, ORDERS_EMPLOYEE), neighborhood.relations());
+    assertEquals(1, neighborhood.distance());
+    assertFalse(neighborhood.isShortened());
+  }
+
+  @Test
+  @DisplayName("neighborhoodOf: 描画距離を増やすと、向きを問わず関連先のテーブルが持つ関連まで、近い順に返す")
+  void testNeighborhoodOfFollowsBothDirections() {
+    var foreignKeys = chain();
+    var department = newTable("public", "department");
+
+    assertEquals(
+        List.of(EMPLOYEE_DEPARTMENT, ORDERS_EMPLOYEE),
+        foreignKeys.neighborhoodOf(department, 2, NodeLimit.UNLIMITED).relations());
+    assertEquals(
+        List.of(EMPLOYEE_DEPARTMENT, ORDERS_EMPLOYEE, ORDERS_CUSTOMERS),
+        foreignKeys.neighborhoodOf(department, 3, NodeLimit.UNLIMITED).relations());
+  }
+
+  @Test
+  @DisplayName("neighborhoodOf: テーブル数が上限を超える場合は、超えない距離まで縮める。1段でも超える場合は1段で描く")
+  void testNeighborhoodOfShortensDistanceToFitLimit() {
+    var foreignKeys = chain();
+    var department = newTable("public", "department");
+
+    var shortened = foreignKeys.neighborhoodOf(department, 3, NodeLimit.of(3));
+    assertEquals(2, shortened.distance());
+    assertEquals(3, shortened.requestedDistance());
+    assertTrue(shortened.isShortened());
+    assertEquals(List.of(EMPLOYEE_DEPARTMENT, ORDERS_EMPLOYEE), shortened.relations());
+
+    var minimum = foreignKeys.neighborhoodOf(department, 2, NodeLimit.of(1));
+    assertEquals(1, minimum.distance());
+    assertEquals(List.of(EMPLOYEE_DEPARTMENT), minimum.relations());
+  }
+
+  /** department ← employee ← orders → customers */
+  private static final ForeignKeyEntity EMPLOYEE_DEPARTMENT =
+      ForeignKeyFixtures.physical(
+          "public", "employee", "fk_employee_department", "public", "department");
+
+  private static final ForeignKeyEntity ORDERS_EMPLOYEE =
+      ForeignKeyFixtures.physical("public", "orders", "fk_orders_employee", "public", "employee");
+
+  private static final ForeignKeyEntity ORDERS_CUSTOMERS =
+      ForeignKeyFixtures.physical("public", "orders", "fk_orders_customers", "public", "customers");
+
+  private static ForeignKeys chain() {
+    return ForeignKeys.of(List.of(EMPLOYEE_DEPARTMENT, ORDERS_EMPLOYEE, ORDERS_CUSTOMERS));
+  }
 }

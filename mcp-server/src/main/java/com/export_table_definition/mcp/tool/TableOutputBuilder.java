@@ -53,8 +53,27 @@ final class TableOutputBuilder {
     if (!columns.isEmpty()) {
       output.set("columns", selectColumns(table, output.path("columns")));
     }
+    if (sections.isEmpty() || sections.contains(TableSection.REFERENCED_BY_VIEWS)) {
+      addReferencingViews(output, table);
+    }
     addViewpoints(output, table);
     return output;
+  }
+
+  /** テーブルを参照しているビューを、ビューの{@code referencedTables}と同じ形（スキーマ名・名前・区分）で加える */
+  private void addReferencingViews(ObjectNode output, TableEntry table) {
+    final List<TableEntry> views = catalog.viewsReferencing(table);
+    if (views.isEmpty()) {
+      return;
+    }
+    final ArrayNode entries = output.putArray(TableSection.REFERENCED_BY_VIEWS.fieldName());
+    for (final TableEntry view : views) {
+      entries
+          .addObject()
+          .put("schema", view.key().schema())
+          .put("name", view.key().name())
+          .put("type", view.type());
+    }
   }
 
   private static Set<TableSection> effectiveSections(

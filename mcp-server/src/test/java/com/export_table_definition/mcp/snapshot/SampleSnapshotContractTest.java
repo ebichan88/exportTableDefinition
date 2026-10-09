@@ -45,7 +45,7 @@ class SampleSnapshotContractTest {
   @Test
   @DisplayName("サンプルの全テーブル（ビュー・マテリアライズドビューを含む）を読み込む")
   void readsAllTables() {
-    assertEquals(13, catalog.tables().size());
+    assertEquals(14, catalog.tables().size());
     final TableEntry employee = find("employee");
     assertEquals("従業員", employee.logicalName());
     assertEquals("table", employee.type());
@@ -121,10 +121,10 @@ class SampleSnapshotContractTest {
   }
 
   @Test
-  @DisplayName("database.jsonのDBMS種別と、スキーマごとのオブジェクトの数を読み込む")
+  @DisplayName("database.jsonのDBMS種別・メジャーバージョンと、スキーマごとのオブジェクトの数を読み込む")
   void summarizesSchemas() {
     assertEquals(
-        List.of(new SchemaSummary("testdb", "PostgreSQL", "sample", 11, 1, 1, 8, 8, 3)),
+        List.of(new SchemaSummary("testdb", "PostgreSQL", 16, "sample", 11, 2, 1, 8, 8, 3)),
         catalog.schemas());
   }
 
@@ -217,6 +217,23 @@ class SampleSnapshotContractTest {
     assertEquals(
         List.of("audit_log", "employee", "department"),
         paths.paths().get(0).tables().stream().map(ObjectKey::name).toList());
+  }
+
+  @Test
+  @DisplayName("ビューのreferencedTablesを読み込み、テーブルを参照しているビューを逆引きできる（パーティションへの参照は親への参照）")
+  void findsViewReferencesOfSample() {
+    assertEquals(
+        List.of(
+            new ObjectKey("testdb", "sample", "attendance"),
+            new ObjectKey("testdb", "sample", "employee_directory_view"),
+            new ObjectKey("testdb", "sample_archive", "department")),
+        find("attendance_monthly_view").referencedTables());
+    assertEquals(
+        List.of("attendance_monthly_view"),
+        catalog.viewsReferencing(find("attendance")).stream().map(t -> t.key().name()).toList());
+    assertEquals(
+        List.of("employee_directory_view"),
+        catalog.viewsReferencing(find("department")).stream().map(t -> t.key().name()).toList());
   }
 
   private static TableEntry find(String name) {

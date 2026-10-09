@@ -77,7 +77,7 @@ public class OutputDirectoryValidatorTest {
 
   private static ExportTableDefinitionRequest exportRequest(String outputPath, boolean rmDist) {
     return new ExportTableDefinitionRequest(
-        TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0, 80, rmDist);
+        TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0, 80, 1, rmDist);
   }
 
   private static CheckDocumentDiffRequest checkDiffRequest(String outputPath) {

@@ -96,7 +96,7 @@ public class ViewpointWriterTest {
 
   private OutputRoot outputRoot() {
     return new OutputRoot(
-        OUT, new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2025, 1, 1)));
+        OUT, new BaseInfoEntity("testdb", "PostgreSQL", 16, LocalDate.of(2025, 1, 1)));
   }
 
   private TableEntity table(String physical, String logical) {
@@ -154,7 +154,7 @@ public class ViewpointWriterTest {
 
         | RDBMS | データベース名 | 作成日 |
         |:---|:---|:---|
-        |PostgreSQL|testdb|2025/01/01|
+        |PostgreSQL 16|testdb|2025/01/01|
 
         ## 説明
 
@@ -231,7 +231,7 @@ public class ViewpointWriterTest {
 
         | RDBMS | データベース名 | 作成日 |
         |:---|:---|:---|
-        |PostgreSQL|testdb|2025/01/01|
+        |PostgreSQL 16|testdb|2025/01/01|
 
         ## 観点情報
 

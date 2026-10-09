@@ -57,7 +57,7 @@ public class OutputPathContainmentTest {
       Map.of(
           OutputRoot.class,
           (base, name) ->
-              new OutputRoot(base, new BaseInfoEntity(name, "PostgreSQL", LocalDate.EPOCH)),
+              new OutputRoot(base, new BaseInfoEntity(name, "PostgreSQL", 16, LocalDate.EPOCH)),
           TableEntity.class,
           (base, name) -> new TableEntity(name, name, name, name, TableType.TABLE, ""),
           String.class,

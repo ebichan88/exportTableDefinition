@@ -4,13 +4,13 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle|FREEPDB1|2026/10/04|
+|Oracle 23|FREEPDB1|2026/10/08|
 
 ## スキーマ別ER図
 
 | No. | スキーマ名 | テーブル数 | Link |
 |:---|:---|:---|:---|
-| 1 | SAMPLE | 13 | [■](./erDiagram_FREEPDB1_SAMPLE.md) |
+| 1 | SAMPLE | 14 | [■](./erDiagram_FREEPDB1_SAMPLE.md) |
 
 ___
 

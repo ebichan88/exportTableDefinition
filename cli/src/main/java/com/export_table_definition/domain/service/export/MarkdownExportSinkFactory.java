@@ -3,6 +3,7 @@ package com.export_table_definition.domain.service.export;
 import com.export_table_definition.domain.model.database.BaseInfoEntity;
 import com.export_table_definition.domain.model.document.ListDocumentType;
 import com.export_table_definition.domain.model.relation.DiagramBoxes;
+import com.export_table_definition.domain.model.relation.ForeignKeys;
 import com.export_table_definition.domain.model.relation.NodeLimit;
 import com.export_table_definition.domain.model.schemaobject.FunctionEntity;
 import com.export_table_definition.domain.model.target.ExportTargets;
@@ -46,13 +47,20 @@ public class MarkdownExportSinkFactory {
    * 指定したディレクトリへMarkdownのドキュメントを書き出す{@link ExportSink}を生成するメソッド
    *
    * @param outputBaseDir 出力先のベースディレクトリパス
-   * @param erDiagramLimit スキーマ別ER図1枚に描画するノード数の上限
+   * @param erDiagramLimit ER図1枚に描画するノード数の上限
+   * @param tableDiagramDistance テーブル定義書のER図に描く関連の距離（段数。1以上）
    * @param diagramBoxes ER図のテーブルの箱に表示する内容
+   * @param foreignKeys 出力対象のテーブル同士の関連（テーブル定義書のER図で、描画距離以内の関連をたどるために使う）
    * @return Markdownのドキュメントを書き出す{@link ExportSink}
    */
   public ExportSink create(
-      Path outputBaseDir, NodeLimit erDiagramLimit, DiagramBoxes diagramBoxes) {
-    return new MarkdownExportSink(outputBaseDir, erDiagramLimit, diagramBoxes);
+      Path outputBaseDir,
+      NodeLimit erDiagramLimit,
+      int tableDiagramDistance,
+      DiagramBoxes diagramBoxes,
+      ForeignKeys foreignKeys) {
+    return new MarkdownExportSink(
+        outputBaseDir, erDiagramLimit, tableDiagramDistance, diagramBoxes, foreignKeys);
   }
 
   /**
@@ -101,12 +109,21 @@ public class MarkdownExportSinkFactory {
 
     private final Path outputBaseDir;
     private final NodeLimit erDiagramLimit;
+    private final int tableDiagramDistance;
     private final DiagramBoxes diagramBoxes;
+    private final ForeignKeys foreignKeys;
 
-    MarkdownExportSink(Path outputBaseDir, NodeLimit erDiagramLimit, DiagramBoxes diagramBoxes) {
+    MarkdownExportSink(
+        Path outputBaseDir,
+        NodeLimit erDiagramLimit,
+        int tableDiagramDistance,
+        DiagramBoxes diagramBoxes,
+        ForeignKeys foreignKeys) {
       this.outputBaseDir = outputBaseDir;
       this.erDiagramLimit = erDiagramLimit;
+      this.tableDiagramDistance = tableDiagramDistance;
       this.diagramBoxes = diagramBoxes;
+      this.foreignKeys = foreignKeys;
     }
 
     /**
@@ -164,7 +181,11 @@ public class MarkdownExportSinkFactory {
     /** {@inheritDoc} */
     @Override
     public void writeTableDefinition(TableDefinitionContent content) {
-      tableDefinitionWriter.writeTableDefinition(content, diagramBoxes, outputBaseDir);
+      tableDefinitionWriter.writeTableDefinition(
+          content,
+          foreignKeys.neighborhoodOf(content.table(), tableDiagramDistance, erDiagramLimit),
+          diagramBoxes,
+          outputBaseDir);
     }
   }
 }

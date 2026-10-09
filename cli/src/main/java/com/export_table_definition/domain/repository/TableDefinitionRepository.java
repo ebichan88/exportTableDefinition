@@ -11,6 +11,7 @@ import com.export_table_definition.domain.model.table.TableDetail;
 import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.TriggerEntity;
+import com.export_table_definition.domain.model.table.ViewReferenceEntity;
 import java.util.List;
 
 /** テーブル定義出力に関するリポジトリインターフェース */
@@ -54,6 +55,16 @@ public interface TableDefinitionRepository {
    * @return パーティション表ごとに、親から子へ階層順に並べたパーティションのリスト
    */
   List<PartitionEntity> selectPartitionList(List<String> schemaList);
+
+  /**
+   * ビュー（マテリアライズドビューを含む）が参照するテーブル（ビュー・マテリアライズドビューを含む）を取得する。 テーブル単位の絞り込みは行わず、スキーマ全体を取得する（{@link
+   * #selectTableList}を参照）
+   *
+   * @param schemaList 参照する側のビューのスキーマで絞り込む。参照されるテーブルは別のスキーマにあってもよい
+   * @return ビューごとに、参照されるテーブルのスキーマ名・テーブル名の順に並べたリスト。同じテーブルは1件にまとめる。
+   *     自身への参照と、DBMSが管理するスキーマのテーブルへの参照は含まない。パーティションへの参照は、パーティション表（根）への参照とする
+   */
+  List<ViewReferenceEntity> selectViewReferenceList(List<String> schemaList);
 
   /** 定義本体を含まない軽量情報 */
   List<FunctionEntity> selectFunctionList(List<String> schemaList);

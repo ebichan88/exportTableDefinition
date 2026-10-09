@@ -43,6 +43,8 @@ final class ExportTableDefinitionProperties {
       new Setting("output", "chunkSize", "--chunk-size", Kind.INTEGER);
   private static final Setting ER_DIAGRAM_MAX_NODES =
       new Setting("output", "erDiagramMaxNodes", "--er-diagram-max-nodes", Kind.INTEGER);
+  private static final Setting ER_DIAGRAM_DISTANCE =
+      new Setting("output", "erDiagramDistance", "--er-diagram-distance", Kind.INTEGER);
   private static final Setting ANNOTATIONS =
       new Setting(null, "annotations", "--annotation-path", Kind.TEXT);
 
@@ -51,13 +53,27 @@ final class ExportTableDefinitionProperties {
    * CLI引数による上書きも、この一覧から引数名を引く（{@link CliArguments}）ため、項目を追加すれば上書きにも自動で対応する
    */
   static final List<Setting> SETTINGS =
-      List.of(SCHEMAS, TABLES, OBJECTS, OUTPUT_PATH, CHUNK_SIZE, ER_DIAGRAM_MAX_NODES, ANNOTATIONS);
+      List.of(
+          SCHEMAS,
+          TABLES,
+          OBJECTS,
+          OUTPUT_PATH,
+          CHUNK_SIZE,
+          ER_DIAGRAM_MAX_NODES,
+          ER_DIAGRAM_DISTANCE,
+          ANNOTATIONS);
 
   /** chunkSize未指定時の既定値（1スキーマあたりこの件数ごとに詳細情報を取得・出力する） */
   private static final int DEFAULT_CHUNK_SIZE = 3000;
 
   /** erDiagramMaxNodes未指定時の既定値（スキーマ別ER図1枚に描画するテーブル数の上限） */
   private static final int DEFAULT_ER_DIAGRAM_MAX_NODES = 80;
+
+  /** erDiagramDistance未指定時の既定値（テーブル定義書のER図に、自テーブルの関連だけを描く） */
+  private static final int DEFAULT_ER_DIAGRAM_DISTANCE = 1;
+
+  /** erDiagramDistanceの上限。関連の多いDBでは段数を増やすと図がすぐに大きくなり、読めなくなるため */
+  private static final int MAX_ER_DIAGRAM_DISTANCE = 3;
 
   /** CLI引数でリストの項目を上書きする場合の区切り文字 */
   private static final String LIST_SEPARATOR = ",";
@@ -67,18 +83,21 @@ final class ExportTableDefinitionProperties {
   private final String outputPath;
   private final int chunkSize;
   private final int erDiagramMaxNodes;
+  private final int erDiagramDistance;
 
   private ExportTableDefinitionProperties(
       TargetSelection targetSelection,
       String sidecarPath,
       String outputPath,
       int chunkSize,
-      int erDiagramMaxNodes) {
+      int erDiagramMaxNodes,
+      int erDiagramDistance) {
     this.targetSelection = targetSelection;
     this.sidecarPath = sidecarPath;
     this.outputPath = outputPath;
     this.chunkSize = chunkSize;
     this.erDiagramMaxNodes = erDiagramMaxNodes;
+    this.erDiagramDistance = erDiagramDistance;
   }
 
   /**
@@ -111,6 +130,13 @@ final class ExportTableDefinitionProperties {
     final int chunkSize = integer(values, CHUNK_SIZE, DEFAULT_CHUNK_SIZE, errors);
     final int erDiagramMaxNodes =
         integer(values, ER_DIAGRAM_MAX_NODES, DEFAULT_ER_DIAGRAM_MAX_NODES, errors);
+    final int erDiagramDistance =
+        integerInRange(
+            values,
+            ER_DIAGRAM_DISTANCE,
+            DEFAULT_ER_DIAGRAM_DISTANCE,
+            MAX_ER_DIAGRAM_DISTANCE,
+            errors);
     final List<String> schemas = list(values, SCHEMAS, errors);
     final List<String> tables = list(values, TABLES, errors);
     final List<String> objects = list(values, OBJECTS, errors);
@@ -137,7 +163,7 @@ final class ExportTableDefinitionProperties {
           targetSelectionError);
     }
     return new ExportTableDefinitionProperties(
-        targetSelection, sidecarPath, outputPath, chunkSize, erDiagramMaxNodes);
+        targetSelection, sidecarPath, outputPath, chunkSize, erDiagramMaxNodes, erDiagramDistance);
   }
 
   /**
@@ -147,10 +173,16 @@ final class ExportTableDefinitionProperties {
    */
   ExportTableDefinitionRequest toExportTableDefinitionRequest(boolean rmDist) {
     return new ExportTableDefinitionRequest(
-        targetSelection, sidecarPath, outputPath, chunkSize, erDiagramMaxNodes, rmDist);
+        targetSelection,
+        sidecarPath,
+        outputPath,
+        chunkSize,
+        erDiagramMaxNodes,
+        erDiagramDistance,
+        rmDist);
   }
 
-  /** 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}は含めない */
+  /** 通常実行と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}・{@code erDiagramDistance}は含めない */
   CheckDocumentDiffRequest toCheckDocumentDiffRequest() {
     return new CheckDocumentDiffRequest(targetSelection, sidecarPath, outputPath, chunkSize);
   }
@@ -289,6 +321,25 @@ final class ExportTableDefinitionProperties {
       errors.add(setting.path() + " must be an integer: " + value);
       return defaultValue;
     }
+  }
+
+  /**
+   * 1以上{@code max}以下の整数として解釈できない場合は、既定値へ黙って置き換えず、誤りとして記録する
+   *
+   * @return 設定値。未指定の場合と、解釈できない・範囲外の場合（誤りを記録済み）は既定値
+   */
+  private static int integerInRange(
+      Map<String, Object> values, Setting setting, int defaultValue, int max, List<String> errors) {
+    final int errorCount = errors.size();
+    final int value = integer(values, setting, defaultValue, errors);
+    if (errors.size() > errorCount) {
+      return defaultValue;
+    }
+    if (value < 1 || value > max) {
+      errors.add(setting.path() + " must be between 1 and " + max + ".");
+      return defaultValue;
+    }
+    return value;
   }
 
   /**

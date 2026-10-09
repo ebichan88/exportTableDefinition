@@ -29,7 +29,7 @@ class InsightWriterTest {
   private static final Path OUT = Path.of("output");
   private static final Path INSIGHTS_DIR = OUT.resolve("insights").resolve("testdb");
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2026, 9, 25));
+      new BaseInfoEntity("testdb", "PostgreSQL", 16, LocalDate.of(2026, 9, 25));
   private static final OutputRoot ROOT = new OutputRoot(OUT, BASE_INFO);
 
   /** 書き込み内容・ディレクトリ作成呼び出しをメモリ上に収集するFileRepositoryのスタブ */

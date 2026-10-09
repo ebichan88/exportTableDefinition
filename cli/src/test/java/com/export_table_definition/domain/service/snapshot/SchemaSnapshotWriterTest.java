@@ -33,7 +33,7 @@ public class SchemaSnapshotWriterTest {
   private static final Path OUT = Path.of("output");
   private static final Path SNAPSHOT_DIR = OUT.resolve("snapshot").resolve("testdb");
   private static final BaseInfoEntity BASE_INFO =
-      new BaseInfoEntity("testdb", "PostgreSQL", LocalDate.of(2026, 9, 25));
+      new BaseInfoEntity("testdb", "PostgreSQL", 16, LocalDate.of(2026, 9, 25));
   private static final OutputRoot ROOT = new OutputRoot(OUT, BASE_INFO);
 
   /** 書き込み内容・ディレクトリ作成呼び出しをメモリ上に収集するFileRepositoryのスタブ */
@@ -110,18 +110,20 @@ public class SchemaSnapshotWriterTest {
         List.of(),
         List.of(),
         List.of(),
+        List.of(),
+        List.of(),
         TableAnnotation.EMPTY,
         List.of());
   }
 
   @Test
-  @DisplayName("writeDatabase: DB名・DBMS種別・形式バージョンを出力し、生成日は含めない")
+  @DisplayName("writeDatabase: DB名・DBMS種別・メジャーバージョン・形式バージョンを出力し、生成日は含めない")
   void testWriteDatabaseExcludesGeneratedDate() {
     writer.writeDatabase(ROOT);
 
     Path file = SNAPSHOT_DIR.resolve("database.json");
     assertEquals(
-        "{\"formatVersion\":1,\"name\":\"testdb\",\"dbms\":\"PostgreSQL\"}\n",
+        "{\"formatVersion\":1,\"name\":\"testdb\",\"dbms\":\"PostgreSQL\",\"majorVersion\":16}\n",
         fileRepository.files.get(file));
     assertTrue(fileRepository.createdDirectories.contains(SNAPSHOT_DIR));
   }

@@ -186,6 +186,19 @@ create view sample.employee_directory_view as
     from sample.employee e
     join sample.department d on e.department_id = d.department_id;
 
+-- ビュー・パーティション・出力対象外のスキーマのテーブルを参照するビュー。
+-- 定義書の「参照するテーブル」では、パーティションへの参照を親のパーティション表（sample.attendance）への参照としてまとめる
+create view sample.attendance_monthly_view as
+    select
+        dv.department_name,
+        date_trunc('month', a.work_date)::date as work_month,
+        sum(a.work_minutes) as total_minutes,
+        max(ad.note) as archive_note
+    from sample_archive.attendance_2025 a
+    join sample.employee_directory_view dv on dv.employee_id = a.employee_id
+    left join sample_archive.department ad on ad.note = dv.department_name
+    group by dv.department_name, date_trunc('month', a.work_date);
+
 /*
  * マテリアライズドビュー
  */
@@ -332,6 +345,7 @@ comment on column sample.project.project_name is 'プロジェクト名';
 comment on column sample.project.budget is '予算';
 
 comment on materialized view sample.project_summary_mv is 'プロジェクト別要員数集計';
+comment on view sample.attendance_monthly_view is '部署別の月次勤務時間';
 
 comment on table sample.attendance is '勤怠（月次パーティション）';
 comment on column sample.attendance.work_date is '勤務日（パーティションキー）';

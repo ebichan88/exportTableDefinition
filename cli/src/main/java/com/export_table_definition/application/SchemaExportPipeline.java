@@ -18,6 +18,7 @@ import com.export_table_definition.domain.model.table.TableEntity;
 import com.export_table_definition.domain.model.table.TableKey;
 import com.export_table_definition.domain.model.table.Tables;
 import com.export_table_definition.domain.model.table.Triggers;
+import com.export_table_definition.domain.model.table.ViewReferences;
 import com.export_table_definition.domain.model.target.ConsistencyNotice;
 import com.export_table_definition.domain.model.target.ExportTargets;
 import com.export_table_definition.domain.model.target.OutputObjectType;
@@ -101,6 +102,7 @@ final class SchemaExportPipeline {
     final Triggers triggers = fetchTriggers(tableScope.schemaNames(), outputObjectTypes);
     final Partitions partitions =
         Partitions.of(repository.selectPartitionList(tableScope.schemaNames()));
+    final ViewReferences viewReferences = fetchViewReferences(tableScope.schemaNames(), tables);
     final SchemaObjects schemaObjects =
         fetchSchemaObjects(tableScope.schemaNames(), outputObjectTypes);
 
@@ -110,6 +112,7 @@ final class SchemaExportPipeline {
         foreignKeys,
         triggers,
         partitions,
+        viewReferences,
         schemaObjects.functions(),
         schemaObjects.sequences(),
         schemaObjects.types(),
@@ -126,6 +129,18 @@ final class SchemaExportPipeline {
   private Tables fetchTables(List<String> targetSchemaList, TableScope tableScope) {
     return Tables.of(
         repository.selectTableList(targetSchemaList).stream().filter(tableScope::matches).toList());
+  }
+
+  /**
+   * 出力対象のビューが参照するテーブルを取得するメソッド<br>
+   * テーブルの定義書から参照しているビューを引けるよう、外部キーと同じく対象範囲全体を一括取得する。
+   * 出力対象外のビュー（定義書を出力しないビュー）の参照は除く。参照されるテーブルは、出力対象外のものも事実として残す
+   */
+  private ViewReferences fetchViewReferences(List<String> targetSchemaList, Tables tables) {
+    return ViewReferences.of(
+        repository.selectViewReferenceList(targetSchemaList).stream()
+            .filter(reference -> tables.contains(reference.tableKey()))
+            .toList());
   }
 
   /**
@@ -301,6 +316,7 @@ final class SchemaExportPipeline {
               targets.foreignKeys(),
               triggers,
               targets.partitions(),
+              targets.viewReferences(),
               targets.annotations(),
               targets.viewpoints());
       sinks.forEach(sink -> sink.writeTableDefinition(content));

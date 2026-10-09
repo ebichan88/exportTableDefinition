@@ -3,9 +3,17 @@
 <mapper namespace="com.export_table_definition.domain.repository.oracle.TableDefinitionRepository">
 
     <select id="selectDatabaseInfo" resultType="DatabaseDto">
+        <!-- DBMS_DB_VERSIONは権限なしで参照できるが、PL/SQLの定数のためSQLの中に定義する関数で読む
+             （V$INSTANCE等のビューは参照に権限が要る） -->
+        WITH
+        FUNCTION major_version RETURN NUMBER IS
+        BEGIN
+            RETURN DBMS_DB_VERSION.VERSION;
+        END;
         SELECT
             SYS_CONTEXT('USERENV','DB_NAME') AS "dbName",
-            'Oracle' AS "dbmsName"
+            'Oracle' AS "dbmsName",
+            major_version() AS "majorVersion"
         FROM dual
         fetch first 1 rows only
     </select>
@@ -577,6 +585,37 @@
             partition_key AS "partitionKey"
         FROM ora_partitions
         ORDER BY schema_name, table_name, partition_position, subpartition_position
+    </select>
+
+    <select id="selectViewReferenceInfo" resultType="ViewReferenceDto">
+        <!-- マテリアライズドビューは同じ名前のコンテナ表（TABLE）にも依存するため、自身への参照として除く。
+             マテリアライズドビューへの参照は、コンテナ表（TABLE）として記録されることがあるため、ALL_MVIEWSで区分を補う。
+             シノニム経由の参照（REFERENCED_TYPE = 'SYNONYM'）は、シノニムを出力しないため含めない -->
+        SELECT DISTINCT
+            d.OWNER AS "schemaName",
+            d.NAME AS "viewName",
+            CASE d.TYPE WHEN 'MATERIALIZED VIEW' THEN 'materialized_view' ELSE 'view' END AS "viewType",
+            d.REFERENCED_OWNER AS "referenceSchemaName",
+            d.REFERENCED_NAME AS "referenceTableName",
+            CASE
+                WHEN d.REFERENCED_TYPE = 'VIEW' THEN 'view'
+                WHEN d.REFERENCED_TYPE = 'MATERIALIZED VIEW' OR m.MVIEW_NAME IS NOT NULL THEN 'materialized_view'
+                ELSE 'table'
+            END AS "referenceTableType"
+        FROM ALL_DEPENDENCIES d
+        LEFT OUTER JOIN ALL_MVIEWS m ON m.OWNER = d.REFERENCED_OWNER AND m.MVIEW_NAME = d.REFERENCED_NAME
+        WHERE d.TYPE IN ('VIEW', 'MATERIALIZED VIEW')
+            AND d.REFERENCED_TYPE IN ('TABLE', 'VIEW', 'MATERIALIZED VIEW')
+            AND NOT (d.REFERENCED_OWNER = d.OWNER AND d.REFERENCED_NAME = d.NAME)
+            AND d.OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
+            AND d.REFERENCED_OWNER NOT IN <include refid="oracleMaintainedSchemas"/>
+            <if test="schemaList != null and schemaList.size() > 0">
+                AND d.OWNER IN
+                <foreach item="schema" index="index" collection="schemaList" open="(" separator="," close=")">
+                    #{schema}
+                </foreach>
+            </if>
+        ORDER BY "schemaName", "viewName", "referenceSchemaName", "referenceTableName"
     </select>
 
     <select id="selectFunctionInfo" resultType="FunctionDto">
