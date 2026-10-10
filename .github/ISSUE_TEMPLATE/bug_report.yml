@@ -91,7 +91,7 @@ body:
         `--version`の出力（`./run.sh --version`・`run.bat --version`・`java -jar dbxray.jar --version`）を書いてください。
         MCPサーバーの場合は、zipを入手したリリースの版を書いてください。
         ソースからビルドした場合は、あわせてコミットのハッシュ（`git rev-parse --short HEAD`）も書いてください。
-      placeholder: 例) dbxray 0.1.0 / dbxray 0.1.0（7c8aaab）
+      placeholder: 例) dbxray 0.2.0 / dbxray 0.2.0（7c8aaab）
     validations:
       required: true
 
