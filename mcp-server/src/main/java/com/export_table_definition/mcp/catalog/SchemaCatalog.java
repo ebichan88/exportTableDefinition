@@ -170,6 +170,23 @@ public final class SchemaCatalog {
     return tables.stream().filter(filter::matches).sorted(comparator).toList();
   }
 
+  /**
+   * 関連のつながりから、テーブルのまとまりを推測するメソッド<br>
+   * 範囲外のテーブルとの関連は無いものとみなす。求め方は{@link ClusterDetector}を参照
+   *
+   * @param maxClusterSize まとまりのテーブル数の上限（2以上）。上限を超えるまとまりは、被参照の多いテーブルを除いて分け直す
+   * @param excludeViewpointTables trueの場合、いずれかの観点に所属するテーブルを範囲から除く（観点が未宣言の範囲だけを求める）
+   */
+  public TableClusters tableClusters(
+      SearchScope scope, int maxClusterSize, boolean excludeViewpointTables) {
+    final List<TableEntry> inScope =
+        tables.stream()
+            .filter(table -> scope.matches(table.key()))
+            .filter(table -> !excludeViewpointTables || viewpointsOf(table).isEmpty())
+            .toList();
+    return new ClusterDetector(inScope, relations, KEY_ORDER).detect(maxClusterSize);
+  }
+
   /** テーブルの関連の数を返すメソッド */
   public RelationCounts relationCountsOf(TableEntry table) {
     return relations.counts(table.key());

@@ -62,6 +62,7 @@ class McpServerProcessTest {
           List.of(
               "list_schemas",
               "list_viewpoints",
+              "list_table_clusters",
               "search_tables",
               "list_tables",
               "get_table",
