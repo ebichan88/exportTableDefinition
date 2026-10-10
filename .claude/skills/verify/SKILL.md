@@ -23,9 +23,6 @@ Markdown表崩れ。詳細は末尾「踏み抜いた地雷」参照）。**マ�
 
 - Dockerが使えること
 - JDK 21 が `/usr/lib/jvm/java-21-amazon-corretto` にあること（無ければ `update-alternatives --list java` 等で確認し読み替える）
-  - **重要**: このマシンのデフォルトJavaはJDK25。Gradle 8.7はJDK25を認識できず
-    `Unsupported class file major version 69` で即死する。必ずJAVA_HOME/PATHをJDK21に切り替えてから
-    `gradlew` を実行すること。
 
 ## 手順
 
