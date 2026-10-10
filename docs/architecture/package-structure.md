@@ -1,7 +1,7 @@
 # パッケージ構成リファレンス
 
-cli（`cli/`）の`com.dbxray` 配下の全パッケージと主要クラスの一覧。
-MCPサーバー（`mcp-server/`。`com.dbxray.mcp`配下）のパッケージは[mcp-server.md](./mcp-server.md)を参照。
+cli（`modules/cli/`）の`com.dbxray` 配下の全パッケージと主要クラスの一覧。
+MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケージは[mcp-server.md](./mcp-server.md)を参照。
 役割の全体像は先に [overview.md](./overview.md)、ドメインの概念同士の関係・用語は [domain-model.md](./domain-model.md) を参照。
 
 ## 命名
@@ -144,7 +144,7 @@ MCPサーバー（`mcp-server/`。`com.dbxray.mcp`配下）のパッケージは
 | | `DatabaseTypeDetector` | DBへ接続して接続先のDB種別を判定する。DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
 | `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。`SqlSessionFactory`をコンストラクタで受け取る。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
-| | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
+| | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`modules/cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
 | `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `PartitionDto`, `ViewReferenceDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
@@ -174,15 +174,15 @@ MCPサーバー（`mcp-server/`。`com.dbxray.mcp`配下）のパッケージは
 
 | パス | 役割 |
 |---|---|
-| `cli/src/main/resources/conf/config.yml` | 配布する設定ファイル（DB接続情報・出力対象・出力先等。全項目が未指定） |
-| `cli/src/main/resources/mybatis-config.xml` | MyBatisのメイン設定（DB種別ごとのmapper読み込み等） |
-| `cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml` | Oracle向けSQL定義 |
-| `cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml` | PostgreSQL向けSQL定義 |
-| `cli/src/main/resources/log4j2.xml` | ログ設定（ログファイルへの出力に加え、このツールのWARNログを`[warn]:`付きで標準エラー出力へ出す） |
+| `modules/cli/src/main/resources/conf/config.yml` | 配布する設定ファイル（DB接続情報・出力対象・出力先等。全項目が未指定） |
+| `modules/cli/src/main/resources/mybatis-config.xml` | MyBatisのメイン設定（DB種別ごとのmapper読み込み等） |
+| `modules/cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml` | Oracle向けSQL定義 |
+| `modules/cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml` | PostgreSQL向けSQL定義 |
+| `modules/cli/src/main/resources/log4j2.xml` | ログ設定（ログファイルへの出力に加え、このツールのWARNログを`[warn]:`付きで標準エラー出力へ出す） |
 
 ## テスト
 
-`cli/src/test/java/com/dbxray` 配下は本体パッケージとほぼ1:1で対応する構成
+`modules/cli/src/test/java/com/dbxray` 配下は本体パッケージとほぼ1:1で対応する構成
 （`application`, `config`, `domain`, `infrastructure`, `presentation`, `testsupport`）。
 `testsupport`にはテスト用のビルダー・フィクスチャ等の共通部品を置く
 （`MarkdownAssert`、`EntityFixtures`、`ForeignKeyFixtures`など）。

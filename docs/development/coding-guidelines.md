@@ -1,6 +1,6 @@
 # コーディングガイドライン
 
-cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レビューするときの規約。人とAIエージェントの両方が対象。
+cli（`modules/cli/`）とMCPサーバー（`modules/mcp-server/`）のコードを書く・レビューするときの規約。人とAIエージェントの両方が対象。
 規約の背景にある設計（レイヤー構成・実行フロー等）は[docs/architecture](../architecture/overview.md)、
 ビルド・テストの実行方法やリリースは[CONTRIBUTING.md](../../CONTRIBUTING.md)を参照。
 
@@ -42,7 +42,7 @@ cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レ�
   同じものに別の名前を付けない。
 - ドメインの概念（`domain.model`のクラス）を追加・改名・削除した場合や、ルールを持つ場所を移した場合は、
   `docs/architecture/domain-model.md`の図・ルール表・用語集も同じ変更で更新する。
-- DB種別（Oracle/PostgreSQL）固有のSQLは`cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml`に分離されている。
+- DB種別（Oracle/PostgreSQL）固有のSQLは`modules/cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml`に分離されている。
   両DBで挙動を揃える変更は両方のmapperを確認・修正する。
 - MCPサーバーはcliのコードに依存しない。接点はスナップショットの形式だけ
   （互換の守り方は[mcp-server.md](../architecture/mcp-server.md)）。
@@ -194,7 +194,7 @@ DBのメタ情報（DB名・スキーマ名・テーブル名・コメント・�
 
 テストの配置は[package-structure.mdの「テスト」](../architecture/package-structure.md#テスト)を参照。
 
-- **種類と実行**：単体テスト（`cli/src/test`・`mcp-server/src/test`。DB不要）は`./gradlew test`、PostgreSQLの結合テスト（`cli/src/integrationTest`）は
+- **種類と実行**：単体テスト（`modules/cli/src/test`・`modules/mcp-server/src/test`。DB不要）は`./gradlew test`、PostgreSQLの結合テスト（`modules/cli/src/integrationTest`）は
   `./gradlew integrationTest`、Oracleの結合テストは`./gradlew oracleIntegrationTest`で実行する（いずれもDockerが必要。詳細はCONTRIBUTING.md）。
 - **ライブラリ**：JUnit 5のアサーション（`org.junit.jupiter.api.Assertions`）を使う。モックライブラリは使わず、ドメインの
   インタフェース（`FileRepository`等）を実装した手書きの偽物（例: 各テストの`InMemoryFileRepository`）で差し替える。
@@ -238,7 +238,7 @@ DBのメタ情報（DB名・スキーマ名・テーブル名・コメント・�
   - 呼び出し元・呼び出し先や他クラスの実装の説明 → 削除（そのクラス・メソッド自身の責務ではない）
   - 「なぜこの実装が良いか」という設計の弁護 → コミットメッセージ
   - コメントアウトしたコード → 削除（必要ならGit履歴から戻す）
-- Javadocを書く対象は宣言の種類で決める（`cli/src/main`・`mcp-server/src/main`。上の「書かない」はどの種類にも当てはまる）。
+- Javadocを書く対象は宣言の種類で決める（`modules/cli/src/main`・`modules/mcp-server/src/main`。上の「書かない」はどの種類にも当てはまる）。
   可視性は外側の型で絞った後のもので判断する（privateなネストクラスのメソッドはprivate扱い）。
 
   | 対象 | 扱い | 書く内容 |

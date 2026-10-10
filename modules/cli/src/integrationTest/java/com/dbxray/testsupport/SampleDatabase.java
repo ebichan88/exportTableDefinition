@@ -18,7 +18,7 @@ public final class SampleDatabase {
   public static final String DATABASE_NAME = "testdb";
 
   /** ベースラインの出力に使ったDDL */
-  private static final String DDL_PATH = "../docs/sample/postgres/ddl.sql";
+  private static final String DDL_PATH = "../../docs/sample/postgres/ddl.sql";
 
   /** verifyスキルの手順と同じイメージ */
   private static final String IMAGE = "postgres:16";

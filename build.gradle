@@ -64,10 +64,10 @@ subprojects {
 
     // 静的解析でバグを検出する。誤検知で開発を妨げないよう、確度が高い（HIGH）指摘だけを失敗として扱う。
     // 検査の対象は配布するコード（main）で、テストコード・結合テストのコードは対象にしない。
-    // 指摘を除外するときは、コードを直せない理由を添えてconfig/spotbugs/exclude.xmlに書く（検査自体は緩めない）
+    // 指摘を除外するときは、コードを直せない理由を添えてgradle/spotbugs/exclude.xmlに書く（検査自体は緩めない）
     spotbugs {
         reportLevel = Confidence.valueOf('HIGH')
-        excludeFilter = rootProject.file('config/spotbugs/exclude.xml')
+        excludeFilter = rootProject.file('gradle/spotbugs/exclude.xml')
     }
     tasks.matching { it.name.startsWith('spotbugs') && it.name != 'spotbugsMain' }.configureEach {
         enabled = false

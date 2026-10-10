@@ -15,13 +15,13 @@ DBに接続し、Markdown形式のテーブル定義書・ER図を出力するJa
 
 Gradleのマルチプロジェクト構成。
 
-- `cli/` — このツール本体（`cli/src/{main,test,integrationTest}`）
-- `mcp-server/` — スナップショットを検索するMCPサーバー。cliのコードには依存せず、接点はスナップショットの形式だけ。
+- `modules/cli/` — このツール本体（`modules/cli/src/{main,test,integrationTest}`）
+- `modules/mcp-server/` — スナップショットを検索するMCPサーバー。cliのコードには依存せず、接点はスナップショットの形式だけ。
   設計は[docs/architecture/mcp-server.md](./docs/architecture/mcp-server.md)を参照
 
 ルートの`build.gradle`にはサブプロジェクト共通の設定（プラグインのバージョン・Javaのバージョン・Spotless・doclint等）だけを置き、
-固有の設定は各サブプロジェクトの`build.gradle`に書く。`docs/`・`scripts/`・`.github/`はリポジトリルートにある。
-以降の文書で`src/...`と書いたパスは、特に断りが無ければ`cli/src/...`を指す。
+固有の設定は各サブプロジェクトの`build.gradle`に書く。`docs/`・`scripts/`・`.github/`はリポジトリルートにある。Gradleのラッパーとビルド用の設定（SpotBugsの除外設定等）は`gradle/`に置く。
+以降の文書で`src/...`と書いたパスは、特に断りが無ければ`modules/cli/src/...`を指す。
 
 ## アーキテクチャドキュメント
 
@@ -34,7 +34,7 @@ Javaのパッケージ構成・レイヤー構成・DI・実行フロー・ド�
   サイドカー・出力対象等）同士の関係図、主なルールを持つ場所、用語集（利用者向けのドキュメント・コード・会話で使う呼び方の対応）
 - [docs/architecture/package-structure.md](./docs/architecture/package-structure.md) — 全パッケージ・主要クラスの
   役割一覧（リファレンス）
-- [docs/architecture/mcp-server.md](./docs/architecture/mcp-server.md) — MCPサーバー（`mcp-server/`）の構成・ツール・
+- [docs/architecture/mcp-server.md](./docs/architecture/mcp-server.md) — MCPサーバー（`modules/mcp-server/`）の構成・ツール・
   スナップショット形式との互換の守り方
 
 ## コーディングガイドライン

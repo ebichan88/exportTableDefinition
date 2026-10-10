@@ -15,7 +15,7 @@ Markdown表崩れ。詳細は末尾「踏み抜いた地雷」参照）。**マ�
 必ずこの手順で実DBに対して1回通してから完了とする。**
 
 まずは`./gradlew integrationTest`を実行する。この手順と同じDDL・設定で出力し、ベースライン
-（`docs/sample/postgres/output`）との一致までを自動で確かめる（`cli/src/integrationTest`）。
+（`docs/sample/postgres/output`）との一致までを自動で確かめる（`modules/cli/src/integrationTest`）。
 この手順は、結合テストが失敗した出力を目で確かめる場合と、意図した出力の変更に合わせてベースラインを
 出力し直す場合に使う。
 
@@ -53,13 +53,13 @@ export PATH=$JAVA_HOME/bin:$PATH
 ./gradlew build --console=plain
 ```
 
-`cli/build/libs/dbxray.jar` と `cli/build/libs/conf/` 一式が作られる
+`modules/cli/build/libs/dbxray.jar` と `modules/cli/build/libs/conf/` 一式が作られる
 （`test`タスクも実行されるが数秒で終わる。ユニットテストが落ちたらそこで止めて直す）。
 
 ### 3. 設定ファイルを用意する
 
-`build.dependsOn(copyResources)`（`cli/build.gradle`）により、ビルドのたびに `cli/src/main/resources/conf/` の内容で
-`cli/build/libs/conf/` が**上書きされる**。設定はビルドの影響を受けない場所に別のファイルとして書き、`--config`で渡す。
+`build.dependsOn(copyResources)`（`modules/cli/build.gradle`）により、ビルドのたびに `modules/cli/src/main/resources/conf/` の内容で
+`modules/cli/build/libs/conf/` が**上書きされる**。設定はビルドの影響を受けない場所に別のファイルとして書き、`--config`で渡す。
 
 `/tmp/verify-postgres.yml` を作成する（パスはリポジトリの絶対パスで書く）:
 
@@ -79,11 +79,11 @@ Markdownに加えて、常に`docs/sample/postgres/output/snapshot/`配下へス
 ### 4. 実行する
 
 DB接続情報はCLI引数で渡す（設定ファイルの`database`は空でよい）。
-`--config`を付けない場合は、カレントディレクトリの`conf/config.yml`を読む（`cli/build/libs`で実行すると、
+`--config`を付けない場合は、カレントディレクトリの`conf/config.yml`を読む（`modules/cli/build/libs`で実行すると、
 全項目が未指定の配布用の設定＝全スキーマ対象を拾ってしまう）ため、必ず`--config`で手順3のファイルを指定する。
 
 ```bash
-java -jar cli/build/libs/dbxray.jar \
+java -jar modules/cli/build/libs/dbxray.jar \
   --config=/tmp/verify-postgres.yml \
   --db-driver=org.postgresql.Driver \
   --db-url=jdbc:postgresql://localhost:15432/testdb \
@@ -145,7 +145,7 @@ EOF
 
 # 4. 実行（リポジトリ直下で）
 rm -rf docs/sample/oracle/output
-java -jar cli/build/libs/dbxray.jar \
+java -jar modules/cli/build/libs/dbxray.jar \
   --config=/tmp/verify-oracle.yml \
   --db-driver=oracle.jdbc.OracleDriver \
   --db-url=jdbc:oracle:thin:@//localhost:11521/FREEPDB1 \
@@ -165,7 +165,7 @@ docker rm -f dbxray-verify-oracle
 使い捨てJavaプログラムを書くのが早い。
 
 ```java
-// /tmp/repro/Repro.java など、cli/build/libs の jar をクラスパスに使う
+// /tmp/repro/Repro.java など、modules/cli/build/libs の jar をクラスパスに使う
 SqlSessionFactory factory =
     MyBatisSqlSessionFactories.create(
         ConnectionSettings.of(
@@ -185,8 +185,8 @@ try (SqlSession session = factory.openSession()) {
 
 ```bash
 cd /tmp/repro
-javac -cp <リポジトリルート>/cli/build/libs/dbxray.jar Repro.java
-java -cp .:<リポジトリルート>/cli/build/libs/dbxray.jar Repro
+javac -cp <リポジトリルート>/modules/cli/build/libs/dbxray.jar Repro.java
+java -cp .:<リポジトリルート>/modules/cli/build/libs/dbxray.jar Repro
 ```
 
 PSQLExceptionの`Position:`はUTF-8バイトオフセットなので、日本語コメントが混じるSQLでは
