@@ -264,7 +264,7 @@ DBのメタ情報（DB名・スキーマ名・テーブル名・コメント・�
 | 変えたもの | 同じ変更で行うこと |
 |---|---|
 | `catalogMapper.xml`・ドメイン層（エンティティ・テンプレート・ER図生成ロジック等） | `./gradlew integrationTest`を実行する。mapperのSQLを変えた場合は、変えた取得結果を確かめるテストを`PostgresCatalogRepositoryIT`に足す |
-| 出力（ベースライン`docs/sample/postgres/output`との差分が出る） | `verify`スキルに従って出力結果を確認し、意図した変更であればベースラインを出力し直す |
+| 出力（ベースライン`docs/sample/postgres/output`との差分が出る） | `verify`スキルに従って出力結果を確認し、意図した変更であればベースラインを出力し直す。READMEの「出力例」（観点「人事管理」のER図・employeeのカラム情報）に貼ったものが出力と食い違っていないかも見る |
 | Oracle用mapper、またはOracleの出力が変わりうるドメイン層 | `./gradlew oracleIntegrationTest`（メモリを2GB程度使う）を実行し、変えた取得結果を確かめるテストを`OracleCatalogRepositoryIT`に足す。ベースラインは`docs/sample/oracle/output`（`verify`スキルのOracleの節） |
 | 片方のDBのmapper | もう片方のmapperも確認し、挙動を揃える |
 | スナップショットの形式（`domain.model.snapshot`のrecord） | `./gradlew :mcp-server:test`を実行する（`SampleSnapshotContractTest`がベースラインを読む）。互換性の無い変更なら`DatabaseSnapshot.FORMAT_VERSION`を上げ、`SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させる |
