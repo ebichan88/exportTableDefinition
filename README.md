@@ -24,6 +24,58 @@
 
 dbxray（旧名: exportTableDefinition）は、DBに接続し、テーブル一覧・各テーブルの定義書・ER図などをMarkdown形式で出力するツールです。
 
+### 出力例
+
+出力例は[サンプルのDB](./docs/sample/postgres/ddl.sql)（PostgreSQL）から出力したものの抜粋です。
+
+#### ER図（観点「人事管理」）
+
+外部キーの関係を、GitHubなどでそのまま図として表示できるMermaid記法で出力します
+（出典: [観点「人事管理」のページ](./docs/sample/postgres/output/testdb/viewpoint_testdb_personnel.md)）。
+
+```mermaid
+erDiagram
+    sample_department["department"]
+    sample_employee["employee（従業員）"]
+    sample_employee_profile["employee_profile"]
+    sample_parking_spot["parking_spot"]
+    sample_department ||--o{ sample_employee : "employee_department_id_fkey"
+    sample_employee |o--o{ sample_employee : "employee_manager_id_fkey"
+    sample_parking_spot |o--o| sample_employee : "employee_parking_spot_id_fkey"
+    sample_employee ||--o| sample_employee_profile : "employee_profile_employee_id_fkey"
+    sample_department {
+        integer department_id PK
+    }
+    sample_employee {
+        integer employee_id PK "従業員ID"
+        integer department_id FK "所属部署ID"
+        integer manager_id FK "上長の従業員ID"
+        integer parking_spot_id FK "駐車場ID"
+    }
+    sample_employee_profile {
+        integer employee_id PK, FK
+    }
+    sample_parking_spot {
+        integer parking_spot_id PK
+    }
+```
+
+#### テーブル定義書（employeeテーブル）
+
+カラム・インデックス・制約・外部キー情報などを、テーブルごとのMarkdownに出力します。以下はカラム情報の先頭6行です
+（出典: [employeeの定義書](./docs/sample/postgres/output/testdb/sample/table/employee.md)）。
+
+| No. | 論理名 | 物理名 | データ型 | 桁数/精度 | PK | Not Null | デフォルト | 備考 |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+|1|従業員ID|employee_id|integer||○|○|nextval('sample.employee_employee_id_seq'::regclass)||
+|2|従業員コード|employee_code|character varying(10)|10||○|||
+|3|従業員名|employee_name|character varying(50)|50||○|||
+|4|所属部署ID|department_id|integer|||○|||
+|5|上長の従業員ID|manager_id|integer||||||
+|6|駐車場ID|parking_spot_id|integer||||||
+
+#### 出力されるものの一覧
+
 出力されるものの全体像は以下のとおりです（各項目の詳細は[出力される内容の詳細](./docs/usage/cli.md#出力される内容の詳細)を参照）。
 
 | 出力物 | 内容 |
