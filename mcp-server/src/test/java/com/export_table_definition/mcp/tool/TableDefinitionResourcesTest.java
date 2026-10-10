@@ -86,7 +86,11 @@ class TableDefinitionResourcesTest {
   void removesControlCharactersFromDisplayStrings() {
     final SchemaCatalog unsafe =
         TestCatalogs.of(
-            List.of(table("x").logicalName("受注\u001b[2J\n明細‮").description("説明\r\n\t2行目").build()));
+            List.of(
+                table("x")
+                    .logicalName("受注\u001b[2J\n明細" + Character.toString(0x202E))
+                    .description("説明\r\n\t2行目")
+                    .build()));
 
     final SyncResourceSpecification spec =
         new TableDefinitionResources(unsafe).specifications().get(0);
