@@ -80,7 +80,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
 5. 通常実行のユースケース（`ExportSchemaUsecase`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExportPipeline`（`application`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
-   - `SchemaExportPipeline.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー・パーティション・ビューの参照等をMyBatis経由で取得し、
+   - `SchemaExportPipeline.fetchTargets()`：`CatalogRepository` からテーブル一覧・外部キー・トリガー・パーティション・ビューの参照等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。
      `ExportTargetConsistency`（`domain.service.target`）が両者を出力対象のテーブルと突き合わせ、
      一括取得分を `ExportTargets` にまとめる
@@ -116,7 +116,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 - 途中の層でcatchしてよいのは、(a) 検査例外を非検査例外で包む、(b) 下位の例外を利用者が直せる誤りへ置き換える、
   (c) フォールバックする（サイドカーYAMLの誤った観点を、警告して読み飛ばす等）場合のみ。
   包むときは原因（`cause`）を必ず渡し、tryの範囲は置き換えたい呼び出しだけに絞る
-  （例: `AbstractTableDefinitionRepository`はSQLの呼び出しだけを包み、DTO→エンティティの変換の失敗は包まない）。
+  （例: `AbstractCatalogRepository`はSQLの呼び出しだけを包み、DTO→エンティティの変換の失敗は包まない）。
   ただし、原因のメッセージが利用者のファイルの内容を引用する場合（SnakeYAMLの解析の失敗）は、原因を渡さず、
   失敗の種類と位置だけをメッセージに書く（`config.YamlSyntaxErrors`。設定ファイルに誤って書いたパスワードが画面・ログへ出ないようにするため）。
   catchしてログを出してから再スローすることはしない（ログの出力も`FailureReporter`が行う）
@@ -190,13 +190,13 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 ## DB種別の切り替え（Oracle / PostgreSQL）
 
 `infrastructure.db.type.DatabaseType` （enum）がDB種別名と対応する
-`infrastructure.db.repository.*TableDefinitionRepository` 実装クラスを紐づけている。
+`infrastructure.db.repository.*CatalogRepository` 実装クラスを紐づけている。
 エントリーポイントが（入力の検証に成功した後に）`DatabaseTypeDetector.detect()` で接続先のDB種別を判定して
 `DatabaseDependentModule` のコンストラクタへ（`SqlSessionFactory`とともに）渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
-`TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
-[modules/cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../modules/cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
-[modules/cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../modules/cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
-両リポジトリは共通処理を `AbstractTableDefinitionRepository` に持つ。
+`CatalogRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
+[modules/cli/src/main/resources/mapper/oracle/catalogMapper.xml](../../modules/cli/src/main/resources/mapper/oracle/catalogMapper.xml) と
+[modules/cli/src/main/resources/mapper/postgresql/catalogMapper.xml](../../modules/cli/src/main/resources/mapper/postgresql/catalogMapper.xml) に分離されている。
+両リポジトリは共通処理を `AbstractCatalogRepository` に持つ。
 
 追加オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は
 `domain.model.target.OutputObjectType` で種別ごとに絞り込み可能。両DBとも同じエンティティへ変換し、DBによる違い
@@ -215,7 +215,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
   （ER図・参照しているビューで、スキーマ・チャンクを跨いだ参照関係を解決するために全件が必要なため）
 - カラム・インデックス・制約はテーブル数に比例して重くなるため、スキーマ単位かつ `chunkSize` 件ごとに
   取得・出力・破棄する（`exportSchemaTableDefinitions` / `exportTableDefinitionChunk`）。
-  `TableDefinitionRepository.selectTableDetails()` がチャンク分をまとめて取得し、テーブルごとの `TableDetail` に
+  `CatalogRepository.selectTableDetails()` がチャンク分をまとめて取得し、テーブルごとの `TableDetail` に
   組み立てて返す。そこへ一括取得分の外部キー・トリガー・パーティション・手動付帯情報を合わせ、1テーブル分の出力内容
   （`TableDefinitionContent`）として各 `ExportSink` へ渡す
 - 関数・プロシージャの定義本体はスキーマ単位で取得・出力・破棄する（`exportSchemaFunctionDefinitions`）
@@ -226,7 +226,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 ## 基本情報と生成日
 
 各ドキュメントの先頭に掲載する基本情報（`domain.model.database.BaseInfoEntity`）は、DBのカタログから取得する
-データベースの情報（`DatabaseEntity`：DB名・DBMS種別・メジャーバージョン。`TableDefinitionRepository.selectDatabase()`）に、
+データベースの情報（`DatabaseEntity`：DB名・DBMS種別・メジャーバージョン。`CatalogRepository.selectDatabase()`）に、
 ドキュメントの生成日を加えたもの。生成日はDBではなく実行時に決まる値のため、`SchemaExportPipeline` がDIで受け取る
 `java.time.Clock` から与える（`DbxrayModule` が実行環境のタイムゾーンの時計を束縛する。テストでは固定の時計を渡せる）。
 
@@ -430,7 +430,7 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
   設定項目の仕様（位置・CLI引数名・既定値・値の形式）と検証を1箇所に持つ（リストの値は各要素の前後の空白を除去し、空要素を除く）。
   `database`の仕様と検証は`ConnectionSettings`が持つ
 - `config.module.DbxrayModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）のうち、DB種別に依存しないもの
-- `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`SqlSessionFactory`・`TableDefinitionRepository`と、それに依存するユースケース）
+- `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`SqlSessionFactory`・`CatalogRepository`と、それに依存するユースケース）
 
 DIコンテナは2段階で組み立てる。出力先の検証等の入力の検証はDBへ接続する前に行う（理由は[入力の検証](#入力の検証)を参照）が、
 DB種別は接続して初めて分かるため、まず`DbxrayModule`だけでコンテナを組み立てて入力の検証に使い、DBへ接続した後に`DatabaseDependentModule`を束縛した
@@ -439,7 +439,7 @@ DB種別は接続して初めて分かるため、まず`DbxrayModule`だけで�
 1回だけ生成して子のコンテナへインスタンスとして束縛し、リポジトリはコンストラクタで受け取る。静的なシングルトンから取得しないため、
 テストでは任意の接続先（テスト用のDB等）の`SqlSessionFactory`を渡してリポジトリを組み立てられる。
 新しいリポジトリ実装やドメインサービスを追加する場合は、`DbxrayModule`に束縛を追加する
-（`TableDefinitionRepository`の実装のように、DB接続後でないと決まらないものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
+（`CatalogRepository`の実装のように、DB接続後でないと決まらないものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
 各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。
 ユースケース（具象クラス）・`application.SchemaExportPipeline`・`OutputDirectoryValidator`はインターフェースを持たないためモジュールでは束縛せず、Guiceのジャストインタイム束縛
 （`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、エントリーポイントと同じ手順で実際にDIコンテナを組み立てる

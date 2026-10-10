@@ -34,23 +34,23 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * OracleTableDefinitionRepository（Oracle用mapperのSQLとDTOからの変換）の結合テスト<br>
+ * OracleCatalogRepository（Oracle用mapperのSQLとDTOからの変換）の結合テスト<br>
  * {@code docs/sample/oracle/ddl.sql}を流し込んだ実DBに対してSQLを実行し、DDLに用意した形（複合外部キー・自己参照・
  * 1対1・関数索引・別スキーマの同名テーブル等）が取得できることを確かめる。どのSQLが壊れたかを特定できるよう、取得メソッドごとに検証する
  */
 @Tag("oracle")
-class OracleTableDefinitionRepositoryIT {
+class OracleCatalogRepositoryIT {
 
   private static final List<String> SAMPLE_SCHEMA = List.of(OracleSampleDatabase.SCHEMA);
 
   /** 1列あたり約70バイトのため、ビューのソースが32KBを超える列数 */
   private static final int LONG_VIEW_COLUMNS = 700;
 
-  private static OracleTableDefinitionRepository repository;
+  private static OracleCatalogRepository repository;
 
   @BeforeAll
   static void setUp() {
-    repository = new OracleTableDefinitionRepository(OracleSampleDatabase.sqlSessionFactory());
+    repository = new OracleCatalogRepository(OracleSampleDatabase.sqlSessionFactory());
   }
 
   @Test

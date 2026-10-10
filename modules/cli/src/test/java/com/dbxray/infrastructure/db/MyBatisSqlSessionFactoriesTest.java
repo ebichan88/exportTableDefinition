@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 public class MyBatisSqlSessionFactoriesTest {
 
   private static final String NAMESPACE_FORMAT =
-      "com.dbxray.domain.repository.%s.TableDefinitionRepository.%s";
+      "com.dbxray.domain.repository.%s.CatalogRepository.%s";
 
   private static SqlSessionFactory create() {
     return MyBatisSqlSessionFactories.create(

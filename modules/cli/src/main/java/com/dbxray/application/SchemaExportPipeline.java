@@ -24,8 +24,8 @@ import com.dbxray.domain.model.target.ExportTargets;
 import com.dbxray.domain.model.target.OutputObjectType;
 import com.dbxray.domain.model.target.TableDefinitionContent;
 import com.dbxray.domain.model.target.TableScope;
+import com.dbxray.domain.repository.CatalogRepository;
 import com.dbxray.domain.repository.SidecarRepository;
-import com.dbxray.domain.repository.TableDefinitionRepository;
 import com.dbxray.domain.service.export.ExportSink;
 import com.dbxray.domain.service.target.ExportTargetConsistency;
 import com.dbxray.domain.service.target.ExportTargetConsistency.ResolvedForeignKeys;
@@ -51,7 +51,7 @@ import org.apache.logging.log4j.Logger;
 final class SchemaExportPipeline {
 
   private static final Logger logger = LogManager.getLogger(SchemaExportPipeline.class);
-  private final TableDefinitionRepository repository;
+  private final CatalogRepository repository;
   private final SidecarRepository sidecarRepository;
   private final ExportTargetConsistency consistency;
   private final Clock clock;
@@ -61,7 +61,7 @@ final class SchemaExportPipeline {
    */
   @Inject
   SchemaExportPipeline(
-      TableDefinitionRepository repository,
+      CatalogRepository repository,
       SidecarRepository sidecarRepository,
       ExportTargetConsistency consistency,
       Clock clock) {

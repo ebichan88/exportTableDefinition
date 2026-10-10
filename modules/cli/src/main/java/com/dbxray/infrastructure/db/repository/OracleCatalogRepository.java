@@ -4,11 +4,11 @@ import com.dbxray.infrastructure.db.type.DatabaseType;
 import jakarta.inject.Inject;
 import org.apache.ibatis.session.SqlSessionFactory;
 
-/** [oracle]テーブル定義出力に関するリポジトリクラス */
-public final class OracleTableDefinitionRepository extends AbstractTableDefinitionRepository {
+/** [oracle]DBのカタログの取得に関するリポジトリクラス */
+public final class OracleCatalogRepository extends AbstractCatalogRepository {
 
   @Inject
-  public OracleTableDefinitionRepository(SqlSessionFactory sqlSessionFactory) {
+  public OracleCatalogRepository(SqlSessionFactory sqlSessionFactory) {
     super(DatabaseType.ORACLE, sqlSessionFactory);
   }
 }

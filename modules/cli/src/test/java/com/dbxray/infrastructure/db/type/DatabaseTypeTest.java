@@ -2,8 +2,8 @@ package com.dbxray.infrastructure.db.type;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.dbxray.infrastructure.db.repository.OracleTableDefinitionRepository;
-import com.dbxray.infrastructure.db.repository.PostgresTableDefinitionRepository;
+import com.dbxray.infrastructure.db.repository.OracleCatalogRepository;
+import com.dbxray.infrastructure.db.repository.PostgresCatalogRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -31,16 +31,15 @@ public class DatabaseTypeTest {
   }
 
   @Test
-  @DisplayName("getRepositoryClass: POSTGRESQLはPostgresTableDefinitionRepositoryを返す")
+  @DisplayName("getRepositoryClass: POSTGRESQLはPostgresCatalogRepositoryを返す")
   void testGetRepositoryClassPostgresql() {
-    assertEquals(
-        PostgresTableDefinitionRepository.class, DatabaseType.POSTGRESQL.getRepositoryClass());
+    assertEquals(PostgresCatalogRepository.class, DatabaseType.POSTGRESQL.getRepositoryClass());
   }
 
   @Test
-  @DisplayName("getRepositoryClass: ORACLEはOracleTableDefinitionRepositoryを返す")
+  @DisplayName("getRepositoryClass: ORACLEはOracleCatalogRepositoryを返す")
   void testGetRepositoryClassOracle() {
-    assertEquals(OracleTableDefinitionRepository.class, DatabaseType.ORACLE.getRepositoryClass());
+    assertEquals(OracleCatalogRepository.class, DatabaseType.ORACLE.getRepositoryClass());
   }
 
   @Test

@@ -42,7 +42,7 @@ cli（`modules/cli/`）とMCPサーバー（`modules/mcp-server/`）のコード
   同じものに別の名前を付けない。
 - ドメインの概念（`domain.model`のクラス）を追加・改名・削除した場合や、ルールを持つ場所を移した場合は、
   `docs/architecture/domain-model.md`の図・ルール表・用語集も同じ変更で更新する。
-- DB種別（Oracle/PostgreSQL）固有のSQLは`modules/cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml`に分離されている。
+- DB種別（Oracle/PostgreSQL）固有のSQLは`modules/cli/src/main/resources/mapper/{oracle,postgresql}/catalogMapper.xml`に分離されている。
   両DBで挙動を揃える変更は両方のmapperを確認・修正する。
 - MCPサーバーはcliのコードに依存しない。接点はスナップショットの形式だけ
   （互換の守り方は[mcp-server.md](../architecture/mcp-server.md)）。
@@ -52,7 +52,7 @@ cli（`modules/cli/`）とMCPサーバー（`modules/mcp-server/`）のコード
 ### DI（Guice）
 
 - 新しいリポジトリ実装やドメインサービスを追加した場合は、`config/module/DbxrayModule.java`に束縛を追加する。
-  接続先の`SqlSessionFactory`と、DB種別で実装が変わる`TableDefinitionRepository`だけは、DB接続後に組み立てる子のコンテナ用の
+  接続先の`SqlSessionFactory`と、DB種別で実装が変わる`CatalogRepository`だけは、DB接続後に組み立てる子のコンテナ用の
   `config/module/DatabaseDependentModule.java`に置く。
 - コンストラクタには`jakarta.inject.Inject`を付ける（Guiceのアノテーションには依存しない）。
 - インターフェースを持たない具象クラス（ユースケース等）は、`@Inject`付きコンストラクタがあればジャストインタイム束縛で解決されるため束縛しない。
@@ -263,9 +263,9 @@ DBのメタ情報（DB名・スキーマ名・テーブル名・コメント・�
 
 | 変えたもの | 同じ変更で行うこと |
 |---|---|
-| `tableDefinitionMapper.xml`・ドメイン層（エンティティ・テンプレート・ER図生成ロジック等） | `./gradlew integrationTest`を実行する。mapperのSQLを変えた場合は、変えた取得結果を確かめるテストを`PostgresTableDefinitionRepositoryIT`に足す |
+| `catalogMapper.xml`・ドメイン層（エンティティ・テンプレート・ER図生成ロジック等） | `./gradlew integrationTest`を実行する。mapperのSQLを変えた場合は、変えた取得結果を確かめるテストを`PostgresCatalogRepositoryIT`に足す |
 | 出力（ベースライン`docs/sample/postgres/output`との差分が出る） | `verify`スキルに従って出力結果を確認し、意図した変更であればベースラインを出力し直す |
-| Oracle用mapper、またはOracleの出力が変わりうるドメイン層 | `./gradlew oracleIntegrationTest`（メモリを2GB程度使う）を実行し、変えた取得結果を確かめるテストを`OracleTableDefinitionRepositoryIT`に足す。ベースラインは`docs/sample/oracle/output`（`verify`スキルのOracleの節） |
+| Oracle用mapper、またはOracleの出力が変わりうるドメイン層 | `./gradlew oracleIntegrationTest`（メモリを2GB程度使う）を実行し、変えた取得結果を確かめるテストを`OracleCatalogRepositoryIT`に足す。ベースラインは`docs/sample/oracle/output`（`verify`スキルのOracleの節） |
 | 片方のDBのmapper | もう片方のmapperも確認し、挙動を揃える |
 | スナップショットの形式（`domain.model.snapshot`のrecord） | `./gradlew :mcp-server:test`を実行する（`SampleSnapshotContractTest`がベースラインを読む）。互換性の無い変更なら`DatabaseSnapshot.FORMAT_VERSION`を上げ、`SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させる |
 | ER図のMermaidの表記（`MermaidSupport`） | `./gradlew :mcp-server:test`を実行する（MCPサーバーの`get_er_diagram`が同じ表記を自前で持ち、`SampleErDiagramContractTest`が観点ページのベースラインと比べる） |
