@@ -299,7 +299,7 @@ public class ErDiagramTemplatesTest {
         """
         ___
 
-        [スキーマのER図へ](./erDiagram_TEST_DB_public.md) [ER図一覧へ](./erDiagramList_TEST_DB.md) [テーブル一覧へ](./tableList_TEST_DB.md)
+        [スキーマのER図へ](./erDiagram_TEST_DB_public.md) / [ER図一覧へ](./erDiagramList_TEST_DB.md) / [テーブル一覧へ](./tableList_TEST_DB.md)
         """,
         ErDiagramTemplates.groupFooter("public", baseInfo()));
   }
@@ -331,7 +331,7 @@ public class ErDiagramTemplatesTest {
         """
         ___
 
-        [ER図一覧へ](./erDiagramList_TEST_DB.md) [テーブル一覧へ](./tableList_TEST_DB.md)
+        [ER図一覧へ](./erDiagramList_TEST_DB.md) / [テーブル一覧へ](./tableList_TEST_DB.md)
         """,
         ErDiagramTemplates.schemaFooter(baseInfo()));
   }

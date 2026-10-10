@@ -145,7 +145,7 @@ public class ViewpointTemplatesTest {
         """
         ___
 
-        [観点一覧へ](./viewpointList_TEST_DB.md) [テーブル一覧へ](./tableList_TEST_DB.md)
+        [観点一覧へ](./viewpointList_TEST_DB.md) / [テーブル一覧へ](./tableList_TEST_DB.md)
         """,
         ViewpointTemplates.footer(baseInfo()));
   }

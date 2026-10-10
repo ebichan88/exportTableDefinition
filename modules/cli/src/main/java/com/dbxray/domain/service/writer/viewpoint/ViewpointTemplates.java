@@ -113,7 +113,7 @@ public class ViewpointTemplates {
     return HORIZON
         + LINE_SEPARATOR_DOUBLE
         + String.format(
-            "[%s](%s) [%s](%s)",
+            "[%s](%s) / [%s](%s)",
             ListDocumentType.VIEWPOINT.getBackLinkLabel(),
             listLink(ListDocumentType.VIEWPOINT, baseInfo),
             ListDocumentType.TABLE.getBackLinkLabel(),
