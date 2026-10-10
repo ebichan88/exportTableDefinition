@@ -9,7 +9,7 @@ cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レ�
 | 検査 | 対象 | 実行 |
 |---|---|---|
 | Spotless（google-java-format） | 書式・importの順序・未使用のimport | `./gradlew spotlessCheck`（直すときは`spotlessApply`） |
-| `ArchitectureTest`（ArchUnit） | レイヤーの依存方向・置き場所・命名・禁止API | `./gradlew :cli:test` |
+| `ArchitectureTest`（ArchUnit） | cli：レイヤーの依存方向・置き場所・命名・禁止API<br>MCPサーバー：パッケージの依存の向き・標準出力への書き込み・cliへの依存 | `./gradlew :cli:test`・`./gradlew :mcp-server:test` |
 | doclint | Javadocの書式の誤り（タグの誤り・参照先の無いリンク等） | `./gradlew javadoc` |
 | JaCoCo | cliのドメイン層・MCPサーバーの`catalog`のカバレッジ（line 95%・branch 85%） | `./gradlew build` |
 | `OutputPathContainmentTest`・`MarkdownInjectionTest` | 出力先の外へのパス・Markdownへの注入 | `./gradlew :cli:test` |
@@ -46,6 +46,8 @@ cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レ�
   両DBで挙動を揃える変更は両方のmapperを確認・修正する。
 - MCPサーバーはcliのコードに依存しない。接点はスナップショットの形式だけ
   （互換の守り方は[mcp-server.md](../architecture/mcp-server.md)）。
+  MCPサーバーの`ArchitectureTest`は、パッケージの依存の向き（`tool → catalog ← snapshot`・`catalog ← insight`）、
+  `catalog`がJDK以外に依存しないこと、標準出力への書き込み、cliへの依存を検査する。
 
 ### DI（Guice）
 
@@ -145,7 +147,7 @@ MCPサーバーはログファイルを持たず、標準エラーへの表示�
 - **既定の設定**：このツールのロガーの既定はINFO、ルート（ライブラリ）はWARNのままにする。MyBatisは実行したSQL（DEBUG）と取得した行
   （TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定を下げるとログが大きくなるうえ機密を含みうる。
   調査用の詳細は、利用者が`dbxray.log.level`で明示的に上げる。
-- **MCPサーバーの標準出力**：MCPサーバーは標準出力をMCPのプロトコルに使う。`System.out`への出力や、標準出力へ出すログの設定を追加しない（表示は標準エラーへ）。
+- **MCPサーバーの標準出力**：MCPサーバーは標準出力をMCPのプロトコルに使う。`System.out`への出力や、標準出力へ出すログの設定を追加しない（表示は標準エラーへ）。`System.out`等への書き込みは`ArchitectureTest`が検出するが、ログの設定は検出しない。
 - ログの仕様（レベル・記録する内容・調査時の上げ方）を変えたら、`docs/usage/cli.md`の「ログ」の節も同じ変更で更新する。
 - 利用者に知らせる警告を足したら、テストでメッセージを確かめる（[テスト](#テスト)）。
 

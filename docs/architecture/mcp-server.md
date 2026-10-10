@@ -16,6 +16,8 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 依存の向きは`tool → catalog ← snapshot`・`catalog ← insight`。検索・関連のたどりは`catalog`に置き、MCPのSDKにもJSONにも依存させない
 （cliの`presentation → application → domain ← infrastructure`と同じ考え方で、中心のロジックを単体テストしやすくする）。
 `snapshot`と`insight`は互いに依存しない（読み込み元のディレクトリが異なる、独立した入力源）。
+これらの依存の向きと、標準出力へ書き込まないこと・cliのコードに依存しないことは`ArchitectureTest`（ArchUnit）が単体テストとして検査する。
+直下の`UserCorrectableException`だけは、読み込みの失敗を伝えるため`snapshot`・`insight`からも使う。
 
 | パッケージ | 主要クラス | 役割 |
 |---|---|---|
@@ -182,6 +184,7 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 | `InsightsDirectoryReaderTest` | 読み込み（兄弟ディレクトリの解決を含む）と、起動時の誤り |
 | `SampleInsightsContractTest` | ベースラインとの契約（観点の所属テーブルを含む。スナップショットのテーブルから所属する観点を逆引きできること＝両者のキーが一致すること） |
 | `tool`配下 | ツールの結果のJSON・エラー・引数の検証、リソースの一覧（名前・説明・URI・表示用文字列の制御文字の除去）と読み出し |
+| `ArchitectureTest` | パッケージの依存の向き（[構成と依存の向き](#構成と依存の向き)）、`catalog`がJDK以外に依存しないこと、標準出力（`System.out`・`FileDescriptor.out`・`System.setOut`）へ書き込まないこと、cliのコードに依存しないこと |
 | `McpServerProcessTest` | 配布するjar（shadowJar）を子プロセスで起動し、MCPクライアントからstdioで呼び出すE2E。マニフェスト・依存の同梱（ServiceLoaderの登録を含む）・標準出力の汚れを確かめる。応答を待たずに続けてツールを呼び出しても止まらないこと（`immediateExecution`の回帰）、型・範囲・未知の引数がSDKの入力スキーマの検証で拒否されること（ツールのテストはハンドラを直接呼ぶため通らない）、リソースの一覧・読み出し・応答を待たずに続けて読んでも止まらないことも確かめる |
 
 `catalog`には単体テストのカバレッジの最低基準（line 95%・branch 85%）を設け、`./gradlew build`で検査する。
