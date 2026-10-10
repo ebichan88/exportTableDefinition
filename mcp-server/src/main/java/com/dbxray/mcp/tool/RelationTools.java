@@ -99,7 +99,8 @@ final class RelationTools {
     final int depth = arguments.optionalInt("depth", 1);
     final Direction direction =
         arguments.optionalEnum("direction", Direction.class, Direction.BOTH);
-    return ToolResults.json(RelatedTablesOutput.of(catalog.relatedTables(table, depth, direction)));
+    return ToolResults.json(
+        RelatedTablesOutput.of(catalog.relations().relatedTables(table, depth, direction)));
   }
 
   private CallToolResult findJoinPath(ToolArguments arguments) {
@@ -110,7 +111,7 @@ final class RelationTools {
     }
     final int maxLength = arguments.optionalInt("maxLength", DEFAULT_MAX_LENGTH);
     final int limit = arguments.optionalInt("limit", DEFAULT_PATH_LIMIT);
-    final JoinPaths found = catalog.joinPaths(from, to, maxLength, limit);
+    final JoinPaths found = catalog.relations().joinPaths(from, to, maxLength, limit);
     return ToolResults.json(
         new JoinPathOutput(
             from.key().qualifiedName(),
@@ -125,7 +126,7 @@ final class RelationTools {
   /** テーブル名を受け取る引数（スキーマ名は{@code スキーマ名.テーブル名}の形で指定する）から、テーブルを1つに解決する */
   private TableEntry resolveTable(ToolArguments arguments, String argumentName) {
     return ObjectResolver.resolve(
-        arguments, argumentName, "テーブル", TableTools.SEARCH_TABLES, catalog::lookupTable);
+        arguments, argumentName, "テーブル", TableTools.SEARCH_TABLES, catalog.tables()::lookup);
   }
 
   /**

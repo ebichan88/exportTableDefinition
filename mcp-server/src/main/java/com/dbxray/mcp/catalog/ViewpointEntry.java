@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * 観点（業務ドメイン別にテーブルをまとめる切り口）の参考情報1件<br>
- * スキーマを持たない（DB単位の概念な）ため{@link SchemaObject}は実装せず、{@link SchemaCatalog}が専用の方法で解決する
+ * スキーマを持たない（DB単位の概念な）ため{@link SchemaObject}は実装せず、{@link ViewpointCatalog}が専用の方法で解決する
  *
  * @param database DB名（参考情報の{@code {DB名}}ディレクトリ）
  * @param id 識別子

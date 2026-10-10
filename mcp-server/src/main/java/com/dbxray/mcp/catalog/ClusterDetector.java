@@ -25,14 +25,13 @@ final class ClusterDetector {
 
   /**
    * @param tables まとまりを求める範囲のテーブル（範囲外のテーブルとの関連は無いものとみなす）
-   * @param keyOrder 同数のときに並べる名前の順
    */
-  ClusterDetector(List<TableEntry> tables, RelationGraph graph, Comparator<ObjectKey> keyOrder) {
+  ClusterDetector(List<TableEntry> tables, RelationGraph graph) {
     this.graph = graph;
     this.byIncomingThenKey =
         Comparator.comparingInt((TableEntry table) -> incoming(table.key()))
             .reversed()
-            .thenComparing(TableEntry::key, keyOrder);
+            .thenComparing(TableEntry::key, ObjectKey.ORDER);
     tables.forEach(table -> this.tables.put(table.key(), table));
     for (final ObjectKey key : this.tables.keySet()) {
       final Set<ObjectKey> neighbors = new HashSet<>(graph.adjacentTables(key));

@@ -79,7 +79,10 @@ final class FunctionTools {
   private CallToolResult listFunctions(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
     final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
-    final List<FunctionEntry> functions = catalog.listFunctions(arguments.scope(), filter);
+    final List<FunctionEntry> functions =
+        catalog.functions().list(arguments.scope(), filter).stream()
+            .flatMap(function -> function.overloads().stream())
+            .toList();
     return ToolResults.json(
         new ListFunctionsOutput(
             functions.size(),
@@ -91,7 +94,7 @@ final class FunctionTools {
     final boolean includeDefinition = arguments.optionalBoolean("includeDefinition", false);
     final FunctionOverloads function =
         ObjectResolver.resolve(
-            arguments, "function", "関数", LIST_FUNCTIONS, catalog::lookupFunction);
+            arguments, "function", "関数", LIST_FUNCTIONS, catalog.functions()::lookup);
     final List<ObjectNode> overloads =
         function.overloads().stream().map(entry -> signature(entry, includeDefinition)).toList();
     final Optional<String> sharedDefinition =
@@ -109,7 +112,7 @@ final class FunctionTools {
             function.key().name(),
             sharedDefinition.map(FunctionTools::truncateDefinition).orElse(null),
             overloads,
-            catalog.triggersCalling(function).stream().map(CallingTrigger::of).toList()));
+            catalog.tables().triggersCalling(function).stream().map(CallingTrigger::of).toList()));
   }
 
   /** スナップショットの1行から、関数を識別する項目（呼び出し側で返す）を除いたもの */

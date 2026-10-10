@@ -68,7 +68,7 @@ public final class McpServerMain {
               .withViewpoints(viewpoints);
       System.err.println(
           "[info]:"
-              + catalog.tables().size()
+              + catalog.tables().all().size()
               + "テーブルを読み込みました。 [snapshot="
               + arguments.snapshotDirectory().toAbsolutePath()
               + "]");
