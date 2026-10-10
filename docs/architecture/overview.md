@@ -14,7 +14,7 @@ Java 21 / Gradle製で、DIコンテナにGoogle Guiceを、O/RマッパーにMy
 
 ## レイヤー構成
 
-`com.export_table_definition` 配下は4層構成（プレゼンテーション / アプリケーション / ドメイン / インフラ）で、
+`com.dbxray` 配下は4層構成（プレゼンテーション / アプリケーション / ドメイン / インフラ）で、
 依存の方向は常に「外側 → 内側」（インフラ・プレゼンテーションはドメインに依存するが、逆はない）。
 
 ```
@@ -50,14 +50,14 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## 実行フロー
 
-1. `ExportTableDefinition.main()` が `CliArguments`（CLI引数の解析・設定ファイルのパス（`--config`）とDB接続情報・実行時設定の
+1. `Dbxray.main()` が `CliArguments`（CLI引数の解析・設定ファイルのパス（`--config`）とDB接続情報・実行時設定の
    上書き値の解決・`--check`/`--rm-dist`フラグの判定）でモードを判定し、以降の処理全体を1つのtry-catchで囲んで実行する。
    例外の捕捉と終了コードへの変換はここで1箇所にまとめて行い、捕捉した例外は`presentation.FailureReporter`が報告する
    （[例外の扱いと終了コード](#例外の扱いと終了コード)を参照）。
-2. `ExportTableDefinition.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
+2. `Dbxray.run()`（`--check`時は`runCheck()`）が、まず入力を検証する（[入力の検証](#入力の検証)を参照）。
    - `CliArguments.requireKnownArguments()`が、解釈できない引数（書き誤り等）が無いことを確かめる
    - `config.ConfigFile.load()`が設定ファイル（既定は`conf/config.yml`）を1回だけ読み込む。以降の検証はこの内容を使う
-   - `ExportTableDefinitionProperties.of()`が、設定ファイルの`database`以外の設定値（出力対象スキーマ／テーブル／オブジェクト種別、
+   - `DbxrayProperties.of()`が、設定ファイルの`database`以外の設定値（出力対象スキーマ／テーブル／オブジェクト種別、
      出力先パス、chunkSize、erDiagramMaxNodes、サイドカーYAMLのパス）を、CLI引数による上書き値
      （`CliArguments.settingOverrides()`）で上書きしてから検証し、
      `ExportTableDefinitionRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDocumentDiffRequest`）へ変換する。
@@ -66,7 +66,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
      削除より前に`[result]:FAIL`として報告されるため、エントリーポイントは読み込み処理の内部で起きる個々の例外を知らずに済む
    - requestはエントリーポイント→コントローラー→ユースケースの3層を、分解・再構築を繰り返さず同じrecordのまま通過する
-   - DB種別に依存しない部品のDIコンテナ（`ExportTableDefinitionModule`）を組み立て、`OutputDirectoryValidator`が出力先
+   - DB種別に依存しない部品のDIコンテナ（`DbxrayModule`）を組み立て、`OutputDirectoryValidator`が出力先
      （`output.path`）を検証する。既存のファイルを指す場合と、`--rm-dist`で削除してはならないディレクトリ（ルート・ホーム
      ディレクトリ・カレントディレクトリ自体）を指す場合は、DBへ接続する前に`[result]:FAIL`として報告する
    - `ConnectionSettings.merge()`（`infrastructure.db`）が設定ファイルの`database`の値を、環境変数のパスワード・CLI引数の値で
@@ -110,7 +110,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
   「利用者が直せる」という分類は入口側の関心であり、ドメインの概念ではないため。入力の誤りはユースケースを呼ぶ前に入口で検証し、
   インフラは外部に触れて初めて分かる誤り（DBに接続できない、YAMLとして読めない等）だけを投げる。
   入口とインフラの双方から投げるため、例外はどの層からも依存できるレイヤーの外（`shared.exception`）に置く
-- 捕捉するのはエントリーポイント（`ExportTableDefinition.main()`）の1箇所だけ。設定の読み込み・DBへの接続・DIコンテナの
+- 捕捉するのはエントリーポイント（`Dbxray.main()`）の1箇所だけ。設定の読み込み・DBへの接続・DIコンテナの
   組み立てを含む処理全体を1つのtry-catchで囲むため、捕捉漏れがない。コントローラー・ユースケースでは捕捉しない。
   捕捉した例外は`presentation.FailureReporter`へ渡し、種類に応じた報告（画面・ログ）を任せる
 - 途中の層でcatchしてよいのは、(a) 検査例外を非検査例外で包む、(b) 下位の例外を利用者が直せる誤りへ置き換える、
@@ -147,9 +147,9 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | DEBUG | 件数に比例して増える進捗。調査時だけ出す | 書き出したファイル、MyBatisが出す実行したSQLとバインドした値 |
 | TRACE | DBから取得した値そのもの | MyBatisが出す取得した行 |
 
-- 既定のレベルは、このツールのロガー（`com.export_table_definition`配下）がINFO、ライブラリ（ルート）がWARN。
+- 既定のレベルは、このツールのロガー（`com.dbxray`配下）がINFO、ライブラリ（ルート）がWARN。
   調査時はシステムプロパティ`export-table-definition.log.level`で上げる。MyBatisは実行したSQLをmapperのnamespace
-  （`com.export_table_definition.domain.repository.{oracle,postgresql}`）のロガーへ出すため、このプロパティだけで
+  （`com.dbxray.domain.repository.{oracle,postgresql}`）のロガーへ出すため、このプロパティだけで
   SQL（DEBUG）・取得した行（TRACE）まで出せる。ライブラリのDEBUG（コネクションプール等）は調査に要らないため出さない
 - DB由来の文字列（関数の定義等）は改行を含みうる。メッセージは`%enc{%m}{CRLF}`で改行を`\n`・`\r`へ置き換えて出し、
   偽のログ行を作られないようにする（スタックトレースは置き換えない）
@@ -178,7 +178,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 |---|---|---|
 | CLI引数 | `CliArguments.requireKnownArguments` | 最初（DBへの接続前） |
 | 設定ファイルの形式（YAMLとして読めるか・最上位がキーと値の組か） | `ConfigFile` | CLI引数の後（DBへの接続前） |
-| 設定ファイルの項目（キー・リスト・整数。CLI引数で上書きした値を含む） | `ExportTableDefinitionProperties` | 同上 |
+| 設定ファイルの項目（キー・リスト・整数。CLI引数で上書きした値を含む） | `DbxrayProperties` | 同上 |
 | 出力対象の絞り込み条件（テーブル名パターン・出力対象オブジェクト種別） | `TableNamePatterns.of` / `OutputObjectType.parse`（`TargetSelection.of`が2つの誤りをまとめる） | 同上 |
 | 出力先（`output.path`が既存のファイルを指さないか、`--rm-dist`で削除してよいか） | `OutputDirectoryValidator` | 設定ファイルの後（DBへの接続前） |
 | DB接続情報 | `ConnectionSettings`（`infrastructure.db`） | 出力先の後（DBへの接続前） |
@@ -228,7 +228,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 各ドキュメントの先頭に掲載する基本情報（`domain.model.database.BaseInfoEntity`）は、DBのカタログから取得する
 データベースの情報（`DatabaseEntity`：DB名・DBMS種別・メジャーバージョン。`TableDefinitionRepository.selectDatabase()`）に、
 ドキュメントの生成日を加えたもの。生成日はDBではなく実行時に決まる値のため、`SchemaExportPipeline` がDIで受け取る
-`java.time.Clock` から与える（`ExportTableDefinitionModule` が実行環境のタイムゾーンの時計を束縛する。テストでは固定の時計を渡せる）。
+`java.time.Clock` から与える（`DbxrayModule` が実行環境のタイムゾーンの時計を束縛する。テストでは固定の時計を渡せる）。
 
 ## 出力対象の突き合わせ
 
@@ -328,7 +328,7 @@ MCPサーバーからAIが引けるよう、参考情報としては出力する
 
 ## DB vs ドキュメントの差分検知（`--check`モード）
 
-`ExportTableDefinition.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
+`Dbxray.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
 `ExportTableDefinitionController.checkDiff()` → `CheckDocumentDiffUsecase.checkDocumentDiff()`を呼び出す。
 
 DBからの取得と出力は`SchemaExportPipeline`が以下のように分けて持ち、通常実行（`ExportTableDefinitionUsecase`）と
@@ -426,21 +426,21 @@ DBのメタ情報だけでは表現できない情報を、サイドカーYAML�
 
 - `config.ConfigFile`: 設定ファイル（YAML）を読み込み、最上位のキーと値の組として返す（ファイルの読み込みとYAMLとしての解析のみを担う）。
   ファイルは`--config`で指定でき、未指定なら実行したディレクトリの`conf/config.yml`を読む
-- `ExportTableDefinitionProperties`（エントリーポイントと同じパッケージ）: 読み込みは`ConfigFile`に委ね、設定ファイルの`database`以外の
+- `DbxrayProperties`（エントリーポイントと同じパッケージ）: 読み込みは`ConfigFile`に委ね、設定ファイルの`database`以外の
   設定項目の仕様（位置・CLI引数名・既定値・値の形式）と検証を1箇所に持つ（リストの値は各要素の前後の空白を除去し、空要素を除く）。
   `database`の仕様と検証は`ConnectionSettings`が持つ
-- `config.module.ExportTableDefinitionModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）のうち、DB種別に依存しないもの
+- `config.module.DbxrayModule`: Guiceの束縛定義（インターフェース→実装クラスの対応表）のうち、DB種別に依存しないもの
 - `config.module.DatabaseDependentModule`: DB種別が決まってから束縛するもの（`SqlSessionFactory`・`TableDefinitionRepository`と、それに依存するユースケース）
 
 DIコンテナは2段階で組み立てる。出力先の検証等の入力の検証はDBへ接続する前に行う（理由は[入力の検証](#入力の検証)を参照）が、
-DB種別は接続して初めて分かるため、まず`ExportTableDefinitionModule`だけでコンテナを組み立てて入力の検証に使い、DBへ接続した後に`DatabaseDependentModule`を束縛した
+DB種別は接続して初めて分かるため、まず`DbxrayModule`だけでコンテナを組み立てて入力の検証に使い、DBへ接続した後に`DatabaseDependentModule`を束縛した
 子のコンテナ（`Injector#createChildInjector`）を足して、コントローラーを取得する。
 `SqlSessionFactory`（設定XMLとmapperの解析を伴い生成が重い。DB接続はこれが持つコネクションプールが使い回す）は、エントリーポイントで
 1回だけ生成して子のコンテナへインスタンスとして束縛し、リポジトリはコンストラクタで受け取る。静的なシングルトンから取得しないため、
 テストでは任意の接続先（テスト用のDB等）の`SqlSessionFactory`を渡してリポジトリを組み立てられる。
-新しいリポジトリ実装やドメインサービスを追加する場合は、`ExportTableDefinitionModule`に束縛を追加する
+新しいリポジトリ実装やドメインサービスを追加する場合は、`DbxrayModule`に束縛を追加する
 （`TableDefinitionRepository`の実装のように、DB接続後でないと決まらないものだけは、親のコンテナでは解決できないため`DatabaseDependentModule`に置く）。
 各クラスのコンストラクタには標準の`jakarta.inject.Inject`を付け、ドメイン層・アプリケーション層がGuiceのAPIに依存しないようにしている。
 ユースケース（具象クラス）・`application.SchemaExportPipeline`・`OutputDirectoryValidator`はインターフェースを持たないためモジュールでは束縛せず、Guiceのジャストインタイム束縛
 （`@Inject`付きコンストラクタ）で生成する。束縛漏れ・`@Inject`の付け忘れは、エントリーポイントと同じ手順で実際にDIコンテナを組み立てる
-`ExportTableDefinitionModuleTest`で検知する。
+`DbxrayModuleTest`で検知する。

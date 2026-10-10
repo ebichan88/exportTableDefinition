@@ -179,7 +179,7 @@ SqlSessionFactory factory =
                 "password", "postgres")));
 try (SqlSession session = factory.openSession()) {
     session.selectList(
-        "com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository.<問題のid>",
+        "com.dbxray.domain.repository.postgresql.TableDefinitionRepository.<問題のid>",
         Map.of("schemaList", List.of("sample"), "tableList", List.of()));
 } catch (Exception e) {
     e.printStackTrace(); // Caused by: PSQLException ... と、MyBatisが添えるSQL文を合わせて確認できる

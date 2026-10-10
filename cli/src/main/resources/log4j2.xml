@@ -35,7 +35,7 @@
 	<Loggers>
 		<!-- このツールの警告のみコンソールにも出す（ライブラリの警告はログファイルのみ）。ログファイルへはRootを通じて出力される。
 			MyBatisは実行したSQLをmapperのnamespace（このパッケージ配下）のロガーで、DEBUGに文、TRACEに取得した行を出す -->
-		<Logger name="com.export_table_definition" level="${level}">
+		<Logger name="com.dbxray" level="${level}">
 			<AppenderRef ref="warning" />
 		</Logger>
 		<!-- ライブラリ（MyBatisのコネクションプール・トランザクション等）は、通常の調査では要らないため警告以上だけを残す -->

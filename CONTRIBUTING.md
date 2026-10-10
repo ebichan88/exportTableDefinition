@@ -12,7 +12,7 @@
 exportTableDefinition
 ├─cli              ・・・ このツール本体（Gradleのサブプロジェクト）
 │  └─src
-│      ├─main            ・・・ javaソースコード（com.export_table_definition）
+│      ├─main            ・・・ javaソースコード（com.dbxray）
 │      ├─test            ・・・ 単体テスト（DB不要）
 │      └─integrationTest ・・・ 結合テスト（Docker上のPostgreSQL・Oracleを使う）
 ├─mcp-server       ・・・ スナップショットをAIから検索するMCPサーバー（Gradleのサブプロジェクト）
@@ -70,7 +70,7 @@ gradlew jacocoTestReport
 
 でHTMLレポート（`cli/build/reports/jacoco/test/html/index.html`・`mcp-server/build/reports/jacoco/test/html/index.html`）を生成できる。
 また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、cliのドメイン層
-（`com.export_table_definition.domain`配下）とMCPサーバーの`catalog`（`com.export_table_definition.mcp.catalog`配下）の
+（`com.dbxray.domain`配下）とMCPサーバーの`catalog`（`com.dbxray.mcp.catalog`配下）の
 単体テストカバレッジが、それぞれline 95%・branch 85%を下回るとビルドが失敗する
 （結合テスト・MCPサーバーのE2Eテストは対象外。基準は各サブプロジェクトの`build.gradle`の`jacocoTestCoverageVerification`で定義）。
 PRではGitHub ActionsがカバレッジレポートをArtifactとしてアップロードし、PRへの概要コメントも投稿する。

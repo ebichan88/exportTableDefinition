@@ -18,7 +18,7 @@ dependencies {
 jar {
     manifest {
         attributes(
-            'Main-Class': 'com.export_table_definition.mcp.McpServerMain',
+            'Main-Class': 'com.dbxray.mcp.McpServerMain',
             'Implementation-Version': project.version)
     }
 }
@@ -63,7 +63,7 @@ jacocoTestCoverageVerification {
     // 対象のパッケージは検査するクラスの範囲で絞る。BUNDLEのincludesはクラスではなくバンドル（プロジェクト）名に
     // 照合されるため、クラスのパターンを書くとルールがどのクラスにも当てはまらず、基準を下回っても失敗しない
     classDirectories.setFrom(sourceSets.main.output.classesDirs.collect {
-        fileTree(it) { include 'com/export_table_definition/mcp/catalog/**' }
+        fileTree(it) { include 'com/dbxray/mcp/catalog/**' }
     })
     violationRules {
         rule {
