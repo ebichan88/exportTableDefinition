@@ -61,7 +61,7 @@ body:
       label: 実際の動作
       description: |
         出力の差異や、コンソールの`[result]`・`[errmsg]`・`[cause]`の内容を貼ってください。
-        想定外の失敗の場合は、実行したフォルダの`var/log/exportTableDefinition.log`のスタックトレースも貼ってください。
+        想定外の失敗の場合は、実行したフォルダの`var/log/dbxray.log`のスタックトレースも貼ってください。
       render: text
     validations:
       required: true
@@ -88,10 +88,10 @@ body:
     attributes:
       label: ツールのバージョン
       description: |
-        `--version`の出力（`./run.sh --version`・`run.bat --version`・`java -jar exportTableDefinition.jar --version`）を書いてください。
+        `--version`の出力（`./run.sh --version`・`run.bat --version`・`java -jar dbxray.jar --version`）を書いてください。
         MCPサーバーの場合は、zipを入手したリリースの版を書いてください。
         ソースからビルドした場合は、あわせてコミットのハッシュ（`git rev-parse --short HEAD`）も書いてください。
-      placeholder: 例) exportTableDefinition 0.1.0 / exportTableDefinition 0.1.0（7c8aaab）
+      placeholder: 例) dbxray 0.1.0 / dbxray 0.1.0（7c8aaab）
     validations:
       required: true
 

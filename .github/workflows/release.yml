@@ -53,13 +53,13 @@ jobs:
         include:
           - os: windows-latest
             platform: windows
-            archive: exportTableDefinition-windows.zip
+            archive: dbxray-windows.zip
           - os: ubuntu-latest
             platform: linux
-            archive: exportTableDefinition-linux.zip
+            archive: dbxray-linux.zip
           - os: macos-latest
             platform: macos
-            archive: exportTableDefinition-macos.zip
+            archive: dbxray-macos.zip
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -97,7 +97,7 @@ jobs:
         id: jdeps_windows
         shell: pwsh
         run: |
-          $jars = @("cli/build/libs/exportTableDefinition.jar", "mcp-server/build/libs/exportTableDefinition-mcp.jar")
+          $jars = @("cli/build/libs/dbxray.jar", "mcp-server/build/libs/dbxray-mcp.jar")
           $detected = (& "$env:JAVA_HOME\bin\jdeps.exe" --ignore-missing-deps --print-module-deps --multi-release 21 @jars | Select-Object -Last 1).Trim()
           $modules = "$detected,jdk.crypto.ec,jdk.charsets,jdk.unsupported"
           Write-Host "Required modules: $modules"
@@ -108,7 +108,7 @@ jobs:
         id: jdeps_unix
         shell: bash
         run: |
-          jars=("cli/build/libs/exportTableDefinition.jar" "mcp-server/build/libs/exportTableDefinition-mcp.jar")
+          jars=("cli/build/libs/dbxray.jar" "mcp-server/build/libs/dbxray-mcp.jar")
           detected=$("$JAVA_HOME/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 21 "${jars[@]}" | tail -1 | tr -d '\r')
           modules="$detected,jdk.crypto.ec,jdk.charsets,jdk.unsupported"
           echo "Required modules: $modules"
@@ -144,7 +144,7 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          Copy-Item cli/build/libs/exportTableDefinition.jar release/
+          Copy-Item cli/build/libs/dbxray.jar release/
           Copy-Item -Recurse cli/build/libs/conf release/conf
           Copy-Item README.md release/
           New-Item -ItemType Directory -Force release/docs | Out-Null
@@ -153,14 +153,14 @@ jobs:
           Copy-Item cli/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/
           Copy-Item scripts/run.bat release/
           New-Item -ItemType Directory -Force release/mcp | Out-Null
-          Copy-Item mcp-server/build/libs/exportTableDefinition-mcp.jar release/mcp/
+          Copy-Item mcp-server/build/libs/dbxray-mcp.jar release/mcp/
           Copy-Item mcp-server/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/mcp/
 
       - name: Assemble release package (Unix)
         if: matrix.platform != 'windows'
         shell: bash
         run: |
-          cp cli/build/libs/exportTableDefinition.jar release/
+          cp cli/build/libs/dbxray.jar release/
           cp -r cli/build/libs/conf release/conf
           cp README.md release/
           mkdir -p release/docs
@@ -169,7 +169,7 @@ jobs:
           cp cli/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/
           cp scripts/run.sh release/
           mkdir -p release/mcp
-          cp mcp-server/build/libs/exportTableDefinition-mcp.jar release/mcp/
+          cp mcp-server/build/libs/dbxray-mcp.jar release/mcp/
           cp mcp-server/build/reports/dependency-license/THIRD-PARTY-NOTICES.txt release/mcp/
           chmod +x release/run.sh release/runtime/bin/java
 

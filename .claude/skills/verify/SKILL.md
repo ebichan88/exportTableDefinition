@@ -7,7 +7,7 @@ description: >-
   「verify」などと言われたとき、またはマッパーSQLや出力ロジックに手を入れた後に必ず使う。
 ---
 
-# exportTableDefinition 動作確認手順（PostgreSQL）
+# dbxray 動作確認手順（PostgreSQL）
 
 DB接続を要するツールなので、単体テストが通っていても実際のDBに対するSQLが壊れていることがある
 （実例: マルチバイトコメントの改行崩れによるSQL構文エラー、文字列リテラルの改行混入による
@@ -34,14 +34,14 @@ Markdown表崩れ。詳細は末尾「踏み抜いた地雷」参照）。**マ�
 既存のコンテナがあれば作り直す（DDLの変更を確実に反映するため、毎回スキーマをまっさらにする）。
 
 ```bash
-docker rm -f exporttabledefinition-verify-db 2>/dev/null
-docker run -d --name exporttabledefinition-verify-db \
+docker rm -f dbxray-verify-db 2>/dev/null
+docker run -d --name dbxray-verify-db \
   -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=testdb \
   -p 15432:5432 postgres:16
 # 起動待ち
-for i in $(seq 1 30); do docker exec exporttabledefinition-verify-db pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
-docker cp docs/sample/postgres/ddl.sql exporttabledefinition-verify-db:/tmp/ddl.sql
-docker exec -e PGPASSWORD=postgres exporttabledefinition-verify-db \
+for i in $(seq 1 30); do docker exec dbxray-verify-db pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+docker cp docs/sample/postgres/ddl.sql dbxray-verify-db:/tmp/ddl.sql
+docker exec -e PGPASSWORD=postgres dbxray-verify-db \
   psql -U postgres -d testdb -v ON_ERROR_STOP=1 -f /tmp/ddl.sql
 ```
 
@@ -56,7 +56,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 ./gradlew build --console=plain
 ```
 
-`cli/build/libs/exportTableDefinition.jar` と `cli/build/libs/conf/` 一式が作られる
+`cli/build/libs/dbxray.jar` と `cli/build/libs/conf/` 一式が作られる
 （`test`タスクも実行されるが数秒で終わる。ユニットテストが落ちたらそこで止めて直す）。
 
 ### 3. 設定ファイルを用意する
@@ -86,7 +86,7 @@ DB接続情報はCLI引数で渡す（設定ファイルの`database`は空で�
 全項目が未指定の配布用の設定＝全スキーマ対象を拾ってしまう）ため、必ず`--config`で手順3のファイルを指定する。
 
 ```bash
-java -jar cli/build/libs/exportTableDefinition.jar \
+java -jar cli/build/libs/dbxray.jar \
   --config=/tmp/verify-postgres.yml \
   --db-driver=org.postgresql.Driver \
   --db-url=jdbc:postgresql://localhost:15432/testdb \
@@ -115,7 +115,7 @@ git diff docs/sample/postgres/output
 ### 6. 後片付け
 
 ```bash
-docker rm -f exporttabledefinition-verify-db
+docker rm -f dbxray-verify-db
 ```
 
 継続して何度も試す場合はコンテナを残しておいてよい（次回はステップ1で作り直せばよい）。
@@ -128,15 +128,15 @@ Oracle用mapper（`mapper/oracle/tableDefinitionMapper.xml`）を変えた場合
 
 ```bash
 # 1. 起動とDDLの流し込み。イメージは初期化スクリプトをCDBのルートで実行するため、PDBへ切り替えてからDDLを流す
-docker rm -f exporttabledefinition-verify-oracle 2>/dev/null
+docker rm -f dbxray-verify-oracle 2>/dev/null
 printf 'alter session set container = FREEPDB1;\n@/opt/sample/ddl.sql\n' > /tmp/oracle-init.sql
-docker run -d --name exporttabledefinition-verify-oracle \
+docker run -d --name dbxray-verify-oracle \
   -e ORACLE_PASSWORD=oracle -p 11521:1521 \
   -v "$PWD/docs/sample/oracle/ddl.sql:/opt/sample/ddl.sql:ro" \
   -v /tmp/oracle-init.sql:/container-entrypoint-initdb.d/init.sql:ro \
   gvenzl/oracle-free:23-slim-faststart
 # 起動待ち（数十秒）。DDLが失敗するとコンテナが終了するので、その場合はdocker logsでORA-を確認する
-for i in $(seq 1 90); do docker logs exporttabledefinition-verify-oracle 2>&1 | grep -q 'DATABASE IS READY TO USE' && break; sleep 2; done
+for i in $(seq 1 90); do docker logs dbxray-verify-oracle 2>&1 | grep -q 'DATABASE IS READY TO USE' && break; sleep 2; done
 
 # 3. 設定ファイル（Oracleのスキーマ名は大文字。ベースラインはサイドカー無しで出力しているためannotationsは書かない）
 cat > /tmp/verify-oracle.yml <<EOF
@@ -148,21 +148,21 @@ EOF
 
 # 4. 実行（リポジトリ直下で）
 rm -rf docs/sample/oracle/output
-java -jar cli/build/libs/exportTableDefinition.jar \
+java -jar cli/build/libs/dbxray.jar \
   --config=/tmp/verify-oracle.yml \
   --db-driver=oracle.jdbc.OracleDriver \
   --db-url=jdbc:oracle:thin:@//localhost:11521/FREEPDB1 \
   --db-username=sample --db-password=sample
 
 # 6. 後片付け
-docker rm -f exporttabledefinition-verify-oracle
+docker rm -f dbxray-verify-oracle
 ```
 
 ## 原因調査（`[result]:FAIL` になったら）
 
 まずコンソールの`[errmsg]`（どのSQLで失敗したか。`Failed to select: …selectColumnInfo`等）と
 `[cause]`（DBが返したエラー。PSQLExceptionのメッセージ等）を見る。スタックトレースは実行したディレクトリの
-`var/log/exportTableDefinition.log`（リポジトリ直下で実行した場合は`var/log/`）に記録される
+`var/log/dbxray.log`（リポジトリ直下で実行した場合は`var/log/`）に記録される
 （`FailureReporter`が想定外の失敗をスタックトレース付きでログへ出す）。
 実際に組み立てられたSQL文と合わせて調べたい場合は、該当のMyBatisステートメントを直接叩く
 使い捨てJavaプログラムを書くのが早い。
@@ -188,8 +188,8 @@ try (SqlSession session = factory.openSession()) {
 
 ```bash
 cd /tmp/repro
-javac -cp <リポジトリルート>/cli/build/libs/exportTableDefinition.jar Repro.java
-java -cp .:<リポジトリルート>/cli/build/libs/exportTableDefinition.jar Repro
+javac -cp <リポジトリルート>/cli/build/libs/dbxray.jar Repro.java
+java -cp .:<リポジトリルート>/cli/build/libs/dbxray.jar Repro
 ```
 
 PSQLExceptionの`Position:`はUTF-8バイトオフセットなので、日本語コメントが混じるSQLでは

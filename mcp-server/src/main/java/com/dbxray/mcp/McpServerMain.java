@@ -28,11 +28,11 @@ public final class McpServerMain {
   /** 起動引数・スナップショットの誤りで起動できなかった場合の終了コード（cliの失敗と揃える） */
   static final int EXIT_USER_CORRECTABLE = 2;
 
-  private static final String SERVER_NAME = "exportTableDefinition";
+  private static final String SERVER_NAME = "dbxray";
 
   /** ツールの使い分け。ツールが多いため、AIが最初の手を選べるよう探し方の順を示す */
   private static final String INSTRUCTIONS =
-      "DBのテーブル定義（exportTableDefinitionが出力したスキーマのスナップショット）を調べるサーバー。"
+      "DBのテーブル定義（dbxrayが出力したスキーマのスナップショット）を調べるサーバー。"
           + "全体像はlist_schemas、テーブルはキーワードならsearch_tables・一覧ならlist_tablesで探し"
           + "（どこから読むか迷う場合は、list_tablesのorderByで関連の多い中心のテーブルから並べる）、"
           + "get_tableで定義を取得する（必要な項目だけをsections・columnsで指定すると結果が小さくなる）。"

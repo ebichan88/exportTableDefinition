@@ -130,12 +130,12 @@ tasks.named('build').configure {
 
 // 配布物・README・release.ymlが参照するjar名を、サブプロジェクト名（cli）に関わらず保つ
 base {
-    archivesName = 'exportTableDefinition'
+    archivesName = 'dbxray'
 }
 
 shadowJar {
     // 起動スクリプト・CIのジョブ等に書くパスが版を上げるたびに変わらないよう、版を含めない固定名にする（版は--versionで確かめる）
-    archiveFileName = 'exportTableDefinition.jar'
+    archiveFileName = 'dbxray.jar'
 }
 
 task copyResources(type: Copy) {

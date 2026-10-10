@@ -8,7 +8,7 @@ final class CliUsage {
   /** Manifestの{@code Implementation-Version}が無い（jar以外から実行した）場合に表示する値 */
   static final String UNKNOWN_VERSION = "unknown";
 
-  private static final String COMMAND_NAME = "exportTableDefinition";
+  private static final String COMMAND_NAME = "dbxray";
 
   private CliUsage() {}
 
@@ -25,7 +25,7 @@ final class CliUsage {
   /** {@code --help}の表示 */
   static String help() {
     return """
-        Usage: java -jar exportTableDefinition.jar [options]
+        Usage: java -jar dbxray.jar [options]
 
         Exports table definition documents (Markdown), ER diagrams and a schema snapshot from a database.
 

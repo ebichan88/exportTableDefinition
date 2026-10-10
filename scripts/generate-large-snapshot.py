@@ -7,7 +7,7 @@ cliが出力するスナップショットと同じ配置（{出力先}/{DB名}/
 
 使い方:
     python3 scripts/generate-large-snapshot.py --tables 3000 --out /tmp/big-snapshot
-    java -jar mcp/exportTableDefinition-mcp.jar --snapshot=/tmp/big-snapshot
+    java -jar mcp/dbxray-mcp.jar --snapshot=/tmp/big-snapshot
 """
 
 import argparse

@@ -50,7 +50,7 @@ class TableDefinitionResourcesTest {
   @Test
   @DisplayName("URIはDB名・スキーマ名・テーブル名の3区間で、MIMEタイプはJSON")
   void buildsUriAndMimeType() {
-    final SyncResourceSpecification department = specOf("exporttable://testdb/sample/department");
+    final SyncResourceSpecification department = specOf("dbxray://testdb/sample/department");
 
     assertEquals("application/json", department.resource().mimeType());
     assertEquals(department.resource().name(), department.resource().title());
@@ -61,10 +61,10 @@ class TableDefinitionResourcesTest {
   void putsDisplayNameFirstInDescription() {
     assertEquals(
         "部署 (sample.department) / testdb / table / 組織のマスタ",
-        specOf("exporttable://testdb/sample/department").resource().description());
+        specOf("dbxray://testdb/sample/department").resource().description());
     assertEquals(
         "sample.no_logical_name / testdb / table",
-        specOf("exporttable://testdb/sample/no_logical_name").resource().description());
+        specOf("dbxray://testdb/sample/no_logical_name").resource().description());
   }
 
   @Test
@@ -102,14 +102,14 @@ class TableDefinitionResourcesTest {
   @Test
   @DisplayName("リソースを読むと、get_tableと同じテーブル定義のJSONが返る")
   void readsTableDefinition() {
-    final SyncResourceSpecification employee = specOf("exporttable://testdb/sample/employee");
+    final SyncResourceSpecification employee = specOf("dbxray://testdb/sample/employee");
 
     final ReadResourceResult result =
         employee.readHandler().apply(null, new ReadResourceRequest(employee.resource().uri()));
 
     final TextResourceContents contents =
         assertInstanceOf(TextResourceContents.class, result.contents().get(0));
-    assertEquals("exporttable://testdb/sample/employee", contents.uri());
+    assertEquals("dbxray://testdb/sample/employee", contents.uri());
     assertEquals("application/json", contents.mimeType());
     assertTrue(contents.text().contains("\"name\":\"employee\""), contents.text());
   }
@@ -117,8 +117,8 @@ class TableDefinitionResourcesTest {
   @Test
   @DisplayName("同名のテーブルが別のスキーマにあっても、それぞれのテーブルの定義が返る")
   void readsEachTablesOwnDefinition() {
-    final String sample = read("exporttable://testdb/sample/employee");
-    final String archive = read("exporttable://testdb/archive/employee");
+    final String sample = read("dbxray://testdb/sample/employee");
+    final String archive = read("dbxray://testdb/archive/employee");
 
     assertTrue(sample.contains("\"schema\":\"sample\""), sample);
     assertTrue(archive.contains("\"schema\":\"archive\""), archive);

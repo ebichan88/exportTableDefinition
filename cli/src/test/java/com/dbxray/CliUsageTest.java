@@ -25,7 +25,7 @@ public class CliUsageTest {
   @Test
   @DisplayName("version: コマンド名で始まり、Manifestが無い環境でもバージョン欄を表示する")
   void testVersion() {
-    assertTrue(CliUsage.version().startsWith("exportTableDefinition "));
+    assertTrue(CliUsage.version().startsWith("dbxray "));
     assertFalse(CliUsage.version().isBlank());
   }
 }

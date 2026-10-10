@@ -30,7 +30,7 @@ public final class FailureReporter {
   private static final Logger logger = LogManager.getLogger(FailureReporter.class);
 
   /** ログファイルの場所（log4j2.xmlのlogfileと揃える）。想定外の失敗の報告で、詳細の確認先として案内する */
-  private static final String LOG_FILE = "./var/log/exportTableDefinition.log";
+  private static final String LOG_FILE = "./var/log/dbxray.log";
 
   private final String failureSummary;
   private final Consumer<String> console;

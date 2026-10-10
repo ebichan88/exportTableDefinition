@@ -84,10 +84,10 @@ public class LocalFileRepositoryTest {
   @Test
   @DisplayName("createTempDirectory: 指定した接頭辞を持つ、実在する一意なディレクトリを作成する")
   void testCreateTempDirectory() {
-    Path tempDir = repository.createTempDirectory("exportTableDefinition-test-");
+    Path tempDir = repository.createTempDirectory("dbxray-test-");
     try {
       assertTrue(Files.isDirectory(tempDir));
-      assertTrue(tempDir.getFileName().toString().startsWith("exportTableDefinition-test-"));
+      assertTrue(tempDir.getFileName().toString().startsWith("dbxray-test-"));
     } finally {
       repository.deleteDirectory(tempDir);
     }

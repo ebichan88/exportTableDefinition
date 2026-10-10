@@ -12,8 +12,7 @@ public record ServerArguments(Path snapshotDirectory) {
   private static final String SNAPSHOT_OPTION = "--snapshot=";
 
   /** 起動引数の書式（誤りを伝えるメッセージに添える） */
-  static final String USAGE =
-      "使い方: java -jar exportTableDefinition-mcp.jar --snapshot=<cliの出力先のsnapshotディレクトリ>";
+  static final String USAGE = "使い方: java -jar dbxray-mcp.jar --snapshot=<cliの出力先のsnapshotディレクトリ>";
 
   /**
    * 起動引数を解釈するメソッド

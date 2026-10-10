@@ -4,14 +4,14 @@
 <Configuration status="warn">
 
 	<Properties>
-		<!-- このツールのログのレベル。調査時は -Dexport-table-definition.log.level=debug（実行したSQL）や
+		<!-- このツールのログのレベル。調査時は -Ddbxray.log.level=debug（実行したSQL）や
 			trace（取得した行）を指定して上げる（docs/usage/cli.mdの「ログ」の節） -->
-		<Property name="level">${sys:export-table-definition.log.level:-info}</Property>
+		<Property name="level">${sys:dbxray.log.level:-info}</Property>
 		<!-- %enc{%m}{CRLF}はメッセージ中の改行を\r・\nへ置き換える。DB由来の文字列（関数の定義等）に含まれる改行で、
 			偽のログ行を作られないようにするため -->
 		<Property name="format">%d{yyyy/MM/dd HH:mm:ss.SSS} [%t] %-5p %c{1} %enc{%m}{CRLF}%n</Property>
-		<Property name="logfile">./var/log/exportTableDefinition.log</Property>
-		<Property name="logfile-archive">./var/log/exportTableDefinition_%d{yyyy-MM-dd}-%i.log</Property>
+		<Property name="logfile">./var/log/dbxray.log</Property>
+		<Property name="logfile-archive">./var/log/dbxray_%d{yyyy-MM-dd}-%i.log</Property>
 	</Properties>
 
 	<Appenders>

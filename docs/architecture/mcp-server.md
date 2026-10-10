@@ -45,7 +45,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `MermaidErDiagram` | `get_er_diagram`のMermaid記法の組み立て。表記・エスケープはcliの`MermaidSupport`に揃える（cliのコードには依存できないため、同じ規則をmcp-server側にも持つ。ずれは`SampleErDiagramContractTest`で検知する） |
 | | `ViewpointResolver` | 引数`viewpoint`（観点のid）の解決と、見つからない場合のエラーの文言 |
 | | `ToolArguments` | ツールの引数の読み取りと、入力スキーマで表せない検証（型・範囲・`enum`・未知の引数はSDKが入力スキーマで検証するため、選択肢は完全一致で照合する）。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
-| | `TableDefinitionResources`・`TableResourceUri` | 利用者が会話に添付するリソース。全テーブル（ビューを含む）を具体的なリソースとして列挙し、読むと`get_table`と同じJSONを返す。URIは`exporttable://{DB名}/{スキーマ名}/{テーブル名}`（各区間はパーセントエンコード）。詳細は[リソース](#リソース) |
+| | `TableDefinitionResources`・`TableResourceUri` | 利用者が会話に添付するリソース。全テーブル（ビューを含む）を具体的なリソースとして列挙し、読むと`get_table`と同じJSONを返す。URIは`dbxray://{DB名}/{スキーマ名}/{テーブル名}`（各区間はパーセントエンコード）。詳細は[リソース](#リソース) |
 
 ## ツール
 
@@ -93,9 +93,9 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 
 | 項目 | 内容 |
 |---|---|
-| URI | `exporttable://{DB名}/{スキーマ名}/{テーブル名}`。各区間はパーセントエンコードする（DB由来の名前は`/`・空白・日本語を含みうるため） |
+| URI | `dbxray://{DB名}/{スキーマ名}/{テーブル名}`。各区間はパーセントエンコードする（DB由来の名前は`/`・空白・日本語を含みうるため） |
 | `name` | `論理名 (スキーマ名.物理名)`。論理名が無い場合は`スキーマ名.物理名`。論理名・物理名のどちらでも絞り込めるようにする |
-| `description` | `name / DB名 / 区分 / テーブルの説明`（120文字で切り詰め）。Claude Codeの候補は、URIが途中で切れ（`etd-list:exporttable://testdb…`）、表示に`name`より`description`を優先するため、先頭に`name`を入れる |
+| `description` | `name / DB名 / 区分 / テーブルの説明`（120文字で切り詰め）。Claude Codeの候補は、URIが途中で切れ（`dbxray:dbxray://testdb…`）、表示に`name`より`description`を優先するため、先頭に`name`を入れる |
 | 中身 | `get_table`を絞り込み無しで呼んだ場合と同じJSON（スナップショットの1行に、参照しているビュー・所属する観点を加えたもの）。読まれたときに組み立てる |
 
 * `name`・`description`は、DB由来の信頼できない文字列を含むため、制御文字・改行・書字方向を変える制御文字を空白に置き換えて1行にする（MCPクライアントの一覧の表示を乱さないため）。
@@ -141,7 +141,7 @@ URIテンプレート（`resources/templates/list`）と、変数の補完（`co
 
 ## 配布
 
-配布用zip（`.github/workflows/release.yml`）の`mcp/exportTableDefinition-mcp.jar`として、cliと同じzipに同梱する。
+配布用zip（`.github/workflows/release.yml`）の`mcp/dbxray-mcp.jar`として、cliと同じzipに同梱する。
 
 - Java実行環境（`runtime`）はcliと共有する。jlinkに含めるモジュールは、cliとMCPサーバーの両方のjarを`jdeps`に渡して合算する。
 - jarはzipの直下ではなく`mcp/`に置き、同梱した依存ライブラリのライセンスの一覧もcliと分ける。

@@ -10,9 +10,9 @@ if not exist "%JAVA_EXE%" (
     exit /b 2
 )
 
-set "JAR_FILE=%~dp0exportTableDefinition.jar"
+set "JAR_FILE=%~dp0dbxray.jar"
 if not exist "%JAR_FILE%" (
-    echo [ERROR] 実行可能jarファイル（exportTableDefinition.jar）が見つかりません。
+    echo [ERROR] 実行可能jarファイル（dbxray.jar）が見つかりません。
     pause
     exit /b 2
 )

@@ -9,7 +9,7 @@
 ### 主なディレクトリ構成
 
 ```
-exportTableDefinition
+dbxray
 ├─cli              ・・・ このツール本体（Gradleのサブプロジェクト）
 │  └─src
 │      ├─main            ・・・ javaソースコード（com.dbxray）
@@ -28,8 +28,8 @@ exportTableDefinition
 
 ### ビルド
 
-以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition.jar`が、
-`exportTableDefinition/mcp-server/build/libs`フォルダ配下にMCPサーバーの`exportTableDefinition-mcp.jar`が作成される
+以下のコマンドを実行することで、`dbxray/cli/build/libs`フォルダ配下に`dbxray.jar`が、
+`dbxray/mcp-server/build/libs`フォルダ配下にMCPサーバーの`dbxray-mcp.jar`が作成される
 
 ```
 gradlew build
@@ -77,7 +77,7 @@ PRではGitHub ActionsがカバレッジレポートをArtifactとしてアッ�
 
 ### Javadoc
 
-以下のコマンドを実行することで、`exportTableDefinition/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
+以下のコマンドを実行することで、`dbxray/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
 
 ```
 gradlew javadoc
@@ -88,7 +88,7 @@ gradlew javadoc
 `cli/build/libs/conf/config.yml`に必要な設定値を記載した状態で、`cli/build/libs`で以下のコマンドを実行する（`gradlew build`のたびに`cli/src/main/resources/conf`の内容で上書きされるため、手元の設定を残したい場合は別の場所に置いて`--config`で指定する）
 
 ```
-java -jar .\exportTableDefinition.jar
+java -jar .\dbxray.jar
 ```
 
 ## バージョンとリリース

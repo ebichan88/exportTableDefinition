@@ -4,12 +4,12 @@ import com.dbxray.mcp.catalog.ObjectKey;
 import java.nio.charset.StandardCharsets;
 
 /**
- * テーブルを指すリソースのURI（{@code exporttable://{DB名}/{スキーマ名}/{テーブル名}}）の組み立て<br>
+ * テーブルを指すリソースのURI（{@code dbxray://{DB名}/{スキーマ名}/{テーブル名}}）の組み立て<br>
  * 各区間はパーセントエンコードする。DB名・スキーマ名・テーブル名はDB由来の信頼できない文字列で、{@code /}や空白、日本語を含みうるため
  */
 final class TableResourceUri {
 
-  private static final String SCHEME = "exporttable://";
+  private static final String SCHEME = "dbxray://";
   private static final String UNRESERVED = "-._~";
 
   private TableResourceUri() {}

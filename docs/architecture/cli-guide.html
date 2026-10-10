@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>cli 読解ガイド</title>
-<meta name="description" content="exportTableDefinition の cli サブプロジェクトを読むための事前知識・全体像・ソースごとの役割と繋がり">
+<meta name="description" content="dbxray の cli サブプロジェクトを読むための事前知識・全体像・ソースごとの役割と繋がり">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap">
@@ -249,7 +249,7 @@ pre.tree { line-height: 1.55; }
 
 <main>
 <header>
-  <p class="eyebrow">exportTableDefinition / cli</p>
+  <p class="eyebrow">dbxray / cli</p>
   <h1>cli 読解ガイド</h1>
   <p class="lead">DBのカタログ（テーブル・カラム・制約・外部キー等のメタ情報）を読み、人が読むMarkdownのテーブル定義書・ER図と、機械が読むスキーマのスナップショット（JSON Lines）を出力するコマンドラインツールです。<code>--check</code>を付けると、DBとコミット済みのスナップショットの差分を検知します。このガイドは、入出力と使っている技術の事前知識から始めて、実行の流れ、データの持ち方、中心のロジック、ソースごとの役割と繋がりまでを順に説明します。</p>
   <ul class="facts">
@@ -308,7 +308,7 @@ pre.tree { line-height: 1.55; }
       <rect x="340" y="110" width="220" height="180" rx="8" class="d-box-acc"/>
       <text x="450" y="138" text-anchor="middle" class="d-t-s">cli（このサブプロジェクト）</text>
       <text x="450" y="164" text-anchor="middle" class="d-t-ms">java -jar</text>
-      <text x="450" y="191" text-anchor="middle" class="d-t-ms">exportTableDefinition.jar</text>
+      <text x="450" y="191" text-anchor="middle" class="d-t-ms">dbxray.jar</text>
       <text x="450" y="232" text-anchor="middle" class="d-t-ms">Dbxray.main()</text>
       <text x="450" y="266" text-anchor="middle" class="d-t-acc">DBは読むだけ</text>
 
@@ -334,7 +334,7 @@ pre.tree { line-height: 1.55; }
       <text x="634" y="266" class="d-t-b">コンソール・ログ・終了コード</text>
       <text x="634" y="286" class="d-t-s">標準出力　[result]:SUCCESS / FAIL</text>
       <text x="634" y="304" class="d-t-s">標準エラー　[warn]:（警告）</text>
-      <text x="634" y="322" class="d-t-s">var/log/exportTableDefinition.log</text>
+      <text x="634" y="322" class="d-t-s">var/log/dbxray.log</text>
       <text x="634" y="340" class="d-t-s">終了コード　0・1・2</text>
 
       <line x1="562" y1="150" x2="616" y2="56" class="d-line-acc" marker-end="url(#g1b)"/>
@@ -616,7 +616,7 @@ baseSqlPath = <span class="k">"com.dbxray.domain.repository."</span> + databaseT
   </tbody>
 </table>
 </div>
-<p class="small muted">実行したSQL（DEBUG）と取得した行（TRACE）は、MyBatisがmapperの名前空間（このツールのパッケージ配下）のロガーへ出します。既定のレベルはINFOなのでログには残らず、調べるときだけ<code>-Dexport-table-definition.log.level=debug</code>で上げます（2.6節）。Oracle用のmapper（838行）は、LONG型の列（ビューのソース・トリガーの本体等）やDBのバージョン（<code>DBMS_DB_VERSION</code>）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（670行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
+<p class="small muted">実行したSQL（DEBUG）と取得した行（TRACE）は、MyBatisがmapperの名前空間（このツールのパッケージ配下）のロガーへ出します。既定のレベルはINFOなのでログには残らず、調べるときだけ<code>-Ddbxray.log.level=debug</code>で上げます（2.6節）。Oracle用のmapper（838行）は、LONG型の列（ビューのソース・トリガーの本体等）やDBのバージョン（<code>DBMS_DB_VERSION</code>）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（670行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
 
 <h3>2.4 Mermaid の erDiagram</h3>
 <p>ER図は、Markdownの中に書くMermaid記法のテキストです。GitHubは<code>```mermaid</code>のコードブロックを図として描画します。サンプルの<code>department</code>の定義書に出力されたER図をそのまま示します。</p>
@@ -660,7 +660,7 @@ erDiagram
 
 <h3>2.6 log4j2 と ArchUnit</h3>
 <ul>
-  <li><strong>log4j2</strong>（<code>log4j2.xml</code>）：ログを、実行したディレクトリからの相対の<code>var/log/exportTableDefinition.log</code>へ書く。既定のレベルは、このツール（<code>com.dbxray</code>）がINFO、ライブラリがWARN。INFOには、接続先のDBMS・ドライバの版、件数、処理時間のような、1回の実行で数件に収まる調査の起点だけを出す。MyBatisは実行したSQL（DEBUG）と取得した行（TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定では残さず、調べるときに<code>-Dexport-table-definition.log.level=debug</code>（または<code>trace</code>）で上げる。このツールのWARNだけは、標準エラーへも<code>[warn]:</code>付きで出す。処理結果の<code>[result]:</code>はロガーを通さず<code>System.out</code>へ直接出す。</li>
+  <li><strong>log4j2</strong>（<code>log4j2.xml</code>）：ログを、実行したディレクトリからの相対の<code>var/log/dbxray.log</code>へ書く。既定のレベルは、このツール（<code>com.dbxray</code>）がINFO、ライブラリがWARN。INFOには、接続先のDBMS・ドライバの版、件数、処理時間のような、1回の実行で数件に収まる調査の起点だけを出す。MyBatisは実行したSQL（DEBUG）と取得した行（TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定では残さず、調べるときに<code>-Ddbxray.log.level=debug</code>（または<code>trace</code>）で上げる。このツールのWARNだけは、標準エラーへも<code>[warn]:</code>付きで出す。処理結果の<code>[result]:</code>はロガーを通さず<code>System.out</code>へ直接出す。</li>
   <li><strong>ログに出さないもの</strong>：パスワード、接続URL、CLI引数・設定値の値、設定ファイル・サイドカーYAMLの内容を引用するライブラリの例外メッセージ。メッセージの改行は<code>%enc{%m}{CRLF}</code>で<code>\n</code>・<code>\r</code>へ置き換え、DB由来の文字列（関数の定義等）で偽のログ行を作らせない。</li>
   <li><strong>ArchUnit</strong>（<code>ArchitectureTest</code>）：レイヤーの依存方向や置き場所などの規約を、単体テストとして検査する。違反するとビルドが失敗する。規約の一覧は3章。</li>
 </ul>
@@ -971,7 +971,7 @@ System.out.println(resultDto.getResultMessage());
 <ul>
   <li><strong>設定ファイルの探し方</strong>：<code>ConfigFile</code>は、<code>--config</code>で指定したファイル、無ければ実行したディレクトリの<code>conf/config.yml</code>を読みます。jarの場所ではなくカレントディレクトリが基準で、配布用の<code>run.sh</code>・<code>run.bat</code>は自分のディレクトリへ移動してから起動します。全項目をCLI引数で上書きする場合でも、設定ファイル自体は必要です（実行するディレクトリを誤ったときに、既定の出力先へ黙って出力しないため）。</li>
   <li><strong>設定項目の仕様は1つの表に持つ</strong>：<code>DbxrayProperties.SETTINGS</code>が、項目ごとに設定ファイルでの位置（<code>output.path</code>等）・上書きするCLI引数名（<code>--output-path</code>等）・値の形式（1つの値・整数・リスト）を持ちます。<code>CliArguments</code>はこの表から上書きの引数を引くため、設定項目を足せば上書きの引数も増えます。</li>
-  <li><strong>接続情報</strong>：<code>ConnectionSettings</code>は設定ファイルの<code>database</code>に、環境変数<code>EXPORT_TABLE_DEFINITION_DB_PASSWORD</code>のパスワード、CLI引数の順で値を重ねて検証します。ファイルに<code>password</code>を書くと誤りです（作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない）。<code>url</code>にパスワードを埋め込む書き方（<code>?password=</code>・<code>sslpassword=</code>・Oracleの<code>user/pass@</code>）も、同じ理由で誤りにします。</li>
+  <li><strong>接続情報</strong>：<code>ConnectionSettings</code>は設定ファイルの<code>database</code>に、環境変数<code>DBXRAY_DB_PASSWORD</code>のパスワード、CLI引数の順で値を重ねて検証します。ファイルに<code>password</code>を書くと誤りです（作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない）。<code>url</code>にパスワードを埋め込む書き方（<code>?password=</code>・<code>sslpassword=</code>・Oracleの<code>user/pass@</code>）も、同じ理由で誤りにします。</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -1004,7 +1004,7 @@ System.out.println(resultDto.getResultMessage());
 
 <h3>FailureReporter の報告の形</h3>
 <p><code>[errmsg]</code>に例外のメッセージを、<code>[cause]</code>に原因の連鎖のうち表示に含まれていないものを浅い順に並べます。原因のメッセージを繰り返しているだけの例外（MyBatisの例外等）は省くため、包んだ箇所でDBが返したエラーが失われず、かつ重複もしません。以下は実際の出力です。</p>
-<pre><code><span class="c">$ java -jar exportTableDefinition.jar --chek</span>
+<pre><code><span class="c">$ java -jar dbxray.jar --chek</span>
 Starting output of table definition document.
 Please wait a moment ...
 
@@ -1021,10 +1021,10 @@ Failed to output table definition document.
 <pre><code><span class="c">$ java -jar … --db-url=jdbc:postgresql://localhost:5999/testdb …（DBが待ち受けていないポート）</span>
 [result]:FAIL
 Failed to output table definition document.
- [errmsg]:Could not connect to the database. Check the connection settings (database in the configuration file, --db-* arguments and the EXPORT_TABLE_DEFINITION_DB_PASSWORD environment variable) and that the database is running.
+ [errmsg]:Could not connect to the database. Check the connection settings (database in the configuration file, --db-* arguments and the DBXRAY_DB_PASSWORD environment variable) and that the database is running.
  [cause]:org.postgresql.util.PSQLException: Connection to localhost:5999 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
  [cause]:java.net.ConnectException: Connection refused</code></pre>
-<p class="small muted">1つ目の<code>(values are not shown; …)</code>は、解釈できない引数の値を伏せている印です（<code>--db-pasword=…</code>のような書き誤りで、パスワードが画面とログファイルに残らないように）。2つ目は、3つの誤りがまとめて1回で報告されている例です。<code>(overridden by …)</code>は、誤った値がCLI引数から来ている可能性を示します。想定外の失敗では、最後に<code>An unexpected error occurred. See the log file for details. [logFile=./var/log/exportTableDefinition.log]</code>が付きます。</p>
+<p class="small muted">1つ目の<code>(values are not shown; …)</code>は、解釈できない引数の値を伏せている印です（<code>--db-pasword=…</code>のような書き誤りで、パスワードが画面とログファイルに残らないように）。2つ目は、3つの誤りがまとめて1回で報告されている例です。<code>(overridden by …)</code>は、誤った値がCLI引数から来ている可能性を示します。想定外の失敗では、最後に<code>An unexpected error occurred. See the log file for details. [logFile=./var/log/dbxray.log]</code>が付きます。</p>
 
 <h3>警告：処理は続けるが知らせる</h3>
 <p>サイドカーYAMLの個々の記述の誤りや、DBと付帯情報の乖離は、読み飛ばして警告します（付帯情報の一部の書き誤りで、定義書全体の再生成を止めないため）。警告はWARNのログで、<code>log4j2.xml</code>がログファイルに加えて標準エラーへ<code>[warn]:</code>付きで出します。以下は、誤りを含むサイドカーYAMLで実行したときの標準エラーです（終了コードは0）。</p>
@@ -1145,7 +1145,7 @@ schemaExportPipeline.export(
   <figcaption><b>図6 SchemaExportPipelineの段取り。</b>破線の枠はループです。ER図は、テーブル一覧・関連・関連カラム（<code>DiagramBoxes</code>）だけで描けるので、詳細をチャンク単位で取得する前の<code>writeOverview</code>で書き出せます。<code>chunkSize</code>を小さくするとメモリは減り、DBへの問い合わせは増えます。出力の内容は変わりません（結合テストが<code>chunkSize</code>を変えて同じ出力になることを確かめています）。</figcaption>
 </figure>
 
-<p>サンプルDB（ビューを含む14テーブル、<code>schema=sample</code>）で通常実行したときに発行されたSQLの順序です（<code>-Dexport-table-definition.log.level=debug</code>で実行したログファイルから抜き出したもの）。</p>
+<p>サンプルDB（ビューを含む14テーブル、<code>schema=sample</code>）で通常実行したときに発行されたSQLの順序です（<code>-Ddbxray.log.level=debug</code>で実行したログファイルから抜き出したもの）。</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>順</th><th>段階</th><th>SQLのID</th><th>行数</th></tr></thead>
@@ -1952,7 +1952,7 @@ erDiagram
     <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">670</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
     <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">838</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列（ビューのソース・トリガーの本体等）とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
     <tr><td class="file">mybatis-config.xml</td><td class="num">39</td><td>DTOの型の別名、接続（POOLED。<code>${driver}</code>等）、2つのmapper</td><td>← <code>MyBatisSqlSessionFactories</code></td></tr>
-    <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>export-table-definition.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
+    <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>dbxray.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
     <tr><td class="file">conf/config.yml</td><td class="num">25</td><td>配布する設定（全項目が未指定。各項目の例をコメントで示す）</td><td>← <code>ConfigFile</code></td></tr>
 
     <tr class="group"><td colspan="4">テスト（cli/src/test・cli/src/integrationTest）</td></tr>

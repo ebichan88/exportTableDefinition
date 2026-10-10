@@ -1,4 +1,4 @@
-rootProject.name = 'exportTableDefinition'
+rootProject.name = 'dbxray'
 
 include 'cli'
 include 'mcp-server'

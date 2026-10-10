@@ -136,7 +136,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 
 ## ログ
 
-ログは`log4j2.xml`で設定し、実行したディレクトリの`var/log/exportTableDefinition.log`へ出す。
+ログは`log4j2.xml`で設定し、実行したディレクトリの`var/log/dbxray.log`へ出す。
 画面への表示（処理結果・失敗の報告）はログとは別に標準出力へ出し、WARNだけはログに加えて標準エラー出力へも出す（[例外の扱いと終了コード](#例外の扱いと終了コード)）。
 
 | レベル | 使う場面 | 例 |
@@ -148,7 +148,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | TRACE | DBから取得した値そのもの | MyBatisが出す取得した行 |
 
 - 既定のレベルは、このツールのロガー（`com.dbxray`配下）がINFO、ライブラリ（ルート）がWARN。
-  調査時はシステムプロパティ`export-table-definition.log.level`で上げる。MyBatisは実行したSQLをmapperのnamespace
+  調査時はシステムプロパティ`dbxray.log.level`で上げる。MyBatisは実行したSQLをmapperのnamespace
   （`com.dbxray.domain.repository.{oracle,postgresql}`）のロガーへ出すため、このプロパティだけで
   SQL（DEBUG）・取得した行（TRACE）まで出せる。ライブラリのDEBUG（コネクションプール等）は調査に要らないため出さない
 - DB由来の文字列（関数の定義等）は改行を含みうる。メッセージは`%enc{%m}{CRLF}`で改行を`\n`・`\r`へ置き換えて出し、

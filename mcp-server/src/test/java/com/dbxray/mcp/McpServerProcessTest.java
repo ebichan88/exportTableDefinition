@@ -60,7 +60,7 @@ class McpServerProcessTest {
         McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build()) {
       client.initialize();
 
-      assertEquals("exportTableDefinition", client.getServerInfo().name());
+      assertEquals("dbxray", client.getServerInfo().name());
       assertEquals(
           List.of(
               "list_schemas",
@@ -261,7 +261,7 @@ class McpServerProcessTest {
       assertEquals(14, resources.size());
       final Resource employee =
           resources.stream()
-              .filter(resource -> resource.uri().equals("exporttable://testdb/sample/employee"))
+              .filter(resource -> resource.uri().equals("dbxray://testdb/sample/employee"))
               .findFirst()
               .orElseThrow();
       assertTrue(employee.name().endsWith(" (sample.employee)"), employee.name());
@@ -304,7 +304,7 @@ class McpServerProcessTest {
             "{\"jsonrpc\":\"2.0\",\"id\":"
                 + (100 + i)
                 + ",\"method\":\"resources/read\",\"params\":{"
-                + "\"uri\":\"exporttable://testdb/sample/employee\"}}");
+                + "\"uri\":\"dbxray://testdb/sample/employee\"}}");
       }
 
       final ObjectMapper mapper = new ObjectMapper();

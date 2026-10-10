@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class CheckDocumentDiffUsecase {
 
-  private static final String CHECK_TEMP_DIR_PREFIX = "exportTableDefinition-check-";
+  private static final String CHECK_TEMP_DIR_PREFIX = "dbxray-check-";
   private final SchemaExportPipeline schemaExportPipeline;
   private final SnapshotExportSinkFactory snapshotSinkFactory;
   private final SnapshotDiff snapshotDiff;

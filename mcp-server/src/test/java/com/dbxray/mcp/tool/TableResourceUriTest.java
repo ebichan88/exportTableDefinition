@@ -13,7 +13,7 @@ class TableResourceUriTest {
   @DisplayName("DB名・スキーマ名・テーブル名の3区間のURIになる")
   void buildsUri() {
     assertEquals(
-        "exporttable://testdb/sample/employee",
+        "dbxray://testdb/sample/employee",
         TableResourceUri.of(new ObjectKey("testdb", "sample", "employee")));
   }
 
@@ -22,7 +22,7 @@ class TableResourceUriTest {
   void encodesSpecialCharacters() {
     final String uri = TableResourceUri.of(new ObjectKey("test db", "sch/ema", "受注+明細"));
 
-    assertEquals("exporttable://test%20db/sch%2Fema/%E5%8F%97%E6%B3%A8%2B%E6%98%8E%E7%B4%B0", uri);
+    assertEquals("dbxray://test%20db/sch%2Fema/%E5%8F%97%E6%B3%A8%2B%E6%98%8E%E7%B4%B0", uri);
   }
 
   @Test

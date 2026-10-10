@@ -20,7 +20,7 @@ public final class ConnectionSettings {
    * パスワードを渡す環境変数<br>
    * パスワードは設定ファイルに書けない。作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない
    */
-  private static final String PASSWORD_ENVIRONMENT_VARIABLE = "EXPORT_TABLE_DEFINITION_DB_PASSWORD";
+  private static final String PASSWORD_ENVIRONMENT_VARIABLE = "DBXRAY_DB_PASSWORD";
 
   private static final String PASSWORD_KEY = "password";
 

@@ -76,8 +76,8 @@ public final class TableDefinitionResources {
 
   /**
    * リソースの説明<br>
-   * Claude Codeの{@code @}の候補は、URIが途中で切れる（{@code etd-list:exporttable://testdb…}）うえ、表示に{@code
-   * name}より {@code description}を優先するため、どのテーブルか分かるよう先頭に表示名を入れる
+   * Claude Codeの{@code @}の候補は、URIが途中で切れる（{@code dbxray:dbxray://testdb…}）うえ、表示に{@code name}より
+   * {@code description}を優先するため、どのテーブルか分かるよう先頭に表示名を入れる
    */
   private static String description(TableEntry table, String name) {
     final String base = name + " / " + singleLine(table.key().database()) + " / " + table.type();
