@@ -2,7 +2,8 @@
 
 [![build](https://github.com/ebichan88/dbxray/actions/workflows/ci.yml/badge.svg)](https://github.com/ebichan88/dbxray/actions/workflows/ci.yml)
 ![release](https://img.shields.io/github/v/release/ebichan88/dbxray)
-![Java](https://custom-icon-badges.herokuapp.com/badge/Java-b07219.svg?logo=Java&logoColor=white)
+![license](https://img.shields.io/github/license/ebichan88/dbxray)
+![Java](https://img.shields.io/badge/-Java%2021-b07219.svg?logo=openjdk&logoColor=white&style=flat)
 ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-555.svg?logo=postgresql&style=flat)
 ![Oracle](https://img.shields.io/badge/-Oracle-f80000.svg?logo=oracle&style=flat)
 
