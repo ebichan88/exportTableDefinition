@@ -26,9 +26,9 @@ import com.dbxray.domain.model.table.TriggerEntity;
 import com.dbxray.domain.model.table.ViewReferenceEntity;
 import com.dbxray.domain.model.viewpoint.Viewpoint;
 import com.dbxray.domain.model.viewpoint.Viewpoints;
+import com.dbxray.domain.repository.CatalogRepository;
 import com.dbxray.domain.repository.FileRepository;
 import com.dbxray.domain.repository.SidecarRepository;
-import com.dbxray.domain.repository.TableDefinitionRepository;
 import com.dbxray.domain.service.UnifiedDiffGenerator;
 import com.dbxray.domain.service.export.InsightExportSinkFactory;
 import com.dbxray.domain.service.export.MarkdownExportSinkFactory;
@@ -130,7 +130,7 @@ public class ExportSchemaUsecaseTest {
   }
 
   /** リポジトリ呼び出し回数・引数を記録するスタブ */
-  private static class RecordingRepository implements TableDefinitionRepository {
+  private static class RecordingRepository implements CatalogRepository {
     private final DatabaseEntity database;
     List<TableEntity> tables = new ArrayList<>();
     List<ColumnEntity> columns = new ArrayList<>();

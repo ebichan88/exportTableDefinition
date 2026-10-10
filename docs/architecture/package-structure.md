@@ -16,7 +16,7 @@ MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケ�
 | `…Entity` | DBから取得したメタ情報1件のrecord | `domain.model.*` | ✓ | `TableEntity`・`ColumnEntity` |
 | 複数形 | エンティティの集合（ファーストクラスコレクション）。検索・振り分けのメソッドを持つ | `domain.model.*` | | `Tables`・`ForeignKeys`・`Triggers` |
 | `…Dto` | 層の境界で受け渡すだけの形（SQLの結果・コントローラーの処理結果） | `infrastructure.db.repository.dto`・`presentation.dto` | ✓ | `ColumnDto`・`ResultDto` |
-| `…Repository` | 外部（DB・ファイル）とのやり取り。インタフェースはdomain、実装はinfrastructure | `domain.repository`／`infrastructure.*.repository` | ✓ | `TableDefinitionRepository`・`PostgresTableDefinitionRepository` |
+| `…Repository` | 外部（DB・ファイル）とのやり取り。インタフェースはdomain、実装はinfrastructure | `domain.repository`／`infrastructure.*.repository` | ✓ | `CatalogRepository`・`PostgresCatalogRepository` |
 | `…Usecase`・`…Request` | ユースケースと、その入力をまとめたrecord | `application` | ✓ | `ExportSchemaUsecase`・`ExportSchemaRequest` |
 | `…Writer` | 何を・どの順で・どのファイルに書くかの段取り | `domain.service.*` | ✓ | `ErDiagramWriter`・`SchemaSnapshotWriter` |
 | `…Templates` | Markdownの行・セクションの組み立て（副作用の無いstaticメソッド） | `domain.service.writer.*`（対応するWriterと同じサブパッケージ。種別をまたぐ部品は`template`） | ✓ | `ErDiagramTemplates` |
@@ -101,7 +101,7 @@ MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケ�
 
 | クラス | 役割 |
 |---|---|
-| `TableDefinitionRepository` | データベースの情報（`selectDatabase`）・テーブル一覧・外部キー・トリガー・パーティション・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる）。カラム・インデックス・制約は、指定したテーブル分をテーブルごとの`TableDetail`に組み立てて返す（`selectTableDetails`）。ER図の関連カラム用に、指定したテーブルのカラムだけも取得できる（`selectColumnList`） |
+| `CatalogRepository` | データベースの情報（`selectDatabase`）・テーブル一覧・外部キー・トリガー・パーティション・関数・シーケンス・型のDB取得IF（DB種別ごとに実装が分かれる）。カラム・インデックス・制約は、指定したテーブル分をテーブルごとの`TableDetail`に組み立てて返す（`selectTableDetails`）。ER図の関連カラム用に、指定したテーブルのカラムだけも取得できる（`selectColumnList`） |
 | `SidecarRepository` | サイドカーYAML（手動付帯情報・論理リレーション・観点）読み込みIF |
 | `FileRepository` | ファイル操作IF（`writeFile`/`appendFile`/`createDirectory`、パスの状態の問い合わせ用の`exists`/`isDirectory`に加え、差分検知用の`listFiles`/`readFile`、一時ディレクトリ操作用の`createTempDirectory`/`deleteDirectory`を持つ） |
 
@@ -143,8 +143,8 @@ MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケ�
 | | `MyBatisSqlSessionFactories` | `ConnectionSettings`からMyBatisの`SqlSessionFactory`を生成する（状態を持たない。生成したものはDIコンテナで使い回す） |
 | | `DatabaseTypeDetector` | DBへ接続して接続先のDB種別を判定する。DBに接続できない場合・非対応のDBの場合は`UserCorrectableException`を投げる |
 | `infrastructure.db.type` | `DatabaseType` | DB種別（postgresql/oracle）とリポジトリ実装クラスの対応enum |
-| `infrastructure.db.repository` | `AbstractTableDefinitionRepository` | Oracle/Postgres共通のリポジトリ基底クラス。`SqlSessionFactory`をコンストラクタで受け取る。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
-| | `OracleTableDefinitionRepository`, `PostgresTableDefinitionRepository` | `TableDefinitionRepository`のDB別実装。対応するSQLは`modules/cli/src/main/resources/mapper/{oracle,postgresql}/tableDefinitionMapper.xml` |
+| `infrastructure.db.repository` | `AbstractCatalogRepository` | Oracle/Postgres共通のリポジトリ基底クラス。`SqlSessionFactory`をコンストラクタで受け取る。SQLの失敗は、どのSQLかを添えて包む（DBが返したエラーは原因として保持する） |
+| | `OracleCatalogRepository`, `PostgresCatalogRepository` | `CatalogRepository`のDB別実装。対応するSQLは`modules/cli/src/main/resources/mapper/{oracle,postgresql}/catalogMapper.xml` |
 | `infrastructure.db.repository.dto` | `DatabaseDto`, `TableDto`, `ColumnDto`, `ConstraintDto`, `ForeignKeyDto`, `IndexDto`, `TriggerDto`, `PartitionDto`, `ViewReferenceDto`, `FunctionDto`, `SequenceDto`, `TypeDto` | MyBatisのResultMap受け皿となるDTO（`toEntity()`で`domain.model`配下のエンティティへ変換される） |
 | | `DtoValues`（パッケージプライベート） | DTOからエンティティへの変換時の値の正規化（値が無いことを空文字へ揃える・区切り文字で連結された値をリストへ分解する） |
 | `infrastructure.file.repository` | `LocalFileRepository` | `FileRepository`実装（ローカルファイルシステムへの読み書き） |
@@ -160,7 +160,7 @@ MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケ�
 | | `YamlSyntaxErrors` | YAMLの解析の失敗を、ファイルの内容を引用せずに失敗の種類と位置だけで説明する文言へ変換する（`ConfigFile`と`SidecarYamlRepository`が使う） |
 | | `InvalidConfigurationException` | 設定の誤り（設定ファイルが見つからない、未知のキー、値が不正等）を表す例外（`UserCorrectableException`の派生）。`ConfigFile`・`DbxrayProperties`・`ConnectionSettings`が投げる |
 | `config.module` | `DbxrayModule` | Guiceの束縛定義（IF→実装クラスの対応）のうち、DB種別に依存しないもの。DBへ接続する前に組み立て、入力の検証にも使う。新規リポジトリ/ドメインサービス追加時はここに束縛を追加する |
-| | `DatabaseDependentModule` | DB種別が決まってから、`DbxrayModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`と`SqlSessionFactory`をコンストラクタで受け取り、`SqlSessionFactory`を束縛して`TableDefinitionRepository`の実装を選ぶ。それに依存するユースケースも束縛する |
+| | `DatabaseDependentModule` | DB種別が決まってから、`DbxrayModule`のコンテナの子として束縛するもの。接続先の`DatabaseType`と`SqlSessionFactory`をコンストラクタで受け取り、`SqlSessionFactory`を束縛して`CatalogRepository`の実装を選ぶ。それに依存するユースケースも束縛する |
 
 ## shared（レイヤーの外）
 
@@ -176,8 +176,8 @@ MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケ�
 |---|---|
 | `modules/cli/src/main/resources/conf/config.yml` | 配布する設定ファイル（DB接続情報・出力対象・出力先等。全項目が未指定） |
 | `modules/cli/src/main/resources/mybatis-config.xml` | MyBatisのメイン設定（DB種別ごとのmapper読み込み等） |
-| `modules/cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml` | Oracle向けSQL定義 |
-| `modules/cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml` | PostgreSQL向けSQL定義 |
+| `modules/cli/src/main/resources/mapper/oracle/catalogMapper.xml` | Oracle向けSQL定義 |
+| `modules/cli/src/main/resources/mapper/postgresql/catalogMapper.xml` | PostgreSQL向けSQL定義 |
 | `modules/cli/src/main/resources/log4j2.xml` | ログ設定（ログファイルへの出力に加え、このツールのWARNログを`[warn]:`付きで標準エラー出力へ出す） |
 
 ## テスト

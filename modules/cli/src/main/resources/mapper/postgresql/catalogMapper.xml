@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.dbxray.domain.repository.postgresql.TableDefinitionRepository">
+<mapper namespace="com.dbxray.domain.repository.postgresql.CatalogRepository">
 
     <select id="selectDatabaseInfo" resultType="DatabaseDto">
         <!-- server_version_numは10以降、メジャーバージョン×10000＋マイナーバージョン（例: 160004） -->

@@ -4,11 +4,11 @@ import com.dbxray.infrastructure.db.type.DatabaseType;
 import jakarta.inject.Inject;
 import org.apache.ibatis.session.SqlSessionFactory;
 
-/** [Postgres]テーブル定義出力に関するリポジトリクラス */
-public final class PostgresTableDefinitionRepository extends AbstractTableDefinitionRepository {
+/** [Postgres]DBのカタログの取得に関するリポジトリクラス */
+public final class PostgresCatalogRepository extends AbstractCatalogRepository {
 
   @Inject
-  public PostgresTableDefinitionRepository(SqlSessionFactory sqlSessionFactory) {
+  public PostgresCatalogRepository(SqlSessionFactory sqlSessionFactory) {
     super(DatabaseType.POSTGRESQL, sqlSessionFactory);
   }
 }

@@ -33,7 +33,7 @@
 		</environment>
 	</environments>
 	<mappers>
-		<mapper resource="mapper/postgresql/tableDefinitionMapper.xml"/>
-		<mapper resource="mapper/oracle/tableDefinitionMapper.xml"/>
+		<mapper resource="mapper/postgresql/catalogMapper.xml"/>
+		<mapper resource="mapper/oracle/catalogMapper.xml"/>
 	</mappers>
 </configuration>

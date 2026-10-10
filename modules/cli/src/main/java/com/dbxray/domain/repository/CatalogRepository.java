@@ -14,8 +14,8 @@ import com.dbxray.domain.model.table.TriggerEntity;
 import com.dbxray.domain.model.table.ViewReferenceEntity;
 import java.util.List;
 
-/** テーブル定義出力に関するリポジトリインターフェース */
-public interface TableDefinitionRepository {
+/** DBのカタログの取得に関するリポジトリインターフェース */
+public interface CatalogRepository {
 
   /** ドキュメントの生成日はDBではなく実行時に決まるため含まない */
   DatabaseEntity selectDatabase();

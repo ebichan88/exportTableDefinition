@@ -2,7 +2,7 @@
 name: verify
 description: >-
   docs/sample/postgres/ddl.sql を使い捨てのPostgreSQL(Docker)に流し込み、jarをビルド・実行して
-  実際にテーブル定義書を出力し、結果を確認する手順。tableDefinitionMapper.xmlやドメイン層
+  実際にテーブル定義書を出力し、結果を確認する手順。catalogMapper.xmlやドメイン層
   （エンティティ・テンプレート・ER図生成など）を変更した後、「動作確認して」「出力結果を確認して」
   「verify」などと言われたとき、またはマッパーSQLや出力ロジックに手を入れた後に必ず使う。
 ---
@@ -119,7 +119,7 @@ docker rm -f dbxray-verify-db
 
 ## Oracleの場合
 
-Oracle用mapper（`mapper/oracle/tableDefinitionMapper.xml`）を変えた場合は、まず`./gradlew oracleIntegrationTest`を実行する
+Oracle用mapper（`mapper/oracle/catalogMapper.xml`）を変えた場合は、まず`./gradlew oracleIntegrationTest`を実行する
 （`docs/sample/oracle/ddl.sql`を流し込んだOracle Database Freeに対して、取得結果とベースライン`docs/sample/oracle/output`との一致を確かめる）。
 ベースラインを出力し直す場合は、PostgreSQLの手順1・3・4・6を次のように読み替える（手順2・5は同じ）。
 
@@ -176,7 +176,7 @@ SqlSessionFactory factory =
                 "password", "postgres")));
 try (SqlSession session = factory.openSession()) {
     session.selectList(
-        "com.dbxray.domain.repository.postgresql.TableDefinitionRepository.<問題のid>",
+        "com.dbxray.domain.repository.postgresql.CatalogRepository.<問題のid>",
         Map.of("schemaList", List.of("sample"), "tableList", List.of()));
 } catch (Exception e) {
     e.printStackTrace(); // Caused by: PSQLException ... と、MyBatisが添えるSQL文を合わせて確認できる
@@ -195,7 +195,7 @@ Javaの文字インデックスとズレる。位置を厳密に特定したい�
 
 ## 踏み抜いた地雷（同じ轍を踏まないためのメモ）
 
-`tableDefinitionMapper.xml`（PostgreSQL/Oracle双方）は長いSQLを可読性のために手動で
+`catalogMapper.xml`（PostgreSQL/Oracle双方）は長いSQLを可読性のために手動で
 折り返しているが、この折り返しが**SQLの意味を変えてしまう**箇所が過去に存在した。
 マッパーXMLを編集するときは以下を守ること。
 
@@ -211,7 +211,7 @@ Javaの文字インデックスとズレる。位置を厳密に特定したい�
    混入し、生成されたMarkdownの表セルが壊れる（表の途中で改行されて別の行として見えてしまう）。
    `selectConstraintInfo`の`'PRIMARY KEY'`がこれで壊れていた（修正済み）。
    同様の理由でOracle側マッパーの`'CREATE INDEX '`も修正済み。
-3. 上記1点目のパターンで、Oracle側マッパー（`mapper/oracle/tableDefinitionMapper.xml`）の
+3. 上記1点目のパターンで、Oracle側マッパー（`mapper/oracle/catalogMapper.xml`）の
    `selectForeignKeyInfo`にも同種の壊れたコメントが3箇所あり、目視で同様に修正した
    （その後`oracleIntegrationTest`で実DBに対して確かめた）。
 

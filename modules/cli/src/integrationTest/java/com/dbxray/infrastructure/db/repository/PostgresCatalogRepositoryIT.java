@@ -28,19 +28,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * PostgresTableDefinitionRepository（PostgreSQL用mapperのSQLとDTOからの変換）の結合テスト<br>
+ * PostgresCatalogRepository（PostgreSQL用mapperのSQLとDTOからの変換）の結合テスト<br>
  * {@code docs/sample/postgres/ddl.sql}を流し込んだ実DBに対してSQLを実行し、DDLに用意した形（複合外部キー・自己参照・
  * 1対1・ビュー・トリガー・オーバーロード等）が取得できることを確かめる。どのSQLが壊れたかを特定できるよう、取得メソッドごとに検証する
  */
-class PostgresTableDefinitionRepositoryIT {
+class PostgresCatalogRepositoryIT {
 
   private static final List<String> SAMPLE_SCHEMA = List.of("sample");
 
-  private static PostgresTableDefinitionRepository repository;
+  private static PostgresCatalogRepository repository;
 
   @BeforeAll
   static void setUp() {
-    repository = new PostgresTableDefinitionRepository(SampleDatabase.sqlSessionFactory());
+    repository = new PostgresCatalogRepository(SampleDatabase.sqlSessionFactory());
   }
 
   @Test

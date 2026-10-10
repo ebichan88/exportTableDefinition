@@ -14,7 +14,7 @@ import com.dbxray.domain.model.table.TableEntity;
 import com.dbxray.domain.model.table.TableKey;
 import com.dbxray.domain.model.table.TriggerEntity;
 import com.dbxray.domain.model.table.ViewReferenceEntity;
-import com.dbxray.domain.repository.TableDefinitionRepository;
+import com.dbxray.domain.repository.CatalogRepository;
 import com.dbxray.infrastructure.db.repository.dto.ColumnDto;
 import com.dbxray.infrastructure.db.repository.dto.ConstraintDto;
 import com.dbxray.infrastructure.db.repository.dto.DatabaseDto;
@@ -37,16 +37,16 @@ import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
-/** テーブル定義出力に関するリポジトリの基底クラス */
-public abstract class AbstractTableDefinitionRepository implements TableDefinitionRepository {
+/** DBのカタログの取得に関するリポジトリの基底クラス */
+public abstract class AbstractCatalogRepository implements CatalogRepository {
 
   private final String baseSqlPath;
   private final SqlSessionFactory sqlSessionFactory;
 
-  protected AbstractTableDefinitionRepository(
+  protected AbstractCatalogRepository(
       DatabaseType databaseType, SqlSessionFactory sqlSessionFactory) {
     this.baseSqlPath =
-        "com.dbxray.domain.repository." + databaseType.getName() + ".TableDefinitionRepository.";
+        "com.dbxray.domain.repository." + databaseType.getName() + ".CatalogRepository.";
     this.sqlSessionFactory = sqlSessionFactory;
   }
 

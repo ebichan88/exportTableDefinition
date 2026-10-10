@@ -1,22 +1,22 @@
 package com.dbxray.infrastructure.db.type;
 
-import com.dbxray.domain.repository.TableDefinitionRepository;
-import com.dbxray.infrastructure.db.repository.OracleTableDefinitionRepository;
-import com.dbxray.infrastructure.db.repository.PostgresTableDefinitionRepository;
+import com.dbxray.domain.repository.CatalogRepository;
+import com.dbxray.infrastructure.db.repository.OracleCatalogRepository;
+import com.dbxray.infrastructure.db.repository.PostgresCatalogRepository;
 import java.util.Arrays;
 import java.util.Objects;
 
 /** Databaseの種別をもつ列挙型クラス */
 public enum DatabaseType {
   /** PostgreSQL */
-  POSTGRESQL("postgresql", PostgresTableDefinitionRepository.class),
+  POSTGRESQL("postgresql", PostgresCatalogRepository.class),
   /** Oracle */
-  ORACLE("oracle", OracleTableDefinitionRepository.class);
+  ORACLE("oracle", OracleCatalogRepository.class);
 
   private final String name;
-  private final Class<? extends TableDefinitionRepository> repositoryClass;
+  private final Class<? extends CatalogRepository> repositoryClass;
 
-  DatabaseType(String name, Class<? extends TableDefinitionRepository> repositoryClass) {
+  DatabaseType(String name, Class<? extends CatalogRepository> repositoryClass) {
     this.name = name;
     this.repositoryClass = repositoryClass;
   }
@@ -35,7 +35,7 @@ public enum DatabaseType {
    *
    * @return リポジトリクラスを返却する。
    */
-  public Class<? extends TableDefinitionRepository> getRepositoryClass() {
+  public Class<? extends CatalogRepository> getRepositoryClass() {
     return repositoryClass;
   }
 

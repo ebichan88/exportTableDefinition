@@ -485,7 +485,7 @@ viewpoints:
 
 <figure>
   <div class="fig-scroll">
-    <svg viewBox="0 0 900 320" role="img" aria-label="左は親のコンテナで、DBへ接続する前に作る。ファイル・サイドカー・出力先パス・JSON変換のインタフェースと実装、時計、Writer等14クラスを束縛し、出力先の検証に使う。右は子のコンテナで、接続して種別が分かった後に作る。SqlSessionFactoryとTableDefinitionRepositoryの実装を束縛し、コントローラー、ユースケース、SchemaExportPipelineはジャストインタイム束縛で作られる。" style="min-width: 780px">
+    <svg viewBox="0 0 900 320" role="img" aria-label="左は親のコンテナで、DBへ接続する前に作る。ファイル・サイドカー・出力先パス・JSON変換のインタフェースと実装、時計、Writer等14クラスを束縛し、出力先の検証に使う。右は子のコンテナで、接続して種別が分かった後に作る。SqlSessionFactoryとCatalogRepositoryの実装を束縛し、コントローラー、ユースケース、SchemaExportPipelineはジャストインタイム束縛で作られる。" style="min-width: 780px">
       <defs>
         <marker id="g2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
       </defs>
@@ -509,20 +509,20 @@ viewpoints:
       <text x="496" y="74" class="d-t-ms">createChildInjector(new DatabaseDependentModule(…))</text>
       <line x1="496" y1="88" x2="874" y2="88" class="d-sep"/>
       <text x="496" y="110" class="d-t-ms">SqlSessionFactory → mainで作った1個</text>
-      <text x="496" y="130" class="d-t-ms">TableDefinitionRepository →</text>
-      <text x="496" y="148" class="d-t-ms">  PostgresTableDefinitionRepository</text>
-      <text x="496" y="166" class="d-t-ms">  または OracleTableDefinitionRepository</text>
+      <text x="496" y="130" class="d-t-ms">CatalogRepository →</text>
+      <text x="496" y="148" class="d-t-ms">  PostgresCatalogRepository</text>
+      <text x="496" y="166" class="d-t-ms">  または OracleCatalogRepository</text>
       <line x1="496" y1="182" x2="874" y2="182" class="d-sep"/>
       <text x="496" y="204" class="d-t">ジャストインタイム束縛で作られるもの</text>
       <text x="496" y="226" class="d-t-ms">ExportSchemaController</text>
       <text x="496" y="244" class="d-t-ms">→ ExportSchemaUsecase・CheckDocumentDiffUsecase</text>
-      <text x="496" y="262" class="d-t-ms">→ SchemaExportPipeline → TableDefinitionRepository</text>
+      <text x="496" y="262" class="d-t-ms">→ SchemaExportPipeline → CatalogRepository</text>
       <text x="496" y="288" class="d-t-acc">使い道：mainがコントローラーを取り出す</text>
 
       <line x1="422" y1="165" x2="476" y2="165" class="d-line" marker-end="url(#g2a)"/>
     </svg>
   </div>
-  <figcaption><b>図2 DIコンテナの2段階。</b>出力先の検証などDB種別に関係ない部品は、DBへ接続する前に親のコンテナから取り出して使います。<code>TableDefinitionRepository</code>の実装は接続先がPostgreSQLかOracleかで変わるため、接続して種別が分かってから子のコンテナで束縛します。Guiceは子のコンテナで作るJIT束縛をできるだけ親に作りますが、<code>TableDefinitionRepository</code>に依存する3つ（パイプライン・ユースケース・コントローラー）は親では作れないため子に作られます。</figcaption>
+  <figcaption><b>図2 DIコンテナの2段階。</b>出力先の検証などDB種別に関係ない部品は、DBへ接続する前に親のコンテナから取り出して使います。<code>CatalogRepository</code>の実装は接続先がPostgreSQLかOracleかで変わるため、接続して種別が分かってから子のコンテナで束縛します。Guiceは子のコンテナで作るJIT束縛をできるだけ親に作りますが、<code>CatalogRepository</code>に依存する3つ（パイプライン・ユースケース・コントローラー）は親では作れないため子に作られます。</figcaption>
 </figure>
 
 <pre><code><span class="c">// Dbxray.createController：DBへ接続するのはここだけ</span>
@@ -539,7 +539,7 @@ viewpoints:
 
 <figure>
   <div class="fig-scroll">
-    <svg viewBox="0 0 900 240" role="img" aria-label="SchemaExportPipelineがリポジトリのselectTableListを呼ぶ。AbstractTableDefinitionRepositoryがSQLのIDを組み立ててsession.selectListを呼ぶ。DB種別ごとのmapper XMLのselect要素が実行され、結果の1行がTableDtoのrecordに入り、toEntityでTableEntityになり、リストとして呼び出し元へ返る。" style="min-width: 760px">
+    <svg viewBox="0 0 900 240" role="img" aria-label="SchemaExportPipelineがリポジトリのselectTableListを呼ぶ。AbstractCatalogRepositoryがSQLのIDを組み立ててsession.selectListを呼ぶ。DB種別ごとのmapper XMLのselect要素が実行され、結果の1行がTableDtoのrecordに入り、toEntityでTableEntityになり、リストとして呼び出し元へ返る。" style="min-width: 760px">
       <defs>
         <marker id="g3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
         <marker id="g3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-acc"/></marker>
@@ -583,13 +583,13 @@ viewpoints:
 
 <p>読むときに戸惑いやすい点が4つあります。</p>
 <ul>
-  <li><strong>SQLのIDは文字列で組み立てる</strong>。mapper XMLの名前空間<code>com.dbxray.domain.repository.postgresql.TableDefinitionRepository</code>はJavaのクラス名に見えますが、そういうインタフェースはありません。<code>AbstractTableDefinitionRepository</code>が「名前空間＋<code>.</code>＋ID」を文字列で作って<code>session.selectList</code>に渡します。IDEで定義へ移動できないので、ID（<code>selectTableInfo</code>等）の文字列でmapper XMLを検索してください。</li>
+  <li><strong>SQLのIDは文字列で組み立てる</strong>。mapper XMLの名前空間<code>com.dbxray.domain.repository.postgresql.CatalogRepository</code>はJavaのクラス名に見えますが、そういうインタフェースはありません。<code>AbstractCatalogRepository</code>が「名前空間＋<code>.</code>＋ID」を文字列で作って<code>session.selectList</code>に渡します。IDEで定義へ移動できないので、ID（<code>selectTableInfo</code>等）の文字列でmapper XMLを検索してください。</li>
   <li><strong>両方のmapperを常に読み込む</strong>。<code>mybatis-config.xml</code>はPostgreSQL用・Oracle用の両方を登録し、<code>DatabaseType</code>の名前（<code>postgresql</code>・<code>oracle</code>）で名前空間を選びます。</li>
   <li><strong>引数は<code>schemaList</code>・<code>tableList</code>の2つだけ</strong>。XMLの<code>&lt;if&gt;</code>で、リストが空なら絞り込み自体を外します。そのため空のリストで<code>selectColumnList</code>を呼ぶと全テーブルのカラムを取ってしまうので、Java側で空を弾いています。</li>
   <li><strong>列とrecordは名前で対応する</strong>。SQLの別名（<code>AS "schemaName"</code>）とDTOのコンポーネント名を、<code>mybatis-config.xml</code>の<code>argNameBasedConstructorAutoMapping</code>で対応させます。<code>resultType="TableDto"</code>は<code>typeAliases</code>で付けた短い名前です。</li>
 </ul>
-<pre><code><span class="c">// AbstractTableDefinitionRepository（要約）</span>
-baseSqlPath = <span class="k">"com.dbxray.domain.repository."</span> + databaseType.getName() + <span class="k">".TableDefinitionRepository."</span>;
+<pre><code><span class="c">// AbstractCatalogRepository（要約）</span>
+baseSqlPath = <span class="k">"com.dbxray.domain.repository."</span> + databaseType.getName() + <span class="k">".CatalogRepository."</span>;
 
 <span class="k">try</span> (SqlSession session = sqlSessionFactory.openSession()) {     <span class="c">// 呼ぶたびにプールから接続を借りる</span>
   <span class="k">return</span> session.selectList(baseSqlPath + sqlId, Map.of(<span class="k">"schemaList"</span>, schemaList, <span class="k">"tableList"</span>, tableList));
@@ -800,7 +800,7 @@ INFO  ExportSchemaController [ END ] exportSchema [elapsedMillis=498]</code></pr
     <tr><td><code>…Entity</code></td><td>DBから取得したメタ情報1件のrecord</td><td><code>TableEntity</code>・<code>ColumnEntity</code></td></tr>
     <tr><td>複数形</td><td>エンティティの集合。検索・振り分けのメソッドを持つ（ファーストクラスコレクション）</td><td><code>Tables</code>・<code>ForeignKeys</code>・<code>Triggers</code></td></tr>
     <tr><td><code>…Dto</code></td><td>層の境界で受け渡すだけの形（SQLの結果・コントローラーの結果）</td><td><code>TableDto</code>・<code>ResultDto</code></td></tr>
-    <tr><td><code>…Repository</code></td><td>外部とのやり取り。インタフェースはdomain、実装はinfrastructure</td><td><code>TableDefinitionRepository</code></td></tr>
+    <tr><td><code>…Repository</code></td><td>外部とのやり取り。インタフェースはdomain、実装はinfrastructure</td><td><code>CatalogRepository</code></td></tr>
     <tr><td><code>…Usecase</code>・<code>…Request</code></td><td>ユースケースと、その入力をまとめたrecord</td><td><code>ExportSchemaUsecase</code></td></tr>
     <tr><td><code>…SinkFactory</code></td><td>出力形式ごとの<code>ExportSink</code>を、出力先を決めて作る</td><td><code>MarkdownExportSinkFactory</code></td></tr>
     <tr><td><code>…Writer</code></td><td>何を・どの順で・どのファイルに書くかの段取り</td><td><code>ErDiagramWriter</code>・<code>SchemaSnapshotWriter</code></td></tr>
@@ -822,7 +822,7 @@ INFO  ExportSchemaController [ END ] exportSchema [elapsedMillis=498]</code></pr
   <li><div><code>domain.model.target</code>：<code>ExportTargets</code>・<code>TableDefinitionContent</code>・<code>TableScope</code>。取得したデータを組み立てる単位です（8章）。</div></li>
   <li><div><code>domain.model.table</code>・<code>relation</code>：<code>TableKey</code>・<code>ForeignKeys</code>・<code>ForeignKeyGroups</code>・<code>Cardinality</code>。関連とER図のルールです（9章）。</div></li>
   <li><div>気になる出力のWriter→Templates：たとえば<code>TableDefinitionWriter</code>（114行。セクションの順）→<code>TableDefinitionTemplates</code>（525行。各セクションの組み立て）。</div></li>
-  <li><div>infrastructure：<code>AbstractTableDefinitionRepository</code>（191行）とmapper XML、<code>SidecarYamlRepository</code>（492行）。</div></li>
+  <li><div>infrastructure：<code>AbstractCatalogRepository</code>（191行）とmapper XML、<code>SidecarYamlRepository</code>（492行）。</div></li>
   <li><div>入口の検証：<code>CliArguments</code>・<code>DbxrayProperties</code>・<code>ConnectionSettings</code>・<code>FailureReporter</code>（5章）。</div></li>
 </ol>
 
@@ -994,7 +994,7 @@ System.out.println(resultDto.getResultMessage());
 <table>
   <thead><tr><th>目的</th><th>実例</th></tr></thead>
   <tbody>
-    <tr><td>検査例外を非検査例外で包む</td><td><code>LocalFileRepository</code>（<code>IOException</code>→<code>UncheckedIOException</code>）、<code>AbstractTableDefinitionRepository.select</code>（どのSQLかを添えて<code>RuntimeException</code>で包む）</td></tr>
+    <tr><td>検査例外を非検査例外で包む</td><td><code>LocalFileRepository</code>（<code>IOException</code>→<code>UncheckedIOException</code>）、<code>AbstractCatalogRepository.select</code>（どのSQLかを添えて<code>RuntimeException</code>で包む）</td></tr>
     <tr><td>下位の例外を利用者が直せる誤りへ置き換える</td><td><code>DatabaseTypeDetector</code>（接続の失敗）、<code>SidecarYamlRepository</code>（YAMLの構文誤り）、<code>DbxrayProperties</code>（<code>TargetSelection</code>の<code>IllegalArgumentException</code>）、<code>ConfigFile</code>（YAMLの構文誤り。文言は<code>YamlSyntaxErrors</code>）</td></tr>
     <tr><td>フォールバックする</td><td><code>SidecarYamlRepository</code>（誤った観点を、警告して読み飛ばす）</td></tr>
   </tbody>
@@ -1822,7 +1822,7 @@ erDiagram
     <tr class="group"><td colspan="4">application：ユースケース</td></tr>
     <tr><td class="file">ExportSchemaUsecase</td><td class="num">85</td><td>通常実行。一括取得→ER図の箱→（<code>--rm-dist</code>なら削除）→3つのSinkで書き出し</td><td>← Controller／→ <code>SchemaExportPipeline</code>・3つの<code>…SinkFactory</code></td></tr>
     <tr><td class="file">CheckDocumentDiffUsecase</td><td class="num">64</td><td><code>--check</code>。スナップショットのSinkだけで一時ディレクトリへ書き、<code>SnapshotDiff</code>で比べる。一時ディレクトリは必ず消す</td><td>← Controller／→ <code>SchemaExportPipeline</code>・<code>SnapshotExportSinkFactory</code>・<code>SnapshotDiff</code></td></tr>
-    <tr><td class="file">SchemaExportPipeline<span class="sub">パッケージプライベート</span></td><td class="num">335</td><td>両ユースケースが共有する取得と書き出しの段取り（<code>fetchTargets</code>・<code>fetchDiagramBoxes</code>・<code>export</code>）。通知と件数をログへ出し、生成日を<code>Clock</code>から求める</td><td>← 2つのUsecase／→ <code>TableDefinitionRepository</code>・<code>SidecarRepository</code>・<code>ExportTargetConsistency</code>・<code>ExportSink</code></td></tr>
+    <tr><td class="file">SchemaExportPipeline<span class="sub">パッケージプライベート</span></td><td class="num">335</td><td>両ユースケースが共有する取得と書き出しの段取り（<code>fetchTargets</code>・<code>fetchDiagramBoxes</code>・<code>export</code>）。通知と件数をログへ出し、生成日を<code>Clock</code>から求める</td><td>← 2つのUsecase／→ <code>CatalogRepository</code>・<code>SidecarRepository</code>・<code>ExportTargetConsistency</code>・<code>ExportSink</code></td></tr>
     <tr><td class="file">ExportSchemaRequest<br>CheckDocumentDiffRequest</td><td class="num">40</td><td>ユースケースへの入力のrecord。3層を同じrecordのまま通る。<code>--check</code>用は<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を持たない</td><td>← <code>DbxrayProperties</code> → Controller → Usecase</td></tr>
     <tr><td class="file">TargetSelection</td><td class="num">63</td><td>出力対象の絞り込み条件（<code>TableScope</code>＋<code>OutputObjectType</code>の集合）。<code>of</code>で文字列を型に変え、2種類の誤りをまとめる</td><td>← <code>DbxrayProperties</code>・<code>SchemaExportPipeline</code></td></tr>
 
@@ -1838,7 +1838,7 @@ erDiagram
     <tr><td class="file">TableKey</td><td class="num">57</td><td>スキーマ名＋テーブル名。テーブルの識別子で、カラム・関連・付帯情報とテーブルを結ぶ。<code>parse</code>で「スキーマ.テーブル」を解析</td><td>どこでも</td></tr>
     <tr><td class="file">TableType</td><td class="num">54</td><td>テーブルの区分のenum。未知の区分は読み込み時に例外</td><td>← <code>TableDto</code>・<code>TableEntity</code></td></tr>
     <tr><td class="file">Tables</td><td class="num">92</td><td>出力対象のテーブルの集合。<code>contains</code>・<code>find</code>（テーブルキー）、<code>bySchema</code>（呼ぶたびに作る）</td><td>← <code>SchemaExportPipeline</code>・<code>ExportTargetConsistency</code>・Writer等</td></tr>
-    <tr><td class="file">TableDetail</td><td class="num">54</td><td>1テーブル分のカラム・インデックス・制約。<code>assembleAll</code>で、まとめて取得した結果をテーブルごとに振り分ける</td><td>← <code>AbstractTableDefinitionRepository</code>・<code>TableDefinitionContent</code></td></tr>
+    <tr><td class="file">TableDetail</td><td class="num">54</td><td>1テーブル分のカラム・インデックス・制約。<code>assembleAll</code>で、まとめて取得した結果をテーブルごとに振り分ける</td><td>← <code>AbstractCatalogRepository</code>・<code>TableDefinitionContent</code></td></tr>
     <tr><td class="file">ColumnEntity<br>IndexEntity<br>ConstraintEntity</td><td class="num">46</td><td>カラム・インデックス・制約1件</td><td>← <code>TableDetail</code>・テンプレート・<code>TableSnapshot</code></td></tr>
     <tr><td class="file">Columns<br>Indexes<br>Constraints<span class="sub">パッケージプライベート</span></td><td class="num">48</td><td><code>TableDetail.assembleAll</code>専用の、テーブルキーで引ける集合</td><td>← <code>TableDetail</code></td></tr>
     <tr><td class="file">TriggerEntity<br>Triggers</td><td class="num">69</td><td>トリガー1件と集合。イベントはリスト。定義はOracleでは宣言部だけで、本体（<code>body</code>）を別に持つ（PostgreSQLは空文字）</td><td>← <code>SchemaExportPipeline</code>・<code>TableDefinitionContent</code>・<code>ObjectListWriter</code></td></tr>
@@ -1873,7 +1873,7 @@ erDiagram
     <tr><td class="file">FunctionEntity<br>Functions</td><td class="num">86</td><td>関数・プロシージャ1件と集合。オーバーロードの番号・数、定義本体（一覧の取得では空）。<code>schemaNames</code>は定義本体を取る単位</td><td>← <code>SchemaExportPipeline</code>・<code>ObjectListWriter</code>・<code>FunctionSnapshot</code>・<code>DocumentLocations</code></td></tr>
     <tr><td class="file">SequenceEntity<br>Sequences</td><td class="num">62</td><td>シーケンス1件と集合。数値は桁あふれしないよう文字列のまま</td><td>← <code>ObjectListWriter</code>・<code>SchemaSnapshotWriter</code></td></tr>
     <tr><td class="file">TypeEntity<br>Types</td><td class="num">52</td><td>ユーザー定義型1件と集合</td><td>← <code>ObjectListWriter</code>・<code>SchemaSnapshotWriter</code></td></tr>
-    <tr><td class="file">DatabaseEntity<br>BaseInfoEntity</td><td class="num">33</td><td>DB名・DBMS種別・メジャーバージョン（カタログから）と、それに生成日を足した基本情報</td><td>← <code>AbstractTableDefinitionRepository</code>・<code>SchemaExportPipeline</code>／→ テンプレート</td></tr>
+    <tr><td class="file">DatabaseEntity<br>BaseInfoEntity</td><td class="num">33</td><td>DB名・DBMS種別・メジャーバージョン（カタログから）と、それに生成日を足した基本情報</td><td>← <code>AbstractCatalogRepository</code>・<code>SchemaExportPipeline</code>／→ テンプレート</td></tr>
     <tr><td class="file">ListDocumentType</td><td class="num">60</td><td>一覧ドキュメントの種類（7つ）。ファイル名の接頭辞とタイトル</td><td>← <code>MarkdownExportSinkFactory</code>・<code>DocumentLocations</code>・テンプレート</td></tr>
 
     <tr class="group"><td colspan="4">domain.model.snapshot・insight：機械が読む形</td></tr>
@@ -1886,7 +1886,7 @@ erDiagram
     <tr><td class="file">ViewpointsInsight<br>ViewpointInsight</td><td class="num">57</td><td><code>viewpoints.json</code>（形式バージョン・観点・所属テーブル）。<code>ViewpointContent</code>から作る</td><td>← <code>InsightWriter</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.repository：外部とのやり取りのインタフェース</td></tr>
-    <tr><td class="file">TableDefinitionRepository</td><td class="num">80</td><td>DBからの取得（12メソッド）。実装はDB種別ごと</td><td>← <code>SchemaExportPipeline</code>／実装 <code>AbstractTableDefinitionRepository</code></td></tr>
+    <tr><td class="file">CatalogRepository</td><td class="num">80</td><td>DBからの取得（12メソッド）。実装はDB種別ごと</td><td>← <code>SchemaExportPipeline</code>／実装 <code>AbstractCatalogRepository</code></td></tr>
     <tr><td class="file">SidecarRepository</td><td class="num">18</td><td>サイドカーYAMLの読み込み。パスが空なら空の<code>Sidecar</code></td><td>← <code>SchemaExportPipeline</code>／実装 <code>SidecarYamlRepository</code></td></tr>
     <tr><td class="file">FileRepository</td><td class="num">60</td><td>ファイル操作（書く・追記・ディレクトリ作成・存在・一覧・読む・一時ディレクトリ・再帰削除）</td><td>← Writer・Usecase・<code>SnapshotDiff</code>・<code>OutputDirectoryValidator</code>／実装 <code>LocalFileRepository</code></td></tr>
 
@@ -1927,10 +1927,10 @@ erDiagram
     <tr><td class="file">ConnectionSettings</td><td class="num">157</td><td>検証済みの接続情報。<code>config.yml</code>の<code>database</code>＋環境変数のパスワード＋CLI引数。<code>driver</code>・<code>url</code>必須、ファイルの<code>password</code>と<code>url</code>へのパスワードの埋め込みは誤り</td><td>← <code>Dbxray</code></td></tr>
     <tr><td class="file">MyBatisSqlSessionFactories</td><td class="num">40</td><td><code>mybatis-config.xml</code>から<code>SqlSessionFactory</code>を作る（接続はしない）</td><td>← <code>Dbxray</code></td></tr>
     <tr><td class="file">DatabaseTypeDetector</td><td class="num">78</td><td>接続して製品名から<code>DatabaseType</code>を判定し、DBMS・ドライバの版をログへ残す。接続できない・非対応のDBは<code>UserCorrectableException</code></td><td>← <code>Dbxray</code></td></tr>
-    <tr><td class="file">DatabaseType</td><td class="num">54</td><td>postgresql・oracleと、リポジトリの実装クラスの対応。名前はSQLの名前空間にも使う</td><td>← <code>DatabaseDependentModule</code>・<code>AbstractTableDefinitionRepository</code></td></tr>
-    <tr><td class="file">AbstractTableDefinitionRepository</td><td class="num">191</td><td><code>TableDefinitionRepository</code>の共通実装。SQLのIDを組み立てて実行し、DTO→エンティティ。SQLの失敗はどのSQLかを添えて包む</td><td>← 2つの実装／→ 12のDTO</td></tr>
-    <tr><td class="file">PostgresTableDefinitionRepository<br>OracleTableDefinitionRepository</td><td class="num">28</td><td>DB種別を渡すだけの実装</td><td>← <code>DatabaseType</code></td></tr>
-    <tr><td class="file">TableDto 等 12個のDTO</td><td class="num">376</td><td><code>TableDto</code>・<code>ColumnDto</code>・<code>IndexDto</code>・<code>ConstraintDto</code>・<code>ForeignKeyDto</code>・<code>TriggerDto</code>・<code>PartitionDto</code>・<code>ViewReferenceDto</code>・<code>FunctionDto</code>・<code>SequenceDto</code>・<code>TypeDto</code>・<code>DatabaseDto</code>。SQLの結果の受け皿（record）で、<code>toEntity()</code>で値の形を揃える。<code>ForeignKeyDto</code>は多重度を判定し、<code>TriggerDto</code>はイベントを分解して本体の末尾の空白を除く</td><td>← <code>AbstractTableDefinitionRepository</code></td></tr>
+    <tr><td class="file">DatabaseType</td><td class="num">54</td><td>postgresql・oracleと、リポジトリの実装クラスの対応。名前はSQLの名前空間にも使う</td><td>← <code>DatabaseDependentModule</code>・<code>AbstractCatalogRepository</code></td></tr>
+    <tr><td class="file">AbstractCatalogRepository</td><td class="num">191</td><td><code>CatalogRepository</code>の共通実装。SQLのIDを組み立てて実行し、DTO→エンティティ。SQLの失敗はどのSQLかを添えて包む</td><td>← 2つの実装／→ 12のDTO</td></tr>
+    <tr><td class="file">PostgresCatalogRepository<br>OracleCatalogRepository</td><td class="num">28</td><td>DB種別を渡すだけの実装</td><td>← <code>DatabaseType</code></td></tr>
+    <tr><td class="file">TableDto 等 12個のDTO</td><td class="num">376</td><td><code>TableDto</code>・<code>ColumnDto</code>・<code>IndexDto</code>・<code>ConstraintDto</code>・<code>ForeignKeyDto</code>・<code>TriggerDto</code>・<code>PartitionDto</code>・<code>ViewReferenceDto</code>・<code>FunctionDto</code>・<code>SequenceDto</code>・<code>TypeDto</code>・<code>DatabaseDto</code>。SQLの結果の受け皿（record）で、<code>toEntity()</code>で値の形を揃える。<code>ForeignKeyDto</code>は多重度を判定し、<code>TriggerDto</code>はイベントを分解して本体の末尾の空白を除く</td><td>← <code>AbstractCatalogRepository</code></td></tr>
     <tr><td class="file">DtoValues<span class="sub">パッケージプライベート</span></td><td class="num">41</td><td><code>null</code>・空白を空文字へ、区切り文字で連結された値をリストへ</td><td>← 各DTO</td></tr>
 
     <tr class="group"><td colspan="4">infrastructure.file・path・snapshot</td></tr>
@@ -1944,13 +1944,13 @@ erDiagram
     <tr><td class="file">YamlSyntaxErrors</td><td class="num">51</td><td>SnakeYAMLの構文誤りを、ファイルの内容を引用しない文言（種類と位置）へ変える</td><td>← <code>ConfigFile</code>・<code>SidecarYamlRepository</code></td></tr>
     <tr><td class="file">InvalidConfigurationException</td><td class="num">28</td><td>設定の誤り（<code>UserCorrectableException</code>の派生）</td><td>← <code>ConfigFile</code>・<code>DbxrayProperties</code>・<code>ConnectionSettings</code></td></tr>
     <tr><td class="file">DbxrayModule</td><td class="num">61</td><td>DB種別に依存しない束縛（親のコンテナ）</td><td>← <code>Dbxray</code></td></tr>
-    <tr><td class="file">DatabaseDependentModule</td><td class="num">38</td><td><code>SqlSessionFactory</code>と<code>TableDefinitionRepository</code>の束縛（子のコンテナ）</td><td>← <code>Dbxray</code></td></tr>
+    <tr><td class="file">DatabaseDependentModule</td><td class="num">38</td><td><code>SqlSessionFactory</code>と<code>CatalogRepository</code>の束縛（子のコンテナ）</td><td>← <code>Dbxray</code></td></tr>
     <tr><td class="file">UserCorrectableException</td><td class="num">34</td><td>利用者が直せる誤り。投げてよいのは入口と、入力・実行環境に触れるインフラだけ</td><td>← <code>CliArguments</code>・<code>OutputDirectoryValidator</code>・<code>DatabaseTypeDetector</code>・<code>SidecarYamlRepository</code>・<code>FailureReporter</code></td></tr>
     <tr><td class="file">package-info（43ファイル）</td><td class="num">90</td><td>各パッケージの要旨。<code>shared.exception</code>だけは置いてよいものの規約も書く</td><td class="muted">—</td></tr>
 
     <tr class="group"><td colspan="4">リソース（modules/cli/src/main/resources）</td></tr>
-    <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">670</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
-    <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">838</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列（ビューのソース・トリガーの本体等）とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
+    <tr><td class="file">mapper/postgresql/<br>catalogMapper.xml</td><td class="num">670</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractCatalogRepository</code>（名前空間<code>…postgresql.CatalogRepository</code>）</td></tr>
+    <tr><td class="file">mapper/oracle/<br>catalogMapper.xml</td><td class="num">838</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列（ビューのソース・トリガーの本体等）とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.CatalogRepository</code>）</td></tr>
     <tr><td class="file">mybatis-config.xml</td><td class="num">39</td><td>DTOの型の別名、接続（POOLED。<code>${driver}</code>等）、2つのmapper</td><td>← <code>MyBatisSqlSessionFactories</code></td></tr>
     <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>dbxray.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
     <tr><td class="file">conf/config.yml</td><td class="num">25</td><td>配布する設定（全項目が未指定。各項目の例をコメントで示す）</td><td>← <code>ConfigFile</code></td></tr>
@@ -1966,7 +1966,7 @@ erDiagram
     <tr><td class="file">infrastructureのテスト（10ファイル）</td><td class="num">1,764</td><td>接続情報・DB種別・DTOの変換・ファイル・サイドカーYAML（597行）・パス（出力先の外を指さないことの網羅的な検査<code>OutputPathContainmentTest</code>を含む）・JSON</td><td>→ infrastructure</td></tr>
     <tr><td class="file">ConfigFileTest<br>testsupport（5ファイル）</td><td class="num">444</td><td>設定ファイルの読み込みと、テスト用の部品（<code>EntityFixtures</code>・<code>ForeignKeyFixtures</code>・<code>DiagramBoxesFixtures</code>・<code>MarkdownAssert</code>・ログの警告を確かめる<code>CapturedLogs</code>）</td><td>← 各テスト</td></tr>
     <tr><td class="file">SampleDatabaseExportIT<br>OracleSampleDatabaseExportIT</td><td class="num">152</td><td>結合テスト。サンプルDBに対して全体を通し、出力をベースライン（<code>docs/sample/*/output</code>）とファイル単位で完全一致させる。<code>--check</code>で差分が無いことも確かめる</td><td>→ <code>ExportBaseline</code></td></tr>
-    <tr><td class="file">PostgresTableDefinitionRepositoryIT<br>OracleTableDefinitionRepositoryIT</td><td class="num">1,300</td><td>mapperの各SQLの取得結果（パーティション・多重度・オーバーロード・ビューの参照・メジャーバージョン・トリガーの本体等）</td><td>→ 2つのmapper</td></tr>
+    <tr><td class="file">PostgresCatalogRepositoryIT<br>OracleCatalogRepositoryIT</td><td class="num">1,300</td><td>mapperの各SQLの取得結果（パーティション・多重度・オーバーロード・ビューの参照・メジャーバージョン・トリガーの本体等）</td><td>→ 2つのmapper</td></tr>
     <tr><td class="file">ExportBaseline<br>SampleDatabase<br>OracleSampleDatabase</td><td class="num">224</td><td>Testcontainersで<code>ddl.sql</code>を流したDBを起動し、本番と同じ2段階でコントローラーを作る（時計は固定、作成日は比較の前に置き換える）</td><td>← 結合テスト</td></tr>
     <tr class="empty-row" hidden><td colspan="4">一致するファイルはありません。</td></tr>
   </tbody>
@@ -1991,7 +1991,7 @@ erDiagram
   <li><div>PostgreSQL用とOracle用の<strong>両方</strong>のmapper XMLに列を足す。別名はDTOのコンポーネント名と同じにする。</div></li>
   <li><div>DTO（record）にコンポーネントを足し、<code>toEntity()</code>で値の形を揃える（無い値は<code>DtoValues.text</code>で空文字、連結された値は<code>split</code>でリスト）。業務ルール（既定値の決定・名前の生成等）はDTOやリポジトリに書かず、ドメインのメソッドに持たせる。</div></li>
   <li><div>エンティティに項目を足し、表示はテンプレートで（連結・エスケープ・○）。機械が読む必要があれば<code>…Snapshot</code>にも足す（値の形は8.3節、「空は出力しない」は2.5節）。</div></li>
-  <li><div><code>./gradlew integrationTest</code>を実行し、<code>PostgresTableDefinitionRepositoryIT</code>に取得結果のテストを足す。Oracle側を変えたら<code>./gradlew oracleIntegrationTest</code>と<code>OracleTableDefinitionRepositoryIT</code>。出力が変わるなら、<code>verify</code>スキルの手順でベースラインを出し直す。</div></li>
+  <li><div><code>./gradlew integrationTest</code>を実行し、<code>PostgresCatalogRepositoryIT</code>に取得結果のテストを足す。Oracle側を変えたら<code>./gradlew oracleIntegrationTest</code>と<code>OracleCatalogRepositoryIT</code>。出力が変わるなら、<code>verify</code>スキルの手順でベースラインを出し直す。</div></li>
 </ol>
 
 <h3>テーブル定義書にセクションを足すとき</h3>

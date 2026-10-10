@@ -2,13 +2,13 @@ package com.dbxray.config.module;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.dbxray.domain.repository.CatalogRepository;
 import com.dbxray.domain.repository.FileRepository;
-import com.dbxray.domain.repository.TableDefinitionRepository;
 import com.dbxray.domain.service.path.OutputPathResolver;
 import com.dbxray.infrastructure.db.ConnectionSettings;
 import com.dbxray.infrastructure.db.MyBatisSqlSessionFactories;
-import com.dbxray.infrastructure.db.repository.OracleTableDefinitionRepository;
-import com.dbxray.infrastructure.db.repository.PostgresTableDefinitionRepository;
+import com.dbxray.infrastructure.db.repository.OracleCatalogRepository;
+import com.dbxray.infrastructure.db.repository.PostgresCatalogRepository;
 import com.dbxray.infrastructure.db.type.DatabaseType;
 import com.dbxray.presentation.ExportSchemaController;
 import com.google.inject.ConfigurationException;
@@ -34,8 +34,7 @@ public class DbxrayModuleTest {
     assertNotNull(injector.getInstance(FileRepository.class));
     assertNotNull(injector.getInstance(OutputPathResolver.class));
     // DB種別に依存するものは、子のコンテナを足すまで取得できない
-    assertThrows(
-        ConfigurationException.class, () -> injector.getInstance(TableDefinitionRepository.class));
+    assertThrows(ConfigurationException.class, () -> injector.getInstance(CatalogRepository.class));
   }
 
   /** 生成するだけでDBへは接続しないSqlSessionFactory（接続先は使われない） */
@@ -52,8 +51,7 @@ public class DbxrayModuleTest {
 
     assertNotNull(injector.getInstance(ExportSchemaController.class));
     assertInstanceOf(
-        PostgresTableDefinitionRepository.class,
-        injector.getInstance(TableDefinitionRepository.class));
+        PostgresCatalogRepository.class, injector.getInstance(CatalogRepository.class));
   }
 
   @Test
@@ -73,9 +71,7 @@ public class DbxrayModuleTest {
     final Injector injector = createInjector(DatabaseType.ORACLE);
 
     assertNotNull(injector.getInstance(ExportSchemaController.class));
-    assertInstanceOf(
-        OracleTableDefinitionRepository.class,
-        injector.getInstance(TableDefinitionRepository.class));
+    assertInstanceOf(OracleCatalogRepository.class, injector.getInstance(CatalogRepository.class));
   }
 
   /**
