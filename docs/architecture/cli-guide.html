@@ -674,7 +674,7 @@ INFO  SchemaExportPipeline Skipping orphan table annotation check because the ou
 INFO  SchemaExportPipeline Merged logical relations declared in the sidecar. [relationCount=1]
 INFO  SchemaExportPipeline Exported schema objects. [tables=14, functions=8, sequences=8, types=3, triggers=5]
 INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMillis=498]</code></pre>
-<p class="small muted">メッセージは英語で要旨を先に書き、値は末尾の<code>[key=value, …]</code>にまとめる、というのがこのリポジトリのログの書式です（<code>AGENTS.md</code>の「ログ」）。</p>
+<p class="small muted">メッセージは英語で要旨を先に書き、値は末尾の<code>[key=value, …]</code>にまとめる、というのがこのリポジトリのログの書式です（<code>docs/development/coding-guidelines.md</code>の「ログ」）。</p>
 
 <!-- ============================================================ -->
 <h2 id="overview"><span class="n">3</span>全体像と読む順</h2>
@@ -774,7 +774,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
 <p class="small muted">行数は空行・コメントを含みます。表の合計は187ファイルで、<code>domain</code>直下のpackage-info（1ファイル・2行）を含めると188ファイル・12,285行です。コードの3分の2がdomainで、その3分の1（2,680行）がMarkdownの組み立てです。</p>
 
 <h3>構造の規約（ArchitectureTestが検査するもの）</h3>
-<p>次の規約はArchUnitの単体テストで検査され、破るとビルドが失敗します。違反したら、テストを緩めずに依存や置き場所のほうを直す、というのがこのリポジトリの方針です（<code>AGENTS.md</code>）。</p>
+<p>次の規約はArchUnitの単体テストで検査され、破るとビルドが失敗します。違反したら、テストを緩めずに依存や置き場所のほうを直す、というのがこのリポジトリの方針です（<code>docs/development/coding-guidelines.md</code>）。</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>規約</th><th>内容</th></tr></thead>
@@ -1774,7 +1774,7 @@ erDiagram
 <p>相対リンクは、リンク元が<code>{DB名}/</code>直下なら<code>linkFromDatabaseRoot</code>（<code>./</code>を付ける）、<code>{スキーマ}/{区分}/</code>の下の個別定義書なら<code>linkFromDefinition</code>（<code>../../</code>を付ける）で作ります。サンプルの<code>department.md</code>には<code>[人事管理](../../viewpoint_testdb_personnel.md)</code>・<code>[テーブル一覧へ](../../tableList_testdb.md)</code>が出力されています。</p>
 
 <h3>DB由来の文字列を信頼しない</h3>
-<p>DB名・スキーマ名・テーブル名・コメント・関数やビューの定義は、ツールを実行する人とは別の人（DBでCREATE・COMMENTの権限を持つ人）が書ける入力です。引用符で囲んだ識別子には<code>/</code>・<code>..</code>・改行・HTMLも書けるため、出力・パスに使う箇所はすべて決まった部品を通します（<code>AGENTS.md</code>の「セキュリティ」）。サイドカーYAMLは利用者自身が書くため、説明文はMarkdownとしてそのまま出力します。</p>
+<p>DB名・スキーマ名・テーブル名・コメント・関数やビューの定義は、ツールを実行する人とは別の人（DBでCREATE・COMMENTの権限を持つ人）が書ける入力です。引用符で囲んだ識別子には<code>/</code>・<code>..</code>・改行・HTMLも書けるため、出力・パスに使う箇所はすべて決まった部品を通します（<code>docs/development/coding-guidelines.md</code>の「セキュリティ」）。サイドカーYAMLは利用者自身が書くため、説明文はMarkdownとしてそのまま出力します。</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>使い道</th><th>通す部品</th><th>防ぐこと</th><th>検査するテスト</th></tr></thead>
@@ -1975,7 +1975,7 @@ erDiagram
 
 <!-- ============================================================ -->
 <h2 id="change"><span class="n">12</span>変更するときの道しるべ</h2>
-<p>よくある変更ごとに、触る場所と確かめ方をまとめます。規約の原文は<code>AGENTS.md</code>の「作業時の注意」にあります。</p>
+<p>よくある変更ごとに、触る場所と確かめ方をまとめます。規約の原文は<code>docs/development/coding-guidelines.md</code>の「変更の種類ごとに必要な作業」にあります。</p>
 
 <h3>設定項目を1つ足すとき</h3>
 <ol class="steps">
