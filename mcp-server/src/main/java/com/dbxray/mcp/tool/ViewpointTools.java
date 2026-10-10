@@ -36,7 +36,7 @@ final class ViewpointTools {
   }
 
   private CallToolResult listViewpoints(ToolArguments arguments) {
-    final List<ViewpointEntry> viewpoints = catalog.listViewpoints(arguments.scope());
+    final List<ViewpointEntry> viewpoints = catalog.viewpoints().list(arguments.scope());
     return ToolResults.json(
         new ListViewpointsOutput(
             viewpoints.stream().map(ListViewpointsOutput.Viewpoint::of).toList()));

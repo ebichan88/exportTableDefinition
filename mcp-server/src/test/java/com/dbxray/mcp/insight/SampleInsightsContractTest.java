@@ -82,12 +82,14 @@ class SampleInsightsContractTest {
 
     assertEquals(
         List.of("personnel", "project"),
-        catalog.viewpointsOf(table(catalog, "employee")).stream().map(ViewpointEntry::id).toList());
-    assertEquals(List.of(), catalog.viewpointsOf(table(catalog, "audit_log")));
+        catalog.viewpoints().containing(table(catalog, "employee")).stream()
+            .map(ViewpointEntry::id)
+            .toList());
+    assertEquals(List.of(), catalog.viewpoints().containing(table(catalog, "audit_log")));
   }
 
   private static TableEntry table(SchemaCatalog catalog, String name) {
-    return catalog.tables().stream()
+    return catalog.tables().all().stream()
         .filter(table -> table.key().name().equals(name))
         .findFirst()
         .orElseThrow();

@@ -46,7 +46,7 @@ class SampleSnapshotContractTest {
   @Test
   @DisplayName("サンプルの全テーブル（ビュー・マテリアライズドビューを含む）を読み込む")
   void readsAllTables() {
-    assertEquals(14, catalog.tables().size());
+    assertEquals(14, catalog.tables().all().size());
     final TableEntry employee = find("employee");
     assertEquals("従業員", employee.logicalName());
     assertEquals("table", employee.type());
@@ -64,7 +64,7 @@ class SampleSnapshotContractTest {
     assertEquals("勤怠（月次パーティション）", attendance.logicalName());
     assertTrue(attendance.json().contains("\"partitionKey\":\"RANGE (work_date)\""));
     assertTrue(
-        catalog.tables().stream()
+        catalog.tables().all().stream()
             .noneMatch(table -> table.key().name().startsWith("attendance_2")));
   }
 
@@ -73,18 +73,19 @@ class SampleSnapshotContractTest {
   void searchesSidecarText() {
     assertEquals(
         List.of("department"),
-        catalog.searchTables(SearchQuery.of("組織単位"), TableFilter.ALL, 10).hits().stream()
+        catalog.tables().search(SearchQuery.of("組織単位"), TableFilter.ALL, 10).hits().stream()
             .map(hit -> hit.table().key().name())
             .toList());
     assertTrue(
-        catalog.searchTables(SearchQuery.of("変更対象のテーブル名"), TableFilter.ALL, 10).hits().stream()
+        catalog.tables().search(SearchQuery.of("変更対象のテーブル名"), TableFilter.ALL, 10).hits().stream()
             .anyMatch(hit -> hit.matchedIn().contains("column:table_name")));
   }
 
   @Test
   @DisplayName("外部キー（複合キー・自己参照を含む）と論理リレーションを、被参照側からもたどれる")
   void followsRelationsOfSample() {
-    final RelatedTables employee = catalog.relatedTables(find("employee"), 1, Direction.BOTH);
+    final RelatedTables employee =
+        catalog.relations().relatedTables(find("employee"), 1, Direction.BOTH);
     final List<String> relations =
         employee.relations().stream()
             .map(
@@ -113,7 +114,8 @@ class SampleSnapshotContractTest {
         relations.contains("project_assignment->employee FOREIGN_KEY ONE_TO_MANY"),
         relations::toString);
 
-    final RelatedTables shipment = catalog.relatedTables(find("shipment"), 1, Direction.OUTGOING);
+    final RelatedTables shipment =
+        catalog.relations().relatedTables(find("shipment"), 1, Direction.OUTGOING);
     assertEquals(
         List.of("warehouse_code", "zone_code"),
         shipment.relations().get(0).relation().fromColumns());
@@ -133,7 +135,9 @@ class SampleSnapshotContractTest {
   @DisplayName("カラムの型・PK・NOT NULL・デフォルト値を読み込み、カラム名から逆引きできる")
   void findsColumnsOfSample() {
     final List<ColumnHit> hits =
-        catalog.findColumns(ColumnQuery.of("employee_id", MatchMode.EXACT), SearchScope.ALL);
+        catalog
+            .tables()
+            .findColumns(ColumnQuery.of("employee_id", MatchMode.EXACT), SearchScope.ALL);
 
     final ColumnEntry primaryKey =
         hits.stream()
@@ -158,7 +162,8 @@ class SampleSnapshotContractTest {
   @DisplayName("関数のシグネチャ（オーバーロードを含む）・シーケンスの所有カラム・型の種別・トリガーを読み込む")
   void readsOtherObjectsOfSample() {
     final FunctionOverloads calculateBonus =
-        Lookups.found(catalog.lookupFunction(ObjectReference.of(null, null, "calculate_bonus")));
+        Lookups.found(
+            catalog.functions().lookup(ObjectReference.of(null, null, "calculate_bonus")));
     assertEquals(
         List.of("p_salary numeric, p_rate numeric", "p_salary numeric"),
         calculateBonus.overloads().stream().map(FunctionEntry::arguments).toList());
@@ -166,11 +171,12 @@ class SampleSnapshotContractTest {
     assertEquals(
         "audit_log.log_id",
         Lookups.found(
-                catalog.lookupSequence(ObjectReference.of(null, null, "audit_log_log_id_seq")))
+                catalog.sequences().lookup(ObjectReference.of(null, null, "audit_log_log_id_seq")))
             .ownedBy());
     assertEquals(
         "ENUM",
-        Lookups.found(catalog.lookupType(ObjectReference.of(null, null, "employee_status_enum")))
+        Lookups.found(
+                catalog.types().lookup(ObjectReference.of(null, null, "employee_status_enum")))
             .category());
     final TriggerEntry audit =
         find("employee").triggers().stream()
@@ -186,26 +192,30 @@ class SampleSnapshotContractTest {
   void findsCrossReferencesOfSample() {
     final FunctionOverloads logEmployeeChange =
         Lookups.found(
-            catalog.lookupFunction(ObjectReference.of(null, null, "log_employee_change")));
+            catalog.functions().lookup(ObjectReference.of(null, null, "log_employee_change")));
     assertEquals(
         List.of("employee.trg_employee_audit"),
-        catalog.triggersCalling(logEmployeeChange).stream()
+        catalog.tables().triggersCalling(logEmployeeChange).stream()
             .map(found -> found.table().key().name() + "." + found.trigger().name())
             .toList());
     assertEquals(
         List.of("audit_log.log_id"),
         catalog
-            .columnsUsingSequence(
+            .tables()
+            .columnsUsing(
                 Lookups.found(
-                    catalog.lookupSequence(ObjectReference.of(null, null, "audit_log_log_id_seq"))))
+                    catalog
+                        .sequences()
+                        .lookup(ObjectReference.of(null, null, "audit_log_log_id_seq"))))
             .stream()
             .map(found -> found.table().key().name() + "." + found.column().name())
             .toList());
     assertTrue(
         catalog
-            .columnsUsingType(
+            .tables()
+            .columnsUsing(
                 Lookups.found(
-                    catalog.lookupType(ObjectReference.of(null, null, "employee_status_enum"))))
+                    catalog.types().lookup(ObjectReference.of(null, null, "employee_status_enum"))))
             .stream()
             .anyMatch(found -> found.table().key().name().equals("employee")));
   }
@@ -213,7 +223,8 @@ class SampleSnapshotContractTest {
   @Test
   @DisplayName("サンプルのテーブル同士をつなぐJOIN経路を探せる")
   void findsJoinPathOfSample() {
-    final JoinPaths paths = catalog.joinPaths(find("audit_log"), find("department"), 4, 5);
+    final JoinPaths paths =
+        catalog.relations().joinPaths(find("audit_log"), find("department"), 4, 5);
 
     assertEquals(
         List.of("audit_log", "employee", "department"),
@@ -237,7 +248,7 @@ class SampleSnapshotContractTest {
             .map(cluster -> cluster.tables().stream().map(table -> table.key().name()).toList())
             .toList());
     assertEquals(
-        catalog.tables().size(),
+        catalog.tables().all().size(),
         clusters.clusters().stream().mapToInt(cluster -> cluster.tables().size()).sum()
             + clusters.hubs().size()
             + clusters.unrelatedTables());
@@ -254,13 +265,17 @@ class SampleSnapshotContractTest {
         find("attendance_monthly_view").referencedTables());
     assertEquals(
         List.of("attendance_monthly_view"),
-        catalog.viewsReferencing(find("attendance")).stream().map(t -> t.key().name()).toList());
+        catalog.tables().viewsReferencing(find("attendance")).stream()
+            .map(t -> t.key().name())
+            .toList());
     assertEquals(
         List.of("employee_directory_view"),
-        catalog.viewsReferencing(find("department")).stream().map(t -> t.key().name()).toList());
+        catalog.tables().viewsReferencing(find("department")).stream()
+            .map(t -> t.key().name())
+            .toList());
   }
 
   private static TableEntry find(String name) {
-    return Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, name)));
+    return Lookups.found(catalog.tables().lookup(ObjectReference.of(null, null, name)));
   }
 }

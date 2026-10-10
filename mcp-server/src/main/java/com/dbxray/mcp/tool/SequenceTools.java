@@ -60,7 +60,7 @@ final class SequenceTools {
   private CallToolResult listSequences(ToolArguments arguments) {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
     final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
-    final List<SequenceEntry> sequences = catalog.listSequences(arguments.scope(), filter);
+    final List<SequenceEntry> sequences = catalog.sequences().list(arguments.scope(), filter);
     return ToolResults.json(
         new ListSequencesOutput(
             sequences.size(),
@@ -71,8 +71,8 @@ final class SequenceTools {
   private CallToolResult getSequence(ToolArguments arguments) {
     final SequenceEntry sequence =
         ObjectResolver.resolve(
-            arguments, "sequence", "シーケンス", LIST_SEQUENCES, catalog::lookupSequence);
-    return ToolResults.withUsedByColumns(sequence.json(), catalog.columnsUsingSequence(sequence));
+            arguments, "sequence", "シーケンス", LIST_SEQUENCES, catalog.sequences()::lookup);
+    return ToolResults.withUsedByColumns(sequence.json(), catalog.tables().columnsUsing(sequence));
   }
 
   /**

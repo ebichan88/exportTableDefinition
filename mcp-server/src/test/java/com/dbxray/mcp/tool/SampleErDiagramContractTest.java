@@ -39,18 +39,19 @@ class SampleErDiagramContractTest {
   @ValueSource(strings = {"personnel", "logistics"})
   @DisplayName("全所属テーブルに関連がある観点のER図は、cliの観点ページのER図と一致する")
   void matchesCliViewpointPage(String id) throws IOException {
-    final ViewpointEntry viewpoint = catalog.findViewpoint(SearchScope.ALL, id).orElseThrow();
+    final ViewpointEntry viewpoint = catalog.viewpoints().find(SearchScope.ALL, id).orElseThrow();
 
-    assertEquals(cliDiagram(id), MermaidErDiagram.render(catalog.diagramOf(viewpoint)));
+    assertEquals(
+        cliDiagram(id), MermaidErDiagram.render(catalog.relations().among(viewpoint.tables())));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"project"})
   @DisplayName("関連の無い所属テーブルは、cliの観点ページのER図に箱だけを加えて描く")
   void addsTablesWithoutRelations(String id) throws IOException {
-    final ViewpointEntry viewpoint = catalog.findViewpoint(SearchScope.ALL, id).orElseThrow();
+    final ViewpointEntry viewpoint = catalog.viewpoints().find(SearchScope.ALL, id).orElseThrow();
 
-    final String mermaid = MermaidErDiagram.render(catalog.diagramOf(viewpoint));
+    final String mermaid = MermaidErDiagram.render(catalog.relations().among(viewpoint.tables()));
 
     assertTrue(mermaid.contains("    sample_project_summary_mv[\"project_summary_mv"), mermaid);
     assertEquals(

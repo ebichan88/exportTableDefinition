@@ -14,7 +14,7 @@ import java.util.stream.Stream;
  * テーブルを頂点、外部キー・論理リレーションを辺とする関連のグラフ<br>
  * 被参照側の関連はスナップショットに保持されないため、組み立て時に全テーブルの関連から逆引きの索引を作る
  */
-final class RelationGraph {
+public final class RelationGraph {
 
   private final Map<ObjectKey, TableEntry> tablesByKey = new HashMap<>();
   private final Map<ObjectKey, List<Relation>> outgoing = new HashMap<>();
@@ -46,9 +46,11 @@ final class RelationGraph {
     }
   }
 
-  /**
-   * @see SchemaCatalog#relationCountsOf(TableEntry)
-   */
+  /** テーブルの関連の数を返すメソッド */
+  public RelationCounts counts(TableEntry table) {
+    return counts(table.key());
+  }
+
   RelationCounts counts(ObjectKey table) {
     return counts.getOrDefault(table, new RelationCounts(0, 0, 0));
   }
@@ -64,9 +66,12 @@ final class RelationGraph {
   }
 
   /**
-   * @see SchemaCatalog#relatedTables(TableEntry, int, Direction)
+   * テーブルから関連をたどるメソッド<br>
+   * 幅優先でたどり、同じ関連は最初に見つけた段の1回だけ返す。スナップショットに含まれないテーブルの先はたどらない
+   *
+   * @param depth たどる段数（1以上）
    */
-  RelatedTables relatedTables(TableEntry start, int depth, Direction direction) {
+  public RelatedTables relatedTables(TableEntry start, int depth, Direction direction) {
     final Map<Relation, Integer> found = new LinkedHashMap<>();
     final Set<ObjectKey> visited = new LinkedHashSet<>(List.of(start.key()));
     final Set<ObjectKey> missing = new LinkedHashSet<>();
@@ -96,9 +101,13 @@ final class RelationGraph {
   }
 
   /**
-   * @see SchemaCatalog#diagramOf(ViewpointEntry)
+   * 指定したテーブル同士の関連を求めるメソッド（観点のER図に描く範囲）<br>
+   * 指定したテーブル同士の外部キー・論理リレーションだけを返す（指定外のテーブルとの関連は含めない）
+   *
+   * @param tables 観点の所属テーブル等（宣言順）
+   * @return テーブルは指定の順、関連はテーブルごとに外部キー・論理リレーションの順。スナップショットに無いテーブルは{@code missingTables}に分ける
    */
-  DiagramScope among(List<ObjectKey> tables) {
+  public DiagramScope among(List<ObjectKey> tables) {
     final Set<ObjectKey> members = new LinkedHashSet<>(tables);
     final List<TableEntry> found =
         members.stream().filter(tablesByKey::containsKey).map(tablesByKey::get).toList();
@@ -114,9 +123,13 @@ final class RelationGraph {
   }
 
   /**
-   * @see SchemaCatalog#joinPaths(TableEntry, TableEntry, int, int)
+   * 2つのテーブルをつなぐ最短の経路を探すメソッド<br>
+   * 外部キー・論理リレーションを向きを問わずたどる。スナップショットに含まれないテーブルは経由しない
+   *
+   * @param maxLength 経路の関連の数の上限（1以上）。これより長い経路は探さない
+   * @param limit 返す経路の数の上限（1以上）
    */
-  JoinPaths joinPaths(TableEntry from, TableEntry to, int maxLength, int limit) {
+  public JoinPaths joinPaths(TableEntry from, TableEntry to, int maxLength, int limit) {
     final ObjectKey goal = to.key();
     final Map<ObjectKey, Integer> distances = new HashMap<>(Map.of(from.key(), 0));
     final Map<ObjectKey, List<Step>> previousSteps = new HashMap<>();

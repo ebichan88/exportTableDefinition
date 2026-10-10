@@ -40,7 +40,7 @@ public final class TableDefinitionResources {
    * @return 全テーブル（ビューを含む）。定義は読まれたときに組み立てる
    */
   public List<SyncResourceSpecification> specifications() {
-    return catalog.tables().stream().map(this::specificationOf).toList();
+    return catalog.tables().all().stream().map(this::specificationOf).toList();
   }
 
   /**

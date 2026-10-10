@@ -24,21 +24,24 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `mcp`（直下） | `McpServerMain` | エントリーポイント。起動引数の検証とスナップショット・参考情報の読み込みの後、stdioのトランスポートでサーバーを起動する |
 | | `ServerArguments` | 起動引数（`--snapshot=<ディレクトリ>`）の解釈と検証 |
 | | `UserCorrectableException` | 利用者が起動引数・スナップショットを見直せば解消する失敗。起動時に標準エラーへ出して終了コード2で終了する |
-| `mcp.catalog` | `SchemaCatalog` | 全オブジェクトを保持し、検索・一覧・名前の解決・カラムの逆引き・オブジェクト間の相互参照・関連のたどりを担う。観点（`ViewpointEntry`）は`withViewpoints`で組み立て後に合成する |
+| `mcp.catalog` | `SchemaCatalog` | 全オブジェクトを保持し、関心ごとの窓口（`tables()`・`functions()`・`sequences()`・`types()`・`viewpoints()`・`relations()`）を返す。自身が持つのは複数の窓口にまたがる処理（スキーマごとの数・テーブルのまとまり）だけ。観点（`ViewpointEntry`）は`withViewpoints`で組み立て後に合成する |
+| | `TableCatalog` | テーブル（ビューを含む）の検索・一覧・名前の解決、カラムの逆引き、トリガーの一覧と、テーブルを走査して求める相互参照（テーブルを参照するビュー、関数を実行するトリガー、シーケンス・型を使うカラム） |
+| | `ObjectCatalog` | 関数（`FunctionOverloads`）・シーケンス・ユーザー定義型に共通の、一覧と名前の解決（見つからない場合の候補を含む）。種類を足しても`SchemaCatalog`にメソッドは増えない。型の種別での絞り込み等、種類に固有の条件はツール側で行う |
+| | `ViewpointCatalog` | 観点の一覧・識別子での解決と、テーブルから所属する観点の逆引き（`containing`） |
 | | `SearchQuery` | テーブルの検索語。空白区切りのAND、NFKC正規化＋小文字化した部分一致、項目ごとの点数（テーブル名＞論理名＞カラム＞説明・備考） |
 | | `ColumnQuery`・`ColumnHit` | カラムの逆引きの条件（物理名・論理名の完全一致／部分一致）と、当てはまったカラム（参照先を含む） |
 | | `ObjectReference`・`Lookup` | 名前で指定されたオブジェクト（`スキーマ名.名前`も可）と、その解決結果（1つに定まる・複数ある・見つからない）。テーブル以外の種類にも共通で使う |
-| | `RelationGraph` | テーブルを頂点、関連（外部キー・論理リレーション）を辺とするグラフ。被参照側の逆引きの索引を持ち、関連のたどりと最短のJOIN経路の探索を担う |
+| | `RelationGraph` | テーブルを頂点、関連（外部キー・論理リレーション）を辺とするグラフ。被参照側の逆引きの索引を持ち、関連の数・関連のたどり・指定したテーブル同士の関連（観点のER図）・最短のJOIN経路の探索を担う。ツールは`SchemaCatalog#relations`から直接呼ぶ |
 | | `Relation`・`RelatedTables`・`JoinPath`・`JoinPaths` | テーブル間の関連と、幅優先でたどった結果・2つのテーブルをつなぐ最短経路 |
 | | `DiagramScope` | ER図に描くテーブルと関連（関連をたどった結果、または観点の所属テーブル同士の関連） |
 | | `ClusterDetector`・`TableClusters`・`TableCluster` | 関連のつながりだけから推測するテーブルのまとまり（`list_table_clusters`の元）。連結成分を1つのまとまりとし、上限を超えるまとまりは被参照の最も多いテーブル（`TableClusters.HUB_MIN_INCOMING`以上から参照される共通のマスタ）をハブとして除いて分け直す。ハブとの間にしか関連の無いテーブルは、被参照の最も多いハブごとにまとめる。呼び出しのたびに求める（範囲・上限が引数で変わるため） |
 | | `SqlNames`・`TableColumn` | カラムの型・デフォルト値（`nextval`）・トリガーの関数名に現れるオブジェクトの名前の判定（相互参照に使う）と、カラムとそれを持つテーブル |
 | | `TableEntry`・`ColumnEntry`・`RelationEntry`・`TriggerEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
-| | `ViewpointEntry` | 観点の参考情報1件（識別子・表示名・説明・所属テーブル）。スキーマを持たないため`SchemaObject`は実装しない。テーブルから所属する観点は`SchemaCatalog#viewpointsOf`で逆引きする（読み込み済みの観点を引くだけで、索引は持たない） |
+| | `ViewpointEntry` | 観点の参考情報1件（識別子・表示名・説明・所属テーブル）。スキーマを持たないため`SchemaObject`は実装しない。テーブルから所属する観点は`ViewpointCatalog#containing`で逆引きする（読み込み済みの観点を引くだけで、索引は持たない） |
 | | `FunctionEntry`・`FunctionOverloads`・`SequenceEntry`・`TypeEntry` | 関数・シーケンス・ユーザー定義型の1行。関数は同名のもの（オーバーロード）を`FunctionOverloads`にまとめて名前の解決の単位にする |
 | | `NameFilter` | 関数・シーケンス・型の一覧を、名前の部分一致で絞り込む条件 |
 | | `TableFilter`・`TableType` | テーブルの一覧・検索の絞り込み（DB・スキーマ・区分・観点）を1回組み立てて`matches`で問い合わせる値オブジェクトと、テーブルの区分（table/view/materialized_view）。区分の値はツールの入力スキーマの`enum`にも使う |
-| | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
+| | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元）。集計は`SchemaSummary.summarize`が行う |
 | `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリ（`tables.jsonl`・`functions.jsonl`・`sequences.jsonl`・`types.jsonl`）を読み込み`SchemaCatalog`を組み立てる。未知の項目は無視し、無いファイルは0件とする（cliの`target.objects`で外せるため） |
 | `mcp.insight` | `InsightsDirectoryReader` | 参考情報のディレクトリ（`{DB名}/viewpoints.json`）を読み込み`ViewpointEntry`のリストを組み立てる。渡されたスナップショットのディレクトリの親の兄弟を自前で求めるため、起動引数は増えない。ディレクトリ・ファイルが無い場合は0件とする |
 | `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`ViewpointTools`・`ClusterTools`・`TableTools`・`RelationTools`・`DiagramTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
@@ -62,7 +65,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | `find_columns` | `column`、`match`・`schema`・`database`・`limit`・`offset`（任意） | 当てはまったカラム（テーブル・型・PK・NOT NULL・デフォルト値・参照先） |
 | `get_related_tables` | `table`、`depth`（1〜3）・`direction`（outgoing/incoming/both）等（任意） | 関連（どのカラム同士か・外部キーか論理リレーションか・多重度・段数）と、関連に現れたテーブルの概要 |
 | `find_join_path` | `from`・`to`、`maxLength`（1〜6）・`limit`等（任意） | 2つのテーブルをつなぐ最短の経路（たどる順のテーブルと、各段の関連）。同じ長さの経路はすべて（`limit`まで）返す |
-| `get_er_diagram` | `table`か`viewpoint`（どちらか一方）、`depth`・`direction`（`table`のときだけ）等（任意） | ER図のMermaid記法（`erDiagram`）と、図に描いたテーブル。`table`は`get_related_tables`と同じ範囲を、`viewpoint`は所属テーブルと所属テーブル同士の関連（`SchemaCatalog#diagramOf`）を描く。描くテーブルは`DiagramTools.MAX_NODES`（cliの`erDiagramMaxNodes`の既定値）まで |
+| `get_er_diagram` | `table`か`viewpoint`（どちらか一方）、`depth`・`direction`（`table`のときだけ）等（任意） | ER図のMermaid記法（`erDiagram`）と、図に描いたテーブル。`table`は`get_related_tables`と同じ範囲を、`viewpoint`は所属テーブルと所属テーブル同士の関連（`RelationGraph#among`）を描く。描くテーブルは`DiagramTools.MAX_NODES`（cliの`erDiagramMaxNodes`の既定値）まで |
 | `list_functions`・`get_function` | `query`等（任意）／`function`、`includeDefinition`（任意） | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）。`get_function`はオーバーロードをまとめ、関数を実行するトリガーも返す。`includeDefinition`指定時は定義本体も返す（オーバーロードの本体が同じ場合は1つにまとめ、長い場合は切り詰める） |
 | `list_sequences`・`get_sequence` | `query`等（任意）／`sequence` | シーケンスの名前・所有カラム／スナップショットの1行と、採番に使うカラム（`usedByColumns`） |
 | `list_types`・`get_type` | `query`・`category`等（任意）／`type` | ユーザー定義型の名前・種別／スナップショットの1行（ENUMの値の一覧等）と、型を使うカラム（`usedByColumns`） |

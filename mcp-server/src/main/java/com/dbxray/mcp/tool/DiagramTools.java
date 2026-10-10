@@ -79,16 +79,17 @@ final class DiagramTools {
         throw new InvalidToolArgumentException(
             "引数" + String.join("・", unusable) + "は、tableを指定した場合だけ使えます。");
       }
-      return render(catalog.diagramOf(viewpoint.get()), null, viewpoint.get().id());
+      return render(
+          catalog.relations().among(viewpoint.get().tables()), null, viewpoint.get().id());
     }
     final TableEntry table =
         ObjectResolver.resolve(
-            arguments, "table", "テーブル", TableTools.SEARCH_TABLES, catalog::lookupTable);
+            arguments, "table", "テーブル", TableTools.SEARCH_TABLES, catalog.tables()::lookup);
     final int depth = arguments.optionalInt("depth", 1);
     final Direction direction =
         arguments.optionalEnum("direction", Direction.class, Direction.BOTH);
     return render(
-        DiagramScope.of(catalog.relatedTables(table, depth, direction)),
+        DiagramScope.of(catalog.relations().relatedTables(table, depth, direction)),
         table.key().qualifiedName(),
         null);
   }

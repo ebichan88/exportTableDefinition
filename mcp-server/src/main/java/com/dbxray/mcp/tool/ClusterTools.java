@@ -84,7 +84,7 @@ final class ClusterTools {
     final Page page = Page.read(arguments, DEFAULT_LIMIT);
     final TableClusters found =
         catalog.tableClusters(arguments.scope(), maxClusterSize, excludeViewpointTables);
-    final List<ViewpointEntry> viewpoints = catalog.listViewpoints(arguments.scope());
+    final List<ViewpointEntry> viewpoints = catalog.viewpoints().list(arguments.scope());
     return ToolResults.json(
         new ListTableClustersOutput(
             found.clusters().size(),
@@ -101,7 +101,7 @@ final class ClusterTools {
         table.key().database(),
         table.key().qualifiedName(),
         table.logicalName(),
-        catalog.relationCountsOf(table).incoming());
+        catalog.relations().counts(table).incoming());
   }
 
   /**

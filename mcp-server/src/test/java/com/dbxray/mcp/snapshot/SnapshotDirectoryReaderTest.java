@@ -59,8 +59,8 @@ class SnapshotDirectoryReaderTest {
             new ObjectKey("otherdb", "public", "item"),
             new ObjectKey("testdb", "hr", "employee"),
             new ObjectKey("testdb", "sales", "orders")),
-        catalog.tables().stream().map(TableEntry::key).toList());
-    final TableEntry orders = catalog.tables().get(2);
+        catalog.tables().all().stream().map(TableEntry::key).toList());
+    final TableEntry orders = catalog.tables().all().get(2);
     assertEquals("受注", orders.logicalName());
     assertEquals("顧客", orders.columns().get(0).remarks());
     assertEquals(
@@ -100,7 +100,7 @@ class SnapshotDirectoryReaderTest {
         List.of(
             new ObjectKey("testdb", "sales", "orders"),
             new ObjectKey("testdb", "archive", "orders")),
-        reader.read(snapshot).tables().get(0).referencedTables());
+        reader.read(snapshot).tables().all().get(0).referencedTables());
   }
 
   @Test
@@ -115,7 +115,7 @@ class SnapshotDirectoryReaderTest {
 
     final SchemaCatalog catalog = reader.read(snapshot);
 
-    assertEquals("c", catalog.tables().get(0).columns().get(0).name());
+    assertEquals("c", catalog.tables().all().get(0).columns().get(0).name());
   }
 
   @Test
@@ -127,10 +127,11 @@ class SnapshotDirectoryReaderTest {
 
     final SchemaCatalog catalog = reader.read(snapshot);
 
-    assertTrue(catalog.tables().isEmpty());
+    assertTrue(catalog.tables().all().isEmpty());
     assertEquals(
         List.of(new ObjectKey("testdb", "sample", "f")),
-        catalog.listFunctions(SearchScope.ALL, NameFilter.ALL).stream()
+        catalog.functions().list(SearchScope.ALL, NameFilter.ALL).stream()
+            .flatMap(function -> function.overloads().stream())
             .map(FunctionEntry::key)
             .toList());
   }
@@ -156,20 +157,21 @@ class SnapshotDirectoryReaderTest {
 
     final SchemaCatalog catalog = reader.read(snapshot);
 
-    final FunctionEntry calc = catalog.listFunctions(SearchScope.ALL, NameFilter.ALL).get(0);
+    final FunctionEntry calc =
+        catalog.functions().list(SearchScope.ALL, NameFilter.ALL).get(0).overloads().get(0);
     assertEquals(
         List.of("FUNCTION", "p numeric", "numeric", "sql"),
         List.of(calc.kind(), calc.arguments(), calc.result(), calc.language()));
     assertEquals(function, calc.json());
-    final SequenceEntry ordersId = catalog.listSequences(SearchScope.ALL, NameFilter.ALL).get(0);
+    final SequenceEntry ordersId = catalog.sequences().list(SearchScope.ALL, NameFilter.ALL).get(0);
     assertEquals("orders.id", ordersId.ownedBy());
     assertEquals(sequence, ordersId.json());
-    final TypeEntry status = catalog.listTypes(SearchScope.ALL, NameFilter.ALL, "").get(0);
+    final TypeEntry status = catalog.types().list(SearchScope.ALL, NameFilter.ALL).get(0);
     assertEquals("ENUM", status.category());
     assertEquals(type, status.json());
     assertEquals(
         new TriggerEntry("trg", "AFTER", List.of("INSERT", "UPDATE"), "ROW", "sample.calc"),
-        catalog.tables().get(0).triggers().get(0));
+        catalog.tables().all().get(0).triggers().get(0));
   }
 
   @Test

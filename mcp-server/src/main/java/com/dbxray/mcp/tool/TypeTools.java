@@ -71,7 +71,10 @@ final class TypeTools {
     final NameFilter filter = NameFilter.of(arguments.optionalString("query"));
     final String category = arguments.optionalChoice("category", CATEGORIES);
     final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
-    final List<TypeEntry> types = catalog.listTypes(arguments.scope(), filter, category);
+    final List<TypeEntry> types =
+        catalog.types().list(arguments.scope(), filter).stream()
+            .filter(type -> category.isEmpty() || category.equalsIgnoreCase(type.category()))
+            .toList();
     return ToolResults.json(
         new ListTypesOutput(
             types.size(),
@@ -81,8 +84,8 @@ final class TypeTools {
 
   private CallToolResult getType(ToolArguments arguments) {
     final TypeEntry type =
-        ObjectResolver.resolve(arguments, "type", "型", LIST_TYPES, catalog::lookupType);
-    return ToolResults.withUsedByColumns(type.json(), catalog.columnsUsingType(type));
+        ObjectResolver.resolve(arguments, "type", "型", LIST_TYPES, catalog.types()::lookup);
+    return ToolResults.withUsedByColumns(type.json(), catalog.tables().columnsUsing(type));
   }
 
   /**

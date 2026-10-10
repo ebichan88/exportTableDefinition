@@ -62,7 +62,7 @@ final class TableOutputBuilder {
 
   /** テーブルを参照しているビューを、ビューの{@code referencedTables}と同じ形（スキーマ名・名前・区分）で加える */
   private void addReferencingViews(ObjectNode output, TableEntry table) {
-    final List<TableEntry> views = catalog.viewsReferencing(table);
+    final List<TableEntry> views = catalog.tables().viewsReferencing(table);
     if (views.isEmpty()) {
       return;
     }
@@ -125,7 +125,7 @@ final class TableOutputBuilder {
    * 観点はスナップショットの項目ではない（参考情報）ため{@code sections}では絞り込まず、所属する観点があれば常に加える
    */
   private void addViewpoints(ObjectNode output, TableEntry table) {
-    final List<ViewpointEntry> viewpoints = catalog.viewpointsOf(table);
+    final List<ViewpointEntry> viewpoints = catalog.viewpoints().containing(table);
     if (viewpoints.isEmpty()) {
       return;
     }

@@ -177,7 +177,7 @@ final class TableTools {
   private CallToolResult searchTables(ToolArguments arguments) {
     final SearchQuery query = SearchQuery.of(arguments.requiredString("query"));
     final int limit = arguments.optionalInt("limit", DEFAULT_SEARCH_LIMIT);
-    final SearchResult result = catalog.searchTables(query, tableFilter(arguments), limit);
+    final SearchResult result = catalog.tables().search(query, tableFilter(arguments), limit);
     return ToolResults.json(
         new SearchTablesOutput(
             result.total(), result.hits().stream().map(SearchTablesOutput.Hit::of).toList()));
@@ -192,7 +192,7 @@ final class TableTools {
     final boolean includeDescription = arguments.optionalBoolean("includeDescription", false);
     final TableOrder order = arguments.optionalEnum("orderBy", TableOrder.class, TableOrder.NAME);
     final Page page = Page.read(arguments, Page.DEFAULT_LIMIT);
-    final List<TableEntry> tables = catalog.listTables(filter, order);
+    final List<TableEntry> tables = catalog.tables().list(filter, order);
     return ToolResults.json(
         new ListTablesOutput(
             tables.size(),
@@ -201,7 +201,7 @@ final class TableTools {
                 .map(
                     table ->
                         ListTablesOutput.Table.of(
-                            table, catalog.relationCountsOf(table), includeDescription))
+                            table, catalog.relations().counts(table), includeDescription))
                 .toList()));
   }
 
@@ -247,7 +247,7 @@ final class TableTools {
                 ObjectReference.of(database, schema, name),
                 "テーブル",
                 SEARCH_TABLES,
-                catalog::lookupTable));
+                catalog.tables()::lookup));
       } catch (InvalidToolArgumentException e) {
         errors.add(e.getMessage());
       }
@@ -264,7 +264,7 @@ final class TableTools {
             arguments.requiredString("column"),
             arguments.optionalEnum("match", MatchMode.class, MatchMode.EXACT));
     final Page page = Page.read(arguments, DEFAULT_COLUMN_LIMIT);
-    final List<ColumnHit> hits = catalog.findColumns(query, arguments.scope());
+    final List<ColumnHit> hits = catalog.tables().findColumns(query, arguments.scope());
     return ToolResults.json(
         new FindColumnsOutput(
             hits.size(),

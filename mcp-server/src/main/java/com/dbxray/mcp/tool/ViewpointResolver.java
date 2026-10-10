@@ -23,14 +23,15 @@ final class ViewpointResolver {
     }
     return Optional.of(
         catalog
-            .findViewpoint(arguments.scope(), id)
+            .viewpoints()
+            .find(arguments.scope(), id)
             .orElseThrow(() -> notFound(catalog, id, arguments)));
   }
 
   private static InvalidToolArgumentException notFound(
       SchemaCatalog catalog, String id, ToolArguments arguments) {
     final List<String> ids =
-        catalog.listViewpoints(arguments.scope()).stream().map(ViewpointEntry::id).toList();
+        catalog.viewpoints().list(arguments.scope()).stream().map(ViewpointEntry::id).toList();
     if (ids.isEmpty()) {
       return new InvalidToolArgumentException("観点" + id + "が見つかりません。観点は1件も宣言されていません。");
     }

@@ -43,7 +43,8 @@ class MermaidErDiagramTest {
                     .build()));
 
     final String mermaid =
-        MermaidErDiagram.render(catalog.diagramOf(viewpoint("parent\"]\n```", "child")));
+        MermaidErDiagram.render(
+            catalog.relations().among(viewpoint("parent\"]\n```", "child").tables()));
 
     // 名前の中の```は行頭に来ないため、コードブロックを閉じる行にならない（閉じる行は行頭の3文字までの空白に続く```）
     assertTrue(mermaid.lines().noneMatch(line -> line.matches(" {0,3}```.*")), mermaid);
