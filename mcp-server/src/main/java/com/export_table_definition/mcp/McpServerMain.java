@@ -4,6 +4,7 @@ import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.ViewpointEntry;
 import com.export_table_definition.mcp.insight.InsightsDirectoryReader;
 import com.export_table_definition.mcp.snapshot.SnapshotDirectoryReader;
+import com.export_table_definition.mcp.tool.TableDefinitionResources;
 import com.export_table_definition.mcp.tool.TableDefinitionTools;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -85,10 +86,12 @@ public final class McpServerMain {
     McpServer.sync(new StdioServerTransportProvider(jsonMapper))
         .serverInfo(SERVER_NAME, version())
         .instructions(INSTRUCTIONS)
-        .capabilities(ServerCapabilities.builder().tools(false).build())
+        // スナップショットは起動時に読み込んだままで変わらないため、リソースの購読・一覧の変更通知は使わない
+        .capabilities(ServerCapabilities.builder().tools(false).resources(false, false).build())
         .jsonMapper(jsonMapper)
         .tools(new TableDefinitionTools(catalog).specifications())
-        // mcp-core 2.0.1は既定でツールをboundedElasticの複数スレッドに並行実行させ、応答の書き込み先
+        .resources(new TableDefinitionResources(catalog).specifications())
+        // mcp-core 2.0.1は既定でツール・リソースの読み出しをboundedElasticの複数スレッドに並行実行させ、応答の書き込み先
         // （Reactorのunicastシンク）への同時書き込みで止まる（java-sdk#686。修正はSDKのmainに入ったが未リリース）。
         // 標準入力を読むスレッドで1つずつ実行させて回避する
         .immediateExecution(true)

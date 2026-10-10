@@ -3,6 +3,7 @@ package com.export_table_definition.mcp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +14,9 @@ import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.Resource;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -235,6 +238,87 @@ class McpServerProcessTest {
     final String stderr =
         new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
     assertTrue(stderr.contains("[error]:スナップショットのディレクトリが見つかりません。"), stderr);
+  }
+
+  @Test
+  @DisplayName("リソース: 全テーブルを一覧でき、論理名と物理名の両方を含む名前で、読むとテーブル定義が返る")
+  void servesResourcesOverStdio() throws Exception {
+    final StdioClientTransport transport =
+        new StdioClientTransport(
+            ServerParameters.builder(JAVA)
+                .args("-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT)
+                .build(),
+            new JacksonMcpJsonMapper(new ObjectMapper()));
+    try (McpSyncClient client =
+        McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build()) {
+      client.initialize();
+
+      assertNotNull(client.getServerCapabilities().resources());
+      assertNull(client.getServerCapabilities().completions(), "URIテンプレートと補完は出さない");
+      assertTrue(client.listResourceTemplates().resourceTemplates().isEmpty());
+
+      final List<Resource> resources = client.listResources().resources();
+      assertEquals(14, resources.size());
+      final Resource employee =
+          resources.stream()
+              .filter(resource -> resource.uri().equals("exporttable://testdb/sample/employee"))
+              .findFirst()
+              .orElseThrow();
+      assertTrue(employee.name().endsWith(" (sample.employee)"), employee.name());
+      assertTrue(employee.name().length() > " (sample.employee)".length(), employee.name());
+      assertTrue(employee.description().startsWith(employee.name()), employee.description());
+
+      final TextResourceContents contents =
+          (TextResourceContents) client.readResource(employee).contents().get(0);
+      assertEquals("application/json", contents.mimeType());
+      assertTrue(contents.text().contains("\"name\":\"employee\""), contents.text());
+    }
+  }
+
+  @Test
+  @DisplayName("リソース: 応答を待たずに続けて読んでも、すべての応答が返る（並行呼び出しで応答が止まる不具合の回帰）")
+  void respondsToPipelinedResourceReads() throws Exception {
+    final int callCount = 8;
+    final Process process =
+        new ProcessBuilder(JAVA, "-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT).start();
+    try {
+      final BufferedWriter stdin =
+          new BufferedWriter(
+              new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
+      final BlockingQueue<String> responses = new LinkedBlockingQueue<>();
+      final Thread reader = new Thread(() -> readLines(process, responses));
+      reader.setDaemon(true);
+      reader.start();
+
+      send(
+          stdin,
+          "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{"
+              + "\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},"
+              + "\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}");
+      assertNotNull(responses.poll(30, TimeUnit.SECONDS), "initializeの応答がありません");
+      send(stdin, "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\",\"params\":{}}");
+
+      for (int i = 0; i < callCount; i++) {
+        send(
+            stdin,
+            "{\"jsonrpc\":\"2.0\",\"id\":"
+                + (100 + i)
+                + ",\"method\":\"resources/read\",\"params\":{"
+                + "\"uri\":\"exporttable://testdb/sample/employee\"}}");
+      }
+
+      final ObjectMapper mapper = new ObjectMapper();
+      final Set<Integer> receivedIds = new HashSet<>();
+      for (int i = 0; i < callCount; i++) {
+        final String line = responses.poll(30, TimeUnit.SECONDS);
+        assertNotNull(line, (i + 1) + "件目の応答がタイムアウトしました（並行呼び出しで応答が止まる不具合の再発）");
+        receivedIds.add(mapper.readTree(line).get("id").asInt());
+      }
+      assertEquals(
+          IntStream.range(100, 100 + callCount).boxed().collect(Collectors.toSet()), receivedIds);
+    } finally {
+      process.destroyForcibly();
+    }
   }
 
   private static String text(CallToolResult result) {
