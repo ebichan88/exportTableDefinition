@@ -38,6 +38,11 @@ final class ToolArguments {
     return value;
   }
 
+  /** 引数が指定されているか（値がnullの場合は未指定とみなす）判定するメソッド */
+  boolean isPresent(String name) {
+    return values.get(name) != null;
+  }
+
   /**
    * 任意の文字列の引数を読み取るメソッド
    *

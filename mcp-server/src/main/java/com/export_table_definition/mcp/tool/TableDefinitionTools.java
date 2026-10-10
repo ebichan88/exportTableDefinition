@@ -32,6 +32,7 @@ public final class TableDefinitionTools {
             new ClusterTools(catalog).specifications(),
             new TableTools(catalog).specifications(),
             new RelationTools(catalog).specifications(),
+            new DiagramTools(catalog).specifications(),
             new FunctionTools(catalog).specifications(),
             new SequenceTools(catalog).specifications(),
             new TypeTools(catalog).specifications(),

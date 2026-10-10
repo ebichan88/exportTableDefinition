@@ -11,6 +11,7 @@ import com.export_table_definition.mcp.catalog.FunctionEntry;
 import com.export_table_definition.mcp.catalog.ObjectKey;
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SequenceEntry;
+import com.export_table_definition.mcp.catalog.TableEntry;
 import com.export_table_definition.mcp.catalog.TestCatalogs;
 import com.export_table_definition.mcp.catalog.TypeEntry;
 import com.export_table_definition.mcp.catalog.ViewpointEntry;
@@ -20,6 +21,7 @@ import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -142,6 +144,7 @@ class TableDefinitionToolsTest {
             "find_columns",
             "get_related_tables",
             "find_join_path",
+            "get_er_diagram",
             "list_functions",
             "get_function",
             "list_sequences",
@@ -724,6 +727,104 @@ class TableDefinitionToolsTest {
     final CallToolResult missing = call("search_tables", Map.of());
     assertTrue(missing.isError());
     assertEquals("引数queryを指定してください。", text(missing));
+  }
+
+  @Test
+  @DisplayName("get_er_diagramは、viewpointを指定すると観点の所属テーブルとその間の関連をMermaidで返す")
+  void getErDiagramOfViewpoint() throws Exception {
+    final JsonNode result = json(call("get_er_diagram", Map.of("viewpoint", "ORG")));
+
+    assertEquals("org", result.get("viewpoint").asText());
+    assertFalse(result.has("table"));
+    assertEquals(
+        "erDiagram\n"
+            + "    sample_department[\"department（部署）\"]\n"
+            + "    sample_employee[\"employee（従業員）\"]\n"
+            + "    sample_department ||--o{ sample_employee : \"employee_department_id_fkey\"\n"
+            + "    sample_employee {\n"
+            + "        integer department_id FK \"部署ID\"\n"
+            + "    }\n",
+        result.get("mermaid").asText());
+    assertEquals(
+        List.of("sample.department", "sample.employee"),
+        jsonStrings(result.get("tables")));
+    assertFalse(result.has("message"));
+  }
+
+  @Test
+  @DisplayName("get_er_diagramは、tableを指定するとたどった関連を描き、論理リレーションは破線にする")
+  void getErDiagramOfTable() throws Exception {
+    final JsonNode result =
+        json(call("get_er_diagram", Map.of("table", "audit_log", "direction", "outgoing")));
+
+    assertEquals("sample.audit_log", result.get("table").asText());
+    assertEquals(
+        "erDiagram\n"
+            + "    sample_audit_log[\"audit_log\"]\n"
+            + "    sample_employee[\"employee（従業員）\"]\n"
+            + "    sample_employee |o..o{ sample_audit_log : \"record_id\"\n"
+            + "    sample_employee {\n"
+            + "        integer employee_id PK\n"
+            + "    }\n",
+        result.get("mermaid").asText());
+  }
+
+  @Test
+  @DisplayName("get_er_diagramは、関連が無い場合も箱だけの図を返し、その旨をmessageで示す")
+  void getErDiagramWithoutRelations() throws Exception {
+    final JsonNode result = json(call("get_er_diagram", Map.of("table", "project")));
+
+    assertEquals("erDiagram\n    sample_project[\"project\"]\n", result.get("mermaid").asText());
+    assertTrue(result.get("message").asText().contains("関連はありません"));
+  }
+
+  @Test
+  @DisplayName("get_er_diagramは、tableとviewpointのどちらか一方だけを受け付け、観点の図にtable用の引数を指定すると誤りにする")
+  void getErDiagramRejectsInvalidArguments() {
+    assertEquals(
+        "引数tableとviewpointは、どちらか一方を指定してください。", text(call("get_er_diagram", Map.of())));
+    assertEquals(
+        "引数tableとviewpointは、どちらか一方を指定してください。",
+        text(call("get_er_diagram", Map.of("table", "employee", "viewpoint", "org"))));
+    final CallToolResult withDepth =
+        call("get_er_diagram", Map.of("viewpoint", "org", "depth", 2, "schema", "sample"));
+    assertTrue(withDepth.isError());
+    assertEquals("引数schema・depthは、tableを指定した場合だけ使えます。", text(withDepth));
+    assertEquals(
+        "観点nopeが見つかりません。観点: org", text(call("get_er_diagram", Map.of("viewpoint", "nope"))));
+  }
+
+  @Test
+  @DisplayName("get_er_diagramは、図に描くテーブルが上限を超える場合は、範囲の絞り方を示す誤りにする")
+  void getErDiagramRejectsTooLargeDiagram() {
+    final List<TableEntry> tables = new ArrayList<>();
+    tables.add(table("hub").build());
+    for (int i = 0; i < DiagramTools.MAX_NODES; i++) {
+      tables.add(table("t" + i).foreignKey("hub_id", "hub", "hub_id").build());
+    }
+    final SyncToolSpecification tool =
+        new TableDefinitionTools(TestCatalogs.of(tables))
+            .specifications().stream()
+                .filter(candidate -> candidate.tool().name().equals("get_er_diagram"))
+                .findFirst()
+                .orElseThrow();
+
+    final CallToolResult result =
+        tool.callHandler()
+            .apply(
+                null,
+                CallToolRequest.builder("get_er_diagram").arguments(Map.of("table", "hub")).build());
+
+    assertTrue(result.isError());
+    assertEquals(
+        "図に描くテーブルが81件となり、上限（80件）を超えます。depthを小さくするか、directionで向きを絞ってください。",
+        text(result));
+  }
+
+  private static List<String> jsonStrings(JsonNode array) {
+    final List<String> values = new ArrayList<>();
+    array.forEach(value -> values.add(value.asText()));
+    return values;
   }
 
   private static FunctionEntry function(String name, String arguments, String json) {

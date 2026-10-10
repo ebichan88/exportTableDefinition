@@ -41,7 +41,8 @@ public final class McpServerMain {
           + "業務ドメインの単位（観点）で絞り込みたい場合は、list_viewpointsで一覧を確認し、"
           + "list_tables・search_tablesのviewpoint引数を指定する。"
           + "テーブルがどの観点に所属するかは、get_tableの結果のviewpointsで分かる。"
-          + "観点が宣言されていない範囲は、list_table_clustersで関連のつながりから推測したまとまりを手がかりにする。";
+          + "観点が宣言されていない範囲は、list_table_clustersで関連のつながりから推測したまとまりを手がかりにする。"
+          + "ER図を見せたい場合は、get_er_diagramでテーブルの周辺か観点のER図をMermaid記法で取得する。";
 
   private McpServerMain() {}
 

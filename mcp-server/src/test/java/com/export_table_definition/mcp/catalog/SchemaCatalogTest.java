@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -880,6 +881,75 @@ class SchemaCatalogTest {
 
     private static List<String> names(List<TableEntry> tables) {
       return tables.stream().map(table -> table.key().name()).toList();
+    }
+  }
+
+  @Nested
+  @DisplayName("ER図の範囲")
+  class DiagramScopeTest {
+
+    private final SchemaCatalog catalog =
+        TestCatalogs.of(
+            List.of(
+                table("customer").build(),
+                table("orders")
+                    .foreignKey("customer_id", "customer", "customer_id")
+                    .foreignKey("store_id", "store", "store_id")
+                    .foreignKey("ghost_id", "ghost", "ghost_id")
+                    .build(),
+                table("order_line")
+                    .foreignKey("order_id", "orders", "order_id")
+                    .logicalRelation("item_id", "item", "item_id")
+                    .build(),
+                table("store").build(),
+                table("memo").build()));
+
+    @Test
+    @DisplayName("観点の所属テーブル同士の関連だけを描き、観点の外・スナップショットに無いテーブルへの関連は含めない")
+    void drawsRelationsAmongViewpointTables() {
+      final DiagramScope scope =
+          catalog.diagramOf(
+              viewpoint("order_line", "orders", "customer", "memo", "ghost", "orders"));
+
+      assertEquals(
+          List.of("order_line", "orders", "customer", "memo"),
+          scope.tables().stream().map(table -> table.key().name()).toList());
+      assertEquals(
+          List.of("order_line->orders", "orders->customer"),
+          scope.relations().stream()
+              .map(relation -> relation.from().name() + "->" + relation.to().name())
+              .toList());
+      assertEquals(List.of(new ObjectKey("testdb", "sample", "ghost")), scope.missingTables());
+      assertEquals(
+          List.of("order_line", "orders", "customer", "memo"),
+          scope.nodes().stream().map(ObjectKey::name).toList());
+    }
+
+    @Test
+    @DisplayName("関連をたどった範囲では、スナップショットに無い参照先も関連の順に箱として描く")
+    void nodesIncludeMissingReferenceTables() {
+      final TableEntry orderLine =
+          Lookups.found(catalog.lookupTable(ObjectReference.of(null, null, "order_line")));
+
+      final DiagramScope scope =
+          DiagramScope.of(catalog.relatedTables(orderLine, 2, Direction.OUTGOING));
+
+      assertEquals(
+          List.of("order_line", "orders", "customer", "store", "item", "ghost"),
+          scope.nodes().stream().map(ObjectKey::name).toList());
+      assertEquals(
+          List.of("item", "ghost"), scope.missingTables().stream().map(ObjectKey::name).toList());
+    }
+
+    private static ViewpointEntry viewpoint(String... tables) {
+      return new ViewpointEntry(
+          "testdb",
+          "order",
+          "受注",
+          "",
+          Arrays.stream(tables)
+              .map(name -> new ObjectKey("testdb", "sample", name))
+              .toList());
     }
   }
 
