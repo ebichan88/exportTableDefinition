@@ -27,7 +27,6 @@ import com.export_table_definition.mcp.catalog.TableFilter;
 import com.export_table_definition.mcp.catalog.TableHit;
 import com.export_table_definition.mcp.catalog.TableOrder;
 import com.export_table_definition.mcp.catalog.TableType;
-import com.export_table_definition.mcp.catalog.ViewpointEntry;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -214,32 +212,7 @@ final class TableTools {
    */
   private TableFilter tableFilter(ToolArguments arguments) {
     final TableFilter filter = TableFilter.of(arguments.scope());
-    return resolveViewpoint(arguments).map(filter::withViewpoint).orElse(filter);
-  }
-
-  /**
-   * 引数{@code viewpoint}（観点のid）を解決するメソッド
-   *
-   * @throws InvalidToolArgumentException 指定した観点が見つからない場合
-   */
-  private Optional<ViewpointEntry> resolveViewpoint(ToolArguments arguments) {
-    final String id = arguments.optionalString("viewpoint");
-    if (id.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(
-        catalog
-            .findViewpoint(arguments.scope(), id)
-            .orElseThrow(() -> viewpointNotFound(id, arguments)));
-  }
-
-  private InvalidToolArgumentException viewpointNotFound(String id, ToolArguments arguments) {
-    final List<String> ids =
-        catalog.listViewpoints(arguments.scope()).stream().map(ViewpointEntry::id).toList();
-    if (ids.isEmpty()) {
-      return new InvalidToolArgumentException("観点" + id + "が見つかりません。観点は1件も宣言されていません。");
-    }
-    return new InvalidToolArgumentException("観点" + id + "が見つかりません。観点: " + String.join(", ", ids));
+    return ViewpointResolver.resolve(catalog, arguments).map(filter::withViewpoint).orElse(filter);
   }
 
   private CallToolResult getTable(ToolArguments arguments) {

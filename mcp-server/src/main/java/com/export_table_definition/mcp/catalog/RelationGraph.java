@@ -96,6 +96,24 @@ final class RelationGraph {
   }
 
   /**
+   * @see SchemaCatalog#diagramOf(ViewpointEntry)
+   */
+  DiagramScope among(List<ObjectKey> tables) {
+    final Set<ObjectKey> members = new LinkedHashSet<>(tables);
+    final List<TableEntry> found =
+        members.stream().filter(tablesByKey::containsKey).map(tablesByKey::get).toList();
+    final List<Relation> relations =
+        found.stream()
+            .flatMap(table -> outgoing(table.key()).stream())
+            .filter(relation -> members.contains(relation.to()))
+            .filter(relation -> tablesByKey.containsKey(relation.to()))
+            .toList();
+    final List<ObjectKey> missing =
+        members.stream().filter(key -> !tablesByKey.containsKey(key)).toList();
+    return new DiagramScope(found, relations, missing);
+  }
+
+  /**
    * @see SchemaCatalog#joinPaths(TableEntry, TableEntry, int, int)
    */
   JoinPaths joinPaths(TableEntry from, TableEntry to, int maxLength, int limit) {

@@ -73,6 +73,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 | `find_columns` | `column`（必須）、`match`（`exact`／`partial`、既定`exact`）・`schema`・`database`・`limit`（既定50、最大500）・`offset` | カラムの物理名・論理名から、そのカラムを持つテーブルを逆引きする。型・PK・NOT NULL・デフォルト値と、外部キー・論理リレーションの参照先も返す |
 | `get_related_tables` | `table`（必須）、`schema`・`database`・`depth`（1〜3、既定1）・`direction`（`outgoing`／`incoming`／`both`、既定`both`） | 外部キーと論理リレーションをたどり、つながるテーブルと、どのカラム同士でつながるか・多重度を返す。参照される側（被参照）からもたどれる |
 | `find_join_path` | `from`・`to`（必須。`スキーマ名.テーブル名`も可）、`database`・`maxLength`（1〜6、既定4）・`limit`（1〜20、既定5） | 2つのテーブルをつなぐ最短のJOIN経路を、外部キーと論理リレーションを向きを問わずたどって返す。同じ長さの経路が複数ある場合はすべて（`limit`まで）返す |
+| `get_er_diagram` | `table`か`viewpoint`（観点のid）のどちらか一方（必須）、`database`。`table`を指定した場合は`schema`・`depth`（1〜3、既定1）・`direction`（`outgoing`／`incoming`／`both`、既定`both`）も使える | ER図をMermaid記法（`erDiagram`）で返す（`mermaid`）。`table`を指定すると、`get_related_tables`と同じ範囲（たどった関連と、関連に現れたテーブル）を描く。`viewpoint`を指定すると、観点の所属テーブルと、所属テーブル同士の関連を描く（観点の外のテーブルとの関連は描かない。関連の無い所属テーブルも箱だけ描く）。表記は定義書のER図と同じで、箱は「テーブル名（論理テーブル名）」と関連をつなぐカラム、外部キーは実線・論理リレーションは破線。図に描くテーブルが80件を超える場合はエラーを返す。Mermaidを描画できるMCPクライアント（チャットの画面等）では、AIがコードブロックに入れて示すと図として表示される |
 | `list_functions` | `query`・`schema`・`database`・`limit`（既定100、最大500）・`offset` | 関数・プロシージャの名前・種別・引数・戻り値・言語を返す（定義本体は返さない）。`query`は名前の部分一致 |
 | `get_function` | `function`（必須）、`schema`・`database`・`includeDefinition` | 関数・プロシージャのシグネチャ（種別・引数・戻り値・言語）を、同名のもの（オーバーロード）をまとめて返す。関数を実行するトリガー（`calledByTriggers`）も返す。`includeDefinition`を指定すると定義本体も返す（既定false。オーバーロードの本体が同じ場合は1つにまとめ、長い場合は切り詰める） |
 | `list_sequences` | `query`・`schema`・`database`・`limit`（既定100、最大500）・`offset` | シーケンスの名前と所有カラムを返す |
@@ -84,6 +85,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 * テーブル名は大文字小文字を区別しません。`スキーマ名.テーブル名`の形でも指定できます。
 * 同名のテーブルが複数のスキーマにある場合・見つからない場合は、候補を示すエラーを返します（AIが引数を直して呼び直します）。
 * `viewpoint`に存在しない観点のidを指定した場合は、宣言されている観点を示すエラーを返します。
+* `get_er_diagram`に`table`と`viewpoint`の両方を指定した場合や、`viewpoint`と一緒に`schema`・`depth`・`direction`を指定した場合はエラーを返します。
 * 一覧を返すツールは、件数が`limit`を超える場合に続きの`offset`（`nextOffset`）を返します。
 * `target.objects`で出力対象から外した種別は0件になります。
 * 関数・プロシージャの定義本体は、AIのコンテキストを圧迫するため既定では返しません（`get_function`の`includeDefinition`で返します）。

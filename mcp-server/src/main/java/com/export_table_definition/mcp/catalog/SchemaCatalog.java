@@ -420,6 +420,16 @@ public final class SchemaCatalog {
   }
 
   /**
+   * 観点のER図に描くテーブルと関連を求めるメソッド<br>
+   * 所属テーブル同士の外部キー・論理リレーションだけを描く（観点の外のテーブルとの関連は含めない）
+   *
+   * @return テーブルは観点の宣言順、関連はテーブルごとに外部キー・論理リレーションの順。所属テーブルのうちスナップショットに無いものは{@code missingTables}に分ける
+   */
+  public DiagramScope diagramOf(ViewpointEntry viewpoint) {
+    return relations.among(viewpoint.tables());
+  }
+
+  /**
    * 2つのテーブルをつなぐ最短の経路を探すメソッド<br>
    * 外部キー・論理リレーションを向きを問わずたどる。スナップショットに含まれないテーブルは経由しない
    *
