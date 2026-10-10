@@ -8,11 +8,11 @@ import io.modelcontextprotocol.spec.McpSchema.Resource;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * テーブルの定義を、利用者がMCPクライアントの{@code @}等で会話に添付するリソースとして返す<br>
- * 全テーブル（ビューを含む）を具体的なリソースとして列挙し、読むと{@code get_table}と同じJSONを返す。 URIテンプレートと変数の補完は出さない（Claude
- * Codeは、一覧に無いURIを自動では添付しないため。docs/architecture/mcp-server.md）
+ * 全テーブル（ビューを含む）を具体的なリソースとして列挙し、読むと{@code get_table}と同じJSONを返す
  */
 public final class TableDefinitionResources {
 
@@ -21,15 +21,14 @@ public final class TableDefinitionResources {
   private static final int MAX_DESCRIPTION_LENGTH = 120;
 
   /** 表示用の文字列から取り除く文字（制御文字・行／段落区切り・双方向の書字方向を変える制御文字）の並び */
-  private static final String UNSAFE_DISPLAY_CHARS =
-      "[\\p{Cc}\\u2028\\u2029\\u202A-\\u202E\\u2066-\\u2069]+";
+  private static final Pattern UNSAFE_DISPLAY_CHARS =
+      Pattern.compile("[\\p{Cc}\\u2028\\u2029\\u202A-\\u202E\\u2066-\\u2069]+");
+
+  private static final Pattern WHITESPACES = Pattern.compile("\\s+");
 
   private final TableOutputBuilder outputBuilder;
   private final SchemaCatalog catalog;
 
-  /**
-   * @param catalog 返す対象のテーブルを持つカタログ
-   */
   public TableDefinitionResources(SchemaCatalog catalog) {
     this.catalog = catalog;
     this.outputBuilder = new TableOutputBuilder(catalog, Set.of(), List.of());
@@ -94,6 +93,7 @@ public final class TableDefinitionResources {
 
   /** DB由来の文字列を、MCPクライアントの一覧に1行で表示できるようにする（制御文字・改行を空白へ置き換え、連続する空白を1つにする） */
   private static String singleLine(String value) {
-    return value.replaceAll(UNSAFE_DISPLAY_CHARS, " ").replaceAll("\\s+", " ").strip();
+    final String printable = UNSAFE_DISPLAY_CHARS.matcher(value).replaceAll(" ");
+    return WHITESPACES.matcher(printable).replaceAll(" ").strip();
   }
 }
