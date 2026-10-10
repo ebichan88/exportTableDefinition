@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.application.CheckDocumentDiffRequest;
 import com.dbxray.application.CheckDocumentDiffUsecase;
-import com.dbxray.application.ExportTableDefinitionRequest;
-import com.dbxray.application.ExportTableDefinitionUsecase;
+import com.dbxray.application.ExportSchemaRequest;
+import com.dbxray.application.ExportSchemaUsecase;
 import com.dbxray.application.TargetSelection;
 import com.dbxray.domain.model.snapshot.ContentDiff;
 import com.dbxray.domain.model.snapshot.DiffResult;
@@ -17,25 +17,25 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** ExportTableDefinitionController の処理結果の組み立てと、例外を捕捉せずに伝えることに関するテスト */
-public class ExportTableDefinitionControllerTest {
+/** ExportSchemaController の処理結果の組み立てと、例外を捕捉せずに伝えることに関するテスト */
+public class ExportSchemaControllerTest {
 
   /**
    * 呼び出し引数を記録し、任意の例外を投げられるユースケースのスタブ<br>
    * ユースケースは具象クラスのため、メソッドを上書きしたサブクラスで差し替える（依存は使わないのでnullで足りる）
    */
   private static class RecordingUsecase {
-    ExportTableDefinitionRequest capturedExportTableDefinitionRequest;
+    ExportSchemaRequest capturedExportSchemaRequest;
     CheckDocumentDiffRequest capturedCheckDocumentDiffRequest;
     RuntimeException toThrow;
     DiffResult diffResultToReturn = new DiffResult(List.of(), List.of(), List.of());
 
-    ExportTableDefinitionController controller() {
-      return new ExportTableDefinitionController(
-          new ExportTableDefinitionUsecase(null, null, null, null, null, null) {
+    ExportSchemaController controller() {
+      return new ExportSchemaController(
+          new ExportSchemaUsecase(null, null, null, null, null, null) {
             @Override
-            public void exportTableDefinition(ExportTableDefinitionRequest request) {
-              capturedExportTableDefinitionRequest = request;
+            public void exportSchema(ExportSchemaRequest request) {
+              capturedExportSchemaRequest = request;
               if (toThrow != null) {
                 throw toThrow;
               }
@@ -55,7 +55,7 @@ public class ExportTableDefinitionControllerTest {
     }
   }
 
-  private ExportTableDefinitionRequest exportRequest(
+  private ExportSchemaRequest exportRequest(
       List<String> schemaList,
       List<String> tableList,
       String outputPath,
@@ -64,7 +64,7 @@ public class ExportTableDefinitionControllerTest {
       List<String> outputObjectList,
       String sidecarPath,
       boolean rmDist) {
-    return new ExportTableDefinitionRequest(
+    return new ExportSchemaRequest(
         TargetSelection.of(schemaList, tableList, outputObjectList),
         sidecarPath,
         outputPath,
@@ -111,12 +111,12 @@ public class ExportTableDefinitionControllerTest {
   }
 
   @Test
-  @DisplayName("execute: 引数（ExportTableDefinitionRequest）をそのままユースケースへ渡す")
+  @DisplayName("execute: 引数（ExportSchemaRequest）をそのままユースケースへ渡す")
   void testExecutePassesArgumentsThrough() {
     var usecase = new RecordingUsecase();
     var controller = usecase.controller();
 
-    ExportTableDefinitionRequest request =
+    ExportSchemaRequest request =
         exportRequest(
             List.of("public"),
             List.of("orders"),
@@ -129,7 +129,7 @@ public class ExportTableDefinitionControllerTest {
 
     controller.execute(request);
 
-    assertSame(request, usecase.capturedExportTableDefinitionRequest);
+    assertSame(request, usecase.capturedExportSchemaRequest);
   }
 
   @Test

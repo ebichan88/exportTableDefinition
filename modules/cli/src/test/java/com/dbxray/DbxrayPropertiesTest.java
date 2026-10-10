@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.DbxrayProperties.SettingOverride;
 import com.dbxray.application.CheckDocumentDiffRequest;
-import com.dbxray.application.ExportTableDefinitionRequest;
+import com.dbxray.application.ExportSchemaRequest;
 import com.dbxray.config.ConfigFile;
 import com.dbxray.config.InvalidConfigurationException;
 import com.dbxray.domain.model.table.TableEntity;
@@ -31,8 +31,8 @@ public class DbxrayPropertiesTest {
     return ConfigFile.parse(CONFIG_PATH, yaml);
   }
 
-  private static ExportTableDefinitionRequest request(String yaml) {
-    return DbxrayProperties.of(config(yaml)).toExportTableDefinitionRequest(false);
+  private static ExportSchemaRequest request(String yaml) {
+    return DbxrayProperties.of(config(yaml)).toExportSchemaRequest(false);
   }
 
   private static InvalidConfigurationException error(String yaml) {
@@ -43,7 +43,7 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: すべての項目が未指定の場合は既定値を用いる")
   void testOfUsesDefaultsWhenNothingSpecified() {
-    ExportTableDefinitionRequest request = request("");
+    ExportSchemaRequest request = request("");
 
     assertEquals(List.of(), request.targetSelection().tableScope().schemaNames());
     assertFalse(request.targetSelection().tableScope().isFiltered());
@@ -59,8 +59,8 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: キーを書かない場合と、キーだけ書いた場合・空のリスト・空白の値は、同じ「未指定」として扱う")
   void testOfTreatsBlankValueAsUnspecified() {
-    ExportTableDefinitionRequest omitted = request("");
-    ExportTableDefinitionRequest blank =
+    ExportSchemaRequest omitted = request("");
+    ExportSchemaRequest blank =
         request(
             """
             target:
@@ -89,7 +89,7 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: 指定した値を型へ変換し、前後の空白を除去する")
   void testOfParsesSpecifiedValues() {
-    ExportTableDefinitionRequest request =
+    ExportSchemaRequest request =
         DbxrayProperties.of(
                 config(
                     """
@@ -104,7 +104,7 @@ public class DbxrayPropertiesTest {
                       erDiagramDistance: 2
                     annotations: " conf/annotations.yml "
                     """))
-            .toExportTableDefinitionRequest(true);
+            .toExportSchemaRequest(true);
 
     assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
     assertFalse(request.targetSelection().tableScope().matches(table("sample", "tmp_work")));
@@ -122,7 +122,7 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: リストの項目は、YAMLのブロック形式でも書け、空要素を除く")
   void testOfReadsBlockStyleListAndSkipsEmptyElements() {
-    ExportTableDefinitionRequest request =
+    ExportSchemaRequest request =
         request(
             """
             target:
@@ -195,7 +195,7 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: databaseの中身は検証しない（DB接続情報の検証はConnectionSettingsが行う）")
   void testOfIgnoresDatabaseSection() {
-    ExportTableDefinitionRequest request =
+    ExportSchemaRequest request =
         request(
             """
             database:
@@ -289,10 +289,10 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: 配布する設定ファイル（全項目が未指定）は、誤りなく既定値で読み込める")
   void testDistributedConfigFile() {
-    ExportTableDefinitionRequest request =
+    ExportSchemaRequest request =
         DbxrayProperties.of(
                 ConfigFile.load(Path.of("src", "main", "resources", "conf", "config.yml")))
-            .toExportTableDefinitionRequest(false);
+            .toExportSchemaRequest(false);
 
     assertEquals(3000, request.chunkSize());
     assertEquals(80, request.erDiagramMaxNodes());
@@ -304,7 +304,7 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: CLI引数による上書き値は設定ファイルの値より優先し、上書きしない項目は設定ファイルの値を用いる")
   void testOfAppliesOverrides() {
-    ExportTableDefinitionRequest request =
+    ExportSchemaRequest request =
         DbxrayProperties.of(
                 config(
                     """
@@ -317,7 +317,7 @@ public class DbxrayPropertiesTest {
                 Map.of(
                     "output.path", new SettingOverride("./docs/prod", "--output-path"),
                     "target.tables", new SettingOverride("!tmp_*", "--table")))
-            .toExportTableDefinitionRequest(false);
+            .toExportSchemaRequest(false);
 
     assertEquals(List.of("sample"), request.targetSelection().tableScope().schemaNames());
     assertFalse(request.targetSelection().tableScope().matches(table("sample", "tmp_work")));
@@ -328,12 +328,12 @@ public class DbxrayPropertiesTest {
   @Test
   @DisplayName("of: CLI引数でリストの項目を上書きする場合はカンマで区切り、各要素の前後の空白を除去して空要素を除く")
   void testOfSplitsCommaSeparatedOverride() {
-    ExportTableDefinitionRequest request =
+    ExportSchemaRequest request =
         DbxrayProperties.of(
                 config("target:\n  schemas: [other]\n"),
                 Map.of(
                     "target.schemas", new SettingOverride("alpha,beta, gamma ,,delta", "--schema")))
-            .toExportTableDefinitionRequest(false);
+            .toExportSchemaRequest(false);
 
     assertEquals(
         List.of("alpha", "beta", "gamma", "delta"),

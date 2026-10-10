@@ -30,7 +30,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 | 層 | パッケージ | 役割 |
 |---|---|---|
 | presentation | `presentation`, `presentation.dto`, `presentation.type` | エントリーポイントからの呼び出しを受け、ユースケースを実行して結果を返す |
-| application | `application` | ユースケース（テーブル定義出力・差分検知それぞれのフロー制御）を実装する |
+| application | `application` | ユースケース（DBドキュメント出力・差分検知それぞれのフロー制御）を実装する |
 | domain | `domain.model.*`, `domain.repository`, `domain.service.*` | エンティティ・値オブジェクト・リポジトリIF・書き込み処理（ドメインサービス）を持つ、DB種別に依存しない中核 |
 | infrastructure | `infrastructure.db`, `infrastructure.file`, `infrastructure.path`, `infrastructure.snapshot` | MyBatisによるDBアクセス、ファイル入出力、出力パス解決、JSON変換などドメインIFの実装を提供する |
 | config | `config`, `config.module` | プロパティ読み込み、Guiceによる依存関係の束縛（DI設定） |
@@ -60,7 +60,7 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
    - `DbxrayProperties.of()`が、設定ファイルの`database`以外の設定値（出力対象スキーマ／テーブル／オブジェクト種別、
      出力先パス、chunkSize、erDiagramMaxNodes、サイドカーYAMLのパス）を、CLI引数による上書き値
      （`CliArguments.settingOverrides()`）で上書きしてから検証し、
-     `ExportTableDefinitionRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDocumentDiffRequest`）へ変換する。
+     `ExportSchemaRequest`（`--check`時は`erDiagramMaxNodes`を持たない`CheckDocumentDiffRequest`）へ変換する。
      出力対象の絞り込み条件（`target`のスキーマ・テーブル・オブジェクト種別）は、生の文字列のまま後続へ渡さず、
      `TargetSelection.of()`が型（`TableScope`・`OutputObjectType`の集合）へ変換・検証する
    - 設定の誤りは`config.InvalidConfigurationException`1種類で、見つかった誤りをまとめて表す。DBへの接続や`--rm-dist`による
@@ -74,11 +74,11 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 3. 入力の検証に成功した後、`MyBatisSqlSessionFactories.create()`で`SqlSessionFactory`を1回だけ生成し、
    `DatabaseTypeDetector.detect()`がDBへ接続して接続先のDB種別を判定する。
    2.のDIコンテナの子として、DB種別に依存する部品（`DatabaseDependentModule`）を束縛したコンテナを組み立て、
-   `ExportTableDefinitionController` を取得する（[設定・DI](#設定di)を参照）。
-4. コントローラーは `ExportTableDefinitionUsecase.exportTableDefinition()`（`--check`時は
+   `ExportSchemaController` を取得する（[設定・DI](#設定di)を参照）。
+4. コントローラーは `ExportSchemaUsecase.exportSchema()`（`--check`時は
    `CheckDocumentDiffUsecase.checkDocumentDiff()`）を呼び出し、結果を `ResultDto`（`--check`時は差分の有無を持つ
    `DiffCheckResultDto`）に変換する。例外は捕捉せず、エントリーポイントまで伝える。
-5. 通常実行のユースケース（`ExportTableDefinitionUsecase`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
+5. 通常実行のユースケース（`ExportSchemaUsecase`）は、以下を順に行う。DBからの取得と出力形式ごとの書き出しの
    段取りは `SchemaExportPipeline`（`application`、パッケージプライベート）に委ね、差分検知のユースケースと共有する。
    - `SchemaExportPipeline.fetchTargets()`：`TableDefinitionRepository` からテーブル一覧・外部キー・トリガー・パーティション・ビューの参照等をMyBatis経由で取得し、
      `SidecarRepository` でサイドカーYAML（手動付帯情報・論理リレーション・観点）を読み込む。
@@ -329,9 +329,9 @@ MCPサーバーからAIが引けるよう、参考情報としては出力する
 ## DB vs ドキュメントの差分検知（`--check`モード）
 
 `Dbxray.main()`にCLI引数`--check`を渡すと、通常のドキュメント出力の代わりに
-`ExportTableDefinitionController.checkDiff()` → `CheckDocumentDiffUsecase.checkDocumentDiff()`を呼び出す。
+`ExportSchemaController.checkDiff()` → `CheckDocumentDiffUsecase.checkDocumentDiff()`を呼び出す。
 
-DBからの取得と出力は`SchemaExportPipeline`が以下のように分けて持ち、通常実行（`ExportTableDefinitionUsecase`）と
+DBからの取得と出力は`SchemaExportPipeline`が以下のように分けて持ち、通常実行（`ExportSchemaUsecase`）と
 `--check`（`CheckDocumentDiffUsecase`）の双方が利用する。両者は取得処理を共有し、書き出し先の出力形式
 （`ExportSink`のリスト）だけを切り替える。
 

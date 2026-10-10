@@ -10,7 +10,7 @@ import com.dbxray.infrastructure.db.MyBatisSqlSessionFactories;
 import com.dbxray.infrastructure.db.repository.OracleTableDefinitionRepository;
 import com.dbxray.infrastructure.db.repository.PostgresTableDefinitionRepository;
 import com.dbxray.infrastructure.db.type.DatabaseType;
-import com.dbxray.presentation.ExportTableDefinitionController;
+import com.dbxray.presentation.ExportSchemaController;
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -50,7 +50,7 @@ public class DbxrayModuleTest {
   void testResolvesControllerForPostgresql() {
     final Injector injector = createInjector(DatabaseType.POSTGRESQL);
 
-    assertNotNull(injector.getInstance(ExportTableDefinitionController.class));
+    assertNotNull(injector.getInstance(ExportSchemaController.class));
     assertInstanceOf(
         PostgresTableDefinitionRepository.class,
         injector.getInstance(TableDefinitionRepository.class));
@@ -72,7 +72,7 @@ public class DbxrayModuleTest {
   void testResolvesControllerForOracle() {
     final Injector injector = createInjector(DatabaseType.ORACLE);
 
-    assertNotNull(injector.getInstance(ExportTableDefinitionController.class));
+    assertNotNull(injector.getInstance(ExportSchemaController.class));
     assertInstanceOf(
         OracleTableDefinitionRepository.class,
         injector.getInstance(TableDefinitionRepository.class));

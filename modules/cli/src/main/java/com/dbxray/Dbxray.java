@@ -1,7 +1,7 @@
 package com.dbxray;
 
 import com.dbxray.application.CheckDocumentDiffRequest;
-import com.dbxray.application.ExportTableDefinitionRequest;
+import com.dbxray.application.ExportSchemaRequest;
 import com.dbxray.config.ConfigFile;
 import com.dbxray.config.InvalidConfigurationException;
 import com.dbxray.config.module.DatabaseDependentModule;
@@ -9,7 +9,7 @@ import com.dbxray.config.module.DbxrayModule;
 import com.dbxray.infrastructure.db.ConnectionSettings;
 import com.dbxray.infrastructure.db.DatabaseTypeDetector;
 import com.dbxray.infrastructure.db.MyBatisSqlSessionFactories;
-import com.dbxray.presentation.ExportTableDefinitionController;
+import com.dbxray.presentation.ExportSchemaController;
 import com.dbxray.presentation.FailureReporter;
 import com.dbxray.presentation.dto.DiffCheckResultDto;
 import com.dbxray.presentation.dto.ResultDto;
@@ -19,7 +19,7 @@ import com.google.inject.Injector;
 import org.apache.ibatis.session.SqlSessionFactory;
 
 /**
- * テーブル定義出力処理を呼び出すクラス<br>
+ * DBドキュメント出力処理を呼び出すクラス<br>
  * 処理全体（入力の検証・DBへの接続・DIコンテナの組み立てを含む）で起きた例外を{@link #main}の1箇所で捕捉し、 {@link
  * FailureReporter}で報告したうえで、終了状態をプロセスの終了コードへ変換する
  */
@@ -35,7 +35,7 @@ public class Dbxray {
   private Dbxray() {}
 
   /**
-   * テーブル定義出力処理のエントリーポイントメソッド<br>
+   * DBドキュメント出力処理のエントリーポイントメソッド<br>
    * {@code --help}・{@code --version}は表示だけして終了する（設定ファイルの読み込みやDBへの接続は行わない）。<br>
    * 終了コードは、成功（{@code --check}で差分なしを含む）は0、{@code --check}で差分ありは1、失敗は2以上（現在は2のみ）
    *
@@ -68,7 +68,7 @@ public class Dbxray {
     System.exit(exitStatus.code());
   }
 
-  /** テーブル定義出力処理実行メソッド */
+  /** DBドキュメント出力処理実行メソッド */
   private static ExitStatus run(CliArguments cliArguments) {
     System.out.println(
         """
@@ -77,9 +77,9 @@ public class Dbxray {
                 """);
     cliArguments.requireKnownArguments();
     final ConfigFile configFile = ConfigFile.load(cliArguments.configPath());
-    final ExportTableDefinitionRequest request =
+    final ExportSchemaRequest request =
         DbxrayProperties.of(configFile, cliArguments.settingOverrides())
-            .toExportTableDefinitionRequest(cliArguments.isRmDist());
+            .toExportSchemaRequest(cliArguments.isRmDist());
     final Injector injector = createInjector();
     injector.getInstance(OutputDirectoryValidator.class).validate(request);
     final ConnectionSettings connectionSettings = connectionSettings(configFile, cliArguments);
@@ -151,7 +151,7 @@ public class Dbxray {
    * @param injector DB種別に依存しない部品のDIコンテナ（{@link #createInjector()}）
    * @param connectionSettings 検証済みのDB接続情報
    */
-  private static ExportTableDefinitionController createController(
+  private static ExportSchemaController createController(
       Injector injector, ConnectionSettings connectionSettings) {
     final SqlSessionFactory sqlSessionFactory =
         MyBatisSqlSessionFactories.create(connectionSettings);
@@ -159,6 +159,6 @@ public class Dbxray {
         .createChildInjector(
             new DatabaseDependentModule(
                 DatabaseTypeDetector.detect(sqlSessionFactory), sqlSessionFactory))
-        .getInstance(ExportTableDefinitionController.class);
+        .getInstance(ExportSchemaController.class);
   }
 }

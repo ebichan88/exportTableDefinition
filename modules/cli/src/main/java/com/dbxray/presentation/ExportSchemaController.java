@@ -2,8 +2,8 @@ package com.dbxray.presentation;
 
 import com.dbxray.application.CheckDocumentDiffRequest;
 import com.dbxray.application.CheckDocumentDiffUsecase;
-import com.dbxray.application.ExportTableDefinitionRequest;
-import com.dbxray.application.ExportTableDefinitionUsecase;
+import com.dbxray.application.ExportSchemaRequest;
+import com.dbxray.application.ExportSchemaUsecase;
 import com.dbxray.domain.model.snapshot.DiffResult;
 import com.dbxray.presentation.dto.DiffCheckResultDto;
 import com.dbxray.presentation.dto.ResultDto;
@@ -13,14 +13,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * テーブル定義出力処理のコントローラークラス<br>
+ * DBドキュメント出力処理のコントローラークラス<br>
  * ユースケースを実行し、結果を表示用のDTOへ変換する。ユースケースの例外は捕捉せずに呼び出し元へ伝える （捕捉はエントリーポイントが1箇所にまとめて行い、報告は{@link
  * FailureReporter}が行う）
  */
-public class ExportTableDefinitionController {
+public class ExportSchemaController {
 
-  private static final Logger logger = LogManager.getLogger(ExportTableDefinitionController.class);
-  private final ExportTableDefinitionUsecase exportTableDefinitionUsecase;
+  private static final Logger logger = LogManager.getLogger(ExportSchemaController.class);
+  private final ExportSchemaUsecase exportSchemaUsecase;
   private final CheckDocumentDiffUsecase checkDocumentDiffUsecase;
   private final Clock clock;
 
@@ -28,21 +28,21 @@ public class ExportTableDefinitionController {
    * @param clock 処理時間を計る時計
    */
   @Inject
-  public ExportTableDefinitionController(
-      ExportTableDefinitionUsecase exportTableDefinitionUsecase,
+  public ExportSchemaController(
+      ExportSchemaUsecase exportSchemaUsecase,
       CheckDocumentDiffUsecase checkDocumentDiffUsecase,
       Clock clock) {
-    this.exportTableDefinitionUsecase = exportTableDefinitionUsecase;
+    this.exportSchemaUsecase = exportSchemaUsecase;
     this.checkDocumentDiffUsecase = checkDocumentDiffUsecase;
     this.clock = clock;
   }
 
   /** コントローラーメソッド */
-  public ResultDto execute(ExportTableDefinitionRequest request) {
-    logger.info("[START] exportTableDefinition");
+  public ResultDto execute(ExportSchemaRequest request) {
+    logger.info("[START] exportSchema");
     final long startMillis = clock.millis();
-    exportTableDefinitionUsecase.exportTableDefinition(request);
-    logger.info("[ END ] exportTableDefinition [elapsedMillis={}]", clock.millis() - startMillis);
+    exportSchemaUsecase.exportSchema(request);
+    logger.info("[ END ] exportSchema [elapsedMillis={}]", clock.millis() - startMillis);
     return new ResultDto("Table definition output is complete.");
   }
 

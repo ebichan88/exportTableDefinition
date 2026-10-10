@@ -43,7 +43,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * DBからスキーマ情報を取得し、出力形式ごとの{@link ExportSink}へ書き出す段取りを担うクラス<br>
- * テーブル定義出力（通常実行）と差分検知（{@code --check}）の双方で共通の処理で、両者の違いは書き出し先の{@link ExportSink}のみ。
+ * DBドキュメント出力（通常実行）と差分検知（{@code --check}）の双方で共通の処理で、両者の違いは書き出し先の{@link ExportSink}のみ。
  * 対象範囲全体を一度にメモリへ載せないよう、軽量な情報は一括取得し（{@link #fetchTargets}）、
  * テーブル数に比例して重くなる情報はスキーマ・チャンク単位で取得・書き出し・破棄する（{@link #export}）。 取得した情報同士の突き合わせは{@link
  * ExportTargetConsistency}に委ねる
