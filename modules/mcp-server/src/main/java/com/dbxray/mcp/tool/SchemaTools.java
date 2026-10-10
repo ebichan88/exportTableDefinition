@@ -30,6 +30,7 @@ final class SchemaTools {
             LIST_SCHEMAS,
             "スキーマ一覧",
             "スナップショットに含まれるDB（DBMS種別・メジャーバージョン）とスキーマの一覧を、スキーマごとのオブジェクトの数とともに返す。"
+                + "functionsは関数・プロシージャの合計で、proceduresはそのうちのプロシージャの数。"
                 + "メジャーバージョンは、書けるSQL（構文・関数）を判断するときに使う。"
                 + "どのDB・スキーマがあるか、全体像をつかむときに最初に使う",
             objectSchema(Map.of(), List.of()),
@@ -70,6 +71,8 @@ final class SchemaTools {
      * 1スキーマと、含まれるオブジェクトの数
      *
      * @param functions 関数・プロシージャの数（オーバーロードはそれぞれ数える）
+     * @param procedures {@code functions}のうちプロシージャの数
+     * @param triggers テーブルに属するトリガーの数
      */
     record Schema(
         String name,
@@ -77,8 +80,10 @@ final class SchemaTools {
         int views,
         int materializedViews,
         int functions,
+        int procedures,
         int sequences,
-        int types) {
+        int types,
+        int triggers) {
 
       static Schema of(SchemaSummary summary) {
         return new Schema(
@@ -87,8 +92,10 @@ final class SchemaTools {
             summary.views(),
             summary.materializedViews(),
             summary.functions(),
+            summary.procedures(),
             summary.sequences(),
-            summary.types());
+            summary.types(),
+            summary.triggers());
       }
     }
   }

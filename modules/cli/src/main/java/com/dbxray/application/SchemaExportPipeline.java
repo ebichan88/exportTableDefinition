@@ -1,6 +1,7 @@
 package com.dbxray.application;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.metrics.DatabaseMetrics;
 import com.dbxray.domain.model.relation.DiagramBoxes;
 import com.dbxray.domain.model.relation.ForeignKeyEntity;
 import com.dbxray.domain.model.relation.ForeignKeys;
@@ -117,7 +118,8 @@ final class SchemaExportPipeline {
         schemaObjects.sequences(),
         schemaObjects.types(),
         annotations,
-        sidecar.viewpoints());
+        sidecar.viewpoints(),
+        outputObjectTypes);
   }
 
   /**
@@ -245,7 +247,7 @@ final class SchemaExportPipeline {
   /**
    * 一括取得した情報をもとに、指定された出力形式で書き出すメソッド<br>
    * 一括取得した情報から出力できるもの（一覧・ER図等）を先に書き出し、その後に関数の定義本体をスキーマ単位で、
-   * テーブルの詳細情報をスキーマ・チャンク単位で取得・書き出し・破棄する。どの形式で書き出す場合も取得処理は共通
+   * テーブルの詳細情報をスキーマ・チャンク単位で取得・書き出し・破棄する。最後に、取得の途中で数えた集計を書き出す。 どの形式で書き出す場合も取得処理は共通
    *
    * @param chunkSize 1回の取得でまとめて処理するテーブル数の上限。0以下の場合は分割しない
    */
@@ -261,13 +263,16 @@ final class SchemaExportPipeline {
     // カラム・インデックス・制約は、スキーマ内でさらにchunkSize件ずつに分割して取得・出力・破棄する。
     // これにより、テーブルが1スキーマに集中していても、同時にメモリ保持する詳細情報を最大chunkSize件分に抑える
     final Triggers triggers = targets.triggers();
+    final DatabaseMetrics.Builder metrics = DatabaseMetrics.builder(targets);
     targets
         .tables()
         .bySchema()
         .forEach(
             (schemaName, tablesInSchema) ->
                 exportSchemaTableDefinitions(
-                    schemaName, tablesInSchema, targets, triggers, chunkSize, sinks));
+                    schemaName, tablesInSchema, targets, triggers, chunkSize, sinks, metrics));
+    final DatabaseMetrics summary = metrics.build();
+    sinks.forEach(sink -> sink.writeSummary(targets, summary));
     logger.info(
         "Exported schema objects. [tables={}, functions={}, sequences={}, types={}, triggers={}]",
         targets.tables().asList().size(),
@@ -293,10 +298,11 @@ final class SchemaExportPipeline {
       ExportTargets targets,
       Triggers triggers,
       int chunkSize,
-      List<ExportSink> sinks) {
+      List<ExportSink> sinks,
+      DatabaseMetrics.Builder metrics) {
     sinks.forEach(sink -> sink.beginSchemaTables(schemaName, targets.baseInfo()));
     for (final List<TableEntity> chunk : splitIntoChunks(tablesInSchema, chunkSize)) {
-      exportTableDefinitionChunk(chunk, targets, triggers, sinks);
+      exportTableDefinitionChunk(chunk, targets, triggers, sinks, metrics);
     }
   }
 
@@ -306,9 +312,14 @@ final class SchemaExportPipeline {
    * @param chunk 1チャンク分のテーブルのリスト（同一スキーマ。呼び出し元で絞り込み済み）
    */
   private void exportTableDefinitionChunk(
-      List<TableEntity> chunk, ExportTargets targets, Triggers triggers, List<ExportSink> sinks) {
+      List<TableEntity> chunk,
+      ExportTargets targets,
+      Triggers triggers,
+      List<ExportSink> sinks,
+      DatabaseMetrics.Builder metrics) {
     for (final TableDetail detail : repository.selectTableDetails(chunk)) {
       report(consistency.findOrphanColumnAnnotations(detail, targets.annotations()));
+      metrics.collectColumns(detail);
       final TableDefinitionContent content =
           TableDefinitionContent.assemble(
               targets.baseInfo(),

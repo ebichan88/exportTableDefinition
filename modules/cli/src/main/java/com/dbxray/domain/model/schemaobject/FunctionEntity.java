@@ -21,6 +21,18 @@ public record FunctionEntity(
     String languageName,
     String definition) {
 
+  /** プロシージャの種別（{@link #functionKind}の値） */
+  private static final String PROCEDURE = "PROCEDURE";
+
+  /**
+   * プロシージャであるか判定するメソッド
+   *
+   * @return プロシージャの場合はtrue。関数の場合はfalse
+   */
+  public boolean isProcedure() {
+    return PROCEDURE.equals(functionKind);
+  }
+
   /**
    * 同じスキーマに同名の関数・プロシージャが複数存在する（オーバーロードされている）か判定するメソッド
    *

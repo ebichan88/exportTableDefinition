@@ -28,7 +28,7 @@ class ObjectCatalogTest {
                 table("db1", "hr", "department").type("view").build()),
             List.of(
                 function("db1", "sales", "calc_tax", "p_amount numeric"),
-                function("db1", "sales", "audit", ""),
+                procedure("db1", "sales", "audit"),
                 function("db1", "sales", "calc_tax", "p_amount numeric, p_rate numeric"),
                 function("db1", "hr", "calc_tax", "")),
             List.of(
@@ -40,12 +40,12 @@ class ObjectCatalogTest {
                 new TypeEntry(new ObjectKey("db1", "sales", "address"), "COMPOSITE", "{}")));
 
     @Test
-    @DisplayName("スキーマごとの数に、関数（オーバーロードはそれぞれ）・シーケンス・型も数える")
+    @DisplayName("スキーマごとの数に、関数（オーバーロードはそれぞれ）とそのうちのプロシージャ・シーケンス・型・トリガーも数える")
     void summarizesAllKinds() {
       assertEquals(
           List.of(
-              new SchemaSummary("db1", "PostgreSQL", 16, "hr", 1, 1, 0, 1, 0, 0),
-              new SchemaSummary("db1", "PostgreSQL", 16, "sales", 1, 0, 0, 3, 2, 2)),
+              new SchemaSummary("db1", "PostgreSQL", 16, "hr", 1, 1, 0, 1, 0, 0, 0, 1),
+              new SchemaSummary("db1", "PostgreSQL", 16, "sales", 1, 0, 0, 3, 1, 2, 2, 2)),
           catalog.schemas());
     }
 
@@ -123,6 +123,11 @@ class ObjectCatalogTest {
         String database, String schema, String name, String arguments) {
       return new FunctionEntry(
           new ObjectKey(database, schema, name), "FUNCTION", arguments, "void", "sql", "{}");
+    }
+
+    private static FunctionEntry procedure(String database, String schema, String name) {
+      return new FunctionEntry(
+          new ObjectKey(database, schema, name), "PROCEDURE", "", "", "plpgsql", "{}");
     }
   }
 }
