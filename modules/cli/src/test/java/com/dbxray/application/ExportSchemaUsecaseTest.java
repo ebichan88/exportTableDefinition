@@ -573,6 +573,37 @@ public class ExportSchemaUsecaseTest {
   }
 
   @Test
+  @DisplayName("READMEの集計は、チャンクに分けて取得したカラムを全テーブル分数え、取得しなかった種別の列は省く")
+  void testReadmeMetricsCountColumnsAcrossChunks() {
+    setUp();
+    IntStream.rangeClosed(1, 3)
+        .forEach(
+            i -> {
+              repository.tables.add(table("public", "t" + i));
+              repository.columns.add(
+                  new ColumnEntity("public", "t" + i, "ID", "id", "int", "", true, true, ""));
+              repository.columns.add(EntityFixtures.column("public", "t" + i, "v", "int", false));
+            });
+
+    usecase.exportSchema(
+        new ExportSchemaRequest(
+            TargetSelection.of(List.of(), List.of(), List.of("function")),
+            null,
+            null,
+            2,
+            80,
+            1,
+            false));
+
+    final String readme = contentOf(dbFile(DEFAULT_OUT, "README.md"));
+    assertTrue(readme.contains("|public|3|0|0|0|6|0|0|"), readme);
+    assertTrue(readme.contains("|public|0 / 3|3 / 6|"), readme);
+    assertFalse(readme.contains("| シーケンス |"), readme);
+    assertFalse(readme.contains("| ユーザー定義型 |"), readme);
+    assertFalse(readme.contains("| トリガー |"), readme);
+  }
+
+  @Test
   @DisplayName("chunkSizeが0以下の場合はスキーマ全体を1回で取得する")
   void testChunkSizeZeroMeansSingleChunk() {
     setUp();

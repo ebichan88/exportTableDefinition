@@ -169,9 +169,9 @@ class TableDefinitionToolsTest {
     assertEquals(
         "{\"databases\":[{\"name\":\"testdb\",\"dbms\":\"PostgreSQL\",\"majorVersion\":16,\"schemas\":["
             + "{\"name\":\"archive\",\"tables\":1,\"views\":0,\"materializedViews\":0,"
-            + "\"functions\":0,\"sequences\":0,\"types\":0},"
+            + "\"functions\":0,\"procedures\":0,\"sequences\":0,\"types\":0,\"triggers\":0},"
             + "{\"name\":\"sample\",\"tables\":4,\"views\":0,\"materializedViews\":0,"
-            + "\"functions\":5,\"sequences\":1,\"types\":1}]}]}",
+            + "\"functions\":5,\"procedures\":0,\"sequences\":1,\"types\":1,\"triggers\":1}]}]}",
         json(call("list_schemas", Map.of())).toString());
   }
 

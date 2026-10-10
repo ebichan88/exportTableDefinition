@@ -25,6 +25,7 @@ DBのメタ情報を**読み取るだけで更新しない**ため、更新の�
 ```mermaid
 flowchart TB
   snapshot["snapshot<br/>スナップショット・差分"]
+  metrics["metrics<br/>集計"]
   insight["insight<br/>参考情報"]
   target["target<br/>出力対象"]
   sidecar["sidecar<br/>サイドカー"]
@@ -36,6 +37,7 @@ flowchart TB
   document["document<br/>一覧ドキュメント"]
 
   snapshot --> target
+  metrics --> target
   insight --> viewpoint
   target --> sidecar
   target --> schemaobject
@@ -49,7 +51,8 @@ flowchart TB
 矢印は「依存する側 → 依存される側」（パッケージは`domain.model.{名前}`）。矢印を辿って到達できるパッケージへは
 直接依存してよい（例：`target`・`snapshot`は`table`のクラスを直接参照する）が、逆向きの依存や循環は作らない。
 `document`（一覧ドキュメントの種別）は他の概念に依存しない。`insight`（参考情報）は`snapshot`とは独立の出力先を持ち、
-`snapshot`に依存しない（両者は役割が異なるだけで、互いを経由する関係ではない）。
+`snapshot`に依存しない（両者は役割が異なるだけで、互いを経由する関係ではない）。`metrics`（READMEに載せる出力対象の集計）は
+`target`の一括取得分と詳細情報から数を求めるだけで、ほかのパッケージから依存されない。
 
 ## テーブルと関連
 
@@ -398,6 +401,10 @@ classDiagram
 （トリガーは所属テーブルで引くため、`Triggers`は`AbstractEntities`を継承してテーブルキーの索引も持つ）。
 スナップショット（`snapshot`）は`TableDefinitionContent`等を機械可読な形へ写したもので、図は省略する。
 
+集計（`metrics`）は、出力対象（`ExportTargets`）と詳細情報（`TableDetail`）から、スキーマごとの数（`SchemaMetrics`）を求めたもの。
+良し悪しの判定を持たず数の事実だけを持ち、`target.objects`で外した種別は数えていない（0件とは区別する）ことを`DatabaseMetrics.isCounted`で示す。
+カラムはチャンク単位で取得するため、`DatabaseMetrics.Builder.collectColumns`で取得のたびに足す。図は省略する。
+
 参考情報（`insight`）は、スナップショットの事実とは別にAIへ渡す情報（観点等。`--check`の比較対象ではない）を
 機械可読な形へ写したもので、`snapshot`と対になる出力だが依存しない。現時点の内容は`ViewpointsInsight`
 （1ファイル分。`formatVersion`を持つ）／`ViewpointInsight`（観点1件。識別子・表示名・説明・所属テーブル）のみで、
@@ -426,6 +433,8 @@ classDiagram
 | テーブル定義書のER図に描く関連（描画距離以内。上限を超える場合は距離を縮める） | `ForeignKeys.neighborhoodOf` |
 | ビューが参照するテーブルの取得（パーティションへの参照は根へまとめる、自身・DBMSが管理するスキーマへの参照は含めない） | `catalogMapper.xml`の`selectViewReferenceInfo` |
 | ビューの参照のうち、出力対象外のビューのものを除く | `SchemaExportPipeline.fetchViewReferences` |
+| 出力対象の集計の数え方（関数・プロシージャはオーバーロードをそれぞれ、トリガーは出力対象のテーブルに属するもの、関連は参照元のスキーマ、関連を持たない＝どの関連の端にもならない）。集計用のSQLは使わない | `DatabaseMetrics.Builder` |
+| プロシージャの判定 | `FunctionEntity.isProcedure` |
 | 一覧ドキュメント（観点一覧を含む）は対象が1件以上あるときだけ出力し、関連ドキュメントとしてリンクする（テーブル一覧は常に出力） | `MarkdownExportSinkFactory.listDocuments` |
 | Markdownのファイル名・配置・相対リンク（関数・プロシージャのオーバーロードは`{名前}_{番号}`、観点ページは識別子から`viewpoint_{DB名}_{識別子}`） | `DocumentLocations` |
 | スナップショットのファイル名・配置 | `SnapshotLocations` |
@@ -467,6 +476,7 @@ classDiagram
 | 出力対象オブジェクト種別 | `target.objects` | `OutputObjectType` | 出力対象の絞り込み条件のうち、テーブル以外の追加オブジェクトを対象とするもの。トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（トリガーはテーブルに属するため、スキーマ直下のオブジェクトとは範囲が異なる） |
 | 出力対象 | － | `ExportTargets` | 出力対象の絞り込み条件を適用して取得した、出力するもの（条件ではなくデータ）。コード上は対象範囲全体を一括取得する軽量な情報の組を指す |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |
+| 集計 | READMEの集計（オブジェクトの数・論理名の記述状況・関連と読み解きの状況） | `DatabaseMetrics` / `SchemaMetrics` | 出力対象のスキーマごとの数。良し悪しの判定（割合・閾値）は持たない |
 | 突き合わせの通知 | 警告ログ | `ConsistencyNotice` | 出力対象と関連・付帯情報・観点を突き合わせた結果（孤児付帯情報・除外した関連・一致しない観点のパターン等） |
 | 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`。RDBMSの欄にはメジャーバージョンを添える）＋生成日 |
 | スキーマ直下のオブジェクト | 関数・プロシージャ／シーケンス／ユーザー定義型 | `FunctionEntity` / `SequenceEntity` / `TypeEntity` | テーブルに属さないオブジェクト |

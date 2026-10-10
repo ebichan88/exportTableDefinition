@@ -3,6 +3,7 @@ package com.dbxray.domain.service.writer;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.metrics.DatabaseMetrics;
 import com.dbxray.domain.model.relation.Cardinality;
 import com.dbxray.domain.model.relation.DiagramNeighborhood;
 import com.dbxray.domain.model.relation.ForeignKeyEntity;
@@ -19,6 +20,7 @@ import com.dbxray.domain.model.table.TableKey;
 import com.dbxray.domain.model.table.TableType;
 import com.dbxray.domain.model.table.TriggerEntity;
 import com.dbxray.domain.model.table.ViewReferenceEntity;
+import com.dbxray.domain.model.target.OutputObjectType;
 import com.dbxray.domain.service.writer.erdiagram.ErDiagramTemplates;
 import com.dbxray.domain.service.writer.objectlist.ObjectDefinitionTemplates;
 import com.dbxray.domain.service.writer.objectlist.ObjectListTemplates;
@@ -27,8 +29,10 @@ import com.dbxray.domain.service.writer.tabledefinition.TableDefinitionListTempl
 import com.dbxray.domain.service.writer.tabledefinition.TableDefinitionTemplates;
 import com.dbxray.domain.service.writer.template.MarkdownTemplateSupport;
 import com.dbxray.testsupport.DiagramBoxesFixtures;
+import com.dbxray.testsupport.ExportTargetsFixtures;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +170,19 @@ public class MarkdownInjectionTest {
     documents.put(
         "objectDefinition.typeFile", () -> ObjectDefinitionTemplates.typeFile(type, BASE_INFO));
     documents.put("readme.fileHeader", () -> ReadmeTemplates.fileHeader(BASE_INFO));
+    documents.put(
+        "readme.metrics",
+        () ->
+            ReadmeTemplates.metrics(
+                DatabaseMetrics.builder(
+                        ExportTargetsFixtures.of(
+                            List.of(
+                                table,
+                                new TableEntity("db", "other", "", "t", TableType.TABLE, "")),
+                            List.of(),
+                            List.of(function),
+                            EnumSet.allOf(OutputObjectType.class)))
+                    .build()));
     documents.put(
         "erDiagram.headers",
         () ->
