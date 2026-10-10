@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle 23|FREEPDB1|2026/10/08|
+|Oracle 23|FREEPDB1|2026/10/10|
 
 ## テーブル説明
 
@@ -55,6 +55,14 @@
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
 |:---|:---|:---|:---|:---|:---|
 |1|TRG_PROJECT_ASSIGNMENT_DELETE|AFTER|DELETE|STATEMENT|CREATE OR REPLACE TRIGGER sample.trg_project_assignment_delete after delete on sample.project_assignment|
+
+### TRG_PROJECT_ASSIGNMENT_DELETE
+
+```sql
+begin
+    dbms_output.put_line('sample.project_assignment was deleted');
+end;
+```
 
 ## ER図
 

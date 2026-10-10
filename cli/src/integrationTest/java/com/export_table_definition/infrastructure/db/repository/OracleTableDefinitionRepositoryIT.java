@@ -571,6 +571,24 @@ class OracleTableDefinitionRepositoryIT {
   }
 
   @Test
+  @DisplayName("selectTriggerList: 本体のPL/SQL（DECLARE部を含む）を、末尾の改行を除いて取得する")
+  void testSelectTriggerBody() {
+    final Map<String, TriggerEntity> triggers =
+        byName(repository.selectTriggerList(SAMPLE_SCHEMA), TriggerEntity::triggerName);
+
+    assertEquals(
+        """
+        begin
+            :new.updated_at := systimestamp;
+        end;""",
+        triggers.get("TRG_EMPLOYEE_SET_UPDATED_AT").body());
+    final String audit = triggers.get("TRG_EMPLOYEE_AUDIT").body();
+    assertTrue(audit.startsWith("declare"), audit);
+    assertTrue(audit.contains("insert into sample.audit_log"), audit);
+    assertTrue(audit.endsWith("end;"), audit);
+  }
+
+  @Test
   @DisplayName("selectTriggerList: WHEN句を持つトリガーは、定義にWHEN句を含める")
   void testSelectTriggerWithWhenClause() throws SQLException {
     try {

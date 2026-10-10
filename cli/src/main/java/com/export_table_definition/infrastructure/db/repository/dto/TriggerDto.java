@@ -11,11 +11,12 @@ public record TriggerDto(
     String events,
     String orientation,
     String functionName,
-    String triggerDefinition) {
+    String triggerDefinition,
+    String body) {
 
   /**
    * DTOからEntityへの変換メソッド<br>
-   * SQLがスラッシュ区切りで連結して返す対象イベントは、ここでリストへ分解する
+   * SQLがスラッシュ区切りで連結して返す対象イベントは、ここでリストへ分解する。 本体の末尾の改行・空白は、意味を持たず、スナップショットの差分の原因にもなるため除く
    *
    * @return TriggerEntityのインスタンス
    */
@@ -28,6 +29,7 @@ public record TriggerDto(
         DtoValues.split(events, "/"),
         DtoValues.text(orientation),
         DtoValues.text(functionName),
-        DtoValues.text(triggerDefinition));
+        DtoValues.text(triggerDefinition),
+        DtoValues.text(body).stripTrailing());
   }
 }

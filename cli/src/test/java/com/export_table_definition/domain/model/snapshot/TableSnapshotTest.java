@@ -129,7 +129,8 @@ public class TableSnapshotTest {
             List.of("INSERT", "UPDATE"),
             "ROW",
             "public.f_orders",
-            "CREATE TRIGGER trg_orders ...");
+            "CREATE TRIGGER trg_orders ...",
+            "BEGIN NULL; END;");
 
     TableSnapshot snapshot =
         TableSnapshot.of(
@@ -182,7 +183,8 @@ public class TableSnapshotTest {
                 List.of("INSERT", "UPDATE"),
                 "ROW",
                 "public.f_orders",
-                "CREATE TRIGGER trg_orders ...")),
+                "CREATE TRIGGER trg_orders ...",
+                "BEGIN NULL; END;")),
         snapshot.triggers());
   }
 

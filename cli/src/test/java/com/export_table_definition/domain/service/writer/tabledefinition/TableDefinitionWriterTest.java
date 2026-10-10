@@ -183,7 +183,8 @@ public class TableDefinitionWriterTest {
             List.of("INSERT"),
             "ROW",
             "public.f_orders",
-            "...");
+            "...",
+            "");
 
     var annotation = new TableAnnotation("受注を管理するテーブル", "個人情報を含む", Map.of("order_id", "受注の主キー"));
     var content =

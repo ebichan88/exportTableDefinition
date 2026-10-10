@@ -371,7 +371,10 @@ public class TableDefinitionTemplates {
         fk.cardinality().getLabel());
   }
 
-  /** トリガー情報セクション */
+  /**
+   * トリガー情報セクション<br>
+   * 本体を持つトリガー（Oracle）は、表の後にトリガーごとの見出しとコードブロックで本体を出す（複数行のため表のセルに収まらない）
+   */
   public static String triggers(List<TriggerEntity> triggers) {
     String header =
         """
@@ -380,17 +383,36 @@ public class TableDefinitionTemplates {
                 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
                 |:---|:---|:---|:---|:---|:---|
                 """;
-    return tableSection(
-        triggers,
-        header,
-        (no, t) ->
-            row(
-                no,
-                t.triggerName(),
-                t.timing(),
-                String.join("/", t.events()),
-                t.orientation(),
-                MarkdownTemplateSupport.escapePipe(t.triggerDefinition())));
+    final StringBuilder sb =
+        new StringBuilder(
+            tableSection(
+                triggers,
+                header,
+                (no, t) ->
+                    row(
+                        no,
+                        t.triggerName(),
+                        t.timing(),
+                        String.join("/", t.events()),
+                        t.orientation(),
+                        MarkdownTemplateSupport.escapePipe(t.triggerDefinition()))));
+    triggers.stream().filter(t -> !t.body().isEmpty()).forEach(t -> sb.append(triggerBody(t)));
+    return sb.toString();
+  }
+
+  /** トリガーの本体（見出しとコードブロック） */
+  private static String triggerBody(TriggerEntity trigger) {
+    final String fence = MarkdownTemplateSupport.codeFence(trigger.body());
+    return "### "
+        + MarkdownTemplateSupport.escapeInline(trigger.triggerName())
+        + LINE_SEPARATOR_DOUBLE
+        + fence
+        + "sql"
+        + LINE_SEPARATOR
+        + trigger.body()
+        + LINE_SEPARATOR
+        + fence
+        + LINE_SEPARATOR_DOUBLE;
   }
 
   /**

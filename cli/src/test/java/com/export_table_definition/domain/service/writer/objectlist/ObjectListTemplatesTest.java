@@ -77,6 +77,7 @@ public class ObjectListTemplatesTest {
             List.of("INSERT"),
             "ROW",
             "public.f_orders",
+            "",
             "");
     assertEquals(
         "|1|public|orders|trg_orders|BEFORE|INSERT|public.f_orders|" + System.lineSeparator(),

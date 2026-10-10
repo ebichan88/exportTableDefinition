@@ -65,6 +65,6 @@ public final class EntityFixtures {
    * @return トリガー
    */
   public static TriggerEntity trigger(String schema, String table) {
-    return new TriggerEntity(schema, table, "", "", List.of(), "", "", "");
+    return new TriggerEntity(schema, table, "", "", List.of(), "", "", "", "");
   }
 }

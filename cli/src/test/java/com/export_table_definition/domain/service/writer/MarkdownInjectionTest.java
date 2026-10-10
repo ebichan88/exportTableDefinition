@@ -87,7 +87,15 @@ public class MarkdownInjectionTest {
             RelationType.PHYSICAL);
     final TriggerEntity trigger =
         new TriggerEntity(
-            HOSTILE, HOSTILE, HOSTILE, HOSTILE, List.of(HOSTILE), HOSTILE, HOSTILE, HOSTILE);
+            HOSTILE,
+            HOSTILE,
+            HOSTILE,
+            HOSTILE,
+            List.of(HOSTILE),
+            HOSTILE,
+            HOSTILE,
+            HOSTILE,
+            HOSTILE);
     final FunctionEntity function =
         new FunctionEntity(
             HOSTILE, HOSTILE, HOSTILE, 1, 1, HOSTILE, HOSTILE, HOSTILE, HOSTILE, HOSTILE);
