@@ -93,4 +93,4 @@ erDiagram
 
 ___
 
-[ER図一覧へ](./erDiagramList_testdb.md) [テーブル一覧へ](./tableList_testdb.md)
+[ER図一覧へ](./erDiagramList_testdb.md) / [テーブル一覧へ](./tableList_testdb.md)

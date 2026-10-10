@@ -87,4 +87,4 @@ erDiagram
 
 ___
 
-[ER図一覧へ](./erDiagramList_FREEPDB1.md) [テーブル一覧へ](./tableList_FREEPDB1.md)
+[ER図一覧へ](./erDiagramList_FREEPDB1.md) / [テーブル一覧へ](./tableList_FREEPDB1.md)

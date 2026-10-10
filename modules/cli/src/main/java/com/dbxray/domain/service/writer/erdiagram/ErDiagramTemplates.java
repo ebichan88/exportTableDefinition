@@ -197,7 +197,7 @@ public class ErDiagramTemplates {
     return HORIZON
         + LINE_SEPARATOR_DOUBLE
         + String.format(
-            "[スキーマのER図へ](%s) ",
+            "[スキーマのER図へ](%s) / ",
             DocumentLocations.linkFromDatabaseRoot(
                 DocumentLocations.erDiagramFile(baseInfo.dbName(), schemaName)))
         + listLinks(baseInfo)
@@ -288,7 +288,7 @@ public class ErDiagramTemplates {
   /** ER図一覧・テーブル一覧へ戻るリンクを並べた文字列を生成するメソッド */
   private static String listLinks(BaseInfoEntity baseInfo) {
     return String.format(
-        "[%s](%s) [%s](%s)",
+        "[%s](%s) / [%s](%s)",
         ListDocumentType.ER_DIAGRAM.getBackLinkLabel(),
         listLink(ListDocumentType.ER_DIAGRAM, baseInfo),
         ListDocumentType.TABLE.getBackLinkLabel(),

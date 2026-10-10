@@ -184,7 +184,7 @@ public class ViewpointWriterTest {
 
         ___
 
-        [観点一覧へ](./viewpointList_testdb.md) [テーブル一覧へ](./tableList_testdb.md)
+        [観点一覧へ](./viewpointList_testdb.md) / [テーブル一覧へ](./tableList_testdb.md)
         """,
         fileRepository.files.get(OUT.resolve("testdb").resolve("viewpoint_testdb_order.md")));
   }
