@@ -97,7 +97,8 @@ class TableDefinitionResourcesTest {
             .orElseThrow();
     assertEquals("exporttable://testdb/sample/department", department.resource().uri());
     assertEquals("application/json", department.resource().mimeType());
-    assertEquals("testdb / table / 組織のマスタ", department.resource().description());
+    assertEquals(
+        "部署 (sample.department) / testdb / table / 組織のマスタ", department.resource().description());
   }
 
   @Test
