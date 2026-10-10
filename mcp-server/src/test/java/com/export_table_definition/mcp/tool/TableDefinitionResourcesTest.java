@@ -4,38 +4,22 @@ import static com.export_table_definition.mcp.catalog.TestTables.table;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.export_table_definition.mcp.catalog.SchemaCatalog;
-import com.export_table_definition.mcp.catalog.TableEntry;
 import com.export_table_definition.mcp.catalog.TestCatalogs;
-import com.export_table_definition.mcp.tool.TableDefinitionResources.Mode;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncResourceSpecification;
-import io.modelcontextprotocol.spec.McpError;
-import io.modelcontextprotocol.spec.McpSchema.CompleteRequest;
-import io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument;
-import io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteContext;
-import io.modelcontextprotocol.spec.McpSchema.CompleteResult;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceResult;
-import io.modelcontextprotocol.spec.McpSchema.ResourceReference;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
-import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /** {@link TableDefinitionResources}のテスト */
 class TableDefinitionResourcesTest {
-
-  private static final ResourceReference REFERENCE =
-      new ResourceReference(TableResourceUri.TEMPLATE);
 
   private final SchemaCatalog catalog =
       TestCatalogs.of(
@@ -46,41 +30,12 @@ class TableDefinitionResourcesTest {
               table("no_logical_name").build(),
               table("testdb", "archive", "employee").logicalName("従業員（過去）").build()));
 
-  private final TableDefinitionResources all =
-      new TableDefinitionResources(catalog, EnumSet.allOf(Mode.class));
-
-  @Test
-  @DisplayName("出し方は list・template・none をカンマ区切りで指定でき、未指定は両方になる")
-  void parsesModes() {
-    assertEquals(EnumSet.allOf(Mode.class), Mode.parse(null));
-    assertEquals(EnumSet.allOf(Mode.class), Mode.parse(" "));
-    assertEquals(Set.of(Mode.LIST), Mode.parse("list"));
-    assertEquals(Set.of(Mode.TEMPLATE), Mode.parse(" Template "));
-    assertEquals(EnumSet.allOf(Mode.class), Mode.parse("list,template"));
-    assertEquals(Set.of(), Mode.parse("none"));
-    assertThrows(IllegalArgumentException.class, () -> Mode.parse("list,all"));
-  }
-
-  @Test
-  @DisplayName("listだけの場合はテンプレートと補完を出さず、templateだけの場合は具体的なリソースを出さない")
-  void switchesBetweenModes() {
-    final TableDefinitionResources listOnly =
-        new TableDefinitionResources(catalog, Set.of(Mode.LIST));
-    final TableDefinitionResources templateOnly =
-        new TableDefinitionResources(catalog, Set.of(Mode.TEMPLATE));
-
-    assertEquals(5, listOnly.resourceSpecifications().size());
-    assertTrue(listOnly.templateSpecifications().isEmpty());
-    assertTrue(listOnly.completionSpecifications().isEmpty());
-    assertTrue(templateOnly.resourceSpecifications().isEmpty());
-    assertEquals(1, templateOnly.templateSpecifications().size());
-    assertEquals(1, templateOnly.completionSpecifications().size());
-  }
+  private final TableDefinitionResources resources = new TableDefinitionResources(catalog);
 
   @Test
   @DisplayName("全テーブルが具体的なリソースになり、名前には論理名と物理名の両方が入る")
   void listsEveryTableWithBothNames() {
-    final List<SyncResourceSpecification> specs = all.resourceSpecifications();
+    final List<SyncResourceSpecification> specs = resources.specifications();
 
     assertEquals(
         Set.of(
@@ -90,25 +45,60 @@ class TableDefinitionResourcesTest {
             "sample.no_logical_name",
             "受注明細 (sample.order_detail)"),
         specs.stream().map(spec -> spec.resource().name()).collect(Collectors.toSet()));
-    final SyncResourceSpecification department =
-        specs.stream()
-            .filter(spec -> spec.resource().uri().endsWith("/sample/department"))
-            .findFirst()
-            .orElseThrow();
-    assertEquals("exporttable://testdb/sample/department", department.resource().uri());
+  }
+
+  @Test
+  @DisplayName("URIはDB名・スキーマ名・テーブル名の3区間で、MIMEタイプはJSON")
+  void buildsUriAndMimeType() {
+    final SyncResourceSpecification department = specOf("exporttable://testdb/sample/department");
+
     assertEquals("application/json", department.resource().mimeType());
+    assertEquals(department.resource().name(), department.resource().title());
+  }
+
+  @Test
+  @DisplayName("説明は先頭に表示名を入れ、続けてDB名・区分・テーブルの説明を並べる")
+  void putsDisplayNameFirstInDescription() {
     assertEquals(
-        "部署 (sample.department) / testdb / table / 組織のマスタ", department.resource().description());
+        "部署 (sample.department) / testdb / table / 組織のマスタ",
+        specOf("exporttable://testdb/sample/department").resource().description());
+    assertEquals(
+        "sample.no_logical_name / testdb / table",
+        specOf("exporttable://testdb/sample/no_logical_name").resource().description());
+  }
+
+  @Test
+  @DisplayName("長い説明は切り詰め、表示名とDB名・区分は削らない")
+  void truncatesLongDescription() {
+    final SchemaCatalog longCatalog =
+        TestCatalogs.of(List.of(table("t").logicalName("表").description("あ".repeat(500)).build()));
+
+    final String description =
+        new TableDefinitionResources(longCatalog).specifications().get(0).resource().description();
+
+    assertTrue(description.startsWith("表 (sample.t) / testdb / table / あ"), description);
+    assertTrue(description.endsWith("…"), description);
+    assertEquals(121, description.length());
+  }
+
+  @Test
+  @DisplayName("DB由来の名前・説明の制御文字・改行・書字方向の制御文字は、1行の表示用に空白へ置き換える")
+  void removesControlCharactersFromDisplayStrings() {
+    final SchemaCatalog unsafe =
+        TestCatalogs.of(
+            List.of(table("x").logicalName("受注\u001b[2J\n明細‮").description("説明\r\n\t2行目").build()));
+
+    final SyncResourceSpecification spec =
+        new TableDefinitionResources(unsafe).specifications().get(0);
+
+    assertEquals("受注 [2J 明細 (sample.x)", spec.resource().name());
+    assertEquals("受注 [2J 明細 (sample.x) / testdb / table / 説明 2行目", spec.resource().description());
   }
 
   @Test
   @DisplayName("リソースを読むと、get_tableと同じテーブル定義のJSONが返る")
   void readsTableDefinition() {
-    final SyncResourceSpecification employee =
-        all.resourceSpecifications().stream()
-            .filter(spec -> spec.resource().uri().endsWith("/sample/employee"))
-            .findFirst()
-            .orElseThrow();
+    final SyncResourceSpecification employee = specOf("exporttable://testdb/sample/employee");
 
     final ReadResourceResult result =
         employee.readHandler().apply(null, new ReadResourceRequest(employee.resource().uri()));
@@ -121,131 +111,32 @@ class TableDefinitionResourcesTest {
   }
 
   @Test
-  @DisplayName("テンプレートに当てはまるURIは、一覧に無くても読める。見つからないURIはリソースが無いエラーになる")
-  void readsByTemplateUri() {
-    final var template = all.templateSpecifications().get(0);
+  @DisplayName("同名のテーブルが別のスキーマにあっても、それぞれのテーブルの定義が返る")
+  void readsEachTablesOwnDefinition() {
+    final String sample = read("exporttable://testdb/sample/employee");
+    final String archive = read("exporttable://testdb/archive/employee");
 
-    final ReadResourceResult found =
-        template
-            .readHandler()
-            .apply(null, new ReadResourceRequest("exporttable://testdb/archive/employee"));
-    assertTrue(
-        ((TextResourceContents) found.contents().get(0)).text().contains("\"schema\":\"archive\""));
-
-    final McpError notFound =
-        assertThrows(
-            McpError.class,
-            () ->
-                template
-                    .readHandler()
-                    .apply(null, new ReadResourceRequest("exporttable://testdb/sample/nothing")));
-    assertEquals(
-        McpError.RESOURCE_NOT_FOUND.apply("x").getJsonRpcError().code(),
-        notFound.getJsonRpcError().code());
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> template.readHandler().apply(null, new ReadResourceRequest("exporttable://x")));
+    assertTrue(sample.contains("\"schema\":\"sample\""), sample);
+    assertTrue(archive.contains("\"schema\":\"archive\""), archive);
+    assertFalse(archive.contains("\"schema\":\"sample\""), archive);
   }
 
   @Test
-  @DisplayName("テーブル名の補完は、物理名でも論理名でも候補が出る")
-  void completesByPhysicalAndLogicalName() {
-    assertEquals(List.of("order_detail"), complete("table", "order_det", Map.of()));
-    assertEquals(List.of("order_detail"), complete("table", "受注", Map.of()));
-    assertEquals(List.of("employee"), complete("table", "従業員", Map.of()));
+  @DisplayName("テーブルが無い場合は、リソースも無い")
+  void hasNoResourcesWithoutTables() {
+    assertTrue(new TableDefinitionResources(TestCatalogs.of(List.of())).specifications().isEmpty());
   }
 
-  @Test
-  @DisplayName("テーブル名の補完は、物理名の前方一致、部分一致、論理名のみの一致の順に並ぶ")
-  void ranksPhysicalPrefixFirst() {
-    final SchemaCatalog ranked =
-        TestCatalogs.of(
-            List.of(
-                table("x_order").build(),
-                table("order_header").build(),
-                table("billing").logicalName("order関連").build()));
-    final TableDefinitionResources resources =
-        new TableDefinitionResources(ranked, Set.of(Mode.TEMPLATE));
-
-    final CompleteResult result =
-        resources
-            .completionSpecifications()
-            .get(0)
-            .completionHandler()
-            .apply(null, new CompleteRequest(REFERENCE, new CompleteArgument("table", "order")));
-
-    assertEquals(List.of("order_header", "x_order", "billing"), result.completion().values());
+  private SyncResourceSpecification specOf(String uri) {
+    return resources.specifications().stream()
+        .filter(spec -> spec.resource().uri().equals(uri))
+        .findFirst()
+        .orElseThrow();
   }
 
-  @Test
-  @DisplayName("テーブル名の補完は、確定済みのスキーマで絞り込める")
-  void narrowsByResolvedSchema() {
-    assertEquals(List.of("employee"), complete("table", "emp", Map.of("schema", "archive")));
-    assertEquals(List.of("employee"), complete("table", "emp", Map.of("schema", "sample")));
-    assertEquals(List.of(), complete("table", "emp", Map.of("schema", "no_such")));
-  }
-
-  @Test
-  @DisplayName("DB名・スキーマ名の補完は、重複を除いて名前順に返す")
-  void completesDatabaseAndSchema() {
-    assertEquals(List.of("testdb"), complete("database", "", Map.of()));
-    assertEquals(List.of("archive", "sample"), complete("schema", "", Map.of()));
-    assertEquals(List.of("sample"), complete("schema", "sam", Map.of("database", "testdb")));
-    assertEquals(List.of(), complete("unknown", "", Map.of()));
-  }
-
-  @Test
-  @DisplayName("補完で返す名前は、URIの区間に使えるようエンコードされる")
-  void encodesCompletionValues() {
-    final SchemaCatalog special =
-        TestCatalogs.of(List.of(table("受注/明細").logicalName("受注明細").build()));
-    final TableDefinitionResources resources =
-        new TableDefinitionResources(special, Set.of(Mode.TEMPLATE));
-
-    final CompleteResult result =
-        resources
-            .completionSpecifications()
-            .get(0)
-            .completionHandler()
-            .apply(null, new CompleteRequest(REFERENCE, new CompleteArgument("table", "")));
-
-    assertEquals(List.of("%E5%8F%97%E6%B3%A8%2F%E6%98%8E%E7%B4%B0"), result.completion().values());
-  }
-
-  @Test
-  @DisplayName("補完の候補は100件までで、残りがあれば合計件数とhasMoreを返す")
-  void limitsCompletions() {
-    final List<TableEntry> tables = new ArrayList<>();
-    IntStream.range(0, 150)
-        .forEach(i -> tables.add(table("t_" + String.format("%03d", i)).build()));
-    final TableDefinitionResources resources =
-        new TableDefinitionResources(TestCatalogs.of(tables), Set.of(Mode.TEMPLATE));
-
-    final CompleteResult result =
-        resources
-            .completionSpecifications()
-            .get(0)
-            .completionHandler()
-            .apply(null, new CompleteRequest(REFERENCE, new CompleteArgument("table", "t_")));
-
-    assertEquals(100, result.completion().values().size());
-    assertEquals(150, result.completion().total());
-    assertTrue(result.completion().hasMore());
-    assertEquals("t_000", result.completion().values().get(0));
-    assertFalse(result.completion().values().contains("t_100"));
-  }
-
-  private List<String> complete(String variable, String typed, Map<String, String> resolved) {
-    final CompleteResult result =
-        all.completionSpecifications()
-            .get(0)
-            .completionHandler()
-            .apply(
-                null,
-                new CompleteRequest(
-                    REFERENCE,
-                    new CompleteArgument(variable, typed),
-                    new CompleteContext(resolved)));
-    return result.completion().values();
+  private String read(String uri) {
+    final ReadResourceResult result =
+        specOf(uri).readHandler().apply(null, new ReadResourceRequest(uri));
+    return ((TextResourceContents) result.contents().get(0)).text();
   }
 }

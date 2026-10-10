@@ -3,6 +3,7 @@ package com.export_table_definition.mcp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,13 +14,7 @@ import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import io.modelcontextprotocol.spec.McpSchema.CompleteRequest;
-import io.modelcontextprotocol.spec.McpSchema.CompleteRequest.CompleteArgument;
-import io.modelcontextprotocol.spec.McpSchema.CompleteResult;
-import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.Resource;
-import io.modelcontextprotocol.spec.McpSchema.ResourceReference;
-import io.modelcontextprotocol.spec.McpSchema.ResourceTemplate;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
@@ -248,11 +243,19 @@ class McpServerProcessTest {
   @Test
   @DisplayName("リソース: 全テーブルを一覧でき、論理名と物理名の両方を含む名前で、読むとテーブル定義が返る")
   void servesResourcesOverStdio() throws Exception {
-    try (McpSyncClient client = startClient()) {
+    final StdioClientTransport transport =
+        new StdioClientTransport(
+            ServerParameters.builder(JAVA)
+                .args("-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT)
+                .build(),
+            new JacksonMcpJsonMapper(new ObjectMapper()));
+    try (McpSyncClient client =
+        McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build()) {
       client.initialize();
 
       assertNotNull(client.getServerCapabilities().resources());
-      assertNotNull(client.getServerCapabilities().completions());
+      assertNull(client.getServerCapabilities().completions(), "URIテンプレートと補完は出さない");
+      assertTrue(client.listResourceTemplates().resourceTemplates().isEmpty());
 
       final List<Resource> resources = client.listResources().resources();
       assertEquals(14, resources.size());
@@ -263,6 +266,7 @@ class McpServerProcessTest {
               .orElseThrow();
       assertTrue(employee.name().endsWith(" (sample.employee)"), employee.name());
       assertTrue(employee.name().length() > " (sample.employee)".length(), employee.name());
+      assertTrue(employee.description().startsWith(employee.name()), employee.description());
 
       final TextResourceContents contents =
           (TextResourceContents) client.readResource(employee).contents().get(0);
@@ -272,89 +276,49 @@ class McpServerProcessTest {
   }
 
   @Test
-  @DisplayName("リソース: URIテンプレートで一覧に無くても読め、変数の補完は物理名・論理名のどちらでも効く")
-  void servesResourceTemplatesAndCompletionsOverStdio() throws Exception {
-    try (McpSyncClient client = startClient()) {
-      client.initialize();
-
-      final List<ResourceTemplate> templates = client.listResourceTemplates().resourceTemplates();
-      assertEquals(1, templates.size());
-      assertEquals("exporttable://{database}/{schema}/{table}", templates.get(0).uriTemplate());
-
-      final ResourceReference reference = new ResourceReference(templates.get(0).uriTemplate());
-      final CompleteResult byPhysical =
-          client.completeCompletion(
-              new CompleteRequest(reference, new CompleteArgument("table", "employee_dir")));
-      assertEquals(List.of("employee_directory_view"), byPhysical.completion().values());
-
-      final CompleteResult schemas =
-          client.completeCompletion(
-              new CompleteRequest(reference, new CompleteArgument("schema", "")));
-      assertTrue(
-          schemas.completion().values().contains("sample"),
-          schemas.completion().values().toString());
-
-      final CompleteResult databases =
-          client.completeCompletion(
-              new CompleteRequest(reference, new CompleteArgument("database", "")));
-      assertEquals(List.of("testdb"), databases.completion().values());
-
-      final TextResourceContents contents =
-          (TextResourceContents)
-              client
-                  .readResource(new ReadResourceRequest("exporttable://testdb/sample/employee"))
-                  .contents()
-                  .get(0);
-      assertTrue(contents.text().contains("\"name\":\"employee\""), contents.text());
-    }
-  }
-
-  @Test
-  @DisplayName("リソース: -Dmcp.resources で出し方を切り替えられる")
-  void switchesResourceModesWithSystemProperty() throws Exception {
-    try (McpSyncClient none = startClient("-Dmcp.resources=none")) {
-      none.initialize();
-      assertEquals(null, none.getServerCapabilities().resources());
-      assertEquals(null, none.getServerCapabilities().completions());
-    }
-    try (McpSyncClient listOnly = startClient("-Dmcp.resources=list")) {
-      listOnly.initialize();
-      assertEquals(14, listOnly.listResources().resources().size());
-      assertTrue(listOnly.listResourceTemplates().resourceTemplates().isEmpty());
-      assertEquals(null, listOnly.getServerCapabilities().completions());
-    }
-    try (McpSyncClient templateOnly = startClient("-Dmcp.resources=template")) {
-      templateOnly.initialize();
-      assertTrue(templateOnly.listResources().resources().isEmpty());
-      assertEquals(1, templateOnly.listResourceTemplates().resourceTemplates().size());
-    }
-  }
-
-  @Test
-  @DisplayName("リソースの出し方に解釈できない値を指定した場合は、標準エラーに理由を出して終了コード2で終了する")
-  void exitsWithMessageOnInvalidResourceMode() throws IOException, InterruptedException {
+  @DisplayName("リソース: 応答を待たずに続けて読んでも、すべての応答が返る（並行呼び出しで応答が止まる不具合の回帰）")
+  void respondsToPipelinedResourceReads() throws Exception {
+    final int callCount = 8;
     final Process process =
-        new ProcessBuilder(
-                JAVA, "-Dmcp.resources=all", "-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT)
-            .start();
-    process.getOutputStream().close();
+        new ProcessBuilder(JAVA, "-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT).start();
+    try {
+      final BufferedWriter stdin =
+          new BufferedWriter(
+              new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
+      final BlockingQueue<String> responses = new LinkedBlockingQueue<>();
+      final Thread reader = new Thread(() -> readLines(process, responses));
+      reader.setDaemon(true);
+      reader.start();
 
-    assertTrue(process.waitFor(30, TimeUnit.SECONDS));
-    assertEquals(McpServerMain.EXIT_USER_CORRECTABLE, process.exitValue());
-    final String stderr =
-        new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-    assertTrue(stderr.contains("-Dmcp.resources"), stderr);
-  }
+      send(
+          stdin,
+          "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{"
+              + "\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},"
+              + "\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}");
+      assertNotNull(responses.poll(30, TimeUnit.SECONDS), "initializeの応答がありません");
+      send(stdin, "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\",\"params\":{}}");
 
-  /** サンプルのスナップショットでサーバーを子プロセスとして起動し、接続したクライアントを返す */
-  private static McpSyncClient startClient(String... jvmArgs) {
-    final List<String> args = new java.util.ArrayList<>(List.of(jvmArgs));
-    args.addAll(List.of("-jar", JAR, "--snapshot=" + SAMPLE_SNAPSHOT));
-    final StdioClientTransport transport =
-        new StdioClientTransport(
-            ServerParameters.builder(JAVA).args(args).build(),
-            new JacksonMcpJsonMapper(new ObjectMapper()));
-    return McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build();
+      for (int i = 0; i < callCount; i++) {
+        send(
+            stdin,
+            "{\"jsonrpc\":\"2.0\",\"id\":"
+                + (100 + i)
+                + ",\"method\":\"resources/read\",\"params\":{"
+                + "\"uri\":\"exporttable://testdb/sample/employee\"}}");
+      }
+
+      final ObjectMapper mapper = new ObjectMapper();
+      final Set<Integer> receivedIds = new HashSet<>();
+      for (int i = 0; i < callCount; i++) {
+        final String line = responses.poll(30, TimeUnit.SECONDS);
+        assertNotNull(line, (i + 1) + "件目の応答がタイムアウトしました（並行呼び出しで応答が止まる不具合の再発）");
+        receivedIds.add(mapper.readTree(line).get("id").asInt());
+      }
+      assertEquals(
+          IntStream.range(100, 100 + callCount).boxed().collect(Collectors.toSet()), receivedIds);
+    } finally {
+      process.destroyForcibly();
+    }
   }
 
   private static String text(CallToolResult result) {
