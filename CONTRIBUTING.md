@@ -2,7 +2,7 @@
 
 不具合の報告は[Issue](../../issues/new/choose)のテンプレートから、変更の提案はPRでお願いします。
 ビルド・テストの方法は[ビルド・テスト](#ビルドテスト)、
-コードの構成と規約は[AGENTS.md](./AGENTS.md)と[docs/architecture](./docs/architecture/overview.md)を参照してください。
+コードの規約は[コーディングガイドライン](./docs/development/coding-guidelines.md)、コードの構成は[docs/architecture](./docs/architecture/overview.md)を参照してください。
 
 ## ビルド・テスト
 
@@ -19,6 +19,7 @@ exportTableDefinition
 ├─docs
 │  ├─usage         ・・・ 利用者向けのドキュメント（READMEから辿るCLIリファレンス・MCPサーバーの使い方）
 │  ├─architecture  ・・・ 設計のドキュメント
+│  ├─development   ・・・ 開発者向けのドキュメント（コーディングガイドライン）
 │  └─sample        ・・・ サンプルDBのDDLと出力のベースライン（結合テストの入力）
 ├─scripts          ・・・ 配布用zipに同梱する起動スクリプト
 ├─build.gradle     ・・・ サブプロジェクト共通のビルド設定

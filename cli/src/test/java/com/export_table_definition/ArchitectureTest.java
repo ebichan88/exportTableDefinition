@@ -18,7 +18,7 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** AGENTS.mdの規約のうち、レイヤーの依存方向・置き場所・命名等の機械的に判定できるものを検査するテスト */
+/** コーディングガイドラインの規約のうち、レイヤーの依存方向・置き場所・命名等の機械的に判定できるものを検査するテスト */
 public class ArchitectureTest {
 
   private static final String ROOT = "com.export_table_definition";

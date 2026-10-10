@@ -46,7 +46,7 @@ subprojects {
         options.charSet = 'UTF-8'
         options.encoding = 'UTF-8'
         // 壊れたJavadoc（タグの誤り・参照先の無いリンク等）は検知するが、Javadocを書かないメンバーは
-        // AGENTS.mdの「コメントスタイル」で許しているため、記述漏れ（missing）は検査しない
+        // docs/development/coding-guidelines.mdの「コメント・Javadoc」で許しているため、記述漏れ（missing）は検査しない
         options.addBooleanOption('Xdoclint:all,-missing', true)
     }
 
