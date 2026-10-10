@@ -775,7 +775,7 @@ class TableDefinitionToolsTest {
     final JsonNode result = json(call("get_er_diagram", Map.of("table", "project")));
 
     assertEquals("erDiagram\n    sample_project[\"project\"]\n", result.get("mermaid").asText());
-    assertTrue(result.get("message").asText().contains("関連はありません"));
+    assertEquals("図に描くテーブルの間に、外部キー・論理リレーションはありません。", result.get("message").asText());
   }
 
   @Test

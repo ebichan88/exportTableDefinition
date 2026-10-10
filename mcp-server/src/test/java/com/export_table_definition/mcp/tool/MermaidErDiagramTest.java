@@ -2,6 +2,7 @@ package com.export_table_definition.mcp.tool;
 
 import static com.export_table_definition.mcp.catalog.TestTables.table;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.export_table_definition.mcp.catalog.ColumnEntry;
 import com.export_table_definition.mcp.catalog.DiagramScope;
@@ -44,13 +45,15 @@ class MermaidErDiagramTest {
     final String mermaid =
         MermaidErDiagram.render(catalog.diagramOf(viewpoint("parent\"]\n```", "child")));
 
+    // 名前の中の```は行頭に来ないため、コードブロックを閉じる行にならない（閉じる行は行頭の3文字までの空白に続く```）
+    assertTrue(mermaid.lines().noneMatch(line -> line.matches(" {0,3}```.*")), mermaid);
     assertEquals(
         "erDiagram\n"
-            + "    sample_parent_______[\"parent']    （親     flowchart）\"]\n"
+            + "    sample_parent______[\"parent'] ```（親 ``` flowchart）\"]\n"
             + "    sample_child[\"child\"]\n"
-            + "    sample_parent_______ ||--o{ sample_child : \"fk'    \"\n"
-            + "    sample_parent_______ {\n"
-            + "        numeric____ id___ PK \"ID' \"\n"
+            + "    sample_parent______ ||--o{ sample_child : \"fk' ```\"\n"
+            + "    sample_parent______ {\n"
+            + "        numeric_ id___ PK \"ID' \"\n"
             + "    }\n"
             + "    sample_child {\n"
             + "        unknown parent_id FK\n"
