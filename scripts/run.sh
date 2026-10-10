@@ -20,9 +20,9 @@ if [ ! -x "$JAVA_EXE" ]; then
     exit 2
 fi
 
-JAR_FILE="./exportTableDefinition.jar"
+JAR_FILE="./dbxray.jar"
 if [ ! -f "$JAR_FILE" ]; then
-    echo "[ERROR] 実行可能jarファイル（exportTableDefinition.jar）が見つかりません。"
+    echo "[ERROR] 実行可能jarファイル（dbxray.jar）が見つかりません。"
     pause_if_interactive
     exit 2
 fi

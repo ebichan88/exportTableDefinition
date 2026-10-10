@@ -1,7 +1,7 @@
-# exportTableDefinition
+# dbxray
 
-[![build](https://github.com/ebichan88/exportTableDefinition/actions/workflows/ci.yml/badge.svg)](https://github.com/ebichan88/exportTableDefinition/actions/workflows/ci.yml)
-![release](https://img.shields.io/github/v/release/ebichan88/exportTableDefinition)
+[![build](https://github.com/ebichan88/dbxray/actions/workflows/ci.yml/badge.svg)](https://github.com/ebichan88/dbxray/actions/workflows/ci.yml)
+![release](https://img.shields.io/github/v/release/ebichan88/dbxray)
 ![Java](https://custom-icon-badges.herokuapp.com/badge/Java-b07219.svg?logo=Java&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-555.svg?logo=postgresql&style=flat)
 ![Oracle](https://img.shields.io/badge/-Oracle-f80000.svg?logo=oracle&style=flat)
@@ -21,7 +21,7 @@
 
 ## Overview
 
-DBに接続し、テーブル一覧・各テーブルの定義書・ER図などをMarkdown形式で出力するツールです。
+dbxray（旧名: exportTableDefinition）は、DBに接続し、テーブル一覧・各テーブルの定義書・ER図などをMarkdown形式で出力するツールです。
 
 出力されるものの全体像は以下のとおりです（各項目の詳細は[出力される内容の詳細](./docs/usage/cli.md#出力される内容の詳細)を参照）。
 
@@ -56,12 +56,12 @@ Java実行環境（runtimeフォルダ）を同梱しているため、Javaを�
 ### 入手方法
 
 1. [Releases](../../releases/latest)からOSに合ったzipをダウンロードする（過去の版は[リリースの一覧](../../releases)から入手できます）
-    * Windows（x64）: `exportTableDefinition-windows.zip`
-    * Linux（x64）: `exportTableDefinition-linux.zip`
-    * macOS（Apple Silicon）: `exportTableDefinition-macos.zip`
+    * Windows（x64）: `dbxray-windows.zip`
+    * Linux（x64）: `dbxray-linux.zip`
+    * macOS（Apple Silicon）: `dbxray-macos.zip`
 2. （任意）同じリリースの`SHA256SUMS`で、ダウンロードしたzipが壊れていない・改ざんされていないことを確かめる
     * Linux／macOS: `sha256sum -c SHA256SUMS --ignore-missing`（macOSで`sha256sum`が無い場合は`shasum -a 256 -c SHA256SUMS --ignore-missing`）
-    * Windows（PowerShell）: `Get-FileHash exportTableDefinition-windows.zip`の値が、`SHA256SUMS`の該当行と一致することを確かめる
+    * Windows（PowerShell）: `Get-FileHash dbxray-windows.zip`の値が、`SHA256SUMS`の該当行と一致することを確かめる
 3. 好きな場所に展開する
     * macOS: 同梱のJava実行環境は署名していないため、そのままではGatekeeperに実行を止められます。展開したフォルダで`xattr -dr com.apple.quarantine .`を実行してから起動してください
 
@@ -71,16 +71,16 @@ Java実行環境（runtimeフォルダ）を同梱しているため、Javaを�
 ### zipファイルの構成
 
 ```
-exportTableDefinition-windows
+dbxray-windows
 │  run.bat／run.sh                             ・・・ ダブルクリックで実行する起動ファイル（Linux／macOSの場合は`run.sh`）
-│  exportTableDefinition.jar                   ・・・ 実行可能形式Jarファイル
+│  dbxray.jar                                  ・・・ 実行可能形式Jarファイル
 │  README.md                                   ・・・ このファイル
 │  LICENSE                                     ・・・ このツールのライセンス（MIT）
 │  THIRD-PARTY-NOTICES.txt                     ・・・ Jarファイルに同梱した依存ライブラリのライセンス
 ├─docs
 │  └─usage                                     ・・・ CLIリファレンス・MCPサーバーの使い方
 ├─mcp
-│     exportTableDefinition-mcp.jar             ・・・ MCPサーバー（`docs/usage/mcp-server.md`を参照）
+│     dbxray-mcp.jar                            ・・・ MCPサーバー（`docs/usage/mcp-server.md`を参照）
 │     THIRD-PARTY-NOTICES.txt                   ・・・ MCPサーバーに同梱した依存ライブラリのライセンス
 ├─runtime                                       ・・・ 同梱のJava実行環境（ライセンスは`runtime/legal`）
 └─conf
@@ -90,7 +90,7 @@ exportTableDefinition-windows
 ### 設定
 
 1. `conf/config.yml`の`database`に、接続先DBの情報を記載する（[config.ymlの記載内容](./docs/usage/cli.md#configyml-の記載内容)を参照）
-   * パスワードは`conf/config.yml`には書けません。環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡してください（[パスワードの指定](./docs/usage/cli.md#パスワードの指定)を参照）
+   * パスワードは`conf/config.yml`には書けません。環境変数`DBXRAY_DB_PASSWORD`で渡してください（[パスワードの指定](./docs/usage/cli.md#パスワードの指定)を参照）
 2. 必要に応じて、同じファイルの出力の対象（`target`）・出力先（`output`）等を編集する（未編集でも全スキーマ・全テーブルが`./output`配下に出力される）
 
 ### 実行

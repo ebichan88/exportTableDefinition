@@ -1,8 +1,8 @@
-# exportTableDefinition の設定ファイル
+# dbxray の設定ファイル
 # 各項目の意味・既定値はdocs/usage/cli.mdの「config.yml の記載内容」を参照。値を書かない項目は既定値になる
 
 # 接続先のDB
-# パスワードはここに書けない。環境変数 EXPORT_TABLE_DEFINITION_DB_PASSWORD（または --db-password）で渡す
+# パスワードはここに書けない。環境変数 DBXRAY_DB_PASSWORD（または --db-password）で渡す
 database:
   driver:     # 例: org.postgresql.Driver ／ oracle.jdbc.OracleDriver
   url:        # 例: jdbc:postgresql://localhost:5432/testdb ／ jdbc:oracle:thin:@//localhost:1521/orclpdb

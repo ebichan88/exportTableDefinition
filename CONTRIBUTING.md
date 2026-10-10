@@ -9,10 +9,10 @@
 ### 主なディレクトリ構成
 
 ```
-exportTableDefinition
+dbxray
 ├─cli              ・・・ このツール本体（Gradleのサブプロジェクト）
 │  └─src
-│      ├─main            ・・・ javaソースコード（com.export_table_definition）
+│      ├─main            ・・・ javaソースコード（com.dbxray）
 │      ├─test            ・・・ 単体テスト（DB不要）
 │      └─integrationTest ・・・ 結合テスト（Docker上のPostgreSQL・Oracleを使う）
 ├─mcp-server       ・・・ スナップショットをAIから検索するMCPサーバー（Gradleのサブプロジェクト）
@@ -28,8 +28,8 @@ exportTableDefinition
 
 ### ビルド
 
-以下のコマンドを実行することで、`exportTableDefinition/cli/build/libs`フォルダ配下に`exportTableDefinition.jar`が、
-`exportTableDefinition/mcp-server/build/libs`フォルダ配下にMCPサーバーの`exportTableDefinition-mcp.jar`が作成される
+以下のコマンドを実行することで、`dbxray/cli/build/libs`フォルダ配下に`dbxray.jar`が、
+`dbxray/mcp-server/build/libs`フォルダ配下にMCPサーバーの`dbxray-mcp.jar`が作成される
 
 ```
 gradlew build
@@ -70,14 +70,14 @@ gradlew jacocoTestReport
 
 でHTMLレポート（`cli/build/reports/jacoco/test/html/index.html`・`mcp-server/build/reports/jacoco/test/html/index.html`）を生成できる。
 また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、cliのドメイン層
-（`com.export_table_definition.domain`配下）とMCPサーバーの`catalog`（`com.export_table_definition.mcp.catalog`配下）の
+（`com.dbxray.domain`配下）とMCPサーバーの`catalog`（`com.dbxray.mcp.catalog`配下）の
 単体テストカバレッジが、それぞれline 95%・branch 85%を下回るとビルドが失敗する
 （結合テスト・MCPサーバーのE2Eテストは対象外。基準は各サブプロジェクトの`build.gradle`の`jacocoTestCoverageVerification`で定義）。
 PRではGitHub ActionsがカバレッジレポートをArtifactとしてアップロードし、PRへの概要コメントも投稿する。
 
 ### Javadoc
 
-以下のコマンドを実行することで、`exportTableDefinition/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
+以下のコマンドを実行することで、`dbxray/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
 
 ```
 gradlew javadoc
@@ -88,7 +88,7 @@ gradlew javadoc
 `cli/build/libs/conf/config.yml`に必要な設定値を記載した状態で、`cli/build/libs`で以下のコマンドを実行する（`gradlew build`のたびに`cli/src/main/resources/conf`の内容で上書きされるため、手元の設定を残したい場合は別の場所に置いて`--config`で指定する）
 
 ```
-java -jar .\exportTableDefinition.jar
+java -jar .\dbxray.jar
 ```
 
 ## バージョンとリリース

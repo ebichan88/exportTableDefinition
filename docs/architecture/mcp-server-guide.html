@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>mcp-server 読解ガイド</title>
-<meta name="description" content="exportTableDefinition の mcp-server サブプロジェクトを読むための事前知識・全体像・ソースごとの役割と繋がり">
+<meta name="description" content="dbxray の mcp-server サブプロジェクトを読むための事前知識・全体像・ソースごとの役割と繋がり">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap">
@@ -241,7 +241,7 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line);
 
 <main>
 <header>
-  <p class="eyebrow">exportTableDefinition / mcp-server</p>
+  <p class="eyebrow">dbxray / mcp-server</p>
   <h1>mcp-server 読解ガイド</h1>
   <p class="lead">cliが出力したスキーマのスナップショット（JSON Lines）を起動時にメモリへ読み込み、AIから呼べる17個の読み取り専用ツールと、利用者が会話に添付できるテーブル定義のリソースとして、標準入出力で公開するサーバーです。DBには接続しません。このガイドは、MCPとSDKの事前知識から始めて、ソースごとの役割と繋がりまでを順に説明します。</p>
   <ul class="facts">
@@ -282,7 +282,7 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line);
       <rect x="540" y="30" width="200" height="160" rx="8" class="d-box-acc"/>
       <text x="640" y="66" text-anchor="middle" class="d-t-b">MCPサーバー（子プロセス）</text>
       <text x="640" y="94" text-anchor="middle" class="d-t-ms">java -jar</text>
-      <text x="640" y="112" text-anchor="middle" class="d-t-ms">exportTableDefinition-mcp.jar</text>
+      <text x="640" y="112" text-anchor="middle" class="d-t-ms">dbxray-mcp.jar</text>
       <text x="640" y="130" text-anchor="middle" class="d-t-ms">--snapshot=…/snapshot</text>
       <text x="640" y="168" text-anchor="middle" class="d-t-s">McpServerMain.main()</text>
 
@@ -357,8 +357,8 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line);
 <span class="c">← stdout</span>
 {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18",
   "capabilities":{"logging":{},"resources":{"subscribe":false,"listChanged":false},"tools":{"listChanged":false}},
-  "serverInfo":{"name":"exportTableDefinition","version":"0.1.0"},
-  "instructions":"DBのテーブル定義（exportTableDefinitionが出力したスキーマのスナップショット）を調べるサーバー。全体像はlist_schemas、…"}}</code></pre>
+  "serverInfo":{"name":"dbxray","version":"0.1.0"},
+  "instructions":"DBのテーブル定義（dbxrayが出力したスキーマのスナップショット）を調べるサーバー。全体像はlist_schemas、…"}}</code></pre>
 <p class="small muted"><code>tools.listChanged:false</code>は「起動後にツールの一覧は変わらない」という宣言です。<code>resources</code>も同じく一覧は変わらず、購読（<code>subscribe</code>）にも対応しません。スナップショットは起動時に読んだまま変わらないためです。<code>logging</code>はSDKが自動で付け加える能力で、このサーバーは使っていません。<code>version</code>はjarのマニフェストの<code>Implementation-Version</code>で、jar以外から起動すると<code>dev</code>になります。</p>
 
 <h3>ツール：定義・結果・2種類のエラー</h3>
@@ -407,22 +407,22 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line);
 {"jsonrpc":"2.0","id":3,"method":"resources/list"}
 <span class="c">←</span>
 {"jsonrpc":"2.0","id":3,"result":{"resources":[
-  {"uri":"exporttable://testdb/sample/department","name":"sample.department","title":"sample.department",
+  {"uri":"dbxray://testdb/sample/department","name":"sample.department","title":"sample.department",
    "description":"sample.department / testdb / table / 社内の組織単位を管理するマスタテーブル。 従業員（employee）は必ずいずれか1つの部署に所属する。",
    "mimeType":"application/json"},
-  {"uri":"exporttable://testdb/sample/employee","name":"従業員 (sample.employee)","title":"従業員 (sample.employee)",
+  {"uri":"dbxray://testdb/sample/employee","name":"従業員 (sample.employee)","title":"従業員 (sample.employee)",
    "description":"従業員 (sample.employee) / testdb / table","mimeType":"application/json"}, …]}}
 
 <span class="c">→ 読み出し（textはget_tableと同じJSONの文字列）</span>
-{"jsonrpc":"2.0","id":4,"method":"resources/read","params":{"uri":"exporttable://testdb/sample/employee"}}
+{"jsonrpc":"2.0","id":4,"method":"resources/read","params":{"uri":"dbxray://testdb/sample/employee"}}
 <span class="c">←</span>
-{"jsonrpc":"2.0","id":4,"result":{"contents":[{"uri":"exporttable://testdb/sample/employee","mimeType":"application/json",
+{"jsonrpc":"2.0","id":4,"result":{"contents":[{"uri":"dbxray://testdb/sample/employee","mimeType":"application/json",
   "text":"{\"schema\":\"sample\",\"name\":\"employee\",\"logicalName\":\"従業員\",\"type\":\"table\",\"columns\":[…]…}"}]}}
 
 <span class="c">→ 一覧に無いURI（プロトコルのエラー。SDKが返す）</span>
-{"jsonrpc":"2.0","id":14,"method":"resources/read","params":{"uri":"exporttable://testdb/sample/nope"}}
+{"jsonrpc":"2.0","id":14,"method":"resources/read","params":{"uri":"dbxray://testdb/sample/nope"}}
 <span class="c">←</span>
-{"jsonrpc":"2.0","id":14,"error":{"code":-32002,"message":"Resource not found","data":{"uri":"exporttable://testdb/sample/nope"}}}</code></pre>
+{"jsonrpc":"2.0","id":14,"error":{"code":-32002,"message":"Resource not found","data":{"uri":"dbxray://testdb/sample/nope"}}}</code></pre>
 <ul>
   <li><code>name</code>は<code>論理名 (スキーマ名.物理名)</code>（論理名が無ければ<code>スキーマ名.物理名</code>）。クライアントの絞り込みは<code>name</code>・<code>description</code>・URIが対象で、<code>title</code>は対象外のため、論理名・物理名のどちらでも探せるよう<code>name</code>に両方を入れています。</li>
   <li><code>description</code>の先頭にも<code>name</code>を入れるのは、Claude Codeの候補がURIを途中で切り、<code>name</code>より<code>description</code>を優先して表示するためです（120文字で切り詰め）。</li>
@@ -1268,7 +1268,7 @@ erDiagram
     <tr><td class="file">TypeTools</td><td class="num">104</td><td><code>list_types</code>・<code>get_type</code>。種別はPostgreSQLとOracleの7つ</td><td>→ <code>listTypes</code>・<code>columnsUsingType</code></td></tr>
     <tr><td class="file">TriggerTools</td><td class="num">90</td><td><code>list_triggers</code>（テーブルをまたぐ一覧）</td><td>→ <code>listTriggers</code></td></tr>
     <tr><td class="file">TableDefinitionResources</td><td class="num">99</td><td>全テーブル（ビューを含む）をリソースとして列挙する。<code>name</code>は<code>論理名 (スキーマ名.物理名)</code>、<code>description</code>の先頭にも同じ名前（120文字まで）。表示用の文字列から制御文字・書字方向の制御文字を除き1行にする。読まれたら<code>get_table</code>と同じJSONを組み立てる</td><td>← <code>McpServerMain</code>／→ <code>TableResourceUri</code>・<code>TableOutputBuilder</code></td></tr>
-    <tr><td class="file">TableResourceUri</td><td class="num">42</td><td>リソースのURI<code>exporttable://{DB名}/{スキーマ名}/{テーブル名}</code>。各区間をUTF-8でパーセントエンコード（英数字と<code>-._~</code>以外）</td><td>← <code>TableDefinitionResources</code></td></tr>
+    <tr><td class="file">TableResourceUri</td><td class="num">42</td><td>リソースのURI<code>dbxray://{DB名}/{スキーマ名}/{テーブル名}</code>。各区間をUTF-8でパーセントエンコード（英数字と<code>-._~</code>以外）</td><td>← <code>TableDefinitionResources</code></td></tr>
     <tr><td class="file">package-info</td><td class="num">2</td><td>パッケージの要旨</td><td class="muted">—</td></tr>
 
     <tr class="group"><td colspan="4">テスト（src/test）</td></tr>
@@ -1344,7 +1344,7 @@ erDiagram
   <dt>ホスト／クライアント／サーバー</dt><dd>MCPの3者。AIアプリ、その中の接続担当、道具の提供側。</dd>
   <dt>トランスポート</dt><dd>メッセージの運び方。このサーバーはstdio（標準入出力）。</dd>
   <dt><code>inputSchema</code></dt><dd>ツールの引数のJSON Schema。AIが引数を組み立てる手がかりであり、SDKの入力検証の基準でもある。</dd>
-  <dt>リソース</dt><dd>MCPでサーバーが出すデータ。このサーバーでは1テーブルが1リソース（<code>exporttable://…</code>）。AIが呼ぶツールと違い、利用者が<code>@</code>等で選んで会話に添付する。</dd>
+  <dt>リソース</dt><dd>MCPでサーバーが出すデータ。このサーバーでは1テーブルが1リソース（<code>dbxray://…</code>）。AIが呼ぶツールと違い、利用者が<code>@</code>等で選んで会話に添付する。</dd>
   <dt>Mermaid（<code>erDiagram</code>）</dt><dd>テキストで図を書く記法。cliの定義書のER図と<code>get_er_diagram</code>が同じ表記で出力する。</dd>
   <dt><code>isError</code></dt><dd>ツールとしての失敗。AIが読んで直せる。JSON-RPCの<code>error</code>とは別物。</dd>
   <dt><code>instructions</code></dt><dd>初期化の応答でサーバーがAIへ渡す使い方の説明。</dd>

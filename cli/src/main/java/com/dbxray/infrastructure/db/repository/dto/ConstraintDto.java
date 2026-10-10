@@ -1,0 +1,28 @@
+package com.dbxray.infrastructure.db.repository.dto;
+
+import com.dbxray.domain.model.table.ConstraintEntity;
+
+/** 制約情報に関してORMのデータの受け渡しに利用するDTOクラス */
+public record ConstraintDto(
+    String schemaName,
+    String tableName,
+    String constraintName,
+    String constraintType,
+    String constraintDefinition,
+    String remarks) {
+
+  /**
+   * DTOからEntityへの変換メソッド
+   *
+   * @return AllConstraintEntityのインスタンス
+   */
+  public ConstraintEntity toEntity() {
+    return new ConstraintEntity(
+        schemaName,
+        tableName,
+        constraintName,
+        DtoValues.text(constraintType),
+        DtoValues.text(constraintDefinition),
+        DtoValues.text(remarks));
+  }
+}

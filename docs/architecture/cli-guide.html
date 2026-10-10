@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>cli 読解ガイド</title>
-<meta name="description" content="exportTableDefinition の cli サブプロジェクトを読むための事前知識・全体像・ソースごとの役割と繋がり">
+<meta name="description" content="dbxray の cli サブプロジェクトを読むための事前知識・全体像・ソースごとの役割と繋がり">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap">
@@ -249,7 +249,7 @@ pre.tree { line-height: 1.55; }
 
 <main>
 <header>
-  <p class="eyebrow">exportTableDefinition / cli</p>
+  <p class="eyebrow">dbxray / cli</p>
   <h1>cli 読解ガイド</h1>
   <p class="lead">DBのカタログ（テーブル・カラム・制約・外部キー等のメタ情報）を読み、人が読むMarkdownのテーブル定義書・ER図と、機械が読むスキーマのスナップショット（JSON Lines）を出力するコマンドラインツールです。<code>--check</code>を付けると、DBとコミット済みのスナップショットの差分を検知します。このガイドは、入出力と使っている技術の事前知識から始めて、実行の流れ、データの持ち方、中心のロジック、ソースごとの役割と繋がりまでを順に説明します。</p>
   <ul class="facts">
@@ -308,8 +308,8 @@ pre.tree { line-height: 1.55; }
       <rect x="340" y="110" width="220" height="180" rx="8" class="d-box-acc"/>
       <text x="450" y="138" text-anchor="middle" class="d-t-s">cli（このサブプロジェクト）</text>
       <text x="450" y="164" text-anchor="middle" class="d-t-ms">java -jar</text>
-      <text x="450" y="191" text-anchor="middle" class="d-t-ms">exportTableDefinition.jar</text>
-      <text x="450" y="232" text-anchor="middle" class="d-t-ms">ExportTableDefinition.main()</text>
+      <text x="450" y="191" text-anchor="middle" class="d-t-ms">dbxray.jar</text>
+      <text x="450" y="232" text-anchor="middle" class="d-t-ms">Dbxray.main()</text>
       <text x="450" y="266" text-anchor="middle" class="d-t-acc">DBは読むだけ</text>
 
       <line x1="282" y1="56" x2="336" y2="140" class="d-line" marker-end="url(#g1a)"/>
@@ -334,7 +334,7 @@ pre.tree { line-height: 1.55; }
       <text x="634" y="266" class="d-t-b">コンソール・ログ・終了コード</text>
       <text x="634" y="286" class="d-t-s">標準出力　[result]:SUCCESS / FAIL</text>
       <text x="634" y="304" class="d-t-s">標準エラー　[warn]:（警告）</text>
-      <text x="634" y="322" class="d-t-s">var/log/exportTableDefinition.log</text>
+      <text x="634" y="322" class="d-t-s">var/log/dbxray.log</text>
       <text x="634" y="340" class="d-t-s">終了コード　0・1・2</text>
 
       <line x1="562" y1="150" x2="616" y2="56" class="d-line-acc" marker-end="url(#g1b)"/>
@@ -431,7 +431,7 @@ viewpoints:
   <thead><tr><th>技術</th><th>何に使うか</th><th>主な場所</th></tr></thead>
   <tbody>
     <tr><td>Java 21</td><td>record・sealed interface・パターンマッチ・テキストブロック</td><td>コード全体</td></tr>
-    <tr><td>Google Guice 7</td><td>DIコンテナ。2段階で組み立てる。<code>@Inject</code>は<code>jakarta.inject</code>のもの</td><td><code>config.module</code>・<code>ExportTableDefinition</code></td></tr>
+    <tr><td>Google Guice 7</td><td>DIコンテナ。2段階で組み立てる。<code>@Inject</code>は<code>jakarta.inject</code>のもの</td><td><code>config.module</code>・<code>Dbxray</code></td></tr>
     <tr><td>MyBatis 3.5</td><td>SQLをXMLに書き、結果をDTO（record）に詰める</td><td><code>resources/mapper</code>・<code>infrastructure.db</code></td></tr>
     <tr><td>SnakeYAML 2.7</td><td>サイドカーYAMLの読み込み</td><td><code>SidecarYamlRepository</code></td></tr>
     <tr><td>Jackson 2</td><td>スナップショット・参考情報のJSON化</td><td><code>JacksonSnapshotSerializer</code></td></tr>
@@ -492,7 +492,7 @@ viewpoints:
       <text x="450" y="18" text-anchor="middle" class="d-t-s">DBへ接続して種別を判定したら、子のコンテナを足す</text>
       <rect x="10" y="30" width="410" height="270" rx="8" class="d-box"/>
       <text x="26" y="54" class="d-t-b">親のコンテナ（DBへ接続する前）</text>
-      <text x="26" y="74" class="d-t-ms">Guice.createInjector(new ExportTableDefinitionModule())</text>
+      <text x="26" y="74" class="d-t-ms">Guice.createInjector(new DbxrayModule())</text>
       <line x1="26" y1="88" x2="404" y2="88" class="d-sep"/>
       <text x="26" y="110" class="d-t-ms">FileRepository → LocalFileRepository</text>
       <text x="26" y="130" class="d-t-ms">SidecarRepository → SidecarYamlRepository</text>
@@ -525,14 +525,14 @@ viewpoints:
   <figcaption><b>図2 DIコンテナの2段階。</b>出力先の検証などDB種別に関係ない部品は、DBへ接続する前に親のコンテナから取り出して使います。<code>TableDefinitionRepository</code>の実装は接続先がPostgreSQLかOracleかで変わるため、接続して種別が分かってから子のコンテナで束縛します。Guiceは子のコンテナで作るJIT束縛をできるだけ親に作りますが、<code>TableDefinitionRepository</code>に依存する3つ（パイプライン・ユースケース・コントローラー）は親では作れないため子に作られます。</figcaption>
 </figure>
 
-<pre><code><span class="c">// ExportTableDefinition.createController：DBへ接続するのはここだけ</span>
+<pre><code><span class="c">// Dbxray.createController：DBへ接続するのはここだけ</span>
 <span class="k">final</span> SqlSessionFactory sqlSessionFactory = MyBatisSqlSessionFactories.create(connectionSettings);
 <span class="k">return</span> injector
     .createChildInjector(
         <span class="k">new</span> DatabaseDependentModule(
             DatabaseTypeDetector.detect(sqlSessionFactory), sqlSessionFactory))   <span class="c">// ここで接続して種別を判定</span>
     .getInstance(ExportTableDefinitionController.<span class="k">class</span>);</code></pre>
-<p class="small muted">接続を束縛の定義（<code>configure()</code>）の中で行わないのは、そこで失敗するとGuiceの例外に包まれて届き、「DBに接続できない」を利用者が直せる誤りとして報告できなくなるためです（<code>DatabaseDependentModule</code>のJavadoc）。束縛の漏れ・<code>@Inject</code>の付け忘れは、本番と同じ手順でコンテナを組み立てる<code>ExportTableDefinitionModuleTest</code>が検知します。</p>
+<p class="small muted">接続を束縛の定義（<code>configure()</code>）の中で行わないのは、そこで失敗するとGuiceの例外に包まれて届き、「DBに接続できない」を利用者が直せる誤りとして報告できなくなるためです（<code>DatabaseDependentModule</code>のJavadoc）。束縛の漏れ・<code>@Inject</code>の付け忘れは、本番と同じ手順でコンテナを組み立てる<code>DbxrayModuleTest</code>が検知します。</p>
 
 <h3>2.3 MyBatis：SQLはXML、結果はrecord</h3>
 <p>MyBatisは、SQLをXMLに書き、結果の列をJavaのオブジェクトへ詰めるライブラリです。このツールが発行するのはすべて<code>SELECT</code>で、更新はありません。</p>
@@ -583,13 +583,13 @@ viewpoints:
 
 <p>読むときに戸惑いやすい点が4つあります。</p>
 <ul>
-  <li><strong>SQLのIDは文字列で組み立てる</strong>。mapper XMLの名前空間<code>com.export_table_definition.domain.repository.postgresql.TableDefinitionRepository</code>はJavaのクラス名に見えますが、そういうインタフェースはありません。<code>AbstractTableDefinitionRepository</code>が「名前空間＋<code>.</code>＋ID」を文字列で作って<code>session.selectList</code>に渡します。IDEで定義へ移動できないので、ID（<code>selectTableInfo</code>等）の文字列でmapper XMLを検索してください。</li>
+  <li><strong>SQLのIDは文字列で組み立てる</strong>。mapper XMLの名前空間<code>com.dbxray.domain.repository.postgresql.TableDefinitionRepository</code>はJavaのクラス名に見えますが、そういうインタフェースはありません。<code>AbstractTableDefinitionRepository</code>が「名前空間＋<code>.</code>＋ID」を文字列で作って<code>session.selectList</code>に渡します。IDEで定義へ移動できないので、ID（<code>selectTableInfo</code>等）の文字列でmapper XMLを検索してください。</li>
   <li><strong>両方のmapperを常に読み込む</strong>。<code>mybatis-config.xml</code>はPostgreSQL用・Oracle用の両方を登録し、<code>DatabaseType</code>の名前（<code>postgresql</code>・<code>oracle</code>）で名前空間を選びます。</li>
   <li><strong>引数は<code>schemaList</code>・<code>tableList</code>の2つだけ</strong>。XMLの<code>&lt;if&gt;</code>で、リストが空なら絞り込み自体を外します。そのため空のリストで<code>selectColumnList</code>を呼ぶと全テーブルのカラムを取ってしまうので、Java側で空を弾いています。</li>
   <li><strong>列とrecordは名前で対応する</strong>。SQLの別名（<code>AS "schemaName"</code>）とDTOのコンポーネント名を、<code>mybatis-config.xml</code>の<code>argNameBasedConstructorAutoMapping</code>で対応させます。<code>resultType="TableDto"</code>は<code>typeAliases</code>で付けた短い名前です。</li>
 </ul>
 <pre><code><span class="c">// AbstractTableDefinitionRepository（要約）</span>
-baseSqlPath = <span class="k">"com.export_table_definition.domain.repository."</span> + databaseType.getName() + <span class="k">".TableDefinitionRepository."</span>;
+baseSqlPath = <span class="k">"com.dbxray.domain.repository."</span> + databaseType.getName() + <span class="k">".TableDefinitionRepository."</span>;
 
 <span class="k">try</span> (SqlSession session = sqlSessionFactory.openSession()) {     <span class="c">// 呼ぶたびにプールから接続を借りる</span>
   <span class="k">return</span> session.selectList(baseSqlPath + sqlId, Map.of(<span class="k">"schemaList"</span>, schemaList, <span class="k">"tableList"</span>, tableList));
@@ -616,7 +616,7 @@ baseSqlPath = <span class="k">"com.export_table_definition.domain.repository."</
   </tbody>
 </table>
 </div>
-<p class="small muted">実行したSQL（DEBUG）と取得した行（TRACE）は、MyBatisがmapperの名前空間（このツールのパッケージ配下）のロガーへ出します。既定のレベルはINFOなのでログには残らず、調べるときだけ<code>-Dexport-table-definition.log.level=debug</code>で上げます（2.6節）。Oracle用のmapper（838行）は、LONG型の列（ビューのソース・トリガーの本体等）やDBのバージョン（<code>DBMS_DB_VERSION</code>）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（670行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
+<p class="small muted">実行したSQL（DEBUG）と取得した行（TRACE）は、MyBatisがmapperの名前空間（このツールのパッケージ配下）のロガーへ出します。既定のレベルはINFOなのでログには残らず、調べるときだけ<code>-Ddbxray.log.level=debug</code>で上げます（2.6節）。Oracle用のmapper（838行）は、LONG型の列（ビューのソース・トリガーの本体等）やDBのバージョン（<code>DBMS_DB_VERSION</code>）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（670行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
 
 <h3>2.4 Mermaid の erDiagram</h3>
 <p>ER図は、Markdownの中に書くMermaid記法のテキストです。GitHubは<code>```mermaid</code>のコードブロックを図として描画します。サンプルの<code>department</code>の定義書に出力されたER図をそのまま示します。</p>
@@ -660,7 +660,7 @@ erDiagram
 
 <h3>2.6 log4j2 と ArchUnit</h3>
 <ul>
-  <li><strong>log4j2</strong>（<code>log4j2.xml</code>）：ログを、実行したディレクトリからの相対の<code>var/log/exportTableDefinition.log</code>へ書く。既定のレベルは、このツール（<code>com.export_table_definition</code>）がINFO、ライブラリがWARN。INFOには、接続先のDBMS・ドライバの版、件数、処理時間のような、1回の実行で数件に収まる調査の起点だけを出す。MyBatisは実行したSQL（DEBUG）と取得した行（TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定では残さず、調べるときに<code>-Dexport-table-definition.log.level=debug</code>（または<code>trace</code>）で上げる。このツールのWARNだけは、標準エラーへも<code>[warn]:</code>付きで出す。処理結果の<code>[result]:</code>はロガーを通さず<code>System.out</code>へ直接出す。</li>
+  <li><strong>log4j2</strong>（<code>log4j2.xml</code>）：ログを、実行したディレクトリからの相対の<code>var/log/dbxray.log</code>へ書く。既定のレベルは、このツール（<code>com.dbxray</code>）がINFO、ライブラリがWARN。INFOには、接続先のDBMS・ドライバの版、件数、処理時間のような、1回の実行で数件に収まる調査の起点だけを出す。MyBatisは実行したSQL（DEBUG）と取得した行（TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定では残さず、調べるときに<code>-Ddbxray.log.level=debug</code>（または<code>trace</code>）で上げる。このツールのWARNだけは、標準エラーへも<code>[warn]:</code>付きで出す。処理結果の<code>[result]:</code>はロガーを通さず<code>System.out</code>へ直接出す。</li>
   <li><strong>ログに出さないもの</strong>：パスワード、接続URL、CLI引数・設定値の値、設定ファイル・サイドカーYAMLの内容を引用するライブラリの例外メッセージ。メッセージの改行は<code>%enc{%m}{CRLF}</code>で<code>\n</code>・<code>\r</code>へ置き換え、DB由来の文字列（関数の定義等）で偽のログ行を作らせない。</li>
   <li><strong>ArchUnit</strong>（<code>ArchitectureTest</code>）：レイヤーの依存方向や置き場所などの規約を、単体テストとして検査する。違反するとビルドが失敗する。規約の一覧は3章。</li>
 </ul>
@@ -679,7 +679,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
 <!-- ============================================================ -->
 <h2 id="overview"><span class="n">3</span>全体像と読む順</h2>
 
-<p><code>com.export_table_definition</code>の下は、4つの層と、層の外の2つ（<code>config</code>・<code>shared</code>）に分かれます。依存の向きは<code>presentation → application → domain ← infrastructure</code>で、domainは他のどの層にも依存しません。DB・ファイル・JSONとやり取りするインタフェースをdomainに置き、その実装をinfrastructureに置く（依存関係逆転）ことで、外部に触れるコードをドメインの外へ出しています。</p>
+<p><code>com.dbxray</code>の下は、4つの層と、層の外の2つ（<code>config</code>・<code>shared</code>）に分かれます。依存の向きは<code>presentation → application → domain ← infrastructure</code>で、domainは他のどの層にも依存しません。DB・ファイル・JSONとやり取りするインタフェースをdomainに置き、その実装をinfrastructureに置く（依存関係逆転）ことで、外部に触れるコードをドメインの外へ出しています。</p>
 
 <figure>
   <div class="fig-scroll">
@@ -706,7 +706,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
       <rect x="30" y="362" width="250" height="96" rx="6" class="d-box-soft"/>
       <text x="46" y="384" class="d-t-s">config（7ファイル）</text>
       <text x="46" y="406" class="d-t-ms">ConfigFile</text>
-      <text x="46" y="424" class="d-t-ms">ExportTableDefinitionModule</text>
+      <text x="46" y="424" class="d-t-ms">DbxrayModule</text>
       <text x="46" y="442" class="d-t-ms">DatabaseDependentModule</text>
 
       <rect x="340" y="100" width="360" height="360" rx="8" class="d-box-acc"/>
@@ -815,7 +815,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
 <h3>おすすめの読む順</h3>
 <p>上から順に読むと、外側（起動と入口）から内側（ルール）へ進めます。</p>
 <ol class="steps">
-  <li><div><code>ExportTableDefinition</code>（165行）：<code>main</code>→<code>run</code>→<code>createInjector</code>→<code>createController</code>。処理全体の骨格です（4章）。</div></li>
+  <li><div><code>Dbxray</code>（165行）：<code>main</code>→<code>run</code>→<code>createInjector</code>→<code>createController</code>。処理全体の骨格です（4章）。</div></li>
   <li><div><code>ExportTableDefinitionController</code>（70行）と2つのユースケース（85行・64行）：2つのモードの違いが「どのSinkを渡すか」だけだと分かります。</div></li>
   <li><div><code>SchemaExportPipeline</code>（335行）：取得の順序と、スキーマ・チャンク単位の分割。6章の図と合わせて読むと速いです。</div></li>
   <li><div><code>ExportSink</code>（47行）と3つの<code>…SinkFactory</code>：出力形式ごとに「いつ何を書くか」（6章の表）。</div></li>
@@ -823,16 +823,16 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
   <li><div><code>domain.model.table</code>・<code>relation</code>：<code>TableKey</code>・<code>ForeignKeys</code>・<code>ForeignKeyGroups</code>・<code>Cardinality</code>。関連とER図のルールです（9章）。</div></li>
   <li><div>気になる出力のWriter→Templates：たとえば<code>TableDefinitionWriter</code>（114行。セクションの順）→<code>TableDefinitionTemplates</code>（525行。各セクションの組み立て）。</div></li>
   <li><div>infrastructure：<code>AbstractTableDefinitionRepository</code>（191行）とmapper XML、<code>SidecarYamlRepository</code>（492行）。</div></li>
-  <li><div>入口の検証：<code>CliArguments</code>・<code>ExportTableDefinitionProperties</code>・<code>ConnectionSettings</code>・<code>FailureReporter</code>（5章）。</div></li>
+  <li><div>入口の検証：<code>CliArguments</code>・<code>DbxrayProperties</code>・<code>ConnectionSettings</code>・<code>FailureReporter</code>（5章）。</div></li>
 </ol>
 
 <!-- ============================================================ -->
 <h2 id="startup"><span class="n">4</span>起動から終了までの流れ</h2>
-<p><code>ExportTableDefinition.main</code>は、処理全体を1つの<code>try-catch</code>で囲み、次の順に進みます。前半（1〜6）はDBへ接続せずに入力を検証し、後半（7〜11）で接続して出力します。入力の誤りを接続より前に報告するのは、DBに接続できない環境（接続情報の誤り・DBの停止中）でも、設定の誤りに先に気付けるようにするためです。</p>
+<p><code>Dbxray.main</code>は、処理全体を1つの<code>try-catch</code>で囲み、次の順に進みます。前半（1〜6）はDBへ接続せずに入力を検証し、後半（7〜11）で接続して出力します。入力の誤りを接続より前に報告するのは、DBに接続できない環境（接続情報の誤り・DBの停止中）でも、設定の誤りに先に気付けるようにするためです。</p>
 
 <figure>
   <div class="fig-scroll">
-    <svg viewBox="0 0 870 720" role="img" aria-label="左に11の段階が縦に並ぶ。1 CliArguments.parse、2 requireKnownArguments、3 ExportTableDefinitionProperties.load、4 親のコンテナ、5 OutputDirectoryValidator、6 ConnectionSettings.load。ここまでDBに接続しない。7 SqlSessionFactoryの生成、8 DatabaseTypeDetectorで接続、9 子のコンテナからコントローラー、10 ユースケースの実行、11 結果の表示と終了。右に、2・3・5・6・8・10の段階で起こる誤りが並び、すべてmainのcatchに集まり、FailureReporterが報告して終了コード2になる。" style="min-width: 760px">
+    <svg viewBox="0 0 870 720" role="img" aria-label="左に11の段階が縦に並ぶ。1 CliArguments.parse、2 requireKnownArguments、3 DbxrayProperties.load、4 親のコンテナ、5 OutputDirectoryValidator、6 ConnectionSettings.load。ここまでDBに接続しない。7 SqlSessionFactoryの生成、8 DatabaseTypeDetectorで接続、9 子のコンテナからコントローラー、10 ユースケースの実行、11 結果の表示と終了。右に、2・3・5・6・8・10の段階で起こる誤りが並び、すべてmainのcatchに集まり、FailureReporterが報告して終了コード2になる。" style="min-width: 760px">
       <defs>
         <marker id="g5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill"/></marker>
         <marker id="g5w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-fill-warn"/></marker>
@@ -845,10 +845,10 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
       <text x="44" y="98" class="d-t-ms">requireKnownArguments()</text>
       <text x="44" y="116" class="d-t-s">開始メッセージを出してから、未知の引数を誤りにする</text>
       <rect x="20" y="136" width="440" height="46" rx="6" class="d-box"/>
-      <text x="44" y="156" class="d-t-ms">ExportTableDefinitionProperties.of(ConfigFile.load(…), …)</text>
+      <text x="44" y="156" class="d-t-ms">DbxrayProperties.of(ConfigFile.load(…), …)</text>
       <text x="44" y="174" class="d-t-s">conf/config.ymlを1回読み、CLI引数を重ねて検証し、Requestにする</text>
       <rect x="20" y="194" width="440" height="46" rx="6" class="d-box"/>
-      <text x="44" y="214" class="d-t-ms">Guice.createInjector(ExportTableDefinitionModule)</text>
+      <text x="44" y="214" class="d-t-ms">Guice.createInjector(DbxrayModule)</text>
       <text x="44" y="232" class="d-t-s">親のコンテナ（DB種別に依存しない部品）</text>
       <rect x="20" y="252" width="440" height="46" rx="6" class="d-box"/>
       <text x="44" y="272" class="d-t-ms">OutputDirectoryValidator.validate(request)</text>
@@ -942,12 +942,12 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
   <figcaption><b>図5 起動から終了まで。</b>例外を捕まえるのは<code>main</code>の1箇所だけで、どの段階の失敗も右端を通ってそこへ集まります。<code>CliArguments.parse</code>は未知の引数があっても例外を投げず、モード（<code>--check</code>か）を決めてから2で誤りにします。そのため<code>--chek</code>と書き誤ると、通常実行の開始メッセージの後に失敗します。</figcaption>
 </figure>
 
-<pre><code><span class="c">// ExportTableDefinition.run（通常実行。runCheckも同じ形）</span>
+<pre><code><span class="c">// Dbxray.run（通常実行。runCheckも同じ形）</span>
 System.out.println(<span class="k">"Starting output of table definition document. …"</span>);
 cliArguments.requireKnownArguments();
 <span class="k">final</span> ConfigFile configFile = ConfigFile.load(cliArguments.configPath());   <span class="c">// 設定ファイルは1回だけ読む</span>
 <span class="k">final</span> ExportTableDefinitionRequest request =
-    ExportTableDefinitionProperties.of(configFile, cliArguments.settingOverrides())
+    DbxrayProperties.of(configFile, cliArguments.settingOverrides())
         .toExportTableDefinitionRequest(cliArguments.isRmDist());
 <span class="k">final</span> Injector injector = createInjector();
 injector.getInstance(OutputDirectoryValidator.<span class="k">class</span>).validate(request);
@@ -957,7 +957,7 @@ System.out.println(resultDto.getResultMessage());
 <span class="k">return</span> ExitStatus.SUCCESS;</code></pre>
 
 <h3>入口で文字列を型に変える</h3>
-<p>設定値は生の文字列のまま深い層へ渡しません。<code>ExportTableDefinitionProperties</code>が空白を除き、整数へ変換し、出力対象の条件を<code>TargetSelection.of</code>で型（<code>TableScope</code>・<code>OutputObjectType</code>の集合）へ変換します。誤りは1件ずつではなく、見つかった分をまとめて報告します。結果はrequestのrecordになり、エントリーポイント→コントローラー→ユースケースの3層を分解・再構築されずに通ります。</p>
+<p>設定値は生の文字列のまま深い層へ渡しません。<code>DbxrayProperties</code>が空白を除き、整数へ変換し、出力対象の条件を<code>TargetSelection.of</code>で型（<code>TableScope</code>・<code>OutputObjectType</code>の集合）へ変換します。誤りは1件ずつではなく、見つかった分をまとめて報告します。結果はrequestのrecordになり、エントリーポイント→コントローラー→ユースケースの3層を分解・再構築されずに通ります。</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>record</th><th>持つもの</th><th>使う場所</th></tr></thead>
@@ -970,8 +970,8 @@ System.out.println(resultDto.getResultMessage());
 </div>
 <ul>
   <li><strong>設定ファイルの探し方</strong>：<code>ConfigFile</code>は、<code>--config</code>で指定したファイル、無ければ実行したディレクトリの<code>conf/config.yml</code>を読みます。jarの場所ではなくカレントディレクトリが基準で、配布用の<code>run.sh</code>・<code>run.bat</code>は自分のディレクトリへ移動してから起動します。全項目をCLI引数で上書きする場合でも、設定ファイル自体は必要です（実行するディレクトリを誤ったときに、既定の出力先へ黙って出力しないため）。</li>
-  <li><strong>設定項目の仕様は1つの表に持つ</strong>：<code>ExportTableDefinitionProperties.SETTINGS</code>が、項目ごとに設定ファイルでの位置（<code>output.path</code>等）・上書きするCLI引数名（<code>--output-path</code>等）・値の形式（1つの値・整数・リスト）を持ちます。<code>CliArguments</code>はこの表から上書きの引数を引くため、設定項目を足せば上書きの引数も増えます。</li>
-  <li><strong>接続情報</strong>：<code>ConnectionSettings</code>は設定ファイルの<code>database</code>に、環境変数<code>EXPORT_TABLE_DEFINITION_DB_PASSWORD</code>のパスワード、CLI引数の順で値を重ねて検証します。ファイルに<code>password</code>を書くと誤りです（作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない）。<code>url</code>にパスワードを埋め込む書き方（<code>?password=</code>・<code>sslpassword=</code>・Oracleの<code>user/pass@</code>）も、同じ理由で誤りにします。</li>
+  <li><strong>設定項目の仕様は1つの表に持つ</strong>：<code>DbxrayProperties.SETTINGS</code>が、項目ごとに設定ファイルでの位置（<code>output.path</code>等）・上書きするCLI引数名（<code>--output-path</code>等）・値の形式（1つの値・整数・リスト）を持ちます。<code>CliArguments</code>はこの表から上書きの引数を引くため、設定項目を足せば上書きの引数も増えます。</li>
+  <li><strong>接続情報</strong>：<code>ConnectionSettings</code>は設定ファイルの<code>database</code>に、環境変数<code>DBXRAY_DB_PASSWORD</code>のパスワード、CLI引数の順で値を重ねて検証します。ファイルに<code>password</code>を書くと誤りです（作業ディレクトリのファイルはAIエージェント等のツールから読まれ得るため、秘密をファイルに残さない）。<code>url</code>にパスワードを埋め込む書き方（<code>?password=</code>・<code>sslpassword=</code>・Oracleの<code>user/pass@</code>）も、同じ理由で誤りにします。</li>
 </ul>
 
 <!-- ============================================================ -->
@@ -995,7 +995,7 @@ System.out.println(resultDto.getResultMessage());
   <thead><tr><th>目的</th><th>実例</th></tr></thead>
   <tbody>
     <tr><td>検査例外を非検査例外で包む</td><td><code>LocalFileRepository</code>（<code>IOException</code>→<code>UncheckedIOException</code>）、<code>AbstractTableDefinitionRepository.select</code>（どのSQLかを添えて<code>RuntimeException</code>で包む）</td></tr>
-    <tr><td>下位の例外を利用者が直せる誤りへ置き換える</td><td><code>DatabaseTypeDetector</code>（接続の失敗）、<code>SidecarYamlRepository</code>（YAMLの構文誤り）、<code>ExportTableDefinitionProperties</code>（<code>TargetSelection</code>の<code>IllegalArgumentException</code>）、<code>ConfigFile</code>（YAMLの構文誤り。文言は<code>YamlSyntaxErrors</code>）</td></tr>
+    <tr><td>下位の例外を利用者が直せる誤りへ置き換える</td><td><code>DatabaseTypeDetector</code>（接続の失敗）、<code>SidecarYamlRepository</code>（YAMLの構文誤り）、<code>DbxrayProperties</code>（<code>TargetSelection</code>の<code>IllegalArgumentException</code>）、<code>ConfigFile</code>（YAMLの構文誤り。文言は<code>YamlSyntaxErrors</code>）</td></tr>
     <tr><td>フォールバックする</td><td><code>SidecarYamlRepository</code>（誤った観点を、警告して読み飛ばす）</td></tr>
   </tbody>
 </table>
@@ -1004,7 +1004,7 @@ System.out.println(resultDto.getResultMessage());
 
 <h3>FailureReporter の報告の形</h3>
 <p><code>[errmsg]</code>に例外のメッセージを、<code>[cause]</code>に原因の連鎖のうち表示に含まれていないものを浅い順に並べます。原因のメッセージを繰り返しているだけの例外（MyBatisの例外等）は省くため、包んだ箇所でDBが返したエラーが失われず、かつ重複もしません。以下は実際の出力です。</p>
-<pre><code><span class="c">$ java -jar exportTableDefinition.jar --chek</span>
+<pre><code><span class="c">$ java -jar dbxray.jar --chek</span>
 Starting output of table definition document.
 Please wait a moment ...
 
@@ -1021,10 +1021,10 @@ Failed to output table definition document.
 <pre><code><span class="c">$ java -jar … --db-url=jdbc:postgresql://localhost:5999/testdb …（DBが待ち受けていないポート）</span>
 [result]:FAIL
 Failed to output table definition document.
- [errmsg]:Could not connect to the database. Check the connection settings (database in the configuration file, --db-* arguments and the EXPORT_TABLE_DEFINITION_DB_PASSWORD environment variable) and that the database is running.
+ [errmsg]:Could not connect to the database. Check the connection settings (database in the configuration file, --db-* arguments and the DBXRAY_DB_PASSWORD environment variable) and that the database is running.
  [cause]:org.postgresql.util.PSQLException: Connection to localhost:5999 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
  [cause]:java.net.ConnectException: Connection refused</code></pre>
-<p class="small muted">1つ目の<code>(values are not shown; …)</code>は、解釈できない引数の値を伏せている印です（<code>--db-pasword=…</code>のような書き誤りで、パスワードが画面とログファイルに残らないように）。2つ目は、3つの誤りがまとめて1回で報告されている例です。<code>(overridden by …)</code>は、誤った値がCLI引数から来ている可能性を示します。想定外の失敗では、最後に<code>An unexpected error occurred. See the log file for details. [logFile=./var/log/exportTableDefinition.log]</code>が付きます。</p>
+<p class="small muted">1つ目の<code>(values are not shown; …)</code>は、解釈できない引数の値を伏せている印です（<code>--db-pasword=…</code>のような書き誤りで、パスワードが画面とログファイルに残らないように）。2つ目は、3つの誤りがまとめて1回で報告されている例です。<code>(overridden by …)</code>は、誤った値がCLI引数から来ている可能性を示します。想定外の失敗では、最後に<code>An unexpected error occurred. See the log file for details. [logFile=./var/log/dbxray.log]</code>が付きます。</p>
 
 <h3>警告：処理は続けるが知らせる</h3>
 <p>サイドカーYAMLの個々の記述の誤りや、DBと付帯情報の乖離は、読み飛ばして警告します（付帯情報の一部の書き誤りで、定義書全体の再生成を止めないため）。警告はWARNのログで、<code>log4j2.xml</code>がログファイルに加えて標準エラーへ<code>[warn]:</code>付きで出します。以下は、誤りを含むサイドカーYAMLで実行したときの標準エラーです（終了コードは0）。</p>
@@ -1145,7 +1145,7 @@ schemaExportPipeline.export(
   <figcaption><b>図6 SchemaExportPipelineの段取り。</b>破線の枠はループです。ER図は、テーブル一覧・関連・関連カラム（<code>DiagramBoxes</code>）だけで描けるので、詳細をチャンク単位で取得する前の<code>writeOverview</code>で書き出せます。<code>chunkSize</code>を小さくするとメモリは減り、DBへの問い合わせは増えます。出力の内容は変わりません（結合テストが<code>chunkSize</code>を変えて同じ出力になることを確かめています）。</figcaption>
 </figure>
 
-<p>サンプルDB（ビューを含む14テーブル、<code>schema=sample</code>）で通常実行したときに発行されたSQLの順序です（<code>-Dexport-table-definition.log.level=debug</code>で実行したログファイルから抜き出したもの）。</p>
+<p>サンプルDB（ビューを含む14テーブル、<code>schema=sample</code>）で通常実行したときに発行されたSQLの順序です（<code>-Ddbxray.log.level=debug</code>で実行したログファイルから抜き出したもの）。</p>
 <div class="table-wrap">
 <table>
   <thead><tr><th>順</th><th>段階</th><th>SQLのID</th><th>行数</th></tr></thead>
@@ -1186,7 +1186,7 @@ schemaExportPipeline.export(
 </div>
 <div class="note key">
   <p class="note-title">出力形式を足すときに触る場所</p>
-  <p><code>ExportSink</code>を実装したクラスとそのFactoryを作り、Factoryを<code>ExportTableDefinitionModule</code>に束縛して、ユースケースが渡すリストに加えます。<code>SchemaExportPipeline</code>は出力形式を知らないので変えません。<code>--check</code>の比較対象にしたくない出力は、<code>CheckDocumentDiffUsecase</code>のリストに加えないだけで、比較から外れます（参考情報がこの方法で外れています）。</p>
+  <p><code>ExportSink</code>を実装したクラスとそのFactoryを作り、Factoryを<code>DbxrayModule</code>に束縛して、ユースケースが渡すリストに加えます。<code>SchemaExportPipeline</code>は出力形式を知らないので変えません。<code>--check</code>の比較対象にしたくない出力は、<code>CheckDocumentDiffUsecase</code>のリストに加えないだけで、比較から外れます（参考情報がこの方法で外れています）。</p>
 </div>
 
 <h3>突き合わせの通知はログへ</h3>
@@ -1677,7 +1677,7 @@ erDiagram
     sample_employee["employee（従業員）"]
     sample_department ||--o{ sample_employee : "employee_department_id_fkey"
     …</code></pre>
-<p class="small muted">上限を3にしているのは、関連の多いDBでは段数を増やすと図がすぐに大きくなり読めなくなるためです（<code>ExportTableDefinitionProperties.MAX_ER_DIAGRAM_DISTANCE</code>）。範囲外の値は既定値に置き換えず、設定の誤りにします。図の関連線は、どの段の関連も「参照先 → 参照元」の向きで同じ<code>MermaidSupport.relationLine</code>で描きます。</p>
+<p class="small muted">上限を3にしているのは、関連の多いDBでは段数を増やすと図がすぐに大きくなり読めなくなるためです（<code>DbxrayProperties.MAX_ER_DIAGRAM_DISTANCE</code>）。範囲外の値は既定値に置き換えず、設定の誤りにします。図の関連線は、どの段の関連も「参照先 → 参照元」の向きで同じ<code>MermaidSupport.relationLine</code>で描きます。</p>
 
 <h3>9.8 ビューが参照するテーブル（ViewReferences）</h3>
 <p>ビュー・マテリアライズドビューが参照するテーブル（ビューを含む）は、ビューのSQLを解析せず、DBが保持する依存関係から取得します（PostgreSQLは<code>pg_depend</code>・<code>pg_rewrite</code>、Oracleは<code>ALL_DEPENDENCIES</code>）。1件が<code>ViewReferenceEntity</code>（参照する側のビューと、参照されるテーブル）で、集合が<code>ViewReferences</code>です。</p>
@@ -1804,27 +1804,27 @@ erDiagram
 <table data-filterable>
   <thead><tr><th>ファイル</th><th>行</th><th>役割</th><th>使う相手・使われる相手</th></tr></thead>
   <tbody>
-    <tr class="group"><td colspan="4">com.export_table_definition（直下）：エントリーポイント</td></tr>
-    <tr><td class="file">ExportTableDefinition</td><td class="num">165</td><td><code>main</code>。処理全体を1つの<code>try-catch</code>で囲み、通常実行（<code>run</code>）か差分検知（<code>runCheck</code>）を呼ぶ。DIコンテナを2段階で組み立て、失敗は<code>FailureReporter</code>で報告して終了コードに変える</td><td>→ <code>CliArguments</code>・<code>ExportTableDefinitionProperties</code>・<code>OutputDirectoryValidator</code>・<code>ConnectionSettings</code>・<code>MyBatisSqlSessionFactories</code>・<code>DatabaseTypeDetector</code>・2つのModule・Controller・<code>FailureReporter</code></td></tr>
-    <tr><td class="file">CliArguments<span class="sub">パッケージプライベート</span></td><td class="num">275</td><td>CLI引数の解析（<code>--check</code>・<code>--rm-dist</code>・<code>--help</code>・<code>--version</code>、接続情報と実行時設定の上書き値）。未知の引数は集めておき、<code>requireKnownArguments</code>で誤りにする（値は伏せて報告）。設定の引数名は<code>SETTINGS</code>から引く</td><td>← <code>ExportTableDefinition</code>／→ <code>ExportTableDefinitionProperties.KEYS</code></td></tr>
-    <tr><td class="file">ExportTableDefinitionProperties<span class="sub">パッケージプライベート</span></td><td class="num">383</td><td><code>conf/config.yml</code>のうち<code>database</code>以外の仕様（8項目の位置・CLI引数名・既定値・形式・範囲）と検証。CLI引数で上書きしてから検証し、誤りをまとめて<code>InvalidConfigurationException</code>にする。2種類のRequestへ変換</td><td>← <code>ExportTableDefinition</code>／→ <code>ConfigFile</code>・<code>TargetSelection</code></td></tr>
-    <tr><td class="file">OutputDirectoryValidator<span class="sub">パッケージプライベート</span></td><td class="num">79</td><td>出力先の検証（既存のファイルを指していないか、<code>--rm-dist</code>で消してよいか）。DBへの接続前に、親のコンテナから取り出して使う</td><td>← <code>ExportTableDefinition</code>／→ <code>OutputPathResolver</code>・<code>FileRepository</code></td></tr>
-    <tr><td class="file">CliUsage<span class="sub">パッケージプライベート</span></td><td class="num">55</td><td><code>--help</code>・<code>--version</code>の文言。版はjarのマニフェスト（<code>Implementation-Version</code>）から</td><td>← <code>ExportTableDefinition</code></td></tr>
+    <tr class="group"><td colspan="4">com.dbxray（直下）：エントリーポイント</td></tr>
+    <tr><td class="file">Dbxray</td><td class="num">165</td><td><code>main</code>。処理全体を1つの<code>try-catch</code>で囲み、通常実行（<code>run</code>）か差分検知（<code>runCheck</code>）を呼ぶ。DIコンテナを2段階で組み立て、失敗は<code>FailureReporter</code>で報告して終了コードに変える</td><td>→ <code>CliArguments</code>・<code>DbxrayProperties</code>・<code>OutputDirectoryValidator</code>・<code>ConnectionSettings</code>・<code>MyBatisSqlSessionFactories</code>・<code>DatabaseTypeDetector</code>・2つのModule・Controller・<code>FailureReporter</code></td></tr>
+    <tr><td class="file">CliArguments<span class="sub">パッケージプライベート</span></td><td class="num">275</td><td>CLI引数の解析（<code>--check</code>・<code>--rm-dist</code>・<code>--help</code>・<code>--version</code>、接続情報と実行時設定の上書き値）。未知の引数は集めておき、<code>requireKnownArguments</code>で誤りにする（値は伏せて報告）。設定の引数名は<code>SETTINGS</code>から引く</td><td>← <code>Dbxray</code>／→ <code>DbxrayProperties.KEYS</code></td></tr>
+    <tr><td class="file">DbxrayProperties<span class="sub">パッケージプライベート</span></td><td class="num">383</td><td><code>conf/config.yml</code>のうち<code>database</code>以外の仕様（8項目の位置・CLI引数名・既定値・形式・範囲）と検証。CLI引数で上書きしてから検証し、誤りをまとめて<code>InvalidConfigurationException</code>にする。2種類のRequestへ変換</td><td>← <code>Dbxray</code>／→ <code>ConfigFile</code>・<code>TargetSelection</code></td></tr>
+    <tr><td class="file">OutputDirectoryValidator<span class="sub">パッケージプライベート</span></td><td class="num">79</td><td>出力先の検証（既存のファイルを指していないか、<code>--rm-dist</code>で消してよいか）。DBへの接続前に、親のコンテナから取り出して使う</td><td>← <code>Dbxray</code>／→ <code>OutputPathResolver</code>・<code>FileRepository</code></td></tr>
+    <tr><td class="file">CliUsage<span class="sub">パッケージプライベート</span></td><td class="num">55</td><td><code>--help</code>・<code>--version</code>の文言。版はjarのマニフェスト（<code>Implementation-Version</code>）から</td><td>← <code>Dbxray</code></td></tr>
 
     <tr class="group"><td colspan="4">presentation（.dto・.type）：コントローラーと報告</td></tr>
-    <tr><td class="file">ExportTableDefinitionController</td><td class="num">70</td><td>ユースケースを呼び、結果を<code>ResultDto</code>・<code>DiffCheckResultDto</code>にする。例外は捕まえない</td><td>← <code>ExportTableDefinition</code>／→ 2つのUsecase・<code>DiffReportFormatter</code></td></tr>
-    <tr><td class="file">FailureReporter</td><td class="num">153</td><td>失敗の報告。<code>[errmsg]</code>と、表示に含まれない原因を<code>[cause]</code>で並べる。想定外の失敗はスタックトレースをログへ出し、画面にログの場所を示す</td><td>← <code>ExportTableDefinition.main</code>／→ <code>ProcessResult</code></td></tr>
+    <tr><td class="file">ExportTableDefinitionController</td><td class="num">70</td><td>ユースケースを呼び、結果を<code>ResultDto</code>・<code>DiffCheckResultDto</code>にする。例外は捕まえない</td><td>← <code>Dbxray</code>／→ 2つのUsecase・<code>DiffReportFormatter</code></td></tr>
+    <tr><td class="file">FailureReporter</td><td class="num">153</td><td>失敗の報告。<code>[errmsg]</code>と、表示に含まれない原因を<code>[cause]</code>で並べる。想定外の失敗はスタックトレースをログへ出し、画面にログの場所を示す</td><td>← <code>Dbxray.main</code>／→ <code>ProcessResult</code></td></tr>
     <tr><td class="file">DiffReportFormatter<span class="sub">パッケージプライベート</span></td><td class="num">101</td><td><code>--check</code>の結果を文面にする。3区分の一覧と、unified diff（1件200行・全体2000行まで）</td><td>← Controller／→ <code>DiffResult</code>・<code>ContentDiff</code></td></tr>
-    <tr><td class="file">ResultDto<br>DiffCheckResultDto</td><td class="num">52</td><td>処理結果のrecord。<code>DiffCheckResultDto</code>は差分の有無から終了状態（<code>exitStatus</code>）を返す</td><td>← Controller・<code>ExportTableDefinition</code></td></tr>
+    <tr><td class="file">ResultDto<br>DiffCheckResultDto</td><td class="num">52</td><td>処理結果のrecord。<code>DiffCheckResultDto</code>は差分の有無から終了状態（<code>exitStatus</code>）を返す</td><td>← Controller・<code>Dbxray</code></td></tr>
     <tr><td class="file">ProcessResult</td><td class="num">18</td><td><code>SUCCESS</code>・<code>FAIL</code>。<code>[result]:</code>の行を組み立てる</td><td>← 2つのDto・<code>FailureReporter</code></td></tr>
-    <tr><td class="file">ExitStatus</td><td class="num">38</td><td>終了状態と終了コード（0成功・1差分あり・2失敗）</td><td>← <code>ExportTableDefinition</code>・<code>DiffCheckResultDto</code></td></tr>
+    <tr><td class="file">ExitStatus</td><td class="num">38</td><td>終了状態と終了コード（0成功・1差分あり・2失敗）</td><td>← <code>Dbxray</code>・<code>DiffCheckResultDto</code></td></tr>
 
     <tr class="group"><td colspan="4">application：ユースケース</td></tr>
     <tr><td class="file">ExportTableDefinitionUsecase</td><td class="num">85</td><td>通常実行。一括取得→ER図の箱→（<code>--rm-dist</code>なら削除）→3つのSinkで書き出し</td><td>← Controller／→ <code>SchemaExportPipeline</code>・3つの<code>…SinkFactory</code></td></tr>
     <tr><td class="file">CheckDocumentDiffUsecase</td><td class="num">64</td><td><code>--check</code>。スナップショットのSinkだけで一時ディレクトリへ書き、<code>SnapshotDiff</code>で比べる。一時ディレクトリは必ず消す</td><td>← Controller／→ <code>SchemaExportPipeline</code>・<code>SnapshotExportSinkFactory</code>・<code>SnapshotDiff</code></td></tr>
     <tr><td class="file">SchemaExportPipeline<span class="sub">パッケージプライベート</span></td><td class="num">335</td><td>両ユースケースが共有する取得と書き出しの段取り（<code>fetchTargets</code>・<code>fetchDiagramBoxes</code>・<code>export</code>）。通知と件数をログへ出し、生成日を<code>Clock</code>から求める</td><td>← 2つのUsecase／→ <code>TableDefinitionRepository</code>・<code>SidecarRepository</code>・<code>ExportTargetConsistency</code>・<code>ExportSink</code></td></tr>
-    <tr><td class="file">ExportTableDefinitionRequest<br>CheckDocumentDiffRequest</td><td class="num">40</td><td>ユースケースへの入力のrecord。3層を同じrecordのまま通る。<code>--check</code>用は<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を持たない</td><td>← <code>ExportTableDefinitionProperties</code> → Controller → Usecase</td></tr>
-    <tr><td class="file">TargetSelection</td><td class="num">63</td><td>出力対象の絞り込み条件（<code>TableScope</code>＋<code>OutputObjectType</code>の集合）。<code>of</code>で文字列を型に変え、2種類の誤りをまとめる</td><td>← <code>ExportTableDefinitionProperties</code>・<code>SchemaExportPipeline</code></td></tr>
+    <tr><td class="file">ExportTableDefinitionRequest<br>CheckDocumentDiffRequest</td><td class="num">40</td><td>ユースケースへの入力のrecord。3層を同じrecordのまま通る。<code>--check</code>用は<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を持たない</td><td>← <code>DbxrayProperties</code> → Controller → Usecase</td></tr>
+    <tr><td class="file">TargetSelection</td><td class="num">63</td><td>出力対象の絞り込み条件（<code>TableScope</code>＋<code>OutputObjectType</code>の集合）。<code>of</code>で文字列を型に変え、2種類の誤りをまとめる</td><td>← <code>DbxrayProperties</code>・<code>SchemaExportPipeline</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.model.target：出力対象</td></tr>
     <tr><td class="file">ExportTargets</td><td class="num">39</td><td>一括取得した出力対象の組（基本情報・テーブル・関連・トリガー・パーティション・ビューの参照・関数/シーケンス/型・付帯情報・観点）</td><td>← <code>SchemaExportPipeline</code> → 各Sink</td></tr>
@@ -1924,9 +1924,9 @@ erDiagram
     <tr><td class="file">PagedSectionTemplates</td><td class="num">68</td><td>見出し・分割ページへのリンク・ページ送り・戻るリンク</td><td>← <code>PagedSectionWriter</code>・テンプレート</td></tr>
 
     <tr class="group"><td colspan="4">infrastructure.db：DBへの接続と取得</td></tr>
-    <tr><td class="file">ConnectionSettings</td><td class="num">157</td><td>検証済みの接続情報。<code>config.yml</code>の<code>database</code>＋環境変数のパスワード＋CLI引数。<code>driver</code>・<code>url</code>必須、ファイルの<code>password</code>と<code>url</code>へのパスワードの埋め込みは誤り</td><td>← <code>ExportTableDefinition</code></td></tr>
-    <tr><td class="file">MyBatisSqlSessionFactories</td><td class="num">40</td><td><code>mybatis-config.xml</code>から<code>SqlSessionFactory</code>を作る（接続はしない）</td><td>← <code>ExportTableDefinition</code></td></tr>
-    <tr><td class="file">DatabaseTypeDetector</td><td class="num">78</td><td>接続して製品名から<code>DatabaseType</code>を判定し、DBMS・ドライバの版をログへ残す。接続できない・非対応のDBは<code>UserCorrectableException</code></td><td>← <code>ExportTableDefinition</code></td></tr>
+    <tr><td class="file">ConnectionSettings</td><td class="num">157</td><td>検証済みの接続情報。<code>config.yml</code>の<code>database</code>＋環境変数のパスワード＋CLI引数。<code>driver</code>・<code>url</code>必須、ファイルの<code>password</code>と<code>url</code>へのパスワードの埋め込みは誤り</td><td>← <code>Dbxray</code></td></tr>
+    <tr><td class="file">MyBatisSqlSessionFactories</td><td class="num">40</td><td><code>mybatis-config.xml</code>から<code>SqlSessionFactory</code>を作る（接続はしない）</td><td>← <code>Dbxray</code></td></tr>
+    <tr><td class="file">DatabaseTypeDetector</td><td class="num">78</td><td>接続して製品名から<code>DatabaseType</code>を判定し、DBMS・ドライバの版をログへ残す。接続できない・非対応のDBは<code>UserCorrectableException</code></td><td>← <code>Dbxray</code></td></tr>
     <tr><td class="file">DatabaseType</td><td class="num">54</td><td>postgresql・oracleと、リポジトリの実装クラスの対応。名前はSQLの名前空間にも使う</td><td>← <code>DatabaseDependentModule</code>・<code>AbstractTableDefinitionRepository</code></td></tr>
     <tr><td class="file">AbstractTableDefinitionRepository</td><td class="num">191</td><td><code>TableDefinitionRepository</code>の共通実装。SQLのIDを組み立てて実行し、DTO→エンティティ。SQLの失敗はどのSQLかを添えて包む</td><td>← 2つの実装／→ 12のDTO</td></tr>
     <tr><td class="file">PostgresTableDefinitionRepository<br>OracleTableDefinitionRepository</td><td class="num">28</td><td>DB種別を渡すだけの実装</td><td>← <code>DatabaseType</code></td></tr>
@@ -1934,17 +1934,17 @@ erDiagram
     <tr><td class="file">DtoValues<span class="sub">パッケージプライベート</span></td><td class="num">41</td><td><code>null</code>・空白を空文字へ、区切り文字で連結された値をリストへ</td><td>← 各DTO</td></tr>
 
     <tr class="group"><td colspan="4">infrastructure.file・path・snapshot</td></tr>
-    <tr><td class="file">LocalFileRepository</td><td class="num">127</td><td><code>FileRepository</code>の実装（UTF-8で書く・追記・再帰削除等）</td><td>← <code>ExportTableDefinitionModule</code></td></tr>
-    <tr><td class="file">SidecarYamlRepository</td><td class="num">492</td><td>サイドカーYAMLの読み込み（SnakeYAMLの<code>SafeConstructor</code>）。ファイルが無い・YAMLとして読めないのは誤り（文言は<code>YamlSyntaxErrors</code>）、個々の記述の誤りは何件目の定義かを添えて警告し、読み飛ばす</td><td>← <code>ExportTableDefinitionModule</code>／→ <code>TableKey.parse</code>・<code>Viewpoint.of</code>・<code>Cardinality</code></td></tr>
+    <tr><td class="file">LocalFileRepository</td><td class="num">127</td><td><code>FileRepository</code>の実装（UTF-8で書く・追記・再帰削除等）</td><td>← <code>DbxrayModule</code></td></tr>
+    <tr><td class="file">SidecarYamlRepository</td><td class="num">492</td><td>サイドカーYAMLの読み込み（SnakeYAMLの<code>SafeConstructor</code>）。ファイルが無い・YAMLとして読めないのは誤り（文言は<code>YamlSyntaxErrors</code>）、個々の記述の誤りは何件目の定義かを添えて警告し、読み飛ばす</td><td>← <code>DbxrayModule</code>／→ <code>TableKey.parse</code>・<code>Viewpoint.of</code>・<code>Cardinality</code></td></tr>
     <tr><td class="file">DefaultOutputPathResolver</td><td class="num">186</td><td><code>OutputPathResolver</code>の実装。既定の出力先<code>./output</code>。解決したパスが起点の外を指さないことを<code>within</code>で確かめる。<code>--rm-dist</code>でルート、カレント・ホームとその上位を拒否</td><td>→ <code>DocumentLocations</code>・<code>SnapshotLocations</code>・<code>InsightLocations</code></td></tr>
-    <tr><td class="file">JacksonSnapshotSerializer</td><td class="num">94</td><td><code>SnapshotSerializer</code>の実装（<code>NON_EMPTY</code>、差分表示用の整形）</td><td>← <code>ExportTableDefinitionModule</code></td></tr>
+    <tr><td class="file">JacksonSnapshotSerializer</td><td class="num">94</td><td><code>SnapshotSerializer</code>の実装（<code>NON_EMPTY</code>、差分表示用の整形）</td><td>← <code>DbxrayModule</code></td></tr>
 
     <tr class="group"><td colspan="4">config・shared.exception</td></tr>
-    <tr><td class="file">ConfigFile</td><td class="num">163</td><td>設定ファイル（<code>--config</code>、無ければ<code>conf/config.yml</code>）をYAMLとして読む。仕様と検証は値を使う側が持つ</td><td>← <code>ExportTableDefinition</code>・<code>ExportTableDefinitionProperties</code>・<code>CliArguments</code></td></tr>
+    <tr><td class="file">ConfigFile</td><td class="num">163</td><td>設定ファイル（<code>--config</code>、無ければ<code>conf/config.yml</code>）をYAMLとして読む。仕様と検証は値を使う側が持つ</td><td>← <code>Dbxray</code>・<code>DbxrayProperties</code>・<code>CliArguments</code></td></tr>
     <tr><td class="file">YamlSyntaxErrors</td><td class="num">51</td><td>SnakeYAMLの構文誤りを、ファイルの内容を引用しない文言（種類と位置）へ変える</td><td>← <code>ConfigFile</code>・<code>SidecarYamlRepository</code></td></tr>
-    <tr><td class="file">InvalidConfigurationException</td><td class="num">28</td><td>設定の誤り（<code>UserCorrectableException</code>の派生）</td><td>← <code>ConfigFile</code>・<code>ExportTableDefinitionProperties</code>・<code>ConnectionSettings</code></td></tr>
-    <tr><td class="file">ExportTableDefinitionModule</td><td class="num">61</td><td>DB種別に依存しない束縛（親のコンテナ）</td><td>← <code>ExportTableDefinition</code></td></tr>
-    <tr><td class="file">DatabaseDependentModule</td><td class="num">38</td><td><code>SqlSessionFactory</code>と<code>TableDefinitionRepository</code>の束縛（子のコンテナ）</td><td>← <code>ExportTableDefinition</code></td></tr>
+    <tr><td class="file">InvalidConfigurationException</td><td class="num">28</td><td>設定の誤り（<code>UserCorrectableException</code>の派生）</td><td>← <code>ConfigFile</code>・<code>DbxrayProperties</code>・<code>ConnectionSettings</code></td></tr>
+    <tr><td class="file">DbxrayModule</td><td class="num">61</td><td>DB種別に依存しない束縛（親のコンテナ）</td><td>← <code>Dbxray</code></td></tr>
+    <tr><td class="file">DatabaseDependentModule</td><td class="num">38</td><td><code>SqlSessionFactory</code>と<code>TableDefinitionRepository</code>の束縛（子のコンテナ）</td><td>← <code>Dbxray</code></td></tr>
     <tr><td class="file">UserCorrectableException</td><td class="num">34</td><td>利用者が直せる誤り。投げてよいのは入口と、入力・実行環境に触れるインフラだけ</td><td>← <code>CliArguments</code>・<code>OutputDirectoryValidator</code>・<code>DatabaseTypeDetector</code>・<code>SidecarYamlRepository</code>・<code>FailureReporter</code></td></tr>
     <tr><td class="file">package-info（43ファイル）</td><td class="num">90</td><td>各パッケージの要旨。<code>shared.exception</code>だけは置いてよいものの規約も書く</td><td class="muted">—</td></tr>
 
@@ -1952,14 +1952,14 @@ erDiagram
     <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">670</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
     <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">838</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列（ビューのソース・トリガーの本体等）とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
     <tr><td class="file">mybatis-config.xml</td><td class="num">39</td><td>DTOの型の別名、接続（POOLED。<code>${driver}</code>等）、2つのmapper</td><td>← <code>MyBatisSqlSessionFactories</code></td></tr>
-    <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>export-table-definition.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
+    <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>dbxray.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
     <tr><td class="file">conf/config.yml</td><td class="num">25</td><td>配布する設定（全項目が未指定。各項目の例をコメントで示す）</td><td>← <code>ConfigFile</code></td></tr>
 
     <tr class="group"><td colspan="4">テスト（cli/src/test・cli/src/integrationTest）</td></tr>
     <tr><td class="file">ArchitectureTest</td><td class="num">214</td><td>構造の規約（3章の表）をArchUnitで検査</td><td>→ main配下の全クラス</td></tr>
-    <tr><td class="file">ExportTableDefinitionModuleTest</td><td class="num">91</td><td>本番と同じ2段階でDIコンテナを組み立て、コントローラーまで解決できるか（DBには接続しない）</td><td>→ 2つのModule</td></tr>
+    <tr><td class="file">DbxrayModuleTest</td><td class="num">91</td><td>本番と同じ2段階でDIコンテナを組み立て、コントローラーまで解決できるか（DBには接続しない）</td><td>→ 2つのModule</td></tr>
     <tr><td class="file">ExportTableDefinitionUsecaseTest</td><td class="num">1,509</td><td>通常実行・<code>--check</code>の流れ全体。Writerは本物、ファイルはメモリ上（<code>InMemoryFileRepository</code>）、DBは呼び出しを記録するスタブ</td><td>→ 2つのUsecase</td></tr>
-    <tr><td class="file">入口のテスト（5ファイル）</td><td class="num">875</td><td><code>CliArgumentsTest</code>・<code>CliUsageTest</code>・<code>ExportTableDefinitionPropertiesTest</code>・<code>OutputDirectoryValidatorTest</code>・<code>TargetSelectionTest</code></td><td>→ 入口の各クラス</td></tr>
+    <tr><td class="file">入口のテスト（5ファイル）</td><td class="num">875</td><td><code>CliArgumentsTest</code>・<code>CliUsageTest</code>・<code>DbxrayPropertiesTest</code>・<code>OutputDirectoryValidatorTest</code>・<code>TargetSelectionTest</code></td><td>→ 入口の各クラス</td></tr>
     <tr><td class="file">presentationのテスト（4ファイル）</td><td class="num">516</td><td>Controller・<code>FailureReporter</code>（原因の併記）・<code>DiffReportFormatter</code>（行数の上限）・<code>ExitStatus</code></td><td>→ presentation</td></tr>
     <tr><td class="file">domain.modelのテスト（31ファイル）</td><td class="num">2,804</td><td>多重度・グループ分割・関連の集合（描画距離を含む）・ビューの参照・テーブル名パターン・<code>TableScope</code>・観点・<code>TableDefinitionContent</code>・<code>TableSnapshot</code>等</td><td>→ domain.model</td></tr>
     <tr><td class="file">domain.serviceのテスト（23ファイル）</td><td class="num">4,840</td><td>突き合わせ・スナップショットの書き込みと比較・unified diff・配置の規則（<code>PathSegmentsTest</code>）・全Writer・全テンプレート（<code>TableDefinitionTemplatesTest</code>は911行）・DB由来の文字列の注入（<code>MarkdownInjectionTest</code>）</td><td>→ domain.service</td></tr>
@@ -1972,7 +1972,7 @@ erDiagram
   </tbody>
 </table>
 </div>
-<p class="small muted"><code>./gradlew build</code>は、domain配下（<code>com/export_table_definition/domain/**</code>）の単体テストのカバレッジがline 95%・branch 85%を下回ると失敗します。結合テストはDockerが必要なため、別のタスク（<code>integrationTest</code>・<code>oracleIntegrationTest</code>）に分かれています。</p>
+<p class="small muted"><code>./gradlew build</code>は、domain配下（<code>com/dbxray/domain/**</code>）の単体テストのカバレッジがline 95%・branch 85%を下回ると失敗します。結合テストはDockerが必要なため、別のタスク（<code>integrationTest</code>・<code>oracleIntegrationTest</code>）に分かれています。</p>
 
 <!-- ============================================================ -->
 <h2 id="change"><span class="n">12</span>変更するときの道しるべ</h2>
@@ -1980,10 +1980,10 @@ erDiagram
 
 <h3>設定項目を1つ足すとき</h3>
 <ol class="steps">
-  <li><div><code>ExportTableDefinitionProperties</code>の<code>SETTINGS</code>に項目（設定ファイルでの位置・CLI引数名・値の形式）を足し、既定値と変換を書く。上書きのCLI引数は<code>CliArguments</code>がこの表から引く。</div></li>
+  <li><div><code>DbxrayProperties</code>の<code>SETTINGS</code>に項目（設定ファイルでの位置・CLI引数名・値の形式）を足し、既定値と変換を書く。上書きのCLI引数は<code>CliArguments</code>がこの表から引く。</div></li>
   <li><div>値をrequest（<code>ExportTableDefinitionRequest</code>・必要なら<code>CheckDocumentDiffRequest</code>）に足し、使う層まで同じrecordで運ぶ。文字列のまま深い層へ渡さず、入口で型にする。</div></li>
   <li><div>配布する<code>conf/config.yml</code>（全項目が未指定）に項目を並べ、<code>docs/usage/cli.md</code>の設定の表（CLI引数の列を含む）を更新する。</div></li>
-  <li><div><code>ExportTableDefinitionPropertiesTest</code>・<code>CliArgumentsTest</code>に、未指定・誤った値・上書きのテストを足す。</div></li>
+  <li><div><code>DbxrayPropertiesTest</code>・<code>CliArgumentsTest</code>に、未指定・誤った値・上書きのテストを足す。</div></li>
 </ol>
 
 <h3>DBから取得する項目を足すとき</h3>
@@ -2002,14 +2002,14 @@ erDiagram
 
 <h3>出力形式を足すとき</h3>
 <ul>
-  <li><code>ExportSink</code>を実装したクラスと、それを作る<code>…SinkFactory</code>を<code>domain.service.export</code>に作り、Factoryを<code>ExportTableDefinitionModule</code>に束縛して、ユースケースが渡すリストに加える。<code>--check</code>で比較したいかどうかで、<code>CheckDocumentDiffUsecase</code>のリストに加えるかを決める。</li>
+  <li><code>ExportSink</code>を実装したクラスと、それを作る<code>…SinkFactory</code>を<code>domain.service.export</code>に作り、Factoryを<code>DbxrayModule</code>に束縛して、ユースケースが渡すリストに加える。<code>--check</code>で比較したいかどうかで、<code>CheckDocumentDiffUsecase</code>のリストに加えるかを決める。</li>
   <li>配置の規則は<code>…Locations</code>に、パスの解決は<code>OutputPathResolver</code>に足す（application層でパスの文字列を組み立てない）。</li>
 </ul>
 
 <h3>新しいドメインサービス・リポジトリを足すとき</h3>
 <ul>
-  <li>コンストラクタに<code>jakarta.inject.Inject</code>を付ける。インタフェースと実装を分けたら<code>ExportTableDefinitionModule</code>に束縛を足す。DB種別で実装が変わるものだけは<code>DatabaseDependentModule</code>へ。</li>
-  <li>束縛の漏れは<code>ExportTableDefinitionModuleTest</code>で分かる。ファイルを読み書きするなら<code>FileRepository</code>を受け取る（<code>Files</code>を直接使うと<code>ArchitectureTest</code>が落ちる）。日付が要るなら<code>Clock</code>を受け取る。</li>
+  <li>コンストラクタに<code>jakarta.inject.Inject</code>を付ける。インタフェースと実装を分けたら<code>DbxrayModule</code>に束縛を足す。DB種別で実装が変わるものだけは<code>DatabaseDependentModule</code>へ。</li>
+  <li>束縛の漏れは<code>DbxrayModuleTest</code>で分かる。ファイルを読み書きするなら<code>FileRepository</code>を受け取る（<code>Files</code>を直接使うと<code>ArchitectureTest</code>が落ちる）。日付が要るなら<code>Clock</code>を受け取る。</li>
 </ul>
 
 <h3>スナップショットの形式を変えるとき</h3>

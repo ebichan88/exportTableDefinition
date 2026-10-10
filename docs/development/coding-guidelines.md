@@ -49,12 +49,12 @@ cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レ�
 
 ### DI（Guice）
 
-- 新しいリポジトリ実装やドメインサービスを追加した場合は、`config/module/ExportTableDefinitionModule.java`に束縛を追加する。
+- 新しいリポジトリ実装やドメインサービスを追加した場合は、`config/module/DbxrayModule.java`に束縛を追加する。
   接続先の`SqlSessionFactory`と、DB種別で実装が変わる`TableDefinitionRepository`だけは、DB接続後に組み立てる子のコンテナ用の
   `config/module/DatabaseDependentModule.java`に置く。
 - コンストラクタには`jakarta.inject.Inject`を付ける（Guiceのアノテーションには依存しない）。
 - インターフェースを持たない具象クラス（ユースケース等）は、`@Inject`付きコンストラクタがあればジャストインタイム束縛で解決されるため束縛しない。
-- 束縛漏れは`ExportTableDefinitionModuleTest`（実際にDIコンテナを組み立てるテスト）で検知できる。
+- 束縛漏れは`DbxrayModuleTest`（実際にDIコンテナを組み立てるテスト）で検知できる。
 
 ## 責務の分け方
 
@@ -66,7 +66,7 @@ cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レ�
   そのまま渡っていたら、requestレコードにまとめる（例: `application.ExportTableDefinitionRequest`/`CheckDocumentDiffRequest`）。
   渡す先で使われない引数が混ざっていないかも見る。
 - **設定値を生のまま深い層へ渡さない。** 空白の除去・型への変換・検証は入口で1回だけ行い、設定誤りはDBへの問い合わせや
-  出力先の削除より前に検知する（例: `ExportTableDefinitionProperties`・`application.TargetSelection#of`）。
+  出力先の削除より前に検知する（例: `DbxrayProperties`・`application.TargetSelection#of`）。
 - **インフラ層に業務ルールを持たせない。** Repository実装は読み込みと型変換に専念し、デフォルト値の決定・名前の自動生成・
   識別子の解析といったルールはドメイン層（エンティティ・値オブジェクト・enum）のメソッドに持たせる
   （例: `ForeignKeyEntity#resolveLogicalRelationName`、`Cardinality#DEFAULT_FOR_LOGICAL_RELATION`）。
@@ -104,7 +104,7 @@ cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レ�
 - `UserCorrectableException`を投げるのは、入口（CLI引数・設定・出力先の検証）と、利用者の入力・実行環境に触れるインフラ
   （DBへの接続、サイドカーYAMLの読み込み）だけ。ドメイン層・アプリケーション層では投げない。利用者が直せる入力の誤りは、
   ユースケースを呼ぶ前に入口で検証する（ユースケースの中で見つかる設定の誤りがあれば、その検証を入口へ移す）。
-- 捕捉はエントリーポイント（`ExportTableDefinition.main()`）の1箇所だけで、捕捉した例外の報告は`presentation.FailureReporter`が行う。
+- 捕捉はエントリーポイント（`Dbxray.main()`）の1箇所だけで、捕捉した例外の報告は`presentation.FailureReporter`が行う。
 - 途中の層でcatchしてよいのは、検査例外を包む・利用者が直せる誤りへ置き換える・フォールバックする場合だけ。
   - 包むときは`cause`を渡す（原因のメッセージがファイルの内容を引用する場合を除く。[ログ](#ログ)の「出さないもの」を参照）。
   - tryの範囲は置き換えたい呼び出しだけに絞る。`catch (Exception e)`で広く包むと、別の失敗まで同じ文言になり原因も表示から消える。
@@ -115,7 +115,7 @@ cli（`cli/`）とMCPサーバー（`mcp-server/`）のコードを書く・レ�
 設計は[overview.mdの「入力の検証」](../architecture/overview.md#入力の検証)を参照。
 対象は設定ファイル・CLI引数・DB接続情報・サイドカーYAMLで、仕様は`docs/usage/cli.md`の各節に記載する。
 
-- 設定項目・引数を追加・変更した場合は、`docs/usage/cli.md`の仕様の表と、検証する場所（`ExportTableDefinitionProperties`・
+- 設定項目・引数を追加・変更した場合は、`docs/usage/cli.md`の仕様の表と、検証する場所（`DbxrayProperties`・
   `CliArguments`等）を同じ変更で更新する。
 - 未指定（キーの省略・空）は既定値。未知のキー・引数や解釈できない値は、既定値へ黙って置き換えずに失敗にする。
 - サイドカーYAMLの個々の記述の誤りは、読み飛ばして警告する（WARNログはコンソールにも出る）。
@@ -144,7 +144,7 @@ MCPサーバーはログファイルを持たず、標準エラーへの表示�
 - **置き場所**：ドメイン層ではログを出さず、判定結果を値（`ConsistencyNotice`等）で返して呼び出し側が出す（[責務の分け方](#責務の分け方)）。
 - **既定の設定**：このツールのロガーの既定はINFO、ルート（ライブラリ）はWARNのままにする。MyBatisは実行したSQL（DEBUG）と取得した行
   （TRACE。DBのメタ情報そのもの）をこのツールのパッケージ配下のロガーへ出すため、既定を下げるとログが大きくなるうえ機密を含みうる。
-  調査用の詳細は、利用者が`export-table-definition.log.level`で明示的に上げる。
+  調査用の詳細は、利用者が`dbxray.log.level`で明示的に上げる。
 - **MCPサーバーの標準出力**：MCPサーバーは標準出力をMCPのプロトコルに使う。`System.out`への出力や、標準出力へ出すログの設定を追加しない（表示は標準エラーへ）。
 - ログの仕様（レベル・記録する内容・調査時の上げ方）を変えたら、`docs/usage/cli.md`の「ログ」の節も同じ変更で更新する。
 - 利用者に知らせる警告を足したら、テストでメッセージを確かめる（[テスト](#テスト)）。
@@ -267,7 +267,7 @@ DBのメタ情報（DB名・スキーマ名・テーブル名・コメント・�
 | 片方のDBのmapper | もう片方のmapperも確認し、挙動を揃える |
 | スナップショットの形式（`domain.model.snapshot`のrecord） | `./gradlew :mcp-server:test`を実行する（`SampleSnapshotContractTest`がベースラインを読む）。互換性の無い変更なら`DatabaseSnapshot.FORMAT_VERSION`を上げ、`SnapshotDirectoryReader.SUPPORTED_FORMAT_VERSION`を追従させる |
 | ER図のMermaidの表記（`MermaidSupport`） | `./gradlew :mcp-server:test`を実行する（MCPサーバーの`get_er_diagram`が同じ表記を自前で持ち、`SampleErDiagramContractTest`が観点ページのベースラインと比べる） |
-| 設定項目・CLI引数 | `docs/usage/cli.md`の仕様の表と、検証する場所（`ExportTableDefinitionProperties`・`CliArguments`等）を更新する |
+| 設定項目・CLI引数 | `docs/usage/cli.md`の仕様の表と、検証する場所（`DbxrayProperties`・`CliArguments`等）を更新する |
 | ログの仕様 | `docs/usage/cli.md`の「ログ」の節を更新する |
 | ドメインの概念（`domain.model`のクラス）・ルールを持つ場所 | `docs/architecture/domain-model.md`の図・ルール表・用語集を更新する |
 | リポジトリ実装・ドメインサービスの追加 | Guiceの束縛を追加する（[DI](#diguice)） |

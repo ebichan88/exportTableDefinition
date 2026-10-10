@@ -6,7 +6,7 @@ AIが正しいテーブル名・カラム・JOINの条件（外部キーと、�
 
 * DBには接続しません。スナップショット・参考情報のファイルを読むだけなので、DBの接続情報をAIに渡す必要はありません。
 * AIが調べるだけでなく、利用者が`@`等でテーブルの定義を会話に添付することもできます（[リソース](#リソース会話にテーブルの定義を添付する)）。
-* 配布用zipの`mcp/exportTableDefinition-mcp.jar`がサーバー本体です。同梱のJava実行環境（`runtime`）で動くため、Javaのインストールは不要です。
+* 配布用zipの`mcp/dbxray-mcp.jar`がサーバー本体です。同梱のJava実行環境（`runtime`）で動くため、Javaのインストールは不要です。
 
 ## MCPサーバー動作イメージ
 
@@ -22,7 +22,7 @@ AIが正しいテーブル名・カラム・JOINの条件（外部キーと、�
 MCPクライアント（Claude Code・Claude Desktop等）が、標準入出力で通信するサーバーとして起動します。自分で起動しておく必要はありません。
 
 ```
-<展開先>/runtime/bin/java -jar <展開先>/mcp/exportTableDefinition-mcp.jar --snapshot=<output.path配下のsnapshotディレクトリ>
+<展開先>/runtime/bin/java -jar <展開先>/mcp/dbxray-mcp.jar --snapshot=<output.path配下のsnapshotディレクトリ>
 ```
 
 Windowsでは`<展開先>\runtime\bin\java.exe`を指定します。
@@ -42,18 +42,18 @@ Windowsでは`<展開先>\runtime\bin\java.exe`を指定します。
 Claude Codeの場合、次のコマンドで登録できます（Linux／macOSの例）。
 
 ```
-claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/java -jar /opt/exportTableDefinition-linux/mcp/exportTableDefinition-mcp.jar --snapshot=/work/schema-docs/output/snapshot
+claude mcp add dbxray -- /opt/dbxray-linux/runtime/bin/java -jar /opt/dbxray-linux/mcp/dbxray-mcp.jar --snapshot=/work/schema-docs/output/snapshot
 ```
 
 チームで共有する場合は、アプリのリポジトリに`.mcp.json`をコミットし、各自の環境で異なるパスを環境変数で与えます
-（`ETD_HOME`はzipの展開先、`SCHEMA_SNAPSHOT_DIR`はcloneしたテーブル定義書のリポジトリの`snapshot`ディレクトリ）。
+（`DBXRAY_HOME`はzipの展開先、`SCHEMA_SNAPSHOT_DIR`はcloneしたテーブル定義書のリポジトリの`snapshot`ディレクトリ）。
 
 ```json
 {
   "mcpServers": {
-    "table-definition": {
-      "command": "${ETD_HOME}/runtime/bin/java",
-      "args": ["-jar", "${ETD_HOME}/mcp/exportTableDefinition-mcp.jar", "--snapshot=${SCHEMA_SNAPSHOT_DIR}"]
+    "dbxray": {
+      "command": "${DBXRAY_HOME}/runtime/bin/java",
+      "args": ["-jar", "${DBXRAY_HOME}/mcp/dbxray-mcp.jar", "--snapshot=${SCHEMA_SNAPSHOT_DIR}"]
     }
   }
 }
@@ -97,7 +97,7 @@ claude mcp add table-definition -- /opt/exportTableDefinition-linux/runtime/bin/
 ツールはAIが呼び出して調べますが、利用者が「このテーブル」と指名して、定義を会話に添付することもできます。
 スナップショットに含まれる全テーブル（ビューを含む）がMCPのリソースとして並び、論理名・物理名のどちらでも絞り込めます。
 
-* リソースの名前は`論理名 (スキーマ名.物理名)`、URIは`exporttable://{DB名}/{スキーマ名}/{テーブル名}`です。
+* リソースの名前は`論理名 (スキーマ名.物理名)`、URIは`dbxray://{DB名}/{スキーマ名}/{テーブル名}`です。
   添付される内容は、`get_table`で返す定義（JSON）と同じです。
 * AIに調べさせると、AIが探す名前を取り違えることがあります。名前が分かっているテーブルは、添付で指名すると確実に定義が載ります。
 

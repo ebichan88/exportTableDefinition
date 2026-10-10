@@ -1,5 +1,5 @@
 -- ============================================================================
--- exportTableDefinition サンプルDDL（Oracle）
+-- dbxray サンプルDDL（Oracle）
 --
 -- PostgreSQL版（docs/sample/postgres/ddl.sql）と同じスキーマ構成をOracleで作るDDLです。
 -- 出力対象となりうるオブジェクト種別（テーブル／ビュー／マテリアライズドビュー／インデックス／制約／外部キー／

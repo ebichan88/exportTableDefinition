@@ -1,6 +1,6 @@
 # CLIリファレンス
 
-テーブル定義書を出力するCLI（`run.sh`・`run.bat`・`exportTableDefinition.jar`）の設定・実行・出力の詳細です。
+テーブル定義書を出力するCLI（`run.sh`・`run.bat`・`dbxray.jar`）の設定・実行・出力の詳細です。
 入手から最初の実行までは[README](../../README.md#getting-started)を参照してください。
 
 目次:
@@ -100,15 +100,15 @@ DB接続情報（`database`）:
 
 ### パスワードの指定
 
-パスワードは、環境変数`EXPORT_TABLE_DEFINITION_DB_PASSWORD`で渡します。
+パスワードは、環境変数`DBXRAY_DB_PASSWORD`で渡します。
 
 ```
 # Linux／macOS
-export EXPORT_TABLE_DEFINITION_DB_PASSWORD='パスワード'
+export DBXRAY_DB_PASSWORD='パスワード'
 ./run.sh
 
 # Windows（コマンドプロンプト）
-set EXPORT_TABLE_DEFINITION_DB_PASSWORD=パスワード
+set DBXRAY_DB_PASSWORD=パスワード
 run.bat
 ```
 
@@ -224,7 +224,7 @@ viewpoints:
 | `--check` | DB vs ドキュメントの差分検知モードで実行する（[後述](#db-vs-ドキュメントの差分検知--checkモード)） |
 | `--rm-dist` | 書き込み前に出力先ディレクトリを削除する（[後述](#出力先ディレクトリの事前クリーンアップ--rm-distオプション)） |
 | `--help` | 使い方を表示して終了する（設定ファイルの読み込み・DBへの接続は行わない。終了コード`0`） |
-| `--version` | バージョンを表示して終了する（`exportTableDefinition 0.1.0`のように表示。`--help`と同時に指定した場合は`--help`を優先する。終了コード`0`） |
+| `--version` | バージョンを表示して終了する（`dbxray 0.1.0`のように表示。`--help`と同時に指定した場合は`--help`を優先する。終了コード`0`） |
 | `--config=パス` | 読み込む設定ファイルを指定する（未指定の場合は、実行したディレクトリの`conf/config.yml`） |
 | `--db-password=値` | パスワードを指定する（[パスワードの指定](#パスワードの指定)を参照） |
 | `--db-url=値`・`--output-path=値`等 | 設定ファイルの項目を上書きする（次項） |
@@ -240,7 +240,7 @@ viewpoints:
 CI等で接続情報をファイルに残したくない場合や、出力先・出力対象をジョブごとに切り替えたい場合に利用してください。
 
 ```
-java -jar exportTableDefinition.jar --db-url=jdbc:postgresql://localhost:5432/testdb --output-path=./docs/db/prod --table='!flyway_schema_history,*_bk'
+java -jar dbxray.jar --db-url=jdbc:postgresql://localhost:5432/testdb --output-path=./docs/db/prod --table='!flyway_schema_history,*_bk'
 ```
 
 * 優先順位は `CLI引数 > 設定ファイルの値` です。CLI引数の値を空にした場合は、指定しなかったものとして設定ファイルの値を使います。
@@ -254,7 +254,7 @@ java -jar exportTableDefinition.jar --db-url=jdbc:postgresql://localhost:5432/te
 テーブル定義書は、生成対象のファイルのみを新規作成・上書きする方式のため、DBからテーブルやスキーマを削除した後に再実行しても、削除されたテーブルに対応する`.md`ファイルは`output.path`配下に残り続けます。`--rm-dist`を付けて実行すると、書き込みを開始する前に`output.path`のベースディレクトリを再帰的に削除してから生成するため、常に現在のDBの状態のみが出力先に反映されます。
 
 ```
-java -jar exportTableDefinition.jar --rm-dist
+java -jar dbxray.jar --rm-dist
 ```
 
 * CI上で定義書を自動生成・コミットする運用（マイグレーション後に再生成してコミットする等）で、削除されたテーブルの残骸ファイルが蓄積するのを防ぐ用途を想定しています。
@@ -269,7 +269,7 @@ java -jar exportTableDefinition.jar --rm-dist
 `--check`を付けて実行すると、DBの現状のスナップショットと`output.path`配下にコミット済みのスナップショットを比較し、差分（例: `table sample.employee`、`function sample.calculate_bonus(p_salary numeric)`）をオブジェクト単位で検知します。マイグレーション後にドキュメントの再生成・コミットを忘れていないかをCIで機械的に検知する用途のため、CIで利用する場合はスナップショットもコミットしておいてください。
 
 ```
-java -jar exportTableDefinition.jar --check
+java -jar dbxray.jar --check
 ```
 
 * 以下の3区分で報告します。
@@ -307,13 +307,13 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
 ```yaml
 - name: Check table definition document diff
   run: >-
-    java -jar exportTableDefinition.jar --check
+    java -jar dbxray.jar --check
     --db-url="$DB_URL" --db-username="$DB_USERNAME"
     --output-path=./docs/db/prod --table='!flyway_schema_history'
   env:
     DB_URL: ${{ secrets.DB_URL }}
     DB_USERNAME: ${{ secrets.DB_USERNAME }}
-    EXPORT_TABLE_DEFINITION_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    DBXRAY_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 ```
 
 ## 終了コード・失敗時の表示
@@ -332,11 +332,11 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
 
 * `[errmsg]`に失敗の内容、原因がある場合は`[cause]`にその内容が表示されます
 * 設定・入力・実行環境を見直せば解消する失敗（設定の誤り、DBに接続できない等）は、表示内容に従って見直してください
-* それ以外の想定外の失敗は、実行したフォルダの`var/log/exportTableDefinition.log`にスタックトレースが記録されます
+* それ以外の想定外の失敗は、実行したフォルダの`var/log/dbxray.log`にスタックトレースが記録されます
 
 ## ログ
 
-実行したフォルダの`var/log/exportTableDefinition.log`に記録されます（10MBごとに切り替え、過去3世代まで残します）。
+実行したフォルダの`var/log/dbxray.log`に記録されます（10MBごとに切り替え、過去3世代まで残します）。
 警告（`[warn]:`）は、ログファイルに加えて画面（標準エラー出力）にも表示されます。
 
 | レベル | 記録する内容 |
@@ -347,16 +347,16 @@ GitHub Actionsでの利用例（マイグレーション後にドキュメント
 | DEBUG | 上記に加え、実行したSQLとバインドした値（スキーマ名・テーブル名）、書き出したファイル |
 | TRACE | 上記に加え、DBから取得した行（コメント・関数やビューの定義を含む） |
 
-調査のために詳しく記録する場合は、システムプロパティ`export-table-definition.log.level`でレベルを指定します
+調査のために詳しく記録する場合は、システムプロパティ`dbxray.log.level`でレベルを指定します
 （`run.sh`・`run.bat`経由の場合は、環境変数`JAVA_TOOL_OPTIONS`で渡します）。
 DEBUG以上のログには、DBのメタ情報がそのまま記録されます。共有する前に内容を確認してください。
 
 ```bash
 # Linux／macOS
-JAVA_TOOL_OPTIONS=-Dexport-table-definition.log.level=debug ./run.sh
+JAVA_TOOL_OPTIONS=-Ddbxray.log.level=debug ./run.sh
 
 # Windows（コマンドプロンプト）
-set JAVA_TOOL_OPTIONS=-Dexport-table-definition.log.level=debug
+set JAVA_TOOL_OPTIONS=-Ddbxray.log.level=debug
 run.bat
 ```
 
