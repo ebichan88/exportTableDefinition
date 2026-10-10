@@ -4,6 +4,8 @@ import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.ViewpointEntry;
 import com.export_table_definition.mcp.insight.InsightsDirectoryReader;
 import com.export_table_definition.mcp.snapshot.SnapshotDirectoryReader;
+import com.export_table_definition.mcp.tool.TableDefinitionResources;
+import com.export_table_definition.mcp.tool.TableDefinitionResources.Mode;
 import com.export_table_definition.mcp.tool.TableDefinitionTools;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -17,6 +19,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * MCPサーバーのエントリーポイント<br>
@@ -57,7 +60,9 @@ public final class McpServerMain {
     System.setErr(
         new PrintStream(new FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8));
     final SchemaCatalog catalog;
+    final Set<Mode> resourceModes;
     try {
+      resourceModes = resourceModes();
       final ServerArguments arguments = ServerArguments.parse(args);
       final List<ViewpointEntry> viewpoints =
           new InsightsDirectoryReader().readViewpoints(arguments.snapshotDirectory());
@@ -76,23 +81,53 @@ public final class McpServerMain {
       System.exit(EXIT_USER_CORRECTABLE);
       return;
     }
-    start(catalog);
+    start(catalog, resourceModes);
+  }
+
+  /**
+   * リソースの出し方（検証用の起動時のシステムプロパティ）を読むメソッド
+   *
+   * @throws UserCorrectableException 解釈できない値の場合
+   */
+  private static Set<Mode> resourceModes() {
+    try {
+      return Mode.parse(System.getProperty(TableDefinitionResources.MODE_PROPERTY));
+    } catch (IllegalArgumentException e) {
+      throw new UserCorrectableException(e.getMessage(), e);
+    }
   }
 
   /** stdioのトランスポートでサーバーを起動する。標準入力が閉じられるまでトランスポートのスレッドが応答し続ける */
-  private static void start(SchemaCatalog catalog) {
+  private static void start(SchemaCatalog catalog, Set<Mode> resourceModes) {
     final McpJsonMapper jsonMapper = new JacksonMcpJsonMapper(new ObjectMapper());
-    McpServer.sync(new StdioServerTransportProvider(jsonMapper))
-        .serverInfo(SERVER_NAME, version())
-        .instructions(INSTRUCTIONS)
-        .capabilities(ServerCapabilities.builder().tools(false).build())
-        .jsonMapper(jsonMapper)
-        .tools(new TableDefinitionTools(catalog).specifications())
-        // mcp-core 2.0.1は既定でツールをboundedElasticの複数スレッドに並行実行させ、応答の書き込み先
-        // （Reactorのunicastシンク）への同時書き込みで止まる（java-sdk#686。修正はSDKのmainに入ったが未リリース）。
-        // 標準入力を読むスレッドで1つずつ実行させて回避する
-        .immediateExecution(true)
-        .build();
+    final TableDefinitionResources resources = new TableDefinitionResources(catalog, resourceModes);
+    final ServerCapabilities.Builder capabilities = ServerCapabilities.builder().tools(false);
+    if (resources.listEnabled() || resources.templateEnabled()) {
+      // スナップショットは起動時に読み込んだままで変わらないため、購読・一覧の変更通知は使わない
+      capabilities.resources(false, false);
+    }
+    if (resources.templateEnabled()) {
+      capabilities.completions();
+    }
+    final McpServer.SyncSpecification<?> server =
+        McpServer.sync(new StdioServerTransportProvider(jsonMapper))
+            .serverInfo(SERVER_NAME, version())
+            .instructions(INSTRUCTIONS)
+            .capabilities(capabilities.build())
+            .jsonMapper(jsonMapper)
+            .tools(new TableDefinitionTools(catalog).specifications())
+            // mcp-core 2.0.1は既定でツールをboundedElasticの複数スレッドに並行実行させ、応答の書き込み先
+            // （Reactorのunicastシンク）への同時書き込みで止まる（java-sdk#686。修正はSDKのmainに入ったが未リリース）。
+            // 標準入力を読むスレッドで1つずつ実行させて回避する
+            .immediateExecution(true);
+    if (resources.listEnabled()) {
+      server.resources(resources.resourceSpecifications());
+    }
+    if (resources.templateEnabled()) {
+      server.resourceTemplates(resources.templateSpecifications());
+      server.completions(resources.completionSpecifications());
+    }
+    server.build();
   }
 
   /** jarのマニフェストのバージョン。jarから起動していない場合（テスト等）は{@code dev} */
