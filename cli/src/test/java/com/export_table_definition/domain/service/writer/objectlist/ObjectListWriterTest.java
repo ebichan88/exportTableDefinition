@@ -107,7 +107,15 @@ public class ObjectListWriterTest {
   void testWriteTriggerListWritesFile() {
     var trigger =
         new TriggerEntity(
-            "public", "orders", "trg_orders", "BEFORE", List.of("INSERT"), "ROW", "f_orders", "");
+            "public",
+            "orders",
+            "trg_orders",
+            "BEFORE",
+            List.of("INSERT"),
+            "ROW",
+            "f_orders",
+            "",
+            "");
     writer.writeTriggerList(Triggers.of(List.of(trigger)), outputRoot());
 
     Path file = OUT.resolve("testdb").resolve("triggerList_testdb.md");
@@ -216,7 +224,7 @@ public class ObjectListWriterTest {
     List<TriggerEntity> triggers =
         IntStream.rangeClosed(1, 3001)
             .mapToObj(
-                i -> new TriggerEntity("public", "t" + i, "trg" + i, "", List.of(), "", "", ""))
+                i -> new TriggerEntity("public", "t" + i, "trg" + i, "", List.of(), "", "", "", ""))
             .toList();
     writer.writeTriggerList(Triggers.of(triggers), outputRoot());
 

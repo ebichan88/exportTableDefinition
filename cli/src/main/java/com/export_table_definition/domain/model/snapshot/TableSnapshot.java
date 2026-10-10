@@ -183,6 +183,7 @@ public record TableSnapshot(
    * @param events 対象イベント（INSERT/UPDATE/DELETE/TRUNCATE）のリスト
    * @param orientation 実行単位（ROW/STATEMENT）
    * @param function 実行される関数名（スキーマ修飾）
+   * @param body 本体（Oracleのみ。PostgreSQLは本体を実行する関数が持つため空文字）
    */
   public record Trigger(
       String name,
@@ -190,7 +191,8 @@ public record TableSnapshot(
       List<String> events,
       String orientation,
       String function,
-      String definition) {
+      String definition,
+      String body) {
 
     /** トリガー情報から生成する */
     static Trigger of(TriggerEntity trigger) {
@@ -200,7 +202,8 @@ public record TableSnapshot(
           trigger.events(),
           text(trigger.orientation()),
           text(trigger.functionName()),
-          text(trigger.triggerDefinition()));
+          text(trigger.triggerDefinition()),
+          text(trigger.body()));
     }
   }
 }

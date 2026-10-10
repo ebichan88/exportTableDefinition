@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle 23|FREEPDB1|2026/10/08|
+|Oracle 23|FREEPDB1|2026/10/10|
 
 ## テーブル説明
 
@@ -72,6 +72,16 @@
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
 |:---|:---|:---|:---|:---|:---|
 |1|TRG_ATTENDANCE_CHECK_WORK_MINUTES|BEFORE|INSERT/UPDATE|ROW|CREATE OR REPLACE TRIGGER sample.trg_attendance_check_work_minutes before insert or update on sample.attendance for each row|
+
+### TRG_ATTENDANCE_CHECK_WORK_MINUTES
+
+```sql
+begin
+    if :new.work_minutes < 0 then
+        raise_application_error(-20001, 'work_minutes must not be negative');
+    end if;
+end;
+```
 
 ## ER図
 

@@ -59,9 +59,39 @@ public class DtoToEntityTest {
   void testTriggerDtoSplitsEvents() {
     var dto =
         new TriggerDto(
-            "public", "orders", "trg", "AFTER", "INSERT/UPDATE", "ROW", "public.f", "CREATE ...");
+            "public",
+            "orders",
+            "trg",
+            "AFTER",
+            "INSERT/UPDATE",
+            "ROW",
+            "public.f",
+            "CREATE ...",
+            "");
 
     assertEquals(List.of("INSERT", "UPDATE"), dto.toEntity().events());
+  }
+
+  @Test
+  @DisplayName("TriggerDto: 本体の末尾の改行・空白を除き、本体が無い（OracleのNULL）場合は空文字にする")
+  void testTriggerDtoBody() {
+    var withBody =
+        new TriggerDto(
+            "SAMPLE",
+            "ORDERS",
+            "TRG",
+            "AFTER",
+            "INSERT",
+            "ROW",
+            null,
+            "CREATE ...",
+            "begin\n  null;\nend;\n  ");
+    var withoutBody =
+        new TriggerDto(
+            "SAMPLE", "ORDERS", "TRG", "AFTER", "INSERT", "ROW", null, "CREATE ...", null);
+
+    assertEquals("begin\n  null;\nend;", withBody.toEntity().body());
+    assertEquals("", withoutBody.toEntity().body());
   }
 
   @Test

@@ -277,7 +277,8 @@ public class TableDefinitionTemplatesTest {
             List.of("INSERT"),
             "ROW",
             "public.f_orders",
-            "CREATE TRIGGER trg_orders ...");
+            "CREATE TRIGGER trg_orders ...",
+            "");
     var t2 =
         new TriggerEntity(
             "public",
@@ -287,7 +288,8 @@ public class TableDefinitionTemplatesTest {
             List.of("UPDATE"),
             "ROW",
             "public.f_audit",
-            "CREATE TRIGGER trg_orders_audit ...");
+            "CREATE TRIGGER trg_orders_audit ...",
+            "");
     assertMarkdownEquals(
         """
         ## トリガー情報
@@ -299,6 +301,44 @@ public class TableDefinitionTemplatesTest {
 
         """,
         TableDefinitionTemplates.triggers(List.of(t1, t2)));
+  }
+
+  @Test
+  @DisplayName("triggers: 本体を持つトリガー（Oracle）は、表の後にトリガーごとの見出しとコードブロックで本体を出力する")
+  void testTriggerBodies() {
+    var withBody =
+        new TriggerEntity(
+            "SAMPLE",
+            "ORDERS",
+            "TRG_ORDERS",
+            "BEFORE",
+            List.of("INSERT"),
+            "ROW",
+            "",
+            "CREATE OR REPLACE TRIGGER sample.trg_orders before insert on sample.orders for each row",
+            "begin\n    :new.created_at := systimestamp;\nend;");
+    var withoutBody =
+        new TriggerEntity(
+            "SAMPLE", "ORDERS", "TRG_NO_BODY", "AFTER", List.of("DELETE"), "STATEMENT", "", "", "");
+    assertMarkdownEquals(
+        """
+        ## トリガー情報
+
+        | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
+        |:---|:---|:---|:---|:---|:---|
+        |1|TRG_ORDERS|BEFORE|INSERT|ROW|CREATE OR REPLACE TRIGGER sample.trg_orders before insert on sample.orders for each row|
+        |2|TRG_NO_BODY|AFTER|DELETE|STATEMENT||
+
+        ### TRG_ORDERS
+
+        ```sql
+        begin
+            :new.created_at := systimestamp;
+        end;
+        ```
+
+        """,
+        TableDefinitionTemplates.triggers(List.of(withBody, withoutBody)));
   }
 
   @Test
@@ -326,7 +366,8 @@ public class TableDefinitionTemplatesTest {
             List.of("INSERT"),
             "ROW",
             "public.f_orders",
-            "CREATE TRIGGER trg_orders WHEN ((new.a || new.b) IS NOT NULL)");
+            "CREATE TRIGGER trg_orders WHEN ((new.a || new.b) IS NOT NULL)",
+            "");
     assertTrue(
         TableDefinitionTemplates.indexes(List.of(idx)).contains("USING btree (((a \\|\\| b)))|"));
     assertTrue(

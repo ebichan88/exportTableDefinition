@@ -469,9 +469,12 @@
     </select>
 
     <select id="selectTriggerInfo" resultType="TriggerDto">
-        WITH ora_triggers AS (
+        WITH
+        <include refid="longValueFunction"/>
+        ora_triggers AS (
             <!-- テーブル・ビューのトリガーだけを対象にする（スキーマ・データベースのイベントトリガーは対象外）。
-                 本体のPL/SQLはトリガーの中に直接書かれ、PostgreSQLのように呼び出す関数が無いため、定義には宣言部だけを出す -->
+                 本体のPL/SQLはトリガーの中に直接書かれ、PostgreSQLのように呼び出す関数が無いため、定義には宣言部を、本体は別の列に出す。
+                 トリガーの所有者はテーブルの所有者と異なりうるため、本体はトリガーの所有者（OWNER）で引く -->
             SELECT
                 tr.table_owner AS schema_name,
                 tr.table_name AS table_name,
@@ -488,7 +491,8 @@
                     ELSE 'STATEMENT'
                 END AS orientation,
                 'CREATE OR REPLACE TRIGGER ' || TRIM(REGEXP_REPLACE(tr.description, '\s+', ' '))
-                    || CASE WHEN tr.when_clause IS NOT NULL THEN ' WHEN (' || tr.when_clause || ')' END AS trigger_definition
+                    || CASE WHEN tr.when_clause IS NOT NULL THEN ' WHEN (' || tr.when_clause || ')' END AS trigger_definition,
+                long_value('SELECT trigger_body FROM all_triggers WHERE owner = :p1 AND trigger_name = :p2', tr.owner, tr.trigger_name) AS body
             FROM all_triggers tr
             WHERE tr.base_object_type IN ('TABLE', 'VIEW')
                 AND tr.table_owner NOT IN <include refid="oracleMaintainedSchemas"/>
@@ -507,7 +511,8 @@
             events AS "events",
             orientation AS "orientation",
             '' AS "functionName",
-            trigger_definition AS "triggerDefinition"
+            trigger_definition AS "triggerDefinition",
+            body AS "body"
         FROM ora_triggers
         ORDER BY schema_name, table_name, trigger_name
     </select>

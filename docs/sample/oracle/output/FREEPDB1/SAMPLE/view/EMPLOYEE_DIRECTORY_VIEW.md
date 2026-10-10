@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle 23|FREEPDB1|2026/10/08|
+|Oracle 23|FREEPDB1|2026/10/10|
 
 ## テーブル説明
 
@@ -75,6 +75,21 @@ select
 | No. | トリガー名 | タイミング | イベント | 単位 | 定義 |
 |:---|:---|:---|:---|:---|:---|
 |1|TRG_EMPLOYEE_DIRECTORY_INSERT|INSTEAD OF|INSERT|ROW|CREATE OR REPLACE TRIGGER sample.trg_employee_directory_insert instead of insert on sample.employee_directory_view for each row|
+
+### TRG_EMPLOYEE_DIRECTORY_INSERT
+
+```sql
+declare
+    v_department_id number(10);
+begin
+    select department_id into v_department_id
+    from sample.department
+    where department_name = :new.department_name;
+
+    insert into sample.employee(employee_code, employee_name, department_id)
+    values (:new.employee_code, :new.employee_name, v_department_id);
+end;
+```
 
 ## ER図
 

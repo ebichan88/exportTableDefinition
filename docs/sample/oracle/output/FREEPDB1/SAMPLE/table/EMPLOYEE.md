@@ -4,7 +4,7 @@
 
 | RDBMS | データベース名 | 作成日 |
 |:---|:---|:---|
-|Oracle 23|FREEPDB1|2026/10/08|
+|Oracle 23|FREEPDB1|2026/10/10|
 
 ## テーブル説明
 
@@ -82,6 +82,26 @@
 |:---|:---|:---|:---|:---|:---|
 |1|TRG_EMPLOYEE_AUDIT|AFTER|INSERT/UPDATE/DELETE|ROW|CREATE OR REPLACE TRIGGER sample.trg_employee_audit after insert or update or delete on sample.employee for each row|
 |2|TRG_EMPLOYEE_SET_UPDATED_AT|BEFORE|UPDATE|ROW|CREATE OR REPLACE TRIGGER sample.trg_employee_set_updated_at before update on sample.employee for each row|
+
+### TRG_EMPLOYEE_AUDIT
+
+```sql
+declare
+    v_action varchar2(10);
+begin
+    v_action := case when inserting then 'INSERT' when updating then 'UPDATE' else 'DELETE' end;
+    insert into sample.audit_log(table_name, record_id, action, changed_by)
+    values ('employee', coalesce(:new.employee_id, :old.employee_id), v_action, user);
+end;
+```
+
+### TRG_EMPLOYEE_SET_UPDATED_AT
+
+```sql
+begin
+    :new.updated_at := systimestamp;
+end;
+```
 
 ## ER図
 

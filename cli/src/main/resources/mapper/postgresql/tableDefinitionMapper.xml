@@ -404,7 +404,9 @@
             events AS "events",
             orientation AS "orientation",
             function_name AS "functionName",
-            trigger_definition AS "triggerDefinition"
+            trigger_definition AS "triggerDefinition",
+            <!-- 本体は実行する関数の定義にあるため、トリガー自身は持たない -->
+            '' AS "body"
         FROM all_triggers
         ORDER BY schema_name, table_name, trigger_name;
     </select>
