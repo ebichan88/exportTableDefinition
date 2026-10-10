@@ -135,6 +135,7 @@ class TableDefinitionToolsTest {
         List.of(
             "list_schemas",
             "list_viewpoints",
+            "list_table_clusters",
             "search_tables",
             "list_tables",
             "get_table",
@@ -177,6 +178,24 @@ class TableDefinitionToolsTest {
     assertEquals(
         "{\"viewpoints\":[{\"database\":\"testdb\",\"id\":\"org\",\"name\":\"組織\",\"tableCount\":2}]}",
         json(call("list_viewpoints", Map.of())).toString());
+  }
+
+  @Test
+  @DisplayName("list_table_clustersは、関連でつながるテーブルのまとまりと、含まれる観点・関連の無いテーブルの数を返す")
+  void listTableClusters() throws Exception {
+    assertEquals(
+        objectMapper.readTree(
+            "{\"total\":1,\"unrelatedTables\":2,\"clusters\":[{\"database\":\"testdb\","
+                + "\"representative\":\"sample.department\",\"size\":3,\"tables\":["
+                + "{\"name\":\"sample.department\",\"logicalName\":\"部署\"},"
+                + "{\"name\":\"sample.employee\",\"logicalName\":\"従業員\"},"
+                + "{\"name\":\"sample.audit_log\"}],\"viewpoints\":[\"org\"]}]}"),
+        json(call("list_table_clusters", Map.of())));
+
+    final JsonNode unassigned =
+        json(call("list_table_clusters", Map.of("excludeViewpointTables", true)));
+    assertEquals(0, unassigned.get("total").asInt());
+    assertEquals(3, unassigned.get("unrelatedTables").asInt());
   }
 
   @Test

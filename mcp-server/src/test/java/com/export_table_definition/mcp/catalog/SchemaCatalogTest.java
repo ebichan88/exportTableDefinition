@@ -762,6 +762,128 @@ class SchemaCatalogTest {
   }
 
   @Nested
+  @DisplayName("関連のまとまり")
+  class TableClustersTest {
+
+    /**
+     * employee（department → へ参照し、orders・payroll・attendance・leave_requestから参照される共通のマスタ）、受注の系統
+     * （orders → customer、order_item → orders・product、shipment → orders）、給与の系統（payroll_item →
+     * payroll）、関連の無いmemo
+     */
+    private final List<TableEntry> tables =
+        List.of(
+            table("department").build(),
+            table("employee").foreignKey("department_id", "department", "department_id").build(),
+            table("customer").build(),
+            table("product").build(),
+            table("orders")
+                .foreignKey("employee_id", "employee", "employee_id")
+                .foreignKey("customer_id", "customer", "customer_id")
+                .build(),
+            table("order_item")
+                .foreignKey("order_id", "orders", "order_id")
+                .foreignKey("product_id", "product", "product_id")
+                .build(),
+            table("shipment").logicalRelation("order_id", "orders", "order_id").build(),
+            table("payroll").foreignKey("employee_id", "employee", "employee_id").build(),
+            table("payroll_item").foreignKey("payroll_id", "payroll", "payroll_id").build(),
+            table("attendance").foreignKey("employee_id", "employee", "employee_id").build(),
+            table("leave_request").foreignKey("employee_id", "employee", "employee_id").build(),
+            table("memo").build());
+
+    private final SchemaCatalog catalog = TestCatalogs.of(tables);
+
+    @Test
+    @DisplayName("上限以内なら、関連でつながるテーブルを1つのまとまりとし、関連の無いテーブルは数だけを返す")
+    void keepsConnectedTablesWithinLimit() {
+      final TableClusters result = catalog.tableClusters(SearchScope.ALL, 30, false);
+
+      assertEquals(1, result.clusters().size());
+      assertEquals(11, result.clusters().get(0).tables().size());
+      assertEquals("employee", result.clusters().get(0).representative().key().name());
+      assertTrue(result.hubs().isEmpty());
+      assertEquals(1, result.unrelatedTables());
+    }
+
+    @Test
+    @DisplayName("上限を超えるまとまりは、被参照の最も多いテーブルをハブとして除いて分け、ハブだけと関連を持つテーブルはハブごとにまとめる")
+    void splitsByRemovingHubs() {
+      final TableClusters result = catalog.tableClusters(SearchScope.ALL, 5, false);
+
+      assertEquals(List.of("employee"), names(result.hubs()));
+      assertEquals(
+          List.of(
+              List.of("orders", "customer", "product", "order_item", "shipment"),
+              List.of("department", "attendance", "leave_request"),
+              List.of("payroll", "payroll_item")),
+          result.clusters().stream().map(cluster -> names(cluster.tables())).toList());
+      assertTrue(
+          result.clusters().stream()
+              .allMatch(cluster -> names(cluster.hubs()).equals(List.of("employee"))));
+      assertEquals(1, result.unrelatedTables());
+    }
+
+    @Test
+    @DisplayName("被参照の多いテーブルが無い（一続きの関連だけの）まとまりは、上限を超えても分けない")
+    void keepsChainWithoutHub() {
+      final SchemaCatalog chain =
+          TestCatalogs.of(
+              List.of(
+                  table("t0").build(),
+                  table("t1").foreignKey("t0_id", "t0", "id").build(),
+                  table("t2").foreignKey("t1_id", "t1", "id").build(),
+                  table("t3").foreignKey("t2_id", "t2", "id").build(),
+                  table("t4").foreignKey("t3_id", "t3", "id").build()));
+
+      final TableClusters result = chain.tableClusters(SearchScope.ALL, 2, false);
+
+      assertEquals(1, result.clusters().size());
+      assertEquals(5, result.clusters().get(0).tables().size());
+      assertTrue(result.hubs().isEmpty());
+    }
+
+    @Test
+    @DisplayName("範囲外のテーブル（別スキーマ・観点に所属するテーブル）との関連は無いものとみなす")
+    void ignoresRelationsOutsideScope() {
+      final SchemaCatalog scoped =
+          TestCatalogs.of(
+                  List.of(
+                      table("department").build(),
+                      table("employee")
+                          .foreignKey("department_id", "department", "department_id")
+                          .build(),
+                      table("attendance")
+                          .foreignKey("employee_id", "employee", "employee_id")
+                          .build(),
+                      table("testdb", "other", "outside").build()))
+              .withViewpoints(
+                  List.of(
+                      new ViewpointEntry(
+                          "testdb",
+                          "org",
+                          "組織",
+                          "",
+                          List.of(new ObjectKey("testdb", "sample", "department")))));
+
+      final TableClusters all = scoped.tableClusters(new SearchScope("", "sample"), 30, false);
+      assertEquals(
+          List.of(List.of("department", "employee", "attendance")),
+          all.clusters().stream().map(cluster -> names(cluster.tables())).toList());
+      assertEquals(0, all.unrelatedTables());
+
+      final TableClusters unassigned =
+          scoped.tableClusters(new SearchScope("", "sample"), 30, true);
+      assertEquals(
+          List.of(List.of("employee", "attendance")),
+          unassigned.clusters().stream().map(cluster -> names(cluster.tables())).toList());
+    }
+
+    private static List<String> names(List<TableEntry> tables) {
+      return tables.stream().map(table -> table.key().name()).toList();
+    }
+  }
+
+  @Nested
   @DisplayName("観点")
   class ViewpointsTest {
 

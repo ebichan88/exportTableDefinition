@@ -599,4 +599,4 @@ AIへ渡すための出力です。観点（[`viewpoints`](#viewpoints観点)）
 
 * 観点を1つも宣言していない場合は、ファイル自体を出力しません。
 * `--check`の比較対象には含まれません（参考情報を変更しても`--check`は差分として報告しません）。
-* [MCPサーバー](./mcp-server.md)の`list_viewpoints`・`list_tables`・`search_tables`・`get_table`から参照されます。
+* [MCPサーバー](./mcp-server.md)の`list_viewpoints`・`list_table_clusters`・`list_tables`・`search_tables`・`get_table`から参照されます。

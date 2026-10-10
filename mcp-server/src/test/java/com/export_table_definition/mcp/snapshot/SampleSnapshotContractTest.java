@@ -20,6 +20,7 @@ import com.export_table_definition.mcp.catalog.SchemaCatalog;
 import com.export_table_definition.mcp.catalog.SchemaSummary;
 import com.export_table_definition.mcp.catalog.SearchQuery;
 import com.export_table_definition.mcp.catalog.SearchScope;
+import com.export_table_definition.mcp.catalog.TableClusters;
 import com.export_table_definition.mcp.catalog.TableEntry;
 import com.export_table_definition.mcp.catalog.TableFilter;
 import com.export_table_definition.mcp.catalog.TriggerEntry;
@@ -217,6 +218,29 @@ class SampleSnapshotContractTest {
     assertEquals(
         List.of("audit_log", "employee", "department"),
         paths.paths().get(0).tables().stream().map(ObjectKey::name).toList());
+  }
+
+  @Test
+  @DisplayName("サンプルのテーブルを、関連のまとまり・ハブ・関連の無いテーブルのいずれか1つに分けられる")
+  void detectsClustersOfSample() {
+    final TableClusters clusters = catalog.tableClusters(SearchScope.ALL, 3, false);
+
+    assertEquals(
+        List.of("employee"), clusters.hubs().stream().map(table -> table.key().name()).toList());
+    assertEquals(
+        List.of(
+            List.of("department", "parking_spot", "audit_log", "employee_profile"),
+            List.of("attendance", "attendance_note"),
+            List.of("project", "project_assignment"),
+            List.of("warehouse_zone", "shipment")),
+        clusters.clusters().stream()
+            .map(cluster -> cluster.tables().stream().map(table -> table.key().name()).toList())
+            .toList());
+    assertEquals(
+        catalog.tables().size(),
+        clusters.clusters().stream().mapToInt(cluster -> cluster.tables().size()).sum()
+            + clusters.hubs().size()
+            + clusters.unrelatedTables());
   }
 
   @Test

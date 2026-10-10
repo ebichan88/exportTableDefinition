@@ -53,6 +53,11 @@ final class RelationGraph {
     return counts.getOrDefault(table, new RelationCounts(0, 0, 0));
   }
 
+  /** 向きを問わず関連でつながる、自テーブル以外のスナップショットに含まれるテーブル（重複なし） */
+  Set<ObjectKey> adjacentTables(ObjectKey table) {
+    return neighbors(table, Direction.BOTH);
+  }
+
   /** テーブルが持つ（参照先へ向かう）関連を、外部キー・論理リレーションの順に返す */
   List<Relation> outgoing(ObjectKey table) {
     return outgoing.getOrDefault(table, List.of());

@@ -27,6 +27,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `ObjectReference`・`Lookup` | 名前で指定されたオブジェクト（`スキーマ名.名前`も可）と、その解決結果（1つに定まる・複数ある・見つからない）。テーブル以外の種類にも共通で使う |
 | | `RelationGraph` | テーブルを頂点、関連（外部キー・論理リレーション）を辺とするグラフ。被参照側の逆引きの索引を持ち、関連のたどりと最短のJOIN経路の探索を担う |
 | | `Relation`・`RelatedTables`・`JoinPath`・`JoinPaths` | テーブル間の関連と、幅優先でたどった結果・2つのテーブルをつなぐ最短経路 |
+| | `ClusterDetector`・`TableClusters`・`TableCluster` | 関連のつながりだけから推測するテーブルのまとまり（`list_table_clusters`の元）。連結成分を1つのまとまりとし、上限を超えるまとまりは被参照の最も多いテーブル（`TableClusters.HUB_MIN_INCOMING`以上から参照される共通のマスタ）をハブとして除いて分け直す。ハブとの間にしか関連の無いテーブルは、被参照の最も多いハブごとにまとめる。呼び出しのたびに求める（範囲・上限が引数で変わるため） |
 | | `SqlNames`・`TableColumn` | カラムの型・デフォルト値（`nextval`）・トリガーの関数名に現れるオブジェクトの名前の判定（相互参照に使う）と、カラムとそれを持つテーブル |
 | | `TableEntry`・`ColumnEntry`・`RelationEntry`・`TriggerEntry`・`ObjectKey`・`DatabaseEntry` | スナップショットの1行のうち、検索・一覧・逆引き・関連のたどりに使う項目 |
 | | `ViewpointEntry` | 観点の参考情報1件（識別子・表示名・説明・所属テーブル）。スキーマを持たないため`SchemaObject`は実装しない。テーブルから所属する観点は`SchemaCatalog#viewpointsOf`で逆引きする（読み込み済みの観点を引くだけで、索引は持たない） |
@@ -36,7 +37,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 | | `SchemaSummary` | スキーマごとのオブジェクトの数（`list_schemas`の元） |
 | `mcp.snapshot` | `SnapshotDirectoryReader` | スナップショットのディレクトリ（`tables.jsonl`・`functions.jsonl`・`sequences.jsonl`・`types.jsonl`）を読み込み`SchemaCatalog`を組み立てる。未知の項目は無視し、無いファイルは0件とする（cliの`target.objects`で外せるため） |
 | `mcp.insight` | `InsightsDirectoryReader` | 参考情報のディレクトリ（`{DB名}/viewpoints.json`）を読み込み`ViewpointEntry`のリストを組み立てる。渡されたスナップショットのディレクトリの親の兄弟を自前で求めるため、起動引数は増えない。ディレクトリ・ファイルが無い場合は0件とする |
-| `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`ViewpointTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
+| `mcp.tool` | `TableDefinitionTools` | MCPサーバーへ登録するツールの一覧。ツールは関心ごとのクラス（`SchemaTools`・`ViewpointTools`・`ClusterTools`・`TableTools`・`RelationTools`・`FunctionTools`・`SequenceTools`・`TypeTools`・`TriggerTools`）に分けて定義する |
 | | `ToolSpecifications`・`ToolResults`・`ObjectResolver`・`Page` | ツールの定義の組み立て、結果のJSON化、名前の解決とエラーの文言、一覧の範囲（`offset`・`limit`と、一覧の件数の既定値・上限） |
 | | `TableOutputBuilder` | `get_table`の1テーブル分の結果の組み立て（スナップショットの1行に、`sections`・`columns`の絞り込みと、参照しているビュー・所属する観点を反映する） |
 | | `ToolArguments` | ツールの引数の読み取りと、入力スキーマで表せない検証（型・範囲・`enum`・未知の引数はSDKが入力スキーマで検証するため、選択肢は完全一致で照合する）。誤りは`InvalidToolArgumentException`としてツールのエラー（`isError`）で返す |
@@ -47,6 +48,7 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 |---|---|---|
 | `list_schemas` | なし | DB（DBMS種別・メジャーバージョン。古いcliのスナップショットでは省く）ごとのスキーマと、スキーマごとのオブジェクトの数 |
 | `list_viewpoints` | `database`（任意） | 観点（業務ドメイン別にテーブルをまとめる切り口。参考情報）の識別子・表示名・説明・所属テーブル数 |
+| `list_table_clusters` | `schema`・`database`・`maxClusterSize`（2〜500、既定30）・`excludeViewpointTables`・`limit`・`offset`（任意） | 関連のつながりから推測したテーブルのまとまり（被参照の多い順のテーブル・代表のテーブル・まとまりが参照するハブ・まとまりのテーブルを含む観点）、まとまりを分けるために除いたハブ、関連の無いテーブルの数。推測であり観点ではないため、観点が未宣言の範囲の手がかりや`viewpoints:`の雛形に使う。`excludeViewpointTables`で観点に所属するテーブルを範囲から除ける。行数等の統計は使わない（実データに由来する値を扱わない方針。#78の⑮） |
 | `search_tables` | `query`、`schema`・`database`・`limit`・`viewpoint`（任意） | 一致したテーブルの概要（名前・論理名・区分・説明）と、一致した項目（`matchedIn`）。`viewpoint`（観点のid）を指定すると所属テーブルだけに絞り込む |
 | `list_tables` | `schema`・`database`・`type`・`includeDescription`・`limit`・`offset`・`viewpoint`・`orderBy`（任意） | テーブルの概要（名前・論理名・区分）と関連の数（`incoming`・`outgoing`・`impact`）の一覧。`viewpoint`で観点の所属テーブルだけに絞り込め、`orderBy`で関連の数の多い順に並べられる。関連の数は読み込み時に`RelationGraph`で1回求める（`impact`は参照元を3段までたどる。段数の上限は`RelationCounts.IMPACT_DEPTH`） |
 | `get_table` | `table`（配列も可。最大10件）、`schema`・`database`・`sections`・`columns`（任意） | スナップショットの1行（cliが項目を追加すれば、そのまま返る。ビューの参照先`referencedTables`を含む）に、テーブルを参照しているビュー（`referencedByViews`。ビューの`referencedTables`から逆引きする）と、テーブルが所属する観点（`viewpoints`。`id`・`name`を宣言順）を加えたもの。`sections`・`columns`で項目・カラムを絞れる（`viewpoints`は絞り込みの対象外で、所属する観点があれば常に返す）。`table`に配列を指定すると`{"tables":[...]}`でまとめて返す（`columns`は1件指定時のみ使える） |
@@ -128,7 +130,7 @@ mcp-serverはcliのスナップショットのrecordを共有せず、読み込�
 
 | テスト | 対象 |
 |---|---|
-| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、相互参照、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先）、JOIN経路の探索、観点の一覧・解決・テーブルの絞り込み・テーブルからの逆引き |
+| `catalog`配下 | 検索の順位・AND・正規化、一覧、カラムの逆引き、名前の解決、相互参照、関連のたどり（向き・段数・自己参照・スナップショットに無い参照先）、JOIN経路の探索、関連のまとまり（ハブの除去・ハブとの間にしか関連の無いテーブルの寄せ方・範囲外との関連の扱い）、観点の一覧・解決・テーブルの絞り込み・テーブルからの逆引き |
 | `SnapshotDirectoryReaderTest` | 読み込みと、起動時の誤り（ファイル名・行番号を含むメッセージ） |
 | `SampleSnapshotContractTest` | ベースラインとの契約（上記） |
 | `InsightsDirectoryReaderTest` | 読み込み（兄弟ディレクトリの解決を含む）と、起動時の誤り |
