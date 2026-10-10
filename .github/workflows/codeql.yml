@@ -1,0 +1,48 @@
+name: CodeQL
+
+# GitHubのコードスキャン（CodeQL）で、SQLインジェクション・パス・トラバーサル・安全でないパース等の
+# 脆弱性のパターンを検出する。結果はリポジトリのSecurityタブ（Code scanning）に出る。
+# 週1回も実行するのは、コードを変えなくても、検出ルールの更新で新しく見つかるものを拾うため
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+
+      # 配布するコードとテストコードをコンパイルする（CodeQLはこのビルドを観測して解析する）。テストの実行はしない
+      - name: Build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew compileJava compileTestJava compileIntegrationTestJava --console=plain
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          category: /language:java-kotlin

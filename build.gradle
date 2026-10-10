@@ -2,10 +2,12 @@
 plugins {
     id 'com.gradleup.shadow' version '9.4.1' apply false
     id 'com.diffplug.spotless' version '8.10.3' apply false
+    id 'com.github.spotbugs' version '6.5.12' apply false
     id 'com.github.jk1.dependency-license-report' version '3.1.4' apply false
 }
 
 import com.github.jk1.license.render.TextReportRenderer
+import com.github.spotbugs.snom.Confidence
 
 // 各サブプロジェクト共通の設定だけを置く。サブプロジェクト固有の設定は各ディレクトリのbuild.gradleに書く
 subprojects {
@@ -20,6 +22,7 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'com.diffplug.spotless'
+    apply plugin: 'com.github.spotbugs'
     apply plugin: 'com.github.jk1.dependency-license-report'
 
     java {
@@ -57,6 +60,17 @@ subprojects {
             importOrder('\\#', '')
             removeUnusedImports()
         }
+    }
+
+    // 静的解析でバグを検出する。誤検知で開発を妨げないよう、確度が高い（HIGH）指摘だけを失敗として扱う。
+    // 検査の対象は配布するコード（main）で、テストコード・結合テストのコードは対象にしない。
+    // 指摘を除外するときは、コードを直せない理由を添えてconfig/spotbugs/exclude.xmlに書く（検査自体は緩めない）
+    spotbugs {
+        reportLevel = Confidence.valueOf('HIGH')
+        excludeFilter = rootProject.file('config/spotbugs/exclude.xml')
+    }
+    tasks.matching { it.name.startsWith('spotbugs') && it.name != 'spotbugsMain' }.configureEach {
+        enabled = false
     }
 
     // 配布物（jar）に同梱する依存ライブラリのライセンスの一覧。release.ymlが配布用zipへ入れる
