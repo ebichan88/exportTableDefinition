@@ -305,7 +305,7 @@ Content differs:
 GitHub Actionsでの利用例（マイグレーション後にドキュメント再生成を忘れていないかをCIで検知する）:
 
 ```yaml
-- name: Check table definition document diff
+- name: Check database document diff
   run: >-
     java -jar dbxray.jar --check
     --db-url="$DB_URL" --db-username="$DB_USERNAME"

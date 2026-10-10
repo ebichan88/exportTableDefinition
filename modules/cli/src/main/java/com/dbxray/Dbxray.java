@@ -26,12 +26,11 @@ import org.apache.ibatis.session.SqlSessionFactory;
 public class Dbxray {
 
   /** 通常実行が失敗した場合の報告の要旨 */
-  private static final String EXPORT_FAILURE_SUMMARY =
-      "Failed to output table definition document.";
+  private static final String EXPORT_FAILURE_SUMMARY = "Failed to output database documents.";
 
   /** 差分検知（{@code --check}モード）が失敗した場合の報告の要旨 */
   private static final String CHECK_FAILURE_SUMMARY =
-      "Failed to check table definition document diff.";
+      "Failed to check differences between the database and the snapshot.";
 
   private Dbxray() {}
 
@@ -73,7 +72,7 @@ public class Dbxray {
   private static ExitStatus run(CliArguments cliArguments) {
     System.out.println(
         """
-                Starting output of table definition document.
+                Starting output of database documents.
                 Please wait a moment ...
                 """);
     cliArguments.requireKnownArguments();
@@ -100,7 +99,7 @@ public class Dbxray {
     }
     System.out.println(
         """
-                Starting check of table definition document diff.
+                Starting check of differences between the database and the snapshot.
                 Please wait a moment ...
                 """);
     cliArguments.requireKnownArguments();

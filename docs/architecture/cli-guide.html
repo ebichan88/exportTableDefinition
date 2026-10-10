@@ -943,7 +943,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
 </figure>
 
 <pre><code><span class="c">// Dbxray.run（通常実行。runCheckも同じ形）</span>
-System.out.println(<span class="k">"Starting output of table definition document. …"</span>);
+System.out.println(<span class="k">"Starting output of database documents. …"</span>);
 cliArguments.requireKnownArguments();
 <span class="k">final</span> ConfigFile configFile = ConfigFile.load(cliArguments.configPath());   <span class="c">// 設定ファイルは1回だけ読む</span>
 <span class="k">final</span> ExportTableDefinitionRequest request =
@@ -1005,22 +1005,22 @@ System.out.println(resultDto.getResultMessage());
 <h3>FailureReporter の報告の形</h3>
 <p><code>[errmsg]</code>に例外のメッセージを、<code>[cause]</code>に原因の連鎖のうち表示に含まれていないものを浅い順に並べます。原因のメッセージを繰り返しているだけの例外（MyBatisの例外等）は省くため、包んだ箇所でDBが返したエラーが失われず、かつ重複もしません。以下は実際の出力です。</p>
 <pre><code><span class="c">$ java -jar dbxray.jar --chek</span>
-Starting output of table definition document.
+Starting output of database documents.
 Please wait a moment ...
 
 [result]:FAIL
-Failed to output table definition document.
+Failed to output database documents.
  [errmsg]:Unknown argument: --chek (values are not shown; specify a value as --name=value) (available arguments: --check, --rm-dist, --help, --version, --config=&lt;path&gt;, --db-driver=&lt;value&gt;, …, --annotation-path=&lt;value&gt;)</code></pre>
 <pre><code><span class="c">$ java -jar … --chunk-size=abc --output-objects=trigger,view --table='sample.,!'</span>
 [result]:FAIL
-Failed to output table definition document.
+Failed to output database documents.
  [errmsg]:Invalid configuration in conf/config.yml (overridden by --table, --output-objects, --chunk-size).
   - output.chunkSize must be an integer: abc
   - Invalid table pattern: sample., ! (the table name and the schema name must not be empty)
   - Unknown output object type: view</code></pre>
 <pre><code><span class="c">$ java -jar … --db-url=jdbc:postgresql://localhost:5999/testdb …（DBが待ち受けていないポート）</span>
 [result]:FAIL
-Failed to output table definition document.
+Failed to output database documents.
  [errmsg]:Could not connect to the database. Check the connection settings (database in the configuration file, --db-* arguments and the DBXRAY_DB_PASSWORD environment variable) and that the database is running.
  [cause]:org.postgresql.util.PSQLException: Connection to localhost:5999 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
  [cause]:java.net.ConnectException: Connection refused</code></pre>
