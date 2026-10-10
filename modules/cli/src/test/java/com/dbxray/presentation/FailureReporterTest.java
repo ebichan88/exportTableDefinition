@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 /** FailureReporter の失敗の報告（利用者が直せる誤りと想定外の失敗の区別、原因の併記）に関するテスト */
 public class FailureReporterTest {
 
-  private static final String SUMMARY = "Failed to output table definition document.";
+  private static final String SUMMARY = "Failed to output database documents.";
 
   private final List<String> console = new ArrayList<>();
   private final FailureReporter reporter = new FailureReporter(SUMMARY, console::add);

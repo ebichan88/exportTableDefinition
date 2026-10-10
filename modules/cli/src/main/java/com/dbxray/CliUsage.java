@@ -27,7 +27,7 @@ final class CliUsage {
     return """
         Usage: java -jar dbxray.jar [options]
 
-        Exports table definition documents (Markdown), ER diagrams and a schema snapshot from a database.
+        Exports database documents (Markdown: table definitions, ER diagrams, object lists) and a schema snapshot from a database.
 
         Options:
           --check              Check the differences between the database and the committed snapshot
