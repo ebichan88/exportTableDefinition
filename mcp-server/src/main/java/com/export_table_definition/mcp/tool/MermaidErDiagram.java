@@ -50,7 +50,10 @@ final class MermaidErDiagram {
     nodes.forEach(key -> sb.append(aliasLine(ids.get(key), label(key, tables.get(key), nodes))));
     scope
         .relations()
-        .forEach(relation -> sb.append(relationLine(ids.get(relation.to()), relation, ids.get(relation.from()))));
+        .forEach(
+            relation ->
+                sb.append(
+                    relationLine(ids.get(relation.to()), relation, ids.get(relation.from()))));
     final Map<ObjectKey, Set<String>> usedColumns = new HashMap<>();
     final Map<ObjectKey, Set<String>> foreignKeyColumns = new HashMap<>();
     scope
@@ -142,7 +145,8 @@ final class MermaidErDiagram {
     if (columns.isEmpty()) {
       return "";
     }
-    final StringBuilder sb = new StringBuilder("    ").append(id).append(" {").append(LINE_SEPARATOR);
+    final StringBuilder sb =
+        new StringBuilder("    ").append(id).append(" {").append(LINE_SEPARATOR);
     columns.forEach(
         column -> sb.append(attributeLine(column, foreignKeyColumns.contains(column.name()))));
     return sb.append("    }").append(LINE_SEPARATOR).toString();
@@ -171,7 +175,8 @@ final class MermaidErDiagram {
   }
 
   /**
-   * 二重引用符で囲む表示名は、二重引用符を含められないため単一引用符に置き換える。 改行は、図の次の行（Mermaidの構文や、コードブロックを閉じる{@code ```}）として解釈されないよう空白に置き換える
+   * 二重引用符で囲む表示名は、二重引用符を含められないため単一引用符に置き換える。 改行は、図の次の行（Mermaidの構文や、コードブロックを閉じる{@code
+   * ```}）として解釈されないよう空白に置き換える
    */
   static String quotable(String value) {
     return value.replace('"', '\'').replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');

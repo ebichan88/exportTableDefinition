@@ -947,9 +947,7 @@ class SchemaCatalogTest {
           "order",
           "受注",
           "",
-          Arrays.stream(tables)
-              .map(name -> new ObjectKey("testdb", "sample", name))
-              .toList());
+          Arrays.stream(tables).map(name -> new ObjectKey("testdb", "sample", name)).toList());
     }
   }
 

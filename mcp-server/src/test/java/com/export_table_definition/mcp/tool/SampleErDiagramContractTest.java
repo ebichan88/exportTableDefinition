@@ -55,9 +55,10 @@ class SampleErDiagramContractTest {
     assertTrue(mermaid.contains("    sample_project_summary_mv[\"project_summary_mv"), mermaid);
     assertEquals(
         cliDiagram(id),
-        mermaid.lines()
-                .filter(line -> !line.startsWith("    sample_project_summary_mv["))
-                .reduce("", (joined, line) -> joined + line + "\n"));
+        mermaid
+            .lines()
+            .filter(line -> !line.startsWith("    sample_project_summary_mv["))
+            .reduce("", (joined, line) -> joined + line + "\n"));
   }
 
   /** cliの観点ページから、Mermaidのコードブロックの中身を取り出す */

@@ -746,8 +746,7 @@ class TableDefinitionToolsTest {
             + "    }\n",
         result.get("mermaid").asText());
     assertEquals(
-        List.of("sample.department", "sample.employee"),
-        jsonStrings(result.get("tables")));
+        List.of("sample.department", "sample.employee"), jsonStrings(result.get("tables")));
     assertFalse(result.has("message"));
   }
 
@@ -781,8 +780,7 @@ class TableDefinitionToolsTest {
   @Test
   @DisplayName("get_er_diagramは、tableとviewpointのどちらか一方だけを受け付け、観点の図にtable用の引数を指定すると誤りにする")
   void getErDiagramRejectsInvalidArguments() {
-    assertEquals(
-        "引数tableとviewpointは、どちらか一方を指定してください。", text(call("get_er_diagram", Map.of())));
+    assertEquals("引数tableとviewpointは、どちらか一方を指定してください。", text(call("get_er_diagram", Map.of())));
     assertEquals(
         "引数tableとviewpointは、どちらか一方を指定してください。",
         text(call("get_er_diagram", Map.of("table", "employee", "viewpoint", "org"))));
@@ -813,12 +811,12 @@ class TableDefinitionToolsTest {
         tool.callHandler()
             .apply(
                 null,
-                CallToolRequest.builder("get_er_diagram").arguments(Map.of("table", "hub")).build());
+                CallToolRequest.builder("get_er_diagram")
+                    .arguments(Map.of("table", "hub"))
+                    .build());
 
     assertTrue(result.isError());
-    assertEquals(
-        "図に描くテーブルが81件となり、上限（80件）を超えます。depthを小さくするか、directionで向きを絞ってください。",
-        text(result));
+    assertEquals("図に描くテーブルが81件となり、上限（80件）を超えます。depthを小さくするか、directionで向きを絞ってください。", text(result));
   }
 
   private static List<String> jsonStrings(JsonNode array) {

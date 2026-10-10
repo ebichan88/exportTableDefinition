@@ -55,8 +55,7 @@ final class DiagramTools {
                     "table",
                     TableTools.TABLE_DESCRIPTION + "。viewpointとどちらか一方を指定する",
                     Map.of(
-                        "viewpoint",
-                            stringProperty("観点の識別子（list_viewpointsのid）。tableとどちらか一方を指定する"),
+                        "viewpoint", stringProperty("観点の識別子（list_viewpointsのid）。tableとどちらか一方を指定する"),
                         "depth",
                             integerProperty("tableからたどる段数（既定1）。tableを指定した場合だけ使える", 1, MAX_DEPTH),
                         "direction",
@@ -74,7 +73,8 @@ final class DiagramTools {
       throw new InvalidToolArgumentException("引数tableとviewpointは、どちらか一方を指定してください。");
     }
     if (viewpoint.isPresent()) {
-      final List<String> unusable = TABLE_ONLY_ARGUMENTS.stream().filter(arguments::isPresent).toList();
+      final List<String> unusable =
+          TABLE_ONLY_ARGUMENTS.stream().filter(arguments::isPresent).toList();
       if (!unusable.isEmpty()) {
         throw new InvalidToolArgumentException(
             "引数" + String.join("・", unusable) + "は、tableを指定した場合だけ使えます。");
