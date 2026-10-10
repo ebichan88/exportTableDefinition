@@ -28,8 +28,8 @@ dbxray
 
 ### ビルド
 
-以下のコマンドを実行することで、`dbxray/cli/build/libs`フォルダ配下に`dbxray.jar`が、
-`dbxray/mcp-server/build/libs`フォルダ配下にMCPサーバーの`dbxray-mcp.jar`が作成される
+以下のコマンドを実行することで、`dbxray/modules/cli/build/libs`フォルダ配下に`dbxray.jar`が、
+`dbxray/modules/mcp-server/build/libs`フォルダ配下にMCPサーバーの`dbxray-mcp.jar`が作成される
 
 ```
 gradlew build
@@ -68,7 +68,7 @@ PRではGitHub Actions（`.github/workflows/ci.yml`）でこれらのテスト�
 gradlew jacocoTestReport
 ```
 
-でHTMLレポート（`cli/build/reports/jacoco/test/html/index.html`・`mcp-server/build/reports/jacoco/test/html/index.html`）を生成できる。
+でHTMLレポート（`modules/cli/build/reports/jacoco/test/html/index.html`・`modules/mcp-server/build/reports/jacoco/test/html/index.html`）を生成できる。
 また`gradlew build`（＝`check`）には`jacocoTestCoverageVerification`が含まれており、cliのドメイン層
 （`com.dbxray.domain`配下）とMCPサーバーの`catalog`（`com.dbxray.mcp.catalog`配下）の
 単体テストカバレッジが、それぞれline 95%・branch 85%を下回るとビルドが失敗する
@@ -79,13 +79,13 @@ PRではGitHub ActionsがカバレッジレポートをArtifactとしてアッ�
 
 * **SpotBugs**: `gradlew build`（＝`check`）に`spotbugsMain`が含まれており、配布するコード（main）のバグを静的に検出する。
   確度が高い（`reportLevel = HIGH`）指摘が1件でもあるとビルドが失敗する（`gradlew spotbugsMain`だけでも実行できる）。
-  指摘は、検査を緩めずコードを直す。直せない誤検知だけを、理由のコメントを添えて`config/spotbugs/exclude.xml`に書く
+  指摘は、検査を緩めずコードを直す。直せない誤検知だけを、理由のコメントを添えて`gradle/spotbugs/exclude.xml`に書く
 * **CodeQL**: GitHub Actions（`.github/workflows/codeql.yml`）がPRと`main`への反映、および週1回に実行する。
   結果はリポジトリのSecurityタブ（Code scanning）に出る
 
 ### Javadoc
 
-以下のコマンドを実行することで、`dbxray/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
+以下のコマンドを実行することで、`dbxray/modules/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
 
 ```
 gradlew javadoc
@@ -93,7 +93,7 @@ gradlew javadoc
 
 ### 実行方法
 
-`cli/build/libs/conf/config.yml`に必要な設定値を記載した状態で、`cli/build/libs`で以下のコマンドを実行する（`gradlew build`のたびに`cli/src/main/resources/conf`の内容で上書きされるため、手元の設定を残したい場合は別の場所に置いて`--config`で指定する）
+`modules/cli/build/libs/conf/config.yml`に必要な設定値を記載した状態で、`modules/cli/build/libs`で以下のコマンドを実行する（`gradlew build`のたびに`modules/cli/src/main/resources/conf`の内容で上書きされるため、手元の設定を残したい場合は別の場所に置いて`--config`で指定する）
 
 ```
 java -jar .\dbxray.jar

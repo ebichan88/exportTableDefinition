@@ -5,7 +5,7 @@
 機械可読なスキーマのスナップショット（JSON Lines）を出力し、`--check`モードではDBとコミット済みのスナップショットの差分を検知する。
 Java 21 / Gradle製で、DIコンテナにGoogle Guiceを、O/RマッパーにMyBatisを使用する。
 
-この文書はcli（`cli/`）のアーキテクチャを扱う。スナップショットをAIから検索するMCPサーバー（`mcp-server/`）は
+この文書はcli（`modules/cli/`）のアーキテクチャを扱う。スナップショットをAIから検索するMCPサーバー（`modules/mcp-server/`）は
 [mcp-server.md](./mcp-server.md)を参照。
 
 初めてコードを読む人向けに、入出力と使っている技術（Guice・MyBatis等）の事前知識、起動から終了までと取得・書き出しの流れ、
@@ -194,8 +194,8 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
 エントリーポイントが（入力の検証に成功した後に）`DatabaseTypeDetector.detect()` で接続先のDB種別を判定して
 `DatabaseDependentModule` のコンストラクタへ（`SqlSessionFactory`とともに）渡し、`configure()` が `DatabaseType.getRepositoryClass()` を通じて
 `TableDefinitionRepository` の実装クラスをDBごとに動的に束縛する（束縛定義の中ではDBへ接続しない）。DB固有のSQLは
-[cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
-[cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
+[modules/cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml](../../modules/cli/src/main/resources/mapper/oracle/tableDefinitionMapper.xml) と
+[modules/cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml](../../modules/cli/src/main/resources/mapper/postgresql/tableDefinitionMapper.xml) に分離されている。
 両リポジトリは共通処理を `AbstractTableDefinitionRepository` に持つ。
 
 追加オブジェクト（トリガー／関数・プロシージャ／シーケンス／ユーザー定義型）の出力は

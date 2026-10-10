@@ -457,7 +457,7 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line);
   <thead><tr><th>依存</th><th>役割</th><th>補足</th></tr></thead>
   <tbody>
     <tr><td><code>mcp-core</code></td><td>プロトコルの型（<code>McpSchema</code>）、サーバー・クライアント、トランスポート</td><td>内部はProject Reactor（<code>Mono</code>・<code>Flux</code>）で書かれた非同期実装</td></tr>
-    <tr><td><code>mcp-json-jackson2</code></td><td>Jackson 2によるJSONの変換（<code>JacksonMcpJsonMapper</code>）と、JSON Schemaの検証器</td><td>SDKの一括版<code>mcp</code>はJackson 3を同梱するため、cliと同じJackson 2系に揃えるこの組み合わせを選んでいる（<code>mcp-server/build.gradle</code>のコメント）</td></tr>
+    <tr><td><code>mcp-json-jackson2</code></td><td>Jackson 2によるJSONの変換（<code>JacksonMcpJsonMapper</code>）と、JSON Schemaの検証器</td><td>SDKの一括版<code>mcp</code>はJackson 3を同梱するため、cliと同じJackson 2系に揃えるこの組み合わせを選んでいる（<code>modules/mcp-server/build.gradle</code>のコメント）</td></tr>
     <tr><td><code>jackson-databind</code></td><td>スナップショットの読み込み、ツールの結果のJSON化</td><td>SDKとは別に、自前のコードが直接使う</td></tr>
     <tr><td><code>slf4j-simple</code>（runtimeOnly）</td><td>SDKのログの出力先</td><td><code>simplelogger.properties</code>でWARN以上を標準エラーへ</td></tr>
   </tbody>

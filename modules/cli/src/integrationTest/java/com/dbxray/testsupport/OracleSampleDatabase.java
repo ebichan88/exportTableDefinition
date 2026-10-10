@@ -24,7 +24,7 @@ public final class OracleSampleDatabase {
   /** DDLで作るユーザーのパスワード */
   private static final String PASSWORD = "sample";
 
-  private static final String DDL_PATH = "../docs/sample/oracle/ddl.sql";
+  private static final String DDL_PATH = "../../docs/sample/oracle/ddl.sql";
 
   /** DB作成済みのイメージ（faststart）を使い、起動を数十秒に抑える */
   private static final String IMAGE = "gvenzl/oracle-free:23-slim-faststart";

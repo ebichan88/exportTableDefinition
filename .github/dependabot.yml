@@ -13,7 +13,7 @@ updates:
       gradle-minor-and-patch:
         update-types: [minor, patch]
     ignore:
-      # Oracle 12c以上に対応する21系に留めている（cli/build.gradleのコメントを参照）
+      # Oracle 12c以上に対応する21系に留めている（modules/cli/build.gradleのコメントを参照）
       - dependency-name: com.oracle.database.jdbc:ojdbc11
         update-types: [version-update:semver-major]
   - package-ecosystem: github-actions

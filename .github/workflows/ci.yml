@@ -47,8 +47,8 @@ jobs:
         with:
           name: test-reports
           path: |
-            cli/build/reports/tests/
-            mcp-server/build/reports/tests/
+            modules/cli/build/reports/tests/
+            modules/mcp-server/build/reports/tests/
 
       - name: Upload coverage report
         if: always()
@@ -56,8 +56,8 @@ jobs:
         with:
           name: jacoco-coverage-report
           path: |
-            cli/build/reports/jacoco/test/html/
-            mcp-server/build/reports/jacoco/test/html/
+            modules/cli/build/reports/jacoco/test/html/
+            modules/mcp-server/build/reports/jacoco/test/html/
 
       # PRに単体テストのカバレッジをコメントする。
       # forkからのPRはGITHUB_TOKENが読み取り専用で投稿が失敗し、ジョブごと赤になるため実行しない（カバレッジはアーティファクトで見られる）
@@ -65,7 +65,7 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         uses: madrapps/jacoco-report@e51ce1f46f7f8b5331593f935e59cbaf44b84920 # v1.8.0
         with:
-          paths: cli/build/reports/jacoco/test/jacocoTestReport.xml,mcp-server/build/reports/jacoco/test/jacocoTestReport.xml
+          paths: modules/cli/build/reports/jacoco/test/jacocoTestReport.xml,modules/mcp-server/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           title: カバレッジレポート（単体テスト）
           update-comment: true
@@ -98,4 +98,4 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: oracle-test-reports
-          path: cli/build/reports/tests/oracleIntegrationTest/
+          path: modules/cli/build/reports/tests/oracleIntegrationTest/

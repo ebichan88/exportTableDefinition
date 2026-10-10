@@ -24,11 +24,11 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class SampleDatabaseExportIT {
 
-  /** ベースライン（verifyスキルの手順で出力したもの）。テストの作業ディレクトリはcli/のため、リポジトリルートのdocsは{@code ../}で参照する */
-  private static final Path BASELINE = Path.of("../docs/sample/postgres/output");
+  /** ベースライン（verifyスキルの手順で出力したもの）。テストの作業ディレクトリはmodules/cli/のため、リポジトリルートのdocsは{@code ../../}で参照する */
+  private static final Path BASELINE = Path.of("../../docs/sample/postgres/output");
 
   /** verifyスキルの手順で指定しているサイドカーYAML */
-  private static final String ANNOTATION_PATH = "../docs/sample/postgres/annotations.sample.yml";
+  private static final String ANNOTATION_PATH = "../../docs/sample/postgres/annotations.sample.yml";
 
   @ParameterizedTest(name = "chunkSize={0}")
   @ValueSource(strings = {"", "1"})

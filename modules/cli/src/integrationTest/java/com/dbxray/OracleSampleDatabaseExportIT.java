@@ -23,8 +23,8 @@ import org.junit.jupiter.api.io.TempDir;
 @Tag("oracle")
 class OracleSampleDatabaseExportIT {
 
-  /** テストの作業ディレクトリはcli/のため、リポジトリルートのdocsは{@code ../}で参照する */
-  private static final Path BASELINE = Path.of("../docs/sample/oracle/output");
+  /** テストの作業ディレクトリはmodules/cli/のため、リポジトリルートのdocsは{@code ../../}で参照する */
+  private static final Path BASELINE = Path.of("../../docs/sample/oracle/output");
 
   @Test
   @DisplayName("通常実行: 出力がベースラインと一致する")

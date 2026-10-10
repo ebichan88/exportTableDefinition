@@ -437,7 +437,7 @@ viewpoints:
     <tr><td>Jackson 2</td><td>スナップショット・参考情報のJSON化</td><td><code>JacksonSnapshotSerializer</code></td></tr>
     <tr><td>Mermaid</td><td>ER図の記法。GitHubがMarkdownの中で図に描く</td><td><code>ErDiagramTemplates</code>・<code>MermaidSupport</code></td></tr>
     <tr><td>log4j2</td><td>ログファイルと、警告のコンソール出力</td><td><code>log4j2.xml</code></td></tr>
-    <tr><td>JUnit 6・ArchUnit・Testcontainers</td><td>単体テスト・構造の規約の検査・Docker上の実DBでの結合テスト</td><td><code>cli/src/test</code>・<code>cli/src/integrationTest</code></td></tr>
+    <tr><td>JUnit 6・ArchUnit・Testcontainers</td><td>単体テスト・構造の規約の検査・Docker上の実DBでの結合テスト</td><td><code>modules/cli/src/test</code>・<code>modules/cli/src/integrationTest</code></td></tr>
   </tbody>
 </table>
 </div>
@@ -1948,14 +1948,14 @@ erDiagram
     <tr><td class="file">UserCorrectableException</td><td class="num">34</td><td>利用者が直せる誤り。投げてよいのは入口と、入力・実行環境に触れるインフラだけ</td><td>← <code>CliArguments</code>・<code>OutputDirectoryValidator</code>・<code>DatabaseTypeDetector</code>・<code>SidecarYamlRepository</code>・<code>FailureReporter</code></td></tr>
     <tr><td class="file">package-info（43ファイル）</td><td class="num">90</td><td>各パッケージの要旨。<code>shared.exception</code>だけは置いてよいものの規約も書く</td><td class="muted">—</td></tr>
 
-    <tr class="group"><td colspan="4">リソース（cli/src/main/resources）</td></tr>
+    <tr class="group"><td colspan="4">リソース（modules/cli/src/main/resources）</td></tr>
     <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">670</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
     <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">838</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列（ビューのソース・トリガーの本体等）とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
     <tr><td class="file">mybatis-config.xml</td><td class="num">39</td><td>DTOの型の別名、接続（POOLED。<code>${driver}</code>等）、2つのmapper</td><td>← <code>MyBatisSqlSessionFactories</code></td></tr>
     <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>dbxray.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
     <tr><td class="file">conf/config.yml</td><td class="num">25</td><td>配布する設定（全項目が未指定。各項目の例をコメントで示す）</td><td>← <code>ConfigFile</code></td></tr>
 
-    <tr class="group"><td colspan="4">テスト（cli/src/test・cli/src/integrationTest）</td></tr>
+    <tr class="group"><td colspan="4">テスト（modules/cli/src/test・modules/cli/src/integrationTest）</td></tr>
     <tr><td class="file">ArchitectureTest</td><td class="num">214</td><td>構造の規約（3章の表）をArchUnitで検査</td><td>→ main配下の全クラス</td></tr>
     <tr><td class="file">DbxrayModuleTest</td><td class="num">91</td><td>本番と同じ2段階でDIコンテナを組み立て、コントローラーまで解決できるか（DBには接続しない）</td><td>→ 2つのModule</td></tr>
     <tr><td class="file">ExportTableDefinitionUsecaseTest</td><td class="num">1,509</td><td>通常実行・<code>--check</code>の流れ全体。Writerは本物、ファイルはメモリ上（<code>InMemoryFileRepository</code>）、DBは呼び出しを記録するスタブ</td><td>→ 2つのUsecase</td></tr>
