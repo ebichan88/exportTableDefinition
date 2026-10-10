@@ -1,7 +1,7 @@
 package com.dbxray;
 
 import com.dbxray.application.CheckDocumentDiffRequest;
-import com.dbxray.application.ExportTableDefinitionRequest;
+import com.dbxray.application.ExportSchemaRequest;
 import com.dbxray.application.TargetSelection;
 import com.dbxray.config.ConfigFile;
 import com.dbxray.config.InvalidConfigurationException;
@@ -170,8 +170,8 @@ final class DbxrayProperties {
    *
    * @param rmDist trueの場合、書き込みを開始する前に出力先ディレクトリを再帰的に削除する（{@code --rm-dist}）
    */
-  ExportTableDefinitionRequest toExportTableDefinitionRequest(boolean rmDist) {
-    return new ExportTableDefinitionRequest(
+  ExportSchemaRequest toExportSchemaRequest(boolean rmDist) {
+    return new ExportSchemaRequest(
         targetSelection,
         sidecarPath,
         outputPath,

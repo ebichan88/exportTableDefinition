@@ -1,7 +1,7 @@
 package com.dbxray;
 
 import com.dbxray.application.CheckDocumentDiffRequest;
-import com.dbxray.application.ExportTableDefinitionRequest;
+import com.dbxray.application.ExportSchemaRequest;
 import com.dbxray.domain.repository.FileRepository;
 import com.dbxray.domain.service.path.OutputPathResolver;
 import com.dbxray.shared.exception.UserCorrectableException;
@@ -33,11 +33,11 @@ class OutputDirectoryValidator {
   }
 
   /**
-   * テーブル定義出力（通常実行）の出力先を検証するメソッド
+   * DBドキュメント出力（通常実行）の出力先を検証するメソッド
    *
    * @throws UserCorrectableException 出力先が既存のファイルを指す場合や、{@code --rm-dist}で削除してはならないディレクトリの場合
    */
-  void validate(ExportTableDefinitionRequest request) {
+  void validate(ExportSchemaRequest request) {
     final Path outputBaseDir = requireDirectoryOrAbsent(request.outputPath());
     if (request.rmDist() && !outputPathResolver.isRemovableOutputDir(outputBaseDir)) {
       throw new UserCorrectableException(

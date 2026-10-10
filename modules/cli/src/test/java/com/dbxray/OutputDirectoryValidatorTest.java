@@ -3,7 +3,7 @@ package com.dbxray;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.application.CheckDocumentDiffRequest;
-import com.dbxray.application.ExportTableDefinitionRequest;
+import com.dbxray.application.ExportSchemaRequest;
 import com.dbxray.application.TargetSelection;
 import com.dbxray.config.module.DbxrayModule;
 import com.dbxray.domain.repository.FileRepository;
@@ -75,8 +75,8 @@ public class OutputDirectoryValidatorTest {
   private final OutputDirectoryValidator validator =
       new OutputDirectoryValidator(new DefaultOutputPathResolver(), fileRepository);
 
-  private static ExportTableDefinitionRequest exportRequest(String outputPath, boolean rmDist) {
-    return new ExportTableDefinitionRequest(
+  private static ExportSchemaRequest exportRequest(String outputPath, boolean rmDist) {
+    return new ExportSchemaRequest(
         TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0, 80, 1, rmDist);
   }
 

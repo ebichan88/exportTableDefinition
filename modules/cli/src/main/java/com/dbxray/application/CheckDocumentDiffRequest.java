@@ -2,7 +2,7 @@ package com.dbxray.application;
 
 /**
  * DB vs ドキュメントの差分検知（{@code --check}モード）のユースケースへの入力をまとめたrecord<br>
- * {@link ExportTableDefinitionRequest}と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}を持たず、
+ * {@link ExportSchemaRequest}と異なり、Markdownの描画・ER図の生成を行わないため{@code erDiagramMaxNodes}を持たず、
  * 書き込み前の出力先削除も行わないため{@code rmDist}も持たない
  *
  * @param targetSelection 出力対象の絞り込み条件（設定ファイルの{@code target}のスキーマ・テーブル・オブジェクト種別）

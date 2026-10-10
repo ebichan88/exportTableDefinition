@@ -65,7 +65,7 @@ cli（`modules/cli/`）とMCPサーバー（`modules/mcp-server/`）のコード
 - **同じ値をループのたびに組み立てない。** `TableNamePatterns.of(...)`のような値オブジェクトをストリームの`.filter()`内やループ内で
   毎回組み立てていたら、呼び出し前に1回だけ組み立てて使い回す値オブジェクトへ切り出す（例: `domain.model.target.TableScope`）。
 - **同じ引数群を層ごとに分解・再構築しない。** 同じ引数群が3層以上（エントリーポイント→コントローラー→ユースケース等）を
-  そのまま渡っていたら、requestレコードにまとめる（例: `application.ExportTableDefinitionRequest`/`CheckDocumentDiffRequest`）。
+  そのまま渡っていたら、requestレコードにまとめる（例: `application.ExportSchemaRequest`/`CheckDocumentDiffRequest`）。
   渡す先で使われない引数が混ざっていないかも見る。
 - **設定値を生のまま深い層へ渡さない。** 空白の除去・型への変換・検証は入口で1回だけ行い、設定誤りはDBへの問い合わせや
   出力先の削除より前に検知する（例: `DbxrayProperties`・`application.TargetSelection#of`）。

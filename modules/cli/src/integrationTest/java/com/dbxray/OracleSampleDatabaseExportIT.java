@@ -3,9 +3,9 @@ package com.dbxray;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.application.CheckDocumentDiffRequest;
-import com.dbxray.application.ExportTableDefinitionRequest;
+import com.dbxray.application.ExportSchemaRequest;
 import com.dbxray.config.ConfigFile;
-import com.dbxray.presentation.ExportTableDefinitionController;
+import com.dbxray.presentation.ExportSchemaController;
 import com.dbxray.presentation.dto.DiffCheckResultDto;
 import com.dbxray.testsupport.ExportBaseline;
 import com.dbxray.testsupport.OracleSampleDatabase;
@@ -29,8 +29,7 @@ class OracleSampleDatabaseExportIT {
   @Test
   @DisplayName("通常実行: 出力がベースラインと一致する")
   void testExportMatchesBaseline(@TempDir Path outputDir) {
-    final ExportTableDefinitionRequest request =
-        properties(outputDir).toExportTableDefinitionRequest(false);
+    final ExportSchemaRequest request = properties(outputDir).toExportSchemaRequest(false);
 
     controller().execute(request);
 
@@ -47,7 +46,7 @@ class OracleSampleDatabaseExportIT {
     assertFalse(result.hasDifference(), result.getResultMessage());
   }
 
-  private static ExportTableDefinitionController controller() {
+  private static ExportSchemaController controller() {
     return ExportBaseline.controller(OracleSampleDatabase.sqlSessionFactory());
   }
 

@@ -15,13 +15,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * テーブル定義出力（通常実行）のユースケースクラス<br>
+ * DBドキュメント出力（通常実行）のユースケースクラス<br>
  * DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力先へ書き出す。 取得・書き出しの段取りは{@link
  * SchemaExportPipeline}に委ねる
  */
-public class ExportTableDefinitionUsecase {
+public class ExportSchemaUsecase {
 
-  private static final Logger logger = LogManager.getLogger(ExportTableDefinitionUsecase.class);
+  private static final Logger logger = LogManager.getLogger(ExportSchemaUsecase.class);
   private final SchemaExportPipeline schemaExportPipeline;
   private final MarkdownExportSinkFactory markdownSinkFactory;
   private final SnapshotExportSinkFactory snapshotSinkFactory;
@@ -30,7 +30,7 @@ public class ExportTableDefinitionUsecase {
   private final OutputPathResolver outputPathResolver;
 
   @Inject
-  public ExportTableDefinitionUsecase(
+  public ExportSchemaUsecase(
       SchemaExportPipeline schemaExportPipeline,
       MarkdownExportSinkFactory markdownSinkFactory,
       SnapshotExportSinkFactory snapshotSinkFactory,
@@ -46,7 +46,7 @@ public class ExportTableDefinitionUsecase {
   }
 
   /** DBから取得したスキーマ情報を、Markdownのドキュメントとスキーマのスナップショットとして出力するメソッド */
-  public void exportTableDefinition(ExportTableDefinitionRequest request) {
+  public void exportSchema(ExportSchemaRequest request) {
     final Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
     final ExportTargets targets =
         schemaExportPipeline.fetchTargets(request.targetSelection(), request.sidecarPath());

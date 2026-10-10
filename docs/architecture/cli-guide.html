@@ -514,8 +514,8 @@ viewpoints:
       <text x="496" y="166" class="d-t-ms">  または OracleTableDefinitionRepository</text>
       <line x1="496" y1="182" x2="874" y2="182" class="d-sep"/>
       <text x="496" y="204" class="d-t">ジャストインタイム束縛で作られるもの</text>
-      <text x="496" y="226" class="d-t-ms">ExportTableDefinitionController</text>
-      <text x="496" y="244" class="d-t-ms">→ ExportTableDefinitionUsecase・CheckDocumentDiffUsecase</text>
+      <text x="496" y="226" class="d-t-ms">ExportSchemaController</text>
+      <text x="496" y="244" class="d-t-ms">→ ExportSchemaUsecase・CheckDocumentDiffUsecase</text>
       <text x="496" y="262" class="d-t-ms">→ SchemaExportPipeline → TableDefinitionRepository</text>
       <text x="496" y="288" class="d-t-acc">使い道：mainがコントローラーを取り出す</text>
 
@@ -531,7 +531,7 @@ viewpoints:
     .createChildInjector(
         <span class="k">new</span> DatabaseDependentModule(
             DatabaseTypeDetector.detect(sqlSessionFactory), sqlSessionFactory))   <span class="c">// ここで接続して種別を判定</span>
-    .getInstance(ExportTableDefinitionController.<span class="k">class</span>);</code></pre>
+    .getInstance(ExportSchemaController.<span class="k">class</span>);</code></pre>
 <p class="small muted">接続を束縛の定義（<code>configure()</code>）の中で行わないのは、そこで失敗するとGuiceの例外に包まれて届き、「DBに接続できない」を利用者が直せる誤りとして報告できなくなるためです（<code>DatabaseDependentModule</code>のJavadoc）。束縛の漏れ・<code>@Inject</code>の付け忘れは、本番と同じ手順でコンテナを組み立てる<code>DbxrayModuleTest</code>が検知します。</p>
 
 <h3>2.3 MyBatis：SQLはXML、結果はrecord</h3>
@@ -668,12 +668,12 @@ erDiagram
 <pre><code>INFO  MyBatisSqlSessionFactories Initializing SqlSessionFactory from mybatis-config.xml
 INFO  MyBatisSqlSessionFactories SqlSessionFactory initialization completed.
 INFO  DatabaseTypeDetector Connected to the database. [product=PostgreSQL 16.15 (…), driver=PostgreSQL JDBC Driver 42.7.13]
-INFO  ExportTableDefinitionController [START] exportTableDefinition
+INFO  ExportSchemaController [START] exportSchema
 INFO  SidecarYamlRepository Loaded sidecar. [annotations=…/annotations.sample.yml, tableCount=2, relationCount=1, viewpointCount=3]
 INFO  SchemaExportPipeline Skipping orphan table annotation check because the output target is filtered.
 INFO  SchemaExportPipeline Merged logical relations declared in the sidecar. [relationCount=1]
 INFO  SchemaExportPipeline Exported schema objects. [tables=14, functions=8, sequences=8, types=3, triggers=5]
-INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMillis=498]</code></pre>
+INFO  ExportSchemaController [ END ] exportSchema [elapsedMillis=498]</code></pre>
 <p class="small muted">メッセージは英語で要旨を先に書き、値は末尾の<code>[key=value, …]</code>にまとめる、というのがこのリポジトリのログの書式です（<code>docs/development/coding-guidelines.md</code>の「ログ」）。</p>
 
 <!-- ============================================================ -->
@@ -693,13 +693,13 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
 
       <rect x="30" y="110" width="250" height="88" rx="6" class="d-box"/>
       <text x="46" y="132" class="d-t-s">presentation（10ファイル）</text>
-      <text x="46" y="154" class="d-t-ms">ExportTableDefinitionController</text>
+      <text x="46" y="154" class="d-t-ms">ExportSchemaController</text>
       <text x="46" y="172" class="d-t-ms">FailureReporter</text>
       <text x="46" y="190" class="d-t-s">差分の文面・終了コード</text>
 
       <rect x="30" y="232" width="250" height="96" rx="6" class="d-box"/>
       <text x="46" y="254" class="d-t-s">application（7ファイル）</text>
-      <text x="46" y="276" class="d-t-ms">ExportTableDefinitionUsecase</text>
+      <text x="46" y="276" class="d-t-ms">ExportSchemaUsecase</text>
       <text x="46" y="294" class="d-t-ms">CheckDocumentDiffUsecase</text>
       <text x="46" y="312" class="d-t-ms">SchemaExportPipeline</text>
 
@@ -801,7 +801,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
     <tr><td>複数形</td><td>エンティティの集合。検索・振り分けのメソッドを持つ（ファーストクラスコレクション）</td><td><code>Tables</code>・<code>ForeignKeys</code>・<code>Triggers</code></td></tr>
     <tr><td><code>…Dto</code></td><td>層の境界で受け渡すだけの形（SQLの結果・コントローラーの結果）</td><td><code>TableDto</code>・<code>ResultDto</code></td></tr>
     <tr><td><code>…Repository</code></td><td>外部とのやり取り。インタフェースはdomain、実装はinfrastructure</td><td><code>TableDefinitionRepository</code></td></tr>
-    <tr><td><code>…Usecase</code>・<code>…Request</code></td><td>ユースケースと、その入力をまとめたrecord</td><td><code>ExportTableDefinitionUsecase</code></td></tr>
+    <tr><td><code>…Usecase</code>・<code>…Request</code></td><td>ユースケースと、その入力をまとめたrecord</td><td><code>ExportSchemaUsecase</code></td></tr>
     <tr><td><code>…SinkFactory</code></td><td>出力形式ごとの<code>ExportSink</code>を、出力先を決めて作る</td><td><code>MarkdownExportSinkFactory</code></td></tr>
     <tr><td><code>…Writer</code></td><td>何を・どの順で・どのファイルに書くかの段取り</td><td><code>ErDiagramWriter</code>・<code>SchemaSnapshotWriter</code></td></tr>
     <tr><td><code>…Templates</code></td><td>Markdownの行・セクションの組み立て（副作用の無いstaticメソッド）</td><td><code>TableDefinitionTemplates</code></td></tr>
@@ -816,7 +816,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
 <p>上から順に読むと、外側（起動と入口）から内側（ルール）へ進めます。</p>
 <ol class="steps">
   <li><div><code>Dbxray</code>（165行）：<code>main</code>→<code>run</code>→<code>createInjector</code>→<code>createController</code>。処理全体の骨格です（4章）。</div></li>
-  <li><div><code>ExportTableDefinitionController</code>（70行）と2つのユースケース（85行・64行）：2つのモードの違いが「どのSinkを渡すか」だけだと分かります。</div></li>
+  <li><div><code>ExportSchemaController</code>（70行）と2つのユースケース（85行・64行）：2つのモードの違いが「どのSinkを渡すか」だけだと分かります。</div></li>
   <li><div><code>SchemaExportPipeline</code>（335行）：取得の順序と、スキーマ・チャンク単位の分割。6章の図と合わせて読むと速いです。</div></li>
   <li><div><code>ExportSink</code>（47行）と3つの<code>…SinkFactory</code>：出力形式ごとに「いつ何を書くか」（6章の表）。</div></li>
   <li><div><code>domain.model.target</code>：<code>ExportTargets</code>・<code>TableDefinitionContent</code>・<code>TableScope</code>。取得したデータを組み立てる単位です（8章）。</div></li>
@@ -946,9 +946,9 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
 System.out.println(<span class="k">"Starting output of database documents. …"</span>);
 cliArguments.requireKnownArguments();
 <span class="k">final</span> ConfigFile configFile = ConfigFile.load(cliArguments.configPath());   <span class="c">// 設定ファイルは1回だけ読む</span>
-<span class="k">final</span> ExportTableDefinitionRequest request =
+<span class="k">final</span> ExportSchemaRequest request =
     DbxrayProperties.of(configFile, cliArguments.settingOverrides())
-        .toExportTableDefinitionRequest(cliArguments.isRmDist());
+        .toExportSchemaRequest(cliArguments.isRmDist());
 <span class="k">final</span> Injector injector = createInjector();
 injector.getInstance(OutputDirectoryValidator.<span class="k">class</span>).validate(request);
 <span class="k">final</span> ConnectionSettings connectionSettings = connectionSettings(configFile, cliArguments);   <span class="c">// ConnectionSettings.merge</span>
@@ -962,7 +962,7 @@ System.out.println(resultDto.getResultMessage());
 <table>
   <thead><tr><th>record</th><th>持つもの</th><th>使う場所</th></tr></thead>
   <tbody>
-    <tr><td><code>ExportTableDefinitionRequest</code></td><td><code>targetSelection</code>・<code>sidecarPath</code>・<code>outputPath</code>・<code>chunkSize</code>・<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code></td><td>通常実行</td></tr>
+    <tr><td><code>ExportSchemaRequest</code></td><td><code>targetSelection</code>・<code>sidecarPath</code>・<code>outputPath</code>・<code>chunkSize</code>・<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code></td><td>通常実行</td></tr>
     <tr><td><code>CheckDocumentDiffRequest</code></td><td>上から<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を除いたもの（Markdownを描かず、出力先も消さないため）</td><td><code>--check</code></td></tr>
     <tr><td><code>TargetSelection</code></td><td><code>TableScope</code>（スキーマ名＋テーブル名パターン）と<code>Set&lt;OutputObjectType&gt;</code></td><td>両方のrequestの中</td></tr>
   </tbody>
@@ -1051,7 +1051,7 @@ Failed to output database documents.
 <!-- ============================================================ -->
 <h2 id="pipeline"><span class="n">6</span>取得と書き出しの段取り（SchemaExportPipeline）</h2>
 <p>通常実行のユースケースは短く、取得と書き出しの段取りを<code>SchemaExportPipeline</code>（パッケージプライベート）に任せています。<code>--check</code>のユースケースも同じパイプラインを使い、違いは渡す<code>ExportSink</code>のリストだけです。</p>
-<pre><code><span class="c">// ExportTableDefinitionUsecase.exportTableDefinition</span>
+<pre><code><span class="c">// ExportSchemaUsecase.exportSchema</span>
 <span class="k">final</span> Path outputBaseDir = outputPathResolver.resolveBaseOutputDir(request.outputPath());
 <span class="k">final</span> ExportTargets targets =
     schemaExportPipeline.fetchTargets(request.targetSelection(), request.sidecarPath());   <span class="c">// 一括取得</span>
@@ -1812,7 +1812,7 @@ erDiagram
     <tr><td class="file">CliUsage<span class="sub">パッケージプライベート</span></td><td class="num">55</td><td><code>--help</code>・<code>--version</code>の文言。版はjarのマニフェスト（<code>Implementation-Version</code>）から</td><td>← <code>Dbxray</code></td></tr>
 
     <tr class="group"><td colspan="4">presentation（.dto・.type）：コントローラーと報告</td></tr>
-    <tr><td class="file">ExportTableDefinitionController</td><td class="num">70</td><td>ユースケースを呼び、結果を<code>ResultDto</code>・<code>DiffCheckResultDto</code>にする。例外は捕まえない</td><td>← <code>Dbxray</code>／→ 2つのUsecase・<code>DiffReportFormatter</code></td></tr>
+    <tr><td class="file">ExportSchemaController</td><td class="num">70</td><td>ユースケースを呼び、結果を<code>ResultDto</code>・<code>DiffCheckResultDto</code>にする。例外は捕まえない</td><td>← <code>Dbxray</code>／→ 2つのUsecase・<code>DiffReportFormatter</code></td></tr>
     <tr><td class="file">FailureReporter</td><td class="num">153</td><td>失敗の報告。<code>[errmsg]</code>と、表示に含まれない原因を<code>[cause]</code>で並べる。想定外の失敗はスタックトレースをログへ出し、画面にログの場所を示す</td><td>← <code>Dbxray.main</code>／→ <code>ProcessResult</code></td></tr>
     <tr><td class="file">DiffReportFormatter<span class="sub">パッケージプライベート</span></td><td class="num">101</td><td><code>--check</code>の結果を文面にする。3区分の一覧と、unified diff（1件200行・全体2000行まで）</td><td>← Controller／→ <code>DiffResult</code>・<code>ContentDiff</code></td></tr>
     <tr><td class="file">ResultDto<br>DiffCheckResultDto</td><td class="num">52</td><td>処理結果のrecord。<code>DiffCheckResultDto</code>は差分の有無から終了状態（<code>exitStatus</code>）を返す</td><td>← Controller・<code>Dbxray</code></td></tr>
@@ -1820,10 +1820,10 @@ erDiagram
     <tr><td class="file">ExitStatus</td><td class="num">38</td><td>終了状態と終了コード（0成功・1差分あり・2失敗）</td><td>← <code>Dbxray</code>・<code>DiffCheckResultDto</code></td></tr>
 
     <tr class="group"><td colspan="4">application：ユースケース</td></tr>
-    <tr><td class="file">ExportTableDefinitionUsecase</td><td class="num">85</td><td>通常実行。一括取得→ER図の箱→（<code>--rm-dist</code>なら削除）→3つのSinkで書き出し</td><td>← Controller／→ <code>SchemaExportPipeline</code>・3つの<code>…SinkFactory</code></td></tr>
+    <tr><td class="file">ExportSchemaUsecase</td><td class="num">85</td><td>通常実行。一括取得→ER図の箱→（<code>--rm-dist</code>なら削除）→3つのSinkで書き出し</td><td>← Controller／→ <code>SchemaExportPipeline</code>・3つの<code>…SinkFactory</code></td></tr>
     <tr><td class="file">CheckDocumentDiffUsecase</td><td class="num">64</td><td><code>--check</code>。スナップショットのSinkだけで一時ディレクトリへ書き、<code>SnapshotDiff</code>で比べる。一時ディレクトリは必ず消す</td><td>← Controller／→ <code>SchemaExportPipeline</code>・<code>SnapshotExportSinkFactory</code>・<code>SnapshotDiff</code></td></tr>
     <tr><td class="file">SchemaExportPipeline<span class="sub">パッケージプライベート</span></td><td class="num">335</td><td>両ユースケースが共有する取得と書き出しの段取り（<code>fetchTargets</code>・<code>fetchDiagramBoxes</code>・<code>export</code>）。通知と件数をログへ出し、生成日を<code>Clock</code>から求める</td><td>← 2つのUsecase／→ <code>TableDefinitionRepository</code>・<code>SidecarRepository</code>・<code>ExportTargetConsistency</code>・<code>ExportSink</code></td></tr>
-    <tr><td class="file">ExportTableDefinitionRequest<br>CheckDocumentDiffRequest</td><td class="num">40</td><td>ユースケースへの入力のrecord。3層を同じrecordのまま通る。<code>--check</code>用は<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を持たない</td><td>← <code>DbxrayProperties</code> → Controller → Usecase</td></tr>
+    <tr><td class="file">ExportSchemaRequest<br>CheckDocumentDiffRequest</td><td class="num">40</td><td>ユースケースへの入力のrecord。3層を同じrecordのまま通る。<code>--check</code>用は<code>erDiagramMaxNodes</code>・<code>erDiagramDistance</code>・<code>rmDist</code>を持たない</td><td>← <code>DbxrayProperties</code> → Controller → Usecase</td></tr>
     <tr><td class="file">TargetSelection</td><td class="num">63</td><td>出力対象の絞り込み条件（<code>TableScope</code>＋<code>OutputObjectType</code>の集合）。<code>of</code>で文字列を型に変え、2種類の誤りをまとめる</td><td>← <code>DbxrayProperties</code>・<code>SchemaExportPipeline</code></td></tr>
 
     <tr class="group"><td colspan="4">domain.model.target：出力対象</td></tr>
@@ -1892,9 +1892,9 @@ erDiagram
 
     <tr class="group"><td colspan="4">domain.service（export・target・snapshot・insight・path・直下）</td></tr>
     <tr><td class="file">ExportSink</td><td class="num">47</td><td>1つの出力形式で書き出すインタフェース（<code>writeOverview</code>・<code>writeFunctionDefinitions</code>・<code>beginSchemaTables</code>・<code>writeTableDefinition</code>）</td><td>← <code>SchemaExportPipeline</code></td></tr>
-    <tr><td class="file">MarkdownExportSinkFactory</td><td class="num">191</td><td>MarkdownのSinkを作る。出力する一覧の決定（<code>listDocuments</code>）、テーブル定義書のER図の範囲（<code>neighborhoodOf</code>）の決定と、5つのWriterの呼び出し</td><td>← <code>ExportTableDefinitionUsecase</code>／→ 5つのWriter</td></tr>
+    <tr><td class="file">MarkdownExportSinkFactory</td><td class="num">191</td><td>MarkdownのSinkを作る。出力する一覧の決定（<code>listDocuments</code>）、テーブル定義書のER図の範囲（<code>neighborhoodOf</code>）の決定と、5つのWriterの呼び出し</td><td>← <code>ExportSchemaUsecase</code>／→ 5つのWriter</td></tr>
     <tr><td class="file">SnapshotExportSinkFactory</td><td class="num">76</td><td>スナップショットのSinkを作る</td><td>← 2つのUsecase／→ <code>SchemaSnapshotWriter</code></td></tr>
-    <tr><td class="file">InsightExportSinkFactory</td><td class="num">72</td><td>参考情報のSinkを作る。<code>writeOverview</code>だけで観点を書く</td><td>← <code>ExportTableDefinitionUsecase</code>／→ <code>InsightWriter</code></td></tr>
+    <tr><td class="file">InsightExportSinkFactory</td><td class="num">72</td><td>参考情報のSinkを作る。<code>writeOverview</code>だけで観点を書く</td><td>← <code>ExportSchemaUsecase</code>／→ <code>InsightWriter</code></td></tr>
     <tr><td class="file">ExportTargetConsistency</td><td class="num">222</td><td>出力対象と関連・付帯情報・観点の突き合わせ。関連の合流（<code>resolveForeignKeys</code>）と、孤児・不一致の検出。結果は通知で返す</td><td>← <code>SchemaExportPipeline</code></td></tr>
     <tr><td class="file">SchemaSnapshotWriter</td><td class="num">123</td><td>スナップショットの書き込み。テーブルは<code>initTableFile</code>で空にしてから1行ずつ追記</td><td>← <code>SnapshotExportSinkFactory</code>／→ <code>SnapshotSerializer</code>・<code>FileRepository</code></td></tr>
     <tr><td class="file">SnapshotDiff</td><td class="num">155</td><td>2つの<code>snapshot/</code>をオブジェクト単位で比べ、内容の違いにunified diffを付ける</td><td>← <code>CheckDocumentDiffUsecase</code>／→ <code>UnifiedDiffGenerator</code></td></tr>
@@ -1958,7 +1958,7 @@ erDiagram
     <tr class="group"><td colspan="4">テスト（modules/cli/src/test・modules/cli/src/integrationTest）</td></tr>
     <tr><td class="file">ArchitectureTest</td><td class="num">214</td><td>構造の規約（3章の表）をArchUnitで検査</td><td>→ main配下の全クラス</td></tr>
     <tr><td class="file">DbxrayModuleTest</td><td class="num">91</td><td>本番と同じ2段階でDIコンテナを組み立て、コントローラーまで解決できるか（DBには接続しない）</td><td>→ 2つのModule</td></tr>
-    <tr><td class="file">ExportTableDefinitionUsecaseTest</td><td class="num">1,509</td><td>通常実行・<code>--check</code>の流れ全体。Writerは本物、ファイルはメモリ上（<code>InMemoryFileRepository</code>）、DBは呼び出しを記録するスタブ</td><td>→ 2つのUsecase</td></tr>
+    <tr><td class="file">ExportSchemaUsecaseTest</td><td class="num">1,509</td><td>通常実行・<code>--check</code>の流れ全体。Writerは本物、ファイルはメモリ上（<code>InMemoryFileRepository</code>）、DBは呼び出しを記録するスタブ</td><td>→ 2つのUsecase</td></tr>
     <tr><td class="file">入口のテスト（5ファイル）</td><td class="num">875</td><td><code>CliArgumentsTest</code>・<code>CliUsageTest</code>・<code>DbxrayPropertiesTest</code>・<code>OutputDirectoryValidatorTest</code>・<code>TargetSelectionTest</code></td><td>→ 入口の各クラス</td></tr>
     <tr><td class="file">presentationのテスト（4ファイル）</td><td class="num">516</td><td>Controller・<code>FailureReporter</code>（原因の併記）・<code>DiffReportFormatter</code>（行数の上限）・<code>ExitStatus</code></td><td>→ presentation</td></tr>
     <tr><td class="file">domain.modelのテスト（31ファイル）</td><td class="num">2,804</td><td>多重度・グループ分割・関連の集合（描画距離を含む）・ビューの参照・テーブル名パターン・<code>TableScope</code>・観点・<code>TableDefinitionContent</code>・<code>TableSnapshot</code>等</td><td>→ domain.model</td></tr>
@@ -1981,7 +1981,7 @@ erDiagram
 <h3>設定項目を1つ足すとき</h3>
 <ol class="steps">
   <li><div><code>DbxrayProperties</code>の<code>SETTINGS</code>に項目（設定ファイルでの位置・CLI引数名・値の形式）を足し、既定値と変換を書く。上書きのCLI引数は<code>CliArguments</code>がこの表から引く。</div></li>
-  <li><div>値をrequest（<code>ExportTableDefinitionRequest</code>・必要なら<code>CheckDocumentDiffRequest</code>）に足し、使う層まで同じrecordで運ぶ。文字列のまま深い層へ渡さず、入口で型にする。</div></li>
+  <li><div>値をrequest（<code>ExportSchemaRequest</code>・必要なら<code>CheckDocumentDiffRequest</code>）に足し、使う層まで同じrecordで運ぶ。文字列のまま深い層へ渡さず、入口で型にする。</div></li>
   <li><div>配布する<code>conf/config.yml</code>（全項目が未指定）に項目を並べ、<code>docs/usage/cli.md</code>の設定の表（CLI引数の列を含む）を更新する。</div></li>
   <li><div><code>DbxrayPropertiesTest</code>・<code>CliArgumentsTest</code>に、未指定・誤った値・上書きのテストを足す。</div></li>
 </ol>

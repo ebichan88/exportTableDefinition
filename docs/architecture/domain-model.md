@@ -458,7 +458,7 @@ classDiagram
 | サイドカー | サイドカーYAML（`annotations`） | `Sidecar` / `SidecarRepository` | DBから取得できない情報を記述するYAML（手動付帯情報＋論理リレーション＋観点）。コード上のパスは`sidecarPath` |
 | 手動付帯情報 | 手動付帯情報（`tables`） | `Annotations` / `TableAnnotation` | テーブル説明・テーブル備考・カラム備考 |
 | 孤児付帯情報 | 実在しないテーブル・カラムに対する付帯情報 | `ConsistencyNotice.Kind.ORPHAN_*` | リネーム・削除によりDBと乖離した付帯情報 |
-| 出力対象の絞り込み条件 | `target`（`schemas`・`tables`・`objects`） | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲（`TableScope`）＋出力対象オブジェクト種別（`OutputObjectType`）。サイドカーYAMLのパスは条件ではなく入力元のため含めず、要求（`ExportTableDefinitionRequest`・`CheckDocumentDiffRequest`）が別に持つ |
+| 出力対象の絞り込み条件 | `target`（`schemas`・`tables`・`objects`） | `TargetSelection`（`application`） | 何を出力するかの条件。出力対象の範囲（`TableScope`）＋出力対象オブジェクト種別（`OutputObjectType`）。サイドカーYAMLのパスは条件ではなく入力元のため含めず、要求（`ExportSchemaRequest`・`CheckDocumentDiffRequest`）が別に持つ |
 | 出力対象の範囲 | `schema`・`table` | `TableScope` | 出力対象の絞り込み条件のうち、テーブルを対象とするもの（スキーマ名＋テーブル名パターン） |
 | テーブル名パターン | `table`の記法（ワイルドカード・除外・スキーマ修飾） | `TableNamePatterns` | 出力対象の範囲と観点の所属テーブルの指定で共通の記法 |
 | 観点 | 観点（`viewpoints`） | `Viewpoint` / `Viewpoints` | 業務ドメイン別にテーブルをまとめる切り口。観点ごとのページと観点一覧を出力する |
