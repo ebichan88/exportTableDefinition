@@ -253,12 +253,12 @@ pre.tree { line-height: 1.55; }
   <h1>cli 読解ガイド</h1>
   <p class="lead">DBのカタログ（テーブル・カラム・制約・外部キー等のメタ情報）を読み、人が読むMarkdownのテーブル定義書・ER図と、機械が読むスキーマのスナップショット（JSON Lines）を出力するコマンドラインツールです。<code>--check</code>を付けると、DBとコミット済みのスナップショットの差分を検知します。このガイドは、入出力と使っている技術の事前知識から始めて、実行の流れ、データの持ち方、中心のロジック、ソースごとの役割と繋がりまでを順に説明します。</p>
   <ul class="facts">
-    <li><b>188 ファイル</b>main配下 12,285行（package-info 43を含む）</li>
+    <li><b>188 ファイル</b>main配下 12,315行（package-info 43を含む）</li>
     <li><b>4層＋2</b>presentation・application・domain・infrastructure と層の外のconfig・shared</li>
     <li><b>3 出力形式</b>Markdown・スナップショット・参考情報（insights）</li>
     <li><b>2 DBMS</b>PostgreSQL・Oracle。SQLはmapper XMLに分離</li>
   </ul>
-  <p class="small muted">mainブランチ（<code>5af8e5f</code>。PR #109まで）を読んで作成。コンソールの出力例は、ビルドしたjarを、<code>docs/sample/postgres/ddl.sql</code>を流し込んだPostgreSQL 16に対して実行して採取したものです（長いパスは短く書き換えています）。Markdown・JSONの例は、コミット済みのベースライン<code>docs/sample/postgres/output</code>から引用しています。テストは単体82ファイル 12,958行、結合7ファイル 1,658行です。</p>
+  <p class="small muted">mainブランチ（<code>0bb6bdd</code>。PR #114まで）を読んで作成。コンソールの出力例は、ビルドしたjarを、<code>docs/sample/postgres/ddl.sql</code>を流し込んだPostgreSQL 16に対して実行して採取したものです（長いパスは短く書き換えています）。Markdown・JSONの例は、コミット済みのベースライン<code>docs/sample/postgres/output</code>から引用しています。テストは単体82ファイル 13,057行、結合7ファイル 1,676行です。</p>
 </header>
 
 <div class="note key">
@@ -604,7 +604,7 @@ baseSqlPath = <span class="k">"com.export_table_definition.domain.repository."</
     <tr><td><code>selectDatabase</code></td><td><code>selectDatabaseInfo</code></td><td><code>DatabaseDto</code> → <code>DatabaseEntity</code>（メジャーバージョンを含む）</td><td><code>fetchTargets</code></td></tr>
     <tr><td><code>selectTableList</code></td><td><code>selectTableInfo</code></td><td><code>TableDto</code> → <code>TableEntity</code>（区分をenumへ）</td><td><code>fetchTargets</code></td></tr>
     <tr><td><code>selectForeignKeyList</code></td><td><code>selectForeignKeyInfo</code></td><td><code>ForeignKeyDto</code> → <code>ForeignKeyEntity</code>（多重度を判定）</td><td><code>fetchTargets</code></td></tr>
-    <tr><td><code>selectTriggerList</code></td><td><code>selectTriggerInfo</code></td><td><code>TriggerDto</code> → <code>TriggerEntity</code>（イベントを分解）</td><td><code>fetchTargets</code>（target.objectsにtrigger）</td></tr>
+    <tr><td><code>selectTriggerList</code></td><td><code>selectTriggerInfo</code></td><td><code>TriggerDto</code> → <code>TriggerEntity</code>（イベントを分解、本体の末尾の空白を除く）</td><td><code>fetchTargets</code>（target.objectsにtrigger）</td></tr>
     <tr><td><code>selectPartitionList</code></td><td><code>selectPartitionInfo</code></td><td><code>PartitionDto</code> → <code>PartitionEntity</code></td><td><code>fetchTargets</code></td></tr>
     <tr><td><code>selectViewReferenceList</code></td><td><code>selectViewReferenceInfo</code></td><td><code>ViewReferenceDto</code> → <code>ViewReferenceEntity</code>（区分をenumへ）</td><td><code>fetchTargets</code>（出力対象のビューの分へ絞る）</td></tr>
     <tr><td><code>selectFunctionList</code></td><td><code>selectFunctionInfo</code></td><td><code>FunctionDto</code> → <code>FunctionEntity</code>（本体なし）</td><td><code>fetchTargets</code>（function）</td></tr>
@@ -616,7 +616,7 @@ baseSqlPath = <span class="k">"com.export_table_definition.domain.repository."</
   </tbody>
 </table>
 </div>
-<p class="small muted">実行したSQL（DEBUG）と取得した行（TRACE）は、MyBatisがmapperの名前空間（このツールのパッケージ配下）のロガーへ出します。既定のレベルはINFOなのでログには残らず、調べるときだけ<code>-Dexport-table-definition.log.level=debug</code>で上げます（2.6節）。Oracle用のmapper（833行）は、LONG型の列（ビューのソース等）やDBのバージョン（<code>DBMS_DB_VERSION</code>）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（668行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
+<p class="small muted">実行したSQL（DEBUG）と取得した行（TRACE）は、MyBatisがmapperの名前空間（このツールのパッケージ配下）のロガーへ出します。既定のレベルはINFOなのでログには残らず、調べるときだけ<code>-Dexport-table-definition.log.level=debug</code>で上げます（2.6節）。Oracle用のmapper（838行）は、LONG型の列（ビューのソース・トリガーの本体等）やDBのバージョン（<code>DBMS_DB_VERSION</code>）を読むためにSQLの中でPL/SQLの関数を定義する（<code>WITH FUNCTION</code>）など、PostgreSQL用（670行）より手が込んでいます。DBごとの違いはSQLで吸収し、同じDTOへ揃えます。</p>
 
 <h3>2.4 Mermaid の erDiagram</h3>
 <p>ER図は、Markdownの中に書くMermaid記法のテキストです。GitHubは<code>```mermaid</code>のコードブロックを図として描画します。サンプルの<code>department</code>の定義書に出力されたER図をそのまま示します。</p>
@@ -821,7 +821,7 @@ INFO  ExportTableDefinitionController [ END ] exportTableDefinition [elapsedMill
   <li><div><code>ExportSink</code>（47行）と3つの<code>…SinkFactory</code>：出力形式ごとに「いつ何を書くか」（6章の表）。</div></li>
   <li><div><code>domain.model.target</code>：<code>ExportTargets</code>・<code>TableDefinitionContent</code>・<code>TableScope</code>。取得したデータを組み立てる単位です（8章）。</div></li>
   <li><div><code>domain.model.table</code>・<code>relation</code>：<code>TableKey</code>・<code>ForeignKeys</code>・<code>ForeignKeyGroups</code>・<code>Cardinality</code>。関連とER図のルールです（9章）。</div></li>
-  <li><div>気になる出力のWriter→Templates：たとえば<code>TableDefinitionWriter</code>（114行。セクションの順）→<code>TableDefinitionTemplates</code>（503行。各セクションの組み立て）。</div></li>
+  <li><div>気になる出力のWriter→Templates：たとえば<code>TableDefinitionWriter</code>（114行。セクションの順）→<code>TableDefinitionTemplates</code>（525行。各セクションの組み立て）。</div></li>
   <li><div>infrastructure：<code>AbstractTableDefinitionRepository</code>（191行）とmapper XML、<code>SidecarYamlRepository</code>（492行）。</div></li>
   <li><div>入口の検証：<code>CliArguments</code>・<code>ExportTableDefinitionProperties</code>・<code>ConnectionSettings</code>・<code>FailureReporter</code>（5章）。</div></li>
 </ol>
@@ -1461,6 +1461,7 @@ Content differs:
     <tr><td>コメントの無いカラムの論理名</td><td><code>''</code>（PostgreSQLは<code>coalesce</code>）／<code>NULL</code>（Oracle）</td><td><code>""</code></td><td>項目ごと省略</td><td>空のセル</td></tr>
     <tr><td>複合外部キーの列</td><td><code>'warehouse_code,zone_code'</code></td><td><code>List.of("warehouse_code", "zone_code")</code></td><td><code>["warehouse_code","zone_code"]</code></td><td><code>warehouse_code,zone_code</code></td></tr>
     <tr><td>トリガーのイベント</td><td><code>'INSERT/UPDATE'</code></td><td><code>List.of("INSERT", "UPDATE")</code></td><td><code>["INSERT","UPDATE"]</code></td><td><code>INSERT/UPDATE</code></td></tr>
+    <tr><td>トリガーの本体</td><td>PL/SQLの文字列（Oracle。LONG型を<code>long_value</code>で読む）／<code>''</code>（PostgreSQL。本体は実行する関数が持つ）</td><td>末尾の改行・空白を除いた文字列（<code>stripTrailing</code>）</td><td><code>"body":"…"</code>（PostgreSQLは項目ごと省略）</td><td>表の後に<code>### トリガー名</code>と<code>```sql</code>のコードブロック（空なら出さない）</td></tr>
     <tr><td>NOT NULL</td><td><code>true</code>（Oracleは<code>1</code>）</td><td><code>true</code></td><td><code>"notNull":true</code>（<code>false</code>も出す）</td><td><code>○</code>（偽は空）</td></tr>
     <tr><td>区分</td><td><code>'materialized_view'</code></td><td><code>TableType.MATERIALIZED_VIEW</code>（未知なら例外）</td><td><code>"type":"materialized_view"</code></td><td><code>materialized_view</code></td></tr>
     <tr><td>カラム備考</td><td>（SQLには無い。サイドカーYAML）</td><td><code>TableAnnotation.columnRemark(名前)</code></td><td><code>"remarks":"…"</code></td><td>改行・<code>|</code>をエスケープして備考のセル</td></tr>
@@ -1743,7 +1744,7 @@ erDiagram
     <tr><td class="num">13</td><td>論理リレーション情報</td><td><code>logicalRelations</code></td><td>論理リレーションがあるとき</td></tr>
     <tr><td class="num">14</td><td>被参照情報</td><td><code>incomingRelations</code></td><td>参照されているとき</td></tr>
     <tr><td class="num">15</td><td>参照しているビュー</td><td><code>referencingViews</code></td><td>出力対象のビューから参照されているとき</td></tr>
-    <tr><td class="num">16</td><td>トリガー情報</td><td><code>triggers</code></td><td>常に（同上。<code>target.objects</code>でtriggerを外すと行が無くなる）</td></tr>
+    <tr><td class="num">16</td><td>トリガー情報</td><td><code>triggers</code></td><td>常に（同上。<code>target.objects</code>でtriggerを外すと行が無くなる）。本体を持つトリガー（Oracle）は、表の後にトリガーごとの見出しと本体のコードブロック</td></tr>
     <tr><td class="num">17</td><td>ER図</td><td><code>erDiagram</code></td><td>常に（関連が無ければ「関連するテーブルはありません。」。描画距離は9.7節）</td></tr>
     <tr><td class="num">18</td><td>フッター（テーブル一覧へ）</td><td><code>footer</code></td><td>常に</td></tr>
   </tbody>
@@ -1782,7 +1783,7 @@ erDiagram
     <tr><td>ファイル名・ディレクトリ名</td><td><code>PathSegments.encode</code>（<code>/ \ : * ? " &lt; &gt; |</code>・<code>~</code>・制御文字を<code>~</code>＋16進2桁に、<code>.</code>だけの名前と空の名前も置き換える。例：<code>a/b</code> → <code>a~2Fb</code>）と、<code>DefaultOutputPathResolver</code>の<code>within</code></td><td>出力先の外への書き込み（パストラバーサル）</td><td><code>OutputPathContainmentTest</code>（<code>OutputPathResolver</code>の全メソッドを危険な名前で呼ぶ）、<code>ArchitectureTest</code>（<code>Path.resolve</code>の呼び出し場所）</td></tr>
     <tr><td>表の行</td><td><code>row</code>（書式で組み立てた行は<code>escapeTableRow</code>）。改行を<code>&lt;br&gt;</code>に、それ以外の<code>&lt;</code>を<code>&amp;lt;</code>に</td><td>生のHTMLの描画、行の分断</td><td rowspan="3"><code>MarkdownInjectionTest</code>（各テンプレートにHTML・<code>```</code>・見出しを混ぜた文字列を渡す）</td></tr>
     <tr><td>見出し・リストの項目</td><td><code>escapeInline</code>（改行を空白に）</td><td>次の行がMarkdownの構文になること</td></tr>
-    <tr><td>関数・ビューの定義、パーティションキー</td><td><code>codeFence</code>・<code>codeSpan</code>（中身の最長のバッククォートより長い囲み）</td><td>コードブロックが途中で閉じること</td></tr>
+    <tr><td>関数・ビューの定義、トリガーの本体、パーティションキー</td><td><code>codeFence</code>・<code>codeSpan</code>（中身の最長のバッククォートより長い囲み）</td><td>コードブロックが途中で閉じること</td></tr>
     <tr><td>Mermaidの図</td><td><code>MermaidSupport</code>（識別子は記号を<code>_</code>に、表示名・関連名の二重引用符と改行を置き換える）</td><td>図の構文の破壊、コードブロックを閉じる行</td><td><code>MermaidSupportTest</code></td></tr>
     <tr><td>ログ</td><td><code>log4j2.xml</code>の<code>%enc{%m}{CRLF}</code></td><td>改行による偽のログ行</td><td class="muted">—</td></tr>
   </tbody>
@@ -1840,7 +1841,7 @@ erDiagram
     <tr><td class="file">TableDetail</td><td class="num">54</td><td>1テーブル分のカラム・インデックス・制約。<code>assembleAll</code>で、まとめて取得した結果をテーブルごとに振り分ける</td><td>← <code>AbstractTableDefinitionRepository</code>・<code>TableDefinitionContent</code></td></tr>
     <tr><td class="file">ColumnEntity<br>IndexEntity<br>ConstraintEntity</td><td class="num">46</td><td>カラム・インデックス・制約1件</td><td>← <code>TableDetail</code>・テンプレート・<code>TableSnapshot</code></td></tr>
     <tr><td class="file">Columns<br>Indexes<br>Constraints<span class="sub">パッケージプライベート</span></td><td class="num">48</td><td><code>TableDetail.assembleAll</code>専用の、テーブルキーで引ける集合</td><td>← <code>TableDetail</code></td></tr>
-    <tr><td class="file">TriggerEntity<br>Triggers</td><td class="num">66</td><td>トリガー1件と集合。イベントはリスト</td><td>← <code>SchemaExportPipeline</code>・<code>TableDefinitionContent</code>・<code>ObjectListWriter</code></td></tr>
+    <tr><td class="file">TriggerEntity<br>Triggers</td><td class="num">69</td><td>トリガー1件と集合。イベントはリスト。定義はOracleでは宣言部だけで、本体（<code>body</code>）を別に持つ（PostgreSQLは空文字）</td><td>← <code>SchemaExportPipeline</code>・<code>TableDefinitionContent</code>・<code>ObjectListWriter</code></td></tr>
     <tr><td class="file">PartitionEntity<br>Partitions</td><td class="num">67</td><td>パーティション表の下位のパーティション1件と集合。根のテーブルキーで引く。名前は根のスキーマからの相対（<code>getDisplayName</code>）</td><td>← <code>TableDefinitionContent</code>・<code>TableDefinitionTemplates</code></td></tr>
     <tr><td class="file">ViewReferenceEntity<br>ViewReferences</td><td class="num">60</td><td>ビューが参照するテーブル1件と集合。ビューと参照されるテーブルの両方のテーブルキーで引く（<code>belongingTo</code>・<code>referencingTo</code>）</td><td>← <code>SchemaExportPipeline</code>・<code>TableDefinitionContent</code>・<code>TableSnapshot</code></td></tr>
     <tr><td class="file">SchemaTableKeyed</td><td class="num">25</td><td>スキーマ名・テーブル名を持つエンティティのインタフェース。<code>tableKey()</code>の既定実装</td><td>← 各Entity・<code>AbstractEntities</code></td></tr>
@@ -1877,7 +1878,7 @@ erDiagram
 
     <tr class="group"><td colspan="4">domain.model.snapshot・insight：機械が読む形</td></tr>
     <tr><td class="file">DatabaseSnapshot</td><td class="num">27</td><td><code>database.json</code>（形式バージョン・DB名・DBMS・メジャーバージョン）。<code>FORMAT_VERSION</code>はmcp-serverとの契約</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
-    <tr><td class="file">TableSnapshot</td><td class="num">206</td><td><code>tables.jsonl</code>の1行。カラム・インデックス・制約・外部キー・論理リレーション・トリガー・付帯情報・ビューが参照するテーブル（<code>referencedTables</code>。項目の並びを変えないよう末尾）を項目として持つ。被参照と参照しているビューは持たない（参照元から導ける）</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
+    <tr><td class="file">TableSnapshot</td><td class="num">209</td><td><code>tables.jsonl</code>の1行。カラム・インデックス・制約・外部キー・論理リレーション・トリガー（Oracleは本体を含む）・付帯情報・ビューが参照するテーブル（<code>referencedTables</code>。項目の並びを変えないよう末尾）を項目として持つ。被参照と参照しているビューは持たない（参照元から導ける）</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
     <tr><td class="file">FunctionSnapshot<br>SequenceSnapshot<br>TypeSnapshot</td><td class="num">104</td><td><code>functions</code>・<code>sequences</code>・<code>types.jsonl</code>の1行</td><td>← <code>SchemaSnapshotWriter</code></td></tr>
     <tr><td class="file">SnapshotValues<span class="sub">パッケージプライベート</span></td><td class="num">19</td><td>空文字を<code>null</code>にする（JSONで項目ごと省略させる）</td><td>← 各Snapshot</td></tr>
     <tr><td class="file">SnapshotKind</td><td class="num">61</td><td>tables・functions・sequences・types。<code>identify</code>で行の表示名（関数は引数を含む）</td><td>← <code>SnapshotLocations</code>・<code>SnapshotDiff</code></td></tr>
@@ -1909,7 +1910,7 @@ erDiagram
     <tr class="group"><td colspan="4">domain.service.writer：Markdownの段取りとテンプレート</td></tr>
     <tr><td class="file">PagedSectionWriter</td><td class="num">125</td><td>3,000行を超える表を別ページへ分ける</td><td>← 4つのWriter</td></tr>
     <tr><td class="file">TableDefinitionWriter</td><td class="num">114</td><td>テーブル一覧と定義書の段取り（セクションの順）</td><td>← <code>MarkdownExportSinkFactory</code></td></tr>
-    <tr><td class="file">TableDefinitionTemplates</td><td class="num">503</td><td>定義書の各セクション（エスケープ・○・参照するテーブル／参照しているビュー・描画距離に応じたテーブル単位のER図を含む）</td><td>← <code>TableDefinitionWriter</code>／→ <code>MermaidSupport</code></td></tr>
+    <tr><td class="file">TableDefinitionTemplates</td><td class="num">525</td><td>定義書の各セクション（エスケープ・○・参照するテーブル／参照しているビュー・トリガーの本体・描画距離に応じたテーブル単位のER図を含む）</td><td>← <code>TableDefinitionWriter</code>／→ <code>MermaidSupport</code></td></tr>
     <tr><td class="file">TableDefinitionListTemplates</td><td class="num">93</td><td>テーブル一覧（関連ドキュメントへのリンクを含む）</td><td>← <code>TableDefinitionWriter</code></td></tr>
     <tr><td class="file">ErDiagramWriter</td><td class="num">258</td><td>スキーマ別ER図・グループ別ER図・索引の段取り。<code>compose</code>の結果で振り分け、<code>planRendering</code>に従う</td><td>← <code>MarkdownExportSinkFactory</code>／→ <code>ForeignKeyGroups</code></td></tr>
     <tr><td class="file">ErDiagramTemplates</td><td class="num">326</td><td>Mermaidの図、省略・分割の文言、掲載テーブル・外部キー一覧の表、ノードの識別子の重複回避</td><td>← <code>ErDiagramWriter</code>・<code>ViewpointTemplates</code></td></tr>
@@ -1929,7 +1930,7 @@ erDiagram
     <tr><td class="file">DatabaseType</td><td class="num">54</td><td>postgresql・oracleと、リポジトリの実装クラスの対応。名前はSQLの名前空間にも使う</td><td>← <code>DatabaseDependentModule</code>・<code>AbstractTableDefinitionRepository</code></td></tr>
     <tr><td class="file">AbstractTableDefinitionRepository</td><td class="num">191</td><td><code>TableDefinitionRepository</code>の共通実装。SQLのIDを組み立てて実行し、DTO→エンティティ。SQLの失敗はどのSQLかを添えて包む</td><td>← 2つの実装／→ 12のDTO</td></tr>
     <tr><td class="file">PostgresTableDefinitionRepository<br>OracleTableDefinitionRepository</td><td class="num">28</td><td>DB種別を渡すだけの実装</td><td>← <code>DatabaseType</code></td></tr>
-    <tr><td class="file">TableDto 等 12個のDTO</td><td class="num">374</td><td><code>TableDto</code>・<code>ColumnDto</code>・<code>IndexDto</code>・<code>ConstraintDto</code>・<code>ForeignKeyDto</code>・<code>TriggerDto</code>・<code>PartitionDto</code>・<code>ViewReferenceDto</code>・<code>FunctionDto</code>・<code>SequenceDto</code>・<code>TypeDto</code>・<code>DatabaseDto</code>。SQLの結果の受け皿（record）で、<code>toEntity()</code>で値の形を揃える。<code>ForeignKeyDto</code>は多重度を判定し、<code>TriggerDto</code>はイベントを分解する</td><td>← <code>AbstractTableDefinitionRepository</code></td></tr>
+    <tr><td class="file">TableDto 等 12個のDTO</td><td class="num">376</td><td><code>TableDto</code>・<code>ColumnDto</code>・<code>IndexDto</code>・<code>ConstraintDto</code>・<code>ForeignKeyDto</code>・<code>TriggerDto</code>・<code>PartitionDto</code>・<code>ViewReferenceDto</code>・<code>FunctionDto</code>・<code>SequenceDto</code>・<code>TypeDto</code>・<code>DatabaseDto</code>。SQLの結果の受け皿（record）で、<code>toEntity()</code>で値の形を揃える。<code>ForeignKeyDto</code>は多重度を判定し、<code>TriggerDto</code>はイベントを分解して本体の末尾の空白を除く</td><td>← <code>AbstractTableDefinitionRepository</code></td></tr>
     <tr><td class="file">DtoValues<span class="sub">パッケージプライベート</span></td><td class="num">41</td><td><code>null</code>・空白を空文字へ、区切り文字で連結された値をリストへ</td><td>← 各DTO</td></tr>
 
     <tr class="group"><td colspan="4">infrastructure.file・path・snapshot</td></tr>
@@ -1948,8 +1949,8 @@ erDiagram
     <tr><td class="file">package-info（43ファイル）</td><td class="num">90</td><td>各パッケージの要旨。<code>shared.exception</code>だけは置いてよいものの規約も書く</td><td class="muted">—</td></tr>
 
     <tr class="group"><td colspan="4">リソース（cli/src/main/resources）</td></tr>
-    <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">668</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
-    <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">833</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
+    <tr><td class="file">mapper/postgresql/<br>tableDefinitionMapper.xml</td><td class="num">670</td><td>PostgreSQLのカタログ（<code>pg_catalog</code>）を読む13の<code>SELECT</code>。パーティションの子・親から複製された外部キー・トリガーを除く</td><td>← <code>AbstractTableDefinitionRepository</code>（名前空間<code>…postgresql.TableDefinitionRepository</code>）</td></tr>
+    <tr><td class="file">mapper/oracle/<br>tableDefinitionMapper.xml</td><td class="num">838</td><td>Oracleのディクショナリ（<code>ALL_*</code>）を読む13の<code>SELECT</code>。LONG型の列（ビューのソース・トリガーの本体等）とDBのバージョンは<code>WITH FUNCTION</code>で読む</td><td>← 同上（<code>…oracle.TableDefinitionRepository</code>）</td></tr>
     <tr><td class="file">mybatis-config.xml</td><td class="num">39</td><td>DTOの型の別名、接続（POOLED。<code>${driver}</code>等）、2つのmapper</td><td>← <code>MyBatisSqlSessionFactories</code></td></tr>
     <tr><td class="file">log4j2.xml</td><td class="num">46</td><td>ログファイル（既定はこのツールがINFO・ライブラリがWARN。<code>export-table-definition.log.level</code>で上げる）と、このツールのWARNの標準エラー出力。メッセージの改行を置き換える</td><td class="muted">—</td></tr>
     <tr><td class="file">conf/config.yml</td><td class="num">25</td><td>配布する設定（全項目が未指定。各項目の例をコメントで示す）</td><td>← <code>ConfigFile</code></td></tr>
@@ -1960,12 +1961,12 @@ erDiagram
     <tr><td class="file">ExportTableDefinitionUsecaseTest</td><td class="num">1,509</td><td>通常実行・<code>--check</code>の流れ全体。Writerは本物、ファイルはメモリ上（<code>InMemoryFileRepository</code>）、DBは呼び出しを記録するスタブ</td><td>→ 2つのUsecase</td></tr>
     <tr><td class="file">入口のテスト（5ファイル）</td><td class="num">875</td><td><code>CliArgumentsTest</code>・<code>CliUsageTest</code>・<code>ExportTableDefinitionPropertiesTest</code>・<code>OutputDirectoryValidatorTest</code>・<code>TargetSelectionTest</code></td><td>→ 入口の各クラス</td></tr>
     <tr><td class="file">presentationのテスト（4ファイル）</td><td class="num">516</td><td>Controller・<code>FailureReporter</code>（原因の併記）・<code>DiffReportFormatter</code>（行数の上限）・<code>ExitStatus</code></td><td>→ presentation</td></tr>
-    <tr><td class="file">domain.modelのテスト（31ファイル）</td><td class="num">2,794</td><td>多重度・グループ分割・関連の集合（描画距離を含む）・ビューの参照・テーブル名パターン・<code>TableScope</code>・観点・<code>TableDefinitionContent</code>・<code>TableSnapshot</code>等</td><td>→ domain.model</td></tr>
-    <tr><td class="file">domain.serviceのテスト（23ファイル）</td><td class="num">4,781</td><td>突き合わせ・スナップショットの書き込みと比較・unified diff・配置の規則（<code>PathSegmentsTest</code>）・全Writer・全テンプレート（<code>TableDefinitionTemplatesTest</code>は911行）・DB由来の文字列の注入（<code>MarkdownInjectionTest</code>）</td><td>→ domain.service</td></tr>
-    <tr><td class="file">infrastructureのテスト（10ファイル）</td><td class="num">1,734</td><td>接続情報・DB種別・DTOの変換・ファイル・サイドカーYAML（597行）・パス（出力先の外を指さないことの網羅的な検査<code>OutputPathContainmentTest</code>を含む）・JSON</td><td>→ infrastructure</td></tr>
+    <tr><td class="file">domain.modelのテスト（31ファイル）</td><td class="num">2,804</td><td>多重度・グループ分割・関連の集合（描画距離を含む）・ビューの参照・テーブル名パターン・<code>TableScope</code>・観点・<code>TableDefinitionContent</code>・<code>TableSnapshot</code>等</td><td>→ domain.model</td></tr>
+    <tr><td class="file">domain.serviceのテスト（23ファイル）</td><td class="num">4,840</td><td>突き合わせ・スナップショットの書き込みと比較・unified diff・配置の規則（<code>PathSegmentsTest</code>）・全Writer・全テンプレート（<code>TableDefinitionTemplatesTest</code>は911行）・DB由来の文字列の注入（<code>MarkdownInjectionTest</code>）</td><td>→ domain.service</td></tr>
+    <tr><td class="file">infrastructureのテスト（10ファイル）</td><td class="num">1,764</td><td>接続情報・DB種別・DTOの変換・ファイル・サイドカーYAML（597行）・パス（出力先の外を指さないことの網羅的な検査<code>OutputPathContainmentTest</code>を含む）・JSON</td><td>→ infrastructure</td></tr>
     <tr><td class="file">ConfigFileTest<br>testsupport（5ファイル）</td><td class="num">444</td><td>設定ファイルの読み込みと、テスト用の部品（<code>EntityFixtures</code>・<code>ForeignKeyFixtures</code>・<code>DiagramBoxesFixtures</code>・<code>MarkdownAssert</code>・ログの警告を確かめる<code>CapturedLogs</code>）</td><td>← 各テスト</td></tr>
     <tr><td class="file">SampleDatabaseExportIT<br>OracleSampleDatabaseExportIT</td><td class="num">152</td><td>結合テスト。サンプルDBに対して全体を通し、出力をベースライン（<code>docs/sample/*/output</code>）とファイル単位で完全一致させる。<code>--check</code>で差分が無いことも確かめる</td><td>→ <code>ExportBaseline</code></td></tr>
-    <tr><td class="file">PostgresTableDefinitionRepositoryIT<br>OracleTableDefinitionRepositoryIT</td><td class="num">1,282</td><td>mapperの各SQLの取得結果（パーティション・多重度・オーバーロード・ビューの参照・メジャーバージョン等）</td><td>→ 2つのmapper</td></tr>
+    <tr><td class="file">PostgresTableDefinitionRepositoryIT<br>OracleTableDefinitionRepositoryIT</td><td class="num">1,300</td><td>mapperの各SQLの取得結果（パーティション・多重度・オーバーロード・ビューの参照・メジャーバージョン・トリガーの本体等）</td><td>→ 2つのmapper</td></tr>
     <tr><td class="file">ExportBaseline<br>SampleDatabase<br>OracleSampleDatabase</td><td class="num">224</td><td>Testcontainersで<code>ddl.sql</code>を流したDBを起動し、本番と同じ2段階でコントローラーを作る（時計は固定、作成日は比較の前に置き換える）</td><td>← 結合テスト</td></tr>
     <tr class="empty-row" hidden><td colspan="4">一致するファイルはありません。</td></tr>
   </tbody>
@@ -2077,7 +2078,7 @@ erDiagram
 </dl>
 
 <footer>
-  <p>出典：<code>cli/</code>のソース（main 188ファイル・テスト89ファイル）、<code>docs/architecture/overview.md</code>・<code>domain-model.md</code>・<code>package-structure.md</code>、README・<code>docs/usage/cli.md</code>、<code>AGENTS.md</code>。コンソールの出力例はビルドしたjarをサンプルDBに対して実行して採取したもの、Markdown・JSONの例は<code>docs/sample/postgres/output</code>から引用。このガイドはある時点のコードを読んで書いたもので、クラス名・行数等が食い違う場合はコードとアーキテクチャの各文書を正とします。</p>
+  <p>出典：<code>cli/</code>のソース（main 188ファイル・テスト89ファイル）、<code>docs/architecture/overview.md</code>・<code>domain-model.md</code>・<code>package-structure.md</code>、README・<code>docs/usage/cli.md</code>、<code>AGENTS.md</code>・<code>docs/development/coding-guidelines.md</code>。コンソールの出力例はビルドしたjarをサンプルDBに対して実行して採取したもの、Markdown・JSONの例は<code>docs/sample/postgres/output</code>から引用。このガイドはある時点のコードを読んで書いたもので、クラス名・行数等が食い違う場合はコードとアーキテクチャの各文書を正とします。</p>
 </footer>
 </main>
 </div>
