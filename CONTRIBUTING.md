@@ -75,6 +75,14 @@ gradlew jacocoTestReport
 （結合テスト・MCPサーバーのE2Eテストは対象外。基準は各サブプロジェクトの`build.gradle`の`jacocoTestCoverageVerification`で定義）。
 PRではGitHub ActionsがカバレッジレポートをArtifactとしてアップロードし、PRへの概要コメントも投稿する。
 
+#### 静的解析
+
+* **SpotBugs**: `gradlew build`（＝`check`）に`spotbugsMain`が含まれており、配布するコード（main）のバグを静的に検出する。
+  確度が高い（`reportLevel = HIGH`）指摘が1件でもあるとビルドが失敗する（`gradlew spotbugsMain`だけでも実行できる）。
+  指摘は、検査を緩めずコードを直す。直せない誤検知だけを、理由のコメントを添えて`config/spotbugs/exclude.xml`に書く
+* **CodeQL**: GitHub Actions（`.github/workflows/codeql.yml`）がPRと`main`への反映、および週1回に実行する。
+  結果はリポジトリのSecurityタブ（Code scanning）に出る
+
 ### Javadoc
 
 以下のコマンドを実行することで、`dbxray/cli/build/docs/javadoc`フォルダ配下にjavadocが作成される（`build`配下はGit管理対象外）
