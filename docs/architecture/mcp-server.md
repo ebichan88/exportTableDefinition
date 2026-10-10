@@ -102,7 +102,6 @@ cliのアーキテクチャ（[overview.md](./overview.md)）とは独立して�
 * `title`も出すが、MCPクライアントの絞り込みの対象ではない（Claude Codeは`name`・`description`・URI、VS Codeは`name`・URIを対象にする）。
 * 起動時に返す一覧は、テーブル数に比例して大きくなる（3,000テーブルで約0.7MB。1ページで返し、応答は約60ミリ秒）。
   数万テーブルのDBは確かめていない。課題になった場合は、件数の上限の設定を検討する。
-* `scripts/generate-large-snapshot.py`で、任意の件数の合成スナップショットを作れる（大きなDBでの確認用）。
 
 ### MCPクライアントでの確認結果
 
