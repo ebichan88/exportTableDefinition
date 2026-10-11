@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.dbxray.mcp.catalog.ColumnEntry;
 import com.dbxray.mcp.catalog.DatabaseEntry;
 import com.dbxray.mcp.catalog.FunctionEntry;
+import com.dbxray.mcp.catalog.FunctionTableUsageEntry;
+import com.dbxray.mcp.catalog.FunctionTableUsageEntry.UsedTable;
 import com.dbxray.mcp.catalog.ObjectKey;
 import com.dbxray.mcp.catalog.SchemaCatalog;
 import com.dbxray.mcp.catalog.SequenceEntry;
@@ -124,7 +126,39 @@ class TableDefinitionToolsTest {
                           "",
                           List.of(
                               new ObjectKey("testdb", "sample", "department"),
-                              new ObjectKey("testdb", "sample", "employee"))))));
+                              new ObjectKey("testdb", "sample", "employee")))))
+              .withFunctionTableUsages(
+                  List.of(
+                      new FunctionTableUsageEntry(
+                          new ObjectKey("testdb", "sample", "withhold_tax"),
+                          "p_price numeric",
+                          "analyzed",
+                          "",
+                          List.of(
+                              new UsedTable("sample", "employee", List.of(), List.of("R", "U")),
+                              new UsedTable(
+                                  "", "project", List.of("sample", "archive"), List.of("D"))),
+                          List.of("EXECUTE"),
+                          true,
+                          false),
+                      new FunctionTableUsageEntry(
+                          new ObjectKey("testdb", "sample", "withhold_tax"),
+                          "p_price numeric, p_rate numeric",
+                          "analyzed",
+                          "",
+                          List.of(),
+                          List.of(),
+                          false,
+                          true),
+                      new FunctionTableUsageEntry(
+                          new ObjectKey("testdb", "sample", "log_change"),
+                          "",
+                          "unsupported_language",
+                          "plpython3u",
+                          List.of(),
+                          List.of(),
+                          false,
+                          false))));
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -500,6 +534,36 @@ class TableDefinitionToolsTest {
     final CallToolResult notFound = call("get_function", Map.of("function", "calc"));
     assertTrue(notFound.isError());
     assertEquals("関数calcが見つかりません。名前の似た関数: testdb:sample.calc_bonus", text(notFound));
+  }
+
+  @Test
+  @DisplayName("get_functionは、参考情報がある場合にオーバーロードごとの利用しているテーブル（tableUsage）を返す")
+  void getFunctionWithTableUsage() throws Exception {
+    final JsonNode overloads =
+        json(call("get_function", Map.of("function", "withhold_tax"))).get("overloads");
+
+    assertEquals(
+        "{\"tables\":[{\"table\":\"sample.employee\",\"operations\":\"RU\"},"
+            + "{\"table\":\"project\",\"schemaCandidates\":[\"sample\",\"archive\"],\"operations\":\"D\"}],"
+            + "\"dynamicSql\":[\"EXECUTE\"],\"incomplete\":true}",
+        overloads.get(0).get("tableUsage").toString());
+    assertEquals(
+        "{\"tables\":[],\"overloadsMerged\":true}",
+        overloads.get(1).get("tableUsage").toString(),
+        "該当なしでも、解析したことが分かるよう空の配列を返す");
+    assertEquals(
+        "{\"status\":\"unsupported_language\",\"language\":\"plpython3u\"}",
+        json(call("get_function", Map.of("function", "log_change")))
+            .get("overloads")
+            .get(0)
+            .get("tableUsage")
+            .toString());
+    assertFalse(
+        json(call("get_function", Map.of("function", "calc_bonus")))
+            .get("overloads")
+            .get(0)
+            .has("tableUsage"),
+        "参考情報が無い関数には項目ごと返さない");
   }
 
   @Test
