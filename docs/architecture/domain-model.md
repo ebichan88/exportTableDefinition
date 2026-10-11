@@ -38,9 +38,11 @@ flowchart TB
 
   snapshot --> target
   insight --> viewpoint
+  insight --> target
   target --> sidecar
   target --> schemaobject
   target --> database
+  target --> tableusage
   sidecar --> viewpoint
   sidecar --> relation
   viewpoint --> relation
@@ -402,9 +404,10 @@ classDiagram
 スナップショット（`snapshot`）は`TableDefinitionContent`等を機械可読な形へ写したもので、図は省略する。
 
 参考情報（`insight`）は、スナップショットの事実とは別にAIへ渡す情報（観点等。`--check`の比較対象ではない）を
-機械可読な形へ写したもので、`snapshot`と対になる出力だが依存しない。現時点の内容は`ViewpointsInsight`
-（1ファイル分。`formatVersion`を持つ）／`ViewpointInsight`（観点1件。識別子・表示名・説明・所属テーブル）のみで、
-`Viewpoint.resolve`の結果（`ViewpointContent`）から変換する。図は省略する。
+機械可読な形へ写したもので、`snapshot`と対になる出力だが依存しない。内容は`ViewpointsInsight`
+（1ファイル分。`formatVersion`を持つ）／`ViewpointInsight`（観点1件。識別子・表示名・説明・所属テーブル）で
+`Viewpoint.resolve`の結果（`ViewpointContent`）から変換するものと、`FunctionTableUsagesInsight`（1スキーマ分。
+関数・プロシージャごとの利用しているテーブル）で関数1つ分の出力内容（`FunctionDefinitionContent`）から変換するもの。図は省略する。
 
 ## 関数の利用テーブル
 
@@ -418,6 +421,9 @@ classDiagram
   決まらない場合は同じ名前の出力対象のテーブル（候補）をすべて持ち、スキーマを決めつけない（`TableUsage.schemaDetermined`）。
 - 解析しなかった場合は、理由を状態（`TableUsageStatus`。対象外の言語・定義が無い・wrap・サブプログラムが見つからない）で表す。
   抽出を行わない実行（プレビューの機能を有効にしていない実行）の結果は`NOT_ANALYZED`で、定義書の節・参考情報を出さない。
+- 抽出はプレビューの機能（`application.PreviewFeature.FUNCTION_TABLE_USAGE`。`--preview`）で、`SchemaExportPipeline`が
+  スキーマ単位で取得した定義本体から行い、関数1つ分の出力内容（`domain.model.target.FunctionDefinitionContent`。関数・利用しているテーブル・DBMS種別）
+  として各`ExportSink`へ渡す。スナップショットには含めず、定義書の節と参考情報（`FunctionTableUsagesInsight`）にだけ出す。
 
 ## 主なルールと、それを持つ場所
 
@@ -487,6 +493,8 @@ classDiagram
 | 出力対象オブジェクト種別 | `target.objects` | `OutputObjectType` | 出力対象の絞り込み条件のうち、テーブル以外の追加オブジェクトを対象とするもの。トリガー・関数/プロシージャ・シーケンス・ユーザー定義型（トリガーはテーブルに属するため、スキーマ直下のオブジェクトとは範囲が異なる） |
 | 出力対象 | － | `ExportTargets` | 出力対象の絞り込み条件を適用して取得した、出力するもの（条件ではなくデータ）。コード上は対象範囲全体を一括取得する軽量な情報の組を指す |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |
+| 関数1つ分の出力内容 | 関数・プロシージャの定義書 | `FunctionDefinitionContent` | 関数・プロシージャの定義書1ファイル・スナップショットと参考情報の1件分の内容（関数・利用しているテーブル） |
+| プレビューの機能 | `--preview` | `PreviewFeature`（`application`） | 精度・出力の形を固めている途中で、`--preview`を付けたときだけ動く機能。互換性の対象にしない |
 | 突き合わせの通知 | 警告ログ | `ConsistencyNotice` | 出力対象と関連・付帯情報・観点を突き合わせた結果（孤児付帯情報・除外した関連・一致しない観点のパターン等） |
 | DBMS種別 | RDBMS（`PostgreSQL`・`Oracle`） | `Dbms` | 接続先のDBMS。mapperのSQLが返す表示名から`DatabaseDto`の変換時に求める |
 | 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`。RDBMSの欄にはメジャーバージョンを添える）＋生成日 |

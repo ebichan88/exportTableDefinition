@@ -3,6 +3,7 @@ package com.dbxray.domain.service.writer;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.database.Dbms;
 import com.dbxray.domain.model.relation.Cardinality;
 import com.dbxray.domain.model.relation.DiagramNeighborhood;
 import com.dbxray.domain.model.relation.ForeignKeyEntity;
@@ -19,6 +20,11 @@ import com.dbxray.domain.model.table.TableKey;
 import com.dbxray.domain.model.table.TableType;
 import com.dbxray.domain.model.table.TriggerEntity;
 import com.dbxray.domain.model.table.ViewReferenceEntity;
+import com.dbxray.domain.model.tableusage.CrudOperation;
+import com.dbxray.domain.model.tableusage.DynamicSqlKind;
+import com.dbxray.domain.model.tableusage.FunctionTableUsage;
+import com.dbxray.domain.model.tableusage.TableUsage;
+import com.dbxray.domain.model.target.FunctionDefinitionContent;
 import com.dbxray.domain.service.writer.erdiagram.ErDiagramTemplates;
 import com.dbxray.domain.service.writer.objectlist.ObjectDefinitionTemplates;
 import com.dbxray.domain.service.writer.objectlist.ObjectListTemplates;
@@ -32,6 +38,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -159,7 +166,34 @@ public class MarkdownInjectionTest {
                 + ObjectListTemplates.typeListLine(1, type));
     documents.put(
         "objectDefinition.functionFile",
-        () -> ObjectDefinitionTemplates.functionFile(function, BASE_INFO));
+        () ->
+            ObjectDefinitionTemplates.functionFile(
+                FunctionDefinitionContent.withoutTableUsage(function, Dbms.POSTGRESQL), BASE_INFO));
+    final TableEntity hostileTable =
+        new TableEntity(HOSTILE, HOSTILE, HOSTILE, HOSTILE, TableType.TABLE, HOSTILE);
+    final FunctionTableUsage tableUsage =
+        FunctionTableUsage.analyzed(
+            List.of(
+                new TableUsage(List.of(hostileTable), true, Set.of(CrudOperation.READ)),
+                new TableUsage(
+                    List.of(hostileTable, hostileTable), false, Set.of(CrudOperation.DELETE))),
+            List.of(DynamicSqlKind.EXECUTE),
+            true,
+            true);
+    for (final Dbms dbms : Dbms.values()) {
+      documents.put(
+          "objectDefinition.functionFile.tableUsage." + dbms,
+          () ->
+              ObjectDefinitionTemplates.functionFile(
+                  new FunctionDefinitionContent(function, tableUsage, dbms), BASE_INFO));
+    }
+    documents.put(
+        "objectDefinition.functionFile.unsupportedLanguage",
+        () ->
+            ObjectDefinitionTemplates.functionFile(
+                new FunctionDefinitionContent(
+                    function, FunctionTableUsage.unsupportedLanguage(HOSTILE), Dbms.ORACLE),
+                BASE_INFO));
     documents.put(
         "objectDefinition.sequenceFile",
         () -> ObjectDefinitionTemplates.sequenceFile(sequence, BASE_INFO));

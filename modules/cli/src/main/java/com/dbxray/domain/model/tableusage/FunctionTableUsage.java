@@ -57,6 +57,15 @@ public record FunctionTableUsage(
   }
 
   /**
+   * スキーマが決まらない名前の行を取得するメソッド
+   *
+   * @return スキーマが決まらない行（{@link #tables}の並び順）
+   */
+  public List<TableUsage> schemaUndeterminedTables() {
+    return tables.stream().filter(table -> !table.schemaDetermined()).toList();
+  }
+
+  /**
    * 抽出を行った実行の結果か（定義書の節・参考情報を出力するか）判定するメソッド
    *
    * @return {@link TableUsageStatus#NOT_ANALYZED}以外の場合はtrue

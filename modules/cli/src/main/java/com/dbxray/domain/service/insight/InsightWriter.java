@@ -1,6 +1,8 @@
 package com.dbxray.domain.service.insight;
 
+import com.dbxray.domain.model.insight.FunctionTableUsagesInsight;
 import com.dbxray.domain.model.insight.ViewpointsInsight;
+import com.dbxray.domain.model.target.FunctionDefinitionContent;
 import com.dbxray.domain.model.viewpoint.ViewpointContent;
 import com.dbxray.domain.repository.FileRepository;
 import com.dbxray.domain.service.path.OutputPathResolver;
@@ -48,6 +50,22 @@ public class InsightWriter {
       return;
     }
     write(outputPathResolver.resolveViewpointsInsightFile(root), ViewpointsInsight.of(contents));
+  }
+
+  /**
+   * 1スキーマ分の関数・プロシージャの利用しているテーブルの参考情報を書き込むメソッド<br>
+   * 抽出を行っていない実行（プレビューの機能を有効にしていない実行）では、ファイル自体を出力しない
+   *
+   * @param contents 当該スキーマの関数・プロシージャの出力内容
+   */
+  public void writeFunctionTableUsages(
+      String schemaName, List<FunctionDefinitionContent> contents, OutputRoot root) {
+    if (contents.stream().noneMatch(content -> content.tableUsage().isAttempted())) {
+      return;
+    }
+    write(
+        outputPathResolver.resolveFunctionTableUsagesInsightFile(root, schemaName),
+        FunctionTableUsagesInsight.of(schemaName, contents));
   }
 
   private void write(Path filePath, Object insight) {
