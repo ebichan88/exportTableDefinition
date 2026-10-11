@@ -1,6 +1,7 @@
 package com.dbxray.domain.service.export;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.metrics.DatabaseMetrics;
 import com.dbxray.domain.model.target.ExportTargets;
 import com.dbxray.domain.model.target.FunctionDefinitionContent;
 import com.dbxray.domain.model.target.TableDefinitionContent;
@@ -44,4 +45,13 @@ public interface ExportSink {
    * @param content 1テーブル分の定義書出力に必要な情報
    */
   void writeTableDefinition(TableDefinitionContent content);
+
+  /**
+   * 一括取得した情報とテーブルの詳細情報の両方から求めた集計を書き出すメソッド<br>
+   * すべてのテーブルの定義を書き出した後に1度だけ呼ばれる。集計を使わない出力形式は何もしない
+   *
+   * @param targets 一括取得した出力対象の情報
+   * @param metrics 出力対象の集計（カラムを含めて数え終えたもの）
+   */
+  default void writeSummary(ExportTargets targets, DatabaseMetrics metrics) {}
 }

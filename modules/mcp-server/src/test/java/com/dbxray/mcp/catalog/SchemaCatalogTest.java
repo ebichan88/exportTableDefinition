@@ -34,9 +34,9 @@ class SchemaCatalogTest {
     void summarizesSchemas() {
       assertEquals(
           List.of(
-              new SchemaSummary("db1", "PostgreSQL", 16, "hr", 1, 0, 0, 0, 0, 0),
-              new SchemaSummary("db1", "PostgreSQL", 16, "sales", 1, 1, 0, 0, 0, 0),
-              new SchemaSummary("db2", "Oracle", 23, "hr", 1, 0, 0, 0, 0, 0)),
+              new SchemaSummary("db1", "PostgreSQL", 16, "hr", 1, 0, 0, 0, 0, 0, 0, 0),
+              new SchemaSummary("db1", "PostgreSQL", 16, "sales", 1, 1, 0, 0, 0, 0, 0, 0),
+              new SchemaSummary("db2", "Oracle", 23, "hr", 1, 0, 0, 0, 0, 0, 0, 0)),
           catalog.schemas());
     }
 

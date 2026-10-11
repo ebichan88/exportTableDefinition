@@ -221,6 +221,11 @@ infrastructure  … MyBatis／ファイルI/Oなど、ドメインのインタ�
   `CatalogRepository.selectTableDetails()` がチャンク分をまとめて取得し、テーブルごとの `TableDetail` に
   組み立てて返す。そこへ一括取得分の外部キー・トリガー・パーティション・手動付帯情報を合わせ、1テーブル分の出力内容
   （`TableDefinitionContent`）として各 `ExportSink` へ渡す
+- READMEに載せる出力対象の集計（`domain.model.metrics.DatabaseMetrics`）は、集計用のSQLを使わずに求める。カラム以外は一括取得分
+  （`ExportTargets`）から数え、カラムはチャンクごとに取得した`TableDetail`の数を`DatabaseMetrics.Builder`に足していく
+  （スキーマごとの数だけを持つため、メモリはスキーマ数に比例する）。テーブルの絞り込み（`TableScope.matches`）をSQLではなく取得後に
+  行っているため、SQLで数えると出力したドキュメントと数が合わなくなる。すべてのテーブルを書き出した後、`ExportSink.writeSummary()`で
+  各`ExportSink`へ渡し、MarkdownはこのときREADMEを書き出す
 - 関数・プロシージャの定義本体はスキーマ単位で取得・出力・破棄する（`exportSchemaFunctionDefinitions`）
 - ER図のテーブルの箱に表示する関連カラム（関連の参照元・参照先として使われるカラム）は、ER図をチャンクより先に
   書き出すため、関連を持つテーブルのカラムをスキーマ単位かつ `chunkSize` 件ごとに別途取得し、関連カラムだけを残す
@@ -269,7 +274,9 @@ Markdownドキュメントのファイル名・配置（一覧・ER図・観点�
 同名のもの（オーバーロード）がある場合のみ`{関数名}_{番号}`とする（番号はSQLが関数名ごとに振る）。
 観点ページは、日本語・空白を含みうる表示名ではなく、ファイル名に使える文字に限った識別子から`viewpoint_{DB名}_{識別子}.md`とする。
 `{DB名}/`ディレクトリには、GitHub等でそのディレクトリを開いた際の入り口となるよう、生成される一覧ドキュメントへのリンクを
-まとめた`README.md`も`ReadmeWriter`が出力する。
+まとめた`README.md`も`ReadmeWriter`が出力する。READMEには出力対象の集計（スキーマごとのオブジェクトの数・論理名の記述状況・
+関連と読み解きの状況）も載せる。集計は良し悪しの判定（割合・閾値）を持たず数だけを示し、`target.objects`で外した種別は
+取得していない（0件とは限らない）ため列ごと省く（`DatabaseMetrics.isCounted`）。
 
 どの一覧ドキュメントを出力するか（テーブル一覧は常に、それ以外は対象が1件以上ある場合のみ）は
 `MarkdownExportSinkFactory`の`listDocuments()`が1箇所で決め、一覧の書き出しと、テーブル一覧に掲載する関連ドキュメントへの
@@ -344,6 +351,7 @@ DBからの取得と出力は`SchemaExportPipeline`が以下のように分け�
   サイドカー）を取得し、`domain.model.target.ExportTargets`にまとめる
 - `export()`: `ExportTargets`から出力できるもの（一覧・ER図等）を`ExportSink.writeOverview()`で書き出した後、
   関数の定義本体をスキーマ単位で、テーブルの詳細情報をスキーマ・チャンク単位で取得し、各`ExportSink`へ渡す。
+  最後に、取得の途中で数えた集計を`ExportSink.writeSummary()`へ渡す（集計を使うのはMarkdownのREADMEだけ）。
   出力形式ごとの違い（何をどのファイルへ書くか）は`ExportSink`の実装が持ち、`SchemaExportPipeline`は出力形式を意識しない
 
 `checkDocumentDiff()`は、`output.path`（比較先）には手を入れず、スナップショットの`ExportSink`のみで一時ディレクトリへ向けて

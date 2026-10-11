@@ -2,6 +2,7 @@ package com.dbxray.domain.service.export;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
 import com.dbxray.domain.model.document.ListDocumentType;
+import com.dbxray.domain.model.metrics.DatabaseMetrics;
 import com.dbxray.domain.model.relation.DiagramBoxes;
 import com.dbxray.domain.model.relation.ForeignKeys;
 import com.dbxray.domain.model.relation.NodeLimit;
@@ -128,8 +129,9 @@ public class MarkdownExportSinkFactory {
 
     /**
      * {@inheritDoc}<br>
-     * テーブル一覧・README・ER図・各種一覧・観点・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧・外部キー一覧と、
-     * 別途取得した関連カラムのみで生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる
+     * テーブル一覧・ER図・各種一覧・観点・シーケンス/型の個別定義を書き出す。ER図はテーブル一覧・外部キー一覧と、
+     * 別途取得した関連カラムのみで生成できるため、テーブル詳細をチャンク単位で取得する前のこの時点で書き出せる。 READMEはカラムの数を含む集計を載せるため、{@link
+     * #writeSummary}で書き出す
      */
     @Override
     public void writeOverview(ExportTargets targets) {
@@ -137,7 +139,6 @@ public class MarkdownExportSinkFactory {
       final Set<ListDocumentType> documents = listDocuments(targets);
       tableDefinitionWriter.writeTableDefinitionList(
           targets.tables(), outputRoot, relatedDocuments(documents));
-      readmeWriter.writeReadme(documents, outputRoot);
       if (documents.contains(ListDocumentType.ER_DIAGRAM)) {
         erDiagramWriter.writeErDiagram(
             targets.tables(), targets.foreignKeys(), diagramBoxes, outputRoot, erDiagramLimit);
@@ -186,6 +187,16 @@ public class MarkdownExportSinkFactory {
           foreignKeys.neighborhoodOf(content.table(), tableDiagramDistance, erDiagramLimit),
           diagramBoxes,
           outputBaseDir);
+    }
+
+    /**
+     * {@inheritDoc}<br>
+     * 一覧ドキュメントへのリンクと集計を載せたREADMEを書き出す
+     */
+    @Override
+    public void writeSummary(ExportTargets targets, DatabaseMetrics metrics) {
+      readmeWriter.writeReadme(
+          listDocuments(targets), metrics, new OutputRoot(outputBaseDir, targets.baseInfo()));
     }
   }
 }

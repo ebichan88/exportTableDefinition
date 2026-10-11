@@ -12,6 +12,8 @@ import java.util.TreeMap;
  * @param dbms DBMS種別。未設定の場合は空文字
  * @param majorVersion DBMSのメジャーバージョン。不明な場合はnull
  * @param functions 関数・プロシージャの数（オーバーロードはそれぞれ数える）
+ * @param procedures {@code functions}のうちプロシージャの数（オーバーロードはそれぞれ数える）
+ * @param triggers テーブルに属するトリガーの数
  */
 public record SchemaSummary(
     String database,
@@ -22,8 +24,13 @@ public record SchemaSummary(
     int views,
     int materializedViews,
     int functions,
+    int procedures,
     int sequences,
-    int types) {
+    int types,
+    int triggers) {
+
+  /** プロシージャの種別（{@link FunctionEntry#kind}の値） */
+  private static final String PROCEDURE = "PROCEDURE";
 
   /**
    * スキーマごとにオブジェクトの数を集計するメソッド
@@ -51,9 +58,17 @@ public record SchemaSummary(
                   case MATERIALIZED_VIEW -> counter.materializedViews++;
                 }
               });
+      counter.triggers += table.triggers().size();
     }
-    functions.forEach(
-        function -> counterOf(counters, function.key()).functions += function.overloads().size());
+    for (final FunctionOverloads function : functions) {
+      final Counter counter = counterOf(counters, function.key());
+      counter.functions += function.overloads().size();
+      counter.procedures +=
+          (int)
+              function.overloads().stream()
+                  .filter(overload -> PROCEDURE.equals(overload.kind()))
+                  .count();
+    }
     sequences.forEach(sequence -> counterOf(counters, sequence.key()).sequences++);
     types.forEach(type -> counterOf(counters, type.key()).types++);
     return counters.entrySet().stream()
@@ -72,8 +87,10 @@ public record SchemaSummary(
                   counter.views,
                   counter.materializedViews,
                   counter.functions,
+                  counter.procedures,
                   counter.sequences,
-                  counter.types);
+                  counter.types,
+                  counter.triggers);
             })
         .toList();
   }
@@ -92,7 +109,9 @@ public record SchemaSummary(
     private int views;
     private int materializedViews;
     private int functions;
+    private int procedures;
     private int sequences;
     private int types;
+    private int triggers;
   }
 }
