@@ -258,7 +258,7 @@ pre.tree { line-height: 1.55; }
     <li><b>3 出力形式</b>Markdown・スナップショット・参考情報（insights）</li>
     <li><b>2 DBMS</b>PostgreSQL・Oracle。SQLはmapper XMLに分離</li>
   </ul>
-  <p class="small muted">mainブランチ（<code>0bb6bdd</code>。PR #114まで）を読んで作成。コンソールの出力例は、ビルドしたjarを、<code>docs/sample/postgres/ddl.sql</code>を流し込んだPostgreSQL 16に対して実行して採取したものです（長いパスは短く書き換えています）。Markdown・JSONの例は、コミット済みのベースライン<code>docs/sample/postgres/output</code>から引用しています。テストは単体が約13.4k行、結合が約1.7k行です（空行・コメントを含む目安）。</p>
+  <p class="small muted">mainブランチ（<code>0bb6bdd</code>。PR #114まで）を読んで作成。コンソールの出力例は、ビルドしたjarを、<code>docs/sample/postgres/ddl.sql</code>を流し込んだPostgreSQL 16に対して実行して採取したものです（長いパスは短く書き換えています）。Markdown・JSONの例は、コミット済みのベースライン<code>docs/sample/postgres/output</code>から引用しています。</p>
 </header>
 
 <div class="note key">
@@ -710,7 +710,7 @@ INFO  ExportSchemaController [ END ] exportSchema [elapsedMillis=498]</code></pr
       <text x="46" y="442" class="d-t-ms">DatabaseDependentModule</text>
 
       <rect x="340" y="100" width="360" height="360" rx="8" class="d-box-acc"/>
-      <text x="356" y="122" class="d-t-s">domain（約8.5k行）</text>
+      <text x="356" y="122" class="d-t-s">domain</text>
       <rect x="356" y="134" width="328" height="110" rx="5" class="d-box"/>
       <text x="370" y="156" class="d-t-b">domain.model（10パッケージ）</text>
       <text x="370" y="176" class="d-t-s">table・relation・target・sidecar</text>
@@ -756,22 +756,21 @@ INFO  ExportSchemaController [ END ] exportSchema [elapsedMillis=498]</code></pr
 
 <div class="table-wrap">
 <table>
-  <thead><tr><th>層・パッケージ</th><th>規模（目安）</th><th>ひとことで</th></tr></thead>
+  <thead><tr><th>層・パッケージ</th><th>ひとことで</th></tr></thead>
   <tbody>
-    <tr><td>エントリーポイント（直下）</td><td class="num">約1.0k行</td><td><code>main</code>。CLI引数・設定・出力先の検証と、DIコンテナの組み立て。<code>--help</code>・<code>--version</code>の表示</td></tr>
-    <tr><td><code>presentation</code>（<code>.dto</code>・<code>.type</code>）</td><td class="num">約0.4k行</td><td>ユースケースを呼んで結果を文面にする。失敗の報告、終了コード</td></tr>
-    <tr><td><code>application</code></td><td class="num">約0.6k行</td><td>2つのユースケースと、両者が共有する取得・書き出しの段取り</td></tr>
-    <tr><td><code>domain.model</code>（10パッケージ）</td><td class="num">約3.7k行</td><td>エンティティ・集合・値オブジェクトと、それらが持つルール</td></tr>
-    <tr><td><code>domain.repository</code></td><td class="num">約0.2k行</td><td>DB・サイドカーYAML・ファイルとのやり取りのインタフェース</td></tr>
-    <tr><td><code>domain.service</code>（writer以外）</td><td class="num">約1.8k行</td><td>出力形式ごとのSink、突き合わせ、配置の規則（DB由来の名前を安全なパスにする）、スナップショットの書き込み・比較</td></tr>
-    <tr><td><code>domain.service.writer</code></td><td class="num">約2.8k行</td><td>Markdownの段取り（Writer）と組み立て（Templates）</td></tr>
-    <tr><td><code>infrastructure</code></td><td class="num">約1.9k行</td><td>MyBatis・DTO・接続、ファイル、サイドカーYAML、パス、Jackson</td></tr>
-    <tr><td><code>config</code>（<code>.module</code>）</td><td class="num">約0.3k行</td><td>設定ファイルの読み込み（YAMLの構文誤りの文言を含む）と、Guiceのモジュール</td></tr>
-    <tr><td><code>shared.exception</code></td><td class="num">0.1k行未満</td><td>利用者が直せる誤りを表す例外</td></tr>
+    <tr><td>エントリーポイント（直下）</td><td><code>main</code>。CLI引数・設定・出力先の検証と、DIコンテナの組み立て。<code>--help</code>・<code>--version</code>の表示</td></tr>
+    <tr><td><code>presentation</code>（<code>.dto</code>・<code>.type</code>）</td><td>ユースケースを呼んで結果を文面にする。失敗の報告、終了コード</td></tr>
+    <tr><td><code>application</code></td><td>2つのユースケースと、両者が共有する取得・書き出しの段取り</td></tr>
+    <tr><td><code>domain.model</code>（10パッケージ）</td><td>エンティティ・集合・値オブジェクトと、それらが持つルール</td></tr>
+    <tr><td><code>domain.repository</code></td><td>DB・サイドカーYAML・ファイルとのやり取りのインタフェース</td></tr>
+    <tr><td><code>domain.service</code>（writer以外）</td><td>出力形式ごとのSink、突き合わせ、配置の規則（DB由来の名前を安全なパスにする）、スナップショットの書き込み・比較</td></tr>
+    <tr><td><code>domain.service.writer</code></td><td>Markdownの段取り（Writer）と組み立て（Templates）</td></tr>
+    <tr><td><code>infrastructure</code></td><td>MyBatis・DTO・接続、ファイル、サイドカーYAML、パス、Jackson</td></tr>
+    <tr><td><code>config</code>（<code>.module</code>）</td><td>設定ファイルの読み込み（YAMLの構文誤りの文言を含む）と、Guiceのモジュール</td></tr>
+    <tr><td><code>shared.exception</code></td><td>利用者が直せる誤りを表す例外</td></tr>
   </tbody>
 </table>
 </div>
-<p class="small muted">規模は空行・コメントを含む行数を100行単位に丸めた目安で、多少のずれは更新しません。コードの約3分の2がdomainで、その約3分の1がMarkdownの組み立てです。</p>
 
 <h3>構造の規約（ArchitectureTestが検査するもの）</h3>
 <p>次の規約はArchUnitの単体テストで検査され、破るとビルドが失敗します。違反したら、テストを緩めずに依存や置き場所のほうを直す、というのがこのリポジトリの方針です（<code>docs/development/coding-guidelines.md</code>）。</p>

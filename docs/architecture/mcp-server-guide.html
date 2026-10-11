@@ -245,7 +245,7 @@ footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--line);
   <h1>mcp-server 読解ガイド</h1>
   <p class="lead">cliが出力したスキーマのスナップショット（JSON Lines）を起動時にメモリへ読み込み、AIから呼べる17個の読み取り専用ツールと、利用者が会話に添付できるテーブル定義のリソースとして、標準入出力で公開するサーバーです。DBには接続しません。このガイドは、MCPとSDKの事前知識から始めて、ソースごとの役割と繋がりまでを順に説明します。</p>
   <ul class="facts">
-    <li><b>約5.5k 行</b>main配下のJava（テストは約4.1k行。空行・コメントを含む目安）</li>
+    <li><b>約5.5k 行</b>main配下のJava（空行・コメントを含む目安）</li>
     <li><b>17 ツール</b>すべて読み取り専用。ほかに全テーブルをリソースとして公開</li>
     <li><b>mcp-core 2.0.1</b>MCP Java SDK。JSONはJackson 2系</li>
     <li><b>stdio</b>MCPクライアントが子プロセスとして起動</li>
@@ -594,13 +594,13 @@ McpServer.sync(<span class="k">new</span> StdioServerTransportProvider(jsonMappe
 
 <div class="table-wrap">
 <table>
-  <thead><tr><th>パッケージ</th><th>規模（目安）</th><th>ひとことで</th></tr></thead>
+  <thead><tr><th>パッケージ</th><th>ひとことで</th></tr></thead>
   <tbody>
-    <tr><td><code>mcp</code>（直下）</td><td class="num">約0.2k行</td><td>入口。起動引数の検証、読み込みの呼び出し、SDKの起動</td></tr>
-    <tr><td><code>mcp.snapshot</code></td><td class="num">約0.3k行</td><td><code>snapshot/</code>のJSON Linesを読み、<code>SchemaCatalog</code>を組み立てる</td></tr>
-    <tr><td><code>mcp.insight</code></td><td class="num">約0.1k行</td><td><code>insights/</code>の観点（viewpoints.json）を読む</td></tr>
-    <tr><td><code>mcp.catalog</code></td><td class="num">約2.1k行</td><td>メモリ上の全オブジェクトと、検索・名前の解決・関連のたどり・相互参照・関連のまとまり・ER図の範囲</td></tr>
-    <tr><td><code>mcp.tool</code></td><td class="num">約2.8k行</td><td>MCPのツールとリソースの定義。引数を読み、catalogに聞き、結果をJSON（ER図はMermaid）にする</td></tr>
+    <tr><td><code>mcp</code>（直下）</td><td>入口。起動引数の検証、読み込みの呼び出し、SDKの起動</td></tr>
+    <tr><td><code>mcp.snapshot</code></td><td><code>snapshot/</code>のJSON Linesを読み、<code>SchemaCatalog</code>を組み立てる</td></tr>
+    <tr><td><code>mcp.insight</code></td><td><code>insights/</code>の観点（viewpoints.json）を読む</td></tr>
+    <tr><td><code>mcp.catalog</code></td><td>メモリ上の全オブジェクトと、検索・名前の解決・関連のたどり・相互参照・関連のまとまり・ER図の範囲</td></tr>
+    <tr><td><code>mcp.tool</code></td><td>MCPのツールとリソースの定義。引数を読み、catalogに聞き、結果をJSON（ER図はMermaid）にする</td></tr>
   </tbody>
 </table>
 </div>
