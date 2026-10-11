@@ -34,6 +34,7 @@ flowchart TB
   schemaobject["schemaobject<br/>スキーマ直下のオブジェクト"]
   database["database<br/>データベース・基本情報"]
   document["document<br/>一覧ドキュメント"]
+  tableusage["tableusage<br/>関数の利用テーブル"]
 
   snapshot --> target
   insight --> viewpoint
@@ -44,6 +45,7 @@ flowchart TB
   sidecar --> relation
   viewpoint --> relation
   relation --> table
+  tableusage --> table
 ```
 
 矢印は「依存する側 → 依存される側」（パッケージは`domain.model.{名前}`）。矢印を辿って到達できるパッケージへは
@@ -404,6 +406,19 @@ classDiagram
 （1ファイル分。`formatVersion`を持つ）／`ViewpointInsight`（観点1件。識別子・表示名・説明・所属テーブル）のみで、
 `Viewpoint.resolve`の結果（`ViewpointContent`）から変換する。図は省略する。
 
+## 関数の利用テーブル
+
+関数・プロシージャの定義本体（`FunctionEntity.definition`）から、利用している出力対象のテーブルと操作（C・R・U・D）を機械的に抽出した参考値を
+`FunctionTableUsage`（1関数分。状態・テーブルごとの`TableUsage`・動的SQLの種類）で表す。抽出は`domain.service.tableusage`の
+`FunctionTableUsageAnalyzer`が、字句に分ける（`SqlLexer`）→本体を切り出す（`FunctionBodyLocator`）→テーブルを指す位置の名前と操作を拾う
+（`TableReferenceScanner`）→出力対象のテーブル（`Tables`）と照らす、の順に行う。
+
+- 拾った名前のうち、出力対象のテーブル（ビュー・マテリアライズドビューを含む）と一致したものだけを残す。CTEの名前・変数・DUAL等はここで落ちる。
+- スキーマ修飾の無い名前は、定義から決まる場合（PostgreSQLの関数の`SET search_path`、Oracleの定義者権限の所有者）だけスキーマを決める。
+  決まらない場合は同じ名前の出力対象のテーブル（候補）をすべて持ち、スキーマを決めつけない（`TableUsage.schemaDetermined`）。
+- 解析しなかった場合は、理由を状態（`TableUsageStatus`。対象外の言語・定義が無い・wrap・サブプログラムが見つからない）で表す。
+  抽出を行わない実行（プレビューの機能を有効にしていない実行）の結果は`NOT_ANALYZED`で、定義書の節・参考情報を出さない。
+
 ## 主なルールと、それを持つ場所
 
 | ルール | 場所 |
@@ -432,6 +447,10 @@ classDiagram
 | スナップショットのファイル名・配置 | `SnapshotLocations` |
 | 参考情報のファイル名・配置（`snapshot`の兄弟。`--check`の対象外） | `InsightLocations` |
 | スナップショットの行をオブジェクトとして識別する名前（関数・プロシージャは引数を含む） | `SnapshotKind.identify` |
+| 関数・プロシージャの定義本体の字句の規則（DBごとのコメント・文字列・ドル引用符・`q'[...]'`。閉じていない要素は例外にせず不完全とする） | `SqlLexer` |
+| 定義から解析する本体の切り出し（PostgreSQLはドル引用符の中身・SQL標準の本体、Oracleはパッケージ本体の最上位のサブプログラムの範囲とオーバーロードの対応付け） | `FunctionBodyLocator` / `PackageSubprograms` |
+| テーブルを指す位置と操作（C・R・U・D）・動的SQLの判定 | `TableReferenceScanner` |
+| 利用しているテーブルの名前の解決（スキーマが決まる条件・候補・出力対象との照合）と行の並び | `FunctionTableUsageAnalyzer` |
 
 ## 用語集
 
@@ -473,6 +492,10 @@ classDiagram
 | 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`。RDBMSの欄にはメジャーバージョンを添える）＋生成日 |
 | スキーマ直下のオブジェクト | 関数・プロシージャ／シーケンス／ユーザー定義型 | `FunctionEntity` / `SequenceEntity` / `TypeEntity` | テーブルに属さないオブジェクト |
 | オーバーロード | 同名の関数・プロシージャ | `FunctionEntity.isOverloaded` | 同じスキーマの同名の関数・プロシージャ。個別定義のファイル名に番号を付ける |
+| 利用しているテーブル | 利用しているテーブル（関数・プロシージャの定義書の節） | `FunctionTableUsage` / `TableUsage` / `FunctionTableUsageAnalyzer` | 関数・プロシージャの定義本体から機械的に抽出した、利用している出力対象のテーブルと操作（C・R・U・D）。呼び出し先の関数・動的SQLの中は含まない参考値 |
+| 操作 | C・R・U・D | `CrudOperation` | 利用しているテーブルへの操作（作成・読み取り・更新・削除）。`TRUNCATE`はD、`MERGE`はWHEN句の操作 |
+| スキーマが決まらない名前 | `(search_path)`・候補のスキーマ（`schemaCandidates`） | `TableUsage.schemaDetermined` / `TableUsage.schemaCandidates` | スキーマ修飾が無く、定義からはスキーマが決まらない名前（実行時の`search_path`や実行者で決まる）。同じ名前の出力対象のテーブルがあるスキーマを候補として示す |
+| 動的SQL | 動的SQL（`EXECUTE`・`EXECUTE IMMEDIATE`等） | `DynamicSqlKind` | 実行時に組み立てるSQL。中の参照は抽出できないため、含むことだけを示す |
 | 一覧ドキュメント | テーブル一覧・ER図一覧・観点一覧 等 | `ListDocumentType` | 種別ごとの一覧ページ |
 | スナップショット | スキーマのスナップショット | `domain.model.snapshot` | 取得結果を構造化したJSON Lines（生成日を含まない） |
 | 差分検知 | `--check`モード | `CheckDocumentDiffUsecase` / `DiffResult` | 生成したスナップショットとコミット済みのスナップショットの比較 |

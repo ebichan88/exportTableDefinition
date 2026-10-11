@@ -80,6 +80,8 @@ MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケ�
 | | `Cardinality`, `RelationType` | 多重度（1対1／1対多等。判定と、論理リレーションの既定値を持つ）、関連の由来（物理／論理）のenum |
 | `domain.model.schemaobject` | `FunctionEntity`, `SequenceEntity`, `TypeEntity` | テーブルに属さないスキーマ直下のオブジェクト（関数・プロシージャ／シーケンス／ユーザー定義型）のrecord。`FunctionEntity`は同名関数（オーバーロード）内の番号を持つ |
 | | `Functions`, `Sequences`, `Types` | 上記エンティティのファーストクラスコレクション（取得順のリストを保持する。テーブルキーでは引かない） |
+| `domain.model.tableusage` | `FunctionTableUsage`, `TableUsage` | 関数・プロシージャ1つ分の利用しているテーブル（状態・テーブルごとの操作・動的SQLの種類・不完全／オーバーロードの和の印）と、1テーブル分の利用（一致した出力対象のテーブル。スキーマが決まらない名前は候補のすべて） |
+| | `CrudOperation`, `DynamicSqlKind`, `TableUsageStatus` | 操作（C・R・U・D）、動的SQLの種類、解析の状態（抽出しなかった・解析した・対象外の言語・定義が無い・wrap・サブプログラムが見つからない）のenum |
 | `domain.model.database` | `DatabaseEntity`, `Dbms` | DBのカタログから取得するデータベースの情報（DB名・DBMS種別・メジャーバージョン）のrecordと、DBMS種別のenum（表示名を持つ。関数の定義本体の字句の規則の切り替えにも使う） |
 | | `BaseInfoEntity` | 各ドキュメントに掲載する基本情報（`DatabaseEntity`の情報＋生成日）のrecord |
 | `domain.model.sidecar` | `Sidecar` | サイドカーYAMLの読み込み結果全体（手動付帯情報＋論理リレーション＋観点）を束ねるrecord |
@@ -119,6 +121,10 @@ MCPサーバー（`modules/mcp-server/`。`com.dbxray.mcp`配下）のパッケ�
 | | `PathSegments` | DB由来の名前（DB名・スキーマ名・テーブル名等）を、パスの1要素として安全な形（区切り・`..`・Windowsで使えない文字を`~2F`等に置き換えたもの）にする。`*Locations`がパスに名前を使うときは必ず通す |
 | | `OutputRoot` | 出力先ベースディレクトリと基本情報の組を表す値オブジェクト（Writer・`OutputPathResolver`へそのまま渡す） |
 | `domain.service.tableusage` | `SqlLexer`, `SqlToken`, `SqlTokenKind` | 関数・プロシージャの定義本体を字句に分ける（DBごとのコメント・文字列・ドル引用符・`q'[...]'`の規則。正規表現を使わず1文字ずつ読み、閉じていない要素があっても例外にしない。正規表現を使わないことは`ArchitectureTest`が検査する） |
+| | `FunctionTableUsageAnalyzer` | 関数・プロシージャの定義本体から利用しているテーブルを抽出する入口（スキーマごとに生成する）。本体の切り出し・位置の判定の結果の名前を、出力対象のテーブルと照らして解決する（スキーマ修飾・`SET search_path`・Oracleの所有者／実行者権限） |
+| | `FunctionBodyLocator`, `PackageSubprograms` | 定義から解析する本体を切り出す（PostgreSQLはドル引用符の中身を字句に分け直す。Oracleはパッケージ本体の最上位のサブプログラムの範囲を`BEGIN`・`CASE`と`END`の対応で求め、オーバーロードを引数名で対応付ける。同じパッケージの字句を使い回す） |
+| | `TableReferenceScanner` | 本体の字句から、テーブルを指す位置（`INSERT INTO`・`FROM`の並び・`JOIN`等）の名前と操作、動的SQLを拾う。完全な構文解析はせず、きっかけのキーワードと前後の字句で判定し、`;`で文の状態を戻す |
+| | `SqlNames` | 字句からカタログでの名前を求める（引用符の無い名前はPostgreSQLは小文字・Oracleは大文字へ、ASCIIの英字だけ畳み込む） |
 | `domain.service.snapshot` | `SchemaSnapshotWriter` | スキーマのスナップショット（JSON Lines）の書き込み。テーブルはスキーマ単位のファイルへ1行ずつ追記する |
 | | `SnapshotDiff` | 生成したスナップショットとコミット済みスナップショットを、オブジェクト単位（追加/削除/内容不一致）で比較する（`--check`モードで使用）。内容が一致しないものは、`SnapshotSerializer.formatForDiff`で整形した上で`UnifiedDiffGenerator`によりunified diffを付ける |
 | | `SnapshotSerializer` | スナップショットのrecordとJSON文字列の変換IF（実装はインフラ層）。差分表示用に1項目1行へ整形する`formatForDiff`も持つ |
