@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.dbxray.mcp.UserCorrectableException;
+import com.dbxray.mcp.catalog.FunctionTableUsageEntry;
+import com.dbxray.mcp.catalog.FunctionTableUsageEntry.UsedTable;
 import com.dbxray.mcp.catalog.ObjectKey;
 import com.dbxray.mcp.catalog.ViewpointEntry;
 import java.io.IOException;
@@ -117,5 +119,71 @@ class InsightsDirectoryReaderTest {
     final Path file = outputBaseDir.resolve(relativePath);
     Files.createDirectories(file.getParent());
     return Files.writeString(file, content);
+  }
+
+  @Test
+  @DisplayName("readFunctionTableUsages: DB・スキーマごとのfunctionTableUsages.jsonを読み、スキーマ名はファイルの中の値を使う")
+  void readsFunctionTableUsages() throws IOException {
+    write(
+        "insights/testdb/My~2FSchema/functionTableUsages.json",
+        "{\"formatVersion\":1,\"schema\":\"My/Schema\",\"functions\":["
+            + "{\"name\":\"f\",\"arguments\":\"p integer\",\"status\":\"analyzed\","
+            + "\"tables\":[{\"schema\":\"sample\",\"name\":\"employee\",\"operations\":[\"R\",\"U\"]},"
+            + "{\"name\":\"project\",\"schemaCandidates\":[\"sample\",\"other\"],\"operations\":[\"D\"]}],"
+            + "\"dynamicSql\":[\"EXECUTE\"],\"incomplete\":true,\"newField\":1},"
+            + "{\"name\":\"py\",\"status\":\"unsupported_language\",\"language\":\"plpython3u\"}]}");
+    write("insights/testdb/viewpoints.json", "{\"formatVersion\":1,\"viewpoints\":[]}");
+
+    final List<FunctionTableUsageEntry> entries =
+        reader.readFunctionTableUsages(snapshotDirectory());
+
+    assertEquals(
+        List.of(
+            new FunctionTableUsageEntry(
+                new ObjectKey("testdb", "My/Schema", "f"),
+                "p integer",
+                "analyzed",
+                "",
+                List.of(
+                    new UsedTable("sample", "employee", List.of(), List.of("R", "U")),
+                    new UsedTable("", "project", List.of("sample", "other"), List.of("D"))),
+                List.of("EXECUTE"),
+                true,
+                false),
+            new FunctionTableUsageEntry(
+                new ObjectKey("testdb", "My/Schema", "py"),
+                "",
+                "unsupported_language",
+                "plpython3u",
+                List.of(),
+                List.of(),
+                false,
+                false)),
+        entries);
+  }
+
+  @Test
+  @DisplayName("readFunctionTableUsages: 参考情報のディレクトリ・ファイルが無い場合は0件とする（--previewを付けずに出力した場合）")
+  void returnsEmptyFunctionTableUsagesWhenMissing() throws IOException {
+    assertTrue(reader.readFunctionTableUsages(snapshotDirectory()).isEmpty());
+
+    Files.createDirectories(outputBaseDir.resolve("insights").resolve("testdb").resolve("sample"));
+    write("insights/testdb/viewpoints.json", "{\"formatVersion\":1,\"viewpoints\":[]}");
+
+    assertTrue(reader.readFunctionTableUsages(snapshotDirectory()).isEmpty());
+  }
+
+  @Test
+  @DisplayName("readFunctionTableUsages: 対応していない新しい形式のバージョンは、MCPサーバーの更新を促す誤りとする")
+  void rejectsNewerFunctionTableUsagesFormat() throws IOException {
+    write(
+        "insights/testdb/sample/functionTableUsages.json",
+        "{\"formatVersion\":2,\"schema\":\"sample\",\"functions\":[]}");
+
+    final UserCorrectableException e =
+        assertThrows(
+            UserCorrectableException.class,
+            () -> reader.readFunctionTableUsages(snapshotDirectory()));
+    assertTrue(e.getMessage().contains("formatVersion=2"), e.getMessage());
   }
 }

@@ -3,6 +3,7 @@ package com.dbxray.domain.service.writer.objectlist;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.database.Dbms;
 import com.dbxray.domain.model.schemaobject.FunctionEntity;
 import com.dbxray.domain.model.schemaobject.Functions;
 import com.dbxray.domain.model.schemaobject.SequenceEntity;
@@ -10,6 +11,7 @@ import com.dbxray.domain.model.schemaobject.TypeEntity;
 import com.dbxray.domain.model.schemaobject.Types;
 import com.dbxray.domain.model.table.TriggerEntity;
 import com.dbxray.domain.model.table.Triggers;
+import com.dbxray.domain.model.target.FunctionDefinitionContent;
 import com.dbxray.domain.repository.FileRepository;
 import com.dbxray.domain.service.path.OutputRoot;
 import com.dbxray.domain.service.writer.PagedSectionWriter;
@@ -174,7 +176,8 @@ public class ObjectListWriterTest {
   void testWriteFunctionDefinitionWritesIndividualFile() {
     var function =
         new FunctionEntity("testdb", "public", "calc_total", 1, 1, "", "", "", "", "SELECT 1;");
-    writer.writeFunctionDefinition(function, outputRoot());
+    writer.writeFunctionDefinition(
+        FunctionDefinitionContent.withoutTableUsage(function, Dbms.POSTGRESQL), outputRoot());
 
     Path expectedDir = OUT.resolve("testdb").resolve("public").resolve("function");
     Path expectedFile = expectedDir.resolve("calc_total.md");

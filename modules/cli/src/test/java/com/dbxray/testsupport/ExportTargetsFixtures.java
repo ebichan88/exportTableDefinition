@@ -1,6 +1,7 @@
 package com.dbxray.testsupport;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.database.Dbms;
 import com.dbxray.domain.model.relation.ForeignKeyEntity;
 import com.dbxray.domain.model.relation.ForeignKeys;
 import com.dbxray.domain.model.schemaobject.FunctionEntity;
@@ -38,6 +39,7 @@ public final class ExportTargetsFixtures {
       Set<OutputObjectType> objectTypes) {
     return new ExportTargets(
         new BaseInfoEntity("testdb", "PostgreSQL", 16, LocalDate.EPOCH),
+        Dbms.POSTGRESQL,
         Tables.of(tables),
         ForeignKeys.of(foreignKeys),
         Triggers.of(List.of()),

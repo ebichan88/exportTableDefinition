@@ -3,9 +3,11 @@ package com.dbxray.domain.service.writer.objectlist;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.database.Dbms;
 import com.dbxray.domain.model.schemaobject.FunctionEntity;
 import com.dbxray.domain.model.schemaobject.SequenceEntity;
 import com.dbxray.domain.model.schemaobject.TypeEntity;
+import com.dbxray.domain.model.target.FunctionDefinitionContent;
 import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,11 +33,14 @@ public class ObjectDefinitionTemplatesTest {
             "",
             "",
             "CREATE OR REPLACE FUNCTION public.f_add(a integer) RETURNS integer ...");
-    String file = ObjectDefinitionTemplates.functionFile(f, base);
+    String file =
+        ObjectDefinitionTemplates.functionFile(
+            FunctionDefinitionContent.withoutTableUsage(f, Dbms.POSTGRESQL), base);
     assertTrue(file.startsWith("# f_add"));
     assertTrue(file.contains("```sql"));
     assertTrue(file.contains("CREATE OR REPLACE FUNCTION public.f_add"));
     assertTrue(file.contains("[関数・プロシージャ一覧へ](../../functionList_TEST_DB.md)"));
+    assertFalse(file.contains("## 利用しているテーブル"), "抽出を行わない実行では節を出さない");
   }
 
   @Test

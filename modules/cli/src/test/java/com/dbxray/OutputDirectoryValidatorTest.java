@@ -77,7 +77,14 @@ public class OutputDirectoryValidatorTest {
 
   private static ExportSchemaRequest exportRequest(String outputPath, boolean rmDist) {
     return new ExportSchemaRequest(
-        TargetSelection.of(List.of(), List.of(), List.of()), null, outputPath, 0, 80, 1, rmDist);
+        TargetSelection.of(List.of(), List.of(), List.of()),
+        null,
+        outputPath,
+        0,
+        80,
+        1,
+        rmDist,
+        Set.of());
   }
 
   private static CheckDocumentDiffRequest checkDiffRequest(String outputPath) {

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.dbxray.domain.model.database.BaseInfoEntity;
+import com.dbxray.domain.model.database.Dbms;
 import com.dbxray.domain.model.relation.ForeignKeys;
 import com.dbxray.domain.model.schemaobject.FunctionEntity;
 import com.dbxray.domain.model.schemaobject.Functions;
@@ -93,6 +94,7 @@ class DatabaseMetricsTest {
     final ExportTargets targets =
         new ExportTargets(
             BASE_INFO,
+            Dbms.POSTGRESQL,
             Tables.of(List.of()),
             ForeignKeys.of(List.of()),
             Triggers.of(List.of()),
@@ -119,6 +121,7 @@ class DatabaseMetricsTest {
   private static ExportTargets targets(Set<OutputObjectType> objectTypes) {
     return new ExportTargets(
         BASE_INFO,
+        Dbms.POSTGRESQL,
         Tables.of(List.of(EMPLOYEE, DEPT, EMPLOYEE_VIEW, SUMMARY, ORDERS, LONELY)),
         ForeignKeys.of(
             List.of(
