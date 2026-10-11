@@ -348,7 +348,7 @@ classDiagram
   }
   class DatabaseEntity {
     String dbName
-    String dbmsName
+    Dbms dbms
     int majorVersion
   }
   class ConsistencyNotice {
@@ -391,7 +391,8 @@ classDiagram
   重要度（`Severity`）に応じて行う
 - **基本情報（`BaseInfoEntity`）**は、DBのカタログから取得するデータベースの情報（`DatabaseEntity`。DB名・DBMS種別・メジャーバージョン）に
   ドキュメントの生成日を加えたもの。生成日はDBではなくアプリケーションの時計（`Clock`）で決まる。DBMSの版はマイナー版の更新で
-  出力が変わらないよう、メジャーバージョンだけを持つ
+  出力が変わらないよう、メジャーバージョンだけを持つ。DBMS種別は`Dbms`（enum）で持ち、表示名（`PostgreSQL`・`Oracle`）を基本情報・スナップショットに出す。
+  種別そのものは、関数の定義本体を字句に分ける規則（コメント・文字列の書き方）の切り替えにも使う
 
 `FunctionEntity`・`SequenceEntity`・`TypeEntity`（`schemaobject`）はテーブルに属さないため、テーブルキーを持たない。
 そのため、それぞれの集合（`Functions`・`Sequences`・`Types`）はテーブルキーでの索引を持たず、取得順のリストだけを保持する
@@ -468,6 +469,7 @@ classDiagram
 | 出力対象 | － | `ExportTargets` | 出力対象の絞り込み条件を適用して取得した、出力するもの（条件ではなくデータ）。コード上は対象範囲全体を一括取得する軽量な情報の組を指す |
 | 1テーブル分の出力内容 | テーブル定義書 | `TableDefinitionContent` | テーブル定義書1ファイル・スナップショット1行分の内容 |
 | 突き合わせの通知 | 警告ログ | `ConsistencyNotice` | 出力対象と関連・付帯情報・観点を突き合わせた結果（孤児付帯情報・除外した関連・一致しない観点のパターン等） |
+| DBMS種別 | RDBMS（`PostgreSQL`・`Oracle`） | `Dbms` | 接続先のDBMS。mapperのSQLが返す表示名から`DatabaseDto`の変換時に求める |
 | 基本情報 | 基本情報（RDBMS・データベース名・作成日） | `BaseInfoEntity` | 各ドキュメントの先頭に掲載する情報。DBの情報（`DatabaseEntity`。RDBMSの欄にはメジャーバージョンを添える）＋生成日 |
 | スキーマ直下のオブジェクト | 関数・プロシージャ／シーケンス／ユーザー定義型 | `FunctionEntity` / `SequenceEntity` / `TypeEntity` | テーブルに属さないオブジェクト |
 | オーバーロード | 同名の関数・プロシージャ | `FunctionEntity.isOverloaded` | 同じスキーマの同名の関数・プロシージャ。個別定義のファイル名に番号を付ける |

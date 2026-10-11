@@ -19,6 +19,6 @@ public record BaseInfoEntity(
    */
   public static BaseInfoEntity of(DatabaseEntity database, LocalDate generatedDate) {
     return new BaseInfoEntity(
-        database.dbName(), database.dbmsName(), database.majorVersion(), generatedDate);
+        database.dbName(), database.dbms().displayName(), database.majorVersion(), generatedDate);
   }
 }
